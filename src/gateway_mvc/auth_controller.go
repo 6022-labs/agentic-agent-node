@@ -1,0 +1,89 @@
+package gateway_mvc
+
+import (
+	"errors"
+
+	"github.com/6022-labs/agentic-agent-node/src/agent_runtime/services"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
+	"github.com/gofiber/fiber/v2"
+)
+
+const (
+	AuthChallengeEndpoint = "/auth/challenge"
+	AuthVerifyEndpoint    = "/auth/verify"
+)
+
+type AuthController struct {
+	getChallenge *use_cases.GetAuthChallenge
+	verifyAuth   *use_cases.VerifyAuth
+}
+
+func NewAuthController(getChallenge *use_cases.GetAuthChallenge, verifyAuth *use_cases.VerifyAuth) *AuthController {
+	return &AuthController{getChallenge: getChallenge, verifyAuth: verifyAuth}
+}
+
+func (c *AuthController) RegisterUnauthenticatedRoutes(app fiber.Router) {
+	app.Get(AuthChallengeEndpoint, c.Challenge)
+	app.Post(AuthVerifyEndpoint, c.Verify)
+}
+
+func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
+
+func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
+	resp, err := c.getChallenge.Execute()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"code":    "challenge_failed",
+			"message": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (c *AuthController) Verify(ctx *fiber.Ctx) error {
+	body := new(requests.VerifyAuthRequest)
+	if err := ctx.BodyParser(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	if err := body.ValidateAndSanitize(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(err)
+	}
+
+	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
+	if err != nil {
+		return ctx.Status(authErrorStatus(err)).JSON(fiber.Map{
+			"code":    authErrorCode(err),
+			"message": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
+func authErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, use_cases.ErrNonceNotFound),
+		errors.Is(err, use_cases.ErrSignatureMismatch),
+		errors.Is(err, use_cases.ErrAddressNotAuthorized):
+		return fiber.StatusUnauthorized
+	case errors.Is(err, services.ErrIdentityNotFound):
+		return fiber.StatusServiceUnavailable
+	default:
+		return fiber.StatusInternalServerError
+	}
+}
+
+func authErrorCode(err error) string {
+	switch {
+	case errors.Is(err, use_cases.ErrNonceNotFound):
+		return "nonce_not_found"
+	case errors.Is(err, use_cases.ErrSignatureMismatch):
+		return "signature_mismatch"
+	case errors.Is(err, use_cases.ErrAddressNotAuthorized):
+		return "not_authorized"
+	case errors.Is(err, services.ErrIdentityNotFound):
+		return "identity_not_found"
+	default:
+		return "verify_failed"
+	}
+}

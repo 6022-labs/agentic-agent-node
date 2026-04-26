@@ -1,0 +1,60 @@
+package configurations
+
+import (
+	"github.com/6022-labs/agentic-agent-node/src/gateway_host/settings"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
+	"github.com/gofiber/contrib/fiberzap/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"go.uber.org/dig"
+	"go.uber.org/zap"
+)
+
+func ConfigureServer(container *dig.Container) {
+	if err := container.Provide(newHttpServer); err != nil {
+		panic(err)
+	}
+
+	if err := container.Invoke(registerRoutes); err != nil {
+		panic(err)
+	}
+}
+
+func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
+	return fiber.New(fiber.Config{
+		AppName:   hostSettings.AppName,
+		Network:   "tcp",
+		BodyLimit: hostSettings.BodyLimitBytes,
+	})
+}
+
+type registerRoutesParams struct {
+	dig.In
+
+	App         *fiber.App
+	Logger      *zap.Logger
+	JwtAuth     *middlewares.JwtAuthMiddleware
+	ReadyGate   *middlewares.ReadyGateMiddleware
+	Controllers []gateway_mvc.ControllerInterface `group:"controllers"`
+}
+
+func registerRoutes(p registerRoutesParams) {
+	p.App.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "*",
+	}))
+
+	p.App.Use(fiberzap.New(fiberzap.Config{
+		Logger: p.Logger,
+	}))
+
+	for _, controller := range p.Controllers {
+		controller.RegisterUnauthenticatedRoutes(p.App)
+	}
+
+	authenticated := p.App.Group("", p.JwtAuth.Handle, p.ReadyGate.Handle)
+	for _, controller := range p.Controllers {
+		controller.RegisterAuthenticatedRoutes(authenticated)
+	}
+}
