@@ -12,5 +12,6 @@ func TestMain(m *testing.M) {
 	GetPostgresContainerBuilder().stop()
 	GetMySQLContainerBuilder().stop()
 	GetMariaDBContainerBuilder().stop()
+	GetVaultContainerBuilder().stop()
 	os.Exit(code)
 }
