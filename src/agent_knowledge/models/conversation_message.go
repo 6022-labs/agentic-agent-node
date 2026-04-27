@@ -11,7 +11,7 @@ import (
 )
 
 // ConversationMessage is one message the agent has seen in a given conversation.
-// Schema is owned by the goose migration in agent_knowledge_db/migrations/.
+// Schema is owned by the goose migration in runtime_db/migrations/.
 //
 // Dedup is by `Hash` (SHA-512 over role/author/content/platform/conversationId)
 // — mirrors the orchestrator's database_connector contract. `Id` is a locally

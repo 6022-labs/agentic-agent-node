@@ -22,9 +22,9 @@ RUN apk add --no-cache tini ca-certificates
 
 COPY --from=builder /gateway /usr/local/bin/gateway
 COPY --from=builder /runtime /usr/local/bin/runtime
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/postgres /migrations/postgres
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/mysql    /migrations/mysql
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/mariadb  /migrations/mariadb
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/postgres /migrations/postgres
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mysql    /migrations/mysql
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mariadb  /migrations/mariadb
 
 # Pre-filled defaults that hold whenever the two binaries share a container:
 # both bind the loopback interface and the gateway can reach the runtime at it.
@@ -42,7 +42,7 @@ ENV GATEWAY_HOST__API_PORT=5000 \
     JWT__TOKEN_TTL=30m \
     JWT__NONCE_TTL=5m \
     VAULT__KV_V1_MOUNT_PATH=secret \
-    AGENT_KNOWLEDGE_MIGRATIONS__FOLDER_PATH=/migrations
+    RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
 
 # Entrypoint script: start runtime in background, then gateway in foreground.
 # Tini reaps and forwards signals; if either child dies the script exits and

@@ -4,9 +4,9 @@ import (
 	agent_identity_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity/configurations"
 	agent_identity_blockchain_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/configurations"
 	agent_knowledge_configurations "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/configurations"
-	agent_knowledge_db_configurations "github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/configurations"
+	runtime_db_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_db/configurations"
 	agent_reasoning_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/configurations"
-	common_vault_configurations "github.com/6022-labs/agentic-agent-node/src/common_vault/configurations"
+	runtime_vault_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_vault/configurations"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
 	runtime_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_mvc/configurations"
 
@@ -26,11 +26,11 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 		panic(err)
 	}
 
-	common_vault_configurations.AddCommonVaultConfiguration(container)
+	runtime_vault_configurations.AddRuntimeVaultConfiguration(container)
 	agent_identity_blockchain_configurations.AddAgentIdentityBlockchainConfiguration(container)
 	agent_identity_configurations.AddAgentIdentityConfiguration(container)
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
-	agent_knowledge_db_configurations.AddAgentKnowledgeDbConfiguration(container)
+	runtime_db_configurations.AddAgentKnowledgeDbConfiguration(container)
 	agent_knowledge_configurations.AddAgentKnowledgeConfiguration(container)
 	runtime_mvc_configurations.AddRuntimeMvcConfiguration(container)
 

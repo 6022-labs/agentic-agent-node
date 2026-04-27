@@ -36,8 +36,8 @@ func findMigrationFolderPath(subPath string) (*string, error) {
 	return &p, nil
 }
 
-// FindAgentKnowledgeMigrationFolderPath returns the absolute path to the
-// agent_knowledge_db migrations folder.
-func FindAgentKnowledgeMigrationFolderPath() (*string, error) {
-	return findMigrationFolderPath("src/agent_knowledge_db/migrations")
+// FindRuntimeMigrationFolderPath returns the absolute path to the
+// runtime_db migrations folder.
+func FindRuntimeMigrationFolderPath() (*string, error) {
+	return findMigrationFolderPath("src/runtime_db/migrations")
 }

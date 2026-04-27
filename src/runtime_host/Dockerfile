@@ -21,10 +21,10 @@ FROM scratch AS final
 # Import the compiled executable from the first stage.
 COPY --from=builder /app /app
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/postgres /migrations/postgres
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/mysql    /migrations/mysql
-COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/agent_knowledge_db/migrations/mariadb  /migrations/mariadb
-ENV AGENT_KNOWLEDGE_MIGRATIONS__FOLDER_PATH=/migrations
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/postgres /migrations/postgres
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mysql    /migrations/mysql
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mariadb  /migrations/mariadb
+ENV RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
 
 EXPOSE 5001
 
