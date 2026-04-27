@@ -2,6 +2,7 @@ package configurations
 
 import (
 	knowledge_repositories "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
@@ -25,6 +26,18 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		repositories.NewLLMConnectionRepository,
+		dig.As(new(reasoning_repositories.LLMConnectionRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewMCPConnectionRepository,
+		dig.As(new(reasoning_repositories.MCPConnectionRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 // newDatabaseClient opens the DB and runs migrations at boot. A failure here
@@ -36,10 +49,10 @@ func newDatabaseClient(
 ) *runtime_db.DatabaseClient {
 	client, err := runtime_db.NewDatabaseClient(dbSettings, migrationsSettings, logger)
 	if err != nil {
-		logger.Fatal("failed to create agent_knowledge database client", zap.Error(err))
+		logger.Fatal("failed to create runtime database client", zap.Error(err))
 	}
 	if err := client.Migrate(); err != nil {
-		logger.Fatal("failed to migrate agent_knowledge database", zap.Error(err))
+		logger.Fatal("failed to migrate runtime database", zap.Error(err))
 	}
 	return client
 }
