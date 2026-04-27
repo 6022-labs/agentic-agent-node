@@ -13,12 +13,12 @@ import (
 // HeaderAuthKeys lists the header names the connection authenticates with;
 // the values live in Vault and are loaded into HeaderAuth on read.
 type MCPConnection struct {
-	Id             uuid.UUID `gorm:"primaryKey"`
-	Name           string
-	Url            string
-	HeaderAuthKeys MCPConnectionHeaderAuthKeys
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	Id             uuid.UUID                   `gorm:"primaryKey;size:36"`
+	Name           string                      `gorm:"not null;size:128"`
+	Url            string                      `gorm:"not null;type:text"`
+	HeaderAuthKeys MCPConnectionHeaderAuthKeys `gorm:"not null"`
+	CreatedAt      time.Time                   `gorm:"not null"`
+	UpdatedAt      time.Time                   `gorm:"not null"`
 
 	HeaderAuth map[string]string `gorm:"-"`
 }
@@ -34,5 +34,10 @@ func (m *MCPConnection) BeforeCreate(_ *gorm.DB) error {
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = time.Now()
 	}
+	return nil
+}
+
+func (m *MCPConnection) BeforeSave(_ *gorm.DB) error {
+	m.UpdatedAt = time.Now()
 	return nil
 }

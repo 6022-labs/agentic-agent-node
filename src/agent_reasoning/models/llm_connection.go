@@ -14,13 +14,13 @@ import (
 //
 // The api key lives in Vault, not on this row.
 type LLMConnection struct {
-	Id          uuid.UUID                      `gorm:"primaryKey"`
-	Platform    enums.LLMConnectionPlatform
-	Model       string
-	BaseUrl     *string
-	SetupStatus enums.LLMConnectionSetupStatus
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Id          uuid.UUID                      `gorm:"primaryKey;size:36"`
+	Platform    enums.LLMConnectionPlatform    `gorm:"not null;size:64"`
+	Model       string                         `gorm:"not null;size:255"`
+	BaseUrl     *string                        `gorm:"type:text"`
+	SetupStatus enums.LLMConnectionSetupStatus `gorm:"not null;size:32"`
+	CreatedAt   time.Time                      `gorm:"not null"`
+	UpdatedAt   time.Time                      `gorm:"not null"`
 }
 
 func (LLMConnection) TableName() string {
@@ -34,5 +34,10 @@ func (m *LLMConnection) BeforeCreate(_ *gorm.DB) error {
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = time.Now()
 	}
+	return nil
+}
+
+func (m *LLMConnection) BeforeSave(_ *gorm.DB) error {
+	m.UpdatedAt = time.Now()
 	return nil
 }

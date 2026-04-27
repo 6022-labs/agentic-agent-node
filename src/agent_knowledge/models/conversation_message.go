@@ -17,15 +17,15 @@ import (
 // — mirrors the orchestrator's database_connector contract. `Id` is a locally
 // generated uuid for traceability.
 type ConversationMessage struct {
-	Id             uuid.UUID `gorm:"primaryKey"`
-	ConversationId string
-	Author         string
-	Role           string
-	Platform       string
-	Content        string
-	Hash           string
-	Timestamp      time.Time
-	CreatedAt      time.Time
+	Id             uuid.UUID `gorm:"primaryKey;size:36"`
+	ConversationId string    `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
+	Author         string    `gorm:"not null;size:128"`
+	Role           string    `gorm:"not null;size:32"`
+	Platform       string    `gorm:"size:64"`
+	Content        string    `gorm:"not null;type:text"`
+	Hash           string    `gorm:"not null;size:128;uniqueIndex:uq_conversation_messages_hash"`
+	Timestamp      time.Time `gorm:"not null"`
+	CreatedAt      time.Time `gorm:"not null"`
 }
 
 func (ConversationMessage) TableName() string {
