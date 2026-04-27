@@ -1,4 +1,4 @@
-package configurations
+package host_configurations
 
 import (
 	"errors"
@@ -11,17 +11,17 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-const configFileName = "appsettings.json"
+const defaultConfigFileName = "appsettings.json"
 
 func LoadKoanfConfig() (*koanf.Koanf, error) {
-	return LoadKoanfConfigFromFile(configFileName)
+	return LoadKoanfConfigFromFile(defaultConfigFileName)
 }
 
 func LoadKoanfConfigFromFile(path string) (*koanf.Koanf, error) {
 	k := koanf.New(".")
 
 	if len(strings.TrimSpace(path)) == 0 {
-		path = configFileName
+		path = defaultConfigFileName
 	}
 
 	if _, err := os.Stat(path); err == nil {

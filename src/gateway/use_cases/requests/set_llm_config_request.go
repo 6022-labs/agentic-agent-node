@@ -3,7 +3,7 @@ package requests
 import (
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type SetLlmConfigRequest struct {

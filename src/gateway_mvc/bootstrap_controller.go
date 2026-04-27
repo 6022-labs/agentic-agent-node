@@ -30,6 +30,13 @@ func (c *BootstrapController) RegisterUnauthenticatedRoutes(app fiber.Router) {
 
 func (c *BootstrapController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 
+// GetStatus reports wallet bootstrap state and a best-effort identity snapshot.
+// @Summary Bootstrap status
+// @Description Wallet lifecycle (`awaiting-vault` | `ready`) plus a best-effort NFT identity snapshot once the wallet is loaded.
+// @Tags Bootstrap
+// @Produce json
+// @Success 200 {object} responses.GetBootstrapStatusResponse
+// @Router /bootstrap/status [get]
 func (c *BootstrapController) GetStatus(ctx *fiber.Ctx) error {
 	state := c.stateReader.Get()
 

@@ -18,9 +18,9 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"host.api_port":         5050,
-			"host.app_name":         "AgenticAI-Agent-Node-Test",
-			"host.body_limit_bytes": 1024 * 1024,
+			"gateway_host.api_port":         5050,
+			"gateway_host.app_name":         "AgenticAI-Agent-Node-Test",
+			"gateway_host.body_limit_bytes": 1024 * 1024,
 		}, "."), nil)
 
 		t.Run("Should load every field as provided", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"host.app_name": "AgenticAI-Agent-Node-Test",
+			"gateway_host.app_name": "AgenticAI-Agent-Node-Test",
 		}, "."), nil)
 
 		t.Run("Should default api_port to 5000", func(t *testing.T) {
@@ -57,8 +57,8 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"host.app_name":         "AgenticAI-Agent-Node-Test",
-			"host.body_limit_bytes": 0,
+			"gateway_host.app_name":         "AgenticAI-Agent-Node-Test",
+			"gateway_host.body_limit_bytes": 0,
 		}, "."), nil)
 
 		t.Run("Should default body_limit_bytes to 4MB", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"host.app_name": "   trimmed-name   ",
+			"gateway_host.app_name": "   trimmed-name   ",
 		}, "."), nil)
 
 		t.Run("Should trim app_name", func(t *testing.T) {

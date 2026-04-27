@@ -23,6 +23,13 @@ func (c *HealthController) RegisterUnauthenticatedRoutes(app fiber.Router) {
 
 func (c *HealthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 
+// Health returns liveness + uptime.
+// @Summary Health
+// @Description Liveness probe; serves before bootstrap completes.
+// @Tags Health
+// @Produce json
+// @Success 200 {object} responses.GetHealthResponse
+// @Router /health [get]
 func (c *HealthController) Health(ctx *fiber.Ctx) error {
 	return ctx.JSON(&responses.GetHealthResponse{
 		Status:        "ok",

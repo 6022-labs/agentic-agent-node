@@ -1,0 +1,37 @@
+# Combined-image build context. Same exclusions as per-host.
+
+# VCS + IDE
+.git
+.gitignore
+.vscode
+.idea
+.devcontainer
+
+# Local secrets / configs
+.env
+**/.env
+**/appsettings.json
+
+# Tests + mocks
+tests/
+
+# Build / module artifacts
+bin/
+*.test
+*.out
+coverage.*
+
+# Documentation generation outputs
+**/docs/.tmp-v3
+**/docs/swagger.json
+**/docs/swagger.yaml
+**/docs/swagger.v3.json
+**/docs/swagger.v3.yaml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Compose / runtime state
+docker-compose.override.yml
+*.pid

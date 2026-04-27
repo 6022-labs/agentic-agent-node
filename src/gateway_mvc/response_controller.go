@@ -19,6 +19,17 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(app fiber.Router) {
 	app.Post(ResponsesEndpoint, c.CreateResponse)
 }
 
+// CreateResponse runs the agent's inner loop for one participant turn.
+// @Summary Create response
+// @Description Runs LLM ↔ MCP ↔ knowledge loop (P2.4 — currently 501).
+// @Tags Responses
+// @Accept json
+// @Produce json
+// @Param request body requests.CreateResponseRequest true "Conversation turn"
+// @Success 501 {object} fiber.Map
+// @Failure 400 {object} errors.ValidationError
+// @Security BearerAuth
+// @Router /responses [post]
 func (c *ResponseController) CreateResponse(ctx *fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)
 	if err := ctx.BodyParser(body); err != nil {

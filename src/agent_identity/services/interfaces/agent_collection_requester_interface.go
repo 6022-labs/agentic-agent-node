@@ -1,0 +1,17 @@
+package interfaces
+
+import "github.com/ethereum/go-ethereum/common"
+
+// AgentCollectionRequesterInterface reads from a single agent collection
+// (an ERC721-style contract). The collection address is passed per call so
+// the same requester can talk to any collection — the orchestrator manages
+// multiple collections via the AgentCollectionsManager.
+type AgentCollectionRequesterInterface interface {
+	// TokenIdByWallet returns the tokenId minted to this wallet in the given
+	// collection, or 0 if none.
+	TokenIdByWallet(collectionAddress common.Address, wallet common.Address) (uint64, error)
+	// OwnerOf returns the current NFT owner for this token.
+	OwnerOf(collectionAddress common.Address, tokenId uint64) (common.Address, error)
+	// NameOf returns the on-chain name (ENS prefix) for this token.
+	NameOf(collectionAddress common.Address, tokenId uint64) (string, error)
+}

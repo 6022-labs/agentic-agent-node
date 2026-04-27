@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/enums"
 )
 
