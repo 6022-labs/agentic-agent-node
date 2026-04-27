@@ -11,22 +11,45 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+type WhenGettingAuthChallengeTestingSuite struct {
+	sut *use_cases.GetAuthChallenge
+
+	mockNonceStore *gateway_mocks.MockNonceStoreInterface
+}
+
+func WhenGettingAuthChallengeBeforeEach(t *testing.T) *WhenGettingAuthChallengeTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockNonceStore := gateway_mocks.NewMockNonceStoreInterface(mockController)
+
+	sut := use_cases.NewGetAuthChallenge(mockNonceStore)
+
+	return &WhenGettingAuthChallengeTestingSuite{
+		sut: sut,
+
+		mockNonceStore: mockNonceStore,
+	}
+}
+
 func TestWhenGettingAuthChallenge(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the nonce store returns a nonce + expiry", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		nonceStore := gateway_mocks.NewMockNonceStoreInterface(ctrl)
 		expectedExp := time.Now().Add(5 * time.Minute)
-		nonceStore.EXPECT().Generate().Return("nonce-abc", expectedExp, nil)
-
-		uc := use_cases.NewGetAuthChallenge(nonceStore)
+		initSuite := func(suite *WhenGettingAuthChallengeTestingSuite) {
+			suite.mockNonceStore.EXPECT().Generate().Return("nonce-abc", expectedExp, nil)
+		}
 
 		t.Run("Should return them in the response", func(t *testing.T) {
-			resp, err := uc.Execute()
+			t.Parallel()
+
+			suite := WhenGettingAuthChallengeBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute()
+
 			assert.NoError(t, err)
 			assert.Equal(t, "nonce-abc", resp.Nonce)
 			assert.Equal(t, expectedExp, resp.ExpiresAt)
@@ -35,16 +58,19 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 
 	t.Run("Given the nonce store fails", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		nonceStore := gateway_mocks.NewMockNonceStoreInterface(ctrl)
-		nonceStore.EXPECT().Generate().Return("", time.Time{}, errors.New("rng failed"))
-
-		uc := use_cases.NewGetAuthChallenge(nonceStore)
+		initSuite := func(suite *WhenGettingAuthChallengeTestingSuite) {
+			suite.mockNonceStore.EXPECT().Generate().Return("", time.Time{}, errors.New("rng failed"))
+		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
-			_, err := uc.Execute()
+			t.Parallel()
+
+			suite := WhenGettingAuthChallengeBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute()
+
 			assert.ErrorContains(t, err, "rng failed")
 		})
 	})

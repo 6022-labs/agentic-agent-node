@@ -12,6 +12,26 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+type WhenAppendingConversationMessagesTestingSuite struct {
+	sut *use_cases.AppendConversationMessages
+
+	mockRepository *knowledge_mocks.MockConversationMessageRepositoryInterface
+}
+
+func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
+
+	sut := use_cases.NewAppendConversationMessages(mockRepository)
+
+	return &WhenAppendingConversationMessagesTestingSuite{
+		sut: sut,
+
+		mockRepository: mockRepository,
+	}
+}
+
 func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Parallel()
 
@@ -20,14 +40,14 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	t.Run("Given an empty conversationId", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		repo := knowledge_mocks.NewMockConversationMessageRepositoryInterface(ctrl)
-		uc := use_cases.NewAppendConversationMessages(repo)
 
 		t.Run("Should no-op without touching the repository", func(t *testing.T) {
-			res, err := uc.Execute("   ", []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+
+			res, err := suite.sut.Execute("   ", []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+
 			assert.NoError(t, err)
 			assert.Empty(t, res)
 		})
@@ -35,14 +55,14 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	t.Run("Given an empty messages slice", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		repo := knowledge_mocks.NewMockConversationMessageRepositoryInterface(ctrl)
-		uc := use_cases.NewAppendConversationMessages(repo)
 
 		t.Run("Should no-op", func(t *testing.T) {
-			res, err := uc.Execute(conversationId, nil)
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+
+			res, err := suite.sut.Execute(conversationId, nil)
+
 			assert.NoError(t, err)
 			assert.Empty(t, res)
 		})
@@ -50,26 +70,29 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	t.Run("Given a list of messages", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		repo := knowledge_mocks.NewMockConversationMessageRepositoryInterface(ctrl)
-		repo.EXPECT().AppendMessages(gomock.Any()).DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
-			assert.Len(t, messages, 2)
-			for _, m := range messages {
-				assert.Equal(t, conversationId, m.ConversationId)
-			}
-			return messages, nil
-		})
-
-		uc := use_cases.NewAppendConversationMessages(repo)
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any()).DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+				assert.Len(t, messages, 2)
+				for _, m := range messages {
+					assert.Equal(t, conversationId, m.ConversationId)
+				}
+				return messages, nil
+			})
+		}
 
 		t.Run("Should stamp conversationId on every row before delegating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
 			input := []models.ConversationMessage{
 				{Author: "alice", Role: "user", Content: "hi", Timestamp: now},
 				{Author: "bob", Role: "assistant", Content: "hello", Timestamp: now},
 			}
-			res, err := uc.Execute(conversationId, input)
+			res, err := suite.sut.Execute(conversationId, input)
+
 			assert.NoError(t, err)
 			assert.Len(t, res, 2)
 		})
@@ -77,16 +100,19 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	t.Run("Given the repository fails", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		repo := knowledge_mocks.NewMockConversationMessageRepositoryInterface(ctrl)
-		repo.EXPECT().AppendMessages(gomock.Any()).Return(nil, errors.New("db down"))
-
-		uc := use_cases.NewAppendConversationMessages(repo)
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any()).Return(nil, errors.New("db down"))
+		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
-			_, err := uc.Execute(conversationId, []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(conversationId, []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+
 			assert.ErrorContains(t, err, "db down")
 		})
 	})
