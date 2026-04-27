@@ -1,10 +1,24 @@
 package configurations
 
-import "go.uber.org/dig"
+import (
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"go.uber.org/dig"
+)
 
-// AddAgentReasoningConfiguration is a no-op today — the package is scaffolded
-// ahead of P2.4 (LLM exec, MCP exec, inner loop). Wire registrations land here
-// when those services are implemented.
 func AddAgentReasoningConfiguration(container *dig.Container) {
-	_ = container
+	providers := []any{
+		use_cases.NewSetupLLMConnection,
+		use_cases.NewGetLLMConnection,
+		use_cases.NewDeleteLLMConnection,
+		use_cases.NewCreateMCPConnection,
+		use_cases.NewListMCPConnections,
+		use_cases.NewGetMCPConnection,
+		use_cases.NewUpdateMCPConnection,
+		use_cases.NewDeleteMCPConnection,
+	}
+	for _, p := range providers {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
+	}
 }

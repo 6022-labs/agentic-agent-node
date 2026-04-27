@@ -1,16 +1,27 @@
 package gateway_mvc
 
 import (
+	"errors"
+
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
 )
 
 const LlmConfigEndpoint = "/config/llm"
 
-type LlmConfigController struct{}
+type LlmConfigController struct {
+	getter  *use_cases.GetLlmConfig
+	setter  *use_cases.SetLlmConfig
+	deleter *use_cases.DeleteLlmConfig
+}
 
-func NewLlmConfigController() *LlmConfigController {
-	return &LlmConfigController{}
+func NewLlmConfigController(
+	getter *use_cases.GetLlmConfig,
+	setter *use_cases.SetLlmConfig,
+	deleter *use_cases.DeleteLlmConfig,
+) *LlmConfigController {
+	return &LlmConfigController{getter: getter, setter: setter, deleter: deleter}
 }
 
 func (c *LlmConfigController) RegisterUnauthenticatedRoutes(_ fiber.Router) {}
@@ -21,25 +32,34 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 	app.Delete(LlmConfigEndpoint, c.Delete)
 }
 
-// Get returns the LLM provider configuration (501).
+// Get returns the LLM provider configuration.
 // @Summary Get LLM config
 // @Tags Config
 // @Produce json
-// @Success 501 {object} fiber.Map
+// @Success 200 {object} responses.GetLlmConfigResponse
+// @Failure 404 {object} fiber.Map "not_configured"
 // @Security BearerAuth
 // @Router /config/llm [get]
 func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
-	return ctx.Status(fiber.StatusNotImplemented).JSON(notImplementedBody("config.llm.get"))
+	res, err := c.getter.Execute(ctx.Context())
+	if errors.Is(err, use_cases.ErrLLMConnectionNotConfigured) {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"code": "not_configured"})
+	}
+	if err != nil {
+		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
+	}
+	return ctx.JSON(res)
 }
 
-// Set upserts the LLM provider configuration (501).
+// Set upserts the LLM provider configuration.
 // @Summary Set LLM config
 // @Tags Config
 // @Accept json
 // @Produce json
 // @Param request body requests.SetLlmConfigRequest true "LLM config"
-// @Success 501 {object} fiber.Map
+// @Success 200 {object} responses.GetLlmConfigResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [post]
 func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
@@ -50,16 +70,24 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return ctx.Status(fiber.StatusNotImplemented).JSON(notImplementedBody("config.llm.set"))
+	res, err := c.setter.Execute(ctx.Context(), body)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
+	}
+	return ctx.JSON(res)
 }
 
-// Delete clears the LLM provider configuration (501).
+// Delete clears the LLM provider configuration.
 // @Summary Delete LLM config
 // @Tags Config
 // @Produce json
-// @Success 501 {object} fiber.Map
+// @Success 204 ""
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
-	return ctx.Status(fiber.StatusNotImplemented).JSON(notImplementedBody("config.llm.delete"))
+	if err := c.deleter.Execute(ctx.Context()); err != nil {
+		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

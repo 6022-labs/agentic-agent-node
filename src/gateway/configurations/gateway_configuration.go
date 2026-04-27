@@ -41,11 +41,20 @@ func AddGatewayConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
-	if err := container.Provide(use_cases.NewGetAuthChallenge); err != nil {
-		panic(err)
+	useCaseProviders := []any{
+		use_cases.NewGetAuthChallenge,
+		use_cases.NewVerifyAuth,
+		use_cases.NewGetLlmConfig,
+		use_cases.NewSetLlmConfig,
+		use_cases.NewDeleteLlmConfig,
+		use_cases.NewListMcpConnections,
+		use_cases.NewCreateMcpConnection,
+		use_cases.NewDeleteMcpConnection,
 	}
-	if err := container.Provide(use_cases.NewVerifyAuth); err != nil {
-		panic(err)
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
 	}
 }
 

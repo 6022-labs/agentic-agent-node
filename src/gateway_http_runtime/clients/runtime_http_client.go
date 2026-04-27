@@ -38,16 +38,35 @@ func (c *RuntimeHttpClient) Get(ctx context.Context, path string, out any, notFo
 
 // Post sends a POST with a JSON body and decodes a JSON response into out.
 func (c *RuntimeHttpClient) Post(ctx context.Context, path string, body any, out any) error {
+	return c.send(ctx, http.MethodPost, path, body, out, nil)
+}
+
+// Put sends a PUT with a JSON body and decodes a JSON response into out.
+// notFoundErr is returned on 404 if non-nil.
+func (c *RuntimeHttpClient) Put(ctx context.Context, path string, body any, out any, notFoundErr error) error {
+	return c.send(ctx, http.MethodPut, path, body, out, notFoundErr)
+}
+
+// Delete sends a DELETE. notFoundErr is returned on 404 if non-nil.
+func (c *RuntimeHttpClient) Delete(ctx context.Context, path string, notFoundErr error) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.baseUrl+path, nil)
+	if err != nil {
+		return err
+	}
+	return c.do(req, nil, notFoundErr)
+}
+
+func (c *RuntimeHttpClient) send(ctx context.Context, method, path string, body any, out any, notFoundErr error) error {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseUrl+path, bytes.NewReader(encoded))
+	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+path, bytes.NewReader(encoded))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	return c.do(req, out, nil)
+	return c.do(req, out, notFoundErr)
 }
 
 func (c *RuntimeHttpClient) do(req *http.Request, out any, notFoundErr error) error {

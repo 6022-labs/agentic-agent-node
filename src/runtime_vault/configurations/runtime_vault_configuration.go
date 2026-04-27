@@ -2,6 +2,7 @@ package configurations
 
 import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	vault_services "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services"
 	vault_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services/interfaces"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
@@ -29,6 +30,20 @@ func AddRuntimeVaultConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		vault_services.NewWalletCredentialsStorage,
 		dig.As(new(identity_interfaces.WalletCredentialsStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		vault_services.NewLLMSecretStorage,
+		dig.As(new(reasoning_interfaces.LLMSecretStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		vault_services.NewMCPHeaderAuthSecretStorage,
+		dig.As(new(reasoning_interfaces.MCPHeaderAuthSecretStorageInterface)),
 	); err != nil {
 		panic(err)
 	}
