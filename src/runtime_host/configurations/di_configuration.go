@@ -30,7 +30,7 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	agent_identity_blockchain_configurations.AddAgentIdentityBlockchainConfiguration(container)
 	agent_identity_configurations.AddAgentIdentityConfiguration(container)
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
-	runtime_db_configurations.AddAgentKnowledgeDbConfiguration(container)
+	runtime_db_configurations.AddRuntimeDbConfiguration(container)
 	agent_knowledge_configurations.AddAgentKnowledgeConfiguration(container)
 	runtime_mvc_configurations.AddRuntimeMvcConfiguration(container)
 

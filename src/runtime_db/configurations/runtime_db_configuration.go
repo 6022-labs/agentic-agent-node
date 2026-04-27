@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func AddAgentKnowledgeDbConfiguration(container *dig.Container) {
+func AddRuntimeDbConfiguration(container *dig.Container) {
 	if err := container.Provide(settings.NewDatabaseSettings); err != nil {
 		panic(err)
 	}
