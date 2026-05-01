@@ -13,31 +13,60 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type WhenIssuingJwtTestingSuite struct {
+	sut         *services.JwtIssuer
+	jwtSettings *settings.JwtSettings
+}
+
+func WhenIssuingJwtBeforeEach() *WhenIssuingJwtTestingSuite {
+	jwtSettings := &settings.JwtSettings{
+		SigningKey: "test-signing-key",
+		TokenTtl:   30 * time.Minute,
+	}
+	return &WhenIssuingJwtTestingSuite{
+		sut:         services.NewJwtIssuer(jwtSettings),
+		jwtSettings: jwtSettings,
+	}
+}
+
 func TestWhenIssuingJwt(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given valid JWT settings and an address", func(t *testing.T) {
 		t.Parallel()
 
-		jwtSettings := &settings.JwtSettings{
-			SigningKey: "test-signing-key",
-			TokenTtl:   30 * time.Minute,
-		}
-		issuer := services.NewJwtIssuer(jwtSettings)
 		address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 
-		token, expiresAt, err := issuer.Issue(address)
-
 		t.Run("Should return a non-empty token", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenIssuingJwtBeforeEach()
+
+			token, _, err := suite.sut.Issue(address)
+
 			assert.NoError(t, err)
 			assert.NotEmpty(t, token)
 		})
 
 		t.Run("Should set expiry equal to now + token_ttl", func(t *testing.T) {
-			assert.WithinDuration(t, time.Now().Add(30*time.Minute), expiresAt, 5*time.Second)
+			t.Parallel()
+
+			suite := WhenIssuingJwtBeforeEach()
+
+			_, expiresAt, err := suite.sut.Issue(address)
+
+			assert.NoError(t, err)
+			assert.WithinDuration(t, time.Now().Add(suite.jwtSettings.TokenTtl), expiresAt, 5*time.Second)
 		})
 
 		t.Run("Should produce a 3-part JWT with HS256 alg and sub == address", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenIssuingJwtBeforeEach()
+
+			token, _, err := suite.sut.Issue(address)
+			assert.NoError(t, err)
+
 			parts := strings.Split(token, ".")
 			assert.Len(t, parts, 3)
 

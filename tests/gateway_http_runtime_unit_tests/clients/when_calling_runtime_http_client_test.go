@@ -21,7 +21,13 @@ type capturedRequest struct {
 	auth   string
 }
 
-func newClient(t *testing.T, handler http.HandlerFunc) (*clients.RuntimeHttpClient, *capturedRequest, func()) {
+type WhenCallingRuntimeHttpClientTestingSuite struct {
+	sut      *clients.RuntimeHttpClient
+	server   *httptest.Server
+	captured *capturedRequest
+}
+
+func WhenCallingRuntimeHttpClientBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingRuntimeHttpClientTestingSuite {
 	t.Helper()
 	captured := &capturedRequest{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -32,11 +38,19 @@ func newClient(t *testing.T, handler http.HandlerFunc) (*clients.RuntimeHttpClie
 		captured.body = string(body)
 		handler(w, r)
 	}))
-	client := clients.NewRuntimeHttpClient(&settings.RuntimeClientSettings{
+	sut := clients.NewRuntimeHttpClient(&settings.RuntimeClientSettings{
 		BaseUrl: server.URL,
 		Timeout: 2 * time.Second,
 	})
-	return client, captured, server.Close
+	return &WhenCallingRuntimeHttpClientTestingSuite{
+		sut:      sut,
+		server:   server,
+		captured: captured,
+	}
+}
+
+func WhenCallingRuntimeHttpClientAfterEach(suite *WhenCallingRuntimeHttpClientTestingSuite) {
+	suite.server.Close()
 }
 
 func TestWhenCallingRuntimeHttpClient(t *testing.T) {
@@ -44,48 +58,66 @@ func TestWhenCallingRuntimeHttpClient(t *testing.T) {
 
 	t.Run("Given a 200 response on GET", func(t *testing.T) {
 		t.Parallel()
-		client, captured, cleanup := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"value":"ok"}`))
-		})
-		defer cleanup()
+		}
 
 		t.Run("Should send GET to the path and decode the body", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingRuntimeHttpClientBeforeEach(t, handler)
+			defer WhenCallingRuntimeHttpClientAfterEach(suite)
+
 			var out struct {
 				Value string `json:"value"`
 			}
-			err := client.Get(context.Background(), "/internal/anything", &out, nil)
+			err := suite.sut.Get(context.Background(), "/internal/anything", &out, nil)
+
 			assert.NoError(t, err)
 			assert.Equal(t, "ok", out.Value)
-			assert.Equal(t, http.MethodGet, captured.method)
-			assert.Equal(t, "/internal/anything", captured.path)
+			assert.Equal(t, http.MethodGet, suite.captured.method)
+			assert.Equal(t, "/internal/anything", suite.captured.path)
 		})
 	})
 
 	t.Run("Given a 404 response and a notFoundErr is supplied", func(t *testing.T) {
 		t.Parallel()
+
 		sentinel := errors.New("not here")
-		client, _, cleanup := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
-		})
-		defer cleanup()
+		}
 
 		t.Run("Should return the sentinel error", func(t *testing.T) {
-			err := client.Get(context.Background(), "/internal/missing", nil, sentinel)
+			t.Parallel()
+
+			suite := WhenCallingRuntimeHttpClientBeforeEach(t, handler)
+			defer WhenCallingRuntimeHttpClientAfterEach(suite)
+
+			err := suite.sut.Get(context.Background(), "/internal/missing", nil, sentinel)
+
 			assert.ErrorIs(t, err, sentinel)
 		})
 	})
 
-	t.Run("Given a 500 response", func(t *testing.T) {
+	t.Run("Given a non-2xx response", func(t *testing.T) {
 		t.Parallel()
-		client, _, cleanup := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte(`{"code":"boom"}`))
-		})
-		defer cleanup()
+		}
 
 		t.Run("Should surface the status + body in the error", func(t *testing.T) {
-			err := client.Get(context.Background(), "/internal/x", nil, nil)
+			t.Parallel()
+
+			suite := WhenCallingRuntimeHttpClientBeforeEach(t, handler)
+			defer WhenCallingRuntimeHttpClientAfterEach(suite)
+
+			err := suite.sut.Get(context.Background(), "/internal/x", nil, nil)
+
 			assert.ErrorContains(t, err, "500")
 			assert.ErrorContains(t, err, "boom")
 		})
@@ -93,22 +125,28 @@ func TestWhenCallingRuntimeHttpClient(t *testing.T) {
 
 	t.Run("Given a POST with a JSON body", func(t *testing.T) {
 		t.Parallel()
-		client, captured, cleanup := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"echoed":true}`))
-		})
-		defer cleanup()
+		}
 
 		t.Run("Should send the body and decode the response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingRuntimeHttpClientBeforeEach(t, handler)
+			defer WhenCallingRuntimeHttpClientAfterEach(suite)
+
 			var out struct {
 				Echoed bool `json:"echoed"`
 			}
-			err := client.Post(context.Background(), "/internal/post", map[string]string{"k": "v"}, &out)
+			err := suite.sut.Post(context.Background(), "/internal/post", map[string]string{"k": "v"}, &out)
+
 			assert.NoError(t, err)
 			assert.True(t, out.Echoed)
-			assert.Equal(t, http.MethodPost, captured.method)
-			assert.Equal(t, "/internal/post", captured.path)
-			assert.Contains(t, captured.body, `"k":"v"`)
+			assert.Equal(t, http.MethodPost, suite.captured.method)
+			assert.Equal(t, "/internal/post", suite.captured.path)
+			assert.Contains(t, suite.captured.body, `"k":"v"`)
 		})
 	})
 }

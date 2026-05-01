@@ -15,6 +15,32 @@ import (
 	"go.uber.org/zap"
 )
 
+type WhenResolvingAgentIdentityTestingSuite struct {
+	sut *services.AgentIdentityResolver
+
+	mockState      *identity_mocks.MockBootstrapStateHolderInterface
+	mockCollection *identity_mocks.MockAgentCollectionRequesterInterface
+	mockManager    *identity_mocks.MockAgentCollectionsManagerRequesterInterface
+}
+
+func WhenResolvingAgentIdentityBeforeEach(t *testing.T) *WhenResolvingAgentIdentityTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockState := identity_mocks.NewMockBootstrapStateHolderInterface(mockController)
+	mockCollection := identity_mocks.NewMockAgentCollectionRequesterInterface(mockController)
+	mockManager := identity_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
+
+	sut := services.NewAgentIdentityResolver(zap.NewNop(), mockState, mockCollection, mockManager)
+
+	return &WhenResolvingAgentIdentityTestingSuite{
+		sut: sut,
+
+		mockState:      mockState,
+		mockCollection: mockCollection,
+		mockManager:    mockManager,
+	}
+}
+
 func TestWhenResolvingAgentIdentity(t *testing.T) {
 	t.Parallel()
 
@@ -24,91 +50,95 @@ func TestWhenResolvingAgentIdentity(t *testing.T) {
 
 	t.Run("Given the wallet has not been loaded yet", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		state := identity_mocks.NewMockBootstrapStateHolderInterface(ctrl)
-		state.EXPECT().Get().Return(models.BootstrapState{Status: enums.BootstrapStatusAwaitingVault})
-
-		resolver := services.NewAgentIdentityResolver(zap.NewNop(), state, nil, nil)
+		initSuite := func(suite *WhenResolvingAgentIdentityTestingSuite) {
+			suite.mockState.EXPECT().Get().Return(models.BootstrapState{Status: enums.BootstrapStatusAwaitingVault})
+		}
 
 		t.Run("Should return an error and not call any chain methods", func(t *testing.T) {
-			_, err := resolver.Resolve(context.Background())
+			t.Parallel()
+
+			suite := WhenResolvingAgentIdentityBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Resolve(context.Background())
+
 			assert.Error(t, err)
 		})
 	})
 
 	t.Run("Given no collection holds a token for the wallet", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		state := identity_mocks.NewMockBootstrapStateHolderInterface(ctrl)
-		state.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
-		manager := identity_mocks.NewMockAgentCollectionsManagerRequesterInterface(ctrl)
-		manager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
-		collection := identity_mocks.NewMockAgentCollectionRequesterInterface(ctrl)
-		collection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), nil)
-		collection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(0), nil)
-
-		resolver := services.NewAgentIdentityResolver(zap.NewNop(), state, collection, manager)
+		initSuite := func(suite *WhenResolvingAgentIdentityTestingSuite) {
+			suite.mockState.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
+			suite.mockManager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), nil)
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(0), nil)
+		}
 
 		t.Run("Should return ErrIdentityNotFound", func(t *testing.T) {
-			_, err := resolver.Resolve(context.Background())
+			t.Parallel()
+
+			suite := WhenResolvingAgentIdentityBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Resolve(context.Background())
+
 			assert.ErrorIs(t, err, services.ErrIdentityNotFound)
 		})
 	})
 
 	t.Run("Given a token is found in the second collection", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		state := identity_mocks.NewMockBootstrapStateHolderInterface(ctrl)
-		state.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
-		manager := identity_mocks.NewMockAgentCollectionsManagerRequesterInterface(ctrl)
-		manager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
-		collection := identity_mocks.NewMockAgentCollectionRequesterInterface(ctrl)
-		collection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), nil)
-		collection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(7), nil)
-		collection.EXPECT().NameOf(collectionB, uint64(7)).Return("agent.eth", nil)
+		initSuite := func(suite *WhenResolvingAgentIdentityTestingSuite) {
+			suite.mockState.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
+			suite.mockManager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), nil)
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(7), nil)
+			suite.mockCollection.EXPECT().NameOf(collectionB, uint64(7)).Return("agent.eth", nil)
+		}
 
-		resolver := services.NewAgentIdentityResolver(zap.NewNop(), state, collection, manager)
+		t.Run("Should resolve to that collection + tokenId + name and serve subsequent calls from cache", func(t *testing.T) {
+			t.Parallel()
 
-		t.Run("Should resolve to that collection + tokenId + name", func(t *testing.T) {
-			identity, err := resolver.Resolve(context.Background())
+			suite := WhenResolvingAgentIdentityBeforeEach(t)
+			initSuite(suite)
+
+			identity, err := suite.sut.Resolve(context.Background())
 			assert.NoError(t, err)
 			assert.Equal(t, collectionB.Hex(), identity.CollectionAddress)
 			assert.Equal(t, uint64(7), identity.TokenId)
 			assert.Equal(t, "agent.eth", identity.Name)
-		})
 
-		t.Run("Should serve the second call from cache", func(t *testing.T) {
-			// no further EXPECT calls — gomock would fail if any chain method ran.
-			identity, err := resolver.Resolve(context.Background())
+			// second call must hit the cache — the gomock controller would fail
+			// if any chain method ran a second time.
+			cached, err := suite.sut.Resolve(context.Background())
 			assert.NoError(t, err)
-			assert.Equal(t, "agent.eth", identity.Name)
+			assert.Equal(t, "agent.eth", cached.Name)
 		})
 	})
 
 	t.Run("Given TokenIdByWallet errors on the first collection", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		state := identity_mocks.NewMockBootstrapStateHolderInterface(ctrl)
-		state.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
-		manager := identity_mocks.NewMockAgentCollectionsManagerRequesterInterface(ctrl)
-		manager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
-		collection := identity_mocks.NewMockAgentCollectionRequesterInterface(ctrl)
-		collection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), errors.New("rpc"))
-		collection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(3), nil)
-		collection.EXPECT().NameOf(collectionB, uint64(3)).Return("ok.eth", nil)
-
-		resolver := services.NewAgentIdentityResolver(zap.NewNop(), state, collection, manager)
+		initSuite := func(suite *WhenResolvingAgentIdentityTestingSuite) {
+			suite.mockState.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
+			suite.mockManager.EXPECT().ListAllCollections().Return([]common.Address{collectionA, collectionB}, nil)
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionA, walletAddr).Return(uint64(0), errors.New("rpc"))
+			suite.mockCollection.EXPECT().TokenIdByWallet(collectionB, walletAddr).Return(uint64(3), nil)
+			suite.mockCollection.EXPECT().NameOf(collectionB, uint64(3)).Return("ok.eth", nil)
+		}
 
 		t.Run("Should skip the failing collection and resolve the next", func(t *testing.T) {
-			identity, err := resolver.Resolve(context.Background())
+			t.Parallel()
+
+			suite := WhenResolvingAgentIdentityBeforeEach(t)
+			initSuite(suite)
+
+			identity, err := suite.sut.Resolve(context.Background())
+
 			assert.NoError(t, err)
 			assert.Equal(t, "ok.eth", identity.Name)
 		})
@@ -116,18 +146,20 @@ func TestWhenResolvingAgentIdentity(t *testing.T) {
 
 	t.Run("Given the manager fails to list collections", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		state := identity_mocks.NewMockBootstrapStateHolderInterface(ctrl)
-		state.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
-		manager := identity_mocks.NewMockAgentCollectionsManagerRequesterInterface(ctrl)
-		manager.EXPECT().ListAllCollections().Return(nil, errors.New("manager rpc"))
-
-		resolver := services.NewAgentIdentityResolver(zap.NewNop(), state, nil, manager)
+		initSuite := func(suite *WhenResolvingAgentIdentityTestingSuite) {
+			suite.mockState.EXPECT().Get().Return(models.BootstrapState{AgentAddress: walletAddr.Hex()})
+			suite.mockManager.EXPECT().ListAllCollections().Return(nil, errors.New("manager rpc"))
+		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
-			_, err := resolver.Resolve(context.Background())
+			t.Parallel()
+
+			suite := WhenResolvingAgentIdentityBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Resolve(context.Background())
+
 			assert.ErrorContains(t, err, "manager rpc")
 		})
 	})

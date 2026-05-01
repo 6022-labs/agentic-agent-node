@@ -14,24 +14,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhenValidatingJwt(t *testing.T) {
-	t.Parallel()
+type WhenValidatingJwtTestingSuite struct {
+	sut         *services.JwtValidator
+	issuer      *services.JwtIssuer
+	jwtSettings *settings.JwtSettings
+}
 
+func WhenValidatingJwtBeforeEach() *WhenValidatingJwtTestingSuite {
 	jwtSettings := &settings.JwtSettings{
 		SigningKey: "round-trip-key",
 		TokenTtl:   30 * time.Minute,
 	}
-	issuer := services.NewJwtIssuer(jwtSettings)
-	validator := services.NewJwtValidator(jwtSettings)
+	return &WhenValidatingJwtTestingSuite{
+		sut:         services.NewJwtValidator(jwtSettings),
+		issuer:      services.NewJwtIssuer(jwtSettings),
+		jwtSettings: jwtSettings,
+	}
+}
+
+func TestWhenValidatingJwt(t *testing.T) {
+	t.Parallel()
+
 	address := common.HexToAddress("0x2222222222222222222222222222222222222222")
 
 	t.Run("Given a token issued with the same settings", func(t *testing.T) {
 		t.Parallel()
 
-		token, _, _ := issuer.Issue(address)
-
 		t.Run("Should recover the original address", func(t *testing.T) {
-			recovered, err := validator.Verify(token)
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach()
+
+			token, _, _ := suite.issuer.Issue(address)
+
+			recovered, err := suite.sut.Verify(token)
+
 			assert.NoError(t, err)
 			assert.Equal(t, address, recovered)
 		})
@@ -40,14 +57,19 @@ func TestWhenValidatingJwt(t *testing.T) {
 	t.Run("Given a token signed with a different key", func(t *testing.T) {
 		t.Parallel()
 
-		other := services.NewJwtIssuer(&settings.JwtSettings{
-			SigningKey: "other-key",
-			TokenTtl:   30 * time.Minute,
-		})
-		token, _, _ := other.Issue(address)
-
 		t.Run("Should reject as signature mismatch", func(t *testing.T) {
-			_, err := validator.Verify(token)
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach()
+
+			otherIssuer := services.NewJwtIssuer(&settings.JwtSettings{
+				SigningKey: "other-key",
+				TokenTtl:   30 * time.Minute,
+			})
+			token, _, _ := otherIssuer.Issue(address)
+
+			_, err := suite.sut.Verify(token)
+
 			assert.ErrorContains(t, err, "signature mismatch")
 		})
 	})
@@ -55,10 +77,15 @@ func TestWhenValidatingJwt(t *testing.T) {
 	t.Run("Given a token whose exp is in the past", func(t *testing.T) {
 		t.Parallel()
 
-		token := craftToken(t, jwtSettings.SigningKey, address.Hex(), time.Now().Add(-time.Hour).Unix(), time.Now().Add(-2*time.Hour).Unix())
-
 		t.Run("Should reject as expired", func(t *testing.T) {
-			_, err := validator.Verify(token)
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach()
+
+			token := craftToken(t, suite.jwtSettings.SigningKey, address.Hex(), time.Now().Add(-time.Hour).Unix(), time.Now().Add(-2*time.Hour).Unix())
+
+			_, err := suite.sut.Verify(token)
+
 			assert.ErrorContains(t, err, "expired")
 		})
 	})
@@ -67,12 +94,20 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should reject input without three segments", func(t *testing.T) {
-			_, err := validator.Verify("not.a.token.really")
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach()
+
+			_, err := suite.sut.Verify("not.a.token.really")
 			assert.Error(t, err)
 		})
 
 		t.Run("Should reject a non-base64 signature", func(t *testing.T) {
-			_, err := validator.Verify("aGVhZGVy.cGF5bG9hZA.??not-base64??")
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach()
+
+			_, err := suite.sut.Verify("aGVhZGVy.cGF5bG9hZA.??not-base64??")
 			assert.Error(t, err)
 		})
 	})

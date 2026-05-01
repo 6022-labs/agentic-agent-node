@@ -14,48 +14,74 @@ import (
 	"go.uber.org/zap"
 )
 
+type WhenRunningBootstrapTestingSuite struct {
+	sut   *services.BootstrapRunner
+	state *services.BootstrapStateHolder
+
+	mockWallet *identity_mocks.MockWalletCredentialsStorageInterface
+}
+
+func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockWallet := identity_mocks.NewMockWalletCredentialsStorageInterface(mockController)
+	state := services.NewBootstrapStateHolder()
+	sut := services.NewBootstrapRunner(zap.NewNop(), mockWallet, state)
+
+	return &WhenRunningBootstrapTestingSuite{
+		sut:   sut,
+		state: state,
+
+		mockWallet: mockWallet,
+	}
+}
+
 func TestWhenRunningBootstrap(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the wallet store returns an existing wallet", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		wallet := identity_mocks.NewMockWalletCredentialsStorageInterface(ctrl)
-		wallet.EXPECT().GetOrGenerate(gomock.Any()).Return(&identity_interfaces.WalletCredentials{
-			PrivateKeyHex: "0xpk",
-			Address:       "0xaddr",
-		}, nil)
-		state := services.NewBootstrapStateHolder()
-
-		runner := services.NewBootstrapRunner(zap.NewNop(), wallet, state)
+		initSuite := func(suite *WhenRunningBootstrapTestingSuite) {
+			suite.mockWallet.EXPECT().GetOrGenerate(gomock.Any()).Return(&identity_interfaces.WalletCredentials{
+				PrivateKeyHex: "0xpk",
+				Address:       "0xaddr",
+			}, nil)
+		}
 
 		t.Run("Should mark the holder as ready with the wallet address", func(t *testing.T) {
-			err := runner.Run(context.Background())
+			t.Parallel()
+
+			suite := WhenRunningBootstrapBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Run(context.Background())
+
 			assert.NoError(t, err)
-			assert.Equal(t, enums.BootstrapStatusReady, state.Get().Status)
-			assert.Equal(t, "0xaddr", state.Get().AgentAddress)
-			assert.Empty(t, state.Get().LastError)
+			assert.Equal(t, enums.BootstrapStatusReady, suite.state.Get().Status)
+			assert.Equal(t, "0xaddr", suite.state.Get().AgentAddress)
+			assert.Empty(t, suite.state.Get().LastError)
 		})
 	})
 
 	t.Run("Given the wallet store fails", func(t *testing.T) {
 		t.Parallel()
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
-		wallet := identity_mocks.NewMockWalletCredentialsStorageInterface(ctrl)
-		wallet.EXPECT().GetOrGenerate(gomock.Any()).Return(nil, errors.New("vault locked"))
-		state := services.NewBootstrapStateHolder()
-
-		runner := services.NewBootstrapRunner(zap.NewNop(), wallet, state)
+		initSuite := func(suite *WhenRunningBootstrapTestingSuite) {
+			suite.mockWallet.EXPECT().GetOrGenerate(gomock.Any()).Return(nil, errors.New("vault locked"))
+		}
 
 		t.Run("Should record the error and leave status non-ready", func(t *testing.T) {
-			err := runner.Run(context.Background())
+			t.Parallel()
+
+			suite := WhenRunningBootstrapBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Run(context.Background())
+
 			assert.ErrorContains(t, err, "vault locked")
-			assert.NotEqual(t, enums.BootstrapStatusReady, state.Get().Status)
-			assert.Contains(t, state.Get().LastError, "vault locked")
+			assert.NotEqual(t, enums.BootstrapStatusReady, suite.state.Get().Status)
+			assert.Contains(t, suite.state.Get().LastError, "vault locked")
 		})
 	})
 }
