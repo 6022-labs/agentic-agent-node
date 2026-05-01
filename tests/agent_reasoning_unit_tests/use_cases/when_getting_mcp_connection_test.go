@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -64,12 +64,12 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
-		row := &models.MCPConnection{
-			Id:             id,
-			Name:           "github",
-			Url:            "https://mcp.github.example",
-			HeaderAuthKeys: models.MCPConnectionHeaderAuthKeys{"Authorization", "X-Trace"},
-		}
+		row := model_builders.NewMCPConnectionBuilder().
+			WithId(id).
+			WithName("github").
+			WithUrl("https://mcp.github.example").
+			WithHeaderAuthKeys([]string{"Authorization", "X-Trace"}).
+			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
 			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("Bearer abc", true, nil)
@@ -94,10 +94,10 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
-		row := &models.MCPConnection{
-			Id:             id,
-			HeaderAuthKeys: models.MCPConnectionHeaderAuthKeys{"Authorization"},
-		}
+		row := model_builders.NewMCPConnectionBuilder().
+			WithId(id).
+			WithHeaderAuthKeys([]string{"Authorization"}).
+			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
 			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)

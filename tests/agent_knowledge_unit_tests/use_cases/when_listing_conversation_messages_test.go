@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
-	"github.com/google/uuid"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -56,8 +56,8 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 		now := time.Now()
 		expected := []models.ConversationMessage{
-			{Id: uuid.New(), ConversationId: "conv", Timestamp: now},
-			{Id: uuid.New(), ConversationId: "conv", Timestamp: now.Add(time.Second)},
+			model_builders.NewConversationMessageBuilder().WithConversationId("conv").WithTimestamp(now).Build(),
+			model_builders.NewConversationMessageBuilder().WithConversationId("conv").WithTimestamp(now.Add(time.Second)).Build(),
 		}
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
 			suite.mockRepository.EXPECT().ListByConversation("conv").Return(expected, nil)

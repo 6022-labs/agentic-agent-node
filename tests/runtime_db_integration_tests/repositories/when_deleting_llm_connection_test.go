@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -81,11 +82,11 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 					suite := WhenDeletingLLMConnectionBeforeEach(tc)
 					defer WhenDeletingLLMConnectionAfterEach(suite)
 
-					_, err := suite.sut.Upsert(&models.LLMConnection{
-						Platform:    reasoning_enums.LLMConnectionPlatformOpenAI,
-						Model:       "gpt-4o",
-						SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
-					})
+					_, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithModel("gpt-4o").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
 					assert.NoError(t, err)
 
 					assert.NoError(t, suite.sut.Delete())

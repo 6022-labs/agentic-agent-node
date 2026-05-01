@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -86,14 +87,14 @@ func WhenAppendingConversationMessagesAfterEach(suite *WhenAppendingConversation
 }
 
 func newMessage(conversationId, content string) models.ConversationMessage {
-	return models.ConversationMessage{
-		ConversationId: conversationId,
-		Author:         "alice.eth",
-		Role:           "user",
-		Platform:       "slack",
-		Content:        content,
-		Timestamp:      time.Now().UTC().Truncate(time.Microsecond),
-	}
+	return model_builders.NewConversationMessageBuilder().
+		WithConversationId(conversationId).
+		WithAuthor("alice.eth").
+		WithRole("user").
+		WithPlatform("slack").
+		WithContent(content).
+		WithTimestamp(time.Now().UTC().Truncate(time.Microsecond)).
+		Build()
 }
 
 func TestWhenAppendingConversationMessages(t *testing.T) {

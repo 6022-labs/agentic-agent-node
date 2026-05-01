@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -66,12 +67,12 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			row := &models.MCPConnection{
-				Id:             id,
-				Name:           "old-name",
-				Url:            "https://old",
-				HeaderAuthKeys: models.MCPConnectionHeaderAuthKeys{"Authorization", "X-Drop"},
-			}
+			row := model_builders.NewMCPConnectionBuilder().
+				WithId(id).
+				WithName("old-name").
+				WithUrl("https://old").
+				WithHeaderAuthKeys([]string{"Authorization", "X-Drop"}).
+				Build()
 			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
 			suite.mockRepository.EXPECT().Update(gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {

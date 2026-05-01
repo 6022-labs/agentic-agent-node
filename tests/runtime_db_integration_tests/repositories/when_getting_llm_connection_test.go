@@ -3,13 +3,13 @@ package repositories_test
 import (
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -54,8 +54,6 @@ func WhenGettingLLMConnectionAfterEach(suite *WhenGettingLLMConnectionTestingSui
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func ptr(s string) *string { return &s }
-
 func TestWhenGettingLLMConnection(t *testing.T) {
 	t.Parallel()
 
@@ -85,12 +83,12 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 					suite := WhenGettingLLMConnectionBeforeEach(tc)
 					defer WhenGettingLLMConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(&models.LLMConnection{
-						Platform:    reasoning_enums.LLMConnectionPlatformOpenAI,
-						Model:       "gpt-4o",
-						BaseUrl:     ptr("https://api.openai.com/v1"),
-						SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
-					})
+					inserted, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithModel("gpt-4o").
+						WithBaseUrl("https://api.openai.com/v1").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
 					assert.NoError(t, err)
 
 					got, err := suite.sut.Get()

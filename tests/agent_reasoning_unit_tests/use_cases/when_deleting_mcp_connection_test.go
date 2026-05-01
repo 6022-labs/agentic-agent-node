@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -64,10 +64,10 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenDeletingMCPConnectionTestingSuite) {
-			row := &models.MCPConnection{
-				Id:             id,
-				HeaderAuthKeys: models.MCPConnectionHeaderAuthKeys{"Authorization", "X-Trace"},
-			}
+			row := model_builders.NewMCPConnectionBuilder().
+				WithId(id).
+				WithHeaderAuthKeys([]string{"Authorization", "X-Trace"}).
+				Build()
 			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "Authorization").Return(nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Trace").Return(nil)

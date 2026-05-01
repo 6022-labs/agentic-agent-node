@@ -6,6 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -37,8 +38,8 @@ func TestWhenListingMCPConnections(t *testing.T) {
 		t.Parallel()
 
 		expected := []models.MCPConnection{
-			{Name: "alpha"},
-			{Name: "beta"},
+			*model_builders.NewMCPConnectionBuilder().WithName("alpha").Build(),
+			*model_builders.NewMCPConnectionBuilder().WithName("beta").Build(),
 		}
 		initSuite := func(suite *WhenListingMCPConnectionsTestingSuite) {
 			suite.mockRepository.EXPECT().List().Return(expected, nil)

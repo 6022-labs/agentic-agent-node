@@ -3,10 +3,10 @@ package use_cases_test
 import (
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -57,10 +57,10 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 	t.Run("Given the repository returns a connection", func(t *testing.T) {
 		t.Parallel()
 
-		expected := &models.LLMConnection{
-			Platform: reasoning_enums.LLMConnectionPlatformOpenAI,
-			Model:    "gpt-4o",
-		}
+		expected := model_builders.NewLLMConnectionBuilder().
+			WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+			WithModel("gpt-4o").
+			Build()
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
 			suite.mockRepository.EXPECT().Get().Return(expected, nil)
 		}

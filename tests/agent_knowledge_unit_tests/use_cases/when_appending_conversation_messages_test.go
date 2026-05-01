@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -46,7 +47,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 
-			res, err := suite.sut.Execute("   ", []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
+			res, err := suite.sut.Execute("   ", []models.ConversationMessage{message})
 
 			assert.NoError(t, err)
 			assert.Empty(t, res)
@@ -88,8 +90,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := []models.ConversationMessage{
-				{Author: "alice", Role: "user", Content: "hi", Timestamp: now},
-				{Author: "bob", Role: "assistant", Content: "hello", Timestamp: now},
+				model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("hi").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().WithAuthor("bob").WithRole("assistant").WithContent("hello").WithTimestamp(now).Build(),
 			}
 			res, err := suite.sut.Execute(conversationId, input)
 
@@ -111,7 +113,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(conversationId, []models.ConversationMessage{{Author: "a", Content: "x", Timestamp: now}})
+			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
+			_, err := suite.sut.Execute(conversationId, []models.ConversationMessage{message})
 
 			assert.ErrorContains(t, err, "db down")
 		})

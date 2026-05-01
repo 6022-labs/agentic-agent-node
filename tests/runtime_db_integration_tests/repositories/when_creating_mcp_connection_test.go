@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -55,13 +56,11 @@ func WhenCreatingMCPConnectionAfterEach(suite *WhenCreatingMCPConnectionTestingS
 }
 
 func newMCPConnection(name, url string, headerKeys ...string) *models.MCPConnection {
-	keys := models.MCPConnectionHeaderAuthKeys{}
-	keys.FromArray(headerKeys)
-	return &models.MCPConnection{
-		Name:           name,
-		Url:            url,
-		HeaderAuthKeys: keys,
-	}
+	return model_builders.NewMCPConnectionBuilder().
+		WithName(name).
+		WithUrl(url).
+		WithHeaderAuthKeys(headerKeys).
+		Build()
 }
 
 func TestWhenCreatingMCPConnection(t *testing.T) {

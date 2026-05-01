@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -70,12 +71,12 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(&models.LLMConnection{
-						Platform:    reasoning_enums.LLMConnectionPlatformOpenAI,
-						Model:       "gpt-4o",
-						BaseUrl:     ptr("https://api.openai.com/v1"),
-						SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
-					})
+					inserted, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithModel("gpt-4o").
+						WithBaseUrl("https://api.openai.com/v1").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -93,18 +94,18 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
-					first, err := suite.sut.Upsert(&models.LLMConnection{
-						Platform:    reasoning_enums.LLMConnectionPlatformOpenAI,
-						Model:       "gpt-4o",
-						SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
-					})
+					first, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithModel("gpt-4o").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
 					assert.NoError(t, err)
 
-					second, err := suite.sut.Upsert(&models.LLMConnection{
-						Platform:    reasoning_enums.LLMConnectionPlatformAnthropic,
-						Model:       "claude-opus-4-7",
-						SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
-					})
+					second, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+						WithPlatform(reasoning_enums.LLMConnectionPlatformAnthropic).
+						WithModel("claude-opus-4-7").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
 					assert.Equal(t, reasoning_enums.LLMConnectionPlatformAnthropic, second.Platform)
