@@ -6,6 +6,8 @@ import (
 	agent_knowledge_configurations "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/configurations"
 	runtime_db_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_db/configurations"
 	agent_reasoning_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/configurations"
+	agent_reasoning_http_inference_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/configurations"
+	agent_reasoning_http_mcp_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/configurations"
 	runtime_vault_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_vault/configurations"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
 	runtime_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_mvc/configurations"
@@ -29,6 +31,8 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	runtime_vault_configurations.AddRuntimeVaultConfiguration(container)
 	agent_identity_blockchain_configurations.AddAgentIdentityBlockchainConfiguration(container)
 	agent_identity_configurations.AddAgentIdentityConfiguration(container)
+	agent_reasoning_http_inference_configurations.AddAgentReasoningHttpInferenceConfiguration(container)
+	agent_reasoning_http_mcp_configurations.AddAgentReasoningHttpMcpConfiguration(container)
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
 	runtime_db_configurations.AddRuntimeDbConfiguration(container)
 	agent_knowledge_configurations.AddAgentKnowledgeConfiguration(container)

@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	agent_identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	"github.com/6022-labs/agentic-agent-node/src/common/host_configurations"
@@ -29,10 +32,13 @@ func main() {
 	host_configurations.ConfigureLogging(container)
 	configurations.ConfigureServer(container)
 
+	bootstrapCtx, cancelBootstrap := context.WithCancel(context.Background())
+	defer cancelBootstrap()
+
 	// Runtime owns wallet bootstrap. Gateway sees the result via /internal/bootstrap/status.
 	if err := container.Invoke(func(runner *agent_identity_services.BootstrapRunner, logger *zap.Logger) {
 		go func() {
-			if err := runner.Run(context.Background()); err != nil {
+			if err := runner.Run(bootstrapCtx); err != nil {
 				logger.Error("bootstrap runner failed", zap.Error(err))
 			}
 		}()
@@ -43,7 +49,40 @@ func main() {
 	err = container.Invoke(func(app *fiber.App, logger *zap.Logger, hostSettings *settings.HostSettings) error {
 		bind := fmt.Sprintf("%s:%d", hostSettings.ListenAddress, hostSettings.ApiPort)
 		logger.Info("Starting runtime server", zap.String("bind", bind))
-		return app.Listen(bind)
+
+		serverErrCh := make(chan error, 1)
+		go func() {
+			serverErrCh <- app.Listen(bind)
+		}()
+
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+		select {
+		case sig := <-sigCh:
+			logger.Info("Shutdown signal received", zap.String("signal", sig.String()))
+
+			cancelBootstrap()
+
+			if err := app.Shutdown(); err != nil {
+				logger.Warn("Fiber shutdown returned an error", zap.Error(err))
+			}
+
+			if err := <-serverErrCh; err != nil {
+				logger.Error("Server stopped with error", zap.Error(err))
+			} else {
+				logger.Info("Server stopped")
+			}
+			logger.Info("Shutdown complete")
+			_ = logger.Sync()
+			return nil
+
+		case err := <-serverErrCh:
+			if err != nil {
+				return fmt.Errorf("server exited unexpectedly: %w", err)
+			}
+			return nil
+		}
 	})
 	if err != nil {
 		panic(err)

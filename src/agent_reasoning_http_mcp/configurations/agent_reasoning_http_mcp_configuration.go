@@ -1,10 +1,38 @@
 package configurations
 
-import "go.uber.org/dig"
+import (
+	"net/http"
 
-// AddAgentReasoningHttpMcpConfiguration is a no-op today — the package is
-// scaffolded ahead of P2.4 (HTTP client → MCP servers). Wire registrations
-// land here when the client is implemented.
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/services"
+	"go.uber.org/dig"
+)
+
 func AddAgentReasoningHttpMcpConfiguration(container *dig.Container) {
-	_ = container
+	// Services
+	err := container.Provide(
+		services.NewMCPRequester,
+		dig.As(new(interfaces.McpRequesterInterface)),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Clients
+	err = container.Provide(
+		clients.NewMcpClient,
+		dig.As(new(clients.McpClientInterface)),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Http clients
+	err = container.Provide(func() *http.Client {
+		return http.DefaultClient
+	}, dig.Name("mcp-http-client"))
+	if err != nil {
+		panic(err)
+	}
 }
