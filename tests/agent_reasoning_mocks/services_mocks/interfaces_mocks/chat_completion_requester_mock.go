@@ -14,6 +14,8 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,16 +44,16 @@ func (m *MockChatCompletionRequesterInterface) EXPECT() *MockChatCompletionReque
 }
 
 // ChatCompletion mocks base method.
-func (m *MockChatCompletionRequesterInterface) ChatCompletion(ctx context.Context, llmConnection *models.LLMConnection, mcpConnections []*models.MCPConnection, messages []*models.ChatCompletionMessage) (*string, error) {
+func (m *MockChatCompletionRequesterInterface) ChatCompletion(ctx context.Context, llmConnection *models.LLMConnection, mcpConnections []*models.MCPConnection, mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChatCompletion", ctx, llmConnection, mcpConnections, messages)
-	ret0, _ := ret[0].(*string)
+	ret := m.ctrl.Call(m, "ChatCompletion", ctx, llmConnection, mcpConnections, mcpToolsByConnectionId, messages)
+	ret0, _ := ret[0].(*interfaces.LLMCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ChatCompletion indicates an expected call of ChatCompletion.
-func (mr *MockChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(ctx, llmConnection, mcpConnections, messages any) *gomock.Call {
+func (mr *MockChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(ctx, llmConnection, mcpConnections, mcpToolsByConnectionId, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockChatCompletionRequesterInterface)(nil).ChatCompletion), ctx, llmConnection, mcpConnections, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockChatCompletionRequesterInterface)(nil).ChatCompletion), ctx, llmConnection, mcpConnections, mcpToolsByConnectionId, messages)
 }

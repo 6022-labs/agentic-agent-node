@@ -5,7 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
 type ExternalOpenAIResponsesStandardRequest struct {
@@ -23,8 +23,14 @@ type ExternalOpenAIResponsesStandardRequestInput struct {
 	Role    *string `json:"role,omitempty"`
 	Content *string `json:"content,omitempty"`
 
-	// Type `function_call_output` fields
+	// Type `function_call` fields
+	Name      *string `json:"name,omitempty"`
+	Arguments *string `json:"arguments,omitempty"`
+
+	// Type `function_call` and `function_call_output` fields
 	CallId *string `json:"call_id,omitempty"`
+
+	// Type `function_call_output` fields
 	Output *string `json:"output,omitempty"`
 }
 
@@ -77,7 +83,7 @@ func NewExternalOpenAIResponsesStandardRequest(
 }
 
 func NewExternalOpenAICompletionsStandardRequestInputFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalOpenAIResponsesStandardRequestInput {
 	return ExternalOpenAIResponsesStandardRequestInput{
 		Type:    "message",
@@ -104,7 +110,7 @@ func NewExternalOpenAIResponsesStandardRequestFromToolCallOutput(
 }
 
 func NewExternalOpenAICompletionsStandardRequestInputsFromChatCompletionMessages(
-	messages []*models.ChatCompletionMessage,
+	messages []*interfaces.ChatCompletionMessage,
 ) []ExternalOpenAIResponsesStandardRequestInput {
 	inputs := make([]ExternalOpenAIResponsesStandardRequestInput, 0, len(messages))
 	for _, message := range messages {

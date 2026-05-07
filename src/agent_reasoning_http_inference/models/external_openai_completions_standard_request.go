@@ -5,7 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
 type ExternalOpenAICompletionsStandardRequest struct {
@@ -62,7 +62,7 @@ func NewExternalOpenAICompletionsStandardRequest(
 }
 
 func NewExternalOpenAICompletionsStandardRequestMessageFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalOpenAICompletionsStandardRequestMessage {
 	return ExternalOpenAICompletionsStandardRequestMessage{
 		Role:    message.Role,
@@ -88,7 +88,7 @@ func NewExternalOpenAICompletionsStandardRequestMessageFromToolCallOutput(
 }
 
 func NewExternalOpenAICompletionsStandardRequestMessagesFromChatCompletionMessages(
-	messages []*models.ChatCompletionMessage,
+	messages []*interfaces.ChatCompletionMessage,
 ) []ExternalOpenAICompletionsStandardRequestMessage {
 	result := make([]ExternalOpenAICompletionsStandardRequestMessage, 0, len(messages))
 	for _, message := range messages {

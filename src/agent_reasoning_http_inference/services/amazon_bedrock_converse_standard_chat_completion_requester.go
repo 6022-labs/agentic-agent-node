@@ -6,8 +6,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
-	orchestrator_agent_compute_http_inference_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -16,26 +16,23 @@ type AmazonBedrockConverseStandardChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		baseUrl, apiKey string,
 		llmConnection *models.LLMConnection,
-		messages []orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardMessage,
-		messagesSystem []orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardRequestSystem,
 		mcpConnections []*models.MCPConnection,
-	) (*string, error)
+		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		messages []*interfaces.ChatCompletionMessage,
+	) (*interfaces.LLMCompletion, error)
 }
 
 type AmazonBedrockConverseStandardChatCompletionRequester struct {
 	logger                      *zap.Logger
-	mcpRequester                interfaces.McpRequesterInterface
 	amazonBedrockConverseClient clients.AmazonBedrockConverseStandardClientInterface
 }
 
 func NewAmazonBedrockConverseStandardChatCompletionRequester(
 	logger *zap.Logger,
-	mcpRequester interfaces.McpRequesterInterface,
 	amazonBedrockConverseClient clients.AmazonBedrockConverseStandardClientInterface,
 ) *AmazonBedrockConverseStandardChatCompletionRequester {
 	return &AmazonBedrockConverseStandardChatCompletionRequester{
 		logger:                      logger,
-		mcpRequester:                mcpRequester,
 		amazonBedrockConverseClient: amazonBedrockConverseClient,
 	}
 }
@@ -43,100 +40,155 @@ func NewAmazonBedrockConverseStandardChatCompletionRequester(
 func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	llmConnection *models.LLMConnection,
-	messages []orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardMessage,
-	messagesSystem []orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardRequestSystem,
 	mcpConnections []*models.MCPConnection,
-) (*string, error) {
-	externalRequest := orchestrator_agent_compute_http_inference_models.NewExternalAmazonBedrockConverseStandardRequest(llmConnection.Model, messages, messagesSystem)
-
-	mcpsToolsAsFunc := make(map[*models.MCPConnection][]*interfaces.McpTool)
-
-	for _, mcpConnection := range mcpConnections {
-		mcpTools, err := r.mcpRequester.ListTools(mcpConnection)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch MCP tools for connection '%s': %w", mcpConnection.Name, err)
-		}
-
-		mcpsToolsAsFunc[mcpConnection] = mcpTools
+	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
+	systems := r.buildSystems(messages)
+	extMessages, err := r.buildRequestMessages(messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build bedrock messages: %w", err)
 	}
 
-	for mcpConnection, tools := range mcpsToolsAsFunc {
+	externalRequest := external_models.NewExternalAmazonBedrockConverseStandardRequest(llmConnection.Model, extMessages, systems)
+
+	for _, mcpConnection := range mcpConnections {
+		tools := mcpToolsByConnectionId[mcpConnection.Id]
+		if len(tools) == 0 {
+			continue
+		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
 
-	r.logger.Debug("Request to Amazon Bedrock Converse Messages endpoint",
-	)
+	r.logger.Debug("Request to Amazon Bedrock Converse Messages endpoint")
 
 	response, err := r.amazonBedrockConverseClient.Messages(baseUrl, apiKey, externalRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call Amazon Bedrock Converse API: %w", err)
 	}
 
-	toolUseContents := lo.Filter(response.Output.Message.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) bool {
-		return content.ToolUse != nil
+	contentTypes := lo.Map(response.Output.Message.Content, func(c external_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) string {
+		return c.ContentType()
 	})
 
 	r.logger.Debug("Response from Amazon Bedrock Converse Messages endpoint",
-		zap.Int("toolUseCount", len(toolUseContents)),
+		zap.Strings("contentTypes", contentTypes),
 	)
 
-	if len(toolUseContents) > 0 {
-		messages = append(messages, response.Output.Message)
+	completion := &interfaces.LLMCompletion{}
 
-		toolUseResults := make(map[string]map[string]any)
-
-		for _, toolCall := range toolUseContents {
-			relatedMcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(toolCall.ToolUse.Name, mcpConnections, mcpsToolsAsFunc)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map function name to MCP tool: %w", err)
-			}
-
-			r.logger.Debug("Calling MCP tool from tool use",
-				zap.String("mcpToolName", mcpTool.Name),
-				zap.String("mcpConnectionName", relatedMcpConnection.Name),
-			)
-
-			toolResult, err := r.mcpRequester.CallTool(relatedMcpConnection, mcpTool, toolCall.ToolUse.Input)
-			if err != nil {
-				return nil, fmt.Errorf("failed to call tool from MCP: %w", err)
-			}
-
-			toolUseResults[toolCall.ToolUse.ToolUseId] = toolResult
+	for _, c := range response.Output.Message.Content {
+		switch {
+		case c.Text != nil:
+			text := *c.Text
+			completion.Text = &text
+		case c.ToolUse != nil:
+			completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
+				Id:        c.ToolUse.ToolUseId,
+				Name:      c.ToolUse.Name,
+				Arguments: c.ToolUse.Input,
+			})
 		}
-
-		// Append messages to include tool result and re-call complete
-		messages = append(messages, orchestrator_agent_compute_http_inference_models.NewExternalAmazonBedrockConverseStandardMessageFromToolCallOutputs(
-			toolUseResults,
-		))
-
-		// Then re-call the complete function with updated messages
-		return r.ChatCompletion(
-			baseUrl,
-			apiKey,
-			llmConnection,
-			messages,
-			messagesSystem,
-			mcpConnections,
-		)
 	}
 
-	textContents := lo.Filter(response.Output.Message.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) bool {
-		return content.Text != nil
-	})
-
-	if len(textContents) == 0 {
-		contentTypes := lo.Map(response.Output.Message.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) string {
-			return content.ContentType()
-		})
+	if completion.Text == nil && len(completion.ToolCalls) == 0 {
 		r.logger.Warn(
-			"No content with type 'text' found in response",
+			"No text or tool_use content found in response",
 			zap.Stringp("stopReason", response.StopReason),
 			zap.Int("contentItems", len(response.Output.Message.Content)),
 			zap.Strings("contentTypes", contentTypes),
 		)
-
-		return nil, fmt.Errorf("bedrock returned no text content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
+		return nil, fmt.Errorf("bedrock returned no actionable content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
 	}
 
-	return textContents[len(textContents)-1].Text, nil
+	return completion, nil
+}
+
+func (r *AmazonBedrockConverseStandardChatCompletionRequester) buildSystems(
+	messages []*interfaces.ChatCompletionMessage,
+) []external_models.ExternalAmazonBedrockConverseStandardRequestSystem {
+	out := make([]external_models.ExternalAmazonBedrockConverseStandardRequestSystem, 0)
+	for _, m := range messages {
+		if m.Role != "system" {
+			continue
+		}
+		out = append(out, external_models.ExternalAmazonBedrockConverseStandardRequestSystem{Text: m.Content})
+	}
+	return out
+}
+
+// buildRequestMessages translates domain messages into bedrock's
+// alternating user/assistant shape. role=tool messages collapse into a single
+// user message containing toolResult content entries.
+func (r *AmazonBedrockConverseStandardChatCompletionRequester) buildRequestMessages(
+	messages []*interfaces.ChatCompletionMessage,
+) ([]external_models.ExternalAmazonBedrockConverseStandardMessage, error) {
+	out := make([]external_models.ExternalAmazonBedrockConverseStandardMessage, 0, len(messages))
+
+	flushToolResults := func(buf []external_models.ExternalAmazonBedrockConverseStandardMessageContent) []external_models.ExternalAmazonBedrockConverseStandardMessageContent {
+		if len(buf) == 0 {
+			return buf
+		}
+		out = append(out, external_models.ExternalAmazonBedrockConverseStandardMessage{
+			Role:    "user",
+			Content: buf,
+		})
+		return nil
+	}
+
+	var pendingToolResults []external_models.ExternalAmazonBedrockConverseStandardMessageContent
+
+	for _, m := range messages {
+		switch m.Role {
+		case "system":
+			continue
+
+		case "user":
+			pendingToolResults = flushToolResults(pendingToolResults)
+			text := m.Content
+			out = append(out, external_models.ExternalAmazonBedrockConverseStandardMessage{
+				Role:    "user",
+				Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{{Text: &text}},
+			})
+
+		case "assistant":
+			pendingToolResults = flushToolResults(pendingToolResults)
+			contents := make([]external_models.ExternalAmazonBedrockConverseStandardMessageContent, 0)
+			if m.Content != "" {
+				text := m.Content
+				contents = append(contents, external_models.ExternalAmazonBedrockConverseStandardMessageContent{Text: &text})
+			}
+			for _, tc := range m.ToolCalls {
+				contents = append(contents, external_models.ExternalAmazonBedrockConverseStandardMessageContent{
+					ToolUse: &external_models.ExternalAmazonBedrockConverseStandardMessageContentToolUse{
+						Name:      tc.Name,
+						Input:     tc.Arguments,
+						ToolUseId: tc.Id,
+					},
+				})
+			}
+			out = append(out, external_models.ExternalAmazonBedrockConverseStandardMessage{
+				Role:    "assistant",
+				Content: contents,
+			})
+
+		case "tool":
+			content := m.Content
+			pendingToolResults = append(pendingToolResults, external_models.ExternalAmazonBedrockConverseStandardMessageContent{
+				ToolResult: &external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResult{
+					ToolUseId: m.ToolCallId,
+					Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResultContent{
+						{Text: &content},
+					},
+				},
+			})
+
+		default:
+			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)
+		}
+	}
+
+	flushToolResults(pendingToolResults)
+
+	return out, nil
 }

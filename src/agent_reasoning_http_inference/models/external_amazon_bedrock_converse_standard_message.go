@@ -1,8 +1,6 @@
 package models
 
-import (
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-)
+import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 
 // This type is used by both request and response
 type ExternalAmazonBedrockConverseStandardMessage struct {
@@ -58,7 +56,7 @@ type ExternalAmazonBedrockConverseStandardMessageContentToolResultContent struct
 }
 
 func NewExternalAmazonBedrockConverseStandardMessageFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalAmazonBedrockConverseStandardMessage {
 	return ExternalAmazonBedrockConverseStandardMessage{
 		Role: message.Role,

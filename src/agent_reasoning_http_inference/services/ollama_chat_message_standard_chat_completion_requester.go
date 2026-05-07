@@ -6,8 +6,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
-	orchestrator_agent_compute_http_inference_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -16,25 +16,23 @@ type OllamaChatMessageStandardChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		baseUrl string,
 		llmConnection *models.LLMConnection,
-		messages []orchestrator_agent_compute_http_inference_models.ExternalOllamaChatMessageStandardMessage,
 		mcpConnections []*models.MCPConnection,
-	) (*string, error)
+		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		messages []*interfaces.ChatCompletionMessage,
+	) (*interfaces.LLMCompletion, error)
 }
 
 type OllamaChatMessageStandardChatCompletionRequester struct {
 	logger                  *zap.Logger
-	mcpRequester            interfaces.McpRequesterInterface
 	ollamaChatMessageClient clients.OllamaChatMessageStandardClientInterface
 }
 
 func NewOllamaChatMessageStandardChatCompletionRequester(
 	logger *zap.Logger,
-	mcpRequester interfaces.McpRequesterInterface,
 	ollamaChatMessageClient clients.OllamaChatMessageStandardClientInterface,
 ) *OllamaChatMessageStandardChatCompletionRequester {
 	return &OllamaChatMessageStandardChatCompletionRequester{
 		logger:                  logger,
-		mcpRequester:            mcpRequester,
 		ollamaChatMessageClient: ollamaChatMessageClient,
 	}
 }
@@ -42,90 +40,108 @@ func NewOllamaChatMessageStandardChatCompletionRequester(
 func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	baseUrl string,
 	llmConnection *models.LLMConnection,
-	messages []orchestrator_agent_compute_http_inference_models.ExternalOllamaChatMessageStandardMessage,
 	mcpConnections []*models.MCPConnection,
-) (*string, error) {
-	externalRequest := orchestrator_agent_compute_http_inference_models.NewExternalOllamaChatMessageStandardRequest(llmConnection.Model, messages)
-
-	mcpsToolsAsFunc := make(map[*models.MCPConnection][]*interfaces.McpTool)
-
-	for _, mcpConnection := range mcpConnections {
-		mcpTools, err := r.mcpRequester.ListTools(mcpConnection)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch MCP tools for connection '%s': %w", mcpConnection.Name, err)
-		}
-
-		mcpsToolsAsFunc[mcpConnection] = mcpTools
+	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
+	extMessages, err := r.buildRequestMessages(messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build ollama messages: %w", err)
 	}
 
-	for mcpConnection, tools := range mcpsToolsAsFunc {
+	externalRequest := external_models.NewExternalOllamaChatMessageStandardRequest(llmConnection.Model, extMessages)
+
+	for _, mcpConnection := range mcpConnections {
+		tools := mcpToolsByConnectionId[mcpConnection.Id]
+		if len(tools) == 0 {
+			continue
+		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
 
-	r.logger.Debug("Request to Chat Message endpoint",
-	)
+	r.logger.Debug("Request to Chat Message endpoint")
 
 	response, err := r.ollamaChatMessageClient.ChatMessage(baseUrl, externalRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	toolCalls := response.Message.ToolCalls
-
 	r.logger.Debug("Response from Chat Message endpoint",
-		zap.Int("toolUseCount", len(toolCalls)),
+		zap.Int("toolCallCount", len(response.Message.ToolCalls)),
 	)
 
-	// For the moment, tool calls are only related to MCP.
-	// Try to find the related MCP of this tool call, call it and re-call the LLM with the tool result.
-	if len(toolCalls) > 0 {
-		messages = append(messages, response.Message)
+	completion := &interfaces.LLMCompletion{}
 
-		for _, toolCall := range toolCalls {
-			relatedMcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(toolCall.Function.Name, mcpConnections, mcpsToolsAsFunc)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map function name to MCP tool: %w", err)
-			}
-
-			r.logger.Debug("Calling MCP tool from tool call",
-				zap.String("mcpToolName", mcpTool.Name),
-				zap.String("mcpConnectionName", relatedMcpConnection.Name),
-			)
-
-			toolResult, err := r.mcpRequester.CallTool(relatedMcpConnection, mcpTool, toolCall.Function.Arguments)
-			if err != nil {
-				return nil, fmt.Errorf("failed to call tool from MCP: %w", err)
-			}
-
-			// Append messages to include tool result and re-call complete
-			toolResultMessage, err := orchestrator_agent_compute_http_inference_models.NewExternalOllamaChatMessageStandardMessageFromToolCallOutput(
-				mcpTool.Name,
-				toolResult,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create message from tool call output: %w", err)
-			}
-
-			messages = append(messages, *toolResultMessage)
-		}
-
-		// Then re-call the complete function with updated messages
-		return r.ChatCompletion(
-			baseUrl,
-			llmConnection,
-			messages,
-			mcpConnections,
-		)
+	if response.Message.Content != "" {
+		text := response.Message.Content
+		completion.Text = &text
 	}
 
-	if len(response.Message.Content) == 0 {
+	for _, tc := range response.Message.ToolCalls {
+		if tc.Function == nil {
+			continue
+		}
+		// Ollama tool calls have no id; use the function name as a stable id.
+		// The inner loop echoes it back in the tool message's ToolCallId.
+		completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
+			Id:        tc.Function.Name,
+			Name:      tc.Function.Name,
+			Arguments: tc.Function.Arguments,
+		})
+	}
+
+	if completion.Text == nil && len(completion.ToolCalls) == 0 {
 		r.logger.Warn(
 			"Empty content in response message",
 			zap.Stringp("doneReason", response.DoneReason),
 		)
-
 		return nil, fmt.Errorf("ollama returned empty content: doneReason=%q", lo.FromPtr(response.DoneReason))
 	}
 
-	return &response.Message.Content, nil
+	return completion, nil
+}
+
+func (r *OllamaChatMessageStandardChatCompletionRequester) buildRequestMessages(
+	messages []*interfaces.ChatCompletionMessage,
+) ([]external_models.ExternalOllamaChatMessageStandardMessage, error) {
+	out := make([]external_models.ExternalOllamaChatMessageStandardMessage, 0, len(messages))
+
+	for _, m := range messages {
+		switch m.Role {
+		case "system", "user":
+			out = append(out, external_models.ExternalOllamaChatMessageStandardMessage{
+				Role:    m.Role,
+				Content: m.Content,
+			})
+
+		case "assistant":
+			extMsg := external_models.ExternalOllamaChatMessageStandardMessage{
+				Role:    "assistant",
+				Content: m.Content,
+			}
+			for _, tc := range m.ToolCalls {
+				name := tc.Name
+				extMsg.ToolCalls = append(extMsg.ToolCalls, external_models.ExternalOllamaChatMessageStandardMessageToolCall{
+					Function: &external_models.ExternalOllamaChatMessageStandardMessageToolCallFunction{
+						Name:      name,
+						Arguments: tc.Arguments,
+					},
+				})
+			}
+			out = append(out, extMsg)
+
+		case "tool":
+			toolName := m.ToolCallId
+			out = append(out, external_models.ExternalOllamaChatMessageStandardMessage{
+				Role:     "tool",
+				ToolName: &toolName,
+				Content:  m.Content,
+			})
+
+		default:
+			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)
+		}
+	}
+
+	return out, nil
 }

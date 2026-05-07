@@ -1,6 +1,6 @@
 package models
 
-import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 
 type ExternalAnthropicMessagesStandardMessage struct {
 	// Common fields
@@ -48,7 +48,7 @@ type ExternalAnthropicMessagesStandardMessageContent struct {
 }
 
 func NewExternalAnthropicMessagesStandardMessageFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalAnthropicMessagesStandardMessage {
 	return ExternalAnthropicMessagesStandardMessage{
 		Role: message.Role,
@@ -62,7 +62,7 @@ func NewExternalAnthropicMessagesStandardMessageFromChatCompletionMessage(
 }
 
 func NewExternalAnthropicMessagesStandardMessagesFromChatCompletionMessages(
-	messages []*models.ChatCompletionMessage,
+	messages []*interfaces.ChatCompletionMessage,
 ) []ExternalAnthropicMessagesStandardMessage {
 	inputs := make([]ExternalAnthropicMessagesStandardMessage, 0, len(messages))
 	for _, message := range messages {

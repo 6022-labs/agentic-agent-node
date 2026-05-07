@@ -7,8 +7,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
-	orchestrator_agent_compute_http_inference_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -18,26 +18,23 @@ type AnthropicMessagesStandardChatCompletionRequesterInterface interface {
 		baseUrl, apiKey string,
 		hasDirectAccessToMcp bool,
 		llmConnection *models.LLMConnection,
-		messages []orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessage,
-		systems []orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardRequestSystem,
 		mcpConnections []*models.MCPConnection,
-	) (*string, error)
+		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		messages []*interfaces.ChatCompletionMessage,
+	) (*interfaces.LLMCompletion, error)
 }
 
 type AnthropicMessagesStandardChatCompletionRequester struct {
 	logger                  *zap.Logger
-	mcpRequester            interfaces.McpRequesterInterface
 	anthropicMessagesClient clients.AnthropicMessagesStandardClientInterface
 }
 
 func NewAnthropicMessagesStandardChatCompletionRequester(
 	logger *zap.Logger,
-	mcpRequester interfaces.McpRequesterInterface,
 	anthropicMessagesClient clients.AnthropicMessagesStandardClientInterface,
 ) *AnthropicMessagesStandardChatCompletionRequester {
 	return &AnthropicMessagesStandardChatCompletionRequester{
 		logger:                  logger,
-		mcpRequester:            mcpRequester,
 		anthropicMessagesClient: anthropicMessagesClient,
 	}
 }
@@ -46,130 +43,187 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	hasDirectAccessToMcp bool,
 	llmConnection *models.LLMConnection,
-	messages []orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessage,
-	systems []orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardRequestSystem,
 	mcpConnections []*models.MCPConnection,
-) (*string, error) {
-	externalRequest := orchestrator_agent_compute_http_inference_models.NewExternalAnthropicMessagesStandardRequest(
+	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
+	systems := r.buildSystems(messages)
+	extMessages, err := r.buildRequestMessages(messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build anthropic messages: %w", err)
+	}
+
+	externalRequest := external_models.NewExternalAnthropicMessagesStandardRequest(
 		llmConnection.Model,
-		messages,
+		extMessages,
 		systems,
 	)
 
-	alreadyAddedMcps := make(map[string]bool)
-
+	directMcps := make(map[uuid.UUID]bool)
 	if hasDirectAccessToMcp {
-		// Even if the platform has direct access to MCP
-		// Anthropic only support MCP servers with OAuth "Authorization" header auth
+		// Anthropic only supports MCP servers with no auth or with a single OAuth Bearer Authorization header.
 		for _, mcpConnection := range mcpConnections {
 			auth, ok := mcpConnection.HeaderAuth["Authorization"]
 			if len(mcpConnection.HeaderAuth) == 0 || (ok && len(mcpConnection.HeaderAuth) == 1 && strings.HasPrefix(auth, "Bearer ")) {
 				externalRequest.AddMcpServerFromMcpConnection(mcpConnection)
-				alreadyAddedMcps[mcpConnection.Name] = true
+				directMcps[mcpConnection.Id] = true
 			}
 		}
 	}
 
-	mcpsToolsAsFunc := make(map[*models.MCPConnection][]*interfaces.McpTool)
-
-	// Add remaining MCP connections as function call tools
 	for _, mcpConnection := range mcpConnections {
-		if _, alreadyAdded := alreadyAddedMcps[mcpConnection.Name]; alreadyAdded {
+		if directMcps[mcpConnection.Id] {
 			continue
 		}
-
-		mcpTools, err := r.mcpRequester.ListTools(mcpConnection)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch MCP tools for connection '%s': %w", mcpConnection.Name, err)
+		tools := mcpToolsByConnectionId[mcpConnection.Id]
+		if len(tools) == 0 {
+			continue
 		}
-
-		mcpsToolsAsFunc[mcpConnection] = mcpTools
-	}
-
-	for mcpConnection, tools := range mcpsToolsAsFunc {
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
 
-	r.logger.Debug("Request to Anthropic Messages endpoint",
-	)
+	r.logger.Debug("Request to Anthropic Messages endpoint")
 
 	response, err := r.anthropicMessagesClient.Messages(baseUrl, apiKey, externalRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call Anthropic Messages API: %w", err)
 	}
 
-	toolUseContents := lo.Filter(response.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessageContent, _ int) bool {
-		return content.Type == "tool_use"
+	contentTypes := lo.Map(response.Content, func(c external_models.ExternalAnthropicMessagesStandardMessageContent, _ int) string {
+		return c.Type
 	})
 
 	r.logger.Debug("Response from Anthropic Messages endpoint",
 		zap.Int("contentItems", len(response.Content)),
-		zap.Int("toolUseCount", len(toolUseContents)),
-		zap.Strings("contentTypes", lo.Map(response.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessageContent, _ int) string {
-			return content.Type
-		})),
+		zap.Strings("contentTypes", contentTypes),
 	)
 
-	if len(toolUseContents) > 0 {
-		messages = append(messages, response.ExternalAnthropicMessagesStandardMessage)
+	completion := &interfaces.LLMCompletion{}
 
-		for _, toolCall := range toolUseContents {
-			relatedMcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(*toolCall.Name, mcpConnections, mcpsToolsAsFunc)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map function name to MCP tool: %w", err)
+	for _, c := range response.Content {
+		switch c.Type {
+		case "text":
+			if c.Text != nil {
+				text := *c.Text
+				completion.Text = &text
 			}
-
-			r.logger.Debug("Calling MCP tool from tool use",
-				zap.String("mcpToolName", mcpTool.Name),
-				zap.String("mcpConnectionName", relatedMcpConnection.Name),
-			)
-
-			toolResult, err := r.mcpRequester.CallTool(relatedMcpConnection, mcpTool, toolCall.Input)
-			if err != nil {
-				return nil, fmt.Errorf("failed to call tool from MCP: %w", err)
+		case "tool_use":
+			if c.Id == nil || c.Name == nil {
+				return nil, fmt.Errorf("anthropic tool_use missing id or name")
 			}
-
-			// Append messages to include tool result and re-call complete
-			toolResultMessage, err := orchestrator_agent_compute_http_inference_models.NewExternalAnthropicMessagesStandardRequestMessagesFromToolCallOutput(
-				*toolCall.Id,
-				toolResult,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create message from tool call output: %w", err)
-			}
-
-			messages = append(messages, *toolResultMessage)
+			completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
+				Id:        *c.Id,
+				Name:      *c.Name,
+				Arguments: c.Input,
+			})
 		}
-
-		// Then re-call the complete function with updated messages
-		return r.ChatCompletion(
-			baseUrl,
-			apiKey,
-			hasDirectAccessToMcp,
-			llmConnection,
-			messages,
-			systems,
-			mcpConnections,
-		)
 	}
 
-	textContents := lo.Filter(response.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessageContent, _ int) bool {
-		return content.Type == "text"
-	})
-
-	if len(textContents) == 0 {
-		contentTypes := lo.Map(response.Content, func(content orchestrator_agent_compute_http_inference_models.ExternalAnthropicMessagesStandardMessageContent, _ int) string {
-			return content.Type
-		})
+	if completion.Text == nil && len(completion.ToolCalls) == 0 {
 		r.logger.Warn(
-			"No content with type 'text' found in response",
+			"No text or tool_use content found in response",
 			zap.Stringp("stopReason", response.StopReason),
 			zap.Int("contentItems", len(response.Content)),
 			zap.Strings("contentTypes", contentTypes),
 		)
-
-		return nil, fmt.Errorf("anthropic returned no text content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
+		return nil, fmt.Errorf("anthropic returned no actionable content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
 	}
 
-	return textContents[len(textContents)-1].Text, nil
+	return completion, nil
+}
+
+func (r *AnthropicMessagesStandardChatCompletionRequester) buildSystems(
+	messages []*interfaces.ChatCompletionMessage,
+) []external_models.ExternalAnthropicMessagesStandardRequestSystem {
+	out := make([]external_models.ExternalAnthropicMessagesStandardRequestSystem, 0)
+	for _, m := range messages {
+		if m.Role != "system" {
+			continue
+		}
+		out = append(out, external_models.ExternalAnthropicMessagesStandardRequestSystem{
+			Type: "text",
+			Text: m.Content,
+		})
+	}
+	return out
+}
+
+// buildRequestMessages translates the domain message stream into anthropic's
+// alternating user/assistant shape. role=tool messages become user messages
+// containing tool_result content; consecutive tool messages collapse into one.
+func (r *AnthropicMessagesStandardChatCompletionRequester) buildRequestMessages(
+	messages []*interfaces.ChatCompletionMessage,
+) ([]external_models.ExternalAnthropicMessagesStandardMessage, error) {
+	out := make([]external_models.ExternalAnthropicMessagesStandardMessage, 0, len(messages))
+
+	flushToolResults := func(buf []external_models.ExternalAnthropicMessagesStandardMessageContent) []external_models.ExternalAnthropicMessagesStandardMessageContent {
+		if len(buf) == 0 {
+			return buf
+		}
+		out = append(out, external_models.ExternalAnthropicMessagesStandardMessage{
+			Role:    "user",
+			Content: buf,
+		})
+		return nil
+	}
+
+	var pendingToolResults []external_models.ExternalAnthropicMessagesStandardMessageContent
+
+	for _, m := range messages {
+		switch m.Role {
+		case "system":
+			continue
+
+		case "user":
+			pendingToolResults = flushToolResults(pendingToolResults)
+			text := m.Content
+			out = append(out, external_models.ExternalAnthropicMessagesStandardMessage{
+				Role: "user",
+				Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+					{Type: "text", Text: &text},
+				},
+			})
+
+		case "assistant":
+			pendingToolResults = flushToolResults(pendingToolResults)
+			contents := make([]external_models.ExternalAnthropicMessagesStandardMessageContent, 0)
+			if m.Content != "" {
+				text := m.Content
+				contents = append(contents, external_models.ExternalAnthropicMessagesStandardMessageContent{
+					Type: "text",
+					Text: &text,
+				})
+			}
+			for _, tc := range m.ToolCalls {
+				id := tc.Id
+				name := tc.Name
+				contents = append(contents, external_models.ExternalAnthropicMessagesStandardMessageContent{
+					Type:  "tool_use",
+					Id:    &id,
+					Name:  &name,
+					Input: tc.Arguments,
+				})
+			}
+			out = append(out, external_models.ExternalAnthropicMessagesStandardMessage{
+				Role:    "assistant",
+				Content: contents,
+			})
+
+		case "tool":
+			callId := m.ToolCallId
+			content := m.Content
+			pendingToolResults = append(pendingToolResults, external_models.ExternalAnthropicMessagesStandardMessageContent{
+				Type:      "tool_result",
+				ToolUseId: &callId,
+				Content:   &content,
+			})
+
+		default:
+			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)
+		}
+	}
+
+	flushToolResults(pendingToolResults)
+
+	return out, nil
 }

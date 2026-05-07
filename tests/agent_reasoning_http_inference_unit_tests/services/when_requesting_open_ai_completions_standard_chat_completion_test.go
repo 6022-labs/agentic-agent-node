@@ -10,8 +10,8 @@ import (
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/clients_mocks"
-	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -20,25 +20,21 @@ import (
 type WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite struct {
 	sut *services.OpenAICompletionsStandardChatCompletionRequester
 
-	mockMcpRequester            *interfaces_mocks.MockMcpRequesterInterface
 	mockOpenAICompletionsClient *clients_mocks.MockOpenAICompletionsStandardClientInterface
 }
 
 func WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
 	mockOpenAICompletionsClient := clients_mocks.NewMockOpenAICompletionsStandardClientInterface(mockController)
 
 	sut := services.NewOpenAICompletionsStandardChatCompletionRequester(
 		zap.NewNop(),
-		mockMcpRequester,
 		mockOpenAICompletionsClient,
 	)
 
 	return &WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite{
 		sut:                         sut,
-		mockMcpRequester:            mockMcpRequester,
 		mockOpenAICompletionsClient: mockOpenAICompletionsClient,
 	}
 }
@@ -57,28 +53,28 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 		WithModel("gpt-4").
 		Build()
 
-	userMessage := "hello"
-	messages := []external_models.ExternalOpenAICompletionsStandardRequestMessage{
-		{
-			Role:    "user",
-			Content: &userMessage,
-		},
+	messages := []*interfaces.ChatCompletionMessage{
+		{Role: "user", Content: "hello"},
 	}
 
-	t.Run("Given no tool calls are requested", func(t *testing.T) {
+	t.Run("Given the LLM returns plain text", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
-
 			suite.mockOpenAICompletionsClient.
 				EXPECT().
 				ChatCompletion(baseUrl, apiKey, gomock.Any()).
 				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAICompletionsStandardRequest) (*external_models.ExternalOpenAICompletionsStandardResponse, error) {
 					assert.Equal(t, llmConnection.Model, request.Model)
-					assert.Equal(t, messages, request.Messages)
+					if assert.Len(t, request.Messages, 1) {
+						assert.Equal(t, "user", request.Messages[0].Role)
+						if assert.NotNil(t, request.Messages[0].Content) {
+							assert.Equal(t, "hello", *request.Messages[0].Content)
+						}
+					}
 					assert.Nil(t, request.Tools)
 
-					response := &external_models.ExternalOpenAICompletionsStandardResponse{
+					return &external_models.ExternalOpenAICompletionsStandardResponse{
 						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
 							{
 								Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{
@@ -87,53 +83,22 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 								},
 							},
 						},
-					}
-
-					return response, nil
+					}, nil
 				})
-
 		}
 
-		t.Run("Should return the first choice content", func(t *testing.T) {
+		t.Run("Should return the assistant text", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, messages, nil)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, expectedContent, *result)
+			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
+				assert.Equal(t, expectedContent, *result.Text)
 			}
-		})
-	})
-
-	t.Run("Given retrieving MCP tools fails", func(t *testing.T) {
-		t.Parallel()
-
-		mcpConnection := model_builders.NewMCPConnectionBuilder().
-			WithName("inventory").
-			WithUrl("https://mcp.example.com").
-			Build()
-		mcpConnection.HeaderAuth = map[string]string{"authorization": "Bearer token"}
-
-		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
-			suite.mockMcpRequester.
-				EXPECT().
-				ListTools(mcpConnection).
-				Return(nil, assert.AnError)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, messages, []*models.MCPConnection{mcpConnection})
-			assert.Nil(t, result)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, fmt.Sprintf("failed to fetch MCP tools for connection '%s'", mcpConnection.Name))
+			assert.Empty(t, result.ToolCalls)
 		})
 	})
 
@@ -157,63 +122,48 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, messages, nil)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "openai completions returned no choices")
 		})
 	})
 
-	t.Run("Given the LLM requests an MCP tool call", func(t *testing.T) {
+	t.Run("Given the LLM emits tool calls", func(t *testing.T) {
 		t.Parallel()
 
 		mcpConnection := model_builders.NewMCPConnectionBuilder().
 			WithName("inventory").
 			WithUrl("https://mcp.example.com").
 			Build()
-		mcpConnection.HeaderAuth = map[string]string{"authorization": "Bearer token"}
+		mcpTool := &interfaces.McpTool{
+			Name:        "fetch_items",
+			Description: "Fetch items",
+			InputScheme: interfaces.McpToolInputScheme{
+				Type:                 "object",
+				Properties:           map[string]interfaces.ToolInputSchemeProperty{},
+				Required:             []string{},
+				AdditionalProperties: false,
+			},
+		}
+		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		toolArguments := map[string]any{"query": "value"}
+		toolArgumentsJson, _ := json.Marshal(toolArguments)
+
+		toolsByConn := map[uuid.UUID][]*interfaces.McpTool{
+			mcpConnection.Id: {mcpTool},
+		}
 
 		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
-			mcpTool := &interfaces.McpTool{
-				Name:        "fetch_items",
-				Description: "Fetch items",
-				InputScheme: interfaces.McpToolInputScheme{
-					Type:                 "object",
-					Properties:           map[string]interfaces.ToolInputSchemeProperty{},
-					Required:             []string{},
-					AdditionalProperties: false,
-				},
-			}
-			functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
-			toolArguments := map[string]any{"query": "value"}
-			toolArgumentsJson, _ := json.Marshal(toolArguments)
-
-			toolResult := map[string]any{"status": "ok"}
-
-			suite.mockMcpRequester.
-				EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{
-					mcpTool,
-				}, nil).
-				Times(2)
-
-			suite.mockMcpRequester.
-				EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArguments).
-				Return(toolResult, nil)
-
-			firstCall := suite.mockOpenAICompletionsClient.
+			suite.mockOpenAICompletionsClient.
 				EXPECT().
 				ChatCompletion(baseUrl, apiKey, gomock.Any()).
 				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAICompletionsStandardRequest) (*external_models.ExternalOpenAICompletionsStandardResponse, error) {
-					assert.Equal(t, llmConnection.Model, request.Model)
-					assert.Equal(t, messages, request.Messages)
 					if assert.Len(t, request.Tools, 1) {
 						assert.Equal(t, functionName, request.Tools[0].Function.Name)
 					}
 
-					response := &external_models.ExternalOpenAICompletionsStandardResponse{
+					return &external_models.ExternalOpenAICompletionsStandardResponse{
 						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
 							{
 								Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{
@@ -230,63 +180,81 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 								},
 							},
 						},
-					}
-
-					return response, nil
+					}, nil
 				})
-
-			secondCall := suite.mockOpenAICompletionsClient.
-				EXPECT().
-				ChatCompletion(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAICompletionsStandardRequest) (*external_models.ExternalOpenAICompletionsStandardResponse, error) {
-					assert.Equal(t, llmConnection.Model, request.Model)
-					assert.Len(t, request.Messages, len(messages)+2)
-
-					assistantToolMessage := request.Messages[len(messages)]
-					assert.Equal(t, "assistant", assistantToolMessage.Role)
-					if assert.Len(t, assistantToolMessage.ToolCalls, 1) {
-						toolCall := assistantToolMessage.ToolCalls[0]
-						assert.Equal(t, "call_1", toolCall.ID)
-						assert.Equal(t, functionName, toolCall.Function.Name)
-						assert.Equal(t, string(toolArgumentsJson), toolCall.Function.Arguments)
-					}
-
-					toolOutputMessage := request.Messages[len(messages)+1]
-					assert.Equal(t, "tool", toolOutputMessage.Role)
-					if assert.NotNil(t, toolOutputMessage.ToolCallId) {
-						assert.Equal(t, "call_1", *toolOutputMessage.ToolCallId)
-					}
-					if assert.NotNil(t, toolOutputMessage.Content) {
-						assert.Equal(t, "{\"status\":\"ok\"}", *toolOutputMessage.Content)
-					}
-
-					response := &external_models.ExternalOpenAICompletionsStandardResponse{
-						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
-							{
-								Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{
-									Role:    "assistant",
-									Content: expectedContent,
-								},
-							},
-						},
-					}
-					return response, nil
-				})
-
-			gomock.InOrder(firstCall, secondCall)
-
 		}
 
-		t.Run("Should call the MCP tool and return the final completion", func(t *testing.T) {
+		t.Run("Should return them in LLMCompletion without resolving them", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, messages, []*models.MCPConnection{mcpConnection})
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, []*models.MCPConnection{mcpConnection}, toolsByConn, messages)
+
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, expectedContent, *result)
+			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
+				assert.Equal(t, "call_1", result.ToolCalls[0].Id)
+				assert.Equal(t, functionName, result.ToolCalls[0].Name)
+				assert.Equal(t, toolArguments, result.ToolCalls[0].Arguments)
+			}
+			assert.Nil(t, result.Text)
+		})
+	})
+
+	t.Run("Given the input stream replays an earlier tool turn", func(t *testing.T) {
+		t.Parallel()
+
+		toolArguments := map[string]any{"query": "value"}
+		argsJson, _ := json.Marshal(toolArguments)
+
+		replay := []*interfaces.ChatCompletionMessage{
+			{Role: "user", Content: "go"},
+			{Role: "assistant", ToolCalls: []interfaces.ToolCall{
+				{Id: "call_1", Name: "inventory_fetch_items", Arguments: toolArguments},
+			}},
+			{Role: "tool", ToolCallId: "call_1", Content: `{"status":"ok"}`},
+		}
+
+		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
+			suite.mockOpenAICompletionsClient.
+				EXPECT().
+				ChatCompletion(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAICompletionsStandardRequest) (*external_models.ExternalOpenAICompletionsStandardResponse, error) {
+					if assert.Len(t, request.Messages, 3) {
+						assistant := request.Messages[1]
+						assert.Equal(t, "assistant", assistant.Role)
+						if assert.Len(t, assistant.ToolCalls, 1) {
+							assert.Equal(t, "call_1", assistant.ToolCalls[0].ID)
+							assert.Equal(t, "inventory_fetch_items", assistant.ToolCalls[0].Function.Name)
+							assert.Equal(t, string(argsJson), assistant.ToolCalls[0].Function.Arguments)
+						}
+
+						tool := request.Messages[2]
+						assert.Equal(t, "tool", tool.Role)
+						if assert.NotNil(t, tool.ToolCallId) {
+							assert.Equal(t, "call_1", *tool.ToolCallId)
+						}
+					}
+
+					return &external_models.ExternalOpenAICompletionsStandardResponse{
+						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
+							{Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{Role: "assistant", Content: expectedContent}},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should encode the assistant tool_calls + tool message in the request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, replay)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
+				assert.Equal(t, expectedContent, *result.Text)
 			}
 		})
 	})

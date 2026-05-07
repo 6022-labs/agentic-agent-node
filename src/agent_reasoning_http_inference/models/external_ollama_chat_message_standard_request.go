@@ -3,7 +3,7 @@ package models
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
 type ExternalOllamaChatMessageStandardRequest struct {

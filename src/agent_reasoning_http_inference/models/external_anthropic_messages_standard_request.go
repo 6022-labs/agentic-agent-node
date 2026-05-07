@@ -6,7 +6,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
 type ExternalAnthropicMessagesStandardRequest struct {
@@ -57,7 +57,7 @@ func NewExternalAnthropicMessagesStandardRequest(
 }
 
 func NewExternalAnthropicMessagesStandardRequestSystemFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalAnthropicMessagesStandardRequestSystem {
 	return ExternalAnthropicMessagesStandardRequestSystem{
 		Type: "text",
@@ -66,7 +66,7 @@ func NewExternalAnthropicMessagesStandardRequestSystemFromChatCompletionMessage(
 }
 
 func NewExternalAnthropicMessagesStandardRequestSystemsFromChatCompletionMessages(
-	messages []*models.ChatCompletionMessage,
+	messages []*interfaces.ChatCompletionMessage,
 ) []ExternalAnthropicMessagesStandardRequestSystem {
 	inputs := make([]ExternalAnthropicMessagesStandardRequestSystem, 0, len(messages))
 	for _, message := range messages {

@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 )
 
 type ExternalOllamaChatMessageStandardMessage struct {
@@ -32,7 +32,7 @@ type ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments struct {
 }
 
 func NewExternalOllamaChatMessageStandardMessageFromChatCompletionMessage(
-	message *models.ChatCompletionMessage,
+	message *interfaces.ChatCompletionMessage,
 ) ExternalOllamaChatMessageStandardMessage {
 	return ExternalOllamaChatMessageStandardMessage{
 		Role:    message.Role,
@@ -41,7 +41,7 @@ func NewExternalOllamaChatMessageStandardMessageFromChatCompletionMessage(
 }
 
 func NewExternalOllamaChatMessageStandardMessagesFromChatCompletionMessages(
-	messages []*models.ChatCompletionMessage,
+	messages []*interfaces.ChatCompletionMessage,
 ) []ExternalOllamaChatMessageStandardMessage {
 	result := make([]ExternalOllamaChatMessageStandardMessage, 0, len(messages))
 	for _, message := range messages {

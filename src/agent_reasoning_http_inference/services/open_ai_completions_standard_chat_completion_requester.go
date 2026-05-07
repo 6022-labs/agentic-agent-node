@@ -1,14 +1,14 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
-	orchestrator_agent_compute_http_inference_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
-	"github.com/samber/lo"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -16,25 +16,23 @@ type OpenAICompletionsStandardChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		baseUrl, apiKey string,
 		llmConnection *models.LLMConnection,
-		messages []orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardRequestMessage,
 		mcpConnections []*models.MCPConnection,
-	) (*string, error)
+		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		messages []*interfaces.ChatCompletionMessage,
+	) (*interfaces.LLMCompletion, error)
 }
 
 type OpenAICompletionsStandardChatCompletionRequester struct {
 	logger                  *zap.Logger
-	mcpRequester            interfaces.McpRequesterInterface
 	openAICompletionsClient clients.OpenAICompletionsStandardClientInterface
 }
 
 func NewOpenAICompletionsStandardChatCompletionRequester(
 	logger *zap.Logger,
-	mcpRequester interfaces.McpRequesterInterface,
 	openAICompletionsClient clients.OpenAICompletionsStandardClientInterface,
 ) *OpenAICompletionsStandardChatCompletionRequester {
 	return &OpenAICompletionsStandardChatCompletionRequester{
 		logger:                  logger,
-		mcpRequester:            mcpRequester,
 		openAICompletionsClient: openAICompletionsClient,
 	}
 }
@@ -42,102 +40,30 @@ func NewOpenAICompletionsStandardChatCompletionRequester(
 func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	llmConnection *models.LLMConnection,
-	messages []orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardRequestMessage,
 	mcpConnections []*models.MCPConnection,
-) (*string, error) {
-	externalRequest := orchestrator_agent_compute_http_inference_models.NewExternalOpenAICompletionsStandardRequest(llmConnection.Model, messages)
-
-	mcpsToolsAsFunc := make(map[*models.MCPConnection][]*interfaces.McpTool)
-
-	for _, mcpConnection := range mcpConnections {
-		mcpTools, err := r.mcpRequester.ListTools(mcpConnection)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch MCP tools for connection '%s': %w", mcpConnection.Name, err)
-		}
-
-		mcpsToolsAsFunc[mcpConnection] = mcpTools
+	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
+	extMessages, err := r.buildRequestMessages(messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build openai completions messages: %w", err)
 	}
 
-	for mcpConnection, tools := range mcpsToolsAsFunc {
+	externalRequest := external_models.NewExternalOpenAICompletionsStandardRequest(llmConnection.Model, extMessages)
+
+	for _, mcpConnection := range mcpConnections {
+		tools := mcpToolsByConnectionId[mcpConnection.Id]
+		if len(tools) == 0 {
+			continue
+		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
 
-	r.logger.Debug("Request to Completions endpoint",
-	)
+	r.logger.Debug("Request to Completions endpoint")
 
 	response, err := r.openAICompletionsClient.ChatCompletion(baseUrl, apiKey, externalRequest)
 	if err != nil {
 		return nil, err
-	}
-
-	toolCalls := lo.FilterMap(
-		response.Choices,
-		func(item orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardResponseChoice, _ int) ([]orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardResponseChoiceMessageToolCall, bool) {
-			return item.Message.ToolCalls, len(item.Message.ToolCalls) > 0
-		},
-	)
-
-	r.logger.Debug("Response from Completions endpoint",
-		zap.Int("toolUseCount", len(toolCalls)),
-	)
-
-	flattenToolCalls := lo.Flatten(toolCalls)
-
-	// For the moment, tool calls are only related to MCP.
-	// Try to find the related MCP of this tool call, call it and re-call the LLM with the tool result.
-	if len(flattenToolCalls) > 0 {
-		for _, toolCall := range flattenToolCalls {
-			messages = append(messages, orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardRequestMessage{
-				Role: "assistant",
-				ToolCalls: []orchestrator_agent_compute_http_inference_models.ExternalOpenAICompletionsStandardRequestMessageToolCall{
-					{
-						ID:       toolCall.ID,
-						Type:     "function", // Can't use toolCall.Type here because some API didn't fill it properly (Mistral...)
-						Function: toolCall.Function,
-					},
-				},
-			})
-
-			relatedMcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(toolCall.Function.Name, mcpConnections, mcpsToolsAsFunc)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map function name to MCP tool: %w", err)
-			}
-
-			r.logger.Debug("Calling MCP tool from tool call",
-				zap.String("mcpToolName", mcpTool.Name),
-				zap.String("mcpConnectionName", relatedMcpConnection.Name),
-			)
-
-			parsedArguments, err := toolCall.Function.ParsedArguments()
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse tool call arguments: %w", err)
-			}
-
-			toolResult, err := r.mcpRequester.CallTool(relatedMcpConnection, mcpTool, parsedArguments)
-			if err != nil {
-				return nil, fmt.Errorf("failed to call tool from MCP: %w", err)
-			}
-
-			// Append messages to include tool result and re-call complete
-			toolResultMessage, err := orchestrator_agent_compute_http_inference_models.NewExternalOpenAICompletionsStandardRequestMessageFromToolCallOutput(
-				toolCall.ID,
-				toolResult,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create message from tool call output: %w", err)
-			}
-
-			messages = append(messages, *toolResultMessage)
-		}
-
-		// Then re-call the complete function with updated messages
-		return r.ChatCompletion(
-			baseUrl,
-			apiKey,
-			llmConnection,
-			messages,
-			mcpConnections,
-		)
 	}
 
 	if len(response.Choices) == 0 {
@@ -150,5 +76,78 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 		return nil, fmt.Errorf("openai completions returned no choices: id=%s model=%s", response.ID, response.Model)
 	}
 
-	return &response.Choices[0].Message.Content, nil
+	choice := response.Choices[0]
+	completion := &interfaces.LLMCompletion{}
+
+	if choice.Message.Content != "" {
+		text := choice.Message.Content
+		completion.Text = &text
+	}
+
+	for _, tc := range choice.Message.ToolCalls {
+		args, err := tc.Function.ParsedArguments()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse openai completions tool call arguments: %w", err)
+		}
+		completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
+			Id:        tc.ID,
+			Name:      tc.Function.Name,
+			Arguments: args,
+		})
+	}
+
+	return completion, nil
+}
+
+func (r *OpenAICompletionsStandardChatCompletionRequester) buildRequestMessages(
+	messages []*interfaces.ChatCompletionMessage,
+) ([]external_models.ExternalOpenAICompletionsStandardRequestMessage, error) {
+	out := make([]external_models.ExternalOpenAICompletionsStandardRequestMessage, 0, len(messages))
+
+	for _, m := range messages {
+		switch m.Role {
+		case "system", "user":
+			content := m.Content
+			out = append(out, external_models.ExternalOpenAICompletionsStandardRequestMessage{
+				Role:    m.Role,
+				Content: &content,
+			})
+
+		case "assistant":
+			msg := external_models.ExternalOpenAICompletionsStandardRequestMessage{Role: "assistant"}
+			if m.Content != "" {
+				content := m.Content
+				msg.Content = &content
+			}
+			for _, tc := range m.ToolCalls {
+				argsBytes, err := json.Marshal(tc.Arguments)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal tool call arguments: %w", err)
+				}
+				msg.ToolCalls = append(msg.ToolCalls, external_models.ExternalOpenAICompletionsStandardRequestMessageToolCall{
+					ID:   tc.Id,
+					Type: "function",
+					Function: external_models.ExternalOpenAICompletionsStandardToolCallFunction{
+						Name:      tc.Name,
+						Arguments: string(argsBytes),
+					},
+				})
+			}
+			out = append(out, msg)
+
+		case "tool":
+			callId := m.ToolCallId
+			content := m.Content
+			out = append(out, external_models.ExternalOpenAICompletionsStandardRequestMessage{
+				Role:       "tool",
+				ToolCallId: &callId,
+				Content:    &content,
+			})
+
+		default:
+			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)
+		}
+	}
+
+	return out, nil
 }

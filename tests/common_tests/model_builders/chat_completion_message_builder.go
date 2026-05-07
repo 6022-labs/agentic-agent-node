@@ -1,7 +1,7 @@
 package model_builders
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/go-faker/faker/v4"
 )
 
@@ -30,8 +30,8 @@ func (b *ChatCompletionMessageBuilder) WithContent(content string) *ChatCompleti
 	return b
 }
 
-func (b *ChatCompletionMessageBuilder) Build() *models.ChatCompletionMessage {
-	return &models.ChatCompletionMessage{
+func (b *ChatCompletionMessageBuilder) Build() *interfaces.ChatCompletionMessage {
+	return &interfaces.ChatCompletionMessage{
 		Role:    b.role,
 		Content: b.content,
 	}

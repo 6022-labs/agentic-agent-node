@@ -6,13 +6,20 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	orchestrator_agent_compute_http_inference_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
+	"github.com/google/uuid"
 	"github.com/pkoukk/tiktoken-go"
 	"go.uber.org/zap"
 )
 
+// ChatCompletionRequester is the http-side adapter that implements
+// ChatCompletionRequesterInterface. It picks the right per-platform requester
+// based on LLMConnection.Platform, fetches the api key from Vault, trims the
+// message stream to the configured token budget, and delegates the round-trip.
+//
+// It does NOT loop on tool calls — tool resolution is the inference_loop's job.
 type ChatCompletionRequester struct {
 	logger *zap.Logger
 
@@ -80,8 +87,9 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	ctx context.Context,
 	llmConnection *models.LLMConnection,
 	mcpConnections []*models.MCPConnection,
-	messages []*models.ChatCompletionMessage,
-) (*string, error) {
+	mcpToolsByConnectionId map[uuid.UUID][]*reasoning_interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
 	trimmedMessages, err := r.trimMessagesToTokenLimit(messages, r.tokenSettings.MaxTokensPerRequest)
 	if err != nil {
 		return nil, err
@@ -100,15 +108,13 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	return r.completeUsingAppropriateStandard(
 		llmConnection,
 		mcpConnections,
+		mcpToolsByConnectionId,
 		trimmedMessages,
 		platformSettings,
 		apiKey,
 	)
 }
 
-// resolveApiKey fetches the configured api key from Vault. Returns nil when
-// none is set — local platforms (e.g. ollama) accept that, cloud platforms
-// surface a clear "api key is required" error downstream.
 func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, error) {
 	apiKey, found, err := r.llmSecretStorage.Get(ctx)
 	if err != nil {
@@ -120,8 +126,14 @@ func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, e
 	return &apiKey, nil
 }
 
-// trimMessagesToTokenLimit trims messages from the start until the total token count is <= limit
-func (r *ChatCompletionRequester) trimMessagesToTokenLimit(messages []*models.ChatCompletionMessage, limit uint) ([]*models.ChatCompletionMessage, error) {
+// trimMessagesToTokenLimit trims messages from the start until the total token
+// count is within the limit. System messages stay at the head; the trimmer
+// drops the oldest non-system messages first. Token budget is approximated
+// using OpenAI's gpt-4 tokenizer for all platforms — close enough for trim.
+func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
+	messages []*interfaces.ChatCompletionMessage,
+	limit uint,
+) ([]*interfaces.ChatCompletionMessage, error) {
 	tokenizer, err := tiktoken.EncodingForModel("gpt-4")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tokenizer: %w", err)
@@ -170,97 +182,82 @@ func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnecti
 func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 	llmConnection *models.LLMConnection,
 	mcpConnections []*models.MCPConnection,
-	messages []*models.ChatCompletionMessage,
+	mcpToolsByConnectionId map[uuid.UUID][]*reasoning_interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
 	platformSettings settings.StandardSettingsInterface,
 	apiKey *string,
-) (*string, error) {
-	if platformSettings.PlatformAPI() == settings.PlatformAPIOpenAIResponsesStandard {
-		inputs := orchestrator_agent_compute_http_inference_models.NewExternalOpenAICompletionsStandardRequestInputsFromChatCompletionMessages(messages)
-
+) (*interfaces.LLMCompletion, error) {
+	switch platformSettings.PlatformAPI() {
+	case settings.PlatformAPIOpenAIResponsesStandard:
 		if apiKey == nil {
 			return nil, fmt.Errorf("api key is required for OpenAI Responses Standard")
 		}
-
 		return r.openAIResponsesStandardChatCompletionRequester.ChatCompletion(
 			platformSettings.GetBaseUrl(),
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
-			inputs,
 			mcpConnections,
-			nil,
+			mcpToolsByConnectionId,
+			messages,
 		)
-	}
 
-	if platformSettings.PlatformAPI() == settings.PlatformAPIOpenAICompletionsStandard {
-		inputs := orchestrator_agent_compute_http_inference_models.NewExternalOpenAICompletionsStandardRequestMessagesFromChatCompletionMessages(messages)
-
+	case settings.PlatformAPIOpenAICompletionsStandard:
 		if apiKey == nil {
 			return nil, fmt.Errorf("api key is required for OpenAI Completions Standard")
 		}
-
 		return r.openAICompletionsStandardChatCompletionRequester.ChatCompletion(
 			platformSettings.GetBaseUrl(),
 			*apiKey,
 			llmConnection,
-			inputs,
 			mcpConnections,
+			mcpToolsByConnectionId,
+			messages,
 		)
-	}
 
-	if platformSettings.PlatformAPI() == settings.PlatformAPIOllamaChatMessageStandard {
-		inputs := orchestrator_agent_compute_http_inference_models.NewExternalOllamaChatMessageStandardMessagesFromChatCompletionMessages(messages)
-
+	case settings.PlatformAPIOllamaChatMessageStandard:
 		if llmConnection.BaseUrl == nil {
 			return nil, fmt.Errorf("base URL is required for Ollama Chat Message Standard")
 		}
-
 		return r.ollamaChatMessageStandardChatCompletionRequester.ChatCompletion(
 			*llmConnection.BaseUrl,
 			llmConnection,
-			inputs,
 			mcpConnections,
+			mcpToolsByConnectionId,
+			messages,
 		)
-	}
 
-	if platformSettings.PlatformAPI() == settings.PlatformAPIAnthropicMessagesStandard {
-		inputs := orchestrator_agent_compute_http_inference_models.NewExternalAnthropicMessagesStandardMessagesFromChatCompletionMessages(messages)
-		systems := orchestrator_agent_compute_http_inference_models.NewExternalAnthropicMessagesStandardRequestSystemsFromChatCompletionMessages(messages)
-
+	case settings.PlatformAPIAnthropicMessagesStandard:
 		if apiKey == nil {
 			return nil, fmt.Errorf("api key is required for Anthropic Messages Standard")
 		}
-
 		return r.anthropicMessagesStandardChatCompletionRequester.ChatCompletion(
 			platformSettings.GetBaseUrl(),
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
-			inputs,
-			systems,
 			mcpConnections,
+			mcpToolsByConnectionId,
+			messages,
 		)
-	}
 
-	if platformSettings.PlatformAPI() == settings.PlatformAPIAmazonBedrockConverseStandard {
-		messages, messagesSystems := orchestrator_agent_compute_http_inference_models.NewExternalAmazonBedrockConverseStandardRequestMessagesAndSystemFromChatCompletionMessages(messages)
-
+	case settings.PlatformAPIAmazonBedrockConverseStandard:
 		if apiKey == nil {
 			return nil, fmt.Errorf("api key is required for Amazon Bedrock Converse Standard")
 		}
 		if llmConnection.BaseUrl == nil {
 			return nil, fmt.Errorf("base URL is required for Amazon Bedrock Converse Standard")
 		}
-
 		return r.amazonBedrockConverseStandardChatCompletionRequester.ChatCompletion(
 			*llmConnection.BaseUrl,
 			*apiKey,
 			llmConnection,
-			messages,
-			messagesSystems,
 			mcpConnections,
+			mcpToolsByConnectionId,
+			messages,
 		)
-	}
 
-	return nil, fmt.Errorf("unsupported platform API: %s", platformSettings.PlatformAPI())
+	default:
+		return nil, fmt.Errorf("unsupported platform API: %s", platformSettings.PlatformAPI())
+	}
 }
