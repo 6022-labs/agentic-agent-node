@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -54,30 +53,6 @@ func NewExternalAnthropicMessagesStandardRequest(
 		Messages:  messages,
 		System:    system,
 	}
-}
-
-func NewExternalAnthropicMessagesStandardRequestSystemFromChatCompletionMessage(
-	message *interfaces.ChatCompletionMessage,
-) ExternalAnthropicMessagesStandardRequestSystem {
-	return ExternalAnthropicMessagesStandardRequestSystem{
-		Type: "text",
-		Text: message.Content,
-	}
-}
-
-func NewExternalAnthropicMessagesStandardRequestSystemsFromChatCompletionMessages(
-	messages []*interfaces.ChatCompletionMessage,
-) []ExternalAnthropicMessagesStandardRequestSystem {
-	inputs := make([]ExternalAnthropicMessagesStandardRequestSystem, 0, len(messages))
-	for _, message := range messages {
-		if message.Role != "system" {
-			continue
-		}
-
-		inputs = append(inputs, NewExternalAnthropicMessagesStandardRequestSystemFromChatCompletionMessage(message))
-	}
-
-	return inputs
 }
 
 func (r *ExternalAnthropicMessagesStandardRequest) AddMcpServerFromMcpConnection(
@@ -137,24 +112,3 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddMcpConnectionAsFunctionCal
 	}
 }
 
-func NewExternalAnthropicMessagesStandardRequestMessagesFromToolCallOutput(
-	toolUseId string,
-	output map[string]any,
-) (*ExternalAnthropicMessagesStandardMessage, error) {
-	outputBytes, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
-	}
-	outputStr := string(outputBytes)
-
-	return &ExternalAnthropicMessagesStandardMessage{
-		Role: "user",
-		Content: []ExternalAnthropicMessagesStandardMessageContent{
-			{
-				Type:      "tool_result",
-				ToolUseId: &toolUseId,
-				Content:   &outputStr,
-			},
-		},
-	}, nil
-}

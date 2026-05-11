@@ -1,8 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
@@ -80,44 +78,6 @@ func NewExternalOpenAIResponsesStandardRequest(
 		Input:              inputs,
 		PreviousResponseID: previousResponseId,
 	}
-}
-
-func NewExternalOpenAICompletionsStandardRequestInputFromChatCompletionMessage(
-	message *interfaces.ChatCompletionMessage,
-) ExternalOpenAIResponsesStandardRequestInput {
-	return ExternalOpenAIResponsesStandardRequestInput{
-		Type:    "message",
-		Role:    &message.Role,
-		Content: &message.Content,
-	}
-}
-
-func NewExternalOpenAIResponsesStandardRequestFromToolCallOutput(
-	callId string,
-	output map[string]any,
-) (*ExternalOpenAIResponsesStandardRequestInput, error) {
-	outputBytes, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
-	}
-	outputStr := string(outputBytes)
-
-	return &ExternalOpenAIResponsesStandardRequestInput{
-		Type:   "function_call_output",
-		CallId: &callId,
-		Output: &outputStr,
-	}, nil
-}
-
-func NewExternalOpenAICompletionsStandardRequestInputsFromChatCompletionMessages(
-	messages []*interfaces.ChatCompletionMessage,
-) []ExternalOpenAIResponsesStandardRequestInput {
-	inputs := make([]ExternalOpenAIResponsesStandardRequestInput, 0, len(messages))
-	for _, message := range messages {
-		inputs = append(inputs, NewExternalOpenAICompletionsStandardRequestInputFromChatCompletionMessage(message))
-	}
-
-	return inputs
 }
 
 func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionsAsMcpTools(

@@ -1,11 +1,5 @@
 package models
 
-import (
-	"encoding/json"
-
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-)
-
 type ExternalOllamaChatMessageStandardMessage struct {
 	Role      string                                             `json:"role"`
 	Content   string                                             `json:"content"`
@@ -31,39 +25,3 @@ type ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments struct {
 	Properties ExternalToolInputSchemaProperties `json:"properties"`
 }
 
-func NewExternalOllamaChatMessageStandardMessageFromChatCompletionMessage(
-	message *interfaces.ChatCompletionMessage,
-) ExternalOllamaChatMessageStandardMessage {
-	return ExternalOllamaChatMessageStandardMessage{
-		Role:    message.Role,
-		Content: message.Content,
-	}
-}
-
-func NewExternalOllamaChatMessageStandardMessagesFromChatCompletionMessages(
-	messages []*interfaces.ChatCompletionMessage,
-) []ExternalOllamaChatMessageStandardMessage {
-	result := make([]ExternalOllamaChatMessageStandardMessage, 0, len(messages))
-	for _, message := range messages {
-		result = append(result, NewExternalOllamaChatMessageStandardMessageFromChatCompletionMessage(message))
-	}
-
-	return result
-}
-
-func NewExternalOllamaChatMessageStandardMessageFromToolCallOutput(
-	toolName string,
-	output map[string]any,
-) (*ExternalOllamaChatMessageStandardMessage, error) {
-	outputBytes, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
-	}
-	outputStr := string(outputBytes)
-
-	return &ExternalOllamaChatMessageStandardMessage{
-		Role:     "tool",
-		ToolName: &toolName,
-		Content:  outputStr,
-	}, nil
-}

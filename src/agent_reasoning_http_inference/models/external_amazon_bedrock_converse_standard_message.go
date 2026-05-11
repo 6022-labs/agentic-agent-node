@@ -1,7 +1,5 @@
 package models
 
-import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-
 // This type is used by both request and response
 type ExternalAmazonBedrockConverseStandardMessage struct {
 	Role    string                                                `json:"role"`
@@ -53,41 +51,4 @@ type ExternalAmazonBedrockConverseStandardMessageContentToolResult struct {
 type ExternalAmazonBedrockConverseStandardMessageContentToolResultContent struct {
 	Json any     `json:"json,omitempty"`
 	Text *string `json:"text,omitempty"`
-}
-
-func NewExternalAmazonBedrockConverseStandardMessageFromChatCompletionMessage(
-	message *interfaces.ChatCompletionMessage,
-) ExternalAmazonBedrockConverseStandardMessage {
-	return ExternalAmazonBedrockConverseStandardMessage{
-		Role: message.Role,
-		Content: []ExternalAmazonBedrockConverseStandardMessageContent{
-			{
-				Text: &message.Content,
-			},
-		},
-	}
-}
-
-func NewExternalAmazonBedrockConverseStandardMessageFromToolCallOutputs(
-	outputs map[string]map[string]any,
-) ExternalAmazonBedrockConverseStandardMessage {
-	contents := make([]ExternalAmazonBedrockConverseStandardMessageContent, 0, len(outputs))
-
-	for toolUseId, toolResult := range outputs {
-		contents = append(contents, ExternalAmazonBedrockConverseStandardMessageContent{
-			ToolResult: &ExternalAmazonBedrockConverseStandardMessageContentToolResult{
-				ToolUseId: toolUseId,
-				Content: []ExternalAmazonBedrockConverseStandardMessageContentToolResultContent{
-					{
-						Json: toolResult,
-					},
-				},
-			},
-		})
-	}
-
-	return ExternalAmazonBedrockConverseStandardMessage{
-		Role:    "user",
-		Content: contents,
-	}
 }

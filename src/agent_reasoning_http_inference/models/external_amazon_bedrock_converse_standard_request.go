@@ -1,12 +1,9 @@
 package models
 
 import (
-	"strings"
-
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
-	"github.com/samber/lo"
 )
 
 type ExternalAmazonBedrockConverseStandardRequest struct {
@@ -71,33 +68,6 @@ func NewExternalAmazonBedrockConverseStandardRequest(
 			MaxTokens: 32000,
 		},
 	}
-}
-
-func NewExternalAmazonBedrockConverseStandardRequestSystemFromChatCompletionMessage(
-	message *interfaces.ChatCompletionMessage,
-) ExternalAmazonBedrockConverseStandardRequestSystem {
-	return ExternalAmazonBedrockConverseStandardRequestSystem{
-		Text: message.Content,
-	}
-}
-
-func NewExternalAmazonBedrockConverseStandardRequestMessagesAndSystemFromChatCompletionMessages(
-	messages []*interfaces.ChatCompletionMessage,
-) (
-	[]ExternalAmazonBedrockConverseStandardMessage,
-	[]ExternalAmazonBedrockConverseStandardRequestSystem,
-) {
-	systemMessages := lo.Filter(messages, func(item *interfaces.ChatCompletionMessage, _ int) bool {
-		return strings.EqualFold(item.Role, "system")
-	})
-
-	otherMessages, _ := lo.Difference(messages, systemMessages)
-
-	return lo.Map(otherMessages, func(item *interfaces.ChatCompletionMessage, _ int) ExternalAmazonBedrockConverseStandardMessage {
-			return NewExternalAmazonBedrockConverseStandardMessageFromChatCompletionMessage(item)
-		}), lo.Map(systemMessages, func(item *interfaces.ChatCompletionMessage, _ int) ExternalAmazonBedrockConverseStandardRequestSystem {
-			return NewExternalAmazonBedrockConverseStandardRequestSystemFromChatCompletionMessage(item)
-		})
 }
 
 func (r *ExternalAmazonBedrockConverseStandardRequest) AddDefaultToolConfigIfNil() {
