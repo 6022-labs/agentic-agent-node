@@ -12,6 +12,7 @@ func AddRuntimeMvcConfiguration(container *dig.Container) {
 	provideController(container, runtime_mvc.NewConversationMessagesController)
 	provideController(container, runtime_mvc.NewLLMConfigController)
 	provideController(container, runtime_mvc.NewMCPConfigController)
+	provideController(container, runtime_mvc.NewResponseController)
 }
 
 func provideController(container *dig.Container, ctor any) {

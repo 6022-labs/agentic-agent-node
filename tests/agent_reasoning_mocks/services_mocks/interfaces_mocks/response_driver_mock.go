@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +42,10 @@ func (m *MockResponseDriverInterface) EXPECT() *MockResponseDriverInterfaceMockR
 }
 
 // Drive mocks base method.
-func (m *MockResponseDriverInterface) Drive(ctx context.Context, conversationId string, inputs []models.ConversationMessage) (*models.ConversationMessage, error) {
+func (m *MockResponseDriverInterface) Drive(ctx context.Context, conversationId string, inputs []interfaces.ConversationMessage) (*interfaces.ConversationMessage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Drive", ctx, conversationId, inputs)
-	ret0, _ := ret[0].(*models.ConversationMessage)
+	ret0, _ := ret[0].(*interfaces.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

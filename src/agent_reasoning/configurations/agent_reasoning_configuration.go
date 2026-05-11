@@ -34,6 +34,13 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		use_cases.NewCreateResponse,
+		dig.As(new(use_cases.CreateResponseInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	providers := []any{
 		use_cases.NewSetupLLMConnection,
 		use_cases.NewGetLLMConnection,
