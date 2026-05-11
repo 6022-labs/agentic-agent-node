@@ -14,13 +14,13 @@ import (
 const InternalConversationMessagesEndpoint = "/internal/conversations/:conversationId/messages"
 
 type ConversationMessagesController struct {
-	appender *use_cases.AppendConversationMessages
-	lister   *use_cases.ListConversationMessages
+	appender use_cases.AppendConversationMessagesInterface
+	lister   use_cases.ListConversationMessagesInterface
 }
 
 func NewConversationMessagesController(
-	appender *use_cases.AppendConversationMessages,
-	lister *use_cases.ListConversationMessages,
+	appender use_cases.AppendConversationMessagesInterface,
+	lister use_cases.ListConversationMessagesInterface,
 ) *ConversationMessagesController {
 	return &ConversationMessagesController{appender: appender, lister: lister}
 }

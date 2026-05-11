@@ -27,6 +27,13 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewResponseDriver,
+		dig.As(new(interfaces.ResponseDriverInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	providers := []any{
 		use_cases.NewSetupLLMConnection,
 		use_cases.NewGetLLMConnection,

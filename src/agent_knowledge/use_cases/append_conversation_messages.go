@@ -1,30 +1,22 @@
 package use_cases
 
 import (
-	"strings"
-
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 )
 
-type AppendConversationMessages struct {
-	repository repositories.ConversationMessageRepositoryInterface
+type AppendConversationMessagesInterface interface {
+	Execute(conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error)
 }
 
-func NewAppendConversationMessages(repository repositories.ConversationMessageRepositoryInterface) *AppendConversationMessages {
-	return &AppendConversationMessages{repository: repository}
+type AppendConversationMessages struct {
+	service interfaces.AppendConversationMessagesInterface
+}
+
+func NewAppendConversationMessages(service interfaces.AppendConversationMessagesInterface) *AppendConversationMessages {
+	return &AppendConversationMessages{service: service}
 }
 
 func (u *AppendConversationMessages) Execute(conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
-	conversationId = strings.TrimSpace(conversationId)
-	if len(conversationId) == 0 || len(messages) == 0 {
-		return nil, nil
-	}
-
-	prepared := make([]models.ConversationMessage, 0, len(messages))
-	for _, msg := range messages {
-		msg.ConversationId = conversationId
-		prepared = append(prepared, msg)
-	}
-	return u.repository.AppendMessages(prepared)
+	return u.service.Append(conversationId, messages)
 }

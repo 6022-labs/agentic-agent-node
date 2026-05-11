@@ -1,21 +1,16 @@
 package models
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
-	"encoding/json"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-// ConversationMessage is one message the agent has seen in a given conversation.
-// Schema is owned by the goose migration in runtime_db/migrations/.
-//
-// Dedup is by `Hash` (SHA-512 over role/author/content/platform/conversationId)
-// — mirrors the orchestrator's database_connector contract. `Id` is a locally
-// generated uuid for traceability.
+// ConversationMessage persists one turn. Schema lives in runtime_db migrations.
+// Dedup by Hash (SHA-512 of role/author/content/platform/conversationId);
+// caller must demojize Content before write so reasoning + knowledge hash agree.
 type ConversationMessage struct {
 	Id             uuid.UUID `gorm:"primaryKey;size:36"`
 	ConversationId string    `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
@@ -45,27 +40,11 @@ func (m *ConversationMessage) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-// ComputeHash sets Hash from the semantic identity of the message — the
-// fields that make two messages "the same" regardless of when or by whom they
-// were stored.
 func (m *ConversationMessage) ComputeHash() error {
-	bytes, err := json.Marshal(struct {
-		Role           string `json:"role"`
-		Author         string `json:"author"`
-		Content        string `json:"content"`
-		Platform       string `json:"platform"`
-		ConversationId string `json:"conversationId"`
-	}{
-		Role:           m.Role,
-		Author:         m.Author,
-		Content:        m.Content,
-		Platform:       m.Platform,
-		ConversationId: m.ConversationId,
-	})
+	hash, err := utils.ComputeConversationMessageHash(m.Role, m.Author, m.Platform, m.Content, m.ConversationId)
 	if err != nil {
 		return err
 	}
-	sum := sha512.Sum512(bytes)
-	m.Hash = hex.EncodeToString(sum[:])
+	m.Hash = hash
 	return nil
 }

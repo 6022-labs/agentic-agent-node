@@ -10,11 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// LLMExecutor is the domain service that runs a single chat-completion
-// round-trip against the configured LLM. It loads the agent's LLMConnection
-// from the repository, then delegates to the adapter port.
-//
-// It does NOT loop on tool calls — see InferenceLoop for that.
+// LLMExecutor runs one chat-completion round-trip. No looping — InferenceLoop
+// owns that.
 type LLMExecutor struct {
 	llmConnectionRepository repositories.LLMConnectionRepositoryInterface
 	chatCompletionRequester interfaces.ChatCompletionRequesterInterface
@@ -30,7 +27,7 @@ func NewLLMExecutor(
 	}
 }
 
-func (e *LLMExecutor) Execute(
+func (e *LLMExecutor) Complete(
 	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
 	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,

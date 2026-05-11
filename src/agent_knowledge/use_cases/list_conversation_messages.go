@@ -1,24 +1,22 @@
 package use_cases
 
 import (
-	"strings"
-
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 )
 
-type ListConversationMessages struct {
-	repository repositories.ConversationMessageRepositoryInterface
+type ListConversationMessagesInterface interface {
+	Execute(conversationId string) ([]models.ConversationMessage, error)
 }
 
-func NewListConversationMessages(repository repositories.ConversationMessageRepositoryInterface) *ListConversationMessages {
-	return &ListConversationMessages{repository: repository}
+type ListConversationMessages struct {
+	service interfaces.ListConversationMessagesInterface
+}
+
+func NewListConversationMessages(service interfaces.ListConversationMessagesInterface) *ListConversationMessages {
+	return &ListConversationMessages{service: service}
 }
 
 func (u *ListConversationMessages) Execute(conversationId string) ([]models.ConversationMessage, error) {
-	conversationId = strings.TrimSpace(conversationId)
-	if len(conversationId) == 0 {
-		return nil, nil
-	}
-	return u.repository.ListByConversation(conversationId)
+	return u.service.List(conversationId)
 }

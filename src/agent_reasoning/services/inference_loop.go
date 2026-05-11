@@ -9,16 +9,13 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
+	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-// InferenceLoop drives the LLM ↔ MCP exchange. Each iteration sends the current
-// message stream to the LLM via LLMExecutor; if the LLM emits ToolCalls, each
-// call is dispatched through McpRequester, results are appended as tool
-// messages, and the loop iterates. The loop returns once the LLM produces a
-// completion with no ToolCalls (final answer) or when MaxIterations is
-// reached.
+// InferenceLoop drives the LLM ↔ MCP exchange until the LLM stops emitting
+// tool calls or MaxIterations is hit.
 type InferenceLoop struct {
 	logger       *zap.Logger
 	llmExecutor  interfaces.LLMExecutorInterface
@@ -40,9 +37,8 @@ func NewInferenceLoop(
 	}
 }
 
-// Run iterates the LLM ↔ MCP loop until the LLM stops requesting tool calls.
-// Returns the full message stream including all assistant + tool turns added
-// during the loop, so callers can persist the conversation.
+// Run returns the full message stream including assistant + tool turns added
+// during the loop.
 func (l *InferenceLoop) Run(
 	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
@@ -54,7 +50,7 @@ func (l *InferenceLoop) Run(
 	}
 
 	for iteration := 0; iteration < l.settings.MaxIterations; iteration++ {
-		completion, err := l.llmExecutor.Execute(ctx, mcpConnections, toolsByConnectionId, messages)
+		completion, err := l.llmExecutor.Complete(ctx, mcpConnections, toolsByConnectionId, messages)
 		if err != nil {
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
 		}
@@ -64,7 +60,7 @@ func (l *InferenceLoop) Run(
 			ToolCalls: completion.ToolCalls,
 		}
 		if completion.Text != nil {
-			assistantMessage.Content = *completion.Text
+			assistantMessage.Content = runtime_utils.DemojizeContent(*completion.Text)
 		}
 		messages = append(messages, assistantMessage)
 

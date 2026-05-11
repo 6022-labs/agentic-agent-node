@@ -72,7 +72,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, nil, nil, messages)
+			result, err := suite.sut.Complete(ctx, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
@@ -96,7 +96,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, nil, nil, messages)
+			result, err := suite.sut.Complete(ctx, nil, nil, messages)
 
 			assert.Nil(t, result)
 			assert.ErrorIs(t, err, interfaces.ErrLLMConnectionNotConfigured)
@@ -118,7 +118,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, nil, nil, messages)
+			result, err := suite.sut.Complete(ctx, nil, nil, messages)
 
 			assert.Nil(t, result)
 			assert.Error(t, err)
@@ -153,7 +153,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, mcpConnections, toolsByConn, messages)
+			result, err := suite.sut.Complete(ctx, mcpConnections, toolsByConn, messages)
 
 			assert.Nil(t, result)
 			assert.Error(t, err)

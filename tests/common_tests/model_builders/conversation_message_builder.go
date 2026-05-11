@@ -78,7 +78,7 @@ func (b *ConversationMessageBuilder) WithCreatedAt(createdAt time.Time) *Convers
 }
 
 func (b *ConversationMessageBuilder) Build() models.ConversationMessage {
-	return models.ConversationMessage{
+	msg := models.ConversationMessage{
 		Id:             b.id,
 		ConversationId: b.conversationId,
 		Author:         b.author,
@@ -89,4 +89,8 @@ func (b *ConversationMessageBuilder) Build() models.ConversationMessage {
 		Timestamp:      b.timestamp,
 		CreatedAt:      b.createdAt,
 	}
+	if msg.Hash == "" {
+		_ = msg.ComputeHash()
+	}
+	return msg
 }

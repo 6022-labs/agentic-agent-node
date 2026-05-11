@@ -139,10 +139,10 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a message that already exists by hash", func(t *testing.T) {
+			t.Run("Given a hash that already exists is re-inserted (race-safety net)", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should skip the duplicate and only insert the new one", func(t *testing.T) {
+				t.Run("Should keep DB count correct via ON CONFLICT DO NOTHING", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
@@ -150,13 +150,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					_, err := suite.sut.AppendMessages([]models.ConversationMessage{newMessage("conv-2", "hi")})
 					assert.NoError(t, err)
 
-					inserted, err := suite.sut.AppendMessages([]models.ConversationMessage{
+					_, err = suite.sut.AppendMessages([]models.ConversationMessage{
 						newMessage("conv-2", "hi"),
 						newMessage("conv-2", "different content"),
 					})
 					assert.NoError(t, err)
-					assert.Len(t, inserted, 1)
-					assert.Equal(t, "different content", inserted[0].Content)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.ConversationMessage{}).Count(&count)
@@ -167,7 +165,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			t.Run("Given a batch with two semantically identical messages", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should insert only one row", func(t *testing.T) {
+				t.Run("Should land only one row thanks to ON CONFLICT DO NOTHING", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
@@ -183,6 +181,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					assert.Equal(t, int64(1), count)
 				})
 			})
+
 		})
 	}
 }
