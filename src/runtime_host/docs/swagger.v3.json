@@ -1,0 +1,518 @@
+{
+    "components": {
+        "schemas": {
+            "enums.BootstrapStatus": {
+                "enum": [
+                    "awaiting-vault",
+                    "ready"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "BootstrapStatusAwaitingVault",
+                    "BootstrapStatusReady"
+                ]
+            },
+            "errors.ValidationError": {
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "fiber.Map": {
+                "additionalProperties": {},
+                "type": "object"
+            },
+            "requests.AppendConversationMessagesRequest": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.ConversationMessageInput"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.AuthorizeRequest": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.ConversationMessageInput": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.CreateResponseRequest": {
+                "properties": {
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "inputs": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.CreateResponseRequestInput"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.CreateResponseRequestInput": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AppendConversationMessagesResponse": {
+                "properties": {
+                    "inserted": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AuthorizeResponse": {
+                "properties": {
+                    "authorized": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ConversationMessage": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.CreateResponseMessage": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.CreateResponseResponse": {
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/responses.CreateResponseMessage"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetAgentIdentityResponse": {
+                "properties": {
+                    "collectionAddress": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "tokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetBootstrapStatusResponse": {
+                "properties": {
+                    "agentAddress": {
+                        "type": "string"
+                    },
+                    "lastError": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/enums.BootstrapStatus"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListConversationMessagesResponse": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "info": {
+        "description": "Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only gateway_host calls it. All endpoints are mounted under /internal.",
+        "title": "Agentic Agent Node — Runtime Host API",
+        "version": "1.0"
+    },
+    "externalDocs": {
+        "description": "",
+        "url": ""
+    },
+    "paths": {
+        "/internal/authorize": {
+            "post": {
+                "description": "Resolves the agent identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by gateway during /auth/verify.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.AuthorizeRequest",
+                                        "summary": "request",
+                                        "description": "Address to check"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Address to check",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AuthorizeResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "authorize_failed"
+                    }
+                },
+                "summary": "Internal authorize",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/bootstrap/status": {
+            "get": {
+                "description": "Wallet lifecycle snapshot for the gateway. Internal-only endpoint.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetBootstrapStatusResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Internal bootstrap status",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/conversations/{conversationId}/messages": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "Conversation id",
+                        "in": "path",
+                        "name": "conversationId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListConversationMessagesResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "list_failed"
+                    }
+                },
+                "summary": "Internal list messages",
+                "tags": [
+                    "Internal"
+                ]
+            },
+            "post": {
+                "description": "Idempotent batch append to the local conversation transcript. Dedup by SHA-512 hash of (role, content, conversationId).",
+                "parameters": [
+                    {
+                        "description": "Conversation id",
+                        "in": "path",
+                        "name": "conversationId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.AppendConversationMessagesRequest",
+                                        "summary": "request",
+                                        "description": "Messages"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Messages",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AppendConversationMessagesResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "append_failed"
+                    }
+                },
+                "summary": "Internal append messages",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/identity": {
+            "get": {
+                "description": "Returns the agent's collection address + tokenId + ENS name. 404 when no NFT has been minted yet.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetAgentIdentityResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_not_found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_lookup_failed"
+                    }
+                },
+                "summary": "Internal identity lookup",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/responses": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.CreateResponseRequest",
+                                        "summary": "request",
+                                        "description": "Inputs"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Inputs",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.CreateResponseResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "create_response_failed"
+                    }
+                },
+                "summary": "Internal create response",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        }
+    },
+    "openapi": "3.1.0",
+    "servers": [
+        {
+            "url": "/"
+        }
+    ]
+}

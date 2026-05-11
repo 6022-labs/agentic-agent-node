@@ -1,0 +1,287 @@
+basePath: /
+definitions:
+  enums.BootstrapStatus:
+    enum:
+    - awaiting-vault
+    - ready
+    type: string
+    x-enum-varnames:
+    - BootstrapStatusAwaitingVault
+    - BootstrapStatusReady
+  errors.ValidationError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  fiber.Map:
+    additionalProperties: true
+    type: object
+  requests.AppendConversationMessagesRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/requests.ConversationMessageInput'
+        type: array
+    type: object
+  requests.AuthorizeRequest:
+    properties:
+      address:
+        type: string
+    type: object
+  requests.ConversationMessageInput:
+    properties:
+      content:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  requests.CreateResponseRequest:
+    properties:
+      conversationId:
+        type: string
+      inputs:
+        items:
+          $ref: '#/definitions/requests.CreateResponseRequestInput'
+        type: array
+    type: object
+  requests.CreateResponseRequestInput:
+    properties:
+      content:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  responses.AppendConversationMessagesResponse:
+    properties:
+      inserted:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+  responses.AuthorizeResponse:
+    properties:
+      authorized:
+        type: boolean
+    type: object
+  responses.ConversationMessage:
+    properties:
+      content:
+        type: string
+      conversationId:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  responses.CreateResponseMessage:
+    properties:
+      content:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  responses.CreateResponseResponse:
+    properties:
+      message:
+        $ref: '#/definitions/responses.CreateResponseMessage'
+    type: object
+  responses.GetAgentIdentityResponse:
+    properties:
+      collectionAddress:
+        type: string
+      name:
+        type: string
+      tokenId:
+        type: integer
+    type: object
+  responses.GetBootstrapStatusResponse:
+    properties:
+      agentAddress:
+        type: string
+      lastError:
+        type: string
+      status:
+        $ref: '#/definitions/enums.BootstrapStatus'
+    type: object
+  responses.ListConversationMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+info:
+  contact: {}
+  description: Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only
+    gateway_host calls it. All endpoints are mounted under /internal.
+  title: Agentic Agent Node — Runtime Host API
+  version: "1.0"
+paths:
+  /internal/authorize:
+    post:
+      consumes:
+      - application/json
+      description: Resolves the agent identity, fetches OwnerOf(tokenId), compares
+        to the supplied address. Used by gateway during /auth/verify.
+      parameters:
+      - description: Address to check
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AuthorizeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AuthorizeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: authorize_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal authorize
+      tags:
+      - Internal
+  /internal/bootstrap/status:
+    get:
+      description: Wallet lifecycle snapshot for the gateway. Internal-only endpoint.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetBootstrapStatusResponse'
+      summary: Internal bootstrap status
+      tags:
+      - Internal
+  /internal/conversations/{conversationId}/messages:
+    get:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: list_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list messages
+      tags:
+      - Internal
+    post:
+      consumes:
+      - application/json
+      description: Idempotent batch append to the local conversation transcript. Dedup
+        by SHA-512 hash of (role, content, conversationId).
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      - description: Messages
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AppendConversationMessagesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AppendConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: append_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal append messages
+      tags:
+      - Internal
+  /internal/identity:
+    get:
+      description: Returns the agent's collection address + tokenId + ENS name. 404
+        when no NFT has been minted yet.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetAgentIdentityResponse'
+        "404":
+          description: identity_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: identity_lookup_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal identity lookup
+      tags:
+      - Internal
+  /internal/responses:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Inputs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateResponseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.CreateResponseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: create_response_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal create response
+      tags:
+      - Internal
+swagger: "2.0"

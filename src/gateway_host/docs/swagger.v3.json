@@ -1,0 +1,1016 @@
+{
+    "components": {
+        "schemas": {
+            "enums.BootstrapStatus": {
+                "enum": [
+                    "awaiting-vault",
+                    "ready"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "BootstrapStatusAwaitingVault",
+                    "BootstrapStatusReady"
+                ]
+            },
+            "enums.ConversationPlatform": {
+                "enum": [
+                    "none",
+                    "slack"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ConversationPlatformNone",
+                    "ConversationPlatformSlack"
+                ]
+            },
+            "enums.DbDriver": {
+                "enum": [
+                    "postgres",
+                    "mysql",
+                    "mariadb"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "DbDriverPostgres",
+                    "DbDriverMySQL",
+                    "DbDriverMariaDB"
+                ]
+            },
+            "enums.MessageRole": {
+                "enum": [
+                    "user",
+                    "assistant",
+                    "system"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "MessageRoleUser",
+                    "MessageRoleAssistant",
+                    "MessageRoleSystem"
+                ]
+            },
+            "errors.ValidationError": {
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "fiber.Map": {
+                "additionalProperties": {},
+                "type": "object"
+            },
+            "requests.CreateMcpConnectionRequest": {
+                "properties": {
+                    "authHeaderName": {
+                        "type": "string"
+                    },
+                    "authHeaderValue": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.CreateResponseRequest": {
+                "properties": {
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "forceConclusion": {
+                        "type": "boolean"
+                    },
+                    "input": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.InputMessageRequest"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "options": {
+                        "$ref": "#/components/schemas/requests.InputOptionsRequest"
+                    },
+                    "platform": {
+                        "$ref": "#/components/schemas/enums.ConversationPlatform"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "tools": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.InputToolRequest"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.InputMessageRequest": {
+                "properties": {
+                    "author": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/enums.MessageRole"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.InputOptionsRequest": {
+                "properties": {
+                    "maxTokens": {
+                        "type": "integer"
+                    },
+                    "stop": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "temperature": {
+                        "type": "number"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.InputToolEndpointRequest": {
+                "properties": {
+                    "authHeader": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.InputToolRequest": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "endpoint": {
+                        "$ref": "#/components/schemas/requests.InputToolEndpointRequest"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.SetDbConfigRequest": {
+                "properties": {
+                    "database": {
+                        "type": "string"
+                    },
+                    "driver": {
+                        "$ref": "#/components/schemas/enums.DbDriver"
+                    },
+                    "host": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "port": {
+                        "type": "integer"
+                    },
+                    "setup": {
+                        "type": "boolean"
+                    },
+                    "username": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.SetLlmConfigRequest": {
+                "properties": {
+                    "apiKey": {
+                        "type": "string"
+                    },
+                    "baseUrl": {
+                        "type": "string"
+                    },
+                    "extensions": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.VerifyAuthRequest": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    },
+                    "nonce": {
+                        "type": "string"
+                    },
+                    "signature": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentIdentitySnapshot": {
+                "properties": {
+                    "collectionAddress": {
+                        "type": "string"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "resolved": {
+                        "type": "boolean"
+                    },
+                    "tokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetAuthChallengeResponse": {
+                "properties": {
+                    "expiresAt": {
+                        "type": "string"
+                    },
+                    "nonce": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetBootstrapStatusResponse": {
+                "properties": {
+                    "agentAddress": {
+                        "type": "string"
+                    },
+                    "identity": {
+                        "$ref": "#/components/schemas/responses.AgentIdentitySnapshot"
+                    },
+                    "lastError": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/enums.BootstrapStatus"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetHealthResponse": {
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "uptimeSeconds": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetLlmConfigResponse": {
+                "properties": {
+                    "baseUrl": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "setupStatus": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListMcpConnectionsResponse": {
+                "properties": {
+                    "connections": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.McpConnectionResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.McpConnectionResponse": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "headerAuthKeys": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.OutputMessage": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.Response": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "isFinal": {
+                        "type": "boolean"
+                    },
+                    "output": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.OutputMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "stats": {
+                        "$ref": "#/components/schemas/responses.ResponseStats"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ResponseStats": {
+                "properties": {
+                    "iterations": {
+                        "type": "integer"
+                    },
+                    "tokens": {
+                        "type": "integer"
+                    },
+                    "toolCalls": {
+                        "type": "integer"
+                    },
+                    "wallClockMs": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.VerifyAuthResponse": {
+                "properties": {
+                    "expiresAt": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "in": "header",
+                "name": "Authorization",
+                "type": "apiKey"
+            }
+        }
+    },
+    "info": {
+        "description": "Public HTTP front for one agent: auth (JWT + EIP-191), bootstrap status, config endpoints, /responses. Authenticated routes proxy to runtime_host on the loopback interface.",
+        "title": "Agentic Agent Node — Gateway Host API",
+        "version": "1.0"
+    },
+    "externalDocs": {
+        "description": "",
+        "url": ""
+    },
+    "paths": {
+        "/auth/challenge": {
+            "get": {
+                "description": "Returns a fresh nonce + expiry. The caller signs the nonce with their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetAuthChallengeResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Auth challenge",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/auth/verify": {
+            "post": {
+                "description": "Verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.VerifyAuthRequest",
+                                        "summary": "request",
+                                        "description": "Address + signature + nonce"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Address + signature + nonce",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.VerifyAuthResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "nonce_not_found | signature_mismatch | not_authorized"
+                    },
+                    "503": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_not_found"
+                    }
+                },
+                "summary": "Auth verify",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/bootstrap/status": {
+            "get": {
+                "description": "Wallet lifecycle (`awaiting-vault` | `ready`) plus a best-effort NFT identity snapshot once the wallet is loaded.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetBootstrapStatusResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Bootstrap status",
+                "tags": [
+                    "Bootstrap"
+                ]
+            }
+        },
+        "/config/db": {
+            "get": {
+                "responses": {
+                    "501": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "Not Implemented"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get DB config",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SetDbConfigRequest",
+                                        "summary": "request",
+                                        "description": "DB config"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "DB config",
+                    "required": true
+                },
+                "responses": {
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "501": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "Not Implemented"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Set DB config",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/llm": {
+            "delete": {
+                "responses": {
+                    "204": {},
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete LLM config",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetLlmConfigResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "not_configured"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get LLM config",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SetLlmConfigRequest",
+                                        "summary": "request",
+                                        "description": "LLM config"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "LLM config",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetLlmConfigResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Set LLM config",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/mcp-connections": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListMcpConnectionsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List MCP connections",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.CreateMcpConnectionRequest",
+                                        "summary": "request",
+                                        "description": "MCP connection"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "MCP connection",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.McpConnectionResponse"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create MCP connection",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/mcp-connections/{id}": {
+            "delete": {
+                "parameters": [
+                    {
+                        "description": "MCP connection id",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {},
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete MCP connection",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Liveness probe; serves before bootstrap completes.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetHealthResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Health",
+                "tags": [
+                    "Health"
+                ]
+            }
+        },
+        "/responses": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.CreateResponseRequest",
+                                        "summary": "request",
+                                        "description": "Conversation turn"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Conversation turn",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_failed"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create response",
+                "tags": [
+                    "Responses"
+                ]
+            }
+        }
+    },
+    "openapi": "3.1.0",
+    "servers": [
+        {
+            "url": "/"
+        }
+    ]
+}
