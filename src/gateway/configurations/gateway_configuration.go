@@ -56,6 +56,13 @@ func AddGatewayConfiguration(container *dig.Container) {
 			panic(err)
 		}
 	}
+
+	if err := container.Provide(
+		use_cases.NewCreateResponse,
+		dig.As(new(use_cases.CreateResponseInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 func newNonceStore(jwtSettings *settings.JwtSettings) *services.NonceStore {

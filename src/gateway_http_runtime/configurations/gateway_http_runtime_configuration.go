@@ -46,4 +46,10 @@ func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		services.NewHttpResponseClient,
+		dig.As(new(gateway_interfaces.ResponseClientInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
