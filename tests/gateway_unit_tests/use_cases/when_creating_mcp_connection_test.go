@@ -48,11 +48,11 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.CreateMCPConnectionPayload) (*runtime_models.MCPConnectionPayload, error) {
+			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
 				assert.Equal(t, "github", body.Name)
 				assert.Equal(t, "https://mcp.github.example", body.Url)
 				assert.Equal(t, map[string]string{"Authorization": "Bearer abc"}, body.HeaderAuth)
-				return &runtime_models.MCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization"}}, nil
+				return &runtime_models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization"}}, nil
 			})
 		}
 
@@ -74,9 +74,9 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.CreateMCPConnectionPayload) (*runtime_models.MCPConnectionPayload, error) {
+			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
 				assert.Nil(t, body.HeaderAuth)
-				return &runtime_models.MCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
+				return &runtime_models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
 			})
 		}
 

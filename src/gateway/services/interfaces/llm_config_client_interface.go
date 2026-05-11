@@ -15,7 +15,7 @@ var ErrLLMConnectionNotFound = errors.New("llm connection not configured")
 // config endpoints. Implemented by `gateway_http_runtime/services` over HTTP;
 // future in-process adapters (e.g. MCP-driven self-config) plug in here too.
 type LLMConfigClientInterface interface {
-	Get(ctx context.Context) (*runtime_models.LLMConnectionPayload, error)
-	Setup(ctx context.Context, body *runtime_models.SetupLLMConnectionPayload) (*runtime_models.LLMConnectionPayload, error)
+	Get(ctx context.Context) (*runtime_models.ExternalLLMConnectionPayload, error)
+	Setup(ctx context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error)
 	Delete(ctx context.Context) error
 }

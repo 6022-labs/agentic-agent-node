@@ -43,10 +43,10 @@ func (m *MockMCPConfigClientInterface) EXPECT() *MockMCPConfigClientInterfaceMoc
 }
 
 // Create mocks base method.
-func (m *MockMCPConfigClientInterface) Create(ctx context.Context, body *models.CreateMCPConnectionPayload) (*models.MCPConnectionPayload, error) {
+func (m *MockMCPConfigClientInterface) Create(ctx context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, body)
-	ret0, _ := ret[0].(*models.MCPConnectionPayload)
+	ret0, _ := ret[0].(*models.ExternalMCPConnectionPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -72,10 +72,10 @@ func (mr *MockMCPConfigClientInterfaceMockRecorder) Delete(ctx, id any) *gomock.
 }
 
 // GetById mocks base method.
-func (m *MockMCPConfigClientInterface) GetById(ctx context.Context, id uuid.UUID) (*models.MCPConnectionPayload, error) {
+func (m *MockMCPConfigClientInterface) GetById(ctx context.Context, id uuid.UUID) (*models.ExternalMCPConnectionPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetById", ctx, id)
-	ret0, _ := ret[0].(*models.MCPConnectionPayload)
+	ret0, _ := ret[0].(*models.ExternalMCPConnectionPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -87,10 +87,10 @@ func (mr *MockMCPConfigClientInterfaceMockRecorder) GetById(ctx, id any) *gomock
 }
 
 // List mocks base method.
-func (m *MockMCPConfigClientInterface) List(ctx context.Context) (*models.MCPConnectionListPayload, error) {
+func (m *MockMCPConfigClientInterface) List(ctx context.Context) (*models.ExternalMCPConnectionListPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx)
-	ret0, _ := ret[0].(*models.MCPConnectionListPayload)
+	ret0, _ := ret[0].(*models.ExternalMCPConnectionListPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -102,10 +102,10 @@ func (mr *MockMCPConfigClientInterfaceMockRecorder) List(ctx any) *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockMCPConfigClientInterface) Update(ctx context.Context, id uuid.UUID, body *models.UpdateMCPConnectionPayload) (*models.MCPConnectionPayload, error) {
+func (m *MockMCPConfigClientInterface) Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, id, body)
-	ret0, _ := ret[0].(*models.MCPConnectionPayload)
+	ret0, _ := ret[0].(*models.ExternalMCPConnectionPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

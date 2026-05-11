@@ -32,7 +32,7 @@ func (u *GetLlmConfig) Execute(ctx context.Context) (*responses.GetLlmConfigResp
 	return u.toResponse(payload), nil
 }
 
-func (u *GetLlmConfig) toResponse(p *runtime_models.LLMConnectionPayload) *responses.GetLlmConfigResponse {
+func (u *GetLlmConfig) toResponse(p *runtime_models.ExternalLLMConnectionPayload) *responses.GetLlmConfigResponse {
 	baseUrl := ""
 	if p.BaseUrl != nil {
 		baseUrl = *p.BaseUrl

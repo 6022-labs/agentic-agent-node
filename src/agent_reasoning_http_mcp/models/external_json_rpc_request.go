@@ -1,6 +1,6 @@
 package models
 
-type JsonRPCRequest struct {
+type ExternalJsonRPCRequest struct {
 	JSONRPC string      `json:"jsonrpc"`
 	ID      int         `json:"id"`
 	Method  string      `json:"method"`

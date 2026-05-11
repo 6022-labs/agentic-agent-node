@@ -20,7 +20,7 @@ func NewHttpAgentIdentityResolver(client *clients.RuntimeHttpClient) *HttpAgentI
 }
 
 func (r *HttpAgentIdentityResolver) Resolve(ctx context.Context) (*models.AgentIdentity, error) {
-	var payload runtime_models.AgentIdentityPayload
+	var payload runtime_models.ExternalAgentIdentityPayload
 	if err := r.client.Get(ctx, identityPath, &payload, common_interfaces.ErrIdentityNotFound); err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ func NewSetLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *SetLlm
 }
 
 func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) (*responses.GetLlmConfigResponse, error) {
-	payload, err := u.client.Setup(ctx, &runtime_models.SetupLLMConnectionPayload{
+	payload, err := u.client.Setup(ctx, &runtime_models.ExternalSetupLLMConnectionPayload{
 		Platform: request.Provider,
 		Model:    request.Model,
 		BaseUrl:  u.toBaseUrlPtr(request.BaseUrl),
@@ -39,7 +39,7 @@ func (u *SetLlmConfig) toBaseUrlPtr(s string) *string {
 	return &trimmed
 }
 
-func (u *SetLlmConfig) toResponse(p *runtime_models.LLMConnectionPayload) *responses.GetLlmConfigResponse {
+func (u *SetLlmConfig) toResponse(p *runtime_models.ExternalLLMConnectionPayload) *responses.GetLlmConfigResponse {
 	baseUrl := ""
 	if p.BaseUrl != nil {
 		baseUrl = *p.BaseUrl

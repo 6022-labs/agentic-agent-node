@@ -19,8 +19,8 @@ func NewHttpAuthorizer(client *clients.RuntimeHttpClient) *HttpAuthorizer {
 }
 
 func (a *HttpAuthorizer) IsAuthorized(ctx context.Context, address common.Address) (bool, error) {
-	body := runtime_models.AuthorizePayload{Address: address.Hex()}
-	var payload runtime_models.AuthorizeResultPayload
+	body := runtime_models.ExternalAuthorizePayload{Address: address.Hex()}
+	var payload runtime_models.ExternalAuthorizeResultPayload
 	if err := a.client.Post(ctx, authorizePath, body, &payload); err != nil {
 		return false, err
 	}

@@ -56,10 +56,10 @@ func (mr *MockLLMConfigClientInterfaceMockRecorder) Delete(ctx any) *gomock.Call
 }
 
 // Get mocks base method.
-func (m *MockLLMConfigClientInterface) Get(ctx context.Context) (*models.LLMConnectionPayload, error) {
+func (m *MockLLMConfigClientInterface) Get(ctx context.Context) (*models.ExternalLLMConnectionPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx)
-	ret0, _ := ret[0].(*models.LLMConnectionPayload)
+	ret0, _ := ret[0].(*models.ExternalLLMConnectionPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -71,10 +71,10 @@ func (mr *MockLLMConfigClientInterfaceMockRecorder) Get(ctx any) *gomock.Call {
 }
 
 // Setup mocks base method.
-func (m *MockLLMConfigClientInterface) Setup(ctx context.Context, body *models.SetupLLMConnectionPayload) (*models.LLMConnectionPayload, error) {
+func (m *MockLLMConfigClientInterface) Setup(ctx context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Setup", ctx, body)
-	ret0, _ := ret[0].(*models.LLMConnectionPayload)
+	ret0, _ := ret[0].(*models.ExternalLLMConnectionPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

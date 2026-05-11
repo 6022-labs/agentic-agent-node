@@ -38,8 +38,8 @@ func TestWhenListingMcpConnections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMcpConnectionsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any()).Return(&runtime_models.MCPConnectionListPayload{
-				Connections: []runtime_models.MCPConnectionPayload{
+			suite.mockClient.EXPECT().List(gomock.Any()).Return(&runtime_models.ExternalMCPConnectionListPayload{
+				Connections: []runtime_models.ExternalMCPConnectionPayload{
 					{Id: "a", Name: "alpha", Url: "https://a", HeaderAuthKeys: []string{"Authorization"}},
 					{Id: "b", Name: "beta", Url: "https://b", HeaderAuthKeys: []string{}},
 				},

@@ -18,16 +18,16 @@ func NewHttpLLMConfigClient(client *clients.RuntimeHttpClient) *HttpLLMConfigCli
 	return &HttpLLMConfigClient{client: client}
 }
 
-func (c *HttpLLMConfigClient) Get(ctx context.Context) (*runtime_models.LLMConnectionPayload, error) {
-	var payload runtime_models.LLMConnectionPayload
+func (c *HttpLLMConfigClient) Get(ctx context.Context) (*runtime_models.ExternalLLMConnectionPayload, error) {
+	var payload runtime_models.ExternalLLMConnectionPayload
 	if err := c.client.Get(ctx, llmConfigPath, &payload, gateway_interfaces.ErrLLMConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *runtime_models.SetupLLMConnectionPayload) (*runtime_models.LLMConnectionPayload, error) {
-	var payload runtime_models.LLMConnectionPayload
+func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error) {
+	var payload runtime_models.ExternalLLMConnectionPayload
 	if err := c.client.Post(ctx, llmConfigPath, body, &payload); err != nil {
 		return nil, err
 	}

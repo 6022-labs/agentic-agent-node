@@ -1,8 +1,8 @@
 package models
 
-type JsonRPCResponse[T any] struct {
+type ExternalJsonRPCResponse[T any] struct {
 	JSONRPC string        `json:"jsonrpc"`
 	ID      interface{}   `json:"id"`
 	Result  T             `json:"result"`
-	Error   *JsonRPCError `json:"error,omitempty"`
+	Error   *ExternalJsonRPCError `json:"error,omitempty"`
 }

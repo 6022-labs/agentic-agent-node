@@ -1,9 +1,9 @@
 package models
 
-type AuthorizePayload struct {
+type ExternalAuthorizePayload struct {
 	Address string `json:"address"`
 }
 
-type AuthorizeResultPayload struct {
+type ExternalAuthorizeResultPayload struct {
 	Authorized bool `json:"authorized"`
 }

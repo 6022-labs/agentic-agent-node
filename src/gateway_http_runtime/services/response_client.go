@@ -17,8 +17,8 @@ func NewHttpResponseClient(client *clients.RuntimeHttpClient) *HttpResponseClien
 	return &HttpResponseClient{client: client}
 }
 
-func (c *HttpResponseClient) Create(ctx context.Context, body *runtime_models.CreateResponsePayload) (*runtime_models.CreateResponseResultPayload, error) {
-	var payload runtime_models.CreateResponseResultPayload
+func (c *HttpResponseClient) Create(ctx context.Context, body *runtime_models.ExternalCreateResponsePayload) (*runtime_models.ExternalCreateResponseResultPayload, error) {
+	var payload runtime_models.ExternalCreateResponseResultPayload
 	if err := c.client.Post(ctx, responsesPath, body, &payload); err != nil {
 		return nil, err
 	}

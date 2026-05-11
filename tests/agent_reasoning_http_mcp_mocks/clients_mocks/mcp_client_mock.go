@@ -42,10 +42,10 @@ func (m *MockMcpClientInterface) EXPECT() *MockMcpClientInterfaceMockRecorder {
 }
 
 // CallTool mocks base method.
-func (m *MockMcpClientInterface) CallTool(mcpServerUrl, toolName string, input map[string]any, headers map[string]string) (*models.JsonRPCResponse[json.RawMessage], error) {
+func (m *MockMcpClientInterface) CallTool(mcpServerUrl, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CallTool", mcpServerUrl, toolName, input, headers)
-	ret0, _ := ret[0].(*models.JsonRPCResponse[json.RawMessage])
+	ret0, _ := ret[0].(*models.ExternalJsonRPCResponse[json.RawMessage])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -57,10 +57,10 @@ func (mr *MockMcpClientInterfaceMockRecorder) CallTool(mcpServerUrl, toolName, i
 }
 
 // ListTools mocks base method.
-func (m *MockMcpClientInterface) ListTools(mcpServerUrl string, headers map[string]string) (*models.JsonRPCResponse[models.ExternalMcpToolsResponse], error) {
+func (m *MockMcpClientInterface) ListTools(mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListTools", mcpServerUrl, headers)
-	ret0, _ := ret[0].(*models.JsonRPCResponse[models.ExternalMcpToolsResponse])
+	ret0, _ := ret[0].(*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

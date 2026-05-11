@@ -21,8 +21,8 @@ const (
 )
 
 type McpClientInterface interface {
-	ListTools(mcpServerUrl string, headers map[string]string) (*models.JsonRPCResponse[models.ExternalMcpToolsResponse], error)
-	CallTool(mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.JsonRPCResponse[json.RawMessage], error)
+	ListTools(mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error)
+	CallTool(mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error)
 }
 
 type McpClient struct {
@@ -46,8 +46,8 @@ func NewMcpClient(
 	}
 }
 
-func (c *McpClient) ListTools(mcpServerUrl string, headers map[string]string) (*models.JsonRPCResponse[models.ExternalMcpToolsResponse], error) {
-	requestBody, err := json.Marshal(models.JsonRPCRequest{
+func (c *McpClient) ListTools(mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
+	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,
 		Method:  listToolsMethod,
@@ -95,8 +95,8 @@ func (c *McpClient) ListTools(mcpServerUrl string, headers map[string]string) (*
 	return rpcResponse, nil
 }
 
-func (c *McpClient) CallTool(mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.JsonRPCResponse[json.RawMessage], error) {
-	requestBody, err := json.Marshal(models.JsonRPCRequest{
+func (c *McpClient) CallTool(mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
+	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,
 		Method:  callToolMethod,
@@ -147,7 +147,7 @@ func (c *McpClient) CallTool(mcpServerUrl string, toolName string, input map[str
 	return rpcResponse, nil
 }
 
-func decodeRPCResponse[T any](logger *zap.Logger, resp *http.Response) (*models.JsonRPCResponse[T], error) {
+func decodeRPCResponse[T any](logger *zap.Logger, resp *http.Response) (*models.ExternalJsonRPCResponse[T], error) {
 	contentType := resp.Header.Get("Content-Type")
 
 	if strings.HasPrefix(strings.ToLower(contentType), "text/event-stream") {
@@ -158,8 +158,8 @@ func decodeRPCResponse[T any](logger *zap.Logger, resp *http.Response) (*models.
 	return decodeApplicationJSON[T](resp.Body)
 }
 
-func decodeApplicationJSON[T any](body io.Reader) (*models.JsonRPCResponse[T], error) {
-	var rpcResponse models.JsonRPCResponse[T]
+func decodeApplicationJSON[T any](body io.Reader) (*models.ExternalJsonRPCResponse[T], error) {
+	var rpcResponse models.ExternalJsonRPCResponse[T]
 	if err := json.NewDecoder(body).Decode(&rpcResponse); err != nil {
 		return nil, err
 	}
@@ -170,12 +170,12 @@ const (
 	sseDataPrefix = "data:"
 )
 
-func decodeEventStream[T any](logger *zap.Logger, body io.Reader) (*models.JsonRPCResponse[T], error) {
+func decodeEventStream[T any](logger *zap.Logger, body io.Reader) (*models.ExternalJsonRPCResponse[T], error) {
 	reader := bufio.NewReader(body)
 
 	var (
 		payloadBuilder strings.Builder
-		lastDecoded    *models.JsonRPCResponse[T]
+		lastDecoded    *models.ExternalJsonRPCResponse[T]
 	)
 
 	flushPayload := func() {
@@ -183,9 +183,9 @@ func decodeEventStream[T any](logger *zap.Logger, body io.Reader) (*models.JsonR
 			return
 		}
 
-		var candidate models.JsonRPCResponse[T]
+		var candidate models.ExternalJsonRPCResponse[T]
 		if err := json.Unmarshal([]byte(payloadBuilder.String()), &candidate); err != nil {
-			logger.Debug("SSE event did not decode to JsonRPCResponse", zap.Error(err))
+			logger.Debug("SSE event did not decode to ExternalJsonRPCResponse", zap.Error(err))
 			payloadBuilder.Reset()
 			return
 		}

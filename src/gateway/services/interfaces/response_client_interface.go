@@ -7,5 +7,5 @@ import (
 )
 
 type ResponseClientInterface interface {
-	Create(ctx context.Context, body *runtime_models.CreateResponsePayload) (*runtime_models.CreateResponseResultPayload, error)
+	Create(ctx context.Context, body *runtime_models.ExternalCreateResponsePayload) (*runtime_models.ExternalCreateResponseResultPayload, error)
 }

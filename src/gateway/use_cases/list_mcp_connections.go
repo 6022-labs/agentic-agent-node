@@ -28,7 +28,7 @@ func (u *ListMcpConnections) Execute(ctx context.Context) (*responses.ListMcpCon
 	return &responses.ListMcpConnectionsResponse{Connections: out}, nil
 }
 
-func (u *ListMcpConnections) toResponse(p *runtime_models.MCPConnectionPayload) *responses.McpConnectionResponse {
+func (u *ListMcpConnections) toResponse(p *runtime_models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {
 	return &responses.McpConnectionResponse{
 		Id:             p.Id,
 		Name:           p.Name,

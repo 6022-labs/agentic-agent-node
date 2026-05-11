@@ -42,10 +42,10 @@ func (m *MockResponseClientInterface) EXPECT() *MockResponseClientInterfaceMockR
 }
 
 // Create mocks base method.
-func (m *MockResponseClientInterface) Create(ctx context.Context, body *models.CreateResponsePayload) (*models.CreateResponseResultPayload, error) {
+func (m *MockResponseClientInterface) Create(ctx context.Context, body *models.ExternalCreateResponsePayload) (*models.ExternalCreateResponseResultPayload, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, body)
-	ret0, _ := ret[0].(*models.CreateResponseResultPayload)
+	ret0, _ := ret[0].(*models.ExternalCreateResponseResultPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

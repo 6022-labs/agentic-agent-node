@@ -19,32 +19,32 @@ func NewHttpMCPConfigClient(client *clients.RuntimeHttpClient) *HttpMCPConfigCli
 	return &HttpMCPConfigClient{client: client}
 }
 
-func (c *HttpMCPConfigClient) List(ctx context.Context) (*runtime_models.MCPConnectionListPayload, error) {
-	var payload runtime_models.MCPConnectionListPayload
+func (c *HttpMCPConfigClient) List(ctx context.Context) (*runtime_models.ExternalMCPConnectionListPayload, error) {
+	var payload runtime_models.ExternalMCPConnectionListPayload
 	if err := c.client.Get(ctx, mcpConfigPath, &payload, nil); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Create(ctx context.Context, body *runtime_models.CreateMCPConnectionPayload) (*runtime_models.MCPConnectionPayload, error) {
-	var payload runtime_models.MCPConnectionPayload
+func (c *HttpMCPConfigClient) Create(ctx context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+	var payload runtime_models.ExternalMCPConnectionPayload
 	if err := c.client.Post(ctx, mcpConfigPath, body, &payload); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*runtime_models.MCPConnectionPayload, error) {
-	var payload runtime_models.MCPConnectionPayload
+func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*runtime_models.ExternalMCPConnectionPayload, error) {
+	var payload runtime_models.ExternalMCPConnectionPayload
 	if err := c.client.Get(ctx, mcpConfigPath+"/"+id.String(), &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *runtime_models.UpdateMCPConnectionPayload) (*runtime_models.MCPConnectionPayload, error) {
-	var payload runtime_models.MCPConnectionPayload
+func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *runtime_models.ExternalUpdateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+	var payload runtime_models.ExternalMCPConnectionPayload
 	if err := c.client.Put(ctx, mcpConfigPath+"/"+id.String(), body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}

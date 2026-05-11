@@ -22,7 +22,7 @@ func NewHttpBootstrapStateReader(client *clients.RuntimeHttpClient) *HttpBootstr
 }
 
 func (r *HttpBootstrapStateReader) Get() models.BootstrapState {
-	var payload runtime_models.BootstrapStatusPayload
+	var payload runtime_models.ExternalBootstrapStatusPayload
 	if err := r.client.Get(context.Background(), bootstrapStatusPath, &payload, nil); err != nil {
 		return models.BootstrapState{LastError: err.Error()}
 	}

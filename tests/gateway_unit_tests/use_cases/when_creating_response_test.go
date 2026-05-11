@@ -55,15 +55,15 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().
 				Create(ctx, gomock.Any()).
-				DoAndReturn(func(_ context.Context, payload *runtime_models.CreateResponsePayload) (*runtime_models.CreateResponseResultPayload, error) {
+				DoAndReturn(func(_ context.Context, payload *runtime_models.ExternalCreateResponsePayload) (*runtime_models.ExternalCreateResponseResultPayload, error) {
 					assert.Equal(t, "conv-1", payload.ConversationId)
 					if assert.Len(t, payload.Inputs, 1) {
 						assert.Equal(t, "user", payload.Inputs[0].Role)
 						assert.Equal(t, "hi", payload.Inputs[0].Content)
 						assert.Equal(t, now, payload.Inputs[0].Timestamp)
 					}
-					return &runtime_models.CreateResponseResultPayload{
-						Message: &runtime_models.CreateResponseMessagePayload{
+					return &runtime_models.ExternalCreateResponseResultPayload{
+						Message: &runtime_models.ExternalCreateResponseMessagePayload{
 							Role:      "assistant",
 							Content:   "hello back",
 							Timestamp: now,
@@ -97,7 +97,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().
 				Create(ctx, gomock.Any()).
-				Return(&runtime_models.CreateResponseResultPayload{}, nil)
+				Return(&runtime_models.ExternalCreateResponseResultPayload{}, nil)
 		}
 
 		t.Run("Should return Response with IsFinal=false and no Output", func(t *testing.T) {

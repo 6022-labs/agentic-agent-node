@@ -26,12 +26,12 @@ func NewCreateResponse(client interfaces.ResponseClientInterface) *CreateRespons
 // Tools, Options, and ForceConclusion are swarm-side concerns — the
 // orchestrator owns them. Agent-node only forwards inputs.
 func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
-	payload := &runtime_models.CreateResponsePayload{
+	payload := &runtime_models.ExternalCreateResponsePayload{
 		ConversationId: request.ConversationId,
-		Inputs:         make([]runtime_models.CreateResponseInputPayload, 0, len(request.Input)),
+		Inputs:         make([]runtime_models.ExternalCreateResponseInputPayload, 0, len(request.Input)),
 	}
 	for _, m := range request.Input {
-		payload.Inputs = append(payload.Inputs, runtime_models.CreateResponseInputPayload{
+		payload.Inputs = append(payload.Inputs, runtime_models.ExternalCreateResponseInputPayload{
 			Role:      string(m.Role),
 			Content:   m.Content,
 			Timestamp: m.Timestamp,

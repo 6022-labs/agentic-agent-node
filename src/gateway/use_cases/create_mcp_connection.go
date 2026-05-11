@@ -18,7 +18,7 @@ func NewCreateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 }
 
 func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
-	payload, err := u.client.Create(ctx, &runtime_models.CreateMCPConnectionPayload{
+	payload, err := u.client.Create(ctx, &runtime_models.ExternalCreateMCPConnectionPayload{
 		Name:       request.Name,
 		Url:        request.Url,
 		HeaderAuth: u.toHeaderAuthMap(request),
@@ -36,7 +36,7 @@ func (u *CreateMcpConnection) toHeaderAuthMap(request *requests.CreateMcpConnect
 	return map[string]string{request.AuthHeaderName: request.AuthHeaderValue}
 }
 
-func (u *CreateMcpConnection) toResponse(p *runtime_models.MCPConnectionPayload) *responses.McpConnectionResponse {
+func (u *CreateMcpConnection) toResponse(p *runtime_models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {
 	return &responses.McpConnectionResponse{
 		Id:             p.Id,
 		Name:           p.Name,

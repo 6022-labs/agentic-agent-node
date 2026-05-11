@@ -2,23 +2,23 @@ package models
 
 import "time"
 
-type CreateResponseInputPayload struct {
+type ExternalCreateResponseInputPayload struct {
 	Role      string    `json:"role"`
 	Content   string    `json:"content"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
-type CreateResponsePayload struct {
+type ExternalCreateResponsePayload struct {
 	ConversationId string                       `json:"conversationId"`
-	Inputs         []CreateResponseInputPayload `json:"inputs"`
+	Inputs         []ExternalCreateResponseInputPayload `json:"inputs"`
 }
 
-type CreateResponseMessagePayload struct {
+type ExternalCreateResponseMessagePayload struct {
 	Role      string    `json:"role"`
 	Content   string    `json:"content"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
-type CreateResponseResultPayload struct {
-	Message *CreateResponseMessagePayload `json:"message,omitempty"`
+type ExternalCreateResponseResultPayload struct {
+	Message *ExternalCreateResponseMessagePayload `json:"message,omitempty"`
 }

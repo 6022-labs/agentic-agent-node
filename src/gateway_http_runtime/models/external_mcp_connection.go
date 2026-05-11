@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type MCPConnectionPayload struct {
+type ExternalMCPConnectionPayload struct {
 	Id             string    `json:"id"`
 	Name           string    `json:"name"`
 	Url            string    `json:"url"`
@@ -11,19 +11,19 @@ type MCPConnectionPayload struct {
 	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
-type MCPConnectionListPayload struct {
-	Connections []MCPConnectionPayload `json:"connections"`
+type ExternalMCPConnectionListPayload struct {
+	Connections []ExternalMCPConnectionPayload `json:"connections"`
 }
 
-// CreateMCPConnectionPayload is the body shape /internal/config/mcp POST accepts.
-type CreateMCPConnectionPayload struct {
+// ExternalCreateMCPConnectionPayload is the body shape /internal/config/mcp POST accepts.
+type ExternalCreateMCPConnectionPayload struct {
 	Name       string            `json:"name"`
 	Url        string            `json:"url"`
 	HeaderAuth map[string]string `json:"headerAuth,omitempty"`
 }
 
-// UpdateMCPConnectionPayload is the body shape /internal/config/mcp/:id PUT accepts.
-type UpdateMCPConnectionPayload struct {
+// ExternalUpdateMCPConnectionPayload is the body shape /internal/config/mcp/:id PUT accepts.
+type ExternalUpdateMCPConnectionPayload struct {
 	Name       string            `json:"name"`
 	Url        string            `json:"url"`
 	HeaderAuth map[string]string `json:"headerAuth,omitempty"`

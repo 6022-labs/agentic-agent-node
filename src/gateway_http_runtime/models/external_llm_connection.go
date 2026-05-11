@@ -2,9 +2,9 @@ package models
 
 import "time"
 
-// LLMConnectionPayload mirrors the JSON shape the runtime returns for
+// ExternalLLMConnectionPayload mirrors the JSON shape the runtime returns for
 // /internal/config/llm. Kept independent of the runtime's domain types.
-type LLMConnectionPayload struct {
+type ExternalLLMConnectionPayload struct {
 	Id          string    `json:"id"`
 	Platform    string    `json:"platform"`
 	Model       string    `json:"model"`
@@ -14,8 +14,8 @@ type LLMConnectionPayload struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-// SetupLLMConnectionPayload is the body shape /internal/config/llm POST accepts.
-type SetupLLMConnectionPayload struct {
+// ExternalSetupLLMConnectionPayload is the body shape /internal/config/llm POST accepts.
+type ExternalSetupLLMConnectionPayload struct {
 	Platform string  `json:"platform"`
 	Model    string  `json:"model"`
 	BaseUrl  *string `json:"baseUrl,omitempty"`

@@ -62,9 +62,9 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			result, err := suite.sut.Create(context.Background(), &models.CreateResponsePayload{
+			result, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
 				ConversationId: "conv-1",
-				Inputs: []models.CreateResponseInputPayload{
+				Inputs: []models.ExternalCreateResponseInputPayload{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
@@ -96,9 +96,9 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			result, err := suite.sut.Create(context.Background(), &models.CreateResponsePayload{
+			result, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
 				ConversationId: "conv-1",
-				Inputs:         []models.CreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
+				Inputs:         []models.ExternalCreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
 			})
 
 			assert.NoError(t, err)
@@ -122,9 +122,9 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			_, err := suite.sut.Create(context.Background(), &models.CreateResponsePayload{
+			_, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
 				ConversationId: "conv-1",
-				Inputs:         []models.CreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
+				Inputs:         []models.ExternalCreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
 			})
 
 			assert.Error(t, err)

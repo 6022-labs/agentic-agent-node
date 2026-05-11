@@ -42,7 +42,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 
 		baseUrl := "https://api.openai.com/v1"
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.LLMConnectionPayload{
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.ExternalLLMConnectionPayload{
 				Id:          "abc",
 				Platform:    "open-ai",
 				Model:       "gpt-4o",
@@ -112,7 +112,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.LLMConnectionPayload{
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.ExternalLLMConnectionPayload{
 				Id: "abc", Platform: "ollama", Model: "llama3", SetupStatus: "established",
 			}, nil)
 		}
