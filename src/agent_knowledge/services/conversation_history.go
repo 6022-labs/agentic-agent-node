@@ -53,8 +53,6 @@ func (h *ConversationHistory) Write(conversationId string, messages []interfaces
 func (h *ConversationHistory) toDTO(m models.ConversationMessage) interfaces.ConversationMessage {
 	return interfaces.ConversationMessage{
 		Role:      m.Role,
-		Author:    m.Author,
-		Platform:  m.Platform,
 		Content:   m.Content,
 		Timestamp: m.Timestamp,
 	}
@@ -63,8 +61,6 @@ func (h *ConversationHistory) toDTO(m models.ConversationMessage) interfaces.Con
 func (h *ConversationHistory) toModel(m interfaces.ConversationMessage) models.ConversationMessage {
 	return models.ConversationMessage{
 		Role:      m.Role,
-		Author:    m.Author,
-		Platform:  m.Platform,
 		Content:   m.Content,
 		Timestamp: m.Timestamp,
 	}

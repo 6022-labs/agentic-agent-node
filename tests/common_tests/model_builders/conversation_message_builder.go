@@ -11,9 +11,7 @@ import (
 type ConversationMessageBuilder struct {
 	id             uuid.UUID
 	conversationId string
-	author         string
 	role           string
-	platform       string
 	content        string
 	hash           string
 	timestamp      time.Time
@@ -24,9 +22,7 @@ func NewConversationMessageBuilder() *ConversationMessageBuilder {
 	return &ConversationMessageBuilder{
 		id:             uuid.New(),
 		conversationId: faker.UUIDHyphenated(),
-		author:         faker.Username(),
 		role:           "user",
-		platform:       "slack",
 		content:        faker.Sentence(),
 		timestamp:      time.Now().UTC().Truncate(time.Microsecond),
 	}
@@ -42,18 +38,8 @@ func (b *ConversationMessageBuilder) WithConversationId(conversationId string) *
 	return b
 }
 
-func (b *ConversationMessageBuilder) WithAuthor(author string) *ConversationMessageBuilder {
-	b.author = author
-	return b
-}
-
 func (b *ConversationMessageBuilder) WithRole(role string) *ConversationMessageBuilder {
 	b.role = role
-	return b
-}
-
-func (b *ConversationMessageBuilder) WithPlatform(platform string) *ConversationMessageBuilder {
-	b.platform = platform
 	return b
 }
 
@@ -81,9 +67,7 @@ func (b *ConversationMessageBuilder) Build() models.ConversationMessage {
 	msg := models.ConversationMessage{
 		Id:             b.id,
 		ConversationId: b.conversationId,
-		Author:         b.author,
 		Role:           b.role,
-		Platform:       b.platform,
 		Content:        b.content,
 		Hash:           b.hash,
 		Timestamp:      b.timestamp,

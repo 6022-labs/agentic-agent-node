@@ -97,8 +97,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := []models.ConversationMessage{
-				model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("hi 🔥").WithTimestamp(now).Build(),
-				model_builders.NewConversationMessageBuilder().WithAuthor("bob").WithRole("assistant").WithContent("hello").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("hi 🔥").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().WithRole("assistant").WithContent("hello").WithTimestamp(now).Build(),
 			}
 			res, err := suite.sut.Append(conversationId, input)
 
@@ -112,9 +112,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given some inputs match existing hashes", func(t *testing.T) {
 		t.Parallel()
 
-		duplicateInput := model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("dup").WithTimestamp(now).Build()
+		duplicateInput := model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build()
 		duplicateInput.ConversationId = conversationId
-		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Author, duplicateInput.Platform, duplicateInput.Content, conversationId)
+		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockRepository.EXPECT().
@@ -138,8 +138,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := []models.ConversationMessage{
-				model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("dup").WithTimestamp(now).Build(),
-				model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("fresh").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("fresh").WithTimestamp(now).Build(),
 			}
 			res, err := suite.sut.Append(conversationId, input)
 
@@ -151,9 +151,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given every input is already stored", func(t *testing.T) {
 		t.Parallel()
 
-		input := model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("dup").WithTimestamp(now).Build()
+		input := model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build()
 		input.ConversationId = conversationId
-		dupHash, _ := utils.ComputeConversationMessageHash(input.Role, input.Author, input.Platform, input.Content, conversationId)
+		dupHash, _ := utils.ComputeConversationMessageHash(input.Role, input.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockRepository.EXPECT().

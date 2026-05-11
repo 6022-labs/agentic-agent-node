@@ -3,9 +3,7 @@
 CREATE TABLE `conversation_messages` (
   `id` varchar(36) NOT NULL,
   `conversation_id` varchar(128) NOT NULL,
-  `author` varchar(128) NOT NULL,
   `role` varchar(32) NOT NULL,
-  `platform` varchar(64) NULL,
   `content` text NOT NULL,
   `hash` varchar(128) NOT NULL,
   `timestamp` datetime(3) NOT NULL,

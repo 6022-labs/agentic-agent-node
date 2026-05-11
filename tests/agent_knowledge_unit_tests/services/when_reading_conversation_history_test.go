@@ -46,8 +46,6 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		stored := []models.ConversationMessage{
 			{
 				Role:           "user",
-				Author:         "alice",
-				Platform:       "slack",
 				Content:        "hi :fire:",
 				ConversationId: conversationId,
 				Hash:           "ignored-by-dto",
@@ -69,8 +67,6 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.Len(t, result, 1) {
 				assert.Equal(t, "user", result[0].Role)
-				assert.Equal(t, "alice", result[0].Author)
-				assert.Equal(t, "slack", result[0].Platform)
 				assert.Equal(t, "hi :fire:", result[0].Content)
 				assert.Equal(t, now, result[0].Timestamp)
 			}

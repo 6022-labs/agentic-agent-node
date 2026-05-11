@@ -45,8 +45,8 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		inputs := []interfaces.ConversationMessage{
-			{Role: "user", Author: "alice", Platform: "slack", Content: "hi", Timestamp: now},
-			{Role: "assistant", Author: "agent", Platform: "slack", Content: "hello", Timestamp: now},
+			{Role: "user", Content: "hi", Timestamp: now},
+			{Role: "assistant", Content: "hello", Timestamp: now},
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
@@ -55,8 +55,6 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 				DoAndReturn(func(_ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
-						assert.Equal(t, "alice", msgs[0].Author)
-						assert.Equal(t, "slack", msgs[0].Platform)
 						assert.Equal(t, "hi", msgs[0].Content)
 						assert.Equal(t, now, msgs[0].Timestamp)
 						assert.Equal(t, "assistant", msgs[1].Role)
@@ -83,8 +81,6 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		persisted := []models.ConversationMessage{
 			{
 				Role:           "user",
-				Author:         "alice",
-				Platform:       "slack",
 				Content:        "hi",
 				ConversationId: conversationId,
 				Hash:           "computed-by-service",
@@ -105,11 +101,10 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 			initSuite(suite)
 
 			result, err := suite.sut.Write(conversationId, []interfaces.ConversationMessage{
-				{Role: "user", Author: "alice", Platform: "slack", Content: "hi", Timestamp: now},
+				{Role: "user", Content: "hi", Timestamp: now},
 			})
 			assert.NoError(t, err)
 			if assert.Len(t, result, 1) {
-				assert.Equal(t, "alice", result[0].Author)
 				assert.Equal(t, "hi", result[0].Content)
 				assert.Equal(t, now, result[0].Timestamp)
 			}

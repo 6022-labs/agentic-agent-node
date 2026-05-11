@@ -9,14 +9,12 @@ import (
 )
 
 // ConversationMessage persists one turn. Schema lives in runtime_db migrations.
-// Dedup by Hash (SHA-512 of role/author/content/platform/conversationId);
-// caller must demojize Content before write so reasoning + knowledge hash agree.
+// Dedup by Hash (SHA-512 of role/content/conversationId); caller must
+// demojize Content before write so reasoning + knowledge hash agree.
 type ConversationMessage struct {
 	Id             uuid.UUID `gorm:"primaryKey;size:36"`
 	ConversationId string    `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
-	Author         string    `gorm:"not null;size:128"`
 	Role           string    `gorm:"not null;size:32"`
-	Platform       string    `gorm:"size:64"`
 	Content        string    `gorm:"not null;type:text"`
 	Hash           string    `gorm:"not null;size:128;uniqueIndex:uq_conversation_messages_hash"`
 	Timestamp      time.Time `gorm:"not null"`
@@ -41,7 +39,7 @@ func (m *ConversationMessage) BeforeCreate(_ *gorm.DB) error {
 }
 
 func (m *ConversationMessage) ComputeHash() error {
-	hash, err := utils.ComputeConversationMessageHash(m.Role, m.Author, m.Platform, m.Content, m.ConversationId)
+	hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, m.ConversationId)
 	if err != nil {
 		return err
 	}

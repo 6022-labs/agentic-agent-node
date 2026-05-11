@@ -115,7 +115,7 @@ func (d *ResponseDriver) computeHashes(
 ) (map[string]struct{}, error) {
 	out := make(map[string]struct{}, len(messages))
 	for _, m := range messages {
-		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Author, m.Platform, m.Content, conversationId)
+		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, conversationId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash history message: %w", err)
 		}
@@ -136,7 +136,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 	for _, m := range inputs {
 		m.Content = utils.DemojizeContent(m.Content)
 
-		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Author, m.Platform, m.Content, conversationId)
+		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, conversationId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash input message: %w", err)
 		}

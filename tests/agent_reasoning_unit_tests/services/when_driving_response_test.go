@@ -59,7 +59,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 	ctx := context.Background()
 	conversationId := "conv-1"
 	inputs := []knowledge_interfaces.ConversationMessage{
-		{Role: "user", Content: "hello", Author: "alice"},
+		{Role: "user", Content: "hello"},
 	}
 
 	t.Run("Given inputs do not match history", func(t *testing.T) {
@@ -112,8 +112,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 	t.Run("Given an input matches an already-stored message", func(t *testing.T) {
 		t.Parallel()
 
-		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello", Author: "alice"}
-		freshInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "follow-up", Author: "alice"}
+		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello"}
+		freshInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "follow-up"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().
@@ -157,7 +157,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 	t.Run("Given every input is already in history", func(t *testing.T) {
 		t.Parallel()
 
-		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello", Author: "alice"}
+		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().
@@ -195,13 +195,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 	t.Run("Given inputs contain unicode emoji that match a demojized history entry", func(t *testing.T) {
 		t.Parallel()
 
-		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi :fire:", Author: "alice"}
-		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥", Author: "alice"}
+		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi :fire:"}
+		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥"}
 
 		// Sanity: the hash of the demojized input matches the stored one.
-		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Author, stored.Platform, stored.Content, conversationId)
+		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Content, conversationId)
 		demojized := utils.DemojizeContent(emojiInput.Content)
-		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, emojiInput.Author, emojiInput.Platform, demojized, conversationId)
+		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, demojized, conversationId)
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {

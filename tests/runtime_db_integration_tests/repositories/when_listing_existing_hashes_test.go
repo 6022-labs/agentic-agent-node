@@ -58,9 +58,7 @@ func WhenListingExistingHashesAfterEach(suite *WhenListingExistingHashesTestingS
 func newHashableMessage(conversationId, content string) models.ConversationMessage {
 	return model_builders.NewConversationMessageBuilder().
 		WithConversationId(conversationId).
-		WithAuthor("alice.eth").
 		WithRole("user").
-		WithPlatform("slack").
 		WithContent(content).
 		WithTimestamp(time.Now().UTC().Truncate(time.Microsecond)).
 		Build()

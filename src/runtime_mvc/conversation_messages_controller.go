@@ -32,7 +32,7 @@ func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
 
 // Append adds messages to a conversation transcript.
 // @Summary Internal append messages
-// @Description Idempotent batch append to the local conversation transcript. Dedup by SHA-512 hash of (role, author, content, platform, conversationId).
+// @Description Idempotent batch append to the local conversation transcript. Dedup by SHA-512 hash of (role, content, conversationId).
 // @Tags Internal
 // @Accept json
 // @Produce json
@@ -59,9 +59,7 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 	domainMessages := make([]models.ConversationMessage, 0, len(body.Messages))
 	for _, m := range body.Messages {
 		domainMessages = append(domainMessages, models.ConversationMessage{
-			Author:    m.Author,
 			Role:      m.Role,
-			Platform:  m.Platform,
 			Content:   m.Content,
 			Timestamp: m.Timestamp,
 		})
@@ -103,9 +101,7 @@ func toWireMessages(in []models.ConversationMessage) []responses.ConversationMes
 		out = append(out, responses.ConversationMessage{
 			Id:             m.Id,
 			ConversationId: m.ConversationId,
-			Author:         m.Author,
 			Role:           m.Role,
-			Platform:       m.Platform,
 			Content:        m.Content,
 			Timestamp:      m.Timestamp,
 		})

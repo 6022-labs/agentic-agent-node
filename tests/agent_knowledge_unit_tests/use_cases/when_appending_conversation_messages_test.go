@@ -42,7 +42,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		input := []models.ConversationMessage{
-			model_builders.NewConversationMessageBuilder().WithAuthor("alice").WithRole("user").WithContent("hi").WithTimestamp(now).Build(),
+			model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("hi").WithTimestamp(now).Build(),
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {

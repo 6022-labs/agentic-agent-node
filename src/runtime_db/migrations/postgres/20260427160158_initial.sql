@@ -3,9 +3,7 @@
 CREATE TABLE "public"."conversation_messages" (
   "id" character varying(36) NOT NULL,
   "conversation_id" character varying(128) NOT NULL,
-  "author" character varying(128) NOT NULL,
   "role" character varying(32) NOT NULL,
-  "platform" character varying(64) NULL,
   "content" text NOT NULL,
   "hash" character varying(128) NOT NULL,
   "timestamp" timestamptz NOT NULL,

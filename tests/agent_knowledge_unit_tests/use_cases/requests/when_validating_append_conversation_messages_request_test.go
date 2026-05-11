@@ -16,7 +16,6 @@ func TestWhenValidatingAppendConversationMessagesRequest(t *testing.T) {
 		req := &requests.AppendConversationMessagesRequest{
 			Messages: []requests.ConversationMessageInput{
 				{
-					Author:    "alice.eth",
 					Role:      "user",
 					Content:   "hi",
 					Timestamp: time.Now(),

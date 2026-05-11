@@ -14,9 +14,7 @@ type AppendConversationMessagesRequest struct {
 // No id field — the runtime generates a uuid on insert and uses the SHA-512
 // hash of the semantic fields as the dedupe key.
 type ConversationMessageInput struct {
-	Author    string    `json:"author"`
 	Role      string    `json:"role"`
-	Platform  string    `json:"platform,omitempty"`
 	Content   string    `json:"content"`
 	Timestamp time.Time `json:"timestamp"`
 }

@@ -13,8 +13,6 @@ type ConversationHistoryInterface interface {
 // persistence concerns (id, hash, created-at).
 type ConversationMessage struct {
 	Role      string
-	Author    string
-	Platform  string
 	Content   string
 	Timestamp time.Time
 }

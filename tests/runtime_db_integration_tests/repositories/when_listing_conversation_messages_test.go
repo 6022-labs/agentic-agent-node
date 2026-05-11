@@ -85,9 +85,9 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 					now := time.Now().UTC().Truncate(time.Microsecond)
 					_, err := suite.sut.AppendMessages([]models.ConversationMessage{
-						{ConversationId: "a", Author: "alice", Role: "user", Content: "a-second", Timestamp: now.Add(time.Second)},
-						{ConversationId: "a", Author: "alice", Role: "user", Content: "a-first", Timestamp: now},
-						{ConversationId: "b", Author: "bob", Role: "user", Content: "b-only", Timestamp: now},
+						{ConversationId: "a", Role: "user", Content: "a-second", Timestamp: now.Add(time.Second)},
+						{ConversationId: "a", Role: "user", Content: "a-first", Timestamp: now},
+						{ConversationId: "b", Role: "user", Content: "b-only", Timestamp: now},
 					})
 					assert.NoError(t, err)
 
