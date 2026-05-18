@@ -1,11 +1,29 @@
 package configurations
 
-import "go.uber.org/dig"
+import (
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/services"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/settings"
+	"go.uber.org/dig"
+)
 
-// AddAgentIdentityEnsConfiguration is a no-op today — the package is scaffolded
-// ahead of P2.12 (boot-time ENS text-record writer for `agent.runtime-url` +
-// `agent.runtime-kind`). Wire registrations land here when the writer is
-// implemented.
+// AddAgentIdentityEnsConfiguration registers the boot-time ENS writer for
+// `agent.runtime-url` + `agent.runtime-kind`. AgentEnsRegistryRequester is
+// invoked by BootstrapRunner via the EnsRuntimeRecordsPublisherInterface
+// after the wallet is ready.
 func AddAgentIdentityEnsConfiguration(container *dig.Container) {
-	_ = container
+	if err := container.Provide(settings.NewAgentIdentityEnsSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(settings.NewAgentEnsRegistriesSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewAgentEnsRegistryRequester,
+		dig.As(new(identity_interfaces.EnsRuntimeRecordsPublisherInterface)),
+	); err != nil {
+		panic(err)
+	}
 }

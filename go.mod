@@ -5,6 +5,7 @@ go 1.26.2
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/ethereum/go-ethereum v1.16.5
+	github.com/go-faker/faker/v4 v4.7.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.6
 	github.com/gofiber/fiber/v2 v2.52.8
@@ -16,6 +17,7 @@ require (
 	github.com/knadh/koanf/providers/confmap v1.0.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.2
+	github.com/kyokomi/emoji/v2 v2.2.13
 	github.com/lib/pq v1.12.3
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/pressly/goose/v3 v3.27.1
@@ -80,7 +82,6 @@ require (
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-faker/faker/v4 v4.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -119,7 +120,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
-	github.com/kyokomi/emoji/v2 v2.2.13 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect

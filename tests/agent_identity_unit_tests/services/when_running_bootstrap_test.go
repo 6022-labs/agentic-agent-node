@@ -18,21 +18,24 @@ type WhenRunningBootstrapTestingSuite struct {
 	sut   *services.BootstrapRunner
 	state *services.BootstrapStateHolder
 
-	mockWallet *identity_mocks.MockWalletCredentialsStorageInterface
+	mockWallet       *identity_mocks.MockWalletCredentialsStorageInterface
+	mockEnsPublisher *identity_mocks.MockEnsRuntimeRecordsPublisherInterface
 }
 
 func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockWallet := identity_mocks.NewMockWalletCredentialsStorageInterface(mockController)
+	mockEnsPublisher := identity_mocks.NewMockEnsRuntimeRecordsPublisherInterface(mockController)
 	state := services.NewBootstrapStateHolder()
-	sut := services.NewBootstrapRunner(zap.NewNop(), mockWallet, state)
+	sut := services.NewBootstrapRunner(zap.NewNop(), mockWallet, state, mockEnsPublisher)
 
 	return &WhenRunningBootstrapTestingSuite{
 		sut:   sut,
 		state: state,
 
-		mockWallet: mockWallet,
+		mockWallet:       mockWallet,
+		mockEnsPublisher: mockEnsPublisher,
 	}
 }
 
@@ -47,6 +50,7 @@ func TestWhenRunningBootstrap(t *testing.T) {
 				PrivateKeyHex: "0xpk",
 				Address:       "0xaddr",
 			}, nil)
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
 		}
 
 		t.Run("Should mark the holder as ready with the wallet address", func(t *testing.T) {

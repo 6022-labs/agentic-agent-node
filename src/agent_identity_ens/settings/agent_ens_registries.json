@@ -1,0 +1,15 @@
+{
+  "_comment": "Well-known AgentEnsRegistry contract addresses per EVM chain id. Add an entry once the registry is deployed on that chain. The node fails to boot if no entry matches blockchain.id.",
+  "registries": [
+    {
+      "chainId": 137,
+      "name": "polygon-mainnet",
+      "address": ""
+    },
+    {
+      "chainId": 80002,
+      "name": "polygon-amoy",
+      "address": "0xb02c3D72cf0939c38C26291e5645d25De18478b7"
+    }
+  ]
+}

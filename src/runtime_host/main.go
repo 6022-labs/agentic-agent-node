@@ -36,9 +36,14 @@ func main() {
 	defer cancelBootstrap()
 
 	// Runtime owns wallet bootstrap. Gateway sees the result via /internal/bootstrap/status.
-	if err := container.Invoke(func(runner *agent_identity_services.BootstrapRunner, logger *zap.Logger) {
+	// BootstrapRunner also publishes ENS runtime records after wallet readiness;
+	// ENS failure is non-fatal and handled inside the runner.
+	if err := container.Invoke(func(
+		bootstrapRunner *agent_identity_services.BootstrapRunner,
+		logger *zap.Logger,
+	) {
 		go func() {
-			if err := runner.Run(bootstrapCtx); err != nil {
+			if err := bootstrapRunner.Run(bootstrapCtx); err != nil {
 				logger.Error("bootstrap runner failed", zap.Error(err))
 			}
 		}()
