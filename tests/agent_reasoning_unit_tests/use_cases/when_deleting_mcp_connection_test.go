@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -47,15 +48,15 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
 		}
 
-		t.Run("Should be a no-op", func(t *testing.T) {
+		t.Run("Should be a no-op returning NoContent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
 		})
 	})
 
@@ -74,15 +75,15 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().Delete(id).Return(nil)
 		}
 
-		t.Run("Should clear every header from vault then drop the row", func(t *testing.T) {
+		t.Run("Should clear every header from vault then drop the row, returning NoContent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
 		})
 	})
 }

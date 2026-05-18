@@ -1,9 +1,7 @@
 package gateway_mvc
 
 import (
-	"errors"
-
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -39,14 +37,7 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 500 {object} fiber.Map
 // @Router /auth/challenge [get]
 func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
-	resp, err := c.getChallenge.Execute()
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    "challenge_failed",
-			"message": err.Error(),
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(resp)
+	return mvc_result.Write(ctx, c.getChallenge.Execute())
 }
 
 // Verify exchanges a signed nonce for a JWT.
@@ -59,7 +50,7 @@ func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.VerifyAuthResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} fiber.Map "nonce_not_found | signature_mismatch | not_authorized"
-// @Failure 503 {object} fiber.Map "identity_not_found"
+// @Failure 502 {object} fiber.Map "identity_not_found"
 // @Router /auth/verify [post]
 func (c *AuthController) Verify(ctx *fiber.Ctx) error {
 	body := new(requests.VerifyAuthRequest)
@@ -69,41 +60,5 @@ func (c *AuthController) Verify(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-
-	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
-	if err != nil {
-		return ctx.Status(authErrorStatus(err)).JSON(fiber.Map{
-			"code":    authErrorCode(err),
-			"message": err.Error(),
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(resp)
-}
-
-func authErrorStatus(err error) int {
-	switch {
-	case errors.Is(err, use_cases.ErrNonceNotFound),
-		errors.Is(err, use_cases.ErrSignatureMismatch),
-		errors.Is(err, use_cases.ErrAddressNotAuthorized):
-		return fiber.StatusUnauthorized
-	case errors.Is(err, services.ErrIdentityNotFound):
-		return fiber.StatusServiceUnavailable
-	default:
-		return fiber.StatusInternalServerError
-	}
-}
-
-func authErrorCode(err error) string {
-	switch {
-	case errors.Is(err, use_cases.ErrNonceNotFound):
-		return "nonce_not_found"
-	case errors.Is(err, use_cases.ErrSignatureMismatch):
-		return "signature_mismatch"
-	case errors.Is(err, use_cases.ErrAddressNotAuthorized):
-		return "not_authorized"
-	case errors.Is(err, services.ErrIdentityNotFound):
-		return "identity_not_found"
-	default:
-		return "verify_failed"
-	}
+	return mvc_result.Write(ctx, c.verifyAuth.Execute(ctx.UserContext(), body))
 }

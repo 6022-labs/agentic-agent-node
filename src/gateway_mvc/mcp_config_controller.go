@@ -2,6 +2,7 @@ package gateway_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -44,11 +45,7 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/mcp-connections [get]
 func (c *McpConfigController) List(ctx *fiber.Ctx) error {
-	res, err := c.lister.Execute(ctx.Context())
-	if err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.JSON(res)
+	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context()))
 }
 
 // Create registers a new MCP connection.
@@ -70,11 +67,7 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	res, err := c.creator.Execute(ctx.Context(), body)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.Status(fiber.StatusCreated).JSON(res)
+	return mvc_result.Write(ctx, c.creator.Execute(ctx.Context(), body))
 }
 
 // Delete removes an MCP connection by id.
@@ -92,8 +85,5 @@ func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("id", "must be a valid uuid"))
 	}
-	if err := c.deleter.Execute(ctx.Context(), id); err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.SendStatus(fiber.StatusNoContent)
+	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context(), id))
 }

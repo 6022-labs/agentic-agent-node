@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -58,17 +60,19 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 			})
 		}
 
-		t.Run("Should map Provider to Platform and forward BaseUrl as a non-nil pointer", func(t *testing.T) {
+		t.Run("Should return Ok mapping Provider to Platform and forwarding BaseUrl as a non-nil pointer", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingLlmConfigBeforeEach(t)
 			request := generateValidSetLlmConfigRequest()
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "open-ai", res.Provider)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.GetLlmConfigResponse)
+			assert.True(t, ok)
+			assert.Equal(t, "open-ai", body.Provider)
 		})
 	})
 
@@ -90,9 +94,9 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 			request.BaseUrl = "   "
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
 		})
 	})
 }

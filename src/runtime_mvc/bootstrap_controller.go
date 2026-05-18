@@ -1,19 +1,19 @@
 package runtime_mvc
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
 const InternalBootstrapStatusEndpoint = "/internal/bootstrap/status"
 
 type BootstrapController struct {
-	stateReader common_interfaces.BootstrapStateReaderInterface
+	getStatus *use_cases.GetBootstrapStatus
 }
 
-func NewBootstrapController(stateReader common_interfaces.BootstrapStateReaderInterface) *BootstrapController {
-	return &BootstrapController{stateReader: stateReader}
+func NewBootstrapController(getStatus *use_cases.GetBootstrapStatus) *BootstrapController {
+	return &BootstrapController{getStatus: getStatus}
 }
 
 func (c *BootstrapController) RegisterRoutes(app fiber.Router) {
@@ -28,10 +28,5 @@ func (c *BootstrapController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.GetBootstrapStatusResponse
 // @Router /internal/bootstrap/status [get]
 func (c *BootstrapController) GetStatus(ctx *fiber.Ctx) error {
-	state := c.stateReader.Get()
-	return ctx.JSON(&responses.GetBootstrapStatusResponse{
-		Status:       state.Status,
-		AgentAddress: state.AgentAddress,
-		LastError:    state.LastError,
-	})
+	return mvc_result.Write(ctx, c.getStatus.Execute())
 }

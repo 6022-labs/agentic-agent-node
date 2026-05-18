@@ -1,8 +1,7 @@
 package gateway_mvc
 
 import (
-	"errors"
-
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -41,14 +40,7 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/llm [get]
 func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
-	res, err := c.getter.Execute(ctx.Context())
-	if errors.Is(err, use_cases.ErrLLMConnectionNotConfigured) {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"code": "not_configured"})
-	}
-	if err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.JSON(res)
+	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context()))
 }
 
 // Set upserts the LLM provider configuration.
@@ -70,11 +62,7 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	res, err := c.setter.Execute(ctx.Context(), body)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.JSON(res)
+	return mvc_result.Write(ctx, c.setter.Execute(ctx.Context(), body))
 }
 
 // Delete clears the LLM provider configuration.
@@ -86,8 +74,5 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deleter.Execute(ctx.Context()); err != nil {
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_unavailable", "message": err.Error()})
-	}
-	return ctx.SendStatus(fiber.StatusNoContent)
+	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context()))
 }

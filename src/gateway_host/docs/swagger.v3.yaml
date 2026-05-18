@@ -358,7 +358,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/fiber.Map'
           description: nonce_not_found | signature_mismatch | not_authorized
-        "503":
+        "502":
           content:
             application/json:
               schema:

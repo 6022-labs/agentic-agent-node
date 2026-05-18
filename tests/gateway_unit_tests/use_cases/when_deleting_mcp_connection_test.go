@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
@@ -42,15 +43,15 @@ func TestWhenDeletingMcpConnection(t *testing.T) {
 			suite.mockClient.EXPECT().Delete(gomock.Any(), id).Return(nil)
 		}
 
-		t.Run("Should forward the id to the client", func(t *testing.T) {
+		t.Run("Should forward the id and return NoContent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingMcpConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
 		})
 	})
 }

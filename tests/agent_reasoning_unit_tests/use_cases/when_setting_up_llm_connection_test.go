@@ -9,6 +9,8 @@ import (
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -71,10 +73,12 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.NotNil(t, res)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.LLMConnectionResponse)
+			assert.True(t, ok)
+			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, body.Platform)
 		})
 	})
 
@@ -85,16 +89,17 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().Save(gomock.Any(), gomock.Any()).Return(errors.New("vault down"))
 		}
 
-		t.Run("Should not touch the repository", func(t *testing.T) {
+		t.Run("Should not touch the repository and return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingUpLLMConnectionBeforeEach(t)
 			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorContains(t, err, "vault down")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "vault down")
 		})
 	})
 }

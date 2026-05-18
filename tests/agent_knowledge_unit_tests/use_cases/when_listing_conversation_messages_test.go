@@ -7,6 +7,8 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -41,24 +43,27 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		now := time.Now()
-		expected := []models.ConversationMessage{
+		stored := []models.ConversationMessage{
 			model_builders.NewConversationMessageBuilder().WithConversationId(conversationId).WithTimestamp(now).Build(),
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().List(conversationId).Return(expected, nil)
+			suite.mockService.EXPECT().List(conversationId).Return(stored, nil)
 		}
 
-		t.Run("Should forward the conversationId and return the rows verbatim", func(t *testing.T) {
+		t.Run("Should return Ok with the rows on the wire", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(conversationId)
+			res := suite.sut.Execute(conversationId)
 
-			assert.NoError(t, err)
-			assert.Equal(t, expected, res)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.ListConversationMessagesResponse)
+			assert.True(t, ok)
+			assert.Len(t, body.Messages, 1)
+			assert.Equal(t, conversationId, body.Messages[0].ConversationId)
 		})
 	})
 
@@ -69,15 +74,16 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite.mockService.EXPECT().List(conversationId).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(conversationId)
+			res := suite.sut.Execute(conversationId)
 
-			assert.ErrorContains(t, err, "db blew")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "db blew")
 		})
 	})
 }

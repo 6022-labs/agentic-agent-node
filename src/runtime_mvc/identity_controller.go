@@ -1,12 +1,8 @@
 package runtime_mvc
 
 import (
-	"errors"
-
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
-	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -16,15 +12,15 @@ const (
 )
 
 type IdentityController struct {
-	resolver     common_interfaces.AgentIdentityResolverInterface
-	ensPublisher identity_interfaces.EnsRuntimeRecordsPublisherInterface
+	getIdentity *use_cases.GetAgentIdentity
+	publishEns  *use_cases.PublishEnsRuntimeRecords
 }
 
 func NewIdentityController(
-	resolver common_interfaces.AgentIdentityResolverInterface,
-	ensPublisher identity_interfaces.EnsRuntimeRecordsPublisherInterface,
+	getIdentity *use_cases.GetAgentIdentity,
+	publishEns *use_cases.PublishEnsRuntimeRecords,
 ) *IdentityController {
-	return &IdentityController{resolver: resolver, ensPublisher: ensPublisher}
+	return &IdentityController{getIdentity: getIdentity, publishEns: publishEns}
 }
 
 func (c *IdentityController) RegisterRoutes(app fiber.Router) {
@@ -42,24 +38,7 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "identity_lookup_failed"
 // @Router /internal/identity [get]
 func (c *IdentityController) Get(ctx *fiber.Ctx) error {
-	identity, err := c.resolver.Resolve(ctx.UserContext())
-	if err != nil {
-		if errors.Is(err, services.ErrIdentityNotFound) {
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"code":    "identity_not_found",
-				"message": err.Error(),
-			})
-		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    "identity_lookup_failed",
-			"message": err.Error(),
-		})
-	}
-	return ctx.JSON(&responses.GetAgentIdentityResponse{
-		CollectionAddress: identity.CollectionAddress,
-		TokenId:           identity.TokenId,
-		Name:              identity.Name,
-	})
+	return mvc_result.Write(ctx, c.getIdentity.Execute(ctx.UserContext()))
 }
 
 // PublishEns re-publishes the agent's runtime ENS text records (URL, kind).
@@ -74,17 +53,5 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "ens_publish_failed"
 // @Router /internal/identity/ens/publish [post]
 func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
-	if err := c.ensPublisher.PublishRuntimeRecords(ctx.UserContext()); err != nil {
-		if errors.Is(err, services.ErrIdentityNotFound) {
-			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"code":    "identity_not_found",
-				"message": "agent NFT must be minted before ENS records can be published",
-			})
-		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"code":    "ens_publish_failed",
-			"message": err.Error(),
-		})
-	}
-	return ctx.SendStatus(fiber.StatusNoContent)
+	return mvc_result.Write(ctx, c.publishEns.Execute(ctx.UserContext()))
 }

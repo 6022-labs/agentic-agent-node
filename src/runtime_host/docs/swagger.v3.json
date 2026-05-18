@@ -448,6 +448,40 @@
                 ]
             }
         },
+        "/internal/identity/ens/publish": {
+            "post": {
+                "description": "Writes `url` + `agent.kind` text records for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_not_found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "ens_publish_failed"
+                    }
+                },
+                "summary": "Re-publish ENS runtime records",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
         "/internal/responses": {
             "post": {
                 "requestBody": {

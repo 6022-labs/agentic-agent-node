@@ -9,6 +9,8 @@ import (
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -61,23 +63,25 @@ func TestWhenCreatingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should return the assistant message in the response DTO", func(t *testing.T) {
+		t.Run("Should return Ok with the assistant message in the response DTO", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Message) {
-				assert.Equal(t, "assistant", result.Message.Role)
-				assert.Equal(t, expectedFinal, result.Message.Content)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.CreateResponseResponse)
+			assert.True(t, ok)
+			if assert.NotNil(t, body.Message) {
+				assert.Equal(t, "assistant", body.Message.Role)
+				assert.Equal(t, expectedFinal, body.Message.Content)
 			}
 		})
 	})
@@ -91,23 +95,23 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, nil)
 		}
 
-		t.Run("Should return an empty response without an assistant message", func(t *testing.T) {
+		t.Run("Should return Ok with an empty response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Nil(t, result.Message)
-			}
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.CreateResponseResponse)
+			assert.True(t, ok)
+			assert.Nil(t, body.Message)
 		})
 	})
 
@@ -120,21 +124,21 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, errors.New("driver broke"))
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should return InternalError carrying the driver message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.Nil(t, result)
-			assert.ErrorContains(t, err, "driver broke")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "driver broke")
 		})
 	})
 }

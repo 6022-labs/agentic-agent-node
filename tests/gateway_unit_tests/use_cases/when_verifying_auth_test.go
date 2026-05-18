@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
 	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
@@ -64,16 +67,17 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(false)
 		}
 
-		t.Run("Should return ErrNonceNotFound", func(t *testing.T) {
+		t.Run("Should return Unauthorized with nonce_not_found", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorIs(t, err, use_cases.ErrNonceNotFound)
+			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
+			assert.Equal(t, "nonce_not_found", res.Code)
 		})
 	})
 
@@ -85,16 +89,17 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
-		t.Run("Should return ErrSignatureMismatch", func(t *testing.T) {
+		t.Run("Should return Unauthorized with signature_mismatch", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorIs(t, err, use_cases.ErrSignatureMismatch)
+			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
+			assert.Equal(t, "signature_mismatch", res.Code)
 		})
 	})
 
@@ -106,16 +111,17 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(common.Address{}, errors.New("malformed"))
 		}
 
-		t.Run("Should propagate the verifier error", func(t *testing.T) {
+		t.Run("Should return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorContains(t, err, "malformed")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "malformed")
 		})
 	})
 
@@ -128,20 +134,44 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, nil)
 		}
 
-		t.Run("Should return ErrAddressNotAuthorized", func(t *testing.T) {
+		t.Run("Should return Unauthorized with not_authorized", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorIs(t, err, use_cases.ErrAddressNotAuthorized)
+			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
+			assert.Equal(t, "not_authorized", res.Code)
 		})
 	})
 
-	t.Run("Given the authorizer errors", func(t *testing.T) {
+	t.Run("Given the authorizer reports identity-not-found", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
+			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(address, nil)
+			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, common_interfaces.ErrIdentityNotFound)
+		}
+
+		t.Run("Should return Unavailable with identity_not_found", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingAuthBeforeEach(t)
+			request := generateValidVerifyAuthRequest(address)
+			initSuite(suite)
+
+			res := suite.sut.Execute(context.Background(), request)
+
+			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
+			assert.Equal(t, "identity_not_found", res.Code)
+		})
+	})
+
+	t.Run("Given the authorizer errors with an unexpected failure", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
@@ -150,16 +180,17 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
 		}
 
-		t.Run("Should propagate the authorizer error", func(t *testing.T) {
+		t.Run("Should return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorContains(t, err, "rpc down")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "rpc down")
 		})
 	})
 
@@ -174,18 +205,20 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
 		}
 
-		t.Run("Should return a JWT response", func(t *testing.T) {
+		t.Run("Should return Ok with a JWT response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "the-token", resp.Token)
-			assert.Equal(t, expectedExp, resp.ExpiresAt)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.VerifyAuthResponse)
+			assert.True(t, ok)
+			assert.Equal(t, "the-token", body.Token)
+			assert.Equal(t, expectedExp, body.ExpiresAt)
 		})
 	})
 }

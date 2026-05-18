@@ -336,7 +336,7 @@ paths:
           description: nonce_not_found | signature_mismatch | not_authorized
           schema:
             $ref: '#/definitions/fiber.Map'
-        "503":
+        "502":
           description: identity_not_found
           schema:
             $ref: '#/definitions/fiber.Map'

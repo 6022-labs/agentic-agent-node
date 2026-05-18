@@ -6,8 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -53,20 +55,22 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			}, nil)
 		}
 
-		t.Run("Should map Platform to Provider and dereference BaseUrl", func(t *testing.T) {
+		t.Run("Should return Ok mapping Platform to Provider and dereferencing BaseUrl", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "abc", res.Id)
-			assert.Equal(t, "open-ai", res.Provider)
-			assert.Equal(t, "gpt-4o", res.Model)
-			assert.Equal(t, baseUrl, res.BaseUrl)
-			assert.Equal(t, "established", res.SetupStatus)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.GetLlmConfigResponse)
+			assert.True(t, ok)
+			assert.Equal(t, "abc", body.Id)
+			assert.Equal(t, "open-ai", body.Provider)
+			assert.Equal(t, "gpt-4o", body.Model)
+			assert.Equal(t, baseUrl, body.BaseUrl)
+			assert.Equal(t, "established", body.SetupStatus)
 		})
 	})
 
@@ -77,15 +81,16 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, gateway_interfaces.ErrLLMConnectionNotFound)
 		}
 
-		t.Run("Should map it to ErrLLMConnectionNotConfigured", func(t *testing.T) {
+		t.Run("Should return NotFound with not_configured", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.True(t, errors.Is(err, use_cases.ErrLLMConnectionNotConfigured))
+			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
+			assert.Equal(t, "not_configured", res.Code)
 		})
 	})
 
@@ -96,15 +101,16 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("boom"))
 		}
 
-		t.Run("Should propagate the error untouched", func(t *testing.T) {
+		t.Run("Should return Unavailable with the message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.ErrorContains(t, err, "boom")
+			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
+			assert.Contains(t, res.Message, "boom")
 		})
 	})
 
@@ -123,10 +129,12 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "", res.BaseUrl)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.GetLlmConfigResponse)
+			assert.True(t, ok)
+			assert.Equal(t, "", body.BaseUrl)
 		})
 	})
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 )
 
 type SetupLLMConnection struct {
@@ -25,14 +27,18 @@ func NewSetupLLMConnection(
 // Execute persists the api key in Vault first, then upserts the row. If the
 // upsert fails the secret stays in Vault — next setup attempt will overwrite
 // it. The reverse order would risk a row pointing at a missing secret.
-func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.SetupLLMConnectionRequest) (*models.LLMConnection, error) {
+func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.SetupLLMConnectionRequest) *usecase_result.Result {
 	if err := u.secretStorage.Save(ctx, request.ApiKey); err != nil {
-		return nil, err
+		return usecase_result.InternalError("setup_failed", err.Error())
 	}
-	return u.repository.Upsert(&models.LLMConnection{
+	connection, err := u.repository.Upsert(&models.LLMConnection{
 		Platform:    request.Platform,
 		Model:       request.Model,
 		BaseUrl:     request.BaseUrl,
 		SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
 	})
+	if err != nil {
+		return usecase_result.InternalError("setup_failed", err.Error())
+	}
+	return usecase_result.Ok(responses.ToLLMConnectionResponse(connection))
 }

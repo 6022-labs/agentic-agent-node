@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -41,15 +42,15 @@ func TestWhenDeletingLlmConfig(t *testing.T) {
 			suite.mockClient.EXPECT().Delete(gomock.Any()).Return(nil)
 		}
 
-		t.Run("Should return no error", func(t *testing.T) {
+		t.Run("Should return NoContent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
 		})
 	})
 
@@ -60,15 +61,16 @@ func TestWhenDeletingLlmConfig(t *testing.T) {
 			suite.mockClient.EXPECT().Delete(gomock.Any()).Return(errors.New("transport down"))
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should return Unavailable carrying the message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.ErrorContains(t, err, "transport down")
+			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
+			assert.Contains(t, res.Message, "transport down")
 		})
 	})
 }

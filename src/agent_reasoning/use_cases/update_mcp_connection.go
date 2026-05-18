@@ -8,6 +8,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/google/uuid"
 )
 
@@ -25,15 +27,18 @@ func NewUpdateMCPConnection(
 
 // Execute applies full-replacement semantics: name, url, and the entire
 // HeaderAuth map are overwritten. Header values absent from the new map are
-// removed from Vault. Returns (nil, nil) if no connection exists with that id.
-func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.UpdateMCPConnectionRequest) (*models.MCPConnection, error) {
+// removed from Vault.
+func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.UpdateMCPConnectionRequest) *usecase_result.Result {
 	existing, err := u.repository.GetById(id)
-	if err != nil || existing == nil {
-		return existing, err
+	if err != nil {
+		return usecase_result.InternalError("update_failed", err.Error())
+	}
+	if existing == nil {
+		return usecase_result.NotFound("mcp_connection_not_found", "")
 	}
 
 	if err := u.dropRemovedHeaders(ctx, existing, request.HeaderAuth); err != nil {
-		return nil, err
+		return usecase_result.InternalError("update_failed", err.Error())
 	}
 
 	newKeys := models.MCPConnectionHeaderAuthKeys{}
@@ -48,16 +53,16 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 	existing.HeaderAuthKeys = newKeys
 	updated, err := u.repository.Update(existing)
 	if err != nil {
-		return nil, err
+		return usecase_result.InternalError("update_failed", err.Error())
 	}
 
 	for k, v := range request.HeaderAuth {
 		if err := u.secretStorage.SaveValue(ctx, updated.Id, k, v); err != nil {
-			return nil, fmt.Errorf("failed to save header %q: %w", k, err)
+			return usecase_result.InternalError("update_failed", fmt.Sprintf("failed to save header %q: %s", k, err.Error()))
 		}
 	}
 	updated.HeaderAuth = request.HeaderAuth
-	return updated, nil
+	return usecase_result.Ok(responses.ToMCPConnectionResponse(updated))
 }
 
 func (u *UpdateMCPConnection) dropRemovedHeaders(ctx context.Context, existing *models.MCPConnection, next map[string]string) error {

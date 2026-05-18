@@ -3,8 +3,8 @@ package runtime_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -41,11 +41,7 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
-	connections, err := c.lister.Execute()
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "list_failed", "message": err.Error()})
-	}
-	return ctx.JSON(responses.ToMCPConnectionListResponse(connections))
+	return mvc_result.Write(ctx, c.lister.Execute())
 }
 
 func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
@@ -56,26 +52,15 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	connection, err := c.creator.Execute(ctx.Context(), body)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "create_failed", "message": err.Error()})
-	}
-	return ctx.Status(fiber.StatusCreated).JSON(responses.ToMCPConnectionResponse(connection))
+	return mvc_result.Write(ctx, c.creator.Execute(ctx.Context(), body))
 }
 
 func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
-	id, err := parseConnectionId(ctx)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
+	id, idErr := parseConnectionId(ctx)
+	if idErr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	connection, getErr := c.getter.Execute(ctx.Context(), id)
-	if getErr != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "get_failed", "message": getErr.Error()})
-	}
-	if connection == nil {
-		return ctx.SendStatus(fiber.StatusNotFound)
-	}
-	return ctx.JSON(responses.ToMCPConnectionResponse(connection))
+	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context(), id))
 }
 
 func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
@@ -90,14 +75,7 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	connection, err := c.updater.Execute(ctx.Context(), id, body)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "update_failed", "message": err.Error()})
-	}
-	if connection == nil {
-		return ctx.SendStatus(fiber.StatusNotFound)
-	}
-	return ctx.JSON(responses.ToMCPConnectionResponse(connection))
+	return mvc_result.Write(ctx, c.updater.Execute(ctx.Context(), id, body))
 }
 
 func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
@@ -105,10 +83,7 @@ func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	if err := c.deleter.Execute(ctx.Context(), id); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "delete_failed", "message": err.Error()})
-	}
-	return ctx.SendStatus(fiber.StatusNoContent)
+	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context(), id))
 }
 
 func parseConnectionId(ctx *fiber.Ctx) (uuid.UUID, *errors.ValidationError) {

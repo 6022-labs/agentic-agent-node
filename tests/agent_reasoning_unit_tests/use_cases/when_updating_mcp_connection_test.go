@@ -7,6 +7,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -49,16 +51,16 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
 		}
 
-		t.Run("Should return nil without touching update or vault", func(t *testing.T) {
+		t.Run("Should return NotFound without touching update or vault", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{Name: "x", Url: "https://x"})
+			res := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{Name: "x", Url: "https://x"})
 
-			assert.NoError(t, err)
-			assert.Nil(t, res)
+			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
+			assert.Equal(t, "mcp_connection_not_found", res.Code)
 		})
 	})
 
@@ -85,20 +87,22 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer new").Return(nil)
 		}
 
-		t.Run("Should drop removed header secrets, update the row, and save kept headers", func(t *testing.T) {
+		t.Run("Should drop removed header secrets, update the row, and return Ok", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{
+			res := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{
 				Name:       "new-name",
 				Url:        "https://new",
 				HeaderAuth: map[string]string{"Authorization": "Bearer new"},
 			})
 
-			assert.NoError(t, err)
-			assert.Equal(t, "Bearer new", res.HeaderAuth["Authorization"])
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.MCPConnectionResponse)
+			assert.True(t, ok)
+			assert.Equal(t, id, body.Id)
 		})
 	})
 }

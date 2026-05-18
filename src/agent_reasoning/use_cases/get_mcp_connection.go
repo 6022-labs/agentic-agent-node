@@ -3,9 +3,10 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/google/uuid"
 )
 
@@ -21,22 +22,25 @@ func NewGetMCPConnection(
 	return &GetMCPConnection{repository: repository, secretStorage: secretStorage}
 }
 
-// Execute returns the connection with HeaderAuth hydrated from Vault. Returns
-// (nil, nil) if no connection exists with that id.
-func (u *GetMCPConnection) Execute(ctx context.Context, id uuid.UUID) (*models.MCPConnection, error) {
+// Execute returns the connection with HeaderAuth hydrated from Vault.
+func (u *GetMCPConnection) Execute(ctx context.Context, id uuid.UUID) *usecase_result.Result {
 	connection, err := u.repository.GetById(id)
-	if err != nil || connection == nil {
-		return connection, err
+	if err != nil {
+		return usecase_result.InternalError("get_failed", err.Error())
 	}
+	if connection == nil {
+		return usecase_result.NotFound("mcp_connection_not_found", "")
+	}
+
 	connection.HeaderAuth = make(map[string]string, len(connection.HeaderAuthKeys))
 	for _, key := range connection.HeaderAuthKeys {
 		value, found, err := u.secretStorage.GetValue(ctx, connection.Id, string(key))
 		if err != nil {
-			return nil, err
+			return usecase_result.InternalError("get_failed", err.Error())
 		}
 		if found {
 			connection.HeaderAuth[string(key)] = value
 		}
 	}
-	return connection, nil
+	return usecase_result.Ok(responses.ToMCPConnectionResponse(connection))
 }

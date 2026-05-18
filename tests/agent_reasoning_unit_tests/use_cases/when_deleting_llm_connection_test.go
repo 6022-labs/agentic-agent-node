@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -48,15 +49,15 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			)
 		}
 
-		t.Run("Should delete the row first then the secret", func(t *testing.T) {
+		t.Run("Should delete the row first then the secret and return NoContent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
+			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
 		})
 	})
 
@@ -67,15 +68,16 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().Delete().Return(errors.New("db down"))
 		}
 
-		t.Run("Should not touch the secret storage", func(t *testing.T) {
+		t.Run("Should not touch the secret storage and return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background())
+			res := suite.sut.Execute(context.Background())
 
-			assert.ErrorContains(t, err, "db down")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "db down")
 		})
 	})
 }

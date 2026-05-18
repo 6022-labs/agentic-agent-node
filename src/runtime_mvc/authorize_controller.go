@@ -1,21 +1,20 @@
 package runtime_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
 const InternalAuthorizeEndpoint = "/internal/authorize"
 
 type AuthorizeController struct {
-	authorizer common_interfaces.AuthorizerInterface
+	authorize *use_cases.Authorize
 }
 
-func NewAuthorizeController(authorizer common_interfaces.AuthorizerInterface) *AuthorizeController {
-	return &AuthorizeController{authorizer: authorizer}
+func NewAuthorizeController(authorize *use_cases.Authorize) *AuthorizeController {
+	return &AuthorizeController{authorize: authorize}
 }
 
 func (c *AuthorizeController) RegisterRoutes(app fiber.Router) {
@@ -41,10 +40,5 @@ func (c *AuthorizeController) Authorize(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-
-	authorized, err := c.authorizer.IsAuthorized(ctx.UserContext(), common.HexToAddress(body.Address))
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "authorize_failed", "message": err.Error()})
-	}
-	return ctx.JSON(&responses.AuthorizeResponse{Authorized: authorized})
+	return mvc_result.Write(ctx, c.authorize.Execute(ctx.UserContext(), body))
 }

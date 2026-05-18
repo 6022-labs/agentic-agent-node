@@ -7,10 +7,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 )
 
 type CreateResponseInterface interface {
-	Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error)
+	Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result
 }
 
 type CreateResponse struct {
@@ -21,7 +22,7 @@ func NewCreateResponse(responseDriver interfaces.ResponseDriverInterface) *Creat
 	return &CreateResponse{responseDriver: responseDriver}
 }
 
-func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error) {
+func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result {
 	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Inputs))
 	for _, m := range request.Inputs {
 		inputs = append(inputs, knowledge_interfaces.ConversationMessage{
@@ -33,16 +34,16 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 
 	persisted, err := u.responseDriver.Drive(ctx, request.ConversationId, inputs)
 	if err != nil {
-		return nil, err
+		return usecase_result.InternalError("create_response_failed", err.Error())
 	}
 	if persisted == nil {
-		return &responses.CreateResponseResponse{}, nil
+		return usecase_result.Ok(&responses.CreateResponseResponse{})
 	}
-	return &responses.CreateResponseResponse{
+	return usecase_result.Ok(&responses.CreateResponseResponse{
 		Message: &responses.CreateResponseMessage{
 			Role:      persisted.Role,
 			Content:   persisted.Content,
 			Timestamp: persisted.Timestamp,
 		},
-	}, nil
+	})
 }

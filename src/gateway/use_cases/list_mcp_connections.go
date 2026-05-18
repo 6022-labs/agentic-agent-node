@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
@@ -16,16 +17,16 @@ func NewListMcpConnections(client gateway_interfaces.MCPConfigClientInterface) *
 	return &ListMcpConnections{client: client}
 }
 
-func (u *ListMcpConnections) Execute(ctx context.Context) (*responses.ListMcpConnectionsResponse, error) {
+func (u *ListMcpConnections) Execute(ctx context.Context) *usecase_result.Result {
 	payload, err := u.client.List(ctx)
 	if err != nil {
-		return nil, err
+		return usecase_result.Unavailable("runtime_unavailable", err.Error())
 	}
 	out := make([]responses.McpConnectionResponse, 0, len(payload.Connections))
 	for i := range payload.Connections {
 		out = append(out, *u.toResponse(&payload.Connections[i]))
 	}
-	return &responses.ListMcpConnectionsResponse{Connections: out}, nil
+	return usecase_result.Ok(&responses.ListMcpConnectionsResponse{Connections: out})
 }
 
 func (u *ListMcpConnections) toResponse(p *runtime_models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {

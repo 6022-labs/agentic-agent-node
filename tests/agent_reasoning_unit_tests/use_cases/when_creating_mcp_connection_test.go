@@ -8,6 +8,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
@@ -57,7 +59,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), generatedId, "Authorization", "Bearer abc").Return(nil)
 		}
 
-		t.Run("Should persist the row and the header value under the generated id", func(t *testing.T) {
+		t.Run("Should persist the row and the header value under the generated id, returning Created", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
@@ -68,11 +70,13 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			}
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, generatedId, res.Id)
-			assert.Equal(t, "Bearer abc", res.HeaderAuth["Authorization"])
+			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
+			body, ok := res.Body.(*responses.MCPConnectionResponse)
+			assert.True(t, ok)
+			assert.Equal(t, generatedId, body.Id)
+			assert.ElementsMatch(t, []string{"Authorization"}, body.HeaderAuthKeys)
 		})
 	})
 
@@ -87,17 +91,17 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			})
 		}
 
-		t.Run("Should not call SaveValue", func(t *testing.T) {
+		t.Run("Should not call SaveValue and return Created", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
 			request := &requests.CreateMCPConnectionRequest{Name: "anon", Url: "https://x.example"}
 			initSuite(suite)
 
-			res, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.NotNil(t, res)
+			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
+			assert.NotNil(t, res.Body)
 		})
 	})
 
@@ -108,7 +112,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().Create(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should not touch the secret storage", func(t *testing.T) {
+		t.Run("Should not touch the secret storage and return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
@@ -118,9 +122,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			}
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), request)
+			res := suite.sut.Execute(context.Background(), request)
 
-			assert.ErrorContains(t, err, "db down")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "db down")
 		})
 	})
 }

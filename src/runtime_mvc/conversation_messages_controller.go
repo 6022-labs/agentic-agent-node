@@ -3,11 +3,10 @@ package runtime_mvc
 import (
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -56,21 +55,7 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
 
-	domainMessages := make([]models.ConversationMessage, 0, len(body.Messages))
-	for _, m := range body.Messages {
-		domainMessages = append(domainMessages, models.ConversationMessage{
-			Role:      m.Role,
-			Content:   m.Content,
-			Timestamp: m.Timestamp,
-		})
-	}
-
-	inserted, err := c.appender.Execute(conversationId, domainMessages)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "append_failed", "message": err.Error()})
-	}
-
-	return ctx.JSON(&responses.AppendConversationMessagesResponse{Inserted: toWireMessages(inserted)})
+	return mvc_result.Write(ctx, c.appender.Execute(conversationId, body))
 }
 
 // List returns the conversation transcript ordered by timestamp ascending.
@@ -88,23 +73,5 @@ func (c *ConversationMessagesController) List(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
-	messages, err := c.lister.Execute(conversationId)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "list_failed", "message": err.Error()})
-	}
-	return ctx.JSON(&responses.ListConversationMessagesResponse{Messages: toWireMessages(messages)})
-}
-
-func toWireMessages(in []models.ConversationMessage) []responses.ConversationMessage {
-	out := make([]responses.ConversationMessage, 0, len(in))
-	for _, m := range in {
-		out = append(out, responses.ConversationMessage{
-			Id:             m.Id,
-			ConversationId: m.ConversationId,
-			Role:           m.Role,
-			Content:        m.Content,
-			Timestamp:      m.Timestamp,
-		})
-	}
-	return out
+	return mvc_result.Write(ctx, c.lister.Execute(conversationId))
 }

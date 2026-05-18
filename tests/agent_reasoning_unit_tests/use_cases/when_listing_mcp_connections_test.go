@@ -5,6 +5,8 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -37,24 +39,27 @@ func TestWhenListingMCPConnections(t *testing.T) {
 	t.Run("Given the repository returns rows", func(t *testing.T) {
 		t.Parallel()
 
-		expected := []models.MCPConnection{
+		stored := []models.MCPConnection{
 			*model_builders.NewMCPConnectionBuilder().WithName("alpha").Build(),
 			*model_builders.NewMCPConnectionBuilder().WithName("beta").Build(),
 		}
 		initSuite := func(suite *WhenListingMCPConnectionsTestingSuite) {
-			suite.mockRepository.EXPECT().List().Return(expected, nil)
+			suite.mockRepository.EXPECT().List().Return(stored, nil)
 		}
 
-		t.Run("Should pass them through without hydrating header values", func(t *testing.T) {
+		t.Run("Should return Ok with the wire response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMCPConnectionsBeforeEach(t)
 			initSuite(suite)
 
-			got, err := suite.sut.Execute()
+			res := suite.sut.Execute()
 
-			assert.NoError(t, err)
-			assert.Equal(t, expected, got)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.MCPConnectionListResponse)
+			assert.True(t, ok)
+			assert.Len(t, body.Connections, 2)
+			assert.Equal(t, "alpha", body.Connections[0].Name)
 		})
 	})
 }

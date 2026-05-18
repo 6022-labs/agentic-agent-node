@@ -3,7 +3,7 @@ package runtime_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -30,14 +30,7 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *LLMConfigController) Get(ctx *fiber.Ctx) error {
-	connection, err := c.getter.Execute()
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "get_failed", "message": err.Error()})
-	}
-	if connection == nil {
-		return ctx.SendStatus(fiber.StatusNotFound)
-	}
-	return ctx.JSON(responses.ToLLMConnectionResponse(connection))
+	return mvc_result.Write(ctx, c.getter.Execute())
 }
 
 func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
@@ -48,16 +41,9 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	connection, err := c.setupper.Execute(ctx.Context(), body)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "setup_failed", "message": err.Error()})
-	}
-	return ctx.JSON(responses.ToLLMConnectionResponse(connection))
+	return mvc_result.Write(ctx, c.setupper.Execute(ctx.Context(), body))
 }
 
 func (c *LLMConfigController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deleter.Execute(ctx.Context()); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"code": "delete_failed", "message": err.Error()})
-	}
-	return ctx.SendStatus(fiber.StatusNoContent)
+	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context()))
 }

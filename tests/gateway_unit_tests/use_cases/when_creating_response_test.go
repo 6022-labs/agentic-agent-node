@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -72,21 +74,21 @@ func TestWhenCreatingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should forward inputs and surface the assistant message in Response.Output", func(t *testing.T) {
+		t.Run("Should return Ok forwarding inputs and surfacing the assistant message in Response.Output", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, request)
+			res := suite.sut.Execute(ctx, request)
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.True(t, result.IsFinal)
-				if assert.Len(t, result.Output, 1) {
-					assert.Equal(t, "hello back", result.Output[0].Content)
-					assert.Equal(t, now, result.Output[0].Timestamp)
-				}
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.Response)
+			assert.True(t, ok)
+			assert.True(t, body.IsFinal)
+			if assert.Len(t, body.Output, 1) {
+				assert.Equal(t, "hello back", body.Output[0].Content)
+				assert.Equal(t, now, body.Output[0].Timestamp)
 			}
 		})
 	})
@@ -100,24 +102,24 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(&runtime_models.ExternalCreateResponseResultPayload{}, nil)
 		}
 
-		t.Run("Should return Response with IsFinal=false and no Output", func(t *testing.T) {
+		t.Run("Should return Ok with IsFinal=false and no Output", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},
 			})
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.False(t, result.IsFinal)
-				assert.Empty(t, result.Output)
-			}
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.Response)
+			assert.True(t, ok)
+			assert.False(t, body.IsFinal)
+			assert.Empty(t, body.Output)
 		})
 	})
 
@@ -130,22 +132,21 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, errors.New("runtime down"))
 		}
 
-		t.Run("Should wrap the error", func(t *testing.T) {
+		t.Run("Should return Unavailable carrying the cause", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},
 			})
 
-			assert.Nil(t, result)
-			assert.ErrorContains(t, err, "failed to create response")
-			assert.ErrorContains(t, err, "runtime down")
+			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
+			assert.Contains(t, res.Message, "runtime down")
 		})
 	})
 }

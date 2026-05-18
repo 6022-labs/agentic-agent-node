@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -47,16 +49,16 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
 		}
 
-		t.Run("Should return nil without touching the secret storage", func(t *testing.T) {
+		t.Run("Should return NotFound without touching the secret storage", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			got, err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
-			assert.Nil(t, got)
+			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
+			assert.Equal(t, "mcp_connection_not_found", res.Code)
 		})
 	})
 
@@ -76,17 +78,19 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "X-Trace").Return("trace-1", true, nil)
 		}
 
-		t.Run("Should hydrate HeaderAuth from vault", func(t *testing.T) {
+		t.Run("Should return Ok with the wire response (HeaderAuth is not on the wire)", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			got, err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "Bearer abc", got.HeaderAuth["Authorization"])
-			assert.Equal(t, "trace-1", got.HeaderAuth["X-Trace"])
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.MCPConnectionResponse)
+			assert.True(t, ok)
+			assert.Equal(t, id, body.Id)
+			assert.ElementsMatch(t, []string{"Authorization", "X-Trace"}, body.HeaderAuthKeys)
 		})
 	})
 
@@ -103,16 +107,18 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
 		}
 
-		t.Run("Should leave that key out of HeaderAuth without erroring", func(t *testing.T) {
+		t.Run("Should still return Ok with the wire response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			got, err := suite.sut.Execute(context.Background(), id)
+			res := suite.sut.Execute(context.Background(), id)
 
-			assert.NoError(t, err)
-			assert.NotContains(t, got.HeaderAuth, "Authorization")
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.MCPConnectionResponse)
+			assert.True(t, ok)
+			assert.Equal(t, id, body.Id)
 		})
 	})
 }

@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -42,17 +44,19 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 			suite.mockNonceStore.EXPECT().Generate().Return("nonce-abc", expectedExp, nil)
 		}
 
-		t.Run("Should return them in the response", func(t *testing.T) {
+		t.Run("Should return Ok with the nonce in the response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAuthChallengeBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute()
+			res := suite.sut.Execute()
 
-			assert.NoError(t, err)
-			assert.Equal(t, "nonce-abc", resp.Nonce)
-			assert.Equal(t, expectedExp, resp.ExpiresAt)
+			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			body, ok := res.Body.(*responses.GetAuthChallengeResponse)
+			assert.True(t, ok)
+			assert.Equal(t, "nonce-abc", body.Nonce)
+			assert.Equal(t, expectedExp, body.ExpiresAt)
 		})
 	})
 
@@ -63,15 +67,16 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 			suite.mockNonceStore.EXPECT().Generate().Return("", time.Time{}, errors.New("rng failed"))
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAuthChallengeBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute()
+			res := suite.sut.Execute()
 
-			assert.ErrorContains(t, err, "rng failed")
+			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
+			assert.Contains(t, res.Message, "rng failed")
 		})
 	})
 }

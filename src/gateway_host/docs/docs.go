@@ -84,7 +84,7 @@ const docTemplate = `{
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
-                    "503": {
+                    "502": {
                         "description": "identity_not_found",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
