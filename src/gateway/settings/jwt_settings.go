@@ -11,33 +11,43 @@ import (
 const JwtSettingsKey = "jwt"
 
 type JwtSettings struct {
-	SigningKey string        `koanf:"signing_key"`
-	TokenTtl   time.Duration `koanf:"token_ttl"`
-	NonceTtl   time.Duration `koanf:"nonce_ttl"`
+	SigningKey string
+	TokenTtl   time.Duration
+	NonceTtl   time.Duration
+}
+
+type jwtSettingsRaw struct {
+	SigningKey      string `koanf:"signing_key"`
+	TokenTtlSeconds int    `koanf:"token_ttl"`
+	NonceTtlSeconds int    `koanf:"nonce_ttl"`
 }
 
 func NewJwtSettings(logger *zap.Logger, k *koanf.Koanf) *JwtSettings {
-	settings := JwtSettings{
-		TokenTtl: 30 * time.Minute,
-		NonceTtl: 5 * time.Minute,
+	raw := jwtSettingsRaw{
+		TokenTtlSeconds: 1800,
+		NonceTtlSeconds: 300,
 	}
-	if err := k.Unmarshal(JwtSettingsKey, &settings); err != nil {
+	if err := k.Unmarshal(JwtSettingsKey, &raw); err != nil {
 		logger.Fatal("failed to unmarshal jwt settings", zap.Error(err))
 	}
 
-	settings.SigningKey = strings.TrimSpace(settings.SigningKey)
+	raw.SigningKey = strings.TrimSpace(raw.SigningKey)
 
-	if len(settings.SigningKey) == 0 {
+	if len(raw.SigningKey) == 0 {
 		logger.Fatal("please set jwt.signing_key (or JWT__SIGNING_KEY env)")
 	}
-	if settings.TokenTtl <= 0 {
-		logger.Warn("invalid jwt.token_ttl value, defaulting to 30m")
-		settings.TokenTtl = 30 * time.Minute
+	if raw.TokenTtlSeconds <= 0 {
+		logger.Warn("invalid jwt.token_ttl value, defaulting to 1800")
+		raw.TokenTtlSeconds = 1800
 	}
-	if settings.NonceTtl <= 0 {
-		logger.Warn("invalid jwt.nonce_ttl value, defaulting to 5m")
-		settings.NonceTtl = 5 * time.Minute
+	if raw.NonceTtlSeconds <= 0 {
+		logger.Warn("invalid jwt.nonce_ttl value, defaulting to 300")
+		raw.NonceTtlSeconds = 300
 	}
 
-	return &settings
+	return &JwtSettings{
+		SigningKey: raw.SigningKey,
+		TokenTtl:   time.Duration(raw.TokenTtlSeconds) * time.Second,
+		NonceTtl:   time.Duration(raw.NonceTtlSeconds) * time.Second,
+	}
 }

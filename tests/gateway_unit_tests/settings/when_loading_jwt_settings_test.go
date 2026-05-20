@@ -2,7 +2,6 @@ package settings_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/settings"
 	"github.com/knadh/koanf/providers/confmap"
@@ -20,8 +19,8 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"jwt.signing_key": "key-123",
-			"jwt.token_ttl":   "15m",
-			"jwt.nonce_ttl":   "2m",
+			"jwt.token_ttl":   900,
+			"jwt.nonce_ttl":   120,
 		}, "."), nil)
 
 		t.Run("Should load every field as provided", func(t *testing.T) {
@@ -31,8 +30,8 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 			assert.NotNil(t, result)
 			assert.Equal(t, "key-123", result.SigningKey)
-			assert.Equal(t, 15*time.Minute, result.TokenTtl)
-			assert.Equal(t, 2*time.Minute, result.NonceTtl)
+			assert.Equal(t, 900, result.TokenTtl)
+			assert.Equal(t, 120, result.NonceTtl)
 		})
 	})
 
@@ -44,13 +43,13 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 			"jwt.signing_key": "key-123",
 		}, "."), nil)
 
-		t.Run("Should default token_ttl to 30m and nonce_ttl to 5m", func(t *testing.T) {
+		t.Run("Should default token_ttl to 1800 and nonce_ttl to 300", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewJwtSettings(zap.NewNop(), k)
 
-			assert.Equal(t, 30*time.Minute, result.TokenTtl)
-			assert.Equal(t, 5*time.Minute, result.NonceTtl)
+			assert.Equal(t, 1800, result.TokenTtl)
+			assert.Equal(t, 300, result.NonceTtl)
 		})
 	})
 
@@ -76,16 +75,16 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"jwt.signing_key": "key",
-			"jwt.token_ttl":   "0s",
-			"jwt.nonce_ttl":   "0s",
+			"jwt.token_ttl":   0,
+			"jwt.nonce_ttl":   0,
 		}, "."), nil)
 
 		t.Run("Should fall back to defaults", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewJwtSettings(zap.NewNop(), k)
-			assert.Equal(t, 30*time.Minute, result.TokenTtl)
-			assert.Equal(t, 5*time.Minute, result.NonceTtl)
+			assert.Equal(t, 1800, result.TokenTtl)
+			assert.Equal(t, 300, result.NonceTtl)
 		})
 	})
 }

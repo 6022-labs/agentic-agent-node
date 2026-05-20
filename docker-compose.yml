@@ -13,8 +13,8 @@ services:
       - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5001
       - RUNTIME_CLIENT__TIMEOUT=5s
       - JWT__SIGNING_KEY=dev-secret
-      - JWT__TOKEN_TTL=30m
-      - JWT__NONCE_TTL=5m
+      - JWT__TOKEN_TTL=1800
+      - JWT__NONCE_TTL=300
       - VAULT__ADDRESS=http://agent-node-vault:8200
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret

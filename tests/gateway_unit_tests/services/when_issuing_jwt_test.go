@@ -21,7 +21,7 @@ type WhenIssuingJwtTestingSuite struct {
 func WhenIssuingJwtBeforeEach() *WhenIssuingJwtTestingSuite {
 	jwtSettings := &settings.JwtSettings{
 		SigningKey: "test-signing-key",
-		TokenTtl:   30 * time.Minute,
+		TokenTtl:   1800,
 	}
 	return &WhenIssuingJwtTestingSuite{
 		sut:         services.NewJwtIssuer(jwtSettings),
@@ -56,7 +56,7 @@ func TestWhenIssuingJwt(t *testing.T) {
 			_, expiresAt, err := suite.sut.Issue(address)
 
 			assert.NoError(t, err)
-			assert.WithinDuration(t, time.Now().Add(suite.jwtSettings.TokenTtl), expiresAt, 5*time.Second)
+			assert.WithinDuration(t, time.Now().Add(time.Duration(suite.jwtSettings.TokenTtl)*time.Second), expiresAt, 5*time.Second)
 		})
 
 		t.Run("Should produce a 3-part JWT with HS256 alg and sub == address", func(t *testing.T) {

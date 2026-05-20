@@ -23,7 +23,7 @@ type WhenValidatingJwtTestingSuite struct {
 func WhenValidatingJwtBeforeEach() *WhenValidatingJwtTestingSuite {
 	jwtSettings := &settings.JwtSettings{
 		SigningKey: "round-trip-key",
-		TokenTtl:   30 * time.Minute,
+		TokenTtl:   1800,
 	}
 	return &WhenValidatingJwtTestingSuite{
 		sut:         services.NewJwtValidator(jwtSettings),
@@ -64,7 +64,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 
 			otherIssuer := services.NewJwtIssuer(&settings.JwtSettings{
 				SigningKey: "other-key",
-				TokenTtl:   30 * time.Minute,
+				TokenTtl:   1800,
 			})
 			token, _, _ := otherIssuer.Issue(address)
 
