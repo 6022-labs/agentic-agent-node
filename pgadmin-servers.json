@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "postgres": {
+      "Name": "[LOCAL] : agentic-agent-node",
+      "Group": "Servers",
+      "Port": 5432,
+      "Username": "postgres",
+      "Host": "db",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "postgres"
+    }
+  }
+}

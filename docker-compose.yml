@@ -53,6 +53,24 @@ services:
     volumes:
       - agent-node-db-data:/var/lib/postgresql/data
 
+  agent-node-pgadmin:
+    image: "dpage/pgadmin4:9.14"
+    container_name: agent-node-pgadmin
+    user: "root"
+    depends_on:
+      agent-node-db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "pgadmin4@pgadmin.org"
+      PGADMIN_DEFAULT_PASSWORD: "root"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    networks:
+      agent-node-network:
+    volumes:
+      - ./pgadmin-servers.json:/pgadmin4/servers.json
+
   agent-node-vault:
     image: hashicorp/vault:1.21
     container_name: agent-node-vault
@@ -74,8 +92,6 @@ services:
 
 networks:
   agent-node-network:
-    name: agent-node-network
-    external: true
 
 volumes:
   agent-node-db-data:
