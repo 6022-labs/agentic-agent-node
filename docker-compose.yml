@@ -8,9 +8,7 @@ services:
       - "5500:5000"
     environment:
       - GATEWAY_HOST__API_PORT=5000
-      - GATEWAY_HOST__APP_NAME=AgenticAI-Agent-Node-Gateway
       - RUNTIME_HOST__API_PORT=5001
-      - RUNTIME_HOST__APP_NAME=AgenticAI-Agent-Node-Runtime
       - RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1
       - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5001
       - RUNTIME_CLIENT__TIMEOUT=5s

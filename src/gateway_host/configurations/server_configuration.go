@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const appName = "AgentNode-Gateway"
+
 func ConfigureServer(container *dig.Container) {
 	if err := container.Provide(newHttpServer); err != nil {
 		panic(err)
@@ -25,7 +27,7 @@ func ConfigureServer(container *dig.Container) {
 
 func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 	return fiber.New(fiber.Config{
-		AppName:   hostSettings.AppName,
+		AppName:   appName,
 		Network:   "tcp",
 		BodyLimit: hostSettings.BodyLimitBytes,
 	})

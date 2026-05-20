@@ -19,7 +19,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"runtime_host.api_port":         6060,
-			"runtime_host.app_name":         "AgenticAI-Runtime-Node-Test",
 			"runtime_host.body_limit_bytes": 1024 * 1024,
 			"runtime_host.listen_address":   "0.0.0.0",
 		}, "."), nil)
@@ -31,7 +30,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 			assert.NotNil(t, result)
 			assert.Equal(t, 6060, result.ApiPort)
-			assert.Equal(t, "AgenticAI-Runtime-Node-Test", result.AppName)
 			assert.Equal(t, 1024*1024, result.BodyLimitBytes)
 			assert.Equal(t, "0.0.0.0", result.ListenAddress)
 		})
@@ -41,9 +39,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"runtime_host.app_name": "AgenticAI-Runtime-Node-Test",
-		}, "."), nil)
+		_ = k.Load(confmap.Provider(map[string]any{}, "."), nil)
 
 		t.Run("Should default api_port to 5001", func(t *testing.T) {
 			t.Parallel()
@@ -59,7 +55,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"runtime_host.app_name":         "AgenticAI-Runtime-Node-Test",
 			"runtime_host.body_limit_bytes": 0,
 		}, "."), nil)
 
@@ -77,7 +72,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"runtime_host.app_name":       "AgenticAI-Runtime-Node-Test",
 			"runtime_host.listen_address": "   ",
 		}, "."), nil)
 
@@ -87,23 +81,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 			result := settings.NewHostSettings(zap.NewNop(), k)
 
 			assert.Equal(t, "127.0.0.1", result.ListenAddress)
-		})
-	})
-
-	t.Run("Given app_name has surrounding whitespace", func(t *testing.T) {
-		t.Parallel()
-
-		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"runtime_host.app_name": "   trimmed-name   ",
-		}, "."), nil)
-
-		t.Run("Should trim app_name", func(t *testing.T) {
-			t.Parallel()
-
-			result := settings.NewHostSettings(zap.NewNop(), k)
-
-			assert.Equal(t, "trimmed-name", result.AppName)
 		})
 	})
 }

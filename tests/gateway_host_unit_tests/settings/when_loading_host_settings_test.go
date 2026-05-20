@@ -19,7 +19,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"gateway_host.api_port":         5050,
-			"gateway_host.app_name":         "AgenticAI-Agent-Node-Test",
 			"gateway_host.body_limit_bytes": 1024 * 1024,
 		}, "."), nil)
 
@@ -30,7 +29,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 			assert.NotNil(t, result)
 			assert.Equal(t, 5050, result.ApiPort)
-			assert.Equal(t, "AgenticAI-Agent-Node-Test", result.AppName)
 			assert.Equal(t, 1024*1024, result.BodyLimitBytes)
 		})
 	})
@@ -39,9 +37,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"gateway_host.app_name": "AgenticAI-Agent-Node-Test",
-		}, "."), nil)
+		_ = k.Load(confmap.Provider(map[string]any{}, "."), nil)
 
 		t.Run("Should default api_port to 5000", func(t *testing.T) {
 			t.Parallel()
@@ -57,7 +53,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"gateway_host.app_name":         "AgenticAI-Agent-Node-Test",
 			"gateway_host.body_limit_bytes": 0,
 		}, "."), nil)
 
@@ -67,23 +62,6 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 			result := settings.NewHostSettings(zap.NewNop(), k)
 
 			assert.Equal(t, 4*1024*1024, result.BodyLimitBytes)
-		})
-	})
-
-	t.Run("Given app_name has surrounding whitespace", func(t *testing.T) {
-		t.Parallel()
-
-		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"gateway_host.app_name": "   trimmed-name   ",
-		}, "."), nil)
-
-		t.Run("Should trim app_name", func(t *testing.T) {
-			t.Parallel()
-
-			result := settings.NewHostSettings(zap.NewNop(), k)
-
-			assert.Equal(t, "trimmed-name", result.AppName)
 		})
 	})
 }

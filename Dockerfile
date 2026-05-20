@@ -31,10 +31,8 @@ COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/sr
 # Anything sensitive (Vault token, JWT signing key, chain RPC, agent DB URL)
 # must still be supplied at runtime.
 ENV GATEWAY_HOST__API_PORT=5000 \
-    GATEWAY_HOST__APP_NAME=AgenticAI-Agent-Node-Gateway \
     GATEWAY_HOST__BODY_LIMIT_BYTES=4194304 \
     RUNTIME_HOST__API_PORT=5001 \
-    RUNTIME_HOST__APP_NAME=AgenticAI-Agent-Node-Runtime \
     RUNTIME_HOST__BODY_LIMIT_BYTES=4194304 \
     RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1 \
     RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5001 \
