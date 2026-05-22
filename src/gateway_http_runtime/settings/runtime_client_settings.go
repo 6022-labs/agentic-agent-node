@@ -11,25 +11,35 @@ import (
 const RuntimeClientSettingsKey = "runtime_client"
 
 type RuntimeClientSettings struct {
-	BaseUrl string        `koanf:"base_url"`
-	Timeout time.Duration `koanf:"timeout"`
+	BaseUrl string
+	Timeout time.Duration
+}
+
+type runtimeClientSettingsRaw struct {
+	BaseUrl        string `koanf:"base_url"`
+	TimeoutSeconds int    `koanf:"timeout"`
 }
 
 func NewRuntimeClientSettings(logger *zap.Logger, k *koanf.Koanf) *RuntimeClientSettings {
-	settings := RuntimeClientSettings{
-		BaseUrl: "http://127.0.0.1:5001",
-		Timeout: 5 * time.Second,
+	raw := runtimeClientSettingsRaw{
+		BaseUrl:        "http://127.0.0.1:5001",
+		TimeoutSeconds: 5,
 	}
-	if err := k.Unmarshal(RuntimeClientSettingsKey, &settings); err != nil {
+	if err := k.Unmarshal(RuntimeClientSettingsKey, &raw); err != nil {
 		logger.Fatal("failed to unmarshal runtime_client settings", zap.Error(err))
 	}
 
-	settings.BaseUrl = strings.TrimSpace(settings.BaseUrl)
-	if len(settings.BaseUrl) == 0 {
-		settings.BaseUrl = "http://127.0.0.1:5001"
+	raw.BaseUrl = strings.TrimSpace(raw.BaseUrl)
+	if len(raw.BaseUrl) == 0 {
+		raw.BaseUrl = "http://127.0.0.1:5001"
 	}
-	if settings.Timeout <= 0 {
-		settings.Timeout = 5 * time.Second
+	if raw.TimeoutSeconds <= 0 {
+		logger.Warn("invalid runtime_client.timeout value, defaulting to 5")
+		raw.TimeoutSeconds = 5
 	}
-	return &settings
+
+	return &RuntimeClientSettings{
+		BaseUrl: raw.BaseUrl,
+		Timeout: time.Duration(raw.TimeoutSeconds) * time.Second,
+	}
 }

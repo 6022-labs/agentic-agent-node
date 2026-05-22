@@ -48,11 +48,31 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		Name:              "agent.eth",
 	}
 
-	t.Run("Given the identity resolver fails", func(t *testing.T) {
+	t.Run("Given the agent has no on-chain identity yet", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
 			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(nil, services.ErrIdentityNotFound)
+		}
+
+		t.Run("Should authorize while unclaimed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingNftOwnerBeforeEach(t)
+			initSuite(suite)
+
+			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
+
+			assert.NoError(t, err)
+			assert.True(t, ok)
+		})
+	})
+
+	t.Run("Given the identity resolver fails for another reason", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
+			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(nil, errors.New("wallet not loaded yet"))
 		}
 
 		t.Run("Should return false and propagate the error", func(t *testing.T) {
@@ -64,7 +84,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
 
 			assert.False(t, ok)
-			assert.ErrorIs(t, err, services.ErrIdentityNotFound)
+			assert.ErrorContains(t, err, "wallet not loaded yet")
 		})
 	})
 
