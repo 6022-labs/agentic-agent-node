@@ -41,11 +41,11 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 	return mvc_result.Write(ctx, c.getIdentity.Execute(ctx.UserContext()))
 }
 
-// PublishEns re-publishes the agent's runtime ENS text records (URL, kind).
+// PublishEns re-publishes the agent's runtime ENS text records (URL).
 // Use when the runtime URL has changed since the boot-time publish, or when
 // the boot-time publish failed (e.g. the NFT had not yet been minted).
 // @Summary Re-publish ENS runtime records
-// @Description Writes `url` + `agent.kind` text records for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.
+// @Description Writes the `url` text record for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.
 // @Tags Internal
 // @Produce json
 // @Success 204

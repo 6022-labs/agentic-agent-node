@@ -24,13 +24,11 @@ import (
 )
 
 const (
-	urlKey       = "url"
-	agentKindKey = "agent.kind"
-	agentKind    = "agent-node"
+	urlKey = "url"
 )
 
-// AgentEnsRegistryRequester publishes the agent's runtime metadata (URL + kind)
-// to its ENS subnode via the on-chain AgentEnsRegistry. Intended to run at
+// AgentEnsRegistryRequester publishes the agent's runtime URL to its ENS
+// subnode via the on-chain AgentEnsRegistry. Intended to run at
 // boot, after the wallet and on-chain identity are ready. On first boot the
 // subnode is not yet provisioned, so the runtime keys are seeded via a single
 // initAgentTexts call. On subsequent boots the subnode already exists and
@@ -65,9 +63,9 @@ func NewAgentEnsRegistryRequester(
 	}
 }
 
-// PublishRuntimeRecords writes the `url` and `agent.kind` text records for the
-// agent's NFT. Caller must have resolved the agent's identity (i.e. the NFT
-// exists on chain) prior to invocation.
+// PublishRuntimeRecords writes the `url` text record for the agent's NFT.
+// Caller must have resolved the agent's identity (i.e. the NFT exists on
+// chain) prior to invocation.
 func (r *AgentEnsRegistryRequester) PublishRuntimeRecords(ctx context.Context) error {
 	identity, err := r.identityResolver.Resolve(ctx)
 	if err != nil {
@@ -122,7 +120,6 @@ func (r *AgentEnsRegistryRequester) initAgentTexts(
 ) error {
 	records := []abi.KeyValue{
 		{Key: urlKey, Value: r.ensSettings.RuntimeUrl},
-		{Key: agentKindKey, Value: agentKind},
 	}
 
 	tx, err := registry.InitAgentTexts(opts, collection, tokenId, records)
@@ -138,7 +135,6 @@ func (r *AgentEnsRegistryRequester) initAgentTexts(
 		zap.Uint64("tokenId", identity.TokenId),
 		zap.String("name", identity.Name),
 		zap.String("runtimeUrl", r.ensSettings.RuntimeUrl),
-		zap.String("agentKind", agentKind),
 		zap.String("tx", tx.Hash().Hex()),
 	)
 	return nil
@@ -158,7 +154,6 @@ func (r *AgentEnsRegistryRequester) refreshAgentTexts(
 		value string
 	}{
 		{urlKey, r.ensSettings.RuntimeUrl},
-		{agentKindKey, agentKind},
 	}
 
 	callOpts := &bind.CallOpts{Context: ctx}

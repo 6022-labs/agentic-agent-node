@@ -206,7 +206,7 @@ const docTemplate = `{
         },
         "/internal/identity/ens/publish": {
             "post": {
-                "description": "Writes ` + "`" + `url` + "`" + ` + ` + "`" + `agent.kind` + "`" + ` text records for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.",
+                "description": "Writes the ` + "`" + `url` + "`" + ` text record for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.",
                 "produces": [
                     "application/json"
                 ],

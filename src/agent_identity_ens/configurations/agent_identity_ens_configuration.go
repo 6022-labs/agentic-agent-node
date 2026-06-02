@@ -7,8 +7,8 @@ import (
 	"go.uber.org/dig"
 )
 
-// AddAgentIdentityEnsConfiguration registers the boot-time ENS writer for
-// `agent.runtime-url` + `agent.runtime-kind`. AgentEnsRegistryRequester is
+// AddAgentIdentityEnsConfiguration registers the boot-time ENS writer for the
+// agent's runtime `url`. AgentEnsRegistryRequester is
 // invoked by BootstrapRunner via the EnsRuntimeRecordsPublisherInterface
 // after the wallet is ready.
 func AddAgentIdentityEnsConfiguration(container *dig.Container) {
