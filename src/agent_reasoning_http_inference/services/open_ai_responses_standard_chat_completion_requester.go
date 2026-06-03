@@ -122,9 +122,8 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 }
 
 // buildRequestInputs flattens domain messages into the OpenAI Responses input
-// stream. assistant turns with tool_calls split into a message entry (text)
-// plus one function_call entry per tool call. role=tool messages become
-// function_call_output entries.
+// stream: assistant tool_calls split into a text message + one function_call
+// each; role=tool messages become function_call_output entries.
 func (r *OpenAIResponsesStandardChatCompletionRequester) buildRequestInputs(
 	messages []*interfaces.ChatCompletionMessage,
 ) ([]external_models.ExternalOpenAIResponsesStandardRequestInput, error) {

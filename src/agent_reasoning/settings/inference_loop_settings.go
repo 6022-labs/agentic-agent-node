@@ -7,9 +7,8 @@ import (
 
 const InferenceLoopSettingsKey = "inference_loop"
 
-// InferenceLoopSettings bounds the LLM ↔ MCP loop. MaxIterations is the hard cap
-// on how many LLM round-trips a single InferenceLoop.Run can make before giving up
-// — stops a runaway agent from burning tokens forever.
+// InferenceLoopSettings bounds the LLM ↔ MCP loop. MaxIterations hard-caps LLM
+// round-trips per InferenceLoop.Run, stopping a runaway agent.
 type InferenceLoopSettings struct {
 	MaxIterations int `koanf:"max_iterations"`
 }

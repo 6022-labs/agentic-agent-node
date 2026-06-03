@@ -23,9 +23,7 @@ type agentCollectionsManagersFile struct {
 }
 
 // AgentCollectionsManagersSettings holds the AgentCollectionsManager address
-// for the blockchain this agent runs against. Bound at startup using
-// BlockblockchainSettings.Id; other services cannot reach into the registry for
-// arbitrary chains.
+// for this agent's chain, bound at startup from BlockchainSettings.Id.
 type AgentCollectionsManagersSettings struct {
 	ManagerAddress common.Address
 }

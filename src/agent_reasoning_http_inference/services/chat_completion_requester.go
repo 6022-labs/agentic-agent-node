@@ -14,12 +14,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// ChatCompletionRequester is the http-side adapter that implements
-// ChatCompletionRequesterInterface. It picks the right per-platform requester
-// based on LLMConnection.Platform, fetches the api key from Vault, trims the
-// message stream to the configured token budget, and delegates the round-trip.
-//
-// It does NOT loop on tool calls — tool resolution is the inference_loop's job.
+// ChatCompletionRequester picks the per-platform requester by
+// LLMConnection.Platform, fetches the api key from Vault, trims messages to the
+// token budget, and delegates. Does NOT loop on tool calls — that's inference_loop.
 type ChatCompletionRequester struct {
 	logger *zap.Logger
 
@@ -126,10 +123,9 @@ func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, e
 	return &apiKey, nil
 }
 
-// trimMessagesToTokenLimit trims messages from the start until the total token
-// count is within the limit. System messages stay at the head; the trimmer
-// drops the oldest non-system messages first. Token budget is approximated
-// using OpenAI's gpt-4 tokenizer for all platforms — close enough for trim.
+// trimMessagesToTokenLimit drops the oldest non-system messages until under
+// limit; system messages stay at the head. Counts tokens with gpt-4's
+// tokenizer for all platforms — close enough for trim.
 func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
 	messages []*interfaces.ChatCompletionMessage,
 	limit uint,

@@ -6,10 +6,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-// UpdateMCPConnectionRequest replaces all editable fields of an MCP connection
-// in one call (full-replacement semantics). HeaderAuth, when present, is the
-// new complete set — any previously configured header not in this map is
-// dropped on Save.
+// UpdateMCPConnectionRequest fully replaces an MCP connection's editable
+// fields. HeaderAuth, if present, is the complete new set — headers absent
+// from the map are dropped on Save.
 type UpdateMCPConnectionRequest struct {
 	Name       string            `json:"name"`
 	Url        string            `json:"url"`

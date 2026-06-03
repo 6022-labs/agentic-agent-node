@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// MCPConnection is one MCP server the agent can call into. Schema is owned by
-// the goose migration in runtime_db/migrations/. An agent may have many.
-//
-// HeaderAuthKeys lists the header names the connection authenticates with;
-// the values live in Vault and are loaded into HeaderAuth on read.
+// MCPConnection is one MCP server the agent can call into (an agent may have
+// many). HeaderAuthKeys names the auth headers; their values live in Vault and
+// load into HeaderAuth on read. Schema owned by runtime_db/migrations/.
 type MCPConnection struct {
 	Id             uuid.UUID                   `gorm:"primaryKey;size:36"`
 	Name           string                      `gorm:"not null;size:128"`

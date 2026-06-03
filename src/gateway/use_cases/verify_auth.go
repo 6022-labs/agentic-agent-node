@@ -12,9 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// Sentinel errors are kept for tests that assert on the domain reason; the
-// outcome (Unauthorized, Unavailable, ...) is what the transport adapter cares
-// about, but having a named error helps unit tests be explicit.
+// Sentinel errors let tests assert on the domain reason; transport adapters
+// only care about the outcome (Unauthorized, Unavailable, ...).
 var (
 	ErrNonceNotFound        = errors.New("nonce not found or expired")
 	ErrSignatureMismatch    = errors.New("signature does not match address")

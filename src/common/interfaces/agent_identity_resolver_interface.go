@@ -7,9 +7,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/models"
 )
 
-// ErrIdentityNotFound means no NFT has been minted to the agent's wallet yet.
-// Both the in-process resolver and the gateway-side HTTP client return this
-// sentinel so callers can map it consistently (e.g. to a 503 / "not yet").
+// ErrIdentityNotFound means no NFT is minted to the agent's wallet yet. Both
+// the resolver and the gateway HTTP client return it so callers map it
+// consistently (e.g. to a 503).
 var ErrIdentityNotFound = errors.New("agent identity not found on chain")
 
 type AgentIdentityResolverInterface interface {

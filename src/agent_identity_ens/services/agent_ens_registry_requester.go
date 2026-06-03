@@ -28,11 +28,9 @@ const (
 )
 
 // AgentEnsRegistryRequester publishes the agent's runtime URL to its ENS
-// subnode via the on-chain AgentEnsRegistry. Intended to run at
-// boot, after the wallet and on-chain identity are ready. On first boot the
-// subnode is not yet provisioned, so the runtime keys are seeded via a single
-// initAgentTexts call. On subsequent boots the subnode already exists and
-// individual records are refreshed via setAgentText (no-op if values match).
+// subnode via the on-chain AgentEnsRegistry, at boot once wallet + identity are
+// ready. First boot seeds the keys via initAgentTexts; later boots refresh
+// individual records via setAgentText (no-op if unchanged).
 type AgentEnsRegistryRequester struct {
 	logger             *zap.Logger
 	client             *ethclient.Client
@@ -64,8 +62,7 @@ func NewAgentEnsRegistryRequester(
 }
 
 // PublishRuntimeRecords writes the `url` text record for the agent's NFT.
-// Caller must have resolved the agent's identity (i.e. the NFT exists on
-// chain) prior to invocation.
+// Requires the NFT to already exist on chain.
 func (r *AgentEnsRegistryRequester) PublishRuntimeRecords(ctx context.Context) error {
 	identity, err := r.identityResolver.Resolve(ctx)
 	if err != nil {

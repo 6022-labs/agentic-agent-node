@@ -15,9 +15,8 @@ func (k *MCPConnectionHeaderAuthKey) String() string {
 	return string(*k)
 }
 
-// MCPConnectionHeaderAuthKeys is the persisted list of header names the
-// MCPConnection authenticates with. Stored as a JSON string array (jsonb on
-// postgres, JSON on mysql/mariadb). The matching values live in Vault.
+// MCPConnectionHeaderAuthKeys is the persisted list of auth header names,
+// stored as a JSON string array. Matching values live in Vault.
 type MCPConnectionHeaderAuthKeys []MCPConnectionHeaderAuthKey
 
 func (k *MCPConnectionHeaderAuthKeys) FromArray(values []string) {
@@ -35,9 +34,8 @@ func (k MCPConnectionHeaderAuthKeys) Value() (driver.Value, error) {
 	return json.Marshal(out)
 }
 
-// GormDBDataType emits the right column type per dialect so gormschema /
-// atlas generate `jsonb` on postgres and `json` on mysql/mariadb instead of
-// the default `bytea`/`BLOB` that `[]byte` would otherwise reflect to.
+// GormDBDataType picks the per-dialect column type (`jsonb` on postgres,
+// `json` on mysql/mariadb) instead of the `bytea`/`BLOB` that `[]byte` reflects to.
 func (MCPConnectionHeaderAuthKeys) GormDBDataType(db *gorm.DB, _ *schema.Field) string {
 	switch db.Dialector.Name() {
 	case "postgres":

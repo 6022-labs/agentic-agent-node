@@ -8,11 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// LLMConnection is the agent's configured LLM provider. Schema is owned by
-// the goose migration in runtime_db/migrations/. One agent per container, so
-// the table is expected to hold zero or one row at any time.
-//
-// The api key lives in Vault, not on this row.
+// LLMConnection is the agent's configured LLM provider. One agent per
+// container, so the table holds zero or one row. The api key lives in Vault,
+// not here. Schema owned by runtime_db/migrations/.
 type LLMConnection struct {
 	Id          uuid.UUID                      `gorm:"primaryKey;size:36"`
 	Platform    enums.LLMConnectionPlatform    `gorm:"not null;size:64"`

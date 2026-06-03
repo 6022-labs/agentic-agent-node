@@ -8,10 +8,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// BootstrapRunner ensures the agent's wallet is loaded from (or generated
-// into) the local Vault. On-chain identity is resolved lazily by
-// AgentIdentityResolver as routes need it; ENS publishing is handled
-// separately and is no longer part of bootstrap.
+// BootstrapRunner loads or generates the agent's wallet in the local Vault.
+// On-chain identity resolves lazily via AgentIdentityResolver; ENS publishing
+// is separate.
 type BootstrapRunner struct {
 	logger        *zap.Logger
 	walletStorage identity_interfaces.WalletCredentialsStorageInterface

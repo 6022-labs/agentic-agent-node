@@ -1,8 +1,6 @@
-// Package usecase_result is the domain-neutral envelope every use case returns.
-// It describes *what happened* in semantic terms (NotFound, Conflict, ...) so
-// the domain layer never has to know about HTTP, fiber, or any transport.
-//
-// Transport adapters (MVC, RPC, ...) translate Outcome -> their own status.
+// Package usecase_result is the transport-neutral envelope every use case
+// returns. Outcome names what happened (NotFound, Conflict, ...); adapters
+// (MVC, RPC) translate it to their own status.
 package usecase_result
 
 type Outcome int
@@ -20,10 +18,8 @@ const (
 	OutcomeInternalError                // unexpected internal failure
 )
 
-// Result is the envelope every use case returns.
-//
-// Body carries the success payload (or nil for content-less results).
-// Code + Message describe failure outcomes; Body stays nil in that case.
+// Result is the envelope every use case returns. Body holds the success payload
+// (nil on failure); Code + Message describe failures.
 type Result struct {
 	Outcome Outcome
 	Body    any

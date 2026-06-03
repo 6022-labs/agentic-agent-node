@@ -21,20 +21,13 @@ type ExternalAnthropicMessagesStandardMessageContent struct {
 	// `redacted_thinking` type fields
 	Data *string `json:"data,omitempty"`
 
-	// `tool_use`,
-	// `mcp_tool_use`,
-	// `server_tool_use` fields
+	// {tool,mcp_tool,server_tool}_use fields
 	Id    *string        `json:"id,omitempty"`
 	Name  *string        `json:"name,omitempty"`
 	Input map[string]any `json:"input,omitempty"`
 
-	// `tool_result`,
-	// `mcp_tool_result`,
-	// `web_fetch_tool_result`,
-	// `web_search_tool_result`,
-	// `code_execution_tool_result`,
-	// `bash_code_execution_tool_result`,
-	// `text_editor_code_execution_tool_result` type fields
+	// *_tool_result fields (tool, mcp, web_fetch, web_search, code_execution,
+	// bash_code_execution, text_editor_code_execution)
 	Content   any     `json:"content,omitempty"`
 	ToolUseId *string `json:"tool_use_id,omitempty"`
 

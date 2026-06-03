@@ -12,8 +12,7 @@ import (
 var ErrLLMConnectionNotFound = errors.New("llm connection not configured")
 
 // LLMConfigClientInterface is the gateway-side port for the runtime's LLM
-// config endpoints. Implemented by `gateway_http_runtime/services` over HTTP;
-// future in-process adapters (e.g. MCP-driven self-config) plug in here too.
+// config endpoints. Implemented over HTTP by gateway_http_runtime/services.
 type LLMConfigClientInterface interface {
 	Get(ctx context.Context) (*runtime_models.ExternalLLMConnectionPayload, error)
 	Setup(ctx context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error)

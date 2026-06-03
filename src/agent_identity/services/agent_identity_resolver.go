@@ -39,9 +39,8 @@ func NewAgentIdentityResolver(
 
 // agentWalletAddress returns the loaded agent wallet address.
 //
-// NOT IMPLEMENTED: this previously read the address from the bootstrap state
-// holder, which has been removed. Rewire it to the vault-backed wallet
-// storage before identity resolution can work again.
+// NOT IMPLEMENTED: bootstrap state holder removed. Rewire to vault-backed
+// wallet storage before identity resolution works again.
 func (r *AgentIdentityResolver) agentWalletAddress() (common.Address, error) {
 	return common.Address{}, errors.New("not implemented: agent wallet address source removed with bootstrap state holder")
 }
