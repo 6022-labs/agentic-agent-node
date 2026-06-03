@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -69,7 +70,7 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 					suite := WhenDeletingMCPConnectionBeforeEach(tc)
 					defer WhenDeletingMCPConnectionAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Delete(uuid.New()))
+					assert.NoError(t, suite.sut.Delete(context.Background(), uuid.New()))
 				})
 			})
 
@@ -81,12 +82,12 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 					suite := WhenDeletingMCPConnectionBeforeEach(tc)
 					defer WhenDeletingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(newMCPConnection("alpha", "https://a.example"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example"))
 					assert.NoError(t, err)
 
-					assert.NoError(t, suite.sut.Delete(inserted.Id))
+					assert.NoError(t, suite.sut.Delete(context.Background(), inserted.Id))
 
-					got, err := suite.sut.GetById(inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.Id)
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 

@@ -1,12 +1,15 @@
 package interfaces
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type ConversationHistoryInterface interface {
 	// Read returns every message for a conversation ordered by timestamp asc.
-	Read(conversationId string) ([]ConversationMessage, error)
+	Read(ctx context.Context, conversationId string) ([]ConversationMessage, error)
 	// Write persists messages and returns the rows actually inserted.
-	Write(conversationId string, messages []ConversationMessage) ([]ConversationMessage, error)
+	Write(ctx context.Context, conversationId string, messages []ConversationMessage) ([]ConversationMessage, error)
 }
 
 // ConversationMessage is the port-level DTO — semantic fields only, no

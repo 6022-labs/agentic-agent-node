@@ -10,6 +10,7 @@
 package use_cases_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	usecase_result "github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
@@ -41,15 +42,15 @@ func (m *MockListConversationMessagesInterface) EXPECT() *MockListConversationMe
 }
 
 // Execute mocks base method.
-func (m *MockListConversationMessagesInterface) Execute(conversationId string) *usecase_result.Result {
+func (m *MockListConversationMessagesInterface) Execute(ctx context.Context, conversationId string) *usecase_result.Result {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", conversationId)
+	ret := m.ctrl.Call(m, "Execute", ctx, conversationId)
 	ret0, _ := ret[0].(*usecase_result.Result)
 	return ret0
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockListConversationMessagesInterfaceMockRecorder) Execute(conversationId any) *gomock.Call {
+func (mr *MockListConversationMessagesInterfaceMockRecorder) Execute(ctx, conversationId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockListConversationMessagesInterface)(nil).Execute), conversationId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockListConversationMessagesInterface)(nil).Execute), ctx, conversationId)
 }

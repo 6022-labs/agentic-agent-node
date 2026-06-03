@@ -10,6 +10,7 @@
 package repositories_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -41,45 +42,45 @@ func (m *MockLLMConnectionRepositoryInterface) EXPECT() *MockLLMConnectionReposi
 }
 
 // Delete mocks base method.
-func (m *MockLLMConnectionRepositoryInterface) Delete() error {
+func (m *MockLLMConnectionRepositoryInterface) Delete(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete")
+	ret := m.ctrl.Call(m, "Delete", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Delete() *gomock.Call {
+func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Delete(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Delete))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Delete), ctx)
 }
 
 // Get mocks base method.
-func (m *MockLLMConnectionRepositoryInterface) Get() (*models.LLMConnection, error) {
+func (m *MockLLMConnectionRepositoryInterface) Get(ctx context.Context) (*models.LLMConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get")
+	ret := m.ctrl.Call(m, "Get", ctx)
 	ret0, _ := ret[0].(*models.LLMConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Get() *gomock.Call {
+func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Get))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Get), ctx)
 }
 
 // Upsert mocks base method.
-func (m *MockLLMConnectionRepositoryInterface) Upsert(connection *models.LLMConnection) (*models.LLMConnection, error) {
+func (m *MockLLMConnectionRepositoryInterface) Upsert(ctx context.Context, connection *models.LLMConnection) (*models.LLMConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upsert", connection)
+	ret := m.ctrl.Call(m, "Upsert", ctx, connection)
 	ret0, _ := ret[0].(*models.LLMConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upsert indicates an expected call of Upsert.
-func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Upsert(connection any) *gomock.Call {
+func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Upsert(ctx, connection any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Upsert), connection)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Upsert), ctx, connection)
 }

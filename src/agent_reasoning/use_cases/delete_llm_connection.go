@@ -23,7 +23,7 @@ func NewDeleteLLMConnection(
 // Execute removes the row first, then the secret. Reverse would leave a row
 // pointing at a missing secret if vault delete fails.
 func (u *DeleteLLMConnection) Execute(ctx context.Context) *usecase_result.Result {
-	if err := u.repository.Delete(); err != nil {
+	if err := u.repository.Delete(ctx); err != nil {
 		return usecase_result.InternalError("delete_failed", err.Error())
 	}
 	if err := u.secretStorage.Delete(ctx); err != nil {

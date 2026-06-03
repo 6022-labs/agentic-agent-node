@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -71,10 +72,11 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					suite := WhenUpsertingAgentBeforeEach(tc)
 					defer WhenUpsertingAgentAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewAgentBuilder().
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
 						WithRole(identity_enums.AgentRoleExpert).
 						Build())
+
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -92,16 +94,18 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					suite := WhenUpsertingAgentBeforeEach(tc)
 					defer WhenUpsertingAgentAfterEach(suite)
 
-					first, err := suite.sut.Upsert(model_builders.NewAgentBuilder().
+					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
 						WithRole(identity_enums.AgentRoleExpert).
 						Build())
+
 					assert.NoError(t, err)
 
-					second, err := suite.sut.Upsert(model_builders.NewAgentBuilder().
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Babbage").
 						WithRole(identity_enums.AgentRoleFacilitator).
 						Build())
+
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
 					assert.Equal(t, "Babbage", second.Name)

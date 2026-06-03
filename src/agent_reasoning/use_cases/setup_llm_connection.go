@@ -31,7 +31,7 @@ func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.Setu
 	if err := u.secretStorage.Save(ctx, request.ApiKey); err != nil {
 		return usecase_result.InternalError("setup_failed", err.Error())
 	}
-	connection, err := u.repository.Upsert(&models.LLMConnection{
+	connection, err := u.repository.Upsert(ctx, &models.LLMConnection{
 		Platform:    request.Platform,
 		Model:       request.Model,
 		BaseUrl:     request.BaseUrl,

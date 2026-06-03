@@ -7,8 +7,8 @@ import (
 	vault_services "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
-	vault "github.com/hashicorp/vault/api"
 	"github.com/google/uuid"
+	vault "github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
 )
 

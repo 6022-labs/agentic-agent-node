@@ -10,6 +10,7 @@
 package repositories_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -41,31 +42,31 @@ func (m *MockAgentRegistrationStateRepositoryInterface) EXPECT() *MockAgentRegis
 }
 
 // Get mocks base method.
-func (m *MockAgentRegistrationStateRepositoryInterface) Get() (*models.AgentRegistrationState, error) {
+func (m *MockAgentRegistrationStateRepositoryInterface) Get(ctx context.Context) (*models.AgentRegistrationState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get")
+	ret := m.ctrl.Call(m, "Get", ctx)
 	ret0, _ := ret[0].(*models.AgentRegistrationState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) Get() *gomock.Call {
+func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).Get))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).Get), ctx)
 }
 
 // Upsert mocks base method.
-func (m *MockAgentRegistrationStateRepositoryInterface) Upsert(state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+func (m *MockAgentRegistrationStateRepositoryInterface) Upsert(ctx context.Context, state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upsert", state)
+	ret := m.ctrl.Call(m, "Upsert", ctx, state)
 	ret0, _ := ret[0].(*models.AgentRegistrationState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upsert indicates an expected call of Upsert.
-func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) Upsert(state any) *gomock.Call {
+func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) Upsert(ctx, state any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).Upsert), state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).Upsert), ctx, state)
 }

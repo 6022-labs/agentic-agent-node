@@ -33,7 +33,7 @@ func (e *LLMExecutor) Complete(
 	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
-	llmConnection, err := e.llmConnectionRepository.Get()
+	llmConnection, err := e.llmConnectionRepository.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load llm connection: %w", err)
 	}

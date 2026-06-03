@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
-					inserted, err := suite.sut.AppendMessages(nil)
+					inserted, err := suite.sut.AppendMessages(context.Background(), nil)
 					assert.NoError(t, err)
 					assert.Empty(t, inserted)
 				})
@@ -124,10 +125,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
-					inserted, err := suite.sut.AppendMessages([]models.ConversationMessage{
+					inserted, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						newMessage("conv-1", "hello"),
 						newMessage("conv-1", "world"),
 					})
+
 					assert.NoError(t, err)
 					assert.Len(t, inserted, 2)
 
@@ -145,13 +147,14 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{newMessage("conv-2", "hi")})
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{newMessage("conv-2", "hi")})
 					assert.NoError(t, err)
 
-					_, err = suite.sut.AppendMessages([]models.ConversationMessage{
+					_, err = suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						newMessage("conv-2", "hi"),
 						newMessage("conv-2", "different content"),
 					})
+
 					assert.NoError(t, err)
 
 					var count int64
@@ -168,10 +171,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						newMessage("conv-3", "same"),
 						newMessage("conv-3", "same"),
 					})
+
 					assert.NoError(t, err)
 
 					var count int64

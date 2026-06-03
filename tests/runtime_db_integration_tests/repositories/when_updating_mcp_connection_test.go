@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -68,17 +69,17 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					suite := WhenUpdatingMCPConnectionBeforeEach(tc)
 					defer WhenUpdatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(newMCPConnection("alpha", "https://a.example", "X-Old"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example", "X-Old"))
 					assert.NoError(t, err)
 
 					inserted.Name = "alpha-renamed"
 					inserted.Url = "https://renamed.example"
 					inserted.HeaderAuthKeys = models.MCPConnectionHeaderAuthKeys{"X-New"}
-					updated, err := suite.sut.Update(inserted)
+					updated, err := suite.sut.Update(context.Background(), inserted)
 					assert.NoError(t, err)
 					assert.Equal(t, "alpha-renamed", updated.Name)
 
-					got, err := suite.sut.GetById(inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, "alpha-renamed", got.Name)
 					assert.Equal(t, "https://renamed.example", got.Url)

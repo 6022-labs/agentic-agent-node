@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
@@ -69,7 +70,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 					suite := WhenGettingLLMConnectionBeforeEach(tc)
 					defer WhenGettingLLMConnectionAfterEach(suite)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
@@ -83,15 +84,16 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 					suite := WhenGettingLLMConnectionBeforeEach(tc)
 					defer WhenGettingLLMConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
 						WithModel("gpt-4o").
 						WithBaseUrl("https://api.openai.com/v1").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
+
 					assert.NoError(t, err)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, got.Platform)

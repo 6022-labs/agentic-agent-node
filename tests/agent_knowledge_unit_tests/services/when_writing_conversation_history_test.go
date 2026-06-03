@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -50,8 +51,8 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().
-				Append(conversationId, gomock.Any()).
+			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
@@ -69,7 +70,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 			suite := WhenWritingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Write(conversationId, inputs)
+			result, err := suite.sut.Write(context.Background(), conversationId, inputs)
 			assert.NoError(t, err)
 			assert.Len(t, result, 2)
 		})
@@ -89,8 +90,8 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().
-				Append(conversationId, gomock.Any()).
+			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+				conversationId, gomock.Any()).
 				Return(persisted, nil)
 		}
 
@@ -100,9 +101,10 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 			suite := WhenWritingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Write(conversationId, []interfaces.ConversationMessage{
+			result, err := suite.sut.Write(context.Background(), conversationId, []interfaces.ConversationMessage{
 				{Role: "user", Content: "hi", Timestamp: now},
 			})
+
 			assert.NoError(t, err)
 			if assert.Len(t, result, 1) {
 				assert.Equal(t, "hi", result[0].Content)
@@ -115,8 +117,8 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().
-				Append(conversationId, gomock.Any()).
+			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+				conversationId, gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -126,9 +128,10 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 			suite := WhenWritingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Write(conversationId, []interfaces.ConversationMessage{
+			_, err := suite.sut.Write(context.Background(), conversationId, []interfaces.ConversationMessage{
 				{Role: "user", Content: "hi"},
 			})
+
 			assert.ErrorContains(t, err, "db down")
 		})
 	})

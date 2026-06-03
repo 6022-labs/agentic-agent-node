@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -79,7 +80,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					suite := WhenListingExistingHashesBeforeEach(tc)
 					defer WhenListingExistingHashesAfterEach(suite)
 
-					existing, err := suite.sut.ListExistingHashes(nil)
+					existing, err := suite.sut.ListExistingHashes(context.Background(), nil)
 					assert.NoError(t, err)
 					assert.Empty(t, existing)
 				})
@@ -94,12 +95,12 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					defer WhenListingExistingHashesAfterEach(suite)
 
 					stored := newHashableMessage("conv-partial", "stored")
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{stored})
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{stored})
 					assert.NoError(t, err)
 
 					unknown := newHashableMessage("conv-partial", "unknown")
 
-					existing, err := suite.sut.ListExistingHashes([]string{stored.Hash, unknown.Hash})
+					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{stored.Hash, unknown.Hash})
 					assert.NoError(t, err)
 					assert.ElementsMatch(t, []string{stored.Hash}, existing)
 				})
@@ -115,10 +116,10 @@ func TestWhenListingExistingHashes(t *testing.T) {
 
 					a := newHashableMessage("conv-all-match", "alpha")
 					b := newHashableMessage("conv-all-match", "beta")
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{a, b})
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{a, b})
 					assert.NoError(t, err)
 
-					existing, err := suite.sut.ListExistingHashes([]string{a.Hash, b.Hash})
+					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{a.Hash, b.Hash})
 					assert.NoError(t, err)
 					assert.ElementsMatch(t, []string{a.Hash, b.Hash}, existing)
 				})
@@ -135,7 +136,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					ghost1 := newHashableMessage("conv-none-match", "never-stored-1")
 					ghost2 := newHashableMessage("conv-none-match", "never-stored-2")
 
-					existing, err := suite.sut.ListExistingHashes([]string{ghost1.Hash, ghost2.Hash})
+					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{ghost1.Hash, ghost2.Hash})
 					assert.NoError(t, err)
 					assert.Empty(t, existing)
 				})
@@ -150,10 +151,10 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					defer WhenListingExistingHashesAfterEach(suite)
 
 					otherConv := newHashableMessage("conv-other", "shared content")
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{otherConv})
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{otherConv})
 					assert.NoError(t, err)
 
-					existing, err := suite.sut.ListExistingHashes([]string{otherConv.Hash})
+					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{otherConv.Hash})
 					assert.NoError(t, err)
 					assert.ElementsMatch(t, []string{otherConv.Hash}, existing)
 				})

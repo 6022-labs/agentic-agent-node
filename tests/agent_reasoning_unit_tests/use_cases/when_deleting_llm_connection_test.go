@@ -44,7 +44,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 
 		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
 			gomock.InOrder(
-				suite.mockRepository.EXPECT().Delete().Return(nil),
+				suite.mockRepository.EXPECT().Delete(gomock.Any()).Return(nil),
 				suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).Return(nil),
 			)
 		}
@@ -65,7 +65,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Delete().Return(errors.New("db down"))
+			suite.mockRepository.EXPECT().Delete(gomock.Any()).Return(errors.New("db down"))
 		}
 
 		t.Run("Should not touch the secret storage and return InternalError", func(t *testing.T) {

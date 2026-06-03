@@ -1,6 +1,7 @@
 package use_cases_test
 
 import (
+	"context"
 	"testing"
 
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
@@ -40,7 +41,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Get().Return(nil, nil)
+			suite.mockRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound", func(t *testing.T) {
@@ -49,7 +50,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			suite := WhenGettingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute()
+			res := suite.sut.Execute(context.Background())
 
 			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
 			assert.Equal(t, "not_configured", res.Code)
@@ -64,7 +65,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			WithModel("gpt-4o").
 			Build()
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Get().Return(stored, nil)
+			suite.mockRepository.EXPECT().Get(gomock.Any()).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the wire response", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			suite := WhenGettingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute()
+			res := suite.sut.Execute(context.Background())
 
 			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
 			body, ok := res.Body.(*responses.LLMConnectionResponse)

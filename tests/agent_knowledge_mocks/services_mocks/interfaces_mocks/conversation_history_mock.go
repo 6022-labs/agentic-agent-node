@@ -10,6 +10,7 @@
 package interfaces_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
@@ -41,31 +42,31 @@ func (m *MockConversationHistoryInterface) EXPECT() *MockConversationHistoryInte
 }
 
 // Read mocks base method.
-func (m *MockConversationHistoryInterface) Read(conversationId string) ([]interfaces.ConversationMessage, error) {
+func (m *MockConversationHistoryInterface) Read(ctx context.Context, conversationId string) ([]interfaces.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Read", conversationId)
+	ret := m.ctrl.Call(m, "Read", ctx, conversationId)
 	ret0, _ := ret[0].([]interfaces.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Read indicates an expected call of Read.
-func (mr *MockConversationHistoryInterfaceMockRecorder) Read(conversationId any) *gomock.Call {
+func (mr *MockConversationHistoryInterfaceMockRecorder) Read(ctx, conversationId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockConversationHistoryInterface)(nil).Read), conversationId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockConversationHistoryInterface)(nil).Read), ctx, conversationId)
 }
 
 // Write mocks base method.
-func (m *MockConversationHistoryInterface) Write(conversationId string, messages []interfaces.ConversationMessage) ([]interfaces.ConversationMessage, error) {
+func (m *MockConversationHistoryInterface) Write(ctx context.Context, conversationId string, messages []interfaces.ConversationMessage) ([]interfaces.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Write", conversationId, messages)
+	ret := m.ctrl.Call(m, "Write", ctx, conversationId, messages)
 	ret0, _ := ret[0].([]interfaces.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Write indicates an expected call of Write.
-func (mr *MockConversationHistoryInterfaceMockRecorder) Write(conversationId, messages any) *gomock.Call {
+func (mr *MockConversationHistoryInterfaceMockRecorder) Write(ctx, conversationId, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockConversationHistoryInterface)(nil).Write), conversationId, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockConversationHistoryInterface)(nil).Write), ctx, conversationId, messages)
 }

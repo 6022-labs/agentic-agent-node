@@ -1,6 +1,7 @@
 package use_cases_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -44,7 +45,7 @@ func TestWhenListingMCPConnections(t *testing.T) {
 			*model_builders.NewMCPConnectionBuilder().WithName("beta").Build(),
 		}
 		initSuite := func(suite *WhenListingMCPConnectionsTestingSuite) {
-			suite.mockRepository.EXPECT().List().Return(stored, nil)
+			suite.mockRepository.EXPECT().List(gomock.Any()).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the wire response", func(t *testing.T) {
@@ -53,7 +54,7 @@ func TestWhenListingMCPConnections(t *testing.T) {
 			suite := WhenListingMCPConnectionsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute()
+			res := suite.sut.Execute(context.Background())
 
 			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
 			body, ok := res.Body.(*responses.MCPConnectionListResponse)

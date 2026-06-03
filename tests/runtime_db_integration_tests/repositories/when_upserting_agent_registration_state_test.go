@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -71,7 +72,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewAgentRegistrationStateBuilder().Build())
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().Build())
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -89,16 +90,18 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
-					first, err := suite.sut.Upsert(model_builders.NewAgentRegistrationStateBuilder().
+					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
 						WithMintStatus(identity_enums.TransactionStatusPending).
 						Build())
+
 					assert.NoError(t, err)
 
-					second, err := suite.sut.Upsert(model_builders.NewAgentRegistrationStateBuilder().
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
 						WithMintStatus(identity_enums.TransactionStatusConfirmed).
 						WithMintChainId(80002).
 						WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
 						Build())
+
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
 					assert.Equal(t, identity_enums.TransactionStatusConfirmed, second.MintStatus)

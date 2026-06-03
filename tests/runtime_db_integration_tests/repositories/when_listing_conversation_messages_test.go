@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 					suite := WhenListingConversationMessagesBeforeEach(tc)
 					defer WhenListingConversationMessagesAfterEach(suite)
 
-					messages, err := suite.sut.ListByConversation("missing")
+					messages, err := suite.sut.ListByConversation(context.Background(), "missing")
 					assert.NoError(t, err)
 					assert.Empty(t, messages)
 				})
@@ -84,20 +85,21 @@ func TestWhenListingConversationMessages(t *testing.T) {
 					defer WhenListingConversationMessagesAfterEach(suite)
 
 					now := time.Now().UTC().Truncate(time.Microsecond)
-					_, err := suite.sut.AppendMessages([]models.ConversationMessage{
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						{ConversationId: "a", Role: "user", Content: "a-second", Timestamp: now.Add(time.Second)},
 						{ConversationId: "a", Role: "user", Content: "a-first", Timestamp: now},
 						{ConversationId: "b", Role: "user", Content: "b-only", Timestamp: now},
 					})
+
 					assert.NoError(t, err)
 
-					messages, err := suite.sut.ListByConversation("a")
+					messages, err := suite.sut.ListByConversation(context.Background(), "a")
 					assert.NoError(t, err)
 					assert.Len(t, messages, 2)
 					assert.Equal(t, "a-first", messages[0].Content)
 					assert.Equal(t, "a-second", messages[1].Content)
 
-					otherMessages, err := suite.sut.ListByConversation("b")
+					otherMessages, err := suite.sut.ListByConversation(context.Background(), "b")
 					assert.NoError(t, err)
 					assert.Len(t, otherMessages, 1)
 					assert.Equal(t, "b-only", otherMessages[0].Content)

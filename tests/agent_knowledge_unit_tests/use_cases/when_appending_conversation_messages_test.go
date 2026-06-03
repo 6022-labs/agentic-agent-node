@@ -1,6 +1,7 @@
 package use_cases_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -53,7 +54,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().Append(conversationId, mapped).Return(mapped, nil)
+			suite.mockService.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(mapped, nil)
 		}
 
 		t.Run("Should return Ok with the persisted rows on the wire", func(t *testing.T) {
@@ -62,7 +63,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(conversationId, req)
+			res := suite.sut.Execute(context.Background(), conversationId, req)
 
 			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
 			body, ok := res.Body.(*responses.AppendConversationMessagesResponse)
@@ -85,7 +86,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().Append(conversationId, mapped).Return(nil, errors.New("db down"))
+			suite.mockService.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {
@@ -94,7 +95,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(conversationId, req)
+			res := suite.sut.Execute(context.Background(), conversationId, req)
 
 			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
 			assert.Contains(t, res.Message, "db down")

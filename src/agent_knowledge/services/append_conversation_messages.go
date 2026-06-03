@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
@@ -18,7 +19,7 @@ func NewAppendConversationMessages(repository repositories.ConversationMessageRe
 	return &AppendConversationMessages{repository: repository}
 }
 
-func (s *AppendConversationMessages) Append(conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (s *AppendConversationMessages) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 || len(messages) == 0 {
 		return nil, nil
@@ -38,7 +39,7 @@ func (s *AppendConversationMessages) Append(conversationId string, messages []mo
 		hashes = append(hashes, msg.Hash)
 	}
 
-	existing, err := s.repository.ListExistingHashes(hashes)
+	existing, err := s.repository.ListExistingHashes(ctx, hashes)
 	if err != nil {
 		return nil, err
 	}
@@ -58,5 +59,5 @@ func (s *AppendConversationMessages) Append(conversationId string, messages []mo
 		return nil, nil
 	}
 
-	return s.repository.AppendMessages(toInsert)
+	return s.repository.AppendMessages(ctx, toInsert)
 }

@@ -24,7 +24,7 @@ func NewGetMCPConnection(
 
 // Execute returns the connection with HeaderAuth hydrated from Vault.
 func (u *GetMCPConnection) Execute(ctx context.Context, id uuid.UUID) *usecase_result.Result {
-	connection, err := u.repository.GetById(id)
+	connection, err := u.repository.GetById(ctx, id)
 	if err != nil {
 		return usecase_result.InternalError("get_failed", err.Error())
 	}

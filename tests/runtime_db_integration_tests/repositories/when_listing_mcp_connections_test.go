@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -67,7 +68,7 @@ func TestWhenListingMCPConnections(t *testing.T) {
 					suite := WhenListingMCPConnectionsBeforeEach(tc)
 					defer WhenListingMCPConnectionsAfterEach(suite)
 
-					list, err := suite.sut.List()
+					list, err := suite.sut.List(context.Background())
 					assert.NoError(t, err)
 					assert.Empty(t, list)
 				})
@@ -81,12 +82,12 @@ func TestWhenListingMCPConnections(t *testing.T) {
 					suite := WhenListingMCPConnectionsBeforeEach(tc)
 					defer WhenListingMCPConnectionsAfterEach(suite)
 
-					_, err := suite.sut.Create(newMCPConnection("alpha", "https://a.example"))
+					_, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example"))
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(newMCPConnection("beta", "https://b.example"))
+					_, err = suite.sut.Create(context.Background(), newMCPConnection("beta", "https://b.example"))
 					assert.NoError(t, err)
 
-					list, err := suite.sut.List()
+					list, err := suite.sut.List(context.Background())
 					assert.NoError(t, err)
 					assert.Len(t, list, 2)
 					assert.Equal(t, "alpha", list[0].Name)

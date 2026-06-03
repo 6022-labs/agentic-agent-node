@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -16,9 +17,9 @@ func NewAgentRepository(client *runtime_db.DatabaseClient) *AgentRepository {
 	return &AgentRepository{client: client}
 }
 
-func (r *AgentRepository) Get() (*models.Agent, error) {
+func (r *AgentRepository) Get(ctx context.Context) (*models.Agent, error) {
 	var entity models.Agent
-	err := r.client.GetDB().First(&entity).Error
+	err := r.client.GetDB().WithContext(ctx).First(&entity).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -28,13 +29,13 @@ func (r *AgentRepository) Get() (*models.Agent, error) {
 	return &entity, nil
 }
 
-func (r *AgentRepository) Upsert(agent *models.Agent) (*models.Agent, error) {
-	existing, err := r.Get()
+func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*models.Agent, error) {
+	existing, err := r.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if existing == nil {
-		if err := r.client.GetDB().Create(agent).Error; err != nil {
+		if err := r.client.GetDB().WithContext(ctx).Create(agent).Error; err != nil {
 			return nil, err
 		}
 		return agent, nil
@@ -52,7 +53,7 @@ func (r *AgentRepository) Upsert(agent *models.Agent) (*models.Agent, error) {
 	existing.Owner = agent.Owner
 	existing.Images = agent.Images
 	existing.Attributes = agent.Attributes
-	if err := r.client.GetDB().Save(existing).Error; err != nil {
+	if err := r.client.GetDB().WithContext(ctx).Save(existing).Error; err != nil {
 		return nil, err
 	}
 	return existing, nil

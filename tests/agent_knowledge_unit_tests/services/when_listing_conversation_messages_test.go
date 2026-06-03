@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -44,7 +45,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
 
-			res, err := suite.sut.List("   ")
+			res, err := suite.sut.List(context.Background(), "   ")
 
 			assert.NoError(t, err)
 			assert.Nil(t, res)
@@ -60,7 +61,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			model_builders.NewConversationMessageBuilder().WithConversationId("conv").WithTimestamp(now.Add(time.Second)).Build(),
 		}
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation("conv").Return(expected, nil)
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), "conv").Return(expected, nil)
 		}
 
 		t.Run("Should return them as-is", func(t *testing.T) {
@@ -69,7 +70,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.List("conv")
+			res, err := suite.sut.List(context.Background(), "conv")
 
 			assert.NoError(t, err)
 			assert.Equal(t, expected, res)
@@ -80,7 +81,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation("conv").Return(nil, errors.New("db blew"))
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), "conv").Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
@@ -89,7 +90,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.List("conv")
+			_, err := suite.sut.List(context.Background(), "conv")
 
 			assert.ErrorContains(t, err, "db blew")
 		})

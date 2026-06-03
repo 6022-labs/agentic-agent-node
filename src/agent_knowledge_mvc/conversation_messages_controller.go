@@ -55,7 +55,7 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
 
-	return mvc_result.Write(ctx, c.appender.Execute(conversationId, body))
+	return mvc_result.Write(ctx, c.appender.Execute(ctx.Context(), conversationId, body))
 }
 
 // List returns the conversation transcript ordered by timestamp ascending.
@@ -73,5 +73,5 @@ func (c *ConversationMessagesController) List(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
-	return mvc_result.Write(ctx, c.lister.Execute(conversationId))
+	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context(), conversationId))
 }

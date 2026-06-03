@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -71,12 +72,13 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
 						WithModel("gpt-4o").
 						WithBaseUrl("https://api.openai.com/v1").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
+
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -94,18 +96,20 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
-					first, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+					first, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
 						WithModel("gpt-4o").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
+
 					assert.NoError(t, err)
 
-					second, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithPlatform(reasoning_enums.LLMConnectionPlatformAnthropic).
 						WithModel("claude-opus-4-7").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
+
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
 					assert.Equal(t, reasoning_enums.LLMConnectionPlatformAnthropic, second.Platform)

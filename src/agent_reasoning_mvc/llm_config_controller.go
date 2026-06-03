@@ -30,7 +30,7 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *LLMConfigController) Get(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.getter.Execute())
+	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context()))
 }
 
 func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {

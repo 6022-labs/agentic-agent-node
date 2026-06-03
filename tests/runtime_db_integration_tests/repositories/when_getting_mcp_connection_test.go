@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -68,7 +69,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 					suite := WhenGettingMCPConnectionBeforeEach(tc)
 					defer WhenGettingMCPConnectionAfterEach(suite)
 
-					got, err := suite.sut.GetById(uuid.New())
+					got, err := suite.sut.GetById(context.Background(), uuid.New())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
@@ -82,10 +83,10 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 					suite := WhenGettingMCPConnectionBeforeEach(tc)
 					defer WhenGettingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(newMCPConnection("github", "https://mcp.github.example", "Authorization"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
 					assert.NoError(t, err)
 
-					got, err := suite.sut.GetById(inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, "github", got.Name)

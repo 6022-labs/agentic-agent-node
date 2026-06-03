@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/google/uuid"
 )
@@ -8,9 +10,9 @@ import (
 // MCPConnectionRepositoryInterface persists the agent's configured MCP servers.
 // An agent may have many.
 type MCPConnectionRepositoryInterface interface {
-	List() ([]models.MCPConnection, error)
-	GetById(id uuid.UUID) (*models.MCPConnection, error)
-	Create(connection *models.MCPConnection) (*models.MCPConnection, error)
-	Update(connection *models.MCPConnection) (*models.MCPConnection, error)
-	Delete(id uuid.UUID) error
+	List(ctx context.Context) ([]models.MCPConnection, error)
+	GetById(ctx context.Context, id uuid.UUID) (*models.MCPConnection, error)
+	Create(ctx context.Context, connection *models.MCPConnection) (*models.MCPConnection, error)
+	Update(ctx context.Context, connection *models.MCPConnection) (*models.MCPConnection, error)
+	Delete(ctx context.Context, id uuid.UUID) error
 }

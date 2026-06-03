@@ -48,7 +48,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound without touching update or vault", func(t *testing.T) {
@@ -75,9 +75,9 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				WithUrl("https://old").
 				WithHeaderAuthKeys([]string{"Authorization", "X-Drop"}).
 				Build()
-			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
-			suite.mockRepository.EXPECT().Update(gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {
+			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "new-name", c.Name)
 				assert.Equal(t, "https://new", c.Url)
 				assert.Len(t, c.HeaderAuthKeys, 1)

@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -48,7 +49,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 
 			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
-			res, err := suite.sut.Append("   ", []models.ConversationMessage{message})
+			res, err := suite.sut.Append(context.Background(), "   ", []models.ConversationMessage{message})
 
 			assert.NoError(t, err)
 			assert.Empty(t, res)
@@ -63,7 +64,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 
-			res, err := suite.sut.Append(conversationId, nil)
+			res, err := suite.sut.Append(context.Background(), conversationId, nil)
 
 			assert.NoError(t, err)
 			assert.Empty(t, res)
@@ -74,12 +75,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListExistingHashes(gomock.Any()).
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
 				Return([]string{}, nil)
 
-			suite.mockRepository.EXPECT().
-				AppendMessages(gomock.Any()).
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
+				gomock.Any()).
 				DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					assert.Len(t, messages, 2)
 					for _, m := range messages {
@@ -100,7 +101,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("hi 🔥").WithTimestamp(now).Build(),
 				model_builders.NewConversationMessageBuilder().WithRole("assistant").WithContent("hello").WithTimestamp(now).Build(),
 			}
-			res, err := suite.sut.Append(conversationId, input)
+			res, err := suite.sut.Append(context.Background(), conversationId, input)
 
 			assert.NoError(t, err)
 			assert.Len(t, res, 2)
@@ -117,12 +118,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListExistingHashes(gomock.Any()).
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
 				Return([]string{dupHash}, nil)
 
-			suite.mockRepository.EXPECT().
-				AppendMessages(gomock.Any()).
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
+				gomock.Any()).
 				DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, messages, 1) {
 						assert.Equal(t, "fresh", messages[0].Content)
@@ -141,7 +142,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build(),
 				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("fresh").WithTimestamp(now).Build(),
 			}
-			res, err := suite.sut.Append(conversationId, input)
+			res, err := suite.sut.Append(context.Background(), conversationId, input)
 
 			assert.NoError(t, err)
 			assert.Len(t, res, 1)
@@ -156,8 +157,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		dupHash, _ := utils.ComputeConversationMessageHash(input.Role, input.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListExistingHashes(gomock.Any()).
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
 				Return([]string{dupHash}, nil)
 			// no AppendMessages call expected
 		}
@@ -168,7 +169,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res, err := suite.sut.Append(conversationId, []models.ConversationMessage{input})
+			res, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
 
 			assert.NoError(t, err)
 			assert.Empty(t, res)
@@ -179,8 +180,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListExistingHashes(gomock.Any()).
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
 				Return(nil, errors.New("db blew"))
 		}
 
@@ -191,7 +192,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
-			_, err := suite.sut.Append(conversationId, []models.ConversationMessage{input})
+			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
 
 			assert.ErrorContains(t, err, "db blew")
 		})
@@ -201,11 +202,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListExistingHashes(gomock.Any()).
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
 				Return([]string{}, nil)
-			suite.mockRepository.EXPECT().
-				AppendMessages(gomock.Any()).
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
+				gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -216,7 +217,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
-			_, err := suite.sut.Append(conversationId, []models.ConversationMessage{message})
+			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{message})
 
 			assert.ErrorContains(t, err, "db down")
 		})

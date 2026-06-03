@@ -29,7 +29,7 @@ func NewUpdateMCPConnection(
 // HeaderAuth map are overwritten. Header values absent from the new map are
 // removed from Vault.
 func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.UpdateMCPConnectionRequest) *usecase_result.Result {
-	existing, err := u.repository.GetById(id)
+	existing, err := u.repository.GetById(ctx, id)
 	if err != nil {
 		return usecase_result.InternalError("update_failed", err.Error())
 	}
@@ -51,7 +51,7 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 	existing.Name = request.Name
 	existing.Url = request.Url
 	existing.HeaderAuthKeys = newKeys
-	updated, err := u.repository.Update(existing)
+	updated, err := u.repository.Update(ctx, existing)
 	if err != nil {
 		return usecase_result.InternalError("update_failed", err.Error())
 	}

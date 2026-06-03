@@ -1,6 +1,8 @@
 package use_cases
 
 import (
+	"context"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
@@ -17,8 +19,8 @@ func NewListMCPConnections(repository repositories.MCPConnectionRepositoryInterf
 // Execute returns every configured MCP connection. Header auth values are
 // not hydrated — fetch a single connection via GetMCPConnection if you need
 // the actual header values.
-func (u *ListMCPConnections) Execute() *usecase_result.Result {
-	connections, err := u.repository.List()
+func (u *ListMCPConnections) Execute(ctx context.Context) *usecase_result.Result {
+	connections, err := u.repository.List(ctx)
 	if err != nil {
 		return usecase_result.InternalError("list_failed", err.Error())
 	}

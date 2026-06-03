@@ -34,7 +34,7 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Cre
 	}
 	keys.FromArray(headerNames)
 
-	created, err := u.repository.Create(&models.MCPConnection{
+	created, err := u.repository.Create(ctx, &models.MCPConnection{
 		Name:           request.Name,
 		Url:            request.Url,
 		HeaderAuthKeys: keys,

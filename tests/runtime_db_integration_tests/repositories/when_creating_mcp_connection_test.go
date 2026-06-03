@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -78,7 +79,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					suite := WhenCreatingMCPConnectionBeforeEach(tc)
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(newMCPConnection("github", "https://mcp.github.example", "Authorization"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 					assert.Equal(t, "github", inserted.Name)
@@ -97,10 +98,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					suite := WhenCreatingMCPConnectionBeforeEach(tc)
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(newMCPConnection("anon", "https://mcp.anon.example"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("anon", "https://mcp.anon.example"))
 					assert.NoError(t, err)
 
-					got, err := suite.sut.GetById(inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.Id)
 					assert.NoError(t, err)
 					assert.NotNil(t, got)
 					assert.Empty(t, got.HeaderAuthKeys)

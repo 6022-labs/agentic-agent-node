@@ -105,4 +105,3 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 		})
 	})
 }
-

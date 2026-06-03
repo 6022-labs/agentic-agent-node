@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
@@ -15,10 +16,10 @@ func NewListConversationMessages(repository repositories.ConversationMessageRepo
 	return &ListConversationMessages{repository: repository}
 }
 
-func (s *ListConversationMessages) List(conversationId string) ([]models.ConversationMessage, error) {
+func (s *ListConversationMessages) List(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 {
 		return nil, nil
 	}
-	return s.repository.ListByConversation(conversationId)
+	return s.repository.ListByConversation(ctx, conversationId)
 }

@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -54,7 +55,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(conversationId).Return(stored, nil)
+			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return DTOs with only the semantic fields exposed", func(t *testing.T) {
@@ -63,7 +64,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 			suite := WhenReadingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Read(conversationId)
+			result, err := suite.sut.Read(context.Background(), conversationId)
 			assert.NoError(t, err)
 			if assert.Len(t, result, 1) {
 				assert.Equal(t, "user", result[0].Role)
@@ -77,7 +78,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(conversationId).Return([]models.ConversationMessage{}, nil)
+			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
 		}
 
 		t.Run("Should return an empty DTO slice", func(t *testing.T) {
@@ -86,7 +87,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 			suite := WhenReadingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Read(conversationId)
+			result, err := suite.sut.Read(context.Background(), conversationId)
 			assert.NoError(t, err)
 			assert.Empty(t, result)
 		})
@@ -96,7 +97,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(conversationId).Return(nil, errors.New("db down"))
+			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
@@ -105,7 +106,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 			suite := WhenReadingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Read(conversationId)
+			_, err := suite.sut.Read(context.Background(), conversationId)
 			assert.ErrorContains(t, err, "db down")
 		})
 	})

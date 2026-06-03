@@ -1,6 +1,7 @@
 package use_cases_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -48,7 +49,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().List(conversationId).Return(stored, nil)
+			suite.mockService.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the rows on the wire", func(t *testing.T) {
@@ -57,7 +58,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(conversationId)
+			res := suite.sut.Execute(context.Background(), conversationId)
 
 			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
 			body, ok := res.Body.(*responses.ListConversationMessagesResponse)
@@ -71,7 +72,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().List(conversationId).Return(nil, errors.New("db blew"))
+			suite.mockService.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {
@@ -80,7 +81,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(conversationId)
+			res := suite.sut.Execute(context.Background(), conversationId)
 
 			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
 			assert.Contains(t, res.Message, "db blew")

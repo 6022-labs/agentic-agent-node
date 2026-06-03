@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -69,7 +70,7 @@ func TestWhenGettingAgent(t *testing.T) {
 					suite := WhenGettingAgentBeforeEach(tc)
 					defer WhenGettingAgentAfterEach(suite)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
@@ -83,16 +84,17 @@ func TestWhenGettingAgent(t *testing.T) {
 					suite := WhenGettingAgentBeforeEach(tc)
 					defer WhenGettingAgentAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewAgentBuilder().
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
 						WithRole(identity_enums.AgentRoleExpert).
 						WithEnsDomain("ada.agent.eth").
 						WithImages(map[string]string{"avatar": "https://example.com/a.png"}).
 						WithAttributes(map[string]string{"trait": "curious"}).
 						Build())
+
 					assert.NoError(t, err)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, "Ada", got.Name)

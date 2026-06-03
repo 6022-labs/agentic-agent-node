@@ -45,7 +45,7 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenDeletingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(nil, nil)
 		}
 
 		t.Run("Should be a no-op returning NoContent", func(t *testing.T) {
@@ -69,10 +69,10 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 				WithId(id).
 				WithHeaderAuthKeys([]string{"Authorization", "X-Trace"}).
 				Build()
-			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "Authorization").Return(nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Trace").Return(nil)
-			suite.mockRepository.EXPECT().Delete(id).Return(nil)
+			suite.mockRepository.EXPECT().Delete(gomock.Any(), id).Return(nil)
 		}
 
 		t.Run("Should clear every header from vault then drop the row, returning NoContent", func(t *testing.T) {

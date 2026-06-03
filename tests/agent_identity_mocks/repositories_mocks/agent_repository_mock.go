@@ -10,6 +10,7 @@
 package repositories_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -41,31 +42,31 @@ func (m *MockAgentRepositoryInterface) EXPECT() *MockAgentRepositoryInterfaceMoc
 }
 
 // Get mocks base method.
-func (m *MockAgentRepositoryInterface) Get() (*models.Agent, error) {
+func (m *MockAgentRepositoryInterface) Get(ctx context.Context) (*models.Agent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get")
+	ret := m.ctrl.Call(m, "Get", ctx)
 	ret0, _ := ret[0].(*models.Agent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockAgentRepositoryInterfaceMockRecorder) Get() *gomock.Call {
+func (mr *MockAgentRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).Get))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).Get), ctx)
 }
 
 // Upsert mocks base method.
-func (m *MockAgentRepositoryInterface) Upsert(agent *models.Agent) (*models.Agent, error) {
+func (m *MockAgentRepositoryInterface) Upsert(ctx context.Context, agent *models.Agent) (*models.Agent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upsert", agent)
+	ret := m.ctrl.Call(m, "Upsert", ctx, agent)
 	ret0, _ := ret[0].(*models.Agent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upsert indicates an expected call of Upsert.
-func (mr *MockAgentRepositoryInterfaceMockRecorder) Upsert(agent any) *gomock.Call {
+func (mr *MockAgentRepositoryInterfaceMockRecorder) Upsert(ctx, agent any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).Upsert), agent)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).Upsert), ctx, agent)
 }

@@ -57,8 +57,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 		expectedText := "hi there"
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().
-				Get().
+			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().
@@ -85,8 +84,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().
-				Get().
+			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
 				Return(nil, nil)
 		}
 
@@ -107,8 +105,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().
-				Get().
+			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -138,8 +135,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().
-				Get().
+			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().

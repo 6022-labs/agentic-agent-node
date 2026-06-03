@@ -46,7 +46,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(id).Return(nil, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound without touching the secret storage", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			WithHeaderAuthKeys([]string{"Authorization", "X-Trace"}).
 			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("Bearer abc", true, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "X-Trace").Return("trace-1", true, nil)
 		}
@@ -103,7 +103,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			WithHeaderAuthKeys([]string{"Authorization"}).
 			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(id).Return(row, nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
 		}
 

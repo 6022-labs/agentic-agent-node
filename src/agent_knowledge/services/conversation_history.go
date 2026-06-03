@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 )
@@ -22,8 +24,8 @@ func NewConversationHistory(
 	}
 }
 
-func (h *ConversationHistory) Read(conversationId string) ([]interfaces.ConversationMessage, error) {
-	stored, err := h.listService.List(conversationId)
+func (h *ConversationHistory) Read(ctx context.Context, conversationId string) ([]interfaces.ConversationMessage, error) {
+	stored, err := h.listService.List(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -34,12 +36,12 @@ func (h *ConversationHistory) Read(conversationId string) ([]interfaces.Conversa
 	return out, nil
 }
 
-func (h *ConversationHistory) Write(conversationId string, messages []interfaces.ConversationMessage) ([]interfaces.ConversationMessage, error) {
+func (h *ConversationHistory) Write(ctx context.Context, conversationId string, messages []interfaces.ConversationMessage) ([]interfaces.ConversationMessage, error) {
 	in := make([]models.ConversationMessage, 0, len(messages))
 	for _, m := range messages {
 		in = append(in, h.toModel(m))
 	}
-	persisted, err := h.appendService.Append(conversationId, in)
+	persisted, err := h.appendService.Append(ctx, conversationId, in)
 	if err != nil {
 		return nil, err
 	}

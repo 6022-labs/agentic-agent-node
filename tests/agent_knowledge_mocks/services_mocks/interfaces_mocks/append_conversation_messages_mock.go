@@ -10,6 +10,7 @@
 package interfaces_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
@@ -41,16 +42,16 @@ func (m *MockAppendConversationMessagesInterface) EXPECT() *MockAppendConversati
 }
 
 // Append mocks base method.
-func (m *MockAppendConversationMessagesInterface) Append(conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (m *MockAppendConversationMessagesInterface) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Append", conversationId, messages)
+	ret := m.ctrl.Call(m, "Append", ctx, conversationId, messages)
 	ret0, _ := ret[0].([]models.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Append indicates an expected call of Append.
-func (mr *MockAppendConversationMessagesInterfaceMockRecorder) Append(conversationId, messages any) *gomock.Call {
+func (mr *MockAppendConversationMessagesInterfaceMockRecorder) Append(ctx, conversationId, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Append", reflect.TypeOf((*MockAppendConversationMessagesInterface)(nil).Append), conversationId, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Append", reflect.TypeOf((*MockAppendConversationMessagesInterface)(nil).Append), ctx, conversationId, messages)
 }

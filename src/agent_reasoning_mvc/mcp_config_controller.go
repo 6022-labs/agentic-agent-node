@@ -41,7 +41,7 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.lister.Execute())
+	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context()))
 }
 
 func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {

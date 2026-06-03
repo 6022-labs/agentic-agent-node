@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -70,7 +71,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 					suite := WhenDeletingLLMConnectionBeforeEach(tc)
 					defer WhenDeletingLLMConnectionAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Delete())
+					assert.NoError(t, suite.sut.Delete(context.Background()))
 				})
 			})
 
@@ -82,14 +83,15 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 					suite := WhenDeletingLLMConnectionBeforeEach(tc)
 					defer WhenDeletingLLMConnectionAfterEach(suite)
 
-					_, err := suite.sut.Upsert(model_builders.NewLLMConnectionBuilder().
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
 						WithModel("gpt-4o").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
+
 					assert.NoError(t, err)
 
-					assert.NoError(t, suite.sut.Delete())
+					assert.NoError(t, suite.sut.Delete(context.Background()))
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)

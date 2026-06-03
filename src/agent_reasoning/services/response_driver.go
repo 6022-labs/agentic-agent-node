@@ -45,7 +45,7 @@ func (d *ResponseDriver) Drive(
 	conversationId string,
 	inputs []knowledge_interfaces.ConversationMessage,
 ) (*knowledge_interfaces.ConversationMessage, error) {
-	history, err := d.conversationHistory.Read(conversationId)
+	history, err := d.conversationHistory.Read(ctx, conversationId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load conversation history: %w", err)
 	}
@@ -94,7 +94,7 @@ func (d *ResponseDriver) Drive(
 		return nil, nil
 	}
 
-	persisted, err := d.conversationHistory.Write(conversationId, toPersist)
+	persisted, err := d.conversationHistory.Write(ctx, conversationId, toPersist)
 	if err != nil {
 		return nil, fmt.Errorf("failed to persist conversation: %w", err)
 	}
@@ -151,7 +151,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 }
 
 func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPConnection, error) {
-	raw, err := d.mcpConnectionRepository.List()
+	raw, err := d.mcpConnectionRepository.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mcp connections: %w", err)
 	}

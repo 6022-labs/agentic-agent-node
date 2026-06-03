@@ -68,8 +68,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "hi there"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -81,8 +81,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
 				})
 
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
@@ -116,10 +116,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		freshInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "follow-up"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().
-				Read(conversationId).
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
+				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -131,8 +131,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
 
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "follow-up", msgs[0].Content)
@@ -160,18 +160,18 @@ func TestWhenDrivingResponse(t *testing.T) {
 		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().
-				Read(conversationId).
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
+				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
 
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "assistant", msgs[0].Role)
@@ -205,18 +205,18 @@ func TestWhenDrivingResponse(t *testing.T) {
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().
-				Read(conversationId).
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
+				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				Return([]*interfaces.ChatCompletionMessage{
 					{Role: "user", Content: "hi :fire:"},
 					{Role: "assistant", Content: "ok"},
 				}, nil)
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "assistant", msgs[0].Role)
@@ -247,8 +247,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "ok"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
 
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
@@ -263,8 +263,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
 				})
 
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					return msgs, nil
 				})
@@ -286,8 +286,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
@@ -295,8 +295,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 				})
 
 			// Inputs still persist even without a final assistant text.
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "user", msgs[0].Role)
@@ -321,8 +321,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().
-				Read(conversationId).
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
+				conversationId).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -343,8 +343,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -369,15 +369,15 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
-			suite.mockConversationHistory.EXPECT().
-				Write(conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -403,8 +403,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 			Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationHistory.EXPECT().Read(conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List().Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
 				Return("", false, errors.New("vault down"))

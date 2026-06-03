@@ -10,6 +10,7 @@
 package interfaces_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
@@ -41,16 +42,16 @@ func (m *MockListConversationMessagesInterface) EXPECT() *MockListConversationMe
 }
 
 // List mocks base method.
-func (m *MockListConversationMessagesInterface) List(conversationId string) ([]models.ConversationMessage, error) {
+func (m *MockListConversationMessagesInterface) List(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", conversationId)
+	ret := m.ctrl.Call(m, "List", ctx, conversationId)
 	ret0, _ := ret[0].([]models.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockListConversationMessagesInterfaceMockRecorder) List(conversationId any) *gomock.Call {
+func (mr *MockListConversationMessagesInterfaceMockRecorder) List(ctx, conversationId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockListConversationMessagesInterface)(nil).List), conversationId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockListConversationMessagesInterface)(nil).List), ctx, conversationId)
 }

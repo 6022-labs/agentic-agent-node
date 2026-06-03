@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -69,7 +70,7 @@ func TestWhenGettingAgentRegistrationState(t *testing.T) {
 					suite := WhenGettingAgentRegistrationStateBeforeEach(tc)
 					defer WhenGettingAgentRegistrationStateAfterEach(suite)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
@@ -83,15 +84,16 @@ func TestWhenGettingAgentRegistrationState(t *testing.T) {
 					suite := WhenGettingAgentRegistrationStateBeforeEach(tc)
 					defer WhenGettingAgentRegistrationStateAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(model_builders.NewAgentRegistrationStateBuilder().
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
 						WithMintStatus(identity_enums.TransactionStatusConfirmed).
 						WithMintChainId(80002).
 						WithMintTxHash("0xabc").
 						WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
 						Build())
+
 					assert.NoError(t, err)
 
-					got, err := suite.sut.Get()
+					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, identity_enums.TransactionStatusConfirmed, got.MintStatus)

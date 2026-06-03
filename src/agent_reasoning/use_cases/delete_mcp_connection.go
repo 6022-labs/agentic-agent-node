@@ -24,7 +24,7 @@ func NewDeleteMCPConnection(
 // Execute clears all header secrets from Vault first (the row knows their
 // keys), then drops the row itself. No-op if the id doesn't exist.
 func (u *DeleteMCPConnection) Execute(ctx context.Context, id uuid.UUID) *usecase_result.Result {
-	existing, err := u.repository.GetById(id)
+	existing, err := u.repository.GetById(ctx, id)
 	if err != nil {
 		return usecase_result.InternalError("delete_failed", err.Error())
 	}
@@ -36,7 +36,7 @@ func (u *DeleteMCPConnection) Execute(ctx context.Context, id uuid.UUID) *usecas
 			return usecase_result.InternalError("delete_failed", err.Error())
 		}
 	}
-	if err := u.repository.Delete(existing.Id); err != nil {
+	if err := u.repository.Delete(ctx, existing.Id); err != nil {
 		return usecase_result.InternalError("delete_failed", err.Error())
 	}
 	return usecase_result.NoContent()

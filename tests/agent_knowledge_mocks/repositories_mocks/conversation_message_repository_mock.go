@@ -10,6 +10,7 @@
 package repositories_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
@@ -41,46 +42,46 @@ func (m *MockConversationMessageRepositoryInterface) EXPECT() *MockConversationM
 }
 
 // AppendMessages mocks base method.
-func (m *MockConversationMessageRepositoryInterface) AppendMessages(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (m *MockConversationMessageRepositoryInterface) AppendMessages(ctx context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AppendMessages", messages)
+	ret := m.ctrl.Call(m, "AppendMessages", ctx, messages)
 	ret0, _ := ret[0].([]models.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AppendMessages indicates an expected call of AppendMessages.
-func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) AppendMessages(messages any) *gomock.Call {
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) AppendMessages(ctx, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendMessages", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).AppendMessages), messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendMessages", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).AppendMessages), ctx, messages)
 }
 
 // ListByConversation mocks base method.
-func (m *MockConversationMessageRepositoryInterface) ListByConversation(conversationId string) ([]models.ConversationMessage, error) {
+func (m *MockConversationMessageRepositoryInterface) ListByConversation(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByConversation", conversationId)
+	ret := m.ctrl.Call(m, "ListByConversation", ctx, conversationId)
 	ret0, _ := ret[0].([]models.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListByConversation indicates an expected call of ListByConversation.
-func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListByConversation(conversationId any) *gomock.Call {
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListByConversation(ctx, conversationId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByConversation", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListByConversation), conversationId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByConversation", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListByConversation), ctx, conversationId)
 }
 
 // ListExistingHashes mocks base method.
-func (m *MockConversationMessageRepositoryInterface) ListExistingHashes(hashes []string) ([]string, error) {
+func (m *MockConversationMessageRepositoryInterface) ListExistingHashes(ctx context.Context, hashes []string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListExistingHashes", hashes)
+	ret := m.ctrl.Call(m, "ListExistingHashes", ctx, hashes)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListExistingHashes indicates an expected call of ListExistingHashes.
-func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListExistingHashes(hashes any) *gomock.Call {
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListExistingHashes(ctx, hashes any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExistingHashes", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListExistingHashes), hashes)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExistingHashes", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListExistingHashes), ctx, hashes)
 }
