@@ -46,3 +46,11 @@ func (r *AgentCollectionRequester) NameOf(collectionAddress common.Address, toke
 	}
 	return contract.NameOf(nil, new(big.Int).SetUint64(tokenId))
 }
+
+func (r *AgentCollectionRequester) CollectionName(collectionAddress common.Address) (string, error) {
+	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+	if err != nil {
+		return "", err
+	}
+	return contract.Name(nil)
+}

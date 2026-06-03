@@ -11,4 +11,6 @@ type AgentCollectionRequesterInterface interface {
 	OwnerOf(collectionAddress common.Address, tokenId uint64) (common.Address, error)
 	// NameOf returns the on-chain name (ENS prefix) for this token.
 	NameOf(collectionAddress common.Address, tokenId uint64) (string, error)
+	// CollectionName returns the ERC721 collection-level name.
+	CollectionName(collectionAddress common.Address) (string, error)
 }

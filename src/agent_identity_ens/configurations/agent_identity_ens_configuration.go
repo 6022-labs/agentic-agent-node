@@ -14,6 +14,10 @@ func AddAgentIdentityEnsConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(settings.NewEnsBlockchainSettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(settings.NewAgentEnsRegistriesSettings); err != nil {
 		panic(err)
 	}

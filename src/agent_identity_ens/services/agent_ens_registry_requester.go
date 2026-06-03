@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	blockchain_abi "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
-	blockchain_settings "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/abi"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/settings"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
@@ -32,32 +30,35 @@ const (
 // ready. First boot seeds the keys via initAgentTexts; later boots refresh
 // individual records via setAgentText (no-op if unchanged).
 type AgentEnsRegistryRequester struct {
-	logger             *zap.Logger
-	client             *ethclient.Client
-	blockchainSettings *blockchain_settings.BlockchainSettings
-	registrySettings   *ens_settings.AgentEnsRegistriesSettings
-	ensSettings        *ens_settings.AgentIdentityEnsSettings
-	walletStorage      identity_interfaces.WalletCredentialsStorageInterface
-	identityResolver   common_interfaces.AgentIdentityResolverInterface
+	logger              *zap.Logger
+	client              *ethclient.Client
+	blockchainSettings  *ens_settings.EnsBlockchainSettings
+	registrySettings    *ens_settings.AgentEnsRegistriesSettings
+	ensSettings         *ens_settings.AgentIdentityEnsSettings
+	walletStorage       identity_interfaces.WalletCredentialsStorageInterface
+	identityResolver    common_interfaces.AgentIdentityResolverInterface
+	collectionRequester identity_interfaces.AgentCollectionRequesterInterface
 }
 
 func NewAgentEnsRegistryRequester(
 	logger *zap.Logger,
 	client *ethclient.Client,
-	blockchainSettings *blockchain_settings.BlockchainSettings,
+	blockchainSettings *ens_settings.EnsBlockchainSettings,
 	registrySettings *ens_settings.AgentEnsRegistriesSettings,
 	ensSettings *ens_settings.AgentIdentityEnsSettings,
 	walletStorage identity_interfaces.WalletCredentialsStorageInterface,
 	identityResolver common_interfaces.AgentIdentityResolverInterface,
+	collectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *AgentEnsRegistryRequester {
 	return &AgentEnsRegistryRequester{
-		logger:             logger,
-		client:             client,
-		blockchainSettings: blockchainSettings,
-		registrySettings:   registrySettings,
-		ensSettings:        ensSettings,
-		walletStorage:      walletStorage,
-		identityResolver:   identityResolver,
+		logger:              logger,
+		client:              client,
+		blockchainSettings:  blockchainSettings,
+		registrySettings:    registrySettings,
+		ensSettings:         ensSettings,
+		walletStorage:       walletStorage,
+		identityResolver:    identityResolver,
+		collectionRequester: collectionRequester,
 	}
 }
 
@@ -203,16 +204,12 @@ func (r *AgentEnsRegistryRequester) resolveAgentNode(
 		return [32]byte{}, fmt.Errorf("read parentNode: %w", err)
 	}
 
-	collectionContract, err := blockchain_abi.NewAgentCollectionV1(collection, r.client)
-	if err != nil {
-		return [32]byte{}, fmt.Errorf("bind AgentCollectionV1: %w", err)
-	}
-	collectionName, err := collectionContract.Name(&bind.CallOpts{Context: ctx})
+	collectionName, err := r.collectionRequester.CollectionName(collection)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("read collection name: %w", err)
 	}
 
-	chainIdLabel := crypto.Keccak256Hash([]byte(strconv.FormatUint(r.blockchainSettings.Id, 10)))
+	chainIdLabel := crypto.Keccak256Hash([]byte(strconv.FormatUint(r.blockchainSettings.ChainId, 10)))
 	chainNode := crypto.Keccak256Hash(parentNode[:], chainIdLabel[:])
 	collectionLabel := crypto.Keccak256Hash([]byte(collectionName))
 	collectionNode := crypto.Keccak256Hash(chainNode[:], collectionLabel[:])
@@ -236,7 +233,7 @@ func (r *AgentEnsRegistryRequester) newTransactor(cred *identity_interfaces.Wall
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(r.blockchainSettings.Id))
+	return bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(r.blockchainSettings.ChainId))
 }
 
 func privateKeyFromCredentials(cred *identity_interfaces.WalletCredentials) (*ecdsa.PrivateKey, error) {

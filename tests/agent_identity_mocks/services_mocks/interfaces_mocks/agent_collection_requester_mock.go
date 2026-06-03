@@ -40,6 +40,21 @@ func (m *MockAgentCollectionRequesterInterface) EXPECT() *MockAgentCollectionReq
 	return m.recorder
 }
 
+// CollectionName mocks base method.
+func (m *MockAgentCollectionRequesterInterface) CollectionName(collectionAddress common.Address) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CollectionName", collectionAddress)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CollectionName indicates an expected call of CollectionName.
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) CollectionName(collectionAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionName", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).CollectionName), collectionAddress)
+}
+
 // NameOf mocks base method.
 func (m *MockAgentCollectionRequesterInterface) NameOf(collectionAddress common.Address, tokenId uint64) (string, error) {
 	m.ctrl.T.Helper()
