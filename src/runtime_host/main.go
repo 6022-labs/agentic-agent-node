@@ -35,18 +35,17 @@ func main() {
 	bootstrapCtx, cancelBootstrap := context.WithCancel(context.Background())
 	defer cancelBootstrap()
 
-	// Runtime owns wallet bootstrap. Gateway sees the result via /internal/bootstrap/status.
-	// BootstrapRunner also publishes ENS runtime records after wallet readiness;
-	// ENS failure is non-fatal and handled inside the runner.
+	// Runtime owns wallet bootstrap. Vault-backed wallet generation is fast, so
+	// this runs synchronously before the server starts serving.
 	if err := container.Invoke(func(
 		bootstrapRunner *agent_identity_services.BootstrapRunner,
 		logger *zap.Logger,
-	) {
-		go func() {
-			if err := bootstrapRunner.Run(bootstrapCtx); err != nil {
-				logger.Error("bootstrap runner failed", zap.Error(err))
-			}
-		}()
+	) error {
+		if err := bootstrapRunner.Run(bootstrapCtx); err != nil {
+			logger.Error("bootstrap runner failed", zap.Error(err))
+			return err
+		}
+		return nil
 	}); err != nil {
 		panic(err)
 	}

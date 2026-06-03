@@ -44,7 +44,6 @@ func AddGatewayConfiguration(container *dig.Container) {
 	useCaseProviders := []any{
 		use_cases.NewGetAuthChallenge,
 		use_cases.NewVerifyAuth,
-		use_cases.NewGetBootstrapStatus,
 		use_cases.NewGetLlmConfig,
 		use_cases.NewSetLlmConfig,
 		use_cases.NewDeleteLlmConfig,

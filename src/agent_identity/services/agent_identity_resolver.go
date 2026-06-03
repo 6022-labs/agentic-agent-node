@@ -18,7 +18,6 @@ var ErrIdentityNotFound = common_interfaces.ErrIdentityNotFound
 
 type AgentIdentityResolver struct {
 	logger              *zap.Logger
-	stateReader         identity_interfaces.BootstrapStateHolderInterface
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface
 	managerRequester    identity_interfaces.AgentCollectionsManagerRequesterInterface
 
@@ -28,16 +27,23 @@ type AgentIdentityResolver struct {
 
 func NewAgentIdentityResolver(
 	logger *zap.Logger,
-	stateReader identity_interfaces.BootstrapStateHolderInterface,
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 	managerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface,
 ) *AgentIdentityResolver {
 	return &AgentIdentityResolver{
 		logger:              logger,
-		stateReader:         stateReader,
 		collectionRequester: collectionRequester,
 		managerRequester:    managerRequester,
 	}
+}
+
+// agentWalletAddress returns the loaded agent wallet address.
+//
+// NOT IMPLEMENTED: this previously read the address from the bootstrap state
+// holder, which has been removed. Rewire it to the vault-backed wallet
+// storage before identity resolution can work again.
+func (r *AgentIdentityResolver) agentWalletAddress() (common.Address, error) {
+	return common.Address{}, errors.New("not implemented: agent wallet address source removed with bootstrap state holder")
 }
 
 func (r *AgentIdentityResolver) Resolve(ctx context.Context) (*models.AgentIdentity, error) {
@@ -48,11 +54,10 @@ func (r *AgentIdentityResolver) Resolve(ctx context.Context) (*models.AgentIdent
 		return r.cache, nil
 	}
 
-	state := r.stateReader.Get()
-	if len(state.AgentAddress) == 0 {
-		return nil, errors.New("wallet not loaded yet")
+	walletAddr, err := r.agentWalletAddress()
+	if err != nil {
+		return nil, err
 	}
-	walletAddr := common.HexToAddress(state.AgentAddress)
 
 	collections, err := r.managerRequester.ListAllCollections()
 	if err != nil {

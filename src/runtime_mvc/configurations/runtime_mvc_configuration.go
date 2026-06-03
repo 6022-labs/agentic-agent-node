@@ -6,7 +6,6 @@ import (
 )
 
 func AddRuntimeMvcConfiguration(container *dig.Container) {
-	provideController(container, runtime_mvc.NewBootstrapController)
 	provideController(container, runtime_mvc.NewIdentityController)
 	provideController(container, runtime_mvc.NewAuthorizeController)
 	provideController(container, runtime_mvc.NewConversationMessagesController)

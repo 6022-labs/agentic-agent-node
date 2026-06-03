@@ -17,12 +17,6 @@ func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
-		services.NewHttpBootstrapStateReader,
-		dig.As(new(common_interfaces.BootstrapStateReaderInterface)),
-	); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
 		services.NewHttpAgentIdentityResolver,
 		dig.As(new(common_interfaces.AgentIdentityResolverInterface)),
 	); err != nil {

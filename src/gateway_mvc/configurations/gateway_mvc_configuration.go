@@ -7,15 +7,11 @@ import (
 )
 
 func AddGatewayMvcConfiguration(container *dig.Container) {
-	if err := container.Provide(middlewares.NewReadyGateMiddleware); err != nil {
-		panic(err)
-	}
 	if err := container.Provide(middlewares.NewJwtAuthMiddleware); err != nil {
 		panic(err)
 	}
 
 	provideController(container, gateway_mvc.NewHealthController)
-	provideController(container, gateway_mvc.NewBootstrapController)
 	provideController(container, gateway_mvc.NewAuthController)
 	provideController(container, gateway_mvc.NewResponseController)
 	provideController(container, gateway_mvc.NewLlmConfigController)

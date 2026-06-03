@@ -39,7 +39,6 @@ type registerRoutesParams struct {
 	App         *fiber.App
 	Logger      *zap.Logger
 	JwtAuth     *middlewares.JwtAuthMiddleware
-	ReadyGate   *middlewares.ReadyGateMiddleware
 	Controllers []gateway_mvc.ControllerInterface `group:"controllers"`
 }
 
@@ -59,7 +58,7 @@ func registerRoutes(p registerRoutesParams) {
 		controller.RegisterUnauthenticatedRoutes(p.App)
 	}
 
-	authenticated := p.App.Group("", p.JwtAuth.Handle, p.ReadyGate.Handle)
+	authenticated := p.App.Group("", p.JwtAuth.Handle)
 	for _, controller := range p.Controllers {
 		controller.RegisterAuthenticatedRoutes(authenticated)
 	}
