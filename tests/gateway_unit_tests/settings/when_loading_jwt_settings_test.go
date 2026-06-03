@@ -2,6 +2,7 @@ package settings_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/settings"
 	"github.com/knadh/koanf/providers/confmap"
@@ -30,8 +31,8 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 			assert.NotNil(t, result)
 			assert.Equal(t, "key-123", result.SigningKey)
-			assert.Equal(t, 900, result.TokenTtl)
-			assert.Equal(t, 120, result.NonceTtl)
+			assert.Equal(t, 900*time.Second, result.TokenTtl)
+			assert.Equal(t, 120*time.Second, result.NonceTtl)
 		})
 	})
 
@@ -48,8 +49,8 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 			result := settings.NewJwtSettings(zap.NewNop(), k)
 
-			assert.Equal(t, 1800, result.TokenTtl)
-			assert.Equal(t, 300, result.NonceTtl)
+			assert.Equal(t, 1800*time.Second, result.TokenTtl)
+			assert.Equal(t, 300*time.Second, result.NonceTtl)
 		})
 	})
 
@@ -83,8 +84,8 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewJwtSettings(zap.NewNop(), k)
-			assert.Equal(t, 1800, result.TokenTtl)
-			assert.Equal(t, 300, result.NonceTtl)
+			assert.Equal(t, 1800*time.Second, result.TokenTtl)
+			assert.Equal(t, 300*time.Second, result.NonceTtl)
 		})
 	})
 }
