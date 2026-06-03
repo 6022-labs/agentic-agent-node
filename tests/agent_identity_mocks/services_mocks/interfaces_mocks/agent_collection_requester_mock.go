@@ -55,21 +55,6 @@ func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) CollectionName(coll
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionName", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).CollectionName), collectionAddress)
 }
 
-// NameOf mocks base method.
-func (m *MockAgentCollectionRequesterInterface) NameOf(collectionAddress common.Address, tokenId uint64) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NameOf", collectionAddress, tokenId)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NameOf indicates an expected call of NameOf.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) NameOf(collectionAddress, tokenId any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NameOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).NameOf), collectionAddress, tokenId)
-}
-
 // OwnerOf mocks base method.
 func (m *MockAgentCollectionRequesterInterface) OwnerOf(collectionAddress common.Address, tokenId uint64) (common.Address, error) {
 	m.ctrl.T.Helper()
@@ -83,19 +68,4 @@ func (m *MockAgentCollectionRequesterInterface) OwnerOf(collectionAddress common
 func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) OwnerOf(collectionAddress, tokenId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OwnerOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).OwnerOf), collectionAddress, tokenId)
-}
-
-// TokenIdByWallet mocks base method.
-func (m *MockAgentCollectionRequesterInterface) TokenIdByWallet(collectionAddress, wallet common.Address) (uint64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TokenIdByWallet", collectionAddress, wallet)
-	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// TokenIdByWallet indicates an expected call of TokenIdByWallet.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) TokenIdByWallet(collectionAddress, wallet any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TokenIdByWallet", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).TokenIdByWallet), collectionAddress, wallet)
 }

@@ -40,6 +40,20 @@ func (m *MockKvV1SecretStorageInterface) EXPECT() *MockKvV1SecretStorageInterfac
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockKvV1SecretStorageInterface) Delete(ctx context.Context, key string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockKvV1SecretStorageInterfaceMockRecorder) Delete(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKvV1SecretStorageInterface)(nil).Delete), ctx, key)
+}
+
 // Read mocks base method.
 func (m *MockKvV1SecretStorageInterface) Read(ctx context.Context, key string) (map[string]string, error) {
 	m.ctrl.T.Helper()
@@ -67,18 +81,4 @@ func (m *MockKvV1SecretStorageInterface) Write(ctx context.Context, key string, 
 func (mr *MockKvV1SecretStorageInterfaceMockRecorder) Write(ctx, key, data any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockKvV1SecretStorageInterface)(nil).Write), ctx, key, data)
-}
-
-// Delete mocks base method.
-func (m *MockKvV1SecretStorageInterface) Delete(ctx context.Context, key string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, key)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockKvV1SecretStorageInterfaceMockRecorder) Delete(ctx, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKvV1SecretStorageInterface)(nil).Delete), ctx, key)
 }

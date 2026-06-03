@@ -2,9 +2,9 @@ package interfaces
 
 import "github.com/ethereum/go-ethereum/common"
 
-// AgentCollectionsManagerRequesterInterface enumerates on-chain agent
-// collections, used at bootstrap to find which minted this agent's NFT.
+// AgentCollectionsManagerRequesterInterface reads the on-chain collections
+// manager to find which collection minted this agent's NFT.
 type AgentCollectionsManagerRequesterInterface interface {
-	// ListAllCollections returns every registered collection address, in store order.
-	ListAllCollections() ([]common.Address, error)
+	// FindAgentByWallet returns the agent NFT the wallet controls, or a zero collection if none.
+	FindAgentByWallet(wallet common.Address) (collection common.Address, tokenId uint64, name string, err error)
 }

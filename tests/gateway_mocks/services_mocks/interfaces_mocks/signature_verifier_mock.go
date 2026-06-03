@@ -41,7 +41,7 @@ func (m *MockSignatureVerifierInterface) EXPECT() *MockSignatureVerifierInterfac
 }
 
 // Recover mocks base method.
-func (m *MockSignatureVerifierInterface) Recover(message string, signatureHex string) (common.Address, error) {
+func (m *MockSignatureVerifierInterface) Recover(message, signatureHex string) (common.Address, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Recover", message, signatureHex)
 	ret0, _ := ret[0].(common.Address)

@@ -40,17 +40,19 @@ func (m *MockAgentCollectionsManagerRequesterInterface) EXPECT() *MockAgentColle
 	return m.recorder
 }
 
-// ListAllCollections mocks base method.
-func (m *MockAgentCollectionsManagerRequesterInterface) ListAllCollections() ([]common.Address, error) {
+// FindAgentByWallet mocks base method.
+func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(wallet common.Address) (common.Address, uint64, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllCollections")
-	ret0, _ := ret[0].([]common.Address)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "FindAgentByWallet", wallet)
+	ret0, _ := ret[0].(common.Address)
+	ret1, _ := ret[1].(uint64)
+	ret2, _ := ret[2].(string)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
-// ListAllCollections indicates an expected call of ListAllCollections.
-func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) ListAllCollections() *gomock.Call {
+// FindAgentByWallet indicates an expected call of FindAgentByWallet.
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentByWallet(wallet any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllCollections", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).ListAllCollections))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByWallet", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByWallet), wallet)
 }

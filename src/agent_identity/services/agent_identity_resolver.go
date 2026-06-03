@@ -17,9 +17,8 @@ import (
 var ErrIdentityNotFound = common_interfaces.ErrIdentityNotFound
 
 type AgentIdentityResolver struct {
-	logger              *zap.Logger
-	collectionRequester identity_interfaces.AgentCollectionRequesterInterface
-	managerRequester    identity_interfaces.AgentCollectionsManagerRequesterInterface
+	logger           *zap.Logger
+	managerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface
 
 	mu    sync.Mutex
 	cache *models.AgentIdentity
@@ -27,13 +26,11 @@ type AgentIdentityResolver struct {
 
 func NewAgentIdentityResolver(
 	logger *zap.Logger,
-	collectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 	managerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface,
 ) *AgentIdentityResolver {
 	return &AgentIdentityResolver{
-		logger:              logger,
-		collectionRequester: collectionRequester,
-		managerRequester:    managerRequester,
+		logger:           logger,
+		managerRequester: managerRequester,
 	}
 }
 
@@ -58,48 +55,24 @@ func (r *AgentIdentityResolver) Resolve(ctx context.Context) (*models.AgentIdent
 		return nil, err
 	}
 
-	collections, err := r.managerRequester.ListAllCollections()
+	collectionAddr, tokenId, name, err := r.managerRequester.FindAgentByWallet(walletAddr)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, collectionAddr := range collections {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		tokenId, err := r.collectionRequester.TokenIdByWallet(collectionAddr, walletAddr)
-		if err != nil {
-			r.logger.Debug("walletToTokenId failed",
-				zap.String("collection", collectionAddr.Hex()),
-				zap.Error(err),
-			)
-			continue
-		}
-		if tokenId == 0 {
-			continue
-		}
-
-		name, err := r.collectionRequester.NameOf(collectionAddr, tokenId)
-		if err != nil {
-			return nil, err
-		}
-
-		identity := &models.AgentIdentity{
-			CollectionAddress: collectionAddr.Hex(),
-			TokenId:           tokenId,
-			Name:              name,
-		}
-		r.cache = identity
-		r.logger.Info("agent identity resolved",
-			zap.String("collection", identity.CollectionAddress),
-			zap.Uint64("tokenId", identity.TokenId),
-			zap.String("name", identity.Name),
-		)
-		return identity, nil
+	if (collectionAddr == common.Address{}) || tokenId == 0 {
+		return nil, ErrIdentityNotFound
 	}
 
-	return nil, ErrIdentityNotFound
+	identity := &models.AgentIdentity{
+		CollectionAddress: collectionAddr.Hex(),
+		TokenId:           tokenId,
+		Name:              name,
+	}
+	r.cache = identity
+	r.logger.Info("agent identity resolved",
+		zap.String("collection", identity.CollectionAddress),
+		zap.Uint64("tokenId", identity.TokenId),
+		zap.String("name", identity.Name),
+	)
+	return identity, nil
 }

@@ -40,6 +40,20 @@ func (m *MockNonceStoreInterface) EXPECT() *MockNonceStoreInterfaceMockRecorder 
 	return m.recorder
 }
 
+// Consume mocks base method.
+func (m *MockNonceStoreInterface) Consume(nonce string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Consume", nonce)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Consume indicates an expected call of Consume.
+func (mr *MockNonceStoreInterfaceMockRecorder) Consume(nonce any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Consume", reflect.TypeOf((*MockNonceStoreInterface)(nil).Consume), nonce)
+}
+
 // Generate mocks base method.
 func (m *MockNonceStoreInterface) Generate() (string, time.Time, error) {
 	m.ctrl.T.Helper()
@@ -54,18 +68,4 @@ func (m *MockNonceStoreInterface) Generate() (string, time.Time, error) {
 func (mr *MockNonceStoreInterfaceMockRecorder) Generate() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockNonceStoreInterface)(nil).Generate))
-}
-
-// Consume mocks base method.
-func (m *MockNonceStoreInterface) Consume(nonce string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Consume", nonce)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// Consume indicates an expected call of Consume.
-func (mr *MockNonceStoreInterfaceMockRecorder) Consume(nonce any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Consume", reflect.TypeOf((*MockNonceStoreInterface)(nil).Consume), nonce)
 }
