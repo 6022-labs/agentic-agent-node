@@ -1,6 +1,7 @@
 package configurations
 
 import (
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	knowledge_repositories "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -35,6 +36,18 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		repositories.NewMCPConnectionRepository,
 		dig.As(new(reasoning_repositories.MCPConnectionRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewAgentRepository,
+		dig.As(new(identity_repositories.AgentRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewAgentRegistrationStateRepository,
+		dig.As(new(identity_repositories.AgentRegistrationStateRepositoryInterface)),
 	); err != nil {
 		panic(err)
 	}
