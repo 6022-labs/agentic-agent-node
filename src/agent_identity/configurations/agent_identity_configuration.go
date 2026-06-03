@@ -13,13 +13,6 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
-		services.NewAgentIdentityResolver,
-		dig.As(new(common_interfaces.AgentIdentityResolverInterface)),
-	); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(
 		services.NewNftOwnerAuthorizer,
 		dig.As(new(common_interfaces.AuthorizerInterface)),
 	); err != nil {

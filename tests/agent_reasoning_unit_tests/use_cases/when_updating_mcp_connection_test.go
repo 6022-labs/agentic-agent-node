@@ -77,7 +77,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
-			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {
+			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "new-name", c.Name)
 				assert.Equal(t, "https://new", c.Url)
 				assert.Len(t, c.HeaderAuthKeys, 1)

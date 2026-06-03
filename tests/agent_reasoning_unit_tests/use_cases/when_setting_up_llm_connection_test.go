@@ -57,7 +57,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
 			gomock.InOrder(
 				suite.mockSecretStorage.EXPECT().Save(gomock.Any(), "sk-secret").Return(nil),
-				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(c *models.LLMConnection) (*models.LLMConnection, error) {
+				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
 					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, c.Platform)
 					assert.Equal(t, "gpt-4o", c.Model)
 					assert.Equal(t, reasoning_enums.LLMConnectionSetupStatusEstablished, c.SetupStatus)

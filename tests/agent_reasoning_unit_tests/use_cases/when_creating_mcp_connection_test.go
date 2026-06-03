@@ -48,7 +48,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 		generatedId := uuid.New()
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {
+			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "github", c.Name)
 				assert.Equal(t, "https://mcp.github.example", c.Url)
 				assert.Len(t, c.HeaderAuthKeys, 1)
@@ -84,7 +84,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(c *models.MCPConnection) (*models.MCPConnection, error) {
+			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Empty(t, c.HeaderAuthKeys)
 				c.Id = uuid.New()
 				return c, nil

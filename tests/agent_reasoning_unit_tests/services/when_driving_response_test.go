@@ -83,7 +83,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
 						assert.Equal(t, "hello", msgs[0].Content)
@@ -133,7 +133,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "follow-up", msgs[0].Content)
 						assert.Equal(t, "ok", msgs[1].Content)
@@ -172,7 +172,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "assistant", msgs[0].Role)
 					}
@@ -217,7 +217,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 				}, nil)
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "assistant", msgs[0].Role)
 					}
@@ -265,7 +265,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					return msgs, nil
 				})
 		}
@@ -297,7 +297,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			// Inputs still persist even without a final assistant text.
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, msgs, 1) {
 						assert.Equal(t, "user", msgs[0].Role)
 					}

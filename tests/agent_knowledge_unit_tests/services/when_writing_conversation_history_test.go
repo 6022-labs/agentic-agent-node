@@ -53,7 +53,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
 			suite.mockAppendService.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
 						assert.Equal(t, "hi", msgs[0].Content)

@@ -31,6 +31,11 @@ func (AgentRegistrationState) TableName() string {
 	return "agent_registration_states"
 }
 
+// IsMinted reports whether the agent's NFT mint is confirmed on chain. Nil-safe.
+func (s *AgentRegistrationState) IsMinted() bool {
+	return s != nil && s.MintStatus == enums.TransactionStatusConfirmed
+}
+
 func (m *AgentRegistrationState) BeforeCreate(_ *gorm.DB) error {
 	if m.Id == uuid.Nil {
 		m.Id = uuid.New()

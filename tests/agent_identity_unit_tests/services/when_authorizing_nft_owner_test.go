@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
+	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
-	"github.com/6022-labs/agentic-agent-node/src/common/models"
+	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	chain_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
-	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -17,23 +18,26 @@ import (
 type WhenAuthorizingNftOwnerTestingSuite struct {
 	sut *services.NftOwnerAuthorizer
 
-	mockResolver   *common_mocks.MockAgentIdentityResolverInterface
-	mockCollection *chain_mocks.MockAgentCollectionRequesterInterface
+	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
+	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockCollection      *chain_mocks.MockAgentCollectionRequesterInterface
 }
 
 func WhenAuthorizingNftOwnerBeforeEach(t *testing.T) *WhenAuthorizingNftOwnerTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockResolver := common_mocks.NewMockAgentIdentityResolverInterface(mockController)
+	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 	mockCollection := chain_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 
-	sut := services.NewNftOwnerAuthorizer(mockResolver, mockCollection)
+	sut := services.NewNftOwnerAuthorizer(mockAgentRepository, mockStateRepository, mockCollection)
 
 	return &WhenAuthorizingNftOwnerTestingSuite{
 		sut: sut,
 
-		mockResolver:   mockResolver,
-		mockCollection: mockCollection,
+		mockAgentRepository: mockAgentRepository,
+		mockStateRepository: mockStateRepository,
+		mockCollection:      mockCollection,
 	}
 }
 
@@ -42,17 +46,21 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 
 	collectionAddr := common.HexToAddress("0xCCCCcccccccccccccccccccccccccccccccccccc")
 	owner := common.HexToAddress("0x4444444444444444444444444444444444444444")
-	identity := &models.AgentIdentity{
-		CollectionAddress: collectionAddr.Hex(),
-		TokenId:           42,
-		Name:              "agent.eth",
+
+	mintedState := func() interface{} {
+		return model_builders.NewAgentRegistrationStateBuilder().
+			WithMintStatus(identity_enums.TransactionStatusConfirmed).
+			Build()
 	}
 
-	t.Run("Given the agent has no on-chain identity yet", func(t *testing.T) {
+	t.Run("Given the mint is not yet confirmed", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(nil, services.ErrIdentityNotFound)
+			state := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusPending).
+				Build()
+			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should authorize while unclaimed", func(t *testing.T) {
@@ -68,11 +76,11 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the identity resolver fails for another reason", func(t *testing.T) {
+	t.Run("Given the state read fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(nil, errors.New("wallet not loaded yet"))
+			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return false and propagate the error", func(t *testing.T) {
@@ -84,15 +92,20 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
 
 			assert.False(t, ok)
-			assert.ErrorContains(t, err, "wallet not loaded yet")
+			assert.ErrorContains(t, err, "db down")
 		})
 	})
 
-	t.Run("Given the requested address is the current NFT owner", func(t *testing.T) {
+	t.Run("Given the mint is confirmed and the requested address is the NFT owner", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(identity, nil)
+			agent := model_builders.NewAgentBuilder().
+				WithCollectionAddress(collectionAddr.Hex()).
+				WithCollectionTokenId(42).
+				Build()
+			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(owner, nil)
 		}
 
@@ -109,11 +122,16 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the requested address is not the NFT owner", func(t *testing.T) {
+	t.Run("Given the mint is confirmed and the requested address is not the NFT owner", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(identity, nil)
+			agent := model_builders.NewAgentBuilder().
+				WithCollectionAddress(collectionAddr.Hex()).
+				WithCollectionTokenId(42).
+				Build()
+			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
@@ -134,7 +152,12 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockResolver.EXPECT().Resolve(gomock.Any()).Return(identity, nil)
+			agent := model_builders.NewAgentBuilder().
+				WithCollectionAddress(collectionAddr.Hex()).
+				WithCollectionTokenId(42).
+				Build()
+			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.Address{}, errors.New("rpc"))
 		}
 

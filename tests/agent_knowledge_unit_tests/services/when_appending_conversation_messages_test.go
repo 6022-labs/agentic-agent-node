@@ -81,7 +81,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
 				gomock.Any()).
-				DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					assert.Len(t, messages, 2)
 					for _, m := range messages {
 						assert.Equal(t, conversationId, m.ConversationId)
@@ -124,7 +124,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
 				gomock.Any()).
-				DoAndReturn(func(messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+				DoAndReturn(func(_ context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, messages, 1) {
 						assert.Equal(t, "fresh", messages[0].Content)
 					}

@@ -8,11 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/abi"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/settings"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/common/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -36,7 +37,8 @@ type AgentEnsRegistryRequester struct {
 	registrySettings    *ens_settings.AgentEnsRegistriesSettings
 	ensSettings         *ens_settings.AgentIdentityEnsSettings
 	walletStorage       identity_interfaces.WalletCredentialsStorageInterface
-	identityResolver    common_interfaces.AgentIdentityResolverInterface
+	agentRepository     repositories.AgentRepositoryInterface
+	stateRepository     repositories.AgentRegistrationStateRepositoryInterface
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface
 }
 
@@ -47,7 +49,8 @@ func NewAgentEnsRegistryRequester(
 	registrySettings *ens_settings.AgentEnsRegistriesSettings,
 	ensSettings *ens_settings.AgentIdentityEnsSettings,
 	walletStorage identity_interfaces.WalletCredentialsStorageInterface,
-	identityResolver common_interfaces.AgentIdentityResolverInterface,
+	agentRepository repositories.AgentRepositoryInterface,
+	stateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *AgentEnsRegistryRequester {
 	return &AgentEnsRegistryRequester{
@@ -57,7 +60,8 @@ func NewAgentEnsRegistryRequester(
 		registrySettings:    registrySettings,
 		ensSettings:         ensSettings,
 		walletStorage:       walletStorage,
-		identityResolver:    identityResolver,
+		agentRepository:     agentRepository,
+		stateRepository:     stateRepository,
 		collectionRequester: collectionRequester,
 	}
 }
@@ -65,9 +69,20 @@ func NewAgentEnsRegistryRequester(
 // PublishRuntimeRecords writes the `url` text record for the agent's NFT.
 // Requires the NFT to already exist on chain.
 func (r *AgentEnsRegistryRequester) PublishRuntimeRecords(ctx context.Context) error {
-	identity, err := r.identityResolver.Resolve(ctx)
+	state, err := r.stateRepository.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("resolve agent identity: %w", err)
+		return fmt.Errorf("load registration state: %w", err)
+	}
+	if !state.IsMinted() {
+		return common_interfaces.ErrIdentityNotFound
+	}
+
+	agent, err := r.agentRepository.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("load agent: %w", err)
+	}
+	if agent == nil || agent.CollectionTokenId == nil {
+		return common_interfaces.ErrIdentityNotFound
 	}
 
 	cred, found, err := r.walletStorage.Get(ctx)
@@ -89,10 +104,10 @@ func (r *AgentEnsRegistryRequester) PublishRuntimeRecords(ctx context.Context) e
 		return fmt.Errorf("bind AgentEnsRegistry: %w", err)
 	}
 
-	collectionAddr := common.HexToAddress(identity.CollectionAddress)
-	tokenId := new(big.Int).SetUint64(identity.TokenId)
+	collectionAddr := common.HexToAddress(agent.CollectionAddress)
+	tokenId := new(big.Int).SetUint64(*agent.CollectionTokenId)
 
-	node, err := r.resolveAgentNode(ctx, registry, collectionAddr, identity.Name)
+	node, err := r.resolveAgentNode(ctx, registry, collectionAddr, agent.Name)
 	if err != nil {
 		return fmt.Errorf("resolve agent node: %w", err)
 	}
@@ -103,9 +118,9 @@ func (r *AgentEnsRegistryRequester) PublishRuntimeRecords(ctx context.Context) e
 	}
 
 	if !provisioned {
-		return r.initAgentTexts(ctx, registry, opts, collectionAddr, tokenId, identity)
+		return r.initAgentTexts(ctx, registry, opts, collectionAddr, tokenId, agent)
 	}
-	return r.refreshAgentTexts(ctx, registry, opts, collectionAddr, tokenId, node, identity)
+	return r.refreshAgentTexts(ctx, registry, opts, collectionAddr, tokenId, node, agent)
 }
 
 func (r *AgentEnsRegistryRequester) initAgentTexts(
@@ -114,7 +129,7 @@ func (r *AgentEnsRegistryRequester) initAgentTexts(
 	opts *bind.TransactOpts,
 	collection common.Address,
 	tokenId *big.Int,
-	identity *models.AgentIdentity,
+	agent *models.Agent,
 ) error {
 	records := []abi.KeyValue{
 		{Key: urlKey, Value: r.ensSettings.RuntimeUrl},
@@ -129,9 +144,9 @@ func (r *AgentEnsRegistryRequester) initAgentTexts(
 	}
 
 	r.logger.Info("agent ENS subnode provisioned",
-		zap.String("collection", identity.CollectionAddress),
-		zap.Uint64("tokenId", identity.TokenId),
-		zap.String("name", identity.Name),
+		zap.String("collection", agent.CollectionAddress),
+		zap.Uint64("tokenId", *agent.CollectionTokenId),
+		zap.String("name", agent.Name),
 		zap.String("runtimeUrl", r.ensSettings.RuntimeUrl),
 		zap.String("tx", tx.Hash().Hex()),
 	)
@@ -145,7 +160,7 @@ func (r *AgentEnsRegistryRequester) refreshAgentTexts(
 	collection common.Address,
 	tokenId *big.Int,
 	node [32]byte,
-	identity *models.AgentIdentity,
+	agent *models.Agent,
 ) error {
 	records := []struct {
 		key   string
@@ -162,9 +177,9 @@ func (r *AgentEnsRegistryRequester) refreshAgentTexts(
 		}
 		if current == rec.value {
 			r.logger.Debug("agent ENS text record already up to date",
-				zap.String("collection", identity.CollectionAddress),
-				zap.Uint64("tokenId", identity.TokenId),
-				zap.String("name", identity.Name),
+				zap.String("collection", agent.CollectionAddress),
+				zap.Uint64("tokenId", *agent.CollectionTokenId),
+				zap.String("name", agent.Name),
 				zap.String("key", rec.key),
 			)
 			continue
@@ -178,9 +193,9 @@ func (r *AgentEnsRegistryRequester) refreshAgentTexts(
 			return fmt.Errorf("setAgentText %s: %w", rec.key, err)
 		}
 		r.logger.Info("agent ENS text record refreshed",
-			zap.String("collection", identity.CollectionAddress),
-			zap.Uint64("tokenId", identity.TokenId),
-			zap.String("name", identity.Name),
+			zap.String("collection", agent.CollectionAddress),
+			zap.Uint64("tokenId", *agent.CollectionTokenId),
+			zap.String("name", agent.Name),
 			zap.String("key", rec.key),
 			zap.String("previous", current),
 			zap.String("value", rec.value),
