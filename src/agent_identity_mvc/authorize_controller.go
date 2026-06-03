@@ -1,4 +1,4 @@
-package runtime_mvc
+package agent_identity_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"

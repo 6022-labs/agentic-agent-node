@@ -1,4 +1,4 @@
-package runtime_mvc
+package agent_reasoning_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"

@@ -1,4 +1,4 @@
-package runtime_mvc
+package agent_knowledge_mvc
 
 import (
 	"strings"

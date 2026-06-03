@@ -4,14 +4,16 @@ import (
 	agent_identity_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity/configurations"
 	agent_identity_blockchain_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/configurations"
 	agent_identity_ens_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/configurations"
+	agent_identity_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_identity_mvc/configurations"
 	agent_knowledge_configurations "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/configurations"
+	agent_knowledge_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_knowledge_mvc/configurations"
 	runtime_db_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_db/configurations"
 	agent_reasoning_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/configurations"
 	agent_reasoning_http_inference_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/configurations"
 	agent_reasoning_http_mcp_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/configurations"
+	agent_reasoning_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_mvc/configurations"
 	runtime_vault_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_vault/configurations"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
-	runtime_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_mvc/configurations"
 
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/dig"
@@ -38,7 +40,9 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
 	runtime_db_configurations.AddRuntimeDbConfiguration(container)
 	agent_knowledge_configurations.AddAgentKnowledgeConfiguration(container)
-	runtime_mvc_configurations.AddRuntimeMvcConfiguration(container)
+	agent_identity_mvc_configurations.AddAgentIdentityMvcConfiguration(container)
+	agent_knowledge_mvc_configurations.AddAgentKnowledgeMvcConfiguration(container)
+	agent_reasoning_mvc_configurations.AddAgentReasoningMvcConfiguration(container)
 
 	return container
 }
