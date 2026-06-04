@@ -2,7 +2,6 @@ package agent_identity_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,15 +11,18 @@ const (
 )
 
 type IdentityController struct {
-	getIdentity *use_cases.GetAgentIdentity
-	publishEns  *use_cases.PublishEnsRuntimeRecords
+	getAgentIdentity         *use_cases.GetAgentIdentity
+	publishEnsRuntimeRecords *use_cases.PublishEnsRuntimeRecords
 }
 
 func NewIdentityController(
-	getIdentity *use_cases.GetAgentIdentity,
-	publishEns *use_cases.PublishEnsRuntimeRecords,
+	getAgentIdentity *use_cases.GetAgentIdentity,
+	publishEnsRuntimeRecords *use_cases.PublishEnsRuntimeRecords,
 ) *IdentityController {
-	return &IdentityController{getIdentity: getIdentity, publishEns: publishEns}
+	return &IdentityController{
+		getAgentIdentity:         getAgentIdentity,
+		publishEnsRuntimeRecords: publishEnsRuntimeRecords,
+	}
 }
 
 func (c *IdentityController) RegisterRoutes(app fiber.Router) {
@@ -38,7 +40,11 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "identity_lookup_failed"
 // @Router /internal/identity [get]
 func (c *IdentityController) Get(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.getIdentity.Execute(ctx.UserContext()))
+	resp, err := c.getAgentIdentity.Execute(ctx.UserContext())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // PublishEns re-publishes the agent's runtime ENS `url` record. Use when the
@@ -52,5 +58,8 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "ens_publish_failed"
 // @Router /internal/identity/ens/publish [post]
 func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.publishEns.Execute(ctx.UserContext()))
+	if err := c.publishEnsRuntimeRecords.Execute(ctx.UserContext()); err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

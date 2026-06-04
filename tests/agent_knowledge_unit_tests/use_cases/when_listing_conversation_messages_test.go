@@ -8,8 +8,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -58,13 +57,11 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), conversationId)
+			resp, err := suite.sut.Execute(context.Background(), conversationId)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.ListConversationMessagesResponse)
-			assert.True(t, ok)
-			assert.Len(t, body.Messages, 1)
-			assert.Equal(t, conversationId, body.Messages[0].ConversationId)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Messages, 1)
+			assert.Equal(t, conversationId, resp.Messages[0].ConversationId)
 		})
 	})
 
@@ -81,10 +78,11 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), conversationId)
+			_, err := suite.sut.Execute(context.Background(), conversationId)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "db blew")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db blew")
 		})
 	})
 }

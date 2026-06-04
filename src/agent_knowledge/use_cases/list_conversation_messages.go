@@ -5,11 +5,11 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type ListConversationMessagesInterface interface {
-	Execute(ctx context.Context, conversationId string) *usecase_result.Result
+	Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error)
 }
 
 type ListConversationMessages struct {
@@ -20,10 +20,10 @@ func NewListConversationMessages(service interfaces.ListConversationMessagesInte
 	return &ListConversationMessages{service: service}
 }
 
-func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) *usecase_result.Result {
+func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
 	messages, err := u.service.List(ctx, conversationId)
 	if err != nil {
-		return usecase_result.InternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
-	return usecase_result.Ok(&responses.ListConversationMessagesResponse{Messages: toWireMessages(messages)})
+	return &responses.ListConversationMessagesResponse{Messages: toWireMessages(messages)}, nil
 }

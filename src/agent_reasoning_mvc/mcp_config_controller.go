@@ -4,7 +4,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -15,21 +14,27 @@ const (
 )
 
 type MCPConfigController struct {
-	lister  *use_cases.ListMCPConnections
-	getter  *use_cases.GetMCPConnection
-	creator *use_cases.CreateMCPConnection
-	updater *use_cases.UpdateMCPConnection
-	deleter *use_cases.DeleteMCPConnection
+	listMCPConnections  *use_cases.ListMCPConnections
+	getMCPConnection    *use_cases.GetMCPConnection
+	createMCPConnection *use_cases.CreateMCPConnection
+	updateMCPConnection *use_cases.UpdateMCPConnection
+	deleteMCPConnection *use_cases.DeleteMCPConnection
 }
 
 func NewMCPConfigController(
-	lister *use_cases.ListMCPConnections,
-	getter *use_cases.GetMCPConnection,
-	creator *use_cases.CreateMCPConnection,
-	updater *use_cases.UpdateMCPConnection,
-	deleter *use_cases.DeleteMCPConnection,
+	listMCPConnections *use_cases.ListMCPConnections,
+	getMCPConnection *use_cases.GetMCPConnection,
+	createMCPConnection *use_cases.CreateMCPConnection,
+	updateMCPConnection *use_cases.UpdateMCPConnection,
+	deleteMCPConnection *use_cases.DeleteMCPConnection,
 ) *MCPConfigController {
-	return &MCPConfigController{lister: lister, getter: getter, creator: creator, updater: updater, deleter: deleter}
+	return &MCPConfigController{
+		listMCPConnections:  listMCPConnections,
+		getMCPConnection:    getMCPConnection,
+		createMCPConnection: createMCPConnection,
+		updateMCPConnection: updateMCPConnection,
+		deleteMCPConnection: deleteMCPConnection,
+	}
 }
 
 func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
@@ -41,7 +46,11 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context()))
+	resp, err := c.listMCPConnections.Execute(ctx.Context())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
@@ -52,7 +61,11 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.creator.Execute(ctx.Context(), body))
+	resp, err := c.createMCPConnection.Execute(ctx.Context(), body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
 func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
@@ -60,7 +73,11 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context(), id))
+	resp, err := c.getMCPConnection.Execute(ctx.Context(), id)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
@@ -75,7 +92,11 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.updater.Execute(ctx.Context(), id, body))
+	resp, err := c.updateMCPConnection.Execute(ctx.Context(), id, body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
@@ -83,7 +104,10 @@ func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context(), id))
+	if err := c.deleteMCPConnection.Execute(ctx.Context(), id); err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 func parseConnectionId(ctx *fiber.Ctx) (uuid.UUID, *errors.ValidationError) {

@@ -7,8 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -57,10 +56,11 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{Name: "x", Url: "https://x"})
+			_, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{Name: "x", Url: "https://x"})
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "mcp_connection_not_found", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "mcp_connection_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -93,16 +93,14 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{
+			resp, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{
 				Name:       "new-name",
 				Url:        "https://new",
 				HeaderAuth: map[string]string{"Authorization": "Bearer new"},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.MCPConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, id, body.Id)
+			assert.NoError(t, err)
+			assert.Equal(t, id, resp.Id)
 		})
 	})
 }

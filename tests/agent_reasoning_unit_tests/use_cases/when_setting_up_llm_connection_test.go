@@ -9,8 +9,7 @@ import (
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -73,12 +72,10 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.LLMConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, body.Platform)
+			assert.NoError(t, err)
+			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, resp.Platform)
 		})
 	})
 
@@ -96,10 +93,11 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "vault down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "vault down")
 		})
 	})
 }

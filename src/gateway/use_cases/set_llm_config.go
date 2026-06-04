@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
@@ -19,7 +19,7 @@ func NewSetLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *SetLlm
 	return &SetLlmConfig{client: client}
 }
 
-func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) *usecase_result.Result {
+func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) (*responses.GetLlmConfigResponse, error) {
 	payload, err := u.client.Setup(ctx, &runtime_models.ExternalSetupLLMConnectionPayload{
 		Platform: request.Provider,
 		Model:    request.Model,
@@ -27,9 +27,9 @@ func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConf
 		ApiKey:   request.ApiKey,
 	})
 	if err != nil {
-		return usecase_result.Unavailable("runtime_unavailable", err.Error())
+		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
 	}
-	return usecase_result.Ok(u.toResponse(payload))
+	return u.toResponse(payload), nil
 }
 
 func (u *SetLlmConfig) toBaseUrlPtr(s string) *string {

@@ -6,22 +6,24 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
 const InternalConversationMessagesEndpoint = "/internal/conversations/:conversationId/messages"
 
 type ConversationMessagesController struct {
-	appender use_cases.AppendConversationMessagesInterface
-	lister   use_cases.ListConversationMessagesInterface
+	appendConversationMessages use_cases.AppendConversationMessagesInterface
+	listConversationMessages   use_cases.ListConversationMessagesInterface
 }
 
 func NewConversationMessagesController(
-	appender use_cases.AppendConversationMessagesInterface,
-	lister use_cases.ListConversationMessagesInterface,
+	appendConversationMessages use_cases.AppendConversationMessagesInterface,
+	listConversationMessages use_cases.ListConversationMessagesInterface,
 ) *ConversationMessagesController {
-	return &ConversationMessagesController{appender: appender, lister: lister}
+	return &ConversationMessagesController{
+		appendConversationMessages: appendConversationMessages,
+		listConversationMessages:   listConversationMessages,
+	}
 }
 
 func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
@@ -55,7 +57,11 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
 
-	return mvc_result.Write(ctx, c.appender.Execute(ctx.Context(), conversationId, body))
+	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // List returns the conversation transcript ordered by timestamp ascending.
@@ -73,5 +79,9 @@ func (c *ConversationMessagesController) List(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
-	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context(), conversationId))
+	resp, err := c.listConversationMessages.Execute(ctx.Context(), conversationId)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }

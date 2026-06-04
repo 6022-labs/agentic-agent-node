@@ -5,7 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type GetLLMConnection struct {
@@ -18,13 +18,13 @@ func NewGetLLMConnection(repository repositories.LLMConnectionRepositoryInterfac
 
 // Execute returns the configured connection (without the api key — that lives
 // in Vault and is only fetched at LLM-call time).
-func (u *GetLLMConnection) Execute(ctx context.Context) *usecase_result.Result {
+func (u *GetLLMConnection) Execute(ctx context.Context) (*responses.LLMConnectionResponse, error) {
 	connection, err := u.repository.Get(ctx)
 	if err != nil {
-		return usecase_result.InternalError("get_failed", err.Error())
+		return nil, errors.NewInternalError("get_failed", err.Error())
 	}
 	if connection == nil {
-		return usecase_result.NotFound("not_configured", "")
+		return nil, errors.NewNotFoundError("not_configured", "")
 	}
-	return usecase_result.Ok(responses.ToLLMConnectionResponse(connection))
+	return responses.ToLLMConnectionResponse(connection), nil
 }

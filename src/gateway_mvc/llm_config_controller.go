@@ -1,7 +1,6 @@
 package gateway_mvc
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -10,17 +9,21 @@ import (
 const LlmConfigEndpoint = "/config/llm"
 
 type LlmConfigController struct {
-	getter  *use_cases.GetLlmConfig
-	setter  *use_cases.SetLlmConfig
-	deleter *use_cases.DeleteLlmConfig
+	getLlmConfig    *use_cases.GetLlmConfig
+	setLlmConfig    *use_cases.SetLlmConfig
+	deleteLlmConfig *use_cases.DeleteLlmConfig
 }
 
 func NewLlmConfigController(
-	getter *use_cases.GetLlmConfig,
-	setter *use_cases.SetLlmConfig,
-	deleter *use_cases.DeleteLlmConfig,
+	getLlmConfig *use_cases.GetLlmConfig,
+	setLlmConfig *use_cases.SetLlmConfig,
+	deleteLlmConfig *use_cases.DeleteLlmConfig,
 ) *LlmConfigController {
-	return &LlmConfigController{getter: getter, setter: setter, deleter: deleter}
+	return &LlmConfigController{
+		getLlmConfig:    getLlmConfig,
+		setLlmConfig:    setLlmConfig,
+		deleteLlmConfig: deleteLlmConfig,
+	}
 }
 
 func (c *LlmConfigController) RegisterUnauthenticatedRoutes(_ fiber.Router) {}
@@ -40,7 +43,11 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/llm [get]
 func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context()))
+	resp, err := c.getLlmConfig.Execute(ctx.Context())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // Set upserts the LLM provider configuration.
@@ -62,7 +69,11 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.setter.Execute(ctx.Context(), body))
+	resp, err := c.setLlmConfig.Execute(ctx.Context(), body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // Delete clears the LLM provider configuration.
@@ -74,5 +85,8 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context()))
+	if err := c.deleteLlmConfig.Execute(ctx.Context()); err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

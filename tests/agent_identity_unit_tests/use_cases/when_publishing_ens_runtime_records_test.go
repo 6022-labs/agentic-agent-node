@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -48,9 +48,9 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 
@@ -67,10 +67,11 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeConflict, res.Outcome)
-			assert.Equal(t, "identity_not_found", res.Code)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "identity_not_found", conflictErr.Code)
 		})
 	})
 
@@ -87,10 +88,11 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "ens registry down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "ens registry down")
 		})
 	})
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -55,9 +55,9 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			suite := WhenDeletingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 
@@ -74,10 +74,11 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			suite := WhenDeletingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "db down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 }

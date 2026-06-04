@@ -1,7 +1,6 @@
 package gateway_mvc
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -13,12 +12,18 @@ const (
 )
 
 type AuthController struct {
-	getChallenge *use_cases.GetAuthChallenge
-	verifyAuth   *use_cases.VerifyAuth
+	getAuthChallenge *use_cases.GetAuthChallenge
+	verifyAuth       *use_cases.VerifyAuth
 }
 
-func NewAuthController(getChallenge *use_cases.GetAuthChallenge, verifyAuth *use_cases.VerifyAuth) *AuthController {
-	return &AuthController{getChallenge: getChallenge, verifyAuth: verifyAuth}
+func NewAuthController(
+	getAuthChallenge *use_cases.GetAuthChallenge,
+	verifyAuth *use_cases.VerifyAuth,
+) *AuthController {
+	return &AuthController{
+		getAuthChallenge: getAuthChallenge,
+		verifyAuth:       verifyAuth,
+	}
 }
 
 func (c *AuthController) RegisterUnauthenticatedRoutes(app fiber.Router) {
@@ -37,7 +42,11 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 500 {object} fiber.Map
 // @Router /auth/challenge [get]
 func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.getChallenge.Execute())
+	resp, err := c.getAuthChallenge.Execute()
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // Verify exchanges a signed nonce for a JWT.
@@ -60,5 +69,9 @@ func (c *AuthController) Verify(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.verifyAuth.Execute(ctx.UserContext(), body))
+	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }

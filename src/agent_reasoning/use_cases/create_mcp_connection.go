@@ -8,7 +8,7 @@ import (
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type CreateMCPConnection struct {
@@ -26,7 +26,7 @@ func NewCreateMCPConnection(
 // Execute creates the row first to get a stable connectionId, then writes
 // every header value to Vault under that id. The persisted row only ever
 // stores the header *names*; values stay in Vault.
-func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) *usecase_result.Result {
+func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	keys := models.MCPConnectionHeaderAuthKeys{}
 	headerNames := make([]string, 0, len(request.HeaderAuth))
 	for k := range request.HeaderAuth {
@@ -40,14 +40,14 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Cre
 		HeaderAuthKeys: keys,
 	})
 	if err != nil {
-		return usecase_result.InternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
 
 	for k, v := range request.HeaderAuth {
 		if err := u.secretStorage.SaveValue(ctx, created.Id, k, v); err != nil {
-			return usecase_result.InternalError("create_failed", err.Error())
+			return nil, errors.NewInternalError("create_failed", err.Error())
 		}
 	}
 	created.HeaderAuth = request.HeaderAuth
-	return usecase_result.Created(responses.ToMCPConnectionResponse(created))
+	return responses.ToMCPConnectionResponse(created), nil
 }

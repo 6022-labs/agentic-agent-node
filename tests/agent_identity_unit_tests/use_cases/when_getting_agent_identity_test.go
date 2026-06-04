@@ -7,8 +7,7 @@ import (
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -62,14 +61,12 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.GetAgentIdentityResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "0xcoll", body.CollectionAddress)
-			assert.Equal(t, uint64(42), body.TokenId)
-			assert.Equal(t, "Alice", body.Name)
+			assert.NoError(t, err)
+			assert.Equal(t, "0xcoll", resp.CollectionAddress)
+			assert.Equal(t, uint64(42), resp.TokenId)
+			assert.Equal(t, "Alice", resp.Name)
 		})
 	})
 
@@ -86,10 +83,11 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "identity_not_found", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "identity_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -109,10 +107,11 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "identity_not_found", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "identity_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -129,10 +128,11 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "db down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 }

@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	usecase_result "github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	requests "github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
+	responses "github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -43,11 +43,12 @@ func (m *MockCreateResponseInterface) EXPECT() *MockCreateResponseInterfaceMockR
 }
 
 // Execute mocks base method.
-func (m *MockCreateResponseInterface) Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result {
+func (m *MockCreateResponseInterface) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", ctx, request)
-	ret0, _ := ret[0].(*usecase_result.Result)
-	return ret0
+	ret0, _ := ret[0].(*responses.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Execute indicates an expected call of Execute.

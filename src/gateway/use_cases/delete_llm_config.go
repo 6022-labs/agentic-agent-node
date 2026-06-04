@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 )
 
@@ -15,9 +15,9 @@ func NewDeleteLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *Del
 	return &DeleteLlmConfig{client: client}
 }
 
-func (u *DeleteLlmConfig) Execute(ctx context.Context) *usecase_result.Result {
+func (u *DeleteLlmConfig) Execute(ctx context.Context) error {
 	if err := u.client.Delete(ctx); err != nil {
-		return usecase_result.Unavailable("runtime_unavailable", err.Error())
+		return errors.NewUnavailableError("runtime_unavailable", err.Error())
 	}
-	return usecase_result.NoContent()
+	return nil
 }

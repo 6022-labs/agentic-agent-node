@@ -4,10 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -67,12 +65,10 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 			request := generateValidSetLlmConfigRequest()
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.GetLlmConfigResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "open-ai", body.Provider)
+			assert.NoError(t, err)
+			assert.Equal(t, "open-ai", resp.Provider)
 		})
 	})
 
@@ -94,9 +90,9 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 			request.BaseUrl = "   "
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 }

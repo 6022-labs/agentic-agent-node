@@ -3,24 +3,27 @@ package agent_reasoning_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/gofiber/fiber/v2"
 )
 
 const InternalLLMConfigEndpoint = "/internal/config/llm"
 
 type LLMConfigController struct {
-	getter   *use_cases.GetLLMConnection
-	setupper *use_cases.SetupLLMConnection
-	deleter  *use_cases.DeleteLLMConnection
+	getLLMConnection    *use_cases.GetLLMConnection
+	setupLLMConnection  *use_cases.SetupLLMConnection
+	deleteLLMConnection *use_cases.DeleteLLMConnection
 }
 
 func NewLLMConfigController(
-	getter *use_cases.GetLLMConnection,
-	setupper *use_cases.SetupLLMConnection,
-	deleter *use_cases.DeleteLLMConnection,
+	getLLMConnection *use_cases.GetLLMConnection,
+	setupLLMConnection *use_cases.SetupLLMConnection,
+	deleteLLMConnection *use_cases.DeleteLLMConnection,
 ) *LLMConfigController {
-	return &LLMConfigController{getter: getter, setupper: setupper, deleter: deleter}
+	return &LLMConfigController{
+		getLLMConnection:    getLLMConnection,
+		setupLLMConnection:  setupLLMConnection,
+		deleteLLMConnection: deleteLLMConnection,
+	}
 }
 
 func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
@@ -30,7 +33,11 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 }
 
 func (c *LLMConfigController) Get(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.getter.Execute(ctx.Context()))
+	resp, err := c.getLLMConnection.Execute(ctx.Context())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
@@ -41,9 +48,16 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.setupper.Execute(ctx.Context(), body))
+	resp, err := c.setupLLMConnection.Execute(ctx.Context(), body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 func (c *LLMConfigController) Delete(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context()))
+	if err := c.deleteLLMConnection.Execute(ctx.Context()); err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

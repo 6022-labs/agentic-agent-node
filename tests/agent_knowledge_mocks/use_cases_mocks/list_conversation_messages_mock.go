@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	usecase_result "github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	responses "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,11 +42,12 @@ func (m *MockListConversationMessagesInterface) EXPECT() *MockListConversationMe
 }
 
 // Execute mocks base method.
-func (m *MockListConversationMessagesInterface) Execute(ctx context.Context, conversationId string) *usecase_result.Result {
+func (m *MockListConversationMessagesInterface) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", ctx, conversationId)
-	ret0, _ := ret[0].(*usecase_result.Result)
-	return ret0
+	ret0, _ := ret[0].(*responses.ListConversationMessagesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Execute indicates an expected call of Execute.

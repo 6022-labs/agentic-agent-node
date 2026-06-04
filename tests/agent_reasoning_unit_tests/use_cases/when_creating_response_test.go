@@ -9,8 +9,7 @@ import (
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -69,19 +68,17 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.CreateResponseResponse)
-			assert.True(t, ok)
-			if assert.NotNil(t, body.Message) {
-				assert.Equal(t, "assistant", body.Message.Role)
-				assert.Equal(t, expectedFinal, body.Message.Content)
+			assert.NoError(t, err)
+			if assert.NotNil(t, resp.Message) {
+				assert.Equal(t, "assistant", resp.Message.Role)
+				assert.Equal(t, expectedFinal, resp.Message.Content)
 			}
 		})
 	})
@@ -101,17 +98,15 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.CreateResponseResponse)
-			assert.True(t, ok)
-			assert.Nil(t, body.Message)
+			assert.NoError(t, err)
+			assert.Nil(t, resp.Message)
 		})
 	})
 
@@ -130,15 +125,16 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			_, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: conversationId,
 				Inputs: []requests.CreateResponseRequestInput{
 					{Role: "user", Content: "hello", Timestamp: now},
 				},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "driver broke")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "driver broke")
 		})
 	})
 }

@@ -6,8 +6,7 @@ import (
 
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -50,10 +49,11 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			suite := WhenGettingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "not_configured", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "not_configured", notFoundErr.Code)
 		})
 	})
 
@@ -74,13 +74,11 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			suite := WhenGettingLLMConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.LLMConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, stored.Id, body.Id)
-			assert.Equal(t, stored.Model, body.Model)
+			assert.NoError(t, err)
+			assert.Equal(t, stored.Id, resp.Id)
+			assert.Equal(t, stored.Model, resp.Model)
 		})
 	})
 }

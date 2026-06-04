@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
@@ -18,16 +18,16 @@ func NewCreateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 	return &CreateMcpConnection{client: client}
 }
 
-func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) *usecase_result.Result {
+func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
 	payload, err := u.client.Create(ctx, &runtime_models.ExternalCreateMCPConnectionPayload{
 		Name:       request.Name,
 		Url:        request.Url,
 		HeaderAuth: u.toHeaderAuthMap(request),
 	})
 	if err != nil {
-		return usecase_result.Unavailable("runtime_unavailable", err.Error())
+		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
 	}
-	return usecase_result.Created(u.toResponse(payload))
+	return u.toResponse(payload), nil
 }
 
 func (u *CreateMcpConnection) toHeaderAuthMap(request *requests.CreateMcpConnectionRequest) map[string]string {

@@ -4,9 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -54,15 +52,13 @@ func TestWhenListingMcpConnections(t *testing.T) {
 			suite := WhenListingMcpConnectionsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.ListMcpConnectionsResponse)
-			assert.True(t, ok)
-			assert.Len(t, body.Connections, 2)
-			assert.Equal(t, "alpha", body.Connections[0].Name)
-			assert.Equal(t, []string{"Authorization"}, body.Connections[0].HeaderAuthKeys)
-			assert.Empty(t, body.Connections[1].HeaderAuthKeys)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Connections, 2)
+			assert.Equal(t, "alpha", resp.Connections[0].Name)
+			assert.Equal(t, []string{"Authorization"}, resp.Connections[0].HeaderAuthKeys)
+			assert.Empty(t, resp.Connections[1].HeaderAuthKeys)
 		})
 	})
 }

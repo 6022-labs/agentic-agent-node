@@ -8,8 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
@@ -70,13 +69,11 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			}
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
-			body, ok := res.Body.(*responses.MCPConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, generatedId, body.Id)
-			assert.ElementsMatch(t, []string{"Authorization"}, body.HeaderAuthKeys)
+			assert.NoError(t, err)
+			assert.Equal(t, generatedId, resp.Id)
+			assert.ElementsMatch(t, []string{"Authorization"}, resp.HeaderAuthKeys)
 		})
 	})
 
@@ -98,10 +95,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			request := &requests.CreateMCPConnectionRequest{Name: "anon", Url: "https://x.example"}
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
-			assert.NotNil(t, res.Body)
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
 		})
 	})
 
@@ -122,10 +119,11 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			}
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "db down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 }

@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
 	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
@@ -74,10 +73,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
-			assert.Equal(t, "nonce_not_found", res.Code)
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "nonce_not_found", unauthorizedErr.Code)
 		})
 	})
 
@@ -96,10 +96,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
-			assert.Equal(t, "signature_mismatch", res.Code)
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "signature_mismatch", unauthorizedErr.Code)
 		})
 	})
 
@@ -118,10 +119,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "malformed")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "malformed")
 		})
 	})
 
@@ -141,10 +143,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeUnauthorized, res.Outcome)
-			assert.Equal(t, "not_authorized", res.Code)
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "not_authorized", unauthorizedErr.Code)
 		})
 	})
 
@@ -164,10 +167,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
-			assert.Equal(t, "identity_not_found", res.Code)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "identity_not_found", unavailableErr.Code)
 		})
 	})
 
@@ -187,10 +191,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "rpc down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "rpc down")
 		})
 	})
 
@@ -212,13 +217,11 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			request := generateValidVerifyAuthRequest(address)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.VerifyAuthResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "the-token", body.Token)
-			assert.Equal(t, expectedExp, body.ExpiresAt)
+			assert.NoError(t, err)
+			assert.Equal(t, "the-token", resp.Token)
+			assert.Equal(t, expectedExp, resp.ExpiresAt)
 		})
 	})
 }

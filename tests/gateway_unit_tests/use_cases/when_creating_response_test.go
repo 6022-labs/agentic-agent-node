@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -80,15 +79,13 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, request)
+			resp, err := suite.sut.Execute(ctx, request)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.Response)
-			assert.True(t, ok)
-			assert.True(t, body.IsFinal)
-			if assert.Len(t, body.Output, 1) {
-				assert.Equal(t, "hello back", body.Output[0].Content)
-				assert.Equal(t, now, body.Output[0].Timestamp)
+			assert.NoError(t, err)
+			assert.True(t, resp.IsFinal)
+			if assert.Len(t, resp.Output, 1) {
+				assert.Equal(t, "hello back", resp.Output[0].Content)
+				assert.Equal(t, now, resp.Output[0].Timestamp)
 			}
 		})
 	})
@@ -108,18 +105,16 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.Response)
-			assert.True(t, ok)
-			assert.False(t, body.IsFinal)
-			assert.Empty(t, body.Output)
+			assert.NoError(t, err)
+			assert.False(t, resp.IsFinal)
+			assert.Empty(t, resp.Output)
 		})
 	})
 
@@ -138,15 +133,16 @@ func TestWhenCreatingResponse(t *testing.T) {
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+			_, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},
 			})
 
-			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
-			assert.Contains(t, res.Message, "runtime down")
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
 		})
 	})
 }

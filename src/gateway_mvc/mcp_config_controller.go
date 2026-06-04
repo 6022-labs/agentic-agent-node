@@ -2,7 +2,6 @@ package gateway_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -15,17 +14,21 @@ const (
 )
 
 type McpConfigController struct {
-	lister  *use_cases.ListMcpConnections
-	creator *use_cases.CreateMcpConnection
-	deleter *use_cases.DeleteMcpConnection
+	listMcpConnections  *use_cases.ListMcpConnections
+	createMcpConnection *use_cases.CreateMcpConnection
+	deleteMcpConnection *use_cases.DeleteMcpConnection
 }
 
 func NewMcpConfigController(
-	lister *use_cases.ListMcpConnections,
-	creator *use_cases.CreateMcpConnection,
-	deleter *use_cases.DeleteMcpConnection,
+	listMcpConnections *use_cases.ListMcpConnections,
+	createMcpConnection *use_cases.CreateMcpConnection,
+	deleteMcpConnection *use_cases.DeleteMcpConnection,
 ) *McpConfigController {
-	return &McpConfigController{lister: lister, creator: creator, deleter: deleter}
+	return &McpConfigController{
+		listMcpConnections:  listMcpConnections,
+		createMcpConnection: createMcpConnection,
+		deleteMcpConnection: deleteMcpConnection,
+	}
 }
 
 func (c *McpConfigController) RegisterUnauthenticatedRoutes(_ fiber.Router) {}
@@ -45,7 +48,11 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/mcp-connections [get]
 func (c *McpConfigController) List(ctx *fiber.Ctx) error {
-	return mvc_result.Write(ctx, c.lister.Execute(ctx.Context()))
+	resp, err := c.listMcpConnections.Execute(ctx.Context())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // Create registers a new MCP connection.
@@ -67,7 +74,11 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
-	return mvc_result.Write(ctx, c.creator.Execute(ctx.Context(), body))
+	resp, err := c.createMcpConnection.Execute(ctx.Context(), body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
 // Delete removes an MCP connection by id.
@@ -85,5 +96,8 @@ func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("id", "must be a valid uuid"))
 	}
-	return mvc_result.Write(ctx, c.deleter.Execute(ctx.Context(), id))
+	if err := c.deleteMcpConnection.Execute(ctx.Context(), id); err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

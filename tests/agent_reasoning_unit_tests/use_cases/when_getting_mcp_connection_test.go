@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -55,10 +54,11 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id)
+			_, err := suite.sut.Execute(context.Background(), id)
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "mcp_connection_not_found", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "mcp_connection_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -84,13 +84,11 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id)
+			resp, err := suite.sut.Execute(context.Background(), id)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.MCPConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, id, body.Id)
-			assert.ElementsMatch(t, []string{"Authorization", "X-Trace"}, body.HeaderAuthKeys)
+			assert.NoError(t, err)
+			assert.Equal(t, id, resp.Id)
+			assert.ElementsMatch(t, []string{"Authorization", "X-Trace"}, resp.HeaderAuthKeys)
 		})
 	})
 
@@ -113,12 +111,10 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id)
+			resp, err := suite.sut.Execute(context.Background(), id)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.MCPConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, id, body.Id)
+			assert.NoError(t, err)
+			assert.Equal(t, id, resp.Id)
 		})
 	})
 }

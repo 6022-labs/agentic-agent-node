@@ -9,8 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -63,13 +62,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), conversationId, req)
+			resp, err := suite.sut.Execute(context.Background(), conversationId, req)
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.AppendConversationMessagesResponse)
-			assert.True(t, ok)
-			assert.Len(t, body.Inserted, 1)
-			assert.Equal(t, "user", body.Inserted[0].Role)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Inserted, 1)
+			assert.Equal(t, "user", resp.Inserted[0].Role)
 		})
 	})
 
@@ -95,10 +92,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), conversationId, req)
+			_, err := suite.sut.Execute(context.Background(), conversationId, req)
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "db down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 }

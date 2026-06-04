@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	requests "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
-	usecase_result "github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	responses "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -43,11 +43,12 @@ func (m *MockAppendConversationMessagesInterface) EXPECT() *MockAppendConversati
 }
 
 // Execute mocks base method.
-func (m *MockAppendConversationMessagesInterface) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) *usecase_result.Result {
+func (m *MockAppendConversationMessagesInterface) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", ctx, conversationId, req)
-	ret0, _ := ret[0].(*usecase_result.Result)
-	return ret0
+	ret0, _ := ret[0].(*responses.AppendConversationMessagesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Execute indicates an expected call of Execute.

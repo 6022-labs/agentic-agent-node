@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -48,9 +48,9 @@ func TestWhenDeletingLlmConfig(t *testing.T) {
 			suite := WhenDeletingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 
@@ -67,10 +67,11 @@ func TestWhenDeletingLlmConfig(t *testing.T) {
 			suite := WhenDeletingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
-			assert.Contains(t, res.Message, "transport down")
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "transport down")
 		})
 	})
 }

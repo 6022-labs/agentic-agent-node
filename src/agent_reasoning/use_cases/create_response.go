@@ -7,11 +7,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type CreateResponseInterface interface {
-	Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result
+	Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error)
 }
 
 type CreateResponse struct {
@@ -22,7 +22,7 @@ func NewCreateResponse(responseDriver interfaces.ResponseDriverInterface) *Creat
 	return &CreateResponse{responseDriver: responseDriver}
 }
 
-func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result {
+func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error) {
 	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Inputs))
 	for _, m := range request.Inputs {
 		inputs = append(inputs, knowledge_interfaces.ConversationMessage{
@@ -34,16 +34,16 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 
 	persisted, err := u.responseDriver.Drive(ctx, request.ConversationId, inputs)
 	if err != nil {
-		return usecase_result.InternalError("create_response_failed", err.Error())
+		return nil, errors.NewInternalError("create_response_failed", err.Error())
 	}
 	if persisted == nil {
-		return usecase_result.Ok(&responses.CreateResponseResponse{})
+		return &responses.CreateResponseResponse{}, nil
 	}
-	return usecase_result.Ok(&responses.CreateResponseResponse{
+	return &responses.CreateResponseResponse{
 		Message: &responses.CreateResponseMessage{
 			Role:      persisted.Role,
 			Content:   persisted.Content,
 			Timestamp: persisted.Timestamp,
 		},
-	})
+	}, nil
 }

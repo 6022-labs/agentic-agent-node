@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 )
 
 type PublishEnsRuntimeRecords struct {
@@ -17,12 +17,12 @@ func NewPublishEnsRuntimeRecords(publisher identity_interfaces.EnsRuntimeRecords
 	return &PublishEnsRuntimeRecords{publisher: publisher}
 }
 
-func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) *usecase_result.Result {
+func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) error {
 	if err := u.publisher.PublishRuntimeRecords(ctx); err != nil {
 		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
-			return usecase_result.Conflict("identity_not_found", "agent NFT must be minted before ENS records can be published")
+			return apperrors.NewConflictError("identity_not_found", "agent NFT must be minted before ENS records can be published")
 		}
-		return usecase_result.InternalError("ens_publish_failed", err.Error())
+		return apperrors.NewInternalError("ens_publish_failed", err.Error())
 	}
-	return usecase_result.NoContent()
+	return nil
 }

@@ -4,10 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -65,12 +63,10 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 			request := generateValidGatewayCreateMcpConnectionRequest()
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
-			body, ok := res.Body.(*responses.McpConnectionResponse)
-			assert.True(t, ok)
-			assert.Equal(t, []string{"Authorization"}, body.HeaderAuthKeys)
+			assert.NoError(t, err)
+			assert.Equal(t, []string{"Authorization"}, resp.HeaderAuthKeys)
 		})
 	})
 
@@ -93,9 +89,9 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 			request.AuthHeaderValue = ""
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), request)
+			_, err := suite.sut.Execute(context.Background(), request)
 
-			assert.Equal(t, usecase_result.OutcomeCreated, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 }

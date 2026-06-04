@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -50,13 +49,11 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 			suite := WhenGettingAuthChallengeBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute()
+			resp, err := suite.sut.Execute()
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.GetAuthChallengeResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "nonce-abc", body.Nonce)
-			assert.Equal(t, expectedExp, body.ExpiresAt)
+			assert.NoError(t, err)
+			assert.Equal(t, "nonce-abc", resp.Nonce)
+			assert.Equal(t, expectedExp, resp.ExpiresAt)
 		})
 	})
 
@@ -73,10 +70,11 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 			suite := WhenGettingAuthChallengeBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute()
+			_, err := suite.sut.Execute()
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "rng failed")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "rng failed")
 		})
 	})
 }

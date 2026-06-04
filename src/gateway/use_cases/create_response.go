@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
@@ -11,7 +11,7 @@ import (
 )
 
 type CreateResponseInterface interface {
-	Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result
+	Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error)
 }
 
 type CreateResponse struct {
@@ -25,7 +25,7 @@ func NewCreateResponse(client interfaces.ResponseClientInterface) *CreateRespons
 // Execute translates the gateway request to the runtime contract. Prompt,
 // Tools, Options, and ForceConclusion are swarm-side concerns — the
 // orchestrator owns them. Agent-node only forwards inputs.
-func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) *usecase_result.Result {
+func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
 	payload := &runtime_models.ExternalCreateResponsePayload{
 		ConversationId: request.ConversationId,
 		Inputs:         make([]runtime_models.ExternalCreateResponseInputPayload, 0, len(request.Input)),
@@ -40,7 +40,7 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 
 	result, err := u.client.Create(ctx, payload)
 	if err != nil {
-		return usecase_result.Unavailable("runtime_unavailable", err.Error())
+		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
 	}
 
 	out := &responses.Response{
@@ -54,5 +54,5 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 			},
 		}
 	}
-	return usecase_result.Ok(out)
+	return out, nil
 }

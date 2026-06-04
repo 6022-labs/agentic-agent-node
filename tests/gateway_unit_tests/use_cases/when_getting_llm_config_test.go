@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -61,16 +60,14 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.GetLlmConfigResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "abc", body.Id)
-			assert.Equal(t, "open-ai", body.Provider)
-			assert.Equal(t, "gpt-4o", body.Model)
-			assert.Equal(t, baseUrl, body.BaseUrl)
-			assert.Equal(t, "established", body.SetupStatus)
+			assert.NoError(t, err)
+			assert.Equal(t, "abc", resp.Id)
+			assert.Equal(t, "open-ai", resp.Provider)
+			assert.Equal(t, "gpt-4o", resp.Model)
+			assert.Equal(t, baseUrl, resp.BaseUrl)
+			assert.Equal(t, "established", resp.SetupStatus)
 		})
 	})
 
@@ -87,10 +84,11 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeNotFound, res.Outcome)
-			assert.Equal(t, "not_configured", res.Code)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "not_configured", notFoundErr.Code)
 		})
 	})
 
@@ -107,10 +105,11 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeUnavailable, res.Outcome)
-			assert.Contains(t, res.Message, "boom")
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "boom")
 		})
 	})
 
@@ -129,12 +128,10 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.GetLlmConfigResponse)
-			assert.True(t, ok)
-			assert.Equal(t, "", body.BaseUrl)
+			assert.NoError(t, err)
+			assert.Equal(t, "", resp.BaseUrl)
 		})
 	})
 }

@@ -7,11 +7,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type AppendConversationMessagesInterface interface {
-	Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) *usecase_result.Result
+	Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error)
 }
 
 type AppendConversationMessages struct {
@@ -22,7 +22,7 @@ func NewAppendConversationMessages(service interfaces.AppendConversationMessages
 	return &AppendConversationMessages{service: service}
 }
 
-func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) *usecase_result.Result {
+func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
 	domainMessages := make([]models.ConversationMessage, 0, len(req.Messages))
 	for _, m := range req.Messages {
 		domainMessages = append(domainMessages, models.ConversationMessage{
@@ -34,10 +34,10 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 
 	inserted, err := u.service.Append(ctx, conversationId, domainMessages)
 	if err != nil {
-		return usecase_result.InternalError("append_failed", err.Error())
+		return nil, errors.NewInternalError("append_failed", err.Error())
 	}
 
-	return usecase_result.Ok(&responses.AppendConversationMessagesResponse{Inserted: toWireMessages(inserted)})
+	return &responses.AppendConversationMessagesResponse{Inserted: toWireMessages(inserted)}, nil
 }
 
 func toWireMessages(in []models.ConversationMessage) []responses.ConversationMessage {

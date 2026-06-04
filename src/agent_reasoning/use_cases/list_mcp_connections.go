@@ -5,7 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type ListMCPConnections struct {
@@ -19,10 +19,10 @@ func NewListMCPConnections(repository repositories.MCPConnectionRepositoryInterf
 // Execute returns every configured MCP connection. Header auth values are
 // not hydrated — fetch a single connection via GetMCPConnection if you need
 // the actual header values.
-func (u *ListMCPConnections) Execute(ctx context.Context) *usecase_result.Result {
+func (u *ListMCPConnections) Execute(ctx context.Context) (*responses.MCPConnectionListResponse, error) {
 	connections, err := u.repository.List(ctx)
 	if err != nil {
-		return usecase_result.InternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
-	return usecase_result.Ok(responses.ToMCPConnectionListResponse(connections))
+	return responses.ToMCPConnectionListResponse(connections), nil
 }

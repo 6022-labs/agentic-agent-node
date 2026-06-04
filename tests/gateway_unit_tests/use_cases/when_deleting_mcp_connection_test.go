@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
@@ -49,9 +48,9 @@ func TestWhenDeletingMcpConnection(t *testing.T) {
 			suite := WhenDeletingMcpConnectionBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), id)
+			err := suite.sut.Execute(context.Background(), id)
 
-			assert.Equal(t, usecase_result.OutcomeNoContent, res.Outcome)
+			assert.NoError(t, err)
 		})
 	})
 }

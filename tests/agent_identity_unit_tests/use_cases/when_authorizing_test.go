@@ -7,8 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -52,12 +51,10 @@ func TestWhenAuthorizing(t *testing.T) {
 			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
+			resp, err := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.AuthorizeResponse)
-			assert.True(t, ok)
-			assert.True(t, body.Authorized)
+			assert.NoError(t, err)
+			assert.True(t, resp.Authorized)
 		})
 	})
 
@@ -74,12 +71,10 @@ func TestWhenAuthorizing(t *testing.T) {
 			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
+			resp, err := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.AuthorizeResponse)
-			assert.True(t, ok)
-			assert.False(t, body.Authorized)
+			assert.NoError(t, err)
+			assert.False(t, resp.Authorized)
 		})
 	})
 
@@ -96,10 +91,11 @@ func TestWhenAuthorizing(t *testing.T) {
 			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
+			_, err := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: address})
 
-			assert.Equal(t, usecase_result.OutcomeInternalError, res.Outcome)
-			assert.Contains(t, res.Message, "rpc down")
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "rpc down")
 		})
 	})
 }

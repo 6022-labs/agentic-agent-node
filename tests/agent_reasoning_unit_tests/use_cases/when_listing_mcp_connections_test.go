@@ -6,8 +6,6 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
-	"github.com/6022-labs/agentic-agent-node/src/common/usecase_result"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -54,13 +52,11 @@ func TestWhenListingMCPConnections(t *testing.T) {
 			suite := WhenListingMCPConnectionsBeforeEach(t)
 			initSuite(suite)
 
-			res := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			assert.Equal(t, usecase_result.OutcomeOk, res.Outcome)
-			body, ok := res.Body.(*responses.MCPConnectionListResponse)
-			assert.True(t, ok)
-			assert.Len(t, body.Connections, 2)
-			assert.Equal(t, "alpha", body.Connections[0].Name)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Connections, 2)
+			assert.Equal(t, "alpha", resp.Connections[0].Name)
 		})
 	})
 }
