@@ -28,6 +28,23 @@ components:
     fiber.Map:
       additionalProperties: {}
       type: object
+    requests.AppendConversationMessageInput:
+      properties:
+        content:
+          type: string
+        role:
+          $ref: '#/components/schemas/enums.MessageRole'
+        timestamp:
+          type: string
+      type: object
+    requests.AppendConversationMessagesRequest:
+      properties:
+        messages:
+          items:
+            $ref: '#/components/schemas/requests.AppendConversationMessageInput'
+          type: array
+          uniqueItems: false
+      type: object
     requests.CreateMcpConnectionRequest:
       properties:
         authHeaderName:
@@ -182,6 +199,14 @@ components:
           type: integer
         walletAddress:
           type: string
+      type: object
+    responses.AppendConversationMessagesResponse:
+      properties:
+        inserted:
+          items:
+            $ref: '#/components/schemas/responses.ConversationMessage'
+          type: array
+          uniqueItems: false
       type: object
     responses.ConversationMessage:
       properties:
@@ -803,6 +828,49 @@ paths:
       security:
       - BearerAuth: []
       summary: List conversation messages
+      tags:
+      - Conversations
+    post:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.AppendConversationMessagesRequest'
+                description: Messages
+                summary: request
+        description: Messages
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.AppendConversationMessagesResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Append conversation messages
       tags:
       - Conversations
   /health:

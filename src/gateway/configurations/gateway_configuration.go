@@ -59,6 +59,7 @@ func AddGatewayConfiguration(container *dig.Container) {
 		use_cases.NewSelfRegisterAgent,
 		use_cases.NewListConversations,
 		use_cases.NewListConversationMessages,
+		use_cases.NewAppendConversationMessages,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

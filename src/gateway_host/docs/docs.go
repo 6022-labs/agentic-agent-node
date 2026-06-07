@@ -593,6 +593,61 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Conversations"
+                ],
+                "summary": "Append conversation messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Conversation id",
+                        "name": "conversationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Messages",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.AppendConversationMessagesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AppendConversationMessagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
             }
         },
         "/health": {
@@ -705,6 +760,31 @@ const docTemplate = `{
         "fiber.Map": {
             "type": "object",
             "additionalProperties": true
+        },
+        "requests.AppendConversationMessageInput": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/enums.MessageRole"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "requests.AppendConversationMessagesRequest": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.AppendConversationMessageInput"
+                    }
+                }
+            }
         },
         "requests.CreateMcpConnectionRequest": {
             "type": "object",
@@ -935,6 +1015,17 @@ const docTemplate = `{
                 },
                 "walletAddress": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.AppendConversationMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "inserted": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.ConversationMessage"
+                    }
                 }
             }
         },

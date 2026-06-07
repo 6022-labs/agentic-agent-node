@@ -5,6 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -14,17 +15,20 @@ const (
 )
 
 type ConversationsController struct {
-	listConversations        *use_cases.ListConversations
-	listConversationMessages *use_cases.ListConversationMessages
+	listConversations          *use_cases.ListConversations
+	listConversationMessages   *use_cases.ListConversationMessages
+	appendConversationMessages *use_cases.AppendConversationMessages
 }
 
 func NewConversationsController(
 	listConversations *use_cases.ListConversations,
 	listConversationMessages *use_cases.ListConversationMessages,
+	appendConversationMessages *use_cases.AppendConversationMessages,
 ) *ConversationsController {
 	return &ConversationsController{
-		listConversations:        listConversations,
-		listConversationMessages: listConversationMessages,
+		listConversations:          listConversations,
+		listConversationMessages:   listConversationMessages,
+		appendConversationMessages: appendConversationMessages,
 	}
 }
 
@@ -33,6 +37,7 @@ func (c *ConversationsController) RegisterUnauthenticatedRoutes(_ fiber.Router) 
 func (c *ConversationsController) RegisterAuthenticatedRoutes(app fiber.Router) {
 	app.Get(ConversationsEndpoint, c.List)
 	app.Get(ConversationMessagesEndpoint, c.ListMessages)
+	app.Post(ConversationMessagesEndpoint, c.AppendMessages)
 }
 
 // List returns the agent's past conversations (most recent first).
@@ -72,4 +77,38 @@ func (c *ConversationsController) ListMessages(ctx *fiber.Ctx) error {
 		return writeError(ctx, err)
 	}
 	return ctx.JSON(resp)
+}
+
+// AppendMessages injects messages into a conversation transcript (out-of-band,
+// e.g. seeding "memory"). Idempotent on the runtime via content hashing.
+// @Summary Append conversation messages
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Param conversationId path string true "Conversation id"
+// @Param request body requests.AppendConversationMessagesRequest true "Messages"
+// @Success 201 {object} responses.AppendConversationMessagesResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Security BearerAuth
+// @Router /conversations/{conversationId}/messages [post]
+func (c *ConversationsController) AppendMessages(ctx *fiber.Ctx) error {
+	conversationId := strings.TrimSpace(ctx.Params("conversationId"))
+	if len(conversationId) == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
+	}
+
+	body := new(requests.AppendConversationMessagesRequest)
+	if err := ctx.BodyParser(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	if err := body.ValidateAndSanitize(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(err)
+	}
+
+	resp, err := c.appendConversationMessages.Execute(ctx.UserContext(), conversationId, body)
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }

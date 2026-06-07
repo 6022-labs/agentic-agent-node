@@ -26,3 +26,17 @@ type ExternalConversationMessage struct {
 type ExternalListConversationMessagesPayload struct {
 	Messages []ExternalConversationMessage `json:"messages"`
 }
+
+type ExternalConversationMessageInput struct {
+	Role      string    `json:"role"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type ExternalAppendConversationMessagesPayload struct {
+	Messages []ExternalConversationMessageInput `json:"messages"`
+}
+
+type ExternalAppendConversationMessagesResultPayload struct {
+	Inserted []ExternalConversationMessage `json:"inserted"`
+}

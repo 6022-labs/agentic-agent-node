@@ -28,6 +28,22 @@ definitions:
   fiber.Map:
     additionalProperties: true
     type: object
+  requests.AppendConversationMessageInput:
+    properties:
+      content:
+        type: string
+      role:
+        $ref: '#/definitions/enums.MessageRole'
+      timestamp:
+        type: string
+    type: object
+  requests.AppendConversationMessagesRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/requests.AppendConversationMessageInput'
+        type: array
+    type: object
   requests.CreateMcpConnectionRequest:
     properties:
       authHeaderName:
@@ -179,6 +195,13 @@ definitions:
         type: integer
       walletAddress:
         type: string
+    type: object
+  responses.AppendConversationMessagesResponse:
+    properties:
+      inserted:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
     type: object
   responses.ConversationMessage:
     properties:
@@ -739,6 +762,41 @@ paths:
       security:
       - BearerAuth: []
       summary: List conversation messages
+      tags:
+      - Conversations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      - description: Messages
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AppendConversationMessagesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.AppendConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Append conversation messages
       tags:
       - Conversations
   /health:

@@ -1,7 +1,9 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
@@ -34,6 +36,22 @@ func (c *HttpConversationHistoryClient) ListMessages(ctx context.Context, conver
 		return nil, err
 	}
 	var payload models.ExternalListConversationMessagesPayload
+	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
+	}
+	return &payload, nil
+}
+
+func (c *HttpConversationHistoryClient) AppendMessages(ctx context.Context, conversationId string, body *models.ExternalAppendConversationMessagesPayload) (*models.ExternalAppendConversationMessagesResultPayload, error) {
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.client.PostInternalConversationsConversationIdMessagesWithBodyWithResponse(ctx, conversationId, jsonContentType, bytes.NewReader(encoded))
+	if err != nil {
+		return nil, err
+	}
+	var payload models.ExternalAppendConversationMessagesResultPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}

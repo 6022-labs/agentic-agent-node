@@ -24,3 +24,7 @@ type ConversationMessage struct {
 type ListConversationMessagesResponse struct {
 	Messages []ConversationMessage `json:"messages"`
 }
+
+type AppendConversationMessagesResponse struct {
+	Inserted []ConversationMessage `json:"inserted"`
+}
