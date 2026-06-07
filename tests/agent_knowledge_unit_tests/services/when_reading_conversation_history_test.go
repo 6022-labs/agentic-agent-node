@@ -8,6 +8,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
+	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -16,22 +17,22 @@ import (
 type WhenReadingConversationHistoryTestingSuite struct {
 	sut *services.ConversationHistory
 
-	mockListConversationMessages   *interfaces_mocks.MockListConversationMessagesInterface
-	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockRepository      *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockMessageAppender *interfaces_mocks.MockMessageAppenderInterface
 }
 
 func WhenReadingConversationHistoryBeforeEach(t *testing.T) *WhenReadingConversationHistoryTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
-	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
+	mockMessageAppender := interfaces_mocks.NewMockMessageAppenderInterface(mockController)
 
-	sut := services.NewConversationHistory(mockListConversationMessages, mockAppendConversationMessages)
+	sut := services.NewConversationHistory(mockRepository, mockMessageAppender)
 
 	return &WhenReadingConversationHistoryTestingSuite{
-		sut:                            sut,
-		mockListConversationMessages:   mockListConversationMessages,
-		mockAppendConversationMessages: mockAppendConversationMessages,
+		sut:                 sut,
+		mockRepository:      mockRepository,
+		mockMessageAppender: mockMessageAppender,
 	}
 }
 
@@ -41,7 +42,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 	conversationId := "conv-1"
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given the list service returns persistence rows", func(t *testing.T) {
+	t.Run("Given the repository returns persistence rows", func(t *testing.T) {
 		t.Parallel()
 
 		stored := []models.ConversationMessage{
@@ -55,7 +56,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return DTOs with only the semantic fields exposed", func(t *testing.T) {
@@ -74,11 +75,11 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the list service returns an empty slice", func(t *testing.T) {
+	t.Run("Given the repository returns an empty slice", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
 		}
 
 		t.Run("Should return an empty DTO slice", func(t *testing.T) {
@@ -93,11 +94,11 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the list service fails", func(t *testing.T) {
+	t.Run("Given the repository fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {

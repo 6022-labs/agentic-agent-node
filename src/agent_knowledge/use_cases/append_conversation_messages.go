@@ -10,16 +10,12 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-type AppendConversationMessagesInterface interface {
-	Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error)
-}
-
 type AppendConversationMessages struct {
-	service interfaces.AppendConversationMessagesInterface
+	messageAppender interfaces.MessageAppenderInterface
 }
 
-func NewAppendConversationMessages(service interfaces.AppendConversationMessagesInterface) *AppendConversationMessages {
-	return &AppendConversationMessages{service: service}
+func NewAppendConversationMessages(messageAppender interfaces.MessageAppenderInterface) *AppendConversationMessages {
+	return &AppendConversationMessages{messageAppender: messageAppender}
 }
 
 func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
@@ -32,7 +28,7 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 		})
 	}
 
-	inserted, err := u.service.Append(ctx, conversationId, domainMessages)
+	inserted, err := u.messageAppender.Append(ctx, conversationId, domainMessages)
 	if err != nil {
 		return nil, errors.NewInternalError("append_failed", err.Error())
 	}

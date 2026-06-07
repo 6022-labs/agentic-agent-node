@@ -12,13 +12,13 @@ import (
 const InternalConversationMessagesEndpoint = "/internal/conversations/:conversationId/messages"
 
 type ConversationMessagesController struct {
-	appendConversationMessages use_cases.AppendConversationMessagesInterface
-	listConversationMessages   use_cases.ListConversationMessagesInterface
+	appendConversationMessages *use_cases.AppendConversationMessages
+	listConversationMessages   *use_cases.ListConversationMessages
 }
 
 func NewConversationMessagesController(
-	appendConversationMessages use_cases.AppendConversationMessagesInterface,
-	listConversationMessages use_cases.ListConversationMessagesInterface,
+	appendConversationMessages *use_cases.AppendConversationMessages,
+	listConversationMessages *use_cases.ListConversationMessages,
 ) *ConversationMessagesController {
 	return &ConversationMessagesController{
 		appendConversationMessages: appendConversationMessages,

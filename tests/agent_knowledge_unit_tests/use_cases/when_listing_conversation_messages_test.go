@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
+	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -18,19 +18,19 @@ import (
 type WhenListingConversationMessagesTestingSuite struct {
 	sut *use_cases.ListConversationMessages
 
-	mockListConversationMessages *interfaces_mocks.MockListConversationMessagesInterface
+	mockRepository *knowledge_mocks.MockConversationMessageRepositoryInterface
 }
 
 func WhenListingConversationMessagesBeforeEach(t *testing.T) *WhenListingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
+	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
 
-	sut := use_cases.NewListConversationMessages(mockListConversationMessages)
+	sut := use_cases.NewListConversationMessages(mockRepository)
 
 	return &WhenListingConversationMessagesTestingSuite{
-		sut:                          sut,
-		mockListConversationMessages: mockListConversationMessages,
+		sut:            sut,
+		mockRepository: mockRepository,
 	}
 }
 
@@ -39,7 +39,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 	conversationId := "conv-1"
 
-	t.Run("Given the service returns rows", func(t *testing.T) {
+	t.Run("Given the repository returns rows", func(t *testing.T) {
 		t.Parallel()
 
 		now := time.Now()
@@ -48,7 +48,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the rows on the wire", func(t *testing.T) {
@@ -65,14 +65,14 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the service fails", func(t *testing.T) {
+	t.Run("Given the repository fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
+			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {
+		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)

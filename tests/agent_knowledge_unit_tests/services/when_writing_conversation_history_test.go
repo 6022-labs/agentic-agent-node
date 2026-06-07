@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -17,22 +18,22 @@ import (
 type WhenWritingConversationHistoryTestingSuite struct {
 	sut *services.ConversationHistory
 
-	mockListConversationMessages   *interfaces_mocks.MockListConversationMessagesInterface
-	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockRepository      *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockMessageAppender *interfaces_mocks.MockMessageAppenderInterface
 }
 
 func WhenWritingConversationHistoryBeforeEach(t *testing.T) *WhenWritingConversationHistoryTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
-	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
+	mockMessageAppender := interfaces_mocks.NewMockMessageAppenderInterface(mockController)
 
-	sut := services.NewConversationHistory(mockListConversationMessages, mockAppendConversationMessages)
+	sut := services.NewConversationHistory(mockRepository, mockMessageAppender)
 
 	return &WhenWritingConversationHistoryTestingSuite{
-		sut:                            sut,
-		mockListConversationMessages:   mockListConversationMessages,
-		mockAppendConversationMessages: mockAppendConversationMessages,
+		sut:                 sut,
+		mockRepository:      mockRepository,
+		mockMessageAppender: mockMessageAppender,
 	}
 }
 
@@ -51,7 +52,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
@@ -64,7 +65,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 				})
 		}
 
-		t.Run("Should map DTOs to persistence models and delegate to the append service", func(t *testing.T) {
+		t.Run("Should map DTOs to persistence models and delegate to the message appender", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenWritingConversationHistoryBeforeEach(t)
@@ -76,7 +77,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the append service returns persistence rows", func(t *testing.T) {
+	t.Run("Given the message appender returns persistence rows", func(t *testing.T) {
 		t.Parallel()
 
 		persisted := []models.ConversationMessage{
@@ -90,7 +91,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				Return(persisted, nil)
 		}
@@ -113,11 +114,11 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the append service fails", func(t *testing.T) {
+	t.Run("Given the message appender fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}

@@ -9,17 +9,17 @@ import (
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 )
 
-// AppendConversationMessages demojizes content, stamps conversationId,
-// hashes, drops dupes against stored rows, then inserts the rest.
-type AppendConversationMessages struct {
-	repository repositories.ConversationMessageRepositoryInterface
+// MessageAppender demojizes content, stamps conversationId, hashes, drops
+// dupes against stored rows, then inserts the rest.
+type MessageAppender struct {
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 }
 
-func NewAppendConversationMessages(repository repositories.ConversationMessageRepositoryInterface) *AppendConversationMessages {
-	return &AppendConversationMessages{repository: repository}
+func NewMessageAppender(conversationMessageRepository repositories.ConversationMessageRepositoryInterface) *MessageAppender {
+	return &MessageAppender{conversationMessageRepository: conversationMessageRepository}
 }
 
-func (s *AppendConversationMessages) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (s *MessageAppender) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 || len(messages) == 0 {
 		return nil, nil
@@ -39,7 +39,7 @@ func (s *AppendConversationMessages) Append(ctx context.Context, conversationId 
 		hashes = append(hashes, msg.Hash)
 	}
 
-	existing, err := s.repository.ListExistingHashes(ctx, hashes)
+	existing, err := s.conversationMessageRepository.ListExistingHashes(ctx, hashes)
 	if err != nil {
 		return nil, err
 	}
@@ -59,5 +59,5 @@ func (s *AppendConversationMessages) Append(ctx context.Context, conversationId 
 		return nil, nil
 	}
 
-	return s.repository.AppendMessages(ctx, toInsert)
+	return s.conversationMessageRepository.AppendMessages(ctx, toInsert)
 }

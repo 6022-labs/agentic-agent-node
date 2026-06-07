@@ -18,19 +18,19 @@ import (
 type WhenAppendingConversationMessagesTestingSuite struct {
 	sut *use_cases.AppendConversationMessages
 
-	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockMessageAppender *interfaces_mocks.MockMessageAppenderInterface
 }
 
 func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockMessageAppender := interfaces_mocks.NewMockMessageAppenderInterface(mockController)
 
-	sut := use_cases.NewAppendConversationMessages(mockAppendConversationMessages)
+	sut := use_cases.NewAppendConversationMessages(mockMessageAppender)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:                            sut,
-		mockAppendConversationMessages: mockAppendConversationMessages,
+		mockMessageAppender: mockMessageAppender,
 	}
 }
 
@@ -40,7 +40,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	now := time.Now()
 	conversationId := "conv-1"
 
-	t.Run("Given the service persists the messages", func(t *testing.T) {
+	t.Run("Given the message appender persists the messages", func(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
@@ -53,7 +53,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(mapped, nil)
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(mapped, nil)
 		}
 
 		t.Run("Should return Ok with the persisted rows on the wire", func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the service fails", func(t *testing.T) {
+	t.Run("Given the message appender fails", func(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
@@ -83,10 +83,10 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {
+		t.Run("Should return InternalError carrying the appender message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)

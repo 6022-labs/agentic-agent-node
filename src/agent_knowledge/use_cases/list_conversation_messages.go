@@ -2,26 +2,28 @@ package use_cases
 
 import (
 	"context"
+	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-type ListConversationMessagesInterface interface {
-	Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error)
-}
-
 type ListConversationMessages struct {
-	service interfaces.ListConversationMessagesInterface
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 }
 
-func NewListConversationMessages(service interfaces.ListConversationMessagesInterface) *ListConversationMessages {
-	return &ListConversationMessages{service: service}
+func NewListConversationMessages(conversationMessageRepository repositories.ConversationMessageRepositoryInterface) *ListConversationMessages {
+	return &ListConversationMessages{conversationMessageRepository: conversationMessageRepository}
 }
 
 func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
-	messages, err := u.service.List(ctx, conversationId)
+	conversationId = strings.TrimSpace(conversationId)
+	if len(conversationId) == 0 {
+		return &responses.ListConversationMessagesResponse{Messages: toWireMessages(nil)}, nil
+	}
+
+	messages, err := u.conversationMessageRepository.ListByConversation(ctx, conversationId)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}

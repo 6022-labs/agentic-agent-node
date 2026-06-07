@@ -2,30 +2,36 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 )
 
 // ConversationHistory implements ConversationHistoryInterface, mapping
 // between the port DTO and the persistence model.
 type ConversationHistory struct {
-	listService   interfaces.ListConversationMessagesInterface
-	appendService interfaces.AppendConversationMessagesInterface
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
+	messageAppender               interfaces.MessageAppenderInterface
 }
 
 func NewConversationHistory(
-	listService interfaces.ListConversationMessagesInterface,
-	appendService interfaces.AppendConversationMessagesInterface,
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
+	messageAppender interfaces.MessageAppenderInterface,
 ) *ConversationHistory {
 	return &ConversationHistory{
-		listService:   listService,
-		appendService: appendService,
+		conversationMessageRepository: conversationMessageRepository,
+		messageAppender:               messageAppender,
 	}
 }
 
 func (h *ConversationHistory) Read(ctx context.Context, conversationId string) ([]interfaces.ConversationMessage, error) {
-	stored, err := h.listService.List(ctx, conversationId)
+	conversationId = strings.TrimSpace(conversationId)
+	if len(conversationId) == 0 {
+		return nil, nil
+	}
+	stored, err := h.conversationMessageRepository.ListByConversation(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +47,7 @@ func (h *ConversationHistory) Write(ctx context.Context, conversationId string, 
 	for _, m := range messages {
 		in = append(in, h.toModel(m))
 	}
-	persisted, err := h.appendService.Append(ctx, conversationId, in)
+	persisted, err := h.messageAppender.Append(ctx, conversationId, in)
 	if err != nil {
 		return nil, err
 	}

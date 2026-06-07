@@ -9,14 +9,8 @@ import (
 
 func AddAgentKnowledgeConfiguration(container *dig.Container) {
 	if err := container.Provide(
-		services.NewListConversationMessages,
-		dig.As(new(interfaces.ListConversationMessagesInterface)),
-	); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
-		services.NewAppendConversationMessages,
-		dig.As(new(interfaces.AppendConversationMessagesInterface)),
+		services.NewMessageAppender,
+		dig.As(new(interfaces.MessageAppenderInterface)),
 	); err != nil {
 		panic(err)
 	}
@@ -28,16 +22,13 @@ func AddAgentKnowledgeConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
-	if err := container.Provide(
+	useCaseProviders := []any{
 		use_cases.NewListConversationMessages,
-		dig.As(new(use_cases.ListConversationMessagesInterface)),
-	); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
 		use_cases.NewAppendConversationMessages,
-		dig.As(new(use_cases.AppendConversationMessagesInterface)),
-	); err != nil {
-		panic(err)
+	}
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
 	}
 }

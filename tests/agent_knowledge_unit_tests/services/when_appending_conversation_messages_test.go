@@ -16,7 +16,7 @@ import (
 )
 
 type WhenAppendingConversationMessagesTestingSuite struct {
-	sut *services.AppendConversationMessages
+	sut *services.MessageAppender
 
 	mockRepository *knowledge_mocks.MockConversationMessageRepositoryInterface
 }
@@ -26,7 +26,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 
 	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
 
-	sut := services.NewAppendConversationMessages(mockRepository)
+	sut := services.NewMessageAppender(mockRepository)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:            sut,
