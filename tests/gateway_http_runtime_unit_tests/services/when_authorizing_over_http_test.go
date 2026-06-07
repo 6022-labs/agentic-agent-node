@@ -3,50 +3,35 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
+	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
-type authorizeCaptured struct {
-	method string
-	path   string
-	body   string
-}
-
 type WhenAuthorizingOverHttpTestingSuite struct {
-	sut      *services.HttpAuthorizer
-	server   *httptest.Server
-	captured *authorizeCaptured
+	sut *services.HttpAuthorizer
+
+	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenAuthorizingOverHttpBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenAuthorizingOverHttpTestingSuite {
-	t.Helper()
-	captured := &authorizeCaptured{}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		captured.method = r.Method
-		captured.path = r.URL.Path
-		body, _ := io.ReadAll(r.Body)
-		captured.body = string(body)
-		handler(w, r)
-	}))
-	client, _ := clients.NewClientWithResponses(server.URL)
+func WhenAuthorizingOverHttpBeforeEach(t *testing.T) *WhenAuthorizingOverHttpTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
+
 	return &WhenAuthorizingOverHttpTestingSuite{
-		sut:      services.NewHttpAuthorizer(client),
-		server:   server,
-		captured: captured,
+		sut:        services.NewHttpAuthorizer(mockClient),
+		mockClient: mockClient,
 	}
-}
-
-func WhenAuthorizingOverHttpAfterEach(suite *WhenAuthorizingOverHttpTestingSuite) {
-	suite.server.Close()
 }
 
 func TestWhenAuthorizingOverHttp(t *testing.T) {
@@ -57,69 +42,74 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 	t.Run("Given the runtime authorizes the address", func(t *testing.T) {
 		t.Parallel()
 
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{"authorized":true}`))
+		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAuthorizeResponse, error) {
+					var sent models.ExternalAuthorizePayload
+					raw, _ := io.ReadAll(reader)
+					_ = json.Unmarshal(raw, &sent)
+					assert.Equal(t, address.Hex(), sent.Address)
+					return &clients.PostInternalAuthorizeResponse{
+						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+						Body:         []byte(`{"authorized":true}`),
+					}, nil
+				})
 		}
 
-		t.Run("Should POST the address to /internal/authorize and return true", func(t *testing.T) {
+		t.Run("Should send the address and return true", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t, handler)
-			defer WhenAuthorizingOverHttpAfterEach(suite)
+			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			initSuite(suite)
 
-			ok, err := suite.sut.IsAuthorized(context.Background(), address)
+			authorized, err := suite.sut.IsAuthorized(context.Background(), address)
 
 			assert.NoError(t, err)
-			assert.True(t, ok)
-			assert.Equal(t, http.MethodPost, suite.captured.method)
-			assert.Equal(t, "/internal/authorize", suite.captured.path)
-
-			var sent models.ExternalAuthorizePayload
-			_ = json.Unmarshal([]byte(suite.captured.body), &sent)
-			assert.Equal(t, address.Hex(), sent.Address)
+			assert.True(t, authorized)
 		})
 	})
 
 	t.Run("Given the runtime denies the address", func(t *testing.T) {
 		t.Parallel()
 
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{"authorized":false}`))
+		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalAuthorizeResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"authorized":false}`),
+				}, nil)
 		}
 
-		t.Run("Should propagate the false answer", func(t *testing.T) {
+		t.Run("Should return false", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t, handler)
-			defer WhenAuthorizingOverHttpAfterEach(suite)
+			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			initSuite(suite)
 
-			ok, err := suite.sut.IsAuthorized(context.Background(), address)
+			authorized, err := suite.sut.IsAuthorized(context.Background(), address)
 
 			assert.NoError(t, err)
-			assert.False(t, ok)
+			assert.False(t, authorized)
 		})
 	})
 
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(`{"code":"boom","message":"runtime down"}`))
+		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(nil, errors.New("runtime down"))
 		}
 
-		t.Run("Should return the error and false", func(t *testing.T) {
+		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t, handler)
-			defer WhenAuthorizingOverHttpAfterEach(suite)
+			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			initSuite(suite)
 
-			ok, err := suite.sut.IsAuthorized(context.Background(), address)
+			_, err := suite.sut.IsAuthorized(context.Background(), address)
 
-			assert.Error(t, err)
-			assert.False(t, ok)
+			assert.ErrorContains(t, err, "runtime down")
 		})
 	})
 }
