@@ -2,34 +2,46 @@ package services_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/settings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
+type authorizeCaptured struct {
+	method string
+	path   string
+	body   string
+}
+
 type WhenAuthorizingOverHttpTestingSuite struct {
-	sut    *services.HttpAuthorizer
-	server *httptest.Server
+	sut      *services.HttpAuthorizer
+	server   *httptest.Server
+	captured *authorizeCaptured
 }
 
 func WhenAuthorizingOverHttpBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenAuthorizingOverHttpTestingSuite {
 	t.Helper()
-	server := httptest.NewServer(handler)
-	client := clients.NewRuntimeHttpClient(&settings.RuntimeClientSettings{
-		BaseUrl: server.URL,
-		Timeout: 2 * time.Second,
-	})
+	captured := &authorizeCaptured{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured.method = r.Method
+		captured.path = r.URL.Path
+		body, _ := io.ReadAll(r.Body)
+		captured.body = string(body)
+		handler(w, r)
+	}))
+	client, _ := clients.NewClientWithResponses(server.URL)
 	return &WhenAuthorizingOverHttpTestingSuite{
-		sut:    services.NewHttpAuthorizer(client),
-		server: server,
+		sut:      services.NewHttpAuthorizer(client),
+		server:   server,
+		captured: captured,
 	}
 }
 
@@ -42,19 +54,15 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 
-	t.Run("Given the runtime returns authorized=true", func(t *testing.T) {
+	t.Run("Given the runtime authorizes the address", func(t *testing.T) {
 		t.Parallel()
 
-		var seenPath, seenBody string
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenPath = r.URL.Path
-			body, _ := io.ReadAll(r.Body)
-			seenBody = string(body)
-			w.Header().Set("Content-Type", "application/json")
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{"authorized":true}`))
 		}
 
-		t.Run("Should POST address to /internal/authorize", func(t *testing.T) {
+		t.Run("Should POST the address to /internal/authorize and return true", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingOverHttpBeforeEach(t, handler)
@@ -64,16 +72,20 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.True(t, ok)
-			assert.Equal(t, "/internal/authorize", seenPath)
-			assert.Contains(t, seenBody, address.Hex())
+			assert.Equal(t, http.MethodPost, suite.captured.method)
+			assert.Equal(t, "/internal/authorize", suite.captured.path)
+
+			var sent models.ExternalAuthorizePayload
+			_ = json.Unmarshal([]byte(suite.captured.body), &sent)
+			assert.Equal(t, address.Hex(), sent.Address)
 		})
 	})
 
-	t.Run("Given the runtime returns authorized=false", func(t *testing.T) {
+	t.Run("Given the runtime denies the address", func(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{"authorized":false}`))
 		}
 
@@ -90,14 +102,15 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime returns a non-2xx", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"code":"boom","message":"runtime down"}`))
 		}
 
-		t.Run("Should return a transport error", func(t *testing.T) {
+		t.Run("Should return the error and false", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingOverHttpBeforeEach(t, handler)
@@ -105,8 +118,8 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 
 			ok, err := suite.sut.IsAuthorized(context.Background(), address)
 
-			assert.False(t, ok)
 			assert.Error(t, err)
+			assert.False(t, ok)
 		})
 	})
 }

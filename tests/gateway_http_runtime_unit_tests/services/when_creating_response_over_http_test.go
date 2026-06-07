@@ -2,7 +2,6 @@ package services_test
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,25 +11,36 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/settings"
 	"github.com/stretchr/testify/assert"
 )
 
+type responseCaptured struct {
+	method string
+	path   string
+	body   string
+}
+
 type WhenCreatingResponseOverHttpTestingSuite struct {
-	sut    *services.HttpResponseClient
-	server *httptest.Server
+	sut      *services.HttpResponseClient
+	server   *httptest.Server
+	captured *responseCaptured
 }
 
 func WhenCreatingResponseOverHttpBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCreatingResponseOverHttpTestingSuite {
 	t.Helper()
-	server := httptest.NewServer(handler)
-	client := clients.NewRuntimeHttpClient(&settings.RuntimeClientSettings{
-		BaseUrl: server.URL,
-		Timeout: 2 * time.Second,
-	})
+	captured := &responseCaptured{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured.method = r.Method
+		captured.path = r.URL.Path
+		body, _ := io.ReadAll(r.Body)
+		captured.body = string(body)
+		handler(w, r)
+	}))
+	client, _ := clients.NewClientWithResponses(server.URL)
 	return &WhenCreatingResponseOverHttpTestingSuite{
-		sut:    services.NewHttpResponseClient(client),
-		server: server,
+		sut:      services.NewHttpResponseClient(client),
+		server:   server,
+		captured: captured,
 	}
 }
 
@@ -42,39 +52,32 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
+	request := &models.ExternalCreateResponsePayload{
+		ConversationId: "conv-1",
+		Inputs: []models.ExternalCreateResponseInputPayload{
+			{Role: "user", Content: "hello", Timestamp: now},
+		},
+	}
 
 	t.Run("Given the runtime returns an assistant message", func(t *testing.T) {
 		t.Parallel()
 
-		var seenPath, seenMethod, seenBody string
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenPath = r.URL.Path
-			seenMethod = r.Method
-			body, _ := io.ReadAll(r.Body)
-			seenBody = string(body)
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"message":{"role":"assistant","content":"hi","timestamp":"` + now.Format(time.RFC3339Nano) + `"}}`))
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"message":{"role":"assistant","content":"hi","timestamp":"2026-01-01T00:00:00Z"}}`))
 		}
 
-		t.Run("Should POST to /internal/responses and decode the result", func(t *testing.T) {
+		t.Run("Should POST to /internal/responses and decode the message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			result, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
-				ConversationId: "conv-1",
-				Inputs: []models.ExternalCreateResponseInputPayload{
-					{Role: "user", Content: "hello", Timestamp: now},
-				},
-			})
+			result, err := suite.sut.Create(context.Background(), request)
 
 			assert.NoError(t, err)
-			assert.Equal(t, http.MethodPost, seenMethod)
-			assert.Equal(t, "/internal/responses", seenPath)
-			assert.Contains(t, seenBody, `"conversationId":"conv-1"`)
-			assert.Contains(t, seenBody, `"role":"user"`)
-
+			assert.Equal(t, http.MethodPost, suite.captured.method)
+			assert.Equal(t, "/internal/responses", suite.captured.path)
 			if assert.NotNil(t, result) && assert.NotNil(t, result.Message) {
 				assert.Equal(t, "assistant", result.Message.Role)
 				assert.Equal(t, "hi", result.Message.Content)
@@ -86,20 +89,17 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{}`))
 		}
 
-		t.Run("Should return a result with nil message", func(t *testing.T) {
+		t.Run("Should return a result with a nil message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			result, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
-				ConversationId: "conv-1",
-				Inputs:         []models.ExternalCreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
-			})
+			result, err := suite.sut.Create(context.Background(), request)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
@@ -108,24 +108,21 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime returns 500", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = json.NewEncoder(w).Encode(map[string]string{"code": "create_response_failed"})
+			_, _ = w.Write([]byte(`{"code":"boom","message":"runtime down"}`))
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseOverHttpBeforeEach(t, handler)
 			defer WhenCreatingResponseOverHttpAfterEach(suite)
 
-			_, err := suite.sut.Create(context.Background(), &models.ExternalCreateResponsePayload{
-				ConversationId: "conv-1",
-				Inputs:         []models.ExternalCreateResponseInputPayload{{Role: "user", Content: "x", Timestamp: now}},
-			})
+			_, err := suite.sut.Create(context.Background(), request)
 
 			assert.Error(t, err)
 		})

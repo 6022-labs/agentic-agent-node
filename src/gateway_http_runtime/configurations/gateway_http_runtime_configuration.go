@@ -1,6 +1,8 @@
 package configurations
 
 import (
+	"net/http"
+
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
@@ -9,11 +11,18 @@ import (
 	"go.uber.org/dig"
 )
 
+// newRuntimeClient builds the generated runtime client (oapi-codegen) bound to
+// the configured base URL and timeout.
+func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResponsesInterface, error) {
+	httpClient := &http.Client{Timeout: s.Timeout}
+	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
+}
+
 func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 	if err := container.Provide(settings.NewRuntimeClientSettings); err != nil {
 		panic(err)
 	}
-	if err := container.Provide(clients.NewRuntimeHttpClient); err != nil {
+	if err := container.Provide(newRuntimeClient); err != nil {
 		panic(err)
 	}
 	if err := container.Provide(

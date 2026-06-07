@@ -1,27 +1,38 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
 	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const authorizePath = "/internal/authorize"
+// jsonContentType is the content type sent on every bodied runtime request.
+const jsonContentType = "application/json"
 
 type HttpAuthorizer struct {
-	client *clients.RuntimeHttpClient
+	client clients.ClientWithResponsesInterface
 }
 
-func NewHttpAuthorizer(client *clients.RuntimeHttpClient) *HttpAuthorizer {
+func NewHttpAuthorizer(client clients.ClientWithResponsesInterface) *HttpAuthorizer {
 	return &HttpAuthorizer{client: client}
 }
 
 func (a *HttpAuthorizer) IsAuthorized(ctx context.Context, address common.Address) (bool, error) {
-	body := runtime_models.ExternalAuthorizePayload{Address: address.Hex()}
+	body, err := json.Marshal(runtime_models.ExternalAuthorizePayload{Address: address.Hex()})
+	if err != nil {
+		return false, err
+	}
+	resp, err := a.client.PostInternalAuthorizeWithBodyWithResponse(ctx, jsonContentType, bytes.NewReader(body))
+	if err != nil {
+		return false, err
+	}
 	var payload runtime_models.ExternalAuthorizeResultPayload
-	if err := a.client.Post(ctx, authorizePath, body, &payload); err != nil {
+	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return false, err
 	}
 	return payload.Authorized, nil
