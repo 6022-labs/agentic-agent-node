@@ -27,6 +27,15 @@ func NewAgentCollectionsManagerRequester(
 	}
 }
 
+// IsKnownCollection reports whether the manager governs this collection.
+func (r *AgentCollectionsManagerRequester) IsKnownCollection(collection common.Address) (bool, error) {
+	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)
+	if err != nil {
+		return false, err
+	}
+	return contract.IsKnownCollection(nil, collection)
+}
+
 // FindAgentByWallet returns the agent NFT a wallet controls, or a zero address if none. The manager scans collections on-chain, paginated by the cursor.
 func (r *AgentCollectionsManagerRequester) FindAgentByWallet(wallet common.Address) (common.Address, uint64, string, error) {
 	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)

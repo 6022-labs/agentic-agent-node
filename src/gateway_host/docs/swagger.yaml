@@ -1,13 +1,5 @@
 basePath: /
 definitions:
-  enums.BootstrapStatus:
-    enum:
-    - awaiting-vault
-    - ready
-    type: string
-    x-enum-varnames:
-    - BootstrapStatusAwaitingVault
-    - BootstrapStatusReady
   enums.ConversationPlatform:
     enum:
     - none
@@ -45,6 +37,101 @@ definitions:
     type: object
   fiber.Map:
     additionalProperties: true
+    type: object
+  models.ExternalAgentRegistrationPayload:
+    properties:
+      attributes:
+        additionalProperties:
+          type: string
+        type: object
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      ensDomain:
+        type: string
+      ensStatus:
+        type: string
+      images:
+        additionalProperties:
+          type: string
+        type: object
+      mintStatus:
+        type: string
+      name:
+        type: string
+      owner:
+        type: string
+      proposalId:
+        type: integer
+      role:
+        type: string
+      tokenId:
+        type: integer
+      walletAddress:
+        type: string
+    type: object
+  models.ExternalEnsInfoPayload:
+    properties:
+      collectionAddress:
+        type: string
+      records:
+        items:
+          $ref: '#/definitions/models.ExternalKeyValue'
+        type: array
+      tokenId:
+        type: integer
+    type: object
+  models.ExternalKeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  models.ExternalMintInfoPayload:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/models.ExternalKeyValue'
+        type: array
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/models.ExternalKeyValue'
+        type: array
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      ownerIsModerator:
+        type: boolean
+      role:
+        type: string
+      to:
+        type: string
+      wallets:
+        items:
+          type: string
+        type: array
+    type: object
+  models.ExternalRegistrationStatusPayload:
+    properties:
+      ensStatus:
+        type: string
+      ensTxHash:
+        type: string
+      mintStatus:
+        type: string
+      mintTxHash:
+        type: string
+      proposalId:
+        type: integer
+      tokenId:
+        type: integer
     type: object
   requests.CreateMcpConnectionRequest:
     properties:
@@ -123,6 +210,25 @@ definitions:
         additionalProperties: {}
         type: object
     type: object
+  requests.SaveAgentRegistrationRequest:
+    properties:
+      attributes:
+        additionalProperties:
+          type: string
+        type: object
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      images:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      role:
+        type: string
+    type: object
   requests.SetDbConfigRequest:
     properties:
       database:
@@ -163,36 +269,12 @@ definitions:
       signature:
         type: string
     type: object
-  responses.AgentIdentitySnapshot:
-    properties:
-      collectionAddress:
-        type: string
-      error:
-        type: string
-      name:
-        type: string
-      resolved:
-        type: boolean
-      tokenId:
-        type: integer
-    type: object
   responses.GetAuthChallengeResponse:
     properties:
       expiresAt:
         type: string
       nonce:
         type: string
-    type: object
-  responses.GetBootstrapStatusResponse:
-    properties:
-      agentAddress:
-        type: string
-      identity:
-        $ref: '#/definitions/responses.AgentIdentitySnapshot'
-      lastError:
-        type: string
-      status:
-        $ref: '#/definitions/enums.BootstrapStatus'
     type: object
   responses.GetHealthResponse:
     properties:
@@ -290,6 +372,128 @@ info:
   title: Agentic Agent Node — Gateway Host API
   version: "1.0"
 paths:
+  /agent/registration:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalAgentRegistrationPayload'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get agent registration draft
+      tags:
+      - AgentRegistration
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Agent draft
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SaveAgentRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalAgentRegistrationPayload'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+      security:
+      - BearerAuth: []
+      summary: Save agent registration draft
+      tags:
+      - AgentRegistration
+  /agent/registration/ens-info:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalEnsInfoPayload'
+        "409":
+          description: not_minted
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get ENS calldata
+      tags:
+      - AgentRegistration
+  /agent/registration/ens/check:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+      security:
+      - BearerAuth: []
+      summary: Check ENS status
+      tags:
+      - AgentRegistration
+  /agent/registration/mint-info:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalMintInfoPayload'
+      security:
+      - BearerAuth: []
+      summary: Get mint calldata
+      tags:
+      - AgentRegistration
+  /agent/registration/mint/check:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+      security:
+      - BearerAuth: []
+      summary: Check mint status
+      tags:
+      - AgentRegistration
+  /agent/registration/self:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Self mint + ENS register
+      tags:
+      - AgentRegistration
   /auth/challenge:
     get:
       description: Returns a fresh nonce + expiry. The caller signs the nonce with
@@ -343,20 +547,6 @@ paths:
       summary: Auth verify
       tags:
       - Auth
-  /bootstrap/status:
-    get:
-      description: Wallet lifecycle (`awaiting-vault` | `ready`) plus a best-effort
-        NFT identity snapshot once the wallet is loaded.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/responses.GetBootstrapStatusResponse'
-      summary: Bootstrap status
-      tags:
-      - Bootstrap
   /config/db:
     get:
       produces:

@@ -10,15 +10,15 @@ import (
 )
 
 type PublishEnsRuntimeRecords struct {
-	publisher identity_interfaces.EnsRuntimeRecordsPublisherInterface
+	ensPublisher identity_interfaces.EnsPublisherInterface
 }
 
-func NewPublishEnsRuntimeRecords(publisher identity_interfaces.EnsRuntimeRecordsPublisherInterface) *PublishEnsRuntimeRecords {
-	return &PublishEnsRuntimeRecords{publisher: publisher}
+func NewPublishEnsRuntimeRecords(ensPublisher identity_interfaces.EnsPublisherInterface) *PublishEnsRuntimeRecords {
+	return &PublishEnsRuntimeRecords{ensPublisher: ensPublisher}
 }
 
 func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) error {
-	if err := u.publisher.PublishRuntimeRecords(ctx); err != nil {
+	if err := u.ensPublisher.PublishRuntimeRecords(ctx); err != nil {
 		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
 			return apperrors.NewConflictError("identity_not_found", "agent NFT must be minted before ENS records can be published")
 		}

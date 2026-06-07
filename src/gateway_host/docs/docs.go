@@ -15,6 +15,210 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/agent/registration": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Get agent registration draft",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalAgentRegistrationPayload"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Save agent registration draft",
+                "parameters": [
+                    {
+                        "description": "Agent draft",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SaveAgentRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalAgentRegistrationPayload"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/registration/ens-info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Get ENS calldata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalEnsInfoPayload"
+                        }
+                    },
+                    "409": {
+                        "description": "not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/registration/ens/check": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Check ENS status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/registration/mint-info": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Get mint calldata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalMintInfoPayload"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/registration/mint/check": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Check mint status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/registration/self": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AgentRegistration"
+                ],
+                "summary": "Self mint + ENS register",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/challenge": {
             "get": {
                 "description": "Returns a fresh nonce + expiry. The caller signs the nonce with their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.",
@@ -88,26 +292,6 @@ const docTemplate = `{
                         "description": "identity_not_found",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
-        "/bootstrap/status": {
-            "get": {
-                "description": "Wallet lifecycle (` + "`" + `awaiting-vault` + "`" + ` | ` + "`" + `ready` + "`" + `) plus a best-effort NFT identity snapshot once the wallet is loaded.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Bootstrap"
-                ],
-                "summary": "Bootstrap status",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/responses.GetBootstrapStatusResponse"
                         }
                     }
                 }
@@ -474,17 +658,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "enums.BootstrapStatus": {
-            "type": "string",
-            "enum": [
-                "awaiting-vault",
-                "ready"
-            ],
-            "x-enum-varnames": [
-                "BootstrapStatusAwaitingVault",
-                "BootstrapStatusReady"
-            ]
-        },
         "enums.ConversationPlatform": {
             "type": "string",
             "enum": [
@@ -536,6 +709,151 @@ const docTemplate = `{
         "fiber.Map": {
             "type": "object",
             "additionalProperties": true
+        },
+        "models.ExternalAgentRegistrationPayload": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "ensDomain": {
+                    "type": "string"
+                },
+                "ensStatus": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "tokenId": {
+                    "type": "integer"
+                },
+                "walletAddress": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ExternalEnsInfoPayload": {
+            "type": "object",
+            "properties": {
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalKeyValue"
+                    }
+                },
+                "tokenId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ExternalKeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ExternalMintInfoPayload": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalKeyValue"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalKeyValue"
+                    }
+                },
+                "moderatorCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerIsModerator": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "wallets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.ExternalRegistrationStatusPayload": {
+            "type": "object",
+            "properties": {
+                "ensStatus": {
+                    "type": "string"
+                },
+                "ensTxHash": {
+                    "type": "string"
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "mintTxHash": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "tokenId": {
+                    "type": "integer"
+                }
+            }
         },
         "requests.CreateMcpConnectionRequest": {
             "type": "object",
@@ -655,6 +973,35 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SaveAgentRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SetDbConfigRequest": {
             "type": "object",
             "properties": {
@@ -716,26 +1063,6 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.AgentIdentitySnapshot": {
-            "type": "object",
-            "properties": {
-                "collectionAddress": {
-                    "type": "string"
-                },
-                "error": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "resolved": {
-                    "type": "boolean"
-                },
-                "tokenId": {
-                    "type": "integer"
-                }
-            }
-        },
         "responses.GetAuthChallengeResponse": {
             "type": "object",
             "properties": {
@@ -744,23 +1071,6 @@ const docTemplate = `{
                 },
                 "nonce": {
                     "type": "string"
-                }
-            }
-        },
-        "responses.GetBootstrapStatusResponse": {
-            "type": "object",
-            "properties": {
-                "agentAddress": {
-                    "type": "string"
-                },
-                "identity": {
-                    "$ref": "#/definitions/responses.AgentIdentitySnapshot"
-                },
-                "lastError": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/enums.BootstrapStatus"
                 }
             }
         },

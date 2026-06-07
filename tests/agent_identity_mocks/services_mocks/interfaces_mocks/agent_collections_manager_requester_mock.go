@@ -56,3 +56,18 @@ func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentBy
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByWallet", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByWallet), wallet)
 }
+
+// IsKnownCollection mocks base method.
+func (m *MockAgentCollectionsManagerRequesterInterface) IsKnownCollection(collection common.Address) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsKnownCollection", collection)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsKnownCollection indicates an expected call of IsKnownCollection.
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) IsKnownCollection(collection any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsKnownCollection", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).IsKnownCollection), collection)
+}

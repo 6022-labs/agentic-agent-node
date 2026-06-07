@@ -8,6 +8,195 @@
     },
     "basePath": "/",
     "paths": {
+        "/internal/agent/registration": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get agent registration draft",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentRegistrationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Validates the collection + form and binds the draft to the node wallet. Returns the stored draft + status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Save agent registration draft",
+                "parameters": [
+                    {
+                        "description": "Agent draft",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SaveAgentRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentRegistrationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/registration/ens-info": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get ENS calldata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.EnsInfoResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/registration/ens/check": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Check ENS status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/registration/mint-info": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get mint calldata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MintInfoResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/registration/mint/check": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Check mint status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/registration/self": {
+            "post": {
+                "description": "Uses the node's bootstrap wallet to mint (or create a mint proposal) and ENS-register the stored draft.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Self mint + ENS register",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/authorize": {
             "post": {
                 "description": "Resolves the agent identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by gateway during /auth/verify.",
@@ -49,26 +238,6 @@
                         "description": "authorize_failed",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
-        "/internal/bootstrap/status": {
-            "get": {
-                "description": "Wallet lifecycle snapshot for the gateway. Internal-only endpoint.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Internal"
-                ],
-                "summary": "Internal bootstrap status",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/responses.GetBootstrapStatusResponse"
                         }
                     }
                 }
@@ -273,17 +442,6 @@
         }
     },
     "definitions": {
-        "enums.BootstrapStatus": {
-            "type": "string",
-            "enum": [
-                "awaiting-vault",
-                "ready"
-            ],
-            "x-enum-varnames": [
-                "BootstrapStatusAwaitingVault",
-                "BootstrapStatusReady"
-            ]
-        },
         "errors.ValidationError": {
             "type": "object",
             "properties": {
@@ -360,6 +518,88 @@
                 }
             }
         },
+        "requests.SaveAgentRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.AgentRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "ensDomain": {
+                    "type": "string"
+                },
+                "ensStatus": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "tokenId": {
+                    "type": "integer"
+                },
+                "walletAddress": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.AppendConversationMessagesResponse": {
             "type": "object",
             "properties": {
@@ -421,6 +661,23 @@
                 }
             }
         },
+        "responses.EnsInfoResponse": {
+            "type": "object",
+            "properties": {
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "tokenId": {
+                    "type": "integer"
+                }
+            }
+        },
         "responses.GetAgentIdentityResponse": {
             "type": "object",
             "properties": {
@@ -435,17 +692,14 @@
                 }
             }
         },
-        "responses.GetBootstrapStatusResponse": {
+        "responses.KeyValue": {
             "type": "object",
             "properties": {
-                "agentAddress": {
+                "key": {
                     "type": "string"
                 },
-                "lastError": {
+                "value": {
                     "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/enums.BootstrapStatus"
                 }
             }
         },
@@ -457,6 +711,73 @@
                     "items": {
                         "$ref": "#/definitions/responses.ConversationMessage"
                     }
+                }
+            }
+        },
+        "responses.MintInfoResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "moderatorCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerIsModerator": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "wallets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "responses.RegistrationStatusResponse": {
+            "type": "object",
+            "properties": {
+                "ensStatus": {
+                    "type": "string"
+                },
+                "ensTxHash": {
+                    "type": "string"
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "mintTxHash": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "tokenId": {
+                    "type": "integer"
                 }
             }
         }

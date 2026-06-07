@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	walletSecretKey         = "agent/wallet"
-	walletFieldPrivateKey   = "privateKey"
-	walletFieldAddress      = "address"
+	walletSecretKey       = "agent/wallet"
+	walletFieldPrivateKey = "privateKey"
+	walletFieldAddress    = "address"
 )
 
 type WalletCredentialsStorage struct {

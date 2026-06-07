@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Code style
 
 - **Keep comments short.** One line where one line does. State the non-obvious *why* or a cross-package contract; never restate what the code already says. No multi-paragraph doc blocks. Go doc comments start with the identifier name, then stop.
+- **Document the contract once, on the interface.** Method doc comments live on the port (`*Interface`); the implementation's methods carry **no** doc comment (it would only drift). Keep the type-level comment on the impl and comments on private helpers. See `RegistrationReconciler` / `AgentCollectionRequester`.
+- **Name dependency fields/params after their full type** (the mvc-controller convention), not a generic role. Drop the package qualifier and the `Interface` suffix, camelCase the rest: `EnsPublisherInterface` → `ensPublisher` (not `publisher`), `AgentRegistrationStateRepositoryInterface` → `agentRegistrationStateRepository` (not `stateRepository`), `*settings.AgentIdentitySettings` → `agentIdentitySettings`. Idiomatic infra names (`logger`, `client`, `ctx`) and local *domain-value* variables (`agent`, `state`, `collection`, `tokenId`) keep their short names.
 - Hexagonal layering is enforced by structure, not lint — keep domain logic out of adapters (see Architecture).
 
 ## Commands

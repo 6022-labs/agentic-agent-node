@@ -50,6 +50,13 @@ func AddGatewayConfiguration(container *dig.Container) {
 		use_cases.NewListMcpConnections,
 		use_cases.NewCreateMcpConnection,
 		use_cases.NewDeleteMcpConnection,
+		use_cases.NewSaveAgentRegistration,
+		use_cases.NewGetAgentRegistration,
+		use_cases.NewGetAgentMintInfo,
+		use_cases.NewCheckAgentMint,
+		use_cases.NewGetAgentEnsInfo,
+		use_cases.NewCheckAgentEns,
+		use_cases.NewSelfRegisterAgent,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

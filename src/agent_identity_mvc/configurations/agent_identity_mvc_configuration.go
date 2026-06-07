@@ -9,6 +9,7 @@ import (
 func AddAgentIdentityMvcConfiguration(container *dig.Container) {
 	provideController(container, agent_identity_mvc.NewIdentityController)
 	provideController(container, agent_identity_mvc.NewAuthorizeController)
+	provideController(container, agent_identity_mvc.NewAgentRegistrationController)
 }
 
 func provideController(container *dig.Container, ctor any) {

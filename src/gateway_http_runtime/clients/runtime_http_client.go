@@ -81,10 +81,35 @@ func (c *RuntimeHttpClient) do(req *http.Request, out any, notFoundErr error) er
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("runtime returned %d: %s", resp.StatusCode, string(body))
+		statusErr := &RuntimeStatusError{StatusCode: resp.StatusCode, Body: string(body)}
+		var parsed struct {
+			Code    string `json:"code"`
+			Field   string `json:"field"`
+			Message string `json:"message"`
+		}
+		if json.Unmarshal(body, &parsed) == nil {
+			statusErr.Code = parsed.Code
+			statusErr.Field = parsed.Field
+			statusErr.Message = parsed.Message
+		}
+		return statusErr
 	}
 	if out == nil {
 		return nil
 	}
 	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// RuntimeStatusError carries a non-2xx runtime response so callers can preserve
+// the semantic status (404/409/400). Error() keeps the legacy string form.
+type RuntimeStatusError struct {
+	StatusCode int
+	Code       string
+	Field      string
+	Message    string
+	Body       string
+}
+
+func (e *RuntimeStatusError) Error() string {
+	return fmt.Sprintf("runtime returned %d: %s", e.StatusCode, e.Body)
 }

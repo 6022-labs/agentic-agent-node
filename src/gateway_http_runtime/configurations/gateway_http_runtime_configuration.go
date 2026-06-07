@@ -40,4 +40,10 @@ func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		services.NewHttpAgentRegistrationClient,
+		dig.As(new(gateway_interfaces.AgentRegistrationClientInterface)),
+	); err != nil {
+		panic(err)
+	}
 }

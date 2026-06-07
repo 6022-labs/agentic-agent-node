@@ -16,13 +16,13 @@ import (
 type WhenPublishingEnsRuntimeRecordsTestingSuite struct {
 	sut *use_cases.PublishEnsRuntimeRecords
 
-	mockPublisher *identity_mocks.MockEnsRuntimeRecordsPublisherInterface
+	mockPublisher *identity_mocks.MockEnsPublisherInterface
 }
 
 func WhenPublishingEnsRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingEnsRuntimeRecordsTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockPublisher := identity_mocks.NewMockEnsRuntimeRecordsPublisherInterface(mockController)
+	mockPublisher := identity_mocks.NewMockEnsPublisherInterface(mockController)
 
 	sut := use_cases.NewPublishEnsRuntimeRecords(mockPublisher)
 

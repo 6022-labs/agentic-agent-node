@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	llmSecretKey      = "agent/llm_secret"
-	llmFieldApiKey    = "apiKey"
+	llmSecretKey   = "agent/llm_secret"
+	llmFieldApiKey = "apiKey"
 )
 
 type LLMSecretStorage struct {

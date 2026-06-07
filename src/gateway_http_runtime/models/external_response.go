@@ -9,7 +9,7 @@ type ExternalCreateResponseInputPayload struct {
 }
 
 type ExternalCreateResponsePayload struct {
-	ConversationId string                       `json:"conversationId"`
+	ConversationId string                               `json:"conversationId"`
 	Inputs         []ExternalCreateResponseInputPayload `json:"inputs"`
 }
 

@@ -24,4 +24,3 @@ type ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments struct {
 	Required   []string                          `json:"required"`
 	Properties ExternalToolInputSchemaProperties `json:"properties"`
 }
-

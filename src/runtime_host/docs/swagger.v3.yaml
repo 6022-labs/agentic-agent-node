@@ -1,13 +1,5 @@
 components:
   schemas:
-    enums.BootstrapStatus:
-      enum:
-      - awaiting-vault
-      - ready
-      type: string
-      x-enum-varnames:
-      - BootstrapStatusAwaitingVault
-      - BootstrapStatusReady
     errors.ValidationError:
       properties:
         field:
@@ -59,6 +51,60 @@ components:
         timestamp:
           type: string
       type: object
+    requests.SaveAgentRegistrationRequest:
+      properties:
+        attributes:
+          additionalProperties:
+            type: string
+          type: object
+        cloneOf:
+          type: integer
+        collectionAddress:
+          type: string
+        images:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          type: string
+        owner:
+          type: string
+        role:
+          type: string
+      type: object
+    responses.AgentRegistrationResponse:
+      properties:
+        attributes:
+          additionalProperties:
+            type: string
+          type: object
+        cloneOf:
+          type: integer
+        collectionAddress:
+          type: string
+        ensDomain:
+          type: string
+        ensStatus:
+          type: string
+        images:
+          additionalProperties:
+            type: string
+          type: object
+        mintStatus:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        proposalId:
+          type: integer
+        role:
+          type: string
+        tokenId:
+          type: integer
+        walletAddress:
+          type: string
+      type: object
     responses.AppendConversationMessagesResponse:
       properties:
         inserted:
@@ -99,6 +145,18 @@ components:
         message:
           $ref: '#/components/schemas/responses.CreateResponseMessage'
       type: object
+    responses.EnsInfoResponse:
+      properties:
+        collectionAddress:
+          type: string
+        records:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        tokenId:
+          type: integer
+      type: object
     responses.GetAgentIdentityResponse:
       properties:
         collectionAddress:
@@ -108,14 +166,12 @@ components:
         tokenId:
           type: integer
       type: object
-    responses.GetBootstrapStatusResponse:
+    responses.KeyValue:
       properties:
-        agentAddress:
+        key:
           type: string
-        lastError:
+        value:
           type: string
-        status:
-          $ref: '#/components/schemas/enums.BootstrapStatus'
       type: object
     responses.ListConversationMessagesResponse:
       properties:
@@ -124,6 +180,53 @@ components:
             $ref: '#/components/schemas/responses.ConversationMessage'
           type: array
           uniqueItems: false
+      type: object
+    responses.MintInfoResponse:
+      properties:
+        attributes:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        cloneOf:
+          type: integer
+        collectionAddress:
+          type: string
+        images:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        moderatorCount:
+          type: integer
+        name:
+          type: string
+        ownerIsModerator:
+          type: boolean
+        role:
+          type: string
+        to:
+          type: string
+        wallets:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
+    responses.RegistrationStatusResponse:
+      properties:
+        ensStatus:
+          type: string
+        ensTxHash:
+          type: string
+        mintStatus:
+          type: string
+        mintTxHash:
+          type: string
+        proposalId:
+          type: integer
+        tokenId:
+          type: integer
       type: object
 externalDocs:
   description: ""
@@ -135,6 +238,146 @@ info:
   version: "1.0"
 openapi: 3.1.0
 paths:
+  /internal/agent/registration:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.AgentRegistrationResponse'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: draft_not_found
+      summary: Get agent registration draft
+      tags:
+      - Internal
+    post:
+      description: Validates the collection + form and binds the draft to the node
+        wallet. Returns the stored draft + status.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SaveAgentRegistrationRequest'
+                description: Agent draft
+                summary: request
+        description: Agent draft
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.AgentRegistrationResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+      summary: Save agent registration draft
+      tags:
+      - Internal
+  /internal/agent/registration/ens-info:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.EnsInfoResponse'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: not_minted
+      summary: Get ENS calldata
+      tags:
+      - Internal
+  /internal/agent/registration/ens/check:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: not_minted
+      summary: Check ENS status
+      tags:
+      - Internal
+  /internal/agent/registration/mint-info:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.MintInfoResponse'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: draft_not_found
+      summary: Get mint calldata
+      tags:
+      - Internal
+  /internal/agent/registration/mint/check:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: draft_not_found
+      summary: Check mint status
+      tags:
+      - Internal
+  /internal/agent/registration/self:
+    post:
+      description: Uses the node's bootstrap wallet to mint (or create a mint proposal)
+        and ENS-register the stored draft.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: draft_not_found
+      summary: Self mint + ENS register
+      tags:
+      - Internal
   /internal/authorize:
     post:
       description: Resolves the agent identity, fetches OwnerOf(tokenId), compares
@@ -170,19 +413,6 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: authorize_failed
       summary: Internal authorize
-      tags:
-      - Internal
-  /internal/bootstrap/status:
-    get:
-      description: Wallet lifecycle snapshot for the gateway. Internal-only endpoint.
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/responses.GetBootstrapStatusResponse'
-          description: OK
-      summary: Internal bootstrap status
       tags:
       - Internal
   /internal/conversations/{conversationId}/messages:

@@ -66,6 +66,12 @@ func (b *AgentBuilder) WithCollectionTokenId(tokenId uint64) *AgentBuilder {
 	return b
 }
 
+// WithoutCollectionTokenId models a not-yet-minted draft.
+func (b *AgentBuilder) WithoutCollectionTokenId() *AgentBuilder {
+	b.collectionTokenId = nil
+	return b
+}
+
 func (b *AgentBuilder) WithCollectionAddress(address string) *AgentBuilder {
 	b.collectionAddress = address
 	return b

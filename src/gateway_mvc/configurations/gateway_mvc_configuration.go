@@ -16,6 +16,7 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 	provideController(container, gateway_mvc.NewResponseController)
 	provideController(container, gateway_mvc.NewLlmConfigController)
 	provideController(container, gateway_mvc.NewMcpConfigController)
+	provideController(container, gateway_mvc.NewAgentRegistrationController)
 }
 
 func provideController(container *dig.Container, ctor any) {

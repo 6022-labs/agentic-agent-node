@@ -111,4 +111,3 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddMcpConnectionAsFunctionCal
 		})
 	}
 }
-

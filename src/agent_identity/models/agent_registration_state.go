@@ -36,6 +36,20 @@ func (s *AgentRegistrationState) IsMinted() bool {
 	return s != nil && s.MintStatus == enums.TransactionStatusConfirmed
 }
 
+// MarkMintConfirmed flips the mint lifecycle to confirmed and stamps the time.
+func (s *AgentRegistrationState) MarkMintConfirmed() {
+	now := time.Now()
+	s.MintStatus = enums.TransactionStatusConfirmed
+	s.MintedAt = &now
+}
+
+// MarkEnsConfirmed flips the ENS lifecycle to confirmed and stamps the time.
+func (s *AgentRegistrationState) MarkEnsConfirmed() {
+	now := time.Now()
+	s.EnsRegistryStatus = enums.TransactionStatusConfirmed
+	s.EnsPublishedAt = &now
+}
+
 func (m *AgentRegistrationState) BeforeCreate(_ *gorm.DB) error {
 	if m.Id == uuid.Nil {
 		m.Id = uuid.New()

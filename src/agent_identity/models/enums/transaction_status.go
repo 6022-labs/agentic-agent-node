@@ -25,8 +25,11 @@ func GetAllTransactionStatuses() TransactionStatusList {
 	}
 }
 
-func (s TransactionStatus) String() string {
-	return string(s)
+func (s *TransactionStatus) String() string {
+	if s == nil {
+		return ""
+	}
+	return string(*s)
 }
 
 func (l TransactionStatusList) String() string {

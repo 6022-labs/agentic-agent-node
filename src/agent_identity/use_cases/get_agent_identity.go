@@ -9,19 +9,19 @@ import (
 )
 
 type GetAgentIdentity struct {
-	agentRepository repositories.AgentRepositoryInterface
-	stateRepository repositories.AgentRegistrationStateRepositoryInterface
+	agentRepository                  repositories.AgentRepositoryInterface
+	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 }
 
 func NewGetAgentIdentity(
 	agentRepository repositories.AgentRepositoryInterface,
-	stateRepository repositories.AgentRegistrationStateRepositoryInterface,
+	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *GetAgentIdentity {
-	return &GetAgentIdentity{agentRepository: agentRepository, stateRepository: stateRepository}
+	return &GetAgentIdentity{agentRepository: agentRepository, agentRegistrationStateRepository: agentRegistrationStateRepository}
 }
 
 func (u *GetAgentIdentity) Execute(ctx context.Context) (*responses.GetAgentIdentityResponse, error) {
-	state, err := u.stateRepository.Get(ctx)
+	state, err := u.agentRegistrationStateRepository.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("identity_lookup_failed", err.Error())
 	}

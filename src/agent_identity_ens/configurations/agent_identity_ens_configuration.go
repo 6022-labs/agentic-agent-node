@@ -7,13 +7,10 @@ import (
 	"go.uber.org/dig"
 )
 
-// AddAgentIdentityEnsConfiguration registers the boot-time ENS writer
-// (AgentEnsRegistryRequester) for the agent's runtime `url`.
+// AddAgentIdentityEnsConfiguration registers the on-chain ENS translator
+// (AgentEnsRegistryRequester); the runtime URL value it publishes is owned by
+// the agent_identity domain.
 func AddAgentIdentityEnsConfiguration(container *dig.Container) {
-	if err := container.Provide(settings.NewAgentIdentityEnsSettings); err != nil {
-		panic(err)
-	}
-
 	if err := container.Provide(settings.NewEnsBlockchainSettings); err != nil {
 		panic(err)
 	}
@@ -24,7 +21,7 @@ func AddAgentIdentityEnsConfiguration(container *dig.Container) {
 
 	if err := container.Provide(
 		services.NewAgentEnsRegistryRequester,
-		dig.As(new(identity_interfaces.EnsRuntimeRecordsPublisherInterface)),
+		dig.As(new(identity_interfaces.EnsRegistrarInterface)),
 	); err != nil {
 		panic(err)
 	}

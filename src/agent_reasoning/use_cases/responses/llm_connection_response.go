@@ -11,13 +11,13 @@ import (
 // LLMConnectionResponse is the wire shape returned by /internal/config/llm.
 // The api key never appears here — it lives only in Vault.
 type LLMConnectionResponse struct {
-	Id          uuid.UUID                              `json:"id"`
-	Platform    reasoning_enums.LLMConnectionPlatform  `json:"platform"`
-	Model       string                                 `json:"model"`
-	BaseUrl     *string                                `json:"baseUrl,omitempty"`
+	Id          uuid.UUID                                `json:"id"`
+	Platform    reasoning_enums.LLMConnectionPlatform    `json:"platform"`
+	Model       string                                   `json:"model"`
+	BaseUrl     *string                                  `json:"baseUrl,omitempty"`
 	SetupStatus reasoning_enums.LLMConnectionSetupStatus `json:"setupStatus"`
-	CreatedAt   time.Time                              `json:"createdAt"`
-	UpdatedAt   time.Time                              `json:"updatedAt"`
+	CreatedAt   time.Time                                `json:"createdAt"`
+	UpdatedAt   time.Time                                `json:"updatedAt"`
 }
 
 func ToLLMConnectionResponse(c *models.LLMConnection) *LLMConnectionResponse {
