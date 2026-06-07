@@ -7,9 +7,9 @@ import (
 	"time"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -43,7 +43,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 
 		baseUrl := "https://api.openai.com/v1"
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.ExternalLLMConnectionPayload{
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalLLMConnectionPayload{
 				Id:          "abc",
 				Platform:    "open-ai",
 				Model:       "gpt-4o",
@@ -117,7 +117,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&runtime_models.ExternalLLMConnectionPayload{
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalLLMConnectionPayload{
 				Id: "abc", Platform: "ollama", Model: "llama3", SetupStatus: "established",
 			}, nil)
 		}

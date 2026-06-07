@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/google/uuid"
 )
 
@@ -20,19 +20,19 @@ func NewHttpMCPConfigClient(client clients.ClientWithResponsesInterface) *HttpMC
 	return &HttpMCPConfigClient{client: client}
 }
 
-func (c *HttpMCPConfigClient) List(ctx context.Context) (*runtime_models.ExternalMCPConnectionListPayload, error) {
+func (c *HttpMCPConfigClient) List(ctx context.Context) (*models.ExternalMCPConnectionListPayload, error) {
 	resp, err := c.client.GetInternalConfigMcpWithResponse(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalMCPConnectionListPayload
+	var payload models.ExternalMCPConnectionListPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Create(ctx context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+func (c *HttpMCPConfigClient) Create(ctx context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -41,26 +41,26 @@ func (c *HttpMCPConfigClient) Create(ctx context.Context, body *runtime_models.E
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalMCPConnectionPayload
+	var payload models.ExternalMCPConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*runtime_models.ExternalMCPConnectionPayload, error) {
+func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*models.ExternalMCPConnectionPayload, error) {
 	resp, err := c.client.GetInternalConfigMcpIdWithResponse(ctx, id.String())
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalMCPConnectionPayload
+	var payload models.ExternalMCPConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *runtime_models.ExternalUpdateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *ru
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalMCPConnectionPayload
+	var payload models.ExternalMCPConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}

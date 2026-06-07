@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 					raw, err := io.ReadAll(reader)
 					assert.NoError(t, err)
 
-					var sent runtime_models.ExternalCreateMCPConnectionPayload
+					var sent models.ExternalCreateMCPConnectionPayload
 					assert.NoError(t, json.Unmarshal(raw, &sent))
 					assert.Equal(t, "tools", sent.Name)
 					assert.Equal(t, "Bearer x", sent.HeaderAuth["Authorization"])
@@ -62,7 +62,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 			suite := WhenCreatingMCPConfigOverHttpBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.Create(context.Background(), &runtime_models.ExternalCreateMCPConnectionPayload{
+			payload, err := suite.sut.Create(context.Background(), &models.ExternalCreateMCPConnectionPayload{
 				Name:       "tools",
 				Url:        "https://mcp.example",
 				HeaderAuth: map[string]string{"Authorization": "Bearer x"},
@@ -92,7 +92,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 			suite := WhenCreatingMCPConfigOverHttpBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Create(context.Background(), &runtime_models.ExternalCreateMCPConnectionPayload{
+			_, err := suite.sut.Create(context.Background(), &models.ExternalCreateMCPConnectionPayload{
 				Name:       "tools",
 				Url:        "https://mcp.example",
 				HeaderAuth: map[string]string{"Authorization": "Bearer x"},

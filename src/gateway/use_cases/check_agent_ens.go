@@ -3,9 +3,9 @@ package use_cases
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type CheckAgentEns struct {
@@ -24,7 +24,7 @@ func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationSta
 	return u.toResponse(payload), nil
 }
 
-func (u *CheckAgentEns) toResponse(p *runtime_models.ExternalRegistrationStatusPayload) *responses.RegistrationStatusResponse {
+func (u *CheckAgentEns) toResponse(p *models.ExternalRegistrationStatusPayload) *responses.RegistrationStatusResponse {
 	return &responses.RegistrationStatusResponse{
 		MintStatus: p.MintStatus,
 		EnsStatus:  p.EnsStatus,

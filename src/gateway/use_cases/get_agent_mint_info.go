@@ -3,9 +3,9 @@ package use_cases
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type GetAgentMintInfo struct {
@@ -24,7 +24,7 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 	return u.toResponse(payload), nil
 }
 
-func (u *GetAgentMintInfo) toResponse(p *runtime_models.ExternalMintInfoPayload) *responses.MintInfoResponse {
+func (u *GetAgentMintInfo) toResponse(p *models.ExternalMintInfoPayload) *responses.MintInfoResponse {
 	return &responses.MintInfoResponse{
 		CollectionAddress: p.CollectionAddress,
 		To:                p.To,
@@ -39,7 +39,7 @@ func (u *GetAgentMintInfo) toResponse(p *runtime_models.ExternalMintInfoPayload)
 	}
 }
 
-func (u *GetAgentMintInfo) toKeyValues(in []runtime_models.ExternalKeyValue) []responses.KeyValue {
+func (u *GetAgentMintInfo) toKeyValues(in []models.ExternalKeyValue) []responses.KeyValue {
 	out := make([]responses.KeyValue, 0, len(in))
 	for _, kv := range in {
 		out = append(out, responses.KeyValue{Key: kv.Key, Value: kv.Value})

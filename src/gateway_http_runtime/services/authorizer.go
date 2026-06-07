@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,7 +23,7 @@ func NewHttpAuthorizer(client clients.ClientWithResponsesInterface) *HttpAuthori
 }
 
 func (a *HttpAuthorizer) IsAuthorized(ctx context.Context, address common.Address) (bool, error) {
-	body, err := json.Marshal(runtime_models.ExternalAuthorizePayload{Address: address.Hex()})
+	body, err := json.Marshal(models.ExternalAuthorizePayload{Address: address.Hex()})
 	if err != nil {
 		return false, err
 	}
@@ -31,7 +31,7 @@ func (a *HttpAuthorizer) IsAuthorized(ctx context.Context, address common.Addres
 	if err != nil {
 		return false, err
 	}
-	var payload runtime_models.ExternalAuthorizeResultPayload
+	var payload models.ExternalAuthorizeResultPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return false, err
 	}

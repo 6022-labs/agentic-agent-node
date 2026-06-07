@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type CreateMcpConnection struct {
@@ -19,7 +19,7 @@ func NewCreateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 }
 
 func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
-	payload, err := u.client.Create(ctx, &runtime_models.ExternalCreateMCPConnectionPayload{
+	payload, err := u.client.Create(ctx, &models.ExternalCreateMCPConnectionPayload{
 		Name:       request.Name,
 		Url:        request.Url,
 		HeaderAuth: u.toHeaderAuthMap(request),
@@ -37,7 +37,7 @@ func (u *CreateMcpConnection) toHeaderAuthMap(request *requests.CreateMcpConnect
 	return map[string]string{request.AuthHeaderName: request.AuthHeaderValue}
 }
 
-func (u *CreateMcpConnection) toResponse(p *runtime_models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {
+func (u *CreateMcpConnection) toResponse(p *models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {
 	return &responses.McpConnectionResponse{
 		Id:             p.Id,
 		Name:           p.Name,

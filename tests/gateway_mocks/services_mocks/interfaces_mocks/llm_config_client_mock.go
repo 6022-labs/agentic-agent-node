@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
+	models "github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gomock "go.uber.org/mock/gomock"
 )
 

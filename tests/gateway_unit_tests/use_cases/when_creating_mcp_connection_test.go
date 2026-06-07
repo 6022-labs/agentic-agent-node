@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -48,11 +48,11 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 				assert.Equal(t, "github", body.Name)
 				assert.Equal(t, "https://mcp.github.example", body.Url)
 				assert.Equal(t, map[string]string{"Authorization": "Bearer abc"}, body.HeaderAuth)
-				return &runtime_models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization"}}, nil
+				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization"}}, nil
 			})
 		}
 
@@ -74,9 +74,9 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalCreateMCPConnectionPayload) (*runtime_models.ExternalMCPConnectionPayload, error) {
+			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 				assert.Nil(t, body.HeaderAuth)
-				return &runtime_models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
+				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
 			})
 		}
 

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type CreateResponseInterface interface {
@@ -26,12 +26,12 @@ func NewCreateResponse(client interfaces.ResponseClientInterface) *CreateRespons
 // Tools, Options, and ForceConclusion are swarm-side concerns — the
 // orchestrator owns them. Agent-node only forwards inputs.
 func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
-	payload := &runtime_models.ExternalCreateResponsePayload{
+	payload := &models.ExternalCreateResponsePayload{
 		ConversationId: request.ConversationId,
-		Inputs:         make([]runtime_models.ExternalCreateResponseInputPayload, 0, len(request.Input)),
+		Inputs:         make([]models.ExternalCreateResponseInputPayload, 0, len(request.Input)),
 	}
 	for _, m := range request.Input {
-		payload.Inputs = append(payload.Inputs, runtime_models.ExternalCreateResponseInputPayload{
+		payload.Inputs = append(payload.Inputs, models.ExternalCreateResponseInputPayload{
 			Role:      string(m.Role),
 			Content:   m.Content,
 			Timestamp: m.Timestamp,

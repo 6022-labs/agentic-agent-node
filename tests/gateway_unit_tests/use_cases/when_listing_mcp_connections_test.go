@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -38,8 +38,8 @@ func TestWhenListingMcpConnections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMcpConnectionsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any()).Return(&runtime_models.ExternalMCPConnectionListPayload{
-				Connections: []runtime_models.ExternalMCPConnectionPayload{
+			suite.mockClient.EXPECT().List(gomock.Any()).Return(&models.ExternalMCPConnectionListPayload{
+				Connections: []models.ExternalMCPConnectionPayload{
 					{Id: "a", Name: "alpha", Url: "https://a", HeaderAuthKeys: []string{"Authorization"}},
 					{Id: "b", Name: "beta", Url: "https://b", HeaderAuthKeys: []string{}},
 				},

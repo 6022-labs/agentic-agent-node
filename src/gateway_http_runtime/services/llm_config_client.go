@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type HttpLLMConfigClient struct {
@@ -19,19 +19,19 @@ func NewHttpLLMConfigClient(client clients.ClientWithResponsesInterface) *HttpLL
 	return &HttpLLMConfigClient{client: client}
 }
 
-func (c *HttpLLMConfigClient) Get(ctx context.Context) (*runtime_models.ExternalLLMConnectionPayload, error) {
+func (c *HttpLLMConfigClient) Get(ctx context.Context) (*models.ExternalLLMConnectionPayload, error) {
 	resp, err := c.client.GetInternalConfigLlmWithResponse(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalLLMConnectionPayload
+	var payload models.ExternalLLMConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrLLMConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil
 }
 
-func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error) {
+func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *runtime_models.Ex
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalLLMConnectionPayload
+	var payload models.ExternalLLMConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}

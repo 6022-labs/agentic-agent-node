@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
 	"github.com/google/uuid"
@@ -48,7 +48,7 @@ func TestWhenUpdatingMCPConfigOverHttp(t *testing.T) {
 					raw, err := io.ReadAll(reader)
 					assert.NoError(t, err)
 
-					var sent runtime_models.ExternalUpdateMCPConnectionPayload
+					var sent models.ExternalUpdateMCPConnectionPayload
 					assert.NoError(t, json.Unmarshal(raw, &sent))
 					assert.Equal(t, "renamed", sent.Name)
 
@@ -65,7 +65,7 @@ func TestWhenUpdatingMCPConfigOverHttp(t *testing.T) {
 			suite := WhenUpdatingMCPConfigOverHttpBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.Update(context.Background(), id, &runtime_models.ExternalUpdateMCPConnectionPayload{
+			payload, err := suite.sut.Update(context.Background(), id, &models.ExternalUpdateMCPConnectionPayload{
 				Name: "renamed",
 				Url:  "https://mcp.example",
 			})
@@ -95,7 +95,7 @@ func TestWhenUpdatingMCPConfigOverHttp(t *testing.T) {
 			suite := WhenUpdatingMCPConfigOverHttpBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Update(context.Background(), id, &runtime_models.ExternalUpdateMCPConnectionPayload{
+			_, err := suite.sut.Update(context.Background(), id, &models.ExternalUpdateMCPConnectionPayload{
 				Name: "renamed",
 				Url:  "https://mcp.example",
 			})

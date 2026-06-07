@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type HttpResponseClient struct {
@@ -18,7 +18,7 @@ func NewHttpResponseClient(client clients.ClientWithResponsesInterface) *HttpRes
 	return &HttpResponseClient{client: client}
 }
 
-func (c *HttpResponseClient) Create(ctx context.Context, body *runtime_models.ExternalCreateResponsePayload) (*runtime_models.ExternalCreateResponseResultPayload, error) {
+func (c *HttpResponseClient) Create(ctx context.Context, body *models.ExternalCreateResponsePayload) (*models.ExternalCreateResponseResultPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (c *HttpResponseClient) Create(ctx context.Context, body *runtime_models.Ex
 	if err != nil {
 		return nil, err
 	}
-	var payload runtime_models.ExternalCreateResponseResultPayload
+	var payload models.ExternalCreateResponseResultPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}

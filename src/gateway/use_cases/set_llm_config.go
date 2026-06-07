@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type SetLlmConfig struct {
@@ -20,7 +20,7 @@ func NewSetLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *SetLlm
 }
 
 func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) (*responses.GetLlmConfigResponse, error) {
-	payload, err := u.client.Setup(ctx, &runtime_models.ExternalSetupLLMConnectionPayload{
+	payload, err := u.client.Setup(ctx, &models.ExternalSetupLLMConnectionPayload{
 		Platform: request.Provider,
 		Model:    request.Model,
 		BaseUrl:  u.toBaseUrlPtr(request.BaseUrl),
@@ -40,7 +40,7 @@ func (u *SetLlmConfig) toBaseUrlPtr(s string) *string {
 	return &trimmed
 }
 
-func (u *SetLlmConfig) toResponse(p *runtime_models.ExternalLLMConnectionPayload) *responses.GetLlmConfigResponse {
+func (u *SetLlmConfig) toResponse(p *models.ExternalLLMConnectionPayload) *responses.GetLlmConfigResponse {
 	baseUrl := ""
 	if p.BaseUrl != nil {
 		baseUrl = *p.BaseUrl

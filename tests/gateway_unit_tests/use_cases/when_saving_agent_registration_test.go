@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -34,12 +34,12 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 	t.Run("Given the runtime accepts the draft", func(t *testing.T) {
 		t.Parallel()
 
-		var forwarded *runtime_models.ExternalSaveAgentRegistrationPayload
+		var forwarded *models.ExternalSaveAgentRegistrationPayload
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, body *runtime_models.ExternalSaveAgentRegistrationPayload) (*runtime_models.ExternalAgentRegistrationPayload, error) {
+				func(_ context.Context, body *models.ExternalSaveAgentRegistrationPayload) (*models.ExternalAgentRegistrationPayload, error) {
 					forwarded = body
-					return &runtime_models.ExternalAgentRegistrationPayload{Name: body.Name}, nil
+					return &models.ExternalAgentRegistrationPayload{Name: body.Name}, nil
 				})
 		}
 

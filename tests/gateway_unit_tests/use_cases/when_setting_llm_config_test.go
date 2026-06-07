@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -48,13 +48,13 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error) {
+			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
 				assert.Equal(t, "open-ai", body.Platform)
 				assert.Equal(t, "gpt-4o", body.Model)
 				assert.Equal(t, "sk-secret", body.ApiKey)
 				assert.NotNil(t, body.BaseUrl)
 				assert.Equal(t, "https://api.openai.com/v1", *body.BaseUrl)
-				return &runtime_models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model, BaseUrl: body.BaseUrl, SetupStatus: "established"}, nil
+				return &models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model, BaseUrl: body.BaseUrl, SetupStatus: "established"}, nil
 			})
 		}
 
@@ -76,9 +76,9 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *runtime_models.ExternalSetupLLMConnectionPayload) (*runtime_models.ExternalLLMConnectionPayload, error) {
+			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
 				assert.Nil(t, body.BaseUrl)
-				return &runtime_models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model}, nil
+				return &models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model}, nil
 			})
 		}
 

@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
-	runtime_models "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 )
 
 type HttpAgentRegistrationClient struct {
@@ -21,7 +21,7 @@ func NewHttpAgentRegistrationClient(client clients.ClientWithResponsesInterface)
 	return &HttpAgentRegistrationClient{client: client}
 }
 
-func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *runtime_models.ExternalSaveAgentRegistrationPayload) (*runtime_models.ExternalAgentRegistrationPayload, error) {
+func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *models.ExternalSaveAgentRegistrationPayload) (*models.ExternalAgentRegistrationPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, mapRuntimeError(err)
@@ -30,79 +30,79 @@ func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *runtime_mo
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalAgentRegistrationPayload
+	var payload models.ExternalAgentRegistrationPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) Get(ctx context.Context) (*runtime_models.ExternalAgentRegistrationPayload, error) {
+func (c *HttpAgentRegistrationClient) Get(ctx context.Context) (*models.ExternalAgentRegistrationPayload, error) {
 	resp, err := c.client.GetInternalAgentRegistrationWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalAgentRegistrationPayload
+	var payload models.ExternalAgentRegistrationPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) MintInfo(ctx context.Context) (*runtime_models.ExternalMintInfoPayload, error) {
+func (c *HttpAgentRegistrationClient) MintInfo(ctx context.Context) (*models.ExternalMintInfoPayload, error) {
 	resp, err := c.client.GetInternalAgentRegistrationMintInfoWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalMintInfoPayload
+	var payload models.ExternalMintInfoPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) CheckMint(ctx context.Context) (*runtime_models.ExternalRegistrationStatusPayload, error) {
+func (c *HttpAgentRegistrationClient) CheckMint(ctx context.Context) (*models.ExternalRegistrationStatusPayload, error) {
 	resp, err := c.client.PostInternalAgentRegistrationMintCheckWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalRegistrationStatusPayload
+	var payload models.ExternalRegistrationStatusPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) EnsInfo(ctx context.Context) (*runtime_models.ExternalEnsInfoPayload, error) {
+func (c *HttpAgentRegistrationClient) EnsInfo(ctx context.Context) (*models.ExternalEnsInfoPayload, error) {
 	resp, err := c.client.GetInternalAgentRegistrationEnsInfoWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalEnsInfoPayload
+	var payload models.ExternalEnsInfoPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) CheckEns(ctx context.Context) (*runtime_models.ExternalRegistrationStatusPayload, error) {
+func (c *HttpAgentRegistrationClient) CheckEns(ctx context.Context) (*models.ExternalRegistrationStatusPayload, error) {
 	resp, err := c.client.PostInternalAgentRegistrationEnsCheckWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalRegistrationStatusPayload
+	var payload models.ExternalRegistrationStatusPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) Self(ctx context.Context) (*runtime_models.ExternalRegistrationStatusPayload, error) {
+func (c *HttpAgentRegistrationClient) Self(ctx context.Context) (*models.ExternalRegistrationStatusPayload, error) {
 	resp, err := c.client.PostInternalAgentRegistrationSelfWithResponse(ctx)
 	if err != nil {
 		return nil, mapRuntimeError(err)
 	}
-	var payload runtime_models.ExternalRegistrationStatusPayload
+	var payload models.ExternalRegistrationStatusPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, mapRuntimeError(err)
 	}

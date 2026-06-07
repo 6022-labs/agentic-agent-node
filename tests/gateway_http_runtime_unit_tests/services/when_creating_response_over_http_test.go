@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
 	"github.com/stretchr/testify/assert"
