@@ -250,6 +250,299 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/config/llm": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal get LLM connection",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.LLMConnectionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "get_llm_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal setup LLM connection",
+                "parameters": [
+                    {
+                        "description": "LLM connection",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SetupLLMConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.LLMConnectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "setup_llm_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete LLM connection",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "delete_llm_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/mcp": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal list MCP connections",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MCPConnectionListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "list_mcp_connections_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal create MCP connection",
+                "parameters": [
+                    {
+                        "description": "MCP connection",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CreateMCPConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MCPConnectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "create_mcp_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/mcp/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal get MCP connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "connection id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MCPConnectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "get_mcp_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update MCP connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "connection id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "MCP connection",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateMCPConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MCPConnectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "update_mcp_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete MCP connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "connection id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "delete_mcp_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/conversations/{conversationId}/messages": {
             "get": {
                 "produces": [
@@ -449,6 +742,49 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "enums.LLMConnectionPlatform": {
+            "type": "string",
+            "enum": [
+                "x",
+                "mistral",
+                "open-ai",
+                "libert-ai",
+                "ollama",
+                "deepseek",
+                "anthropic",
+                "amazon-bedrock"
+            ],
+            "x-enum-varnames": [
+                "LLMConnectionPlatformX",
+                "LLMConnectionPlatformMistral",
+                "LLMConnectionPlatformOpenAI",
+                "LLMConnectionPlatformLibertAI",
+                "LLMConnectionPlatformOllama",
+                "LLMConnectionPlatformDeepseek",
+                "LLMConnectionPlatformAnthropic",
+                "LLMConnectionPlatformAmazonBedrock"
+            ]
+        },
+        "enums.LLMConnectionSetupStatus": {
+            "type": "string",
+            "enum": [
+                "established"
+            ],
+            "x-enum-varnames": [
+                "LLMConnectionSetupStatusEstablished"
+            ]
+        },
+        "errors.NotFoundError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "errors.ValidationError": {
             "type": "object",
             "properties": {
@@ -493,6 +829,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "requests.CreateMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -553,6 +906,40 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "requests.SetupLLMConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
+                    "type": "string"
+                },
+                "baseUrl": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "platform": {
+                    "$ref": "#/definitions/enums.LLMConnectionPlatform"
+                }
+            }
+        },
+        "requests.UpdateMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }
@@ -710,6 +1097,32 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.LLMConnectionResponse": {
+            "type": "object",
+            "properties": {
+                "baseUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "platform": {
+                    "$ref": "#/definitions/enums.LLMConnectionPlatform"
+                },
+                "setupStatus": {
+                    "$ref": "#/definitions/enums.LLMConnectionSetupStatus"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.ListConversationMessagesResponse": {
             "type": "object",
             "properties": {
@@ -718,6 +1131,43 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/responses.ConversationMessage"
                     }
+                }
+            }
+        },
+        "responses.MCPConnectionListResponse": {
+            "type": "object",
+            "properties": {
+                "connections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.MCPConnectionResponse"
+                    }
+                }
+            }
+        },
+        "responses.MCPConnectionResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "headerAuthKeys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

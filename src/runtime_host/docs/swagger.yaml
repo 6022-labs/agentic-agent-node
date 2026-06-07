@@ -1,5 +1,38 @@
 basePath: /
 definitions:
+  enums.LLMConnectionPlatform:
+    enum:
+    - x
+    - mistral
+    - open-ai
+    - libert-ai
+    - ollama
+    - deepseek
+    - anthropic
+    - amazon-bedrock
+    type: string
+    x-enum-varnames:
+    - LLMConnectionPlatformX
+    - LLMConnectionPlatformMistral
+    - LLMConnectionPlatformOpenAI
+    - LLMConnectionPlatformLibertAI
+    - LLMConnectionPlatformOllama
+    - LLMConnectionPlatformDeepseek
+    - LLMConnectionPlatformAnthropic
+    - LLMConnectionPlatformAmazonBedrock
+  enums.LLMConnectionSetupStatus:
+    enum:
+    - established
+    type: string
+    x-enum-varnames:
+    - LLMConnectionSetupStatusEstablished
+  errors.NotFoundError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
   errors.ValidationError:
     properties:
       field:
@@ -29,6 +62,17 @@ definitions:
       role:
         type: string
       timestamp:
+        type: string
+    type: object
+  requests.CreateMCPConnectionRequest:
+    properties:
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
         type: string
     type: object
   requests.CreateResponseRequest:
@@ -68,6 +112,28 @@ definitions:
       owner:
         type: string
       role:
+        type: string
+    type: object
+  requests.SetupLLMConnectionRequest:
+    properties:
+      apiKey:
+        type: string
+      baseUrl:
+        type: string
+      model:
+        type: string
+      platform:
+        $ref: '#/definitions/enums.LLMConnectionPlatform'
+    type: object
+  requests.UpdateMCPConnectionRequest:
+    properties:
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
         type: string
     type: object
   responses.AgentRegistrationResponse:
@@ -169,12 +235,53 @@ definitions:
       value:
         type: string
     type: object
+  responses.LLMConnectionResponse:
+    properties:
+      baseUrl:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      model:
+        type: string
+      platform:
+        $ref: '#/definitions/enums.LLMConnectionPlatform'
+      setupStatus:
+        $ref: '#/definitions/enums.LLMConnectionSetupStatus'
+      updatedAt:
+        type: string
+    type: object
   responses.ListConversationMessagesResponse:
     properties:
       messages:
         items:
           $ref: '#/definitions/responses.ConversationMessage'
         type: array
+    type: object
+  responses.MCPConnectionListResponse:
+    properties:
+      connections:
+        items:
+          $ref: '#/definitions/responses.MCPConnectionResponse'
+        type: array
+    type: object
+  responses.MCPConnectionResponse:
+    properties:
+      createdAt:
+        type: string
+      headerAuthKeys:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+      url:
+        type: string
     type: object
   responses.MintInfoResponse:
     properties:
@@ -380,6 +487,197 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal authorize
+      tags:
+      - Internal
+  /internal/config/llm:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: delete_llm_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete LLM connection
+      tags:
+      - Internal
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.LLMConnectionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: get_llm_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal get LLM connection
+      tags:
+      - Internal
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: LLM connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetupLLMConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.LLMConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: setup_llm_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal setup LLM connection
+      tags:
+      - Internal
+  /internal/config/mcp:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.MCPConnectionListResponse'
+        "500":
+          description: list_mcp_connections_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list MCP connections
+      tags:
+      - Internal
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: MCP connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateMCPConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.MCPConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: create_mcp_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal create MCP connection
+      tags:
+      - Internal
+  /internal/config/mcp/{id}:
+    delete:
+      parameters:
+      - description: connection id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: delete_mcp_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete MCP connection
+      tags:
+      - Internal
+    get:
+      parameters:
+      - description: connection id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.MCPConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: get_mcp_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal get MCP connection
+      tags:
+      - Internal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: connection id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: MCP connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateMCPConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.MCPConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: update_mcp_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal update MCP connection
       tags:
       - Internal
   /internal/conversations/{conversationId}/messages:
