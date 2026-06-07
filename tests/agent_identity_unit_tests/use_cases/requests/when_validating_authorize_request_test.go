@@ -15,6 +15,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: "0x1111111111111111111111111111111111111111"}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -25,6 +27,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: "  0xAbCdEf0123456789abcdef0123456789ABCDEF01  "}
 
 		t.Run("Should trim and accept it", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 			assert.Equal(t, "0xAbCdEf0123456789abcdef0123456789ABCDEF01", req.Address)
@@ -36,6 +40,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: ""}
 
 		t.Run("Should reject with a validation error on the address field", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "address")
@@ -47,6 +53,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: "1111111111111111111111111111111111111111"}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "address")
@@ -58,6 +66,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: "0x1234"}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "address")
@@ -69,6 +79,8 @@ func TestWhenValidatingAuthorizeRequest(t *testing.T) {
 		req := &requests.AuthorizeRequest{Address: "0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "address")

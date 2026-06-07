@@ -16,19 +16,19 @@ import (
 type WhenPublishingEnsRuntimeRecordsTestingSuite struct {
 	sut *use_cases.PublishEnsRuntimeRecords
 
-	mockPublisher *identity_mocks.MockEnsPublisherInterface
+	mockEnsPublisher *identity_mocks.MockEnsPublisherInterface
 }
 
 func WhenPublishingEnsRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingEnsRuntimeRecordsTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockPublisher := identity_mocks.NewMockEnsPublisherInterface(mockController)
+	mockEnsPublisher := identity_mocks.NewMockEnsPublisherInterface(mockController)
 
-	sut := use_cases.NewPublishEnsRuntimeRecords(mockPublisher)
+	sut := use_cases.NewPublishEnsRuntimeRecords(mockEnsPublisher)
 
 	return &WhenPublishingEnsRuntimeRecordsTestingSuite{
-		sut:           sut,
-		mockPublisher: mockPublisher,
+		sut:              sut,
+		mockEnsPublisher: mockEnsPublisher,
 	}
 }
 
@@ -39,7 +39,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
-			suite.mockPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
 		}
 
 		t.Run("Should return NoContent", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
-			suite.mockPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(common_interfaces.ErrIdentityNotFound)
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(common_interfaces.ErrIdentityNotFound)
 		}
 
 		t.Run("Should return Conflict with identity_not_found", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
-			suite.mockPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(errors.New("ens registry down"))
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(errors.New("ens registry down"))
 		}
 
 		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {

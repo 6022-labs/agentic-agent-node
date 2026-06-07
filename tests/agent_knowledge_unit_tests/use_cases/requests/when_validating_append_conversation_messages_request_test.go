@@ -24,6 +24,8 @@ func TestWhenValidatingAppendConversationMessagesRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -34,6 +36,8 @@ func TestWhenValidatingAppendConversationMessagesRequest(t *testing.T) {
 		req := &requests.AppendConversationMessagesRequest{Messages: nil}
 
 		t.Run("Should reject with a validation error on the messages field", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "messages")

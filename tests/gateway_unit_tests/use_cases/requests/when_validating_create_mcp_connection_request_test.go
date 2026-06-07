@@ -18,6 +18,7 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -33,6 +34,7 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -43,6 +45,7 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 		req := &requests.CreateMcpConnectionRequest{Name: "  ", Url: "https://mcp.example.com"}
 
 		t.Run("Should reject with a validation error on name", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "name")
@@ -54,6 +57,7 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 		req := &requests.CreateMcpConnectionRequest{Name: "search", Url: ""}
 
 		t.Run("Should reject with a validation error on url", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "url")
@@ -70,6 +74,7 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject with a validation error on authHeaderValue", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "authHeaderValue")

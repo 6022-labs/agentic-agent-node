@@ -40,10 +40,13 @@ func TestWhenListingConversationMessages(t *testing.T) {
 	t.Run("Given an empty conversationId", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {}
+
 		t.Run("Should return nil without touching the repository", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
 
 			res, err := suite.sut.List(context.Background(), "   ")
 

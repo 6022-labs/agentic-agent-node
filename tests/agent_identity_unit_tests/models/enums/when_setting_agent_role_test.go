@@ -15,6 +15,8 @@ func TestWhenSettingAgentRole(t *testing.T) {
 		var role enums.AgentRole
 
 		t.Run("Should parse and assign it", func(t *testing.T) {
+			t.Parallel()
+
 			err := role.Set("expert")
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AgentRoleExpert, role)
@@ -26,6 +28,8 @@ func TestWhenSettingAgentRole(t *testing.T) {
 		var role enums.AgentRole
 
 		t.Run("Should normalize and assign it", func(t *testing.T) {
+			t.Parallel()
+
 			err := role.Set("FaCiLiTaToR")
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AgentRoleFacilitator, role)
@@ -37,6 +41,8 @@ func TestWhenSettingAgentRole(t *testing.T) {
 		var role enums.AgentRole
 
 		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
+			t.Parallel()
+
 			err := role.Set("wizard")
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "wizard")
@@ -48,6 +54,8 @@ func TestWhenSettingAgentRole(t *testing.T) {
 		roles := enums.GetAllAgentRoles()
 
 		t.Run("Should contain every known role and exclude unknowns", func(t *testing.T) {
+			t.Parallel()
+
 			assert.True(t, roles.Contains(enums.AgentRoleClone))
 			assert.True(t, roles.Contains(enums.AgentRoleHuman))
 			assert.True(t, roles.Contains(enums.AgentRoleExpert))

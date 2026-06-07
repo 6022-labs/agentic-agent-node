@@ -36,6 +36,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req := validCreateResponseRequest()
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -47,6 +48,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.ConversationId = "   "
 
 		t.Run("Should reject with a validation error on conversationId", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "conversationId")
@@ -59,6 +61,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Prompt = ""
 
 		t.Run("Should reject with a validation error on prompt", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "prompt")
@@ -71,6 +74,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Platform = "telepathy"
 
 		t.Run("Should fall back to ConversationPlatformNone without erroring", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 			assert.Equal(t, enums.ConversationPlatformNone, req.Platform)
@@ -83,6 +87,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Input[0].Id = ""
 
 		t.Run("Should reject with a validation error referencing the index", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "input.id")
@@ -96,6 +101,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Input[0].Content = "  "
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "input.content")
@@ -108,6 +114,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Input[0].Timestamp = time.Time{}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "input.timestamp")
@@ -120,6 +127,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Input[0].Role = "wizard"
 
 		t.Run("Should reject and list the allowed roles", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "input.role")
@@ -132,6 +140,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req.Tools = []*requests.InputToolRequest{{Name: "  "}}
 
 		t.Run("Should reject with a validation error on tools.name", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "tools.name")
@@ -147,6 +156,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}}
 
 		t.Run("Should reject with a validation error on tools.endpoint.url", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "tools.endpoint.url")

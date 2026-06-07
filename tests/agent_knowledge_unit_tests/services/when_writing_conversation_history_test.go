@@ -17,22 +17,22 @@ import (
 type WhenWritingConversationHistoryTestingSuite struct {
 	sut *services.ConversationHistory
 
-	mockListService   *interfaces_mocks.MockListConversationMessagesInterface
-	mockAppendService *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockListConversationMessages   *interfaces_mocks.MockListConversationMessagesInterface
+	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
 }
 
 func WhenWritingConversationHistoryBeforeEach(t *testing.T) *WhenWritingConversationHistoryTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockListService := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
-	mockAppendService := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
+	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
 
-	sut := services.NewConversationHistory(mockListService, mockAppendService)
+	sut := services.NewConversationHistory(mockListConversationMessages, mockAppendConversationMessages)
 
 	return &WhenWritingConversationHistoryTestingSuite{
-		sut:               sut,
-		mockListService:   mockListService,
-		mockAppendService: mockAppendService,
+		sut:                            sut,
+		mockListConversationMessages:   mockListConversationMessages,
+		mockAppendConversationMessages: mockAppendConversationMessages,
 	}
 }
 
@@ -51,7 +51,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
@@ -90,7 +90,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				Return(persisted, nil)
 		}
@@ -117,7 +117,7 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
-			suite.mockAppendService.EXPECT().Append(gomock.Any(),
+			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}

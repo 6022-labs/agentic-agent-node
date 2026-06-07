@@ -43,10 +43,13 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given an empty conversationId", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
+
 		t.Run("Should no-op without touching the repository", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
 
 			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
 			res, err := suite.sut.Append(context.Background(), "   ", []models.ConversationMessage{message})
@@ -59,10 +62,13 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given an empty messages slice", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
+
 		t.Run("Should no-op", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
 
 			res, err := suite.sut.Append(context.Background(), conversationId, nil)
 

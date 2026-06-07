@@ -18,19 +18,19 @@ import (
 type WhenAppendingConversationMessagesTestingSuite struct {
 	sut *use_cases.AppendConversationMessages
 
-	mockService *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
 }
 
 func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockService := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
 
-	sut := use_cases.NewAppendConversationMessages(mockService)
+	sut := use_cases.NewAppendConversationMessages(mockAppendConversationMessages)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
-		sut:         sut,
-		mockService: mockService,
+		sut:                            sut,
+		mockAppendConversationMessages: mockAppendConversationMessages,
 	}
 }
 
@@ -53,7 +53,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(mapped, nil)
+			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(mapped, nil)
 		}
 
 		t.Run("Should return Ok with the persisted rows on the wire", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
+			suite.mockAppendConversationMessages.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {

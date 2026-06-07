@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type WhenRequestingChatCompletingTestingSuite struct {
+type WhenRequestingChatCompletionTestingSuite struct {
 	sut *services.ChatCompletionRequester
 
 	tokenSettings *settings.TokenSettings
@@ -38,7 +38,7 @@ type WhenRequestingChatCompletingTestingSuite struct {
 	mockAmazonBedrockConverseStandardChatCompletionRequester *services_mocks.MockAmazonBedrockConverseStandardChatCompletionRequesterInterface
 }
 
-func WhenRequestingChatCompletionBeforeEach(t *testing.T) *WhenRequestingChatCompletingTestingSuite {
+func WhenRequestingChatCompletionBeforeEach(t *testing.T) *WhenRequestingChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockLlmSecretStorage := reasoning_interfaces_mocks.NewMockLLMSecretStorageInterface(mockController)
@@ -77,7 +77,7 @@ func WhenRequestingChatCompletionBeforeEach(t *testing.T) *WhenRequestingChatCom
 		mockAmazonBedrockConverseStandardChatCompletionRequester,
 	)
 
-	return &WhenRequestingChatCompletingTestingSuite{
+	return &WhenRequestingChatCompletionTestingSuite{
 		sut: sut,
 
 		tokenSettings: tokenSettings,
@@ -110,7 +110,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is LibertAI", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.libertAiSettings.BaseUrl = "http://libertai.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -147,7 +147,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is OpenAI", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.openAiSettings.BaseUrl = "http://openai.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -185,7 +185,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is Ollama", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
 
 			suite.mockOllamaChatMessageStandardChatCompletionRequester.
@@ -221,7 +221,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is Mistral", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.mistralSettings.BaseUrl = "http://mistral.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -258,7 +258,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is DeepSeek", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.deepSeekSettings.BaseUrl = "http://deepseek.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -295,7 +295,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is X", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.xSettings.BaseUrl = "http://x.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -332,7 +332,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is Anthropic", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.anthropicSettings.BaseUrl = "http://anthropic.api"
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
@@ -370,7 +370,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is Amazon Bedrock", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRequestingChatCompletingTestingSuite, llmConnection *models.LLMConnection) {
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
 			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
 
 			suite.mockAmazonBedrockConverseStandardChatCompletionRequester.
@@ -406,6 +406,8 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	t.Run("Given llm connection is not supported", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {}
+
 		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
@@ -415,6 +417,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				WithPlatform("unsupported").
 				WithModel("claude").
 				Build()
+			initSuite(suite, llmConnection)
 
 			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
 			assert.Error(t, err)

@@ -18,19 +18,19 @@ import (
 type WhenListingConversationMessagesTestingSuite struct {
 	sut *use_cases.ListConversationMessages
 
-	mockService *interfaces_mocks.MockListConversationMessagesInterface
+	mockListConversationMessages *interfaces_mocks.MockListConversationMessagesInterface
 }
 
 func WhenListingConversationMessagesBeforeEach(t *testing.T) *WhenListingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockService := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
+	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
 
-	sut := use_cases.NewListConversationMessages(mockService)
+	sut := use_cases.NewListConversationMessages(mockListConversationMessages)
 
 	return &WhenListingConversationMessagesTestingSuite{
-		sut:         sut,
-		mockService: mockService,
+		sut:                          sut,
+		mockListConversationMessages: mockListConversationMessages,
 	}
 }
 
@@ -48,7 +48,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the rows on the wire", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockService.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
+			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return InternalError carrying the service message", func(t *testing.T) {

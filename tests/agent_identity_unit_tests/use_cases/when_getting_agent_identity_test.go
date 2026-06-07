@@ -17,22 +17,22 @@ import (
 type WhenGettingAgentIdentityTestingSuite struct {
 	sut *use_cases.GetAgentIdentity
 
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
-	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 }
 
 func WhenGettingAgentIdentityBeforeEach(t *testing.T) *WhenGettingAgentIdentityTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 
-	sut := use_cases.NewGetAgentIdentity(mockAgentRepository, mockStateRepository)
+	sut := use_cases.NewGetAgentIdentity(mockAgentRepository, mockAgentRegistrationStateRepository)
 
 	return &WhenGettingAgentIdentityTestingSuite{
-		sut:                 sut,
-		mockAgentRepository: mockAgentRepository,
-		mockStateRepository: mockStateRepository,
+		sut:                                  sut,
+		mockAgentRepository:                  mockAgentRepository,
+		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 	}
 }
 
@@ -51,7 +51,7 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 				WithCollectionTokenId(42).
 				WithName("Alice").
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
@@ -74,7 +74,7 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound with identity_not_found", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().
 				WithMintStatus(identity_enums.TransactionStatusSubmitted).
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should return NotFound with identity_not_found", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {

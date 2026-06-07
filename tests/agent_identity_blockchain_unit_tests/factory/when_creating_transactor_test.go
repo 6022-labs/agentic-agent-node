@@ -18,19 +18,19 @@ const testPrivateKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d
 type WhenCreatingTransactorTestingSuite struct {
 	sut *factory.TransactorFactory
 
-	mockWalletStorage *interface_mocks.MockWalletCredentialsStorageInterface
+	mockWalletCredentialsStorage *interface_mocks.MockWalletCredentialsStorageInterface
 }
 
 func WhenCreatingTransactorBeforeEach(t *testing.T) *WhenCreatingTransactorTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockWalletStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
+	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
-	sut := factory.NewTransactorFactory(mockWalletStorage)
+	sut := factory.NewTransactorFactory(mockWalletCredentialsStorage)
 
 	return &WhenCreatingTransactorTestingSuite{
-		sut:               sut,
-		mockWalletStorage: mockWalletStorage,
+		sut:                          sut,
+		mockWalletCredentialsStorage: mockWalletCredentialsStorage,
 	}
 }
 
@@ -41,7 +41,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
-			suite.mockWalletStorage.EXPECT().Get(gomock.Any()).
+			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).
 				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: testPrivateKeyHex}, true, nil)
 		}
 
@@ -63,7 +63,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
-			suite.mockWalletStorage.EXPECT().Get(gomock.Any()).Return(nil, false, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(nil, false, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

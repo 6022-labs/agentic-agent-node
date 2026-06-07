@@ -17,25 +17,25 @@ import (
 type WhenReconcilingEnsRegistryTestingSuite struct {
 	sut *services.RegistrationReconciler
 
-	mockCollection      *interface_mocks.MockAgentCollectionRequesterInterface
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
-	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
+	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 }
 
 func WhenReconcilingEnsRegistryBeforeEach(t *testing.T) *WhenReconcilingEnsRegistryTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockCollection := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
+	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 
-	sut := services.NewRegistrationReconciler(mockAgentRepository, mockCollection, mockStateRepository)
+	sut := services.NewRegistrationReconciler(mockAgentRepository, mockAgentCollectionRequester, mockAgentRegistrationStateRepository)
 
 	return &WhenReconcilingEnsRegistryTestingSuite{
-		sut:                 sut,
-		mockCollection:      mockCollection,
-		mockAgentRepository: mockAgentRepository,
-		mockStateRepository: mockStateRepository,
+		sut:                                  sut,
+		mockAgentCollectionRequester:         mockAgentCollectionRequester,
+		mockAgentRepository:                  mockAgentRepository,
+		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 	}
 }
 
@@ -46,7 +46,7 @@ func TestWhenReconcilingEnsRegistry(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingEnsRegistryTestingSuite) {
-			suite.mockStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 					return s, nil
 				})

@@ -16,22 +16,22 @@ import (
 type WhenReadingConversationHistoryTestingSuite struct {
 	sut *services.ConversationHistory
 
-	mockListService   *interfaces_mocks.MockListConversationMessagesInterface
-	mockAppendService *interfaces_mocks.MockAppendConversationMessagesInterface
+	mockListConversationMessages   *interfaces_mocks.MockListConversationMessagesInterface
+	mockAppendConversationMessages *interfaces_mocks.MockAppendConversationMessagesInterface
 }
 
 func WhenReadingConversationHistoryBeforeEach(t *testing.T) *WhenReadingConversationHistoryTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockListService := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
-	mockAppendService := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
+	mockListConversationMessages := interfaces_mocks.NewMockListConversationMessagesInterface(mockController)
+	mockAppendConversationMessages := interfaces_mocks.NewMockAppendConversationMessagesInterface(mockController)
 
-	sut := services.NewConversationHistory(mockListService, mockAppendService)
+	sut := services.NewConversationHistory(mockListConversationMessages, mockAppendConversationMessages)
 
 	return &WhenReadingConversationHistoryTestingSuite{
-		sut:               sut,
-		mockListService:   mockListService,
-		mockAppendService: mockAppendService,
+		sut:                            sut,
+		mockListConversationMessages:   mockListConversationMessages,
+		mockAppendConversationMessages: mockAppendConversationMessages,
 	}
 }
 
@@ -55,7 +55,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return DTOs with only the semantic fields exposed", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
+			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
 		}
 
 		t.Run("Should return an empty DTO slice", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockListService.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
+			suite.mockListConversationMessages.EXPECT().List(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {

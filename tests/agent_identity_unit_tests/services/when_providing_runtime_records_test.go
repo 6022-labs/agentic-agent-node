@@ -25,10 +25,13 @@ func TestWhenProvidingRuntimeRecords(t *testing.T) {
 	t.Run("Given a configured runtime url", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenProvidingRuntimeRecordsTestingSuite) {}
+
 		t.Run("Should return a single url text record carrying it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenProvidingRuntimeRecordsBeforeEach()
+			initSuite(suite)
 
 			records := suite.sut.RuntimeRecords()
 

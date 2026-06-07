@@ -20,31 +20,31 @@ import (
 type WhenSavingAgentRegistrationTestingSuite struct {
 	sut *use_cases.SaveAgentRegistration
 
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
-	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
-	mockManager         *interface_mocks.MockAgentCollectionsManagerRequesterInterface
-	mockCollection      *interface_mocks.MockAgentCollectionRequesterInterface
-	mockWalletStorage   *interface_mocks.MockWalletCredentialsStorageInterface
+	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockAgentCollectionsManagerRequester *interface_mocks.MockAgentCollectionsManagerRequesterInterface
+	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
+	mockWalletCredentialsStorage         *interface_mocks.MockWalletCredentialsStorageInterface
 }
 
 func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistrationTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
-	mockManager := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
-	mockCollection := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
-	mockWalletStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
+	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
+	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockStateRepository, mockManager, mockCollection, mockWalletStorage)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
-		sut:                 sut,
-		mockAgentRepository: mockAgentRepository,
-		mockStateRepository: mockStateRepository,
-		mockManager:         mockManager,
-		mockCollection:      mockCollection,
-		mockWalletStorage:   mockWalletStorage,
+		sut:                                  sut,
+		mockAgentRepository:                  mockAgentRepository,
+		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
+		mockAgentCollectionsManagerRequester: mockAgentCollectionsManagerRequester,
+		mockAgentCollectionRequester:         mockAgentCollectionRequester,
+		mockWalletCredentialsStorage:         mockWalletCredentialsStorage,
 	}
 }
 
@@ -66,14 +66,14 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockManager.EXPECT().IsKnownCollection(gomock.Any()).Return(true, nil)
-			suite.mockWalletStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
-			suite.mockCollection.EXPECT().CollectionName(gomock.Any()).Return("squad", nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection(gomock.Any()).Return(true, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName(gomock.Any()).Return("squad", nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-			suite.mockStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 					return s, nil
 				})
@@ -97,7 +97,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockManager.EXPECT().IsKnownCollection(gomock.Any()).Return(false, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection(gomock.Any()).Return(false, nil)
 		}
 
 		t.Run("Should return a validation error on collectionAddress", func(t *testing.T) {

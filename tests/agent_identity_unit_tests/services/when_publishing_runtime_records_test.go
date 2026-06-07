@@ -92,6 +92,11 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(false, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
+			suite.mockEnsRegistrar.EXPECT().InitRecords(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ common.Address, _ *big.Int, records []identity_interfaces.EnsRecord) error {
+					assert.Equal(t, runtimeRecords, records)
+					return nil
+				})
 		}
 
 		t.Run("Should seed the runtime records via InitRecords", func(t *testing.T) {
@@ -99,12 +104,6 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			suite := WhenPublishingRuntimeRecordsBeforeEach(t)
 			initSuite(suite)
-
-			suite.mockEnsRegistrar.EXPECT().InitRecords(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ common.Address, _ *big.Int, records []identity_interfaces.EnsRecord) error {
-					assert.Equal(t, runtimeRecords, records)
-					return nil
-				})
 
 			err := suite.sut.PublishRuntimeRecords(context.Background())
 
@@ -126,6 +125,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
 			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), "alice", "url").Return("https://old.example.com", nil)
+			suite.mockEnsRegistrar.EXPECT().SetRecord(gomock.Any(), gomock.Any(), gomock.Any(), "url", runtimeUrl).Return(nil)
 		}
 
 		t.Run("Should overwrite it via SetRecord with the current url", func(t *testing.T) {
@@ -133,8 +133,6 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			suite := WhenPublishingRuntimeRecordsBeforeEach(t)
 			initSuite(suite)
-
-			suite.mockEnsRegistrar.EXPECT().SetRecord(gomock.Any(), gomock.Any(), gomock.Any(), "url", runtimeUrl).Return(nil)
 
 			err := suite.sut.PublishRuntimeRecords(context.Background())
 

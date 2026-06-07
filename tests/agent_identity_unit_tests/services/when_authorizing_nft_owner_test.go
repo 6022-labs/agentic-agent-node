@@ -18,26 +18,26 @@ import (
 type WhenAuthorizingNftOwnerTestingSuite struct {
 	sut *services.NftOwnerAuthorizer
 
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
-	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
-	mockCollection      *chain_mocks.MockAgentCollectionRequesterInterface
+	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockAgentCollectionRequester         *chain_mocks.MockAgentCollectionRequesterInterface
 }
 
 func WhenAuthorizingNftOwnerBeforeEach(t *testing.T) *WhenAuthorizingNftOwnerTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
-	mockCollection := chain_mocks.NewMockAgentCollectionRequesterInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentCollectionRequester := chain_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 
-	sut := services.NewNftOwnerAuthorizer(mockAgentRepository, mockStateRepository, mockCollection)
+	sut := services.NewNftOwnerAuthorizer(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionRequester)
 
 	return &WhenAuthorizingNftOwnerTestingSuite{
 		sut: sut,
 
-		mockAgentRepository: mockAgentRepository,
-		mockStateRepository: mockStateRepository,
-		mockCollection:      mockCollection,
+		mockAgentRepository:                  mockAgentRepository,
+		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
+		mockAgentCollectionRequester:         mockAgentCollectionRequester,
 	}
 }
 
@@ -60,7 +60,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().
 				WithMintStatus(identity_enums.TransactionStatusPending).
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should authorize while unclaimed", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return false and propagate the error", func(t *testing.T) {
@@ -104,9 +104,9 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 				WithCollectionAddress(collectionAddr.Hex()).
 				WithCollectionTokenId(42).
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(owner, nil)
+			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(owner, nil)
 		}
 
 		t.Run("Should authorize", func(t *testing.T) {
@@ -130,9 +130,9 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 				WithCollectionAddress(collectionAddr.Hex()).
 				WithCollectionTokenId(42).
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.HexToAddress("0xdeadbeef"), nil)
+			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
 		t.Run("Should reject", func(t *testing.T) {
@@ -156,9 +156,9 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 				WithCollectionAddress(collectionAddr.Hex()).
 				WithCollectionTokenId(42).
 				Build()
-			suite.mockStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(mintedState(), nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockCollection.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.Address{}, errors.New("rpc"))
+			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(collectionAddr, uint64(42)).Return(common.Address{}, errors.New("rpc"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {

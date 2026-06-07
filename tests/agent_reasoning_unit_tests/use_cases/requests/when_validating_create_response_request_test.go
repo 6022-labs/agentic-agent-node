@@ -24,6 +24,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation and trim conversationId", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 			assert.Equal(t, "conv-1", req.ConversationId)
@@ -41,6 +43,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject with a conversationId validation error", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "conversationId")
 		})
@@ -52,6 +56,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		req := &requests.CreateResponseRequest{ConversationId: "conv-1"}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "inputs")
 		})
@@ -68,6 +74,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "inputs.role")
 		})
@@ -84,6 +92,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "inputs.content")
 		})
@@ -100,6 +110,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
+
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "inputs.timestamp")
 		})

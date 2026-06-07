@@ -27,6 +27,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -41,6 +42,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should trim them all", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 			assert.Equal(t, validAddress, req.Address)
@@ -58,6 +60,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject with a validation error on address", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "address")
@@ -73,6 +76,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject with a validation error on signature", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "signature")
@@ -88,6 +92,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "signature")
@@ -103,6 +108,7 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		}
 
 		t.Run("Should reject with a validation error on nonce", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "nonce")

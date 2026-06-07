@@ -19,25 +19,25 @@ import (
 type WhenReconcilingMintTestingSuite struct {
 	sut *services.RegistrationReconciler
 
-	mockCollection      *interface_mocks.MockAgentCollectionRequesterInterface
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
-	mockStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
+	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
+	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 }
 
 func WhenReconcilingMintBeforeEach(t *testing.T) *WhenReconcilingMintTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockCollection := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
+	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 
-	sut := services.NewRegistrationReconciler(mockAgentRepository, mockCollection, mockStateRepository)
+	sut := services.NewRegistrationReconciler(mockAgentRepository, mockAgentCollectionRequester, mockAgentRegistrationStateRepository)
 
 	return &WhenReconcilingMintTestingSuite{
-		sut:                 sut,
-		mockCollection:      mockCollection,
-		mockAgentRepository: mockAgentRepository,
-		mockStateRepository: mockStateRepository,
+		sut:                                  sut,
+		mockAgentCollectionRequester:         mockAgentCollectionRequester,
+		mockAgentRepository:                  mockAgentRepository,
+		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 	}
 }
 
@@ -51,11 +51,11 @@ func TestWhenReconcilingMint(t *testing.T) {
 		nftOwner := common_tests.RandomEthAddress()
 
 		initSuite := func(suite *WhenReconcilingMintTestingSuite) {
-			suite.mockCollection.EXPECT().InformationOf(gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
-			suite.mockCollection.EXPECT().OwnerOf(gomock.Any(), uint64(5)).Return(nftOwner, nil)
+			suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), uint64(5)).Return(nftOwner, nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
-			suite.mockStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 					return s, nil
 				})

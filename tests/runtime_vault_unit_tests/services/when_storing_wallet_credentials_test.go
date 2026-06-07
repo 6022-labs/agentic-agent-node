@@ -43,7 +43,7 @@ func TestWhenStoringWalletCredentials(t *testing.T) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), walletKey).Return(nil, vault_services.ErrSecretNotFound)
 		}
 
-		t.Run("Get should return found=false with no error", func(t *testing.T) {
+		t.Run("Should return found=false with no error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenStoringWalletCredentialsBeforeEach(t)
@@ -67,7 +67,7 @@ func TestWhenStoringWalletCredentials(t *testing.T) {
 			}, nil)
 		}
 
-		t.Run("Get should return the credentials", func(t *testing.T) {
+		t.Run("Should return the credentials", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenStoringWalletCredentialsBeforeEach(t)
@@ -91,7 +91,7 @@ func TestWhenStoringWalletCredentials(t *testing.T) {
 			}, nil)
 		}
 
-		t.Run("Get should error", func(t *testing.T) {
+		t.Run("Should error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenStoringWalletCredentialsBeforeEach(t)
@@ -128,10 +128,13 @@ func TestWhenStoringWalletCredentials(t *testing.T) {
 	t.Run("Given Save is called with empty credentials", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenStoringWalletCredentialsTestingSuite) {}
+
 		t.Run("Should reject without writing", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenStoringWalletCredentialsBeforeEach(t)
+			initSuite(suite)
 
 			err := suite.sut.Save(context.Background(), &identity_interfaces.WalletCredentials{})
 

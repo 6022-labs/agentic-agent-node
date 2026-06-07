@@ -19,6 +19,7 @@ func TestWhenValidatingSetLlmConfigRequest(t *testing.T) {
 		}
 
 		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.NoError(t, err)
 		})
@@ -29,6 +30,7 @@ func TestWhenValidatingSetLlmConfigRequest(t *testing.T) {
 		req := &requests.SetLlmConfigRequest{Provider: "   ", Model: "claude-opus-4-7", ApiKey: "sk-test"}
 
 		t.Run("Should reject with a validation error on provider", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "provider")
@@ -40,6 +42,7 @@ func TestWhenValidatingSetLlmConfigRequest(t *testing.T) {
 		req := &requests.SetLlmConfigRequest{Provider: "anthropic", Model: "", ApiKey: "sk-test"}
 
 		t.Run("Should reject with a validation error on model", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "model")
@@ -51,6 +54,7 @@ func TestWhenValidatingSetLlmConfigRequest(t *testing.T) {
 		req := &requests.SetLlmConfigRequest{Provider: "anthropic", Model: "claude-opus-4-7", ApiKey: ""}
 
 		t.Run("Should reject with a validation error on apiKey", func(t *testing.T) {
+			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "apiKey")

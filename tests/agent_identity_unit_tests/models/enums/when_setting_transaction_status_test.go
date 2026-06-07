@@ -15,6 +15,8 @@ func TestWhenSettingTransactionStatus(t *testing.T) {
 		var status enums.TransactionStatus
 
 		t.Run("Should normalize and assign it", func(t *testing.T) {
+			t.Parallel()
+
 			err := status.Set("Confirmed")
 			assert.NoError(t, err)
 			assert.Equal(t, enums.TransactionStatusConfirmed, status)
@@ -26,6 +28,8 @@ func TestWhenSettingTransactionStatus(t *testing.T) {
 		var status enums.TransactionStatus
 
 		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
+			t.Parallel()
+
 			err := status.Set("published")
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "published")
@@ -37,6 +41,8 @@ func TestWhenSettingTransactionStatus(t *testing.T) {
 		statuses := enums.GetAllTransactionStatuses()
 
 		t.Run("Should contain every known status and exclude unknowns", func(t *testing.T) {
+			t.Parallel()
+
 			assert.True(t, statuses.Contains(enums.TransactionStatusPending))
 			assert.True(t, statuses.Contains(enums.TransactionStatusSubmitted))
 			assert.True(t, statuses.Contains(enums.TransactionStatusConfirmed))
