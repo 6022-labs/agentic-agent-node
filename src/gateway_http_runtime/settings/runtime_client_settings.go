@@ -22,7 +22,7 @@ type runtimeClientSettingsRaw struct {
 
 func NewRuntimeClientSettings(logger *zap.Logger, k *koanf.Koanf) *RuntimeClientSettings {
 	raw := runtimeClientSettingsRaw{
-		BaseUrl:        "http://127.0.0.1:5001",
+		BaseUrl:        "http://127.0.0.1:5400",
 		TimeoutSeconds: 5,
 	}
 	if err := k.Unmarshal(RuntimeClientSettingsKey, &raw); err != nil {
@@ -31,7 +31,7 @@ func NewRuntimeClientSettings(logger *zap.Logger, k *koanf.Koanf) *RuntimeClient
 
 	raw.BaseUrl = strings.TrimSpace(raw.BaseUrl)
 	if len(raw.BaseUrl) == 0 {
-		raw.BaseUrl = "http://127.0.0.1:5001"
+		raw.BaseUrl = "http://127.0.0.1:5400"
 	}
 	if raw.TimeoutSeconds <= 0 {
 		logger.Warn("invalid runtime_client.timeout value, defaulting to 5")

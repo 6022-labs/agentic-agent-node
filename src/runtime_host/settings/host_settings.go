@@ -14,7 +14,7 @@ type HostSettings struct {
 
 func NewHostSettings(logger *zap.Logger, k *koanf.Koanf) *HostSettings {
 	settings := HostSettings{
-		ApiPort:        5001,
+		ApiPort:        5400,
 		BodyLimitBytes: 4 * 1024 * 1024,
 	}
 	if err := k.Unmarshal(HostSettingsKey, &settings); err != nil {
@@ -22,8 +22,8 @@ func NewHostSettings(logger *zap.Logger, k *koanf.Koanf) *HostSettings {
 	}
 
 	if settings.ApiPort <= 0 {
-		logger.Warn("invalid runtime_host.api_port value, defaulting to 5001")
-		settings.ApiPort = 5001
+		logger.Warn("invalid runtime_host.api_port value, defaulting to 5400")
+		settings.ApiPort = 5400
 	}
 	if settings.BodyLimitBytes <= 0 {
 		logger.Warn("invalid runtime_host.body_limit_bytes value, defaulting to 4MB")

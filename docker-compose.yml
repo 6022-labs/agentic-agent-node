@@ -8,10 +8,12 @@ services:
       - "5500:5000"
     environment:
       - GATEWAY_HOST__API_PORT=5000
-      - RUNTIME_HOST__API_PORT=5001
+      - RUNTIME_HOST__API_PORT=5400
       - RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1
-      - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5001
+      - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400
       - RUNTIME_CLIENT__TIMEOUT=5
+      - IPFS__NODE_HTTP_URL=http://agent-node-ipfs:5001
+      - IPFS__BEARER_TOKEN=
       - JWT__SIGNING_KEY=dev-secret
       - JWT__TOKEN_TTL=1800
       - JWT__NONCE_TTL=300
@@ -31,6 +33,27 @@ services:
         condition: service_healthy
       agent-node-vault:
         condition: service_started
+      agent-node-ipfs:
+        condition: service_started
+
+  agent-node-ipfs:
+    image: "ipfs/kubo:v0.32.1"
+    container_name: agent-node-ipfs
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        ipfs init --profile=server 2>/dev/null || true;
+        ipfs config Addresses.API /ip4/0.0.0.0/tcp/5001;
+        exec ipfs daemon --migrate=true
+    ports:
+      - "5001:5001" # RPC API (the runtime talks to this)
+      - "8080:8080" # HTTP gateway
+      - "4001:4001" # libp2p swarm (tcp)
+      - "4001:4001/udp" # libp2p swarm (quic)
+    volumes:
+      - agent-node-ipfs-data:/data/ipfs
+    networks:
+      agent-node-network:
 
   agent-node-db:
     image: "postgres:18-alpine"
@@ -94,3 +117,4 @@ networks:
 volumes:
   agent-node-db-data:
   agent-node-vault-data:
+  agent-node-ipfs-data:

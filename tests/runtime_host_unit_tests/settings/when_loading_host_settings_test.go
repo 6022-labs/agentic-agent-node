@@ -39,12 +39,12 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{}, "."), nil)
 
-		t.Run("Should default api_port to 5001", func(t *testing.T) {
+		t.Run("Should default api_port to 5400", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewHostSettings(zap.NewNop(), k)
 
-			assert.Equal(t, 5001, result.ApiPort)
+			assert.Equal(t, 5400, result.ApiPort)
 		})
 	})
 
