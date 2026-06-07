@@ -543,6 +543,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/conversations": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal list conversations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListConversationsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "list_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/conversations/{conversationId}/messages": {
             "get": {
                 "produces": [
@@ -1033,6 +1058,23 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.ConversationSummary": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "string"
+                },
+                "firstMessageAt": {
+                    "type": "string"
+                },
+                "lastMessageAt": {
+                    "type": "string"
+                },
+                "messageCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "responses.CreateResponseMessage": {
             "type": "object",
             "properties": {
@@ -1130,6 +1172,17 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/responses.ConversationMessage"
+                    }
+                }
+            }
+        },
+        "responses.ListConversationsResponse": {
+            "type": "object",
+            "properties": {
+                "conversations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.ConversationSummary"
                     }
                 }
             }

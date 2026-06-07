@@ -33,7 +33,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalAgentRegistrationPayload"
+                            "$ref": "#/definitions/responses.AgentRegistrationResponse"
                         }
                     },
                     "404": {
@@ -75,7 +75,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalAgentRegistrationPayload"
+                            "$ref": "#/definitions/responses.AgentRegistrationResponse"
                         }
                     },
                     "400": {
@@ -105,7 +105,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalEnsInfoPayload"
+                            "$ref": "#/definitions/responses.EnsInfoResponse"
                         }
                     },
                     "409": {
@@ -135,7 +135,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
                         }
                     }
                 }
@@ -159,7 +159,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalMintInfoPayload"
+                            "$ref": "#/definitions/responses.MintInfoResponse"
                         }
                     }
                 }
@@ -183,7 +183,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
                         }
                     }
                 }
@@ -207,7 +207,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalRegistrationStatusPayload"
+                            "$ref": "#/definitions/responses.RegistrationStatusResponse"
                         }
                     },
                     "404": {
@@ -290,72 +290,6 @@ const docTemplate = `{
                     },
                     "502": {
                         "description": "identity_not_found",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
-        "/config/db": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Config"
-                ],
-                "summary": "Get DB config",
-                "responses": {
-                    "501": {
-                        "description": "Not Implemented",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Config"
-                ],
-                "summary": "Set DB config",
-                "parameters": [
-                    {
-                        "description": "DB config",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.SetDbConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/errors.ValidationError"
-                        }
-                    },
-                    "501": {
-                        "description": "Not Implemented",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -586,6 +520,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/conversations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Conversations"
+                ],
+                "summary": "List conversations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListConversationsResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversations/{conversationId}/messages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Conversations"
+                ],
+                "summary": "List conversation messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Conversation id",
+                        "name": "conversationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListConversationMessagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Liveness probe; serves before bootstrap completes.",
@@ -669,19 +678,6 @@ const docTemplate = `{
                 "ConversationPlatformSlack"
             ]
         },
-        "enums.DbDriver": {
-            "type": "string",
-            "enum": [
-                "postgres",
-                "mysql",
-                "mariadb"
-            ],
-            "x-enum-varnames": [
-                "DbDriverPostgres",
-                "DbDriverMySQL",
-                "DbDriverMariaDB"
-            ]
-        },
         "enums.MessageRole": {
             "type": "string",
             "enum": [
@@ -709,151 +705,6 @@ const docTemplate = `{
         "fiber.Map": {
             "type": "object",
             "additionalProperties": true
-        },
-        "models.ExternalAgentRegistrationPayload": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "cloneOf": {
-                    "type": "integer"
-                },
-                "collectionAddress": {
-                    "type": "string"
-                },
-                "ensDomain": {
-                    "type": "string"
-                },
-                "ensStatus": {
-                    "type": "string"
-                },
-                "images": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "mintStatus": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "owner": {
-                    "type": "string"
-                },
-                "proposalId": {
-                    "type": "integer"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "tokenId": {
-                    "type": "integer"
-                },
-                "walletAddress": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ExternalEnsInfoPayload": {
-            "type": "object",
-            "properties": {
-                "collectionAddress": {
-                    "type": "string"
-                },
-                "records": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExternalKeyValue"
-                    }
-                },
-                "tokenId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.ExternalKeyValue": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ExternalMintInfoPayload": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExternalKeyValue"
-                    }
-                },
-                "cloneOf": {
-                    "type": "integer"
-                },
-                "collectionAddress": {
-                    "type": "string"
-                },
-                "images": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExternalKeyValue"
-                    }
-                },
-                "moderatorCount": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "ownerIsModerator": {
-                    "type": "boolean"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "to": {
-                    "type": "string"
-                },
-                "wallets": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "models.ExternalRegistrationStatusPayload": {
-            "type": "object",
-            "properties": {
-                "ensStatus": {
-                    "type": "string"
-                },
-                "ensTxHash": {
-                    "type": "string"
-                },
-                "mintStatus": {
-                    "type": "string"
-                },
-                "mintTxHash": {
-                    "type": "string"
-                },
-                "proposalId": {
-                    "type": "integer"
-                },
-                "tokenId": {
-                    "type": "integer"
-                }
-            }
         },
         "requests.CreateMcpConnectionRequest": {
             "type": "object",
@@ -1002,32 +853,6 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.SetDbConfigRequest": {
-            "type": "object",
-            "properties": {
-                "database": {
-                    "type": "string"
-                },
-                "driver": {
-                    "$ref": "#/definitions/enums.DbDriver"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "port": {
-                    "type": "integer"
-                },
-                "setup": {
-                    "type": "boolean"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "requests.SetLlmConfigRequest": {
             "type": "object",
             "properties": {
@@ -1060,6 +885,110 @@ const docTemplate = `{
                 },
                 "signature": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.AgentRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "ensDomain": {
+                    "type": "string"
+                },
+                "ensStatus": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "tokenId": {
+                    "type": "integer"
+                },
+                "walletAddress": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ConversationMessage": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "conversationId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ConversationSummary": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "string"
+                },
+                "firstMessageAt": {
+                    "type": "string"
+                },
+                "lastMessageAt": {
+                    "type": "string"
+                },
+                "messageCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "responses.EnsInfoResponse": {
+            "type": "object",
+            "properties": {
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "tokenId": {
+                    "type": "integer"
                 }
             }
         },
@@ -1111,6 +1040,39 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ListConversationMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.ConversationMessage"
+                    }
+                }
+            }
+        },
+        "responses.ListConversationsResponse": {
+            "type": "object",
+            "properties": {
+                "conversations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.ConversationSummary"
+                    }
+                }
+            }
+        },
         "responses.ListMcpConnectionsResponse": {
             "type": "object",
             "properties": {
@@ -1148,6 +1110,50 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.MintInfoResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "cloneOf": {
+                    "type": "integer"
+                },
+                "collectionAddress": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.KeyValue"
+                    }
+                },
+                "moderatorCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerIsModerator": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "wallets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "responses.OutputMessage": {
             "type": "object",
             "properties": {
@@ -1159,6 +1165,29 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.RegistrationStatusResponse": {
+            "type": "object",
+            "properties": {
+                "ensStatus": {
+                    "type": "string"
+                },
+                "ensTxHash": {
+                    "type": "string"
+                },
+                "mintStatus": {
+                    "type": "string"
+                },
+                "mintTxHash": {
+                    "type": "string"
+                },
+                "proposalId": {
+                    "type": "integer"
+                },
+                "tokenId": {
+                    "type": "integer"
                 }
             }
         },

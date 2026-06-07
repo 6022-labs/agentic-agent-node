@@ -24,6 +24,7 @@ func AddAgentKnowledgeConfiguration(container *dig.Container) {
 
 	useCaseProviders := []any{
 		use_cases.NewListConversationMessages,
+		use_cases.NewListConversations,
 		use_cases.NewAppendConversationMessages,
 	}
 	for _, p := range useCaseProviders {

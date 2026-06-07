@@ -9,26 +9,48 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const InternalConversationMessagesEndpoint = "/internal/conversations/:conversationId/messages"
+const (
+	InternalConversationMessagesEndpoint = "/internal/conversations/:conversationId/messages"
+	InternalConversationsEndpoint        = "/internal/conversations"
+)
 
 type ConversationMessagesController struct {
 	appendConversationMessages *use_cases.AppendConversationMessages
 	listConversationMessages   *use_cases.ListConversationMessages
+	listConversations          *use_cases.ListConversations
 }
 
 func NewConversationMessagesController(
 	appendConversationMessages *use_cases.AppendConversationMessages,
 	listConversationMessages *use_cases.ListConversationMessages,
+	listConversations *use_cases.ListConversations,
 ) *ConversationMessagesController {
 	return &ConversationMessagesController{
 		appendConversationMessages: appendConversationMessages,
 		listConversationMessages:   listConversationMessages,
+		listConversations:          listConversations,
 	}
 }
 
 func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
+	app.Get(InternalConversationsEndpoint, c.ListConversations)
 	app.Post(InternalConversationMessagesEndpoint, c.Append)
 	app.Get(InternalConversationMessagesEndpoint, c.List)
+}
+
+// ListConversations returns one summary row per distinct conversation id.
+// @Summary Internal list conversations
+// @Tags Internal
+// @Produce json
+// @Success 200 {object} responses.ListConversationsResponse
+// @Failure 500 {object} fiber.Map "list_failed"
+// @Router /internal/conversations [get]
+func (c *ConversationMessagesController) ListConversations(ctx *fiber.Ctx) error {
+	resp, err := c.listConversations.Execute(ctx.Context())
+	if err != nil {
+		return writeError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // Append adds messages to a conversation transcript.

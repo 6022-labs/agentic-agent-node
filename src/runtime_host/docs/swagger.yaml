@@ -194,6 +194,17 @@ definitions:
       timestamp:
         type: string
     type: object
+  responses.ConversationSummary:
+    properties:
+      conversationId:
+        type: string
+      firstMessageAt:
+        type: string
+      lastMessageAt:
+        type: string
+      messageCount:
+        type: integer
+    type: object
   responses.CreateResponseMessage:
     properties:
       content:
@@ -257,6 +268,13 @@ definitions:
       messages:
         items:
           $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+  responses.ListConversationsResponse:
+    properties:
+      conversations:
+        items:
+          $ref: '#/definitions/responses.ConversationSummary'
         type: array
     type: object
   responses.MCPConnectionListResponse:
@@ -678,6 +696,22 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal update MCP connection
+      tags:
+      - Internal
+  /internal/conversations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationsResponse'
+        "500":
+          description: list_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list conversations
       tags:
       - Internal
   /internal/conversations/{conversationId}/messages:

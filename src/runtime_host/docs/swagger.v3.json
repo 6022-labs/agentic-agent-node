@@ -295,6 +295,23 @@
                 },
                 "type": "object"
             },
+            "responses.ConversationSummary": {
+                "properties": {
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "firstMessageAt": {
+                        "type": "string"
+                    },
+                    "lastMessageAt": {
+                        "type": "string"
+                    },
+                    "messageCount": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "responses.CreateResponseMessage": {
                 "properties": {
                     "content": {
@@ -391,6 +408,18 @@
                     "messages": {
                         "items": {
                             "$ref": "#/components/schemas/responses.ConversationMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListConversationsResponse": {
+                "properties": {
+                    "conversations": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationSummary"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -1194,6 +1223,36 @@
                     }
                 },
                 "summary": "Internal update MCP connection",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/conversations": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListConversationsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "list_failed"
+                    }
+                },
+                "summary": "Internal list conversations",
                 "tags": [
                     "Internal"
                 ]

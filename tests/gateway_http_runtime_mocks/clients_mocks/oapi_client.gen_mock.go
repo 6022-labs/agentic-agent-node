@@ -242,6 +242,26 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalConfigMcpId(ctx, id any, r
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigMcpId", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigMcpId), varargs...)
 }
 
+// GetInternalConversations mocks base method.
+func (m *MockClientInterface) GetInternalConversations(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConversations", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConversations indicates an expected call of GetInternalConversations.
+func (mr *MockClientInterfaceMockRecorder) GetInternalConversations(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConversations", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConversations), varargs...)
+}
+
 // GetInternalConversationsConversationIdMessages mocks base method.
 func (m *MockClientInterface) GetInternalConversationsConversationIdMessages(ctx context.Context, conversationId string, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -844,6 +864,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConversations
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, conversationId}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConversationsConversationIdMessagesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConversationsConversationIdMessagesWithResponse), varargs...)
+}
+
+// GetInternalConversationsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalConversationsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConversationsWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalConversationsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConversationsWithResponse indicates an expected call of GetInternalConversationsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConversationsWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConversationsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConversationsWithResponse), varargs...)
 }
 
 // GetInternalIdentityWithResponse mocks base method.

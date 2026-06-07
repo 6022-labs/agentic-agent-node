@@ -11,5 +11,6 @@ import (
 type ConversationMessageRepositoryInterface interface {
 	AppendMessages(ctx context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error)
 	ListByConversation(ctx context.Context, conversationId string) ([]models.ConversationMessage, error)
+	ListConversationIds(ctx context.Context) ([]string, error)
 	ListExistingHashes(ctx context.Context, hashes []string) ([]string, error)
 }

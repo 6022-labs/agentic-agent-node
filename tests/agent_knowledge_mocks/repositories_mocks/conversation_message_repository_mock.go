@@ -71,6 +71,21 @@ func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListByConversa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByConversation", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListByConversation), ctx, conversationId)
 }
 
+// ListConversationIds mocks base method.
+func (m *MockConversationMessageRepositoryInterface) ListConversationIds(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListConversationIds", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListConversationIds indicates an expected call of ListConversationIds.
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListConversationIds(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConversationIds", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListConversationIds), ctx)
+}
+
 // ListExistingHashes mocks base method.
 func (m *MockConversationMessageRepositoryInterface) ListExistingHashes(ctx context.Context, hashes []string) ([]string, error) {
 	m.ctrl.T.Helper()

@@ -41,6 +41,19 @@ func (r *ConversationMessageRepository) ListByConversation(ctx context.Context, 
 	return entities, nil
 }
 
+func (r *ConversationMessageRepository) ListConversationIds(ctx context.Context) ([]string, error) {
+	var ids []string
+	if err := r.client.GetDB().
+		WithContext(ctx).
+		Model(&models.ConversationMessage{}).
+		Group("conversation_id").
+		Order("MAX(timestamp) DESC").
+		Pluck("conversation_id", &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 func (r *ConversationMessageRepository) ListExistingHashes(ctx context.Context, hashes []string) ([]string, error) {
 	if len(hashes) == 0 {
 		return nil, nil

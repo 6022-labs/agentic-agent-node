@@ -153,6 +153,14 @@ type ResponsesConversationMessage struct {
 	Timestamp      *string `json:"timestamp,omitempty"`
 }
 
+// ResponsesConversationSummary defines model for responses.ConversationSummary.
+type ResponsesConversationSummary struct {
+	ConversationId *string `json:"conversationId,omitempty"`
+	FirstMessageAt *string `json:"firstMessageAt,omitempty"`
+	LastMessageAt  *string `json:"lastMessageAt,omitempty"`
+	MessageCount   *int    `json:"messageCount,omitempty"`
+}
+
 // ResponsesCreateResponseMessage defines model for responses.CreateResponseMessage.
 type ResponsesCreateResponseMessage struct {
 	Content   *string `json:"content,omitempty"`
@@ -199,6 +207,11 @@ type ResponsesLLMConnectionResponse struct {
 // ResponsesListConversationMessagesResponse defines model for responses.ListConversationMessagesResponse.
 type ResponsesListConversationMessagesResponse struct {
 	Messages *[]ResponsesConversationMessage `json:"messages,omitempty"`
+}
+
+// ResponsesListConversationsResponse defines model for responses.ListConversationsResponse.
+type ResponsesListConversationsResponse struct {
+	Conversations *[]ResponsesConversationSummary `json:"conversations,omitempty"`
 }
 
 // ResponsesMCPConnectionListResponse defines model for responses.MCPConnectionListResponse.
@@ -447,6 +460,9 @@ type ClientInterface interface {
 	PutInternalConfigMcpIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PutInternalConfigMcpId(ctx context.Context, id string, body PutInternalConfigMcpIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInternalConversations request
+	GetInternalConversations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConversationsConversationIdMessages request
 	GetInternalConversationsConversationIdMessages(ctx context.Context, conversationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -710,6 +726,18 @@ func (c *Client) PutInternalConfigMcpIdWithBody(ctx context.Context, id string, 
 
 func (c *Client) PutInternalConfigMcpId(ctx context.Context, id string, body PutInternalConfigMcpIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutInternalConfigMcpIdRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInternalConversations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConversationsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1322,6 +1350,33 @@ func NewPutInternalConfigMcpIdRequestWithBody(server string, id string, contentT
 	return req, nil
 }
 
+// NewGetInternalConversationsRequest generates requests for GetInternalConversations
+func NewGetInternalConversationsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/conversations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetInternalConversationsConversationIdMessagesRequest generates requests for GetInternalConversationsConversationIdMessages
 func NewGetInternalConversationsConversationIdMessagesRequest(server string, conversationId string) (*http.Request, error) {
 	var err error
@@ -1597,6 +1652,9 @@ type ClientWithResponsesInterface interface {
 	PutInternalConfigMcpIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigMcpIdResponse, error)
 
 	PutInternalConfigMcpIdWithResponse(ctx context.Context, id string, body PutInternalConfigMcpIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigMcpIdResponse, error)
+
+	// GetInternalConversationsWithResponse request
+	GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error)
 
 	// GetInternalConversationsConversationIdMessagesWithResponse request
 	GetInternalConversationsConversationIdMessagesWithResponse(ctx context.Context, conversationId string, reqEditors ...RequestEditorFn) (*GetInternalConversationsConversationIdMessagesResponse, error)
@@ -1993,6 +2051,29 @@ func (r PutInternalConfigMcpIdResponse) StatusCode() int {
 	return 0
 }
 
+type GetInternalConversationsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesListConversationsResponse
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalConversationsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalConversationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInternalConversationsConversationIdMessagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2294,6 +2375,15 @@ func (c *ClientWithResponses) PutInternalConfigMcpIdWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParsePutInternalConfigMcpIdResponse(rsp)
+}
+
+// GetInternalConversationsWithResponse request returning *GetInternalConversationsResponse
+func (c *ClientWithResponses) GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error) {
+	rsp, err := c.GetInternalConversations(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalConversationsResponse(rsp)
 }
 
 // GetInternalConversationsConversationIdMessagesWithResponse request returning *GetInternalConversationsConversationIdMessagesResponse
@@ -2921,6 +3011,39 @@ func ParsePutInternalConfigMcpIdResponse(rsp *http.Response) (*PutInternalConfig
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInternalConversationsResponse parses an HTTP response from a GetInternalConversationsWithResponse call
+func ParseGetInternalConversationsResponse(rsp *http.Response) (*GetInternalConversationsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalConversationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesListConversationsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest FiberMap

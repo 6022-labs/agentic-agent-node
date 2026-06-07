@@ -8,16 +8,6 @@ components:
       x-enum-varnames:
       - ConversationPlatformNone
       - ConversationPlatformSlack
-    enums.DbDriver:
-      enum:
-      - postgres
-      - mysql
-      - mariadb
-      type: string
-      x-enum-varnames:
-      - DbDriverPostgres
-      - DbDriverMySQL
-      - DbDriverMariaDB
     enums.MessageRole:
       enum:
       - user
@@ -37,105 +27,6 @@ components:
       type: object
     fiber.Map:
       additionalProperties: {}
-      type: object
-    models.ExternalAgentRegistrationPayload:
-      properties:
-        attributes:
-          additionalProperties:
-            type: string
-          type: object
-        cloneOf:
-          type: integer
-        collectionAddress:
-          type: string
-        ensDomain:
-          type: string
-        ensStatus:
-          type: string
-        images:
-          additionalProperties:
-            type: string
-          type: object
-        mintStatus:
-          type: string
-        name:
-          type: string
-        owner:
-          type: string
-        proposalId:
-          type: integer
-        role:
-          type: string
-        tokenId:
-          type: integer
-        walletAddress:
-          type: string
-      type: object
-    models.ExternalEnsInfoPayload:
-      properties:
-        collectionAddress:
-          type: string
-        records:
-          items:
-            $ref: '#/components/schemas/models.ExternalKeyValue'
-          type: array
-          uniqueItems: false
-        tokenId:
-          type: integer
-      type: object
-    models.ExternalKeyValue:
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-      type: object
-    models.ExternalMintInfoPayload:
-      properties:
-        attributes:
-          items:
-            $ref: '#/components/schemas/models.ExternalKeyValue'
-          type: array
-          uniqueItems: false
-        cloneOf:
-          type: integer
-        collectionAddress:
-          type: string
-        images:
-          items:
-            $ref: '#/components/schemas/models.ExternalKeyValue'
-          type: array
-          uniqueItems: false
-        moderatorCount:
-          type: integer
-        name:
-          type: string
-        ownerIsModerator:
-          type: boolean
-        role:
-          type: string
-        to:
-          type: string
-        wallets:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-      type: object
-    models.ExternalRegistrationStatusPayload:
-      properties:
-        ensStatus:
-          type: string
-        ensTxHash:
-          type: string
-        mintStatus:
-          type: string
-        mintTxHash:
-          type: string
-        proposalId:
-          type: integer
-        tokenId:
-          type: integer
       type: object
     requests.CreateMcpConnectionRequest:
       properties:
@@ -236,23 +127,6 @@ components:
         role:
           type: string
       type: object
-    requests.SetDbConfigRequest:
-      properties:
-        database:
-          type: string
-        driver:
-          $ref: '#/components/schemas/enums.DbDriver'
-        host:
-          type: string
-        password:
-          type: string
-        port:
-          type: integer
-        setup:
-          type: boolean
-        username:
-          type: string
-      type: object
     requests.SetLlmConfigRequest:
       properties:
         apiKey:
@@ -275,6 +149,75 @@ components:
           type: string
         signature:
           type: string
+      type: object
+    responses.AgentRegistrationResponse:
+      properties:
+        attributes:
+          additionalProperties:
+            type: string
+          type: object
+        cloneOf:
+          type: integer
+        collectionAddress:
+          type: string
+        ensDomain:
+          type: string
+        ensStatus:
+          type: string
+        images:
+          additionalProperties:
+            type: string
+          type: object
+        mintStatus:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        proposalId:
+          type: integer
+        role:
+          type: string
+        tokenId:
+          type: integer
+        walletAddress:
+          type: string
+      type: object
+    responses.ConversationMessage:
+      properties:
+        content:
+          type: string
+        conversationId:
+          type: string
+        id:
+          type: string
+        role:
+          type: string
+        timestamp:
+          type: string
+      type: object
+    responses.ConversationSummary:
+      properties:
+        conversationId:
+          type: string
+        firstMessageAt:
+          type: string
+        lastMessageAt:
+          type: string
+        messageCount:
+          type: integer
+      type: object
+    responses.EnsInfoResponse:
+      properties:
+        collectionAddress:
+          type: string
+        records:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        tokenId:
+          type: integer
       type: object
     responses.GetAuthChallengeResponse:
       properties:
@@ -307,6 +250,29 @@ components:
         updatedAt:
           type: string
       type: object
+    responses.KeyValue:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      type: object
+    responses.ListConversationMessagesResponse:
+      properties:
+        messages:
+          items:
+            $ref: '#/components/schemas/responses.ConversationMessage'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.ListConversationsResponse:
+      properties:
+        conversations:
+          items:
+            $ref: '#/components/schemas/responses.ConversationSummary'
+          type: array
+          uniqueItems: false
+      type: object
     responses.ListMcpConnectionsResponse:
       properties:
         connections:
@@ -333,6 +299,38 @@ components:
         url:
           type: string
       type: object
+    responses.MintInfoResponse:
+      properties:
+        attributes:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        cloneOf:
+          type: integer
+        collectionAddress:
+          type: string
+        images:
+          items:
+            $ref: '#/components/schemas/responses.KeyValue'
+          type: array
+          uniqueItems: false
+        moderatorCount:
+          type: integer
+        name:
+          type: string
+        ownerIsModerator:
+          type: boolean
+        role:
+          type: string
+        to:
+          type: string
+        wallets:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
     responses.OutputMessage:
       properties:
         content:
@@ -341,6 +339,21 @@ components:
           type: string
         timestamp:
           type: string
+      type: object
+    responses.RegistrationStatusResponse:
+      properties:
+        ensStatus:
+          type: string
+        ensTxHash:
+          type: string
+        mintStatus:
+          type: string
+        mintTxHash:
+          type: string
+        proposalId:
+          type: integer
+        tokenId:
+          type: integer
       type: object
     responses.Response:
       properties:
@@ -397,7 +410,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalAgentRegistrationPayload'
+                $ref: '#/components/schemas/responses.AgentRegistrationResponse'
           description: OK
         "404":
           content:
@@ -427,7 +440,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalAgentRegistrationPayload'
+                $ref: '#/components/schemas/responses.AgentRegistrationResponse'
           description: OK
         "400":
           content:
@@ -447,7 +460,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalEnsInfoPayload'
+                $ref: '#/components/schemas/responses.EnsInfoResponse'
           description: OK
         "409":
           content:
@@ -467,7 +480,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalRegistrationStatusPayload'
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
           description: OK
       security:
       - BearerAuth: []
@@ -481,7 +494,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalMintInfoPayload'
+                $ref: '#/components/schemas/responses.MintInfoResponse'
           description: OK
       security:
       - BearerAuth: []
@@ -495,7 +508,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalRegistrationStatusPayload'
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
           description: OK
       security:
       - BearerAuth: []
@@ -509,7 +522,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalRegistrationStatusPayload'
+                $ref: '#/components/schemas/responses.RegistrationStatusResponse'
           description: OK
         "404":
           content:
@@ -585,50 +598,6 @@ paths:
       summary: Auth verify
       tags:
       - Auth
-  /config/db:
-    get:
-      responses:
-        "501":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: Not Implemented
-      security:
-      - BearerAuth: []
-      summary: Get DB config
-      tags:
-      - Config
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/requests.SetDbConfigRequest'
-                description: DB config
-                summary: request
-        description: DB config
-        required: true
-      responses:
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/errors.ValidationError'
-          description: Bad Request
-        "501":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: Not Implemented
-      security:
-      - BearerAuth: []
-      summary: Set DB config
-      tags:
-      - Config
   /config/llm:
     delete:
       responses:
@@ -783,6 +752,59 @@ paths:
       summary: Delete MCP connection
       tags:
       - Config
+  /conversations:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListConversationsResponse'
+          description: OK
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: List conversations
+      tags:
+      - Conversations
+  /conversations/{conversationId}/messages:
+    get:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListConversationMessagesResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: List conversation messages
+      tags:
+      - Conversations
   /health:
     get:
       description: Liveness probe; serves before bootstrap completes.

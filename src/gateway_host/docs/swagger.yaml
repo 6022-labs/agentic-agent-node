@@ -8,16 +8,6 @@ definitions:
     x-enum-varnames:
     - ConversationPlatformNone
     - ConversationPlatformSlack
-  enums.DbDriver:
-    enum:
-    - postgres
-    - mysql
-    - mariadb
-    type: string
-    x-enum-varnames:
-    - DbDriverPostgres
-    - DbDriverMySQL
-    - DbDriverMariaDB
   enums.MessageRole:
     enum:
     - user
@@ -37,101 +27,6 @@ definitions:
     type: object
   fiber.Map:
     additionalProperties: true
-    type: object
-  models.ExternalAgentRegistrationPayload:
-    properties:
-      attributes:
-        additionalProperties:
-          type: string
-        type: object
-      cloneOf:
-        type: integer
-      collectionAddress:
-        type: string
-      ensDomain:
-        type: string
-      ensStatus:
-        type: string
-      images:
-        additionalProperties:
-          type: string
-        type: object
-      mintStatus:
-        type: string
-      name:
-        type: string
-      owner:
-        type: string
-      proposalId:
-        type: integer
-      role:
-        type: string
-      tokenId:
-        type: integer
-      walletAddress:
-        type: string
-    type: object
-  models.ExternalEnsInfoPayload:
-    properties:
-      collectionAddress:
-        type: string
-      records:
-        items:
-          $ref: '#/definitions/models.ExternalKeyValue'
-        type: array
-      tokenId:
-        type: integer
-    type: object
-  models.ExternalKeyValue:
-    properties:
-      key:
-        type: string
-      value:
-        type: string
-    type: object
-  models.ExternalMintInfoPayload:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/models.ExternalKeyValue'
-        type: array
-      cloneOf:
-        type: integer
-      collectionAddress:
-        type: string
-      images:
-        items:
-          $ref: '#/definitions/models.ExternalKeyValue'
-        type: array
-      moderatorCount:
-        type: integer
-      name:
-        type: string
-      ownerIsModerator:
-        type: boolean
-      role:
-        type: string
-      to:
-        type: string
-      wallets:
-        items:
-          type: string
-        type: array
-    type: object
-  models.ExternalRegistrationStatusPayload:
-    properties:
-      ensStatus:
-        type: string
-      ensTxHash:
-        type: string
-      mintStatus:
-        type: string
-      mintTxHash:
-        type: string
-      proposalId:
-        type: integer
-      tokenId:
-        type: integer
     type: object
   requests.CreateMcpConnectionRequest:
     properties:
@@ -229,23 +124,6 @@ definitions:
       role:
         type: string
     type: object
-  requests.SetDbConfigRequest:
-    properties:
-      database:
-        type: string
-      driver:
-        $ref: '#/definitions/enums.DbDriver'
-      host:
-        type: string
-      password:
-        type: string
-      port:
-        type: integer
-      setup:
-        type: boolean
-      username:
-        type: string
-    type: object
   requests.SetLlmConfigRequest:
     properties:
       apiKey:
@@ -268,6 +146,74 @@ definitions:
         type: string
       signature:
         type: string
+    type: object
+  responses.AgentRegistrationResponse:
+    properties:
+      attributes:
+        additionalProperties:
+          type: string
+        type: object
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      ensDomain:
+        type: string
+      ensStatus:
+        type: string
+      images:
+        additionalProperties:
+          type: string
+        type: object
+      mintStatus:
+        type: string
+      name:
+        type: string
+      owner:
+        type: string
+      proposalId:
+        type: integer
+      role:
+        type: string
+      tokenId:
+        type: integer
+      walletAddress:
+        type: string
+    type: object
+  responses.ConversationMessage:
+    properties:
+      content:
+        type: string
+      conversationId:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  responses.ConversationSummary:
+    properties:
+      conversationId:
+        type: string
+      firstMessageAt:
+        type: string
+      lastMessageAt:
+        type: string
+      messageCount:
+        type: integer
+    type: object
+  responses.EnsInfoResponse:
+    properties:
+      collectionAddress:
+        type: string
+      records:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      tokenId:
+        type: integer
     type: object
   responses.GetAuthChallengeResponse:
     properties:
@@ -300,6 +246,27 @@ definitions:
       updatedAt:
         type: string
     type: object
+  responses.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  responses.ListConversationMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+  responses.ListConversationsResponse:
+    properties:
+      conversations:
+        items:
+          $ref: '#/definitions/responses.ConversationSummary'
+        type: array
+    type: object
   responses.ListMcpConnectionsResponse:
     properties:
       connections:
@@ -324,6 +291,35 @@ definitions:
       url:
         type: string
     type: object
+  responses.MintInfoResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      ownerIsModerator:
+        type: boolean
+      role:
+        type: string
+      to:
+        type: string
+      wallets:
+        items:
+          type: string
+        type: array
+    type: object
   responses.OutputMessage:
     properties:
       content:
@@ -332,6 +328,21 @@ definitions:
         type: string
       timestamp:
         type: string
+    type: object
+  responses.RegistrationStatusResponse:
+    properties:
+      ensStatus:
+        type: string
+      ensTxHash:
+        type: string
+      mintStatus:
+        type: string
+      mintTxHash:
+        type: string
+      proposalId:
+        type: integer
+      tokenId:
+        type: integer
     type: object
   responses.Response:
     properties:
@@ -380,7 +391,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalAgentRegistrationPayload'
+            $ref: '#/definitions/responses.AgentRegistrationResponse'
         "404":
           description: draft_not_found
           schema:
@@ -406,7 +417,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalAgentRegistrationPayload'
+            $ref: '#/definitions/responses.AgentRegistrationResponse'
         "400":
           description: Bad Request
           schema:
@@ -424,7 +435,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalEnsInfoPayload'
+            $ref: '#/definitions/responses.EnsInfoResponse'
         "409":
           description: not_minted
           schema:
@@ -442,7 +453,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
       security:
       - BearerAuth: []
       summary: Check ENS status
@@ -456,7 +467,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalMintInfoPayload'
+            $ref: '#/definitions/responses.MintInfoResponse'
       security:
       - BearerAuth: []
       summary: Get mint calldata
@@ -470,7 +481,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
       security:
       - BearerAuth: []
       summary: Check mint status
@@ -484,7 +495,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalRegistrationStatusPayload'
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
         "404":
           description: draft_not_found
           schema:
@@ -547,46 +558,6 @@ paths:
       summary: Auth verify
       tags:
       - Auth
-  /config/db:
-    get:
-      produces:
-      - application/json
-      responses:
-        "501":
-          description: Not Implemented
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - BearerAuth: []
-      summary: Get DB config
-      tags:
-      - Config
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: DB config
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/requests.SetDbConfigRequest'
-      produces:
-      - application/json
-      responses:
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/errors.ValidationError'
-        "501":
-          description: Not Implemented
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - BearerAuth: []
-      summary: Set DB config
-      tags:
-      - Config
   /config/llm:
     delete:
       produces:
@@ -724,6 +695,52 @@ paths:
       summary: Delete MCP connection
       tags:
       - Config
+  /conversations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationsResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List conversations
+      tags:
+      - Conversations
+  /conversations/{conversationId}/messages:
+    get:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List conversation messages
+      tags:
+      - Conversations
   /health:
     get:
       description: Liveness probe; serves before bootstrap completes.
