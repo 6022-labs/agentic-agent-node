@@ -9,10 +9,8 @@ import (
 
 const IPFSSettingsKey = "ipfs"
 
-// IPFSSettings points the adapter at a Kubo (go-ipfs) node's HTTP API.
-// Set ipfs.node_http_url (env: IPFS__NODE_HTTP_URL). BearerToken is optional —
-// when set, requests carry `Authorization: Bearer <token>`, matching Kubo's
-// API.Authorizations bearer scheme (server side: AuthSecret "bearer:<token>").
+// IPFSSettings targets a Kubo node's HTTP API. BearerToken (optional) is sent as
+// `Authorization: Bearer <token>` for Kubo's API.Authorizations scheme.
 type IPFSSettings struct {
 	IpfsNodeHttpUrl string `koanf:"node_http_url"`
 	BearerToken     string `koanf:"bearer_token"`

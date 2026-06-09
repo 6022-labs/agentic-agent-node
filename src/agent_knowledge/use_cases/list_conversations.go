@@ -16,8 +16,7 @@ func NewListConversations(conversationMessageRepository repositories.Conversatio
 	return &ListConversations{conversationMessageRepository: conversationMessageRepository}
 }
 
-// Execute lists conversation ids (most recent first), then summarises each from
-// its transcript — one extra ListByConversation call per conversation.
+// Execute lists the ids, then summarises each via ListByConversation (one call per conversation).
 func (u *ListConversations) Execute(ctx context.Context) (*responses.ListConversationsResponse, error) {
 	ids, err := u.conversationMessageRepository.ListConversationIds(ctx)
 	if err != nil {
