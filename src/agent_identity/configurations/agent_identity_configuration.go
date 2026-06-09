@@ -2,6 +2,7 @@ package configurations
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services/images"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
@@ -11,6 +12,29 @@ import (
 
 func AddAgentIdentityConfiguration(container *dig.Container) {
 	if err := container.Provide(settings.NewAgentIdentitySettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(settings.NewImageGenerationSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		images.NewDefaultImageGenerator,
+		dig.As(new(identity_interfaces.DefaultImageGeneratorInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		images.NewIconImageGenerator,
+		dig.As(new(identity_interfaces.IconImageGeneratorInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		images.NewGenerateAgentImages,
+		dig.As(new(identity_interfaces.GenerateAgentImagesInterface)),
+	); err != nil {
 		panic(err)
 	}
 

@@ -25,6 +25,7 @@ COPY --from=builder /runtime /usr/local/bin/runtime
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/postgres /migrations/postgres
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mysql    /migrations/mysql
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mariadb  /migrations/mariadb
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_host/images/nft_mark.png /images/nft_mark.png
 
 # Pre-filled defaults that hold whenever the two binaries share a container:
 # both bind the loopback interface and the gateway can reach the runtime at it.
@@ -32,14 +33,15 @@ COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/sr
 # must still be supplied at runtime.
 ENV GATEWAY_HOST__API_PORT=5000 \
     GATEWAY_HOST__BODY_LIMIT_BYTES=4194304 \
-    RUNTIME_HOST__API_PORT=5001 \
+    RUNTIME_HOST__API_PORT=5400 \
     RUNTIME_HOST__BODY_LIMIT_BYTES=4194304 \
     RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1 \
-    RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5001 \
+    RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400 \
     RUNTIME_CLIENT__TIMEOUT=5s \
     JWT__TOKEN_TTL=30m \
     JWT__NONCE_TTL=5m \
     VAULT__KV_V1_MOUNT_PATH=secret \
+    IMAGE_GENERATION__IMAGE_MARK_PATH=/images/nft_mark.png \
     RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
 
 # Entrypoint script: start runtime in background, then gateway in foreground.
