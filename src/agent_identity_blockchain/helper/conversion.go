@@ -23,3 +23,11 @@ func ToNullableUint256(v *uint64) abi.NullableUint256 {
 	}
 	return abi.NullableUint256{IsSet: true, Value: new(big.Int).SetUint64(*v)}
 }
+
+// ToUint64 maps a contract uint256 to uint64, collapsing nil/overflow to 0.
+func ToUint64(v *big.Int) uint64 {
+	if v == nil || !v.IsUint64() {
+		return 0
+	}
+	return v.Uint64()
+}

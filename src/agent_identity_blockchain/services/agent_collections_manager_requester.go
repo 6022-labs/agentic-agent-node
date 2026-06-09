@@ -3,7 +3,9 @@ package services
 import (
 	"math/big"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/settings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -11,6 +13,9 @@ import (
 
 // Collections scanned per findAgentByWallet call, to keep each RPC under the node limit.
 const findAgentByWalletPageSize = 50
+
+// Collections fetched per listCollections call, to keep each RPC under the node limit.
+const listCollectionsPageSize = 50
 
 type AgentCollectionsManagerRequester struct {
 	client           *ethclient.Client
@@ -61,6 +66,38 @@ func (r *AgentCollectionsManagerRequester) FindAgentByWallet(wallet common.Addre
 		// next == 0 means the scan reached the last collection without a match.
 		if res.Next == nil || res.Next.Sign() == 0 {
 			return common.Address{}, 0, "", nil
+		}
+		offset = res.Next
+	}
+}
+
+func (r *AgentCollectionsManagerRequester) ListCollections() ([]models.AgentCollection, error) {
+	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := new(big.Int).SetUint64(listCollectionsPageSize)
+	collections := make([]models.AgentCollection, 0)
+	for offset := big.NewInt(0); ; {
+		res, err := contract.ListCollections(nil, offset, limit)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, info := range res.Infos {
+			collections = append(collections, models.AgentCollection{
+				Address:        info.CollectionAddress.Hex(),
+				Name:           info.Name,
+				Description:    info.Description,
+				ModeratorCount: helper.ToUint64(info.ModeratorCount),
+				NextTokenId:    helper.ToUint64(info.NextTokenId),
+			})
+		}
+
+		// next == 0 means the listing reached the last collection.
+		if res.Next == nil || res.Next.Sign() == 0 {
+			return collections, nil
 		}
 		offset = res.Next
 	}

@@ -117,6 +117,27 @@ components:
         url:
           type: string
       type: object
+    responses.AgentCollectionResponse:
+      properties:
+        address:
+          type: string
+        description:
+          type: string
+        moderatorCount:
+          type: integer
+        name:
+          type: string
+        nextTokenId:
+          type: integer
+      type: object
+    responses.AgentCollectionsResponse:
+      properties:
+        collections:
+          items:
+            $ref: '#/components/schemas/responses.AgentCollectionResponse'
+          type: array
+          uniqueItems: false
+      type: object
     responses.AgentRegistrationResponse:
       properties:
         attributes:
@@ -345,6 +366,24 @@ info:
   version: "1.0"
 openapi: 3.1.0
 paths:
+  /internal/agent/collections:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.AgentCollectionsResponse'
+          description: OK
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: collections_read_failed
+      summary: List agent collections
+      tags:
+      - Internal
   /internal/agent/registration:
     get:
       responses:

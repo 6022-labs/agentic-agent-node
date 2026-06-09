@@ -115,6 +115,26 @@ definitions:
       url:
         type: string
     type: object
+  responses.AgentCollectionResponse:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      nextTokenId:
+        type: integer
+    type: object
+  responses.AgentCollectionsResponse:
+    properties:
+      collections:
+        items:
+          $ref: '#/definitions/responses.AgentCollectionResponse'
+        type: array
+    type: object
   responses.AgentRegistrationResponse:
     properties:
       attributes:
@@ -331,6 +351,22 @@ info:
   title: Agentic Agent Node — Runtime Host API
   version: "1.0"
 paths:
+  /internal/agent/collections:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentCollectionsResponse'
+        "502":
+          description: collections_read_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: List agent collections
+      tags:
+      - Internal
   /internal/agent/registration:
     get:
       produces:

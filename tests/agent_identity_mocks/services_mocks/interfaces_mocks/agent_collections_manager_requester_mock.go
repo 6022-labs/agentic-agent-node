@@ -12,6 +12,7 @@ package interfaces_mocks
 import (
 	reflect "reflect"
 
+	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -70,4 +71,19 @@ func (m *MockAgentCollectionsManagerRequesterInterface) IsKnownCollection(collec
 func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) IsKnownCollection(collection any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsKnownCollection", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).IsKnownCollection), collection)
+}
+
+// ListCollections mocks base method.
+func (m *MockAgentCollectionsManagerRequesterInterface) ListCollections() ([]models.AgentCollection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCollections")
+	ret0, _ := ret[0].([]models.AgentCollection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCollections indicates an expected call of ListCollections.
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) ListCollections() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCollections", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).ListCollections))
 }

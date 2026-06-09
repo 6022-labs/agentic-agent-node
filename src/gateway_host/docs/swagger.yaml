@@ -144,6 +144,26 @@ definitions:
       signature:
         type: string
     type: object
+  responses.AgentCollectionResponse:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      nextTokenId:
+        type: integer
+    type: object
+  responses.AgentCollectionsResponse:
+    properties:
+      collections:
+        items:
+          $ref: '#/definitions/responses.AgentCollectionResponse'
+        type: array
+    type: object
   responses.AgentRegistrationResponse:
     properties:
       attributes:
@@ -387,6 +407,20 @@ info:
   title: Agentic Agent Node — Gateway Host API
   version: "1.0"
 paths:
+  /agent/collections:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentCollectionsResponse'
+      security:
+      - BearerAuth: []
+      summary: List agent collections
+      tags:
+      - AgentCollections
   /agent/registration:
     get:
       produces:

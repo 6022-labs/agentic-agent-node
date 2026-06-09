@@ -107,6 +107,20 @@ type RequestsUpdateMCPConnectionRequest struct {
 	Url        *string            `json:"url,omitempty"`
 }
 
+// ResponsesAgentCollectionResponse defines model for responses.AgentCollectionResponse.
+type ResponsesAgentCollectionResponse struct {
+	Address        *string `json:"address,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	ModeratorCount *int    `json:"moderatorCount,omitempty"`
+	Name           *string `json:"name,omitempty"`
+	NextTokenId    *int    `json:"nextTokenId,omitempty"`
+}
+
+// ResponsesAgentCollectionsResponse defines model for responses.AgentCollectionsResponse.
+type ResponsesAgentCollectionsResponse struct {
+	Collections *[]ResponsesAgentCollectionResponse `json:"collections,omitempty"`
+}
+
 // ResponsesAgentRegistrationResponse defines model for responses.AgentRegistrationResponse.
 type ResponsesAgentRegistrationResponse struct {
 	Attributes        *map[string]string `json:"attributes,omitempty"`
@@ -417,6 +431,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetInternalAgentCollections request
+	GetInternalAgentCollections(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetInternalAgentRegistration request
 	GetInternalAgentRegistration(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -496,6 +513,18 @@ type ClientInterface interface {
 	PostInternalResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostInternalResponses(ctx context.Context, body PostInternalResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetInternalAgentCollections(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalAgentCollectionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetInternalAgentRegistration(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -844,6 +873,33 @@ func (c *Client) PostInternalResponses(ctx context.Context, body PostInternalRes
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetInternalAgentCollectionsRequest generates requests for GetInternalAgentCollections
+func NewGetInternalAgentCollectionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/agent/collections")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetInternalAgentRegistrationRequest generates requests for GetInternalAgentRegistration
@@ -1609,6 +1665,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetInternalAgentCollectionsWithResponse request
+	GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error)
+
 	// GetInternalAgentRegistrationWithResponse request
 	GetInternalAgentRegistrationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationResponse, error)
 
@@ -1688,6 +1747,29 @@ type ClientWithResponsesInterface interface {
 	PostInternalResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalResponsesResponse, error)
 
 	PostInternalResponsesWithResponse(ctx context.Context, body PostInternalResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalResponsesResponse, error)
+}
+
+type GetInternalAgentCollectionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAgentCollectionsResponse
+	JSON502      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalAgentCollectionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalAgentCollectionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetInternalAgentRegistrationResponse struct {
@@ -2207,6 +2289,15 @@ func (r PostInternalResponsesResponse) StatusCode() int {
 	return 0
 }
 
+// GetInternalAgentCollectionsWithResponse request returning *GetInternalAgentCollectionsResponse
+func (c *ClientWithResponses) GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error) {
+	rsp, err := c.GetInternalAgentCollections(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalAgentCollectionsResponse(rsp)
+}
+
 // GetInternalAgentRegistrationWithResponse request returning *GetInternalAgentRegistrationResponse
 func (c *ClientWithResponses) GetInternalAgentRegistrationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationResponse, error) {
 	rsp, err := c.GetInternalAgentRegistration(ctx, reqEditors...)
@@ -2459,6 +2550,39 @@ func (c *ClientWithResponses) PostInternalResponsesWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParsePostInternalResponsesResponse(rsp)
+}
+
+// ParseGetInternalAgentCollectionsResponse parses an HTTP response from a GetInternalAgentCollectionsWithResponse call
+func ParseGetInternalAgentCollectionsResponse(rsp *http.Response) (*GetInternalAgentCollectionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalAgentCollectionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAgentCollectionsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetInternalAgentRegistrationResponse parses an HTTP response from a GetInternalAgentRegistrationWithResponse call

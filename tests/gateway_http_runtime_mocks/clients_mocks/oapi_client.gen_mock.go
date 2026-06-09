@@ -122,6 +122,26 @@ func (mr *MockClientInterfaceMockRecorder) DeleteInternalConfigMcpId(ctx, id any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigMcpId", reflect.TypeOf((*MockClientInterface)(nil).DeleteInternalConfigMcpId), varargs...)
 }
 
+// GetInternalAgentCollections mocks base method.
+func (m *MockClientInterface) GetInternalAgentCollections(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentCollections", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentCollections indicates an expected call of GetInternalAgentCollections.
+func (mr *MockClientInterfaceMockRecorder) GetInternalAgentCollections(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollections", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentCollections), varargs...)
+}
+
 // GetInternalAgentRegistration mocks base method.
 func (m *MockClientInterface) GetInternalAgentRegistration(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -724,6 +744,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteInternalConfigMcpI
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, id}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigMcpIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteInternalConfigMcpIdWithResponse), varargs...)
+}
+
+// GetInternalAgentCollectionsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentCollectionsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentCollectionsWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalAgentCollectionsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentCollectionsWithResponse indicates an expected call of GetInternalAgentCollectionsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentCollectionsWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollectionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentCollectionsWithResponse), varargs...)
 }
 
 // GetInternalAgentRegistrationEnsInfoWithResponse mocks base method.
