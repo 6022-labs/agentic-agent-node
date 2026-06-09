@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for EnumsLLMConnectionPlatform.
@@ -89,17 +90,6 @@ type RequestsCreateResponseRequestInput struct {
 	Content   *string `json:"content,omitempty"`
 	Role      *string `json:"role,omitempty"`
 	Timestamp *string `json:"timestamp,omitempty"`
-}
-
-// RequestsSaveAgentRegistrationRequest defines model for requests.SaveAgentRegistrationRequest.
-type RequestsSaveAgentRegistrationRequest struct {
-	Attributes        *map[string]string `json:"attributes,omitempty"`
-	CloneOf           *int               `json:"cloneOf,omitempty"`
-	CollectionAddress *string            `json:"collectionAddress,omitempty"`
-	Images            *map[string]string `json:"images,omitempty"`
-	Name              *string            `json:"name,omitempty"`
-	Owner             *string            `json:"owner,omitempty"`
-	Role              *string            `json:"role,omitempty"`
 }
 
 // RequestsSetupLLMConnectionRequest defines model for requests.SetupLLMConnectionRequest.
@@ -253,13 +243,34 @@ type ResponsesRegistrationStatusResponse struct {
 	TokenId    *int    `json:"tokenId,omitempty"`
 }
 
-// PostInternalAgentRegistrationJSONBody defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationJSONBody struct {
+// PostInternalAgentRegistrationFormdataBody defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody struct {
 	union json.RawMessage
 }
 
-// PostInternalAgentRegistrationJSONBody0 defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationJSONBody0 = map[string]interface{}
+// PostInternalAgentRegistrationMultipartBody defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationMultipartBody = map[string]interface{}
+
+// PostInternalAgentRegistrationFormdataBody0 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody0 = string
+
+// PostInternalAgentRegistrationFormdataBody1 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody1 = string
+
+// PostInternalAgentRegistrationFormdataBody2 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody2 = string
+
+// PostInternalAgentRegistrationFormdataBody3 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody3 = string
+
+// PostInternalAgentRegistrationFormdataBody4 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody4 = int
+
+// PostInternalAgentRegistrationFormdataBody5 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody5 = string
+
+// PostInternalAgentRegistrationFormdataBody6 defines parameters for PostInternalAgentRegistration.
+type PostInternalAgentRegistrationFormdataBody6 = openapi_types.File
 
 // PostInternalAuthorizeJSONBody defines parameters for PostInternalAuthorize.
 type PostInternalAuthorizeJSONBody struct {
@@ -309,8 +320,11 @@ type PostInternalResponsesJSONBody struct {
 // PostInternalResponsesJSONBody0 defines parameters for PostInternalResponses.
 type PostInternalResponsesJSONBody0 = map[string]interface{}
 
-// PostInternalAgentRegistrationJSONRequestBody defines body for PostInternalAgentRegistration for application/json ContentType.
-type PostInternalAgentRegistrationJSONRequestBody PostInternalAgentRegistrationJSONBody
+// PostInternalAgentRegistrationFormdataRequestBody defines body for PostInternalAgentRegistration for application/x-www-form-urlencoded ContentType.
+type PostInternalAgentRegistrationFormdataRequestBody PostInternalAgentRegistrationFormdataBody
+
+// PostInternalAgentRegistrationMultipartRequestBody defines body for PostInternalAgentRegistration for multipart/form-data ContentType.
+type PostInternalAgentRegistrationMultipartRequestBody = PostInternalAgentRegistrationMultipartBody
 
 // PostInternalAuthorizeJSONRequestBody defines body for PostInternalAuthorize for application/json ContentType.
 type PostInternalAuthorizeJSONRequestBody PostInternalAuthorizeJSONBody
@@ -409,7 +423,7 @@ type ClientInterface interface {
 	// PostInternalAgentRegistrationWithBody request with any body
 	PostInternalAgentRegistrationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostInternalAgentRegistration(ctx context.Context, body PostInternalAgentRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostInternalAgentRegistrationWithFormdataBody(ctx context.Context, body PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalAgentRegistrationEnsInfo request
 	GetInternalAgentRegistrationEnsInfo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -508,8 +522,8 @@ func (c *Client) PostInternalAgentRegistrationWithBody(ctx context.Context, cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostInternalAgentRegistration(ctx context.Context, body PostInternalAgentRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostInternalAgentRegistrationRequest(c.Server, body)
+func (c *Client) PostInternalAgentRegistrationWithFormdataBody(ctx context.Context, body PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalAgentRegistrationRequestWithFormdataBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -859,15 +873,15 @@ func NewGetInternalAgentRegistrationRequest(server string) (*http.Request, error
 	return req, nil
 }
 
-// NewPostInternalAgentRegistrationRequest calls the generic PostInternalAgentRegistration builder with application/json body
-func NewPostInternalAgentRegistrationRequest(server string, body PostInternalAgentRegistrationJSONRequestBody) (*http.Request, error) {
+// NewPostInternalAgentRegistrationRequestWithFormdataBody calls the generic PostInternalAgentRegistration builder with application/x-www-form-urlencoded body
+func NewPostInternalAgentRegistrationRequestWithFormdataBody(server string, body PostInternalAgentRegistrationFormdataRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	bodyStr, err := runtime.MarshalForm(body, nil)
 	if err != nil {
 		return nil, err
 	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostInternalAgentRegistrationRequestWithBody(server, "application/json", bodyReader)
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewPostInternalAgentRegistrationRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
 }
 
 // NewPostInternalAgentRegistrationRequestWithBody generates requests for PostInternalAgentRegistration with any type of body
@@ -1601,7 +1615,7 @@ type ClientWithResponsesInterface interface {
 	// PostInternalAgentRegistrationWithBodyWithResponse request with any body
 	PostInternalAgentRegistrationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationResponse, error)
 
-	PostInternalAgentRegistrationWithResponse(ctx context.Context, body PostInternalAgentRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationResponse, error)
+	PostInternalAgentRegistrationWithFormdataBodyWithResponse(ctx context.Context, body PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationResponse, error)
 
 	// GetInternalAgentRegistrationEnsInfoWithResponse request
 	GetInternalAgentRegistrationEnsInfoWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationEnsInfoResponse, error)
@@ -2211,8 +2225,8 @@ func (c *ClientWithResponses) PostInternalAgentRegistrationWithBodyWithResponse(
 	return ParsePostInternalAgentRegistrationResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostInternalAgentRegistrationWithResponse(ctx context.Context, body PostInternalAgentRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationResponse, error) {
-	rsp, err := c.PostInternalAgentRegistration(ctx, body, reqEditors...)
+func (c *ClientWithResponses) PostInternalAgentRegistrationWithFormdataBodyWithResponse(ctx context.Context, body PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationResponse, error) {
+	rsp, err := c.PostInternalAgentRegistrationWithFormdataBody(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

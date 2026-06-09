@@ -1,20 +1,24 @@
 package models
 
+import "mime/multipart"
+
 // ExternalKeyValue mirrors the runtime KeyValue tuple.
 type ExternalKeyValue struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-// ExternalSaveAgentRegistrationPayload is the runtime save-endpoint body; owner injected by the gateway.
+// ExternalSaveAgentRegistrationPayload is the runtime save-endpoint input; owner
+// injected by the gateway. The client serializes it as multipart/form-data,
+// streaming Image as the file part.
 type ExternalSaveAgentRegistrationPayload struct {
-	CollectionAddress string            `json:"collectionAddress"`
-	Owner             string            `json:"owner"`
-	Name              string            `json:"name"`
-	Role              string            `json:"role"`
-	CloneOf           *uint64           `json:"cloneOf,omitempty"`
-	Images            map[string]string `json:"images"`
-	Attributes        map[string]string `json:"attributes"`
+	CollectionAddress string
+	Owner             string
+	Name              string
+	Role              string
+	CloneOf           *uint64
+	Image             *multipart.FileHeader
+	Attributes        map[string]string
 }
 
 // ExternalAgentRegistrationPayload mirrors the runtime draft + status response.

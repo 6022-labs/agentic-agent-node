@@ -61,9 +61,15 @@ func (c *AgentRegistrationController) RegisterRoutes(app fiber.Router) {
 // @Summary Save agent registration draft
 // @Description Validates the collection + form and binds the draft to the node wallet. Returns the stored draft + status.
 // @Tags Internal
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
-// @Param request body requests.SaveAgentRegistrationRequest true "Agent draft"
+// @Param collectionAddress formData string true "Collection address"
+// @Param owner formData string true "Owner address"
+// @Param name formData string true "Agent name"
+// @Param role formData string true "Agent role"
+// @Param cloneOf formData int false "Token id this agent clones"
+// @Param attributes formData string false "Attributes as a JSON object string"
+// @Param image formData file true "Base image to frame"
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 400 {object} errors.ValidationError
 // @Router /internal/agent/registration [post]
@@ -71,6 +77,9 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 	body := new(requests.SaveAgentRegistrationRequest)
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	if image, err := ctx.FormFile("image"); err == nil {
+		body.Image = image
 	}
 	if err := body.ValidateAndSanitize(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(err)

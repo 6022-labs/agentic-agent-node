@@ -1,22 +1,28 @@
 package requests
 
 import (
+	"encoding/json"
+	"mime/multipart"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-const defaultImageKey = "default"
+const maxImageBytes = 5 * 1024 * 1024
 
-// SaveAgentRegistrationRequest is the draft the connected wallet submits. Owner
-// is injected by the gateway, not accepted here.
+// SaveAgentRegistrationRequest is the multipart draft the connected wallet
+// submits. Owner is injected by the gateway, not accepted here. Image is the
+// single base image the runtime frames; Attributes arrives as a JSON object
+// string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {
-	CollectionAddress string            `json:"collectionAddress"`
-	Name              string            `json:"name"`
-	Role              string            `json:"role"`
-	CloneOf           *uint64           `json:"cloneOf"`
-	Images            map[string]string `json:"images"`
-	Attributes        map[string]string `json:"attributes"`
+	CollectionAddress string                `form:"collectionAddress"`
+	Name              string                `form:"name"`
+	Role              string                `form:"role"`
+	CloneOf           *uint64               `form:"cloneOf"`
+	AttributesRaw     string                `form:"attributes"`
+	Image             *multipart.FileHeader `form:"image"`
+
+	Attributes map[string]string `form:"-"`
 }
 
 func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
@@ -35,8 +41,17 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		return errors.NewValidationError("role", "cannot be empty")
 	}
 
-	if _, ok := r.Images[defaultImageKey]; !ok {
-		return errors.NewValidationError("images", "must include a \"default\" entry")
+	if r.Image == nil {
+		return errors.NewValidationError("image", "is required")
+	}
+	if r.Image.Size > maxImageBytes {
+		return errors.NewValidationError("image", "must be at most 5MB")
+	}
+
+	if strings.TrimSpace(r.AttributesRaw) != "" {
+		if err := json.Unmarshal([]byte(r.AttributesRaw), &r.Attributes); err != nil {
+			return errors.NewValidationError("attributes", "must be a JSON object of string values")
+		}
 	}
 
 	return nil

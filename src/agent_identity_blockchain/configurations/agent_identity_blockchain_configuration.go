@@ -19,6 +19,10 @@ func AddAgentIdentityBlockchainConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(blockchain_settings.NewToken6022Settings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(newEthClient); err != nil {
 		panic(err)
 	}
@@ -44,6 +48,13 @@ func AddAgentIdentityBlockchainConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		blockchain_services.NewAgentMinter,
 		dig.As(new(identity_interfaces.AgentMinterInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		blockchain_services.NewToken6022Requester,
+		dig.As(new(identity_interfaces.Token6022RequesterInterface)),
 	); err != nil {
 		panic(err)
 	}

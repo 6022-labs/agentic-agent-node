@@ -25,7 +25,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		Name:              req.Name,
 		Role:              req.Role,
 		CloneOf:           req.CloneOf,
-		Images:            req.Images,
+		Image:             req.Image,
 		Attributes:        req.Attributes,
 	})
 	if err != nil {

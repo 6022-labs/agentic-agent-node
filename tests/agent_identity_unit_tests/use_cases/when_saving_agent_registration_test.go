@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -26,6 +27,9 @@ type WhenSavingAgentRegistrationTestingSuite struct {
 	mockAgentCollectionsManagerRequester *interface_mocks.MockAgentCollectionsManagerRequesterInterface
 	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
 	mockWalletCredentialsStorage         *interface_mocks.MockWalletCredentialsStorageInterface
+	mockGenerateAgentImages              *interface_mocks.MockGenerateAgentImagesInterface
+	mockIPFSFileStorage                  *interface_mocks.MockIPFSFileStorageInterface
+	mockToken6022Requester               *interface_mocks.MockToken6022RequesterInterface
 }
 
 func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistrationTestingSuite {
@@ -36,13 +40,16 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
+	mockGenerateAgentImages := interface_mocks.NewMockGenerateAgentImagesInterface(mockController)
+	mockIPFSFileStorage := interface_mocks.NewMockIPFSFileStorageInterface(mockController)
+	mockToken6022Requester := interface_mocks.NewMockToken6022RequesterInterface(mockController)
 
 	agentIdentitySettings := &settings.AgentIdentitySettings{
 		RuntimeUrl:    "https://agent.example.com",
 		EnsBaseDomain: "6022.eth",
 	}
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, agentIdentitySettings)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
@@ -51,16 +58,19 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		mockAgentCollectionsManagerRequester: mockAgentCollectionsManagerRequester,
 		mockAgentCollectionRequester:         mockAgentCollectionRequester,
 		mockWalletCredentialsStorage:         mockWalletCredentialsStorage,
+		mockGenerateAgentImages:              mockGenerateAgentImages,
+		mockIPFSFileStorage:                  mockIPFSFileStorage,
+		mockToken6022Requester:               mockToken6022Requester,
 	}
 }
 
-func validSaveRequest() *requests.SaveAgentRegistrationRequest {
+func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 	return &requests.SaveAgentRegistrationRequest{
 		CollectionAddress: common_tests.RandomEthAddress().Hex(),
 		Owner:             common_tests.RandomEthAddress().Hex(),
 		Name:              "Alice",
 		Role:              identity_enums.AgentRoleExpert.String(),
-		Images:            map[string]string{"default": "https://img"},
+		Image:             newMultipartFileHeader(t, []byte("fake-image"), "image/png"),
 		Attributes:        map[string]string{},
 	}
 }
@@ -76,6 +86,11 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName(gomock.Any()).Return("squad", nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockToken6022Requester.EXPECT().BalanceOf(gomock.Any()).Return(big.NewInt(1_000_000), nil)
+			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(18), nil)
+			cid := "QmCid"
+			suite.mockGenerateAgentImages.EXPECT().Generate(gomock.Any()).Return(map[string][]byte{"default": []byte("a"), "icon": []byte("b")}, nil)
+			suite.mockIPFSFileStorage.EXPECT().UploadFile(gomock.Any(), gomock.Any()).Return(&cid, nil).Times(2)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
 			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
@@ -91,11 +106,13 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), validSaveRequest())
+			resp, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Alice", resp.Name)
 			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.MintStatus)
+			assert.Equal(t, "QmCid", resp.Images["default"])
+			assert.Equal(t, "QmCid", resp.Images["icon"])
 		})
 	})
 
@@ -112,7 +129,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), validSaveRequest())
+			_, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)

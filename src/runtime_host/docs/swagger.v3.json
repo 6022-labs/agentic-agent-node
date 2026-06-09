@@ -139,38 +139,6 @@
                 },
                 "type": "object"
             },
-            "requests.SaveAgentRegistrationRequest": {
-                "properties": {
-                    "attributes": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    },
-                    "cloneOf": {
-                        "type": "integer"
-                    },
-                    "collectionAddress": {
-                        "type": "string"
-                    },
-                    "images": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "owner": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "requests.SetupLLMConnectionRequest": {
                 "properties": {
                     "apiKey": {
@@ -581,22 +549,47 @@
                 "description": "Validates the collection + form and binds the draft to the node wallet. Returns the stored draft + status.",
                 "requestBody": {
                     "content": {
-                        "application/json": {
+                        "application/x-www-form-urlencoded": {
                             "schema": {
                                 "oneOf": [
                                     {
-                                        "type": "object"
+                                        "title": "collectionAddress",
+                                        "type": "string"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.SaveAgentRegistrationRequest",
-                                        "summary": "request",
-                                        "description": "Agent draft"
+                                        "title": "owner",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "name",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "role",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "cloneOf",
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "title": "attributes",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "image",
+                                        "type": "file"
                                     }
                                 ]
                             }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object"
+                            }
                         }
                     },
-                    "description": "Agent draft",
+                    "description": "Collection address | Owner address | Agent name | Agent role | Token id this agent clones | Attributes as a JSON object string | Base image to frame",
                     "required": true
                 },
                 "responses": {

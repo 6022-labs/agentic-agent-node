@@ -121,25 +121,6 @@ definitions:
         additionalProperties: {}
         type: object
     type: object
-  requests.SaveAgentRegistrationRequest:
-    properties:
-      attributes:
-        additionalProperties:
-          type: string
-        type: object
-      cloneOf:
-        type: integer
-      collectionAddress:
-        type: string
-      images:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      role:
-        type: string
-    type: object
   requests.SetLlmConfigRequest:
     properties:
       apiKey:
@@ -426,14 +407,36 @@ paths:
       - AgentRegistration
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       parameters:
-      - description: Agent draft
-        in: body
-        name: request
+      - description: Collection address
+        in: formData
+        name: collectionAddress
         required: true
-        schema:
-          $ref: '#/definitions/requests.SaveAgentRegistrationRequest'
+        type: string
+      - description: Agent name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Agent role
+        in: formData
+        name: role
+        required: true
+        type: string
+      - description: Token id this agent clones
+        in: formData
+        name: cloneOf
+        type: integer
+      - description: Attributes as a JSON object string
+        in: formData
+        name: attributes
+        type: string
+      - description: Base image to frame
+        in: formData
+        name: image
+        required: true
+        type: file
       produces:
       - application/json
       responses:

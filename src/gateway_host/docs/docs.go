@@ -51,7 +51,7 @@ const docTemplate = `{
                     }
                 ],
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -62,13 +62,44 @@ const docTemplate = `{
                 "summary": "Save agent registration draft",
                 "parameters": [
                     {
-                        "description": "Agent draft",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.SaveAgentRegistrationRequest"
-                        }
+                        "type": "string",
+                        "description": "Collection address",
+                        "name": "collectionAddress",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent name",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Agent role",
+                        "name": "role",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Token id this agent clones",
+                        "name": "cloneOf",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Attributes as a JSON object string",
+                        "name": "attributes",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Base image to frame",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -901,35 +932,6 @@ const docTemplate = `{
                 "parameters": {
                     "type": "object",
                     "additionalProperties": {}
-                }
-            }
-        },
-        "requests.SaveAgentRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "cloneOf": {
-                    "type": "integer"
-                },
-                "collectionAddress": {
-                    "type": "string"
-                },
-                "images": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
                 }
             }
         },

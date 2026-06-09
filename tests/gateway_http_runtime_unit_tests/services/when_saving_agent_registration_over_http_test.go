@@ -1,8 +1,8 @@
 package services_test
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -40,15 +40,15 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
-					raw, err := io.ReadAll(reader)
-					assert.NoError(t, err)
+			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, contentType string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
+					assert.Contains(t, contentType, "multipart/form-data")
 
-					var sent models.ExternalSaveAgentRegistrationPayload
-					assert.NoError(t, json.Unmarshal(raw, &sent))
-					assert.Equal(t, "bob", sent.Name)
-					assert.Equal(t, "0xowner", sent.Owner)
+					buffered, err := io.ReadAll(reader)
+					assert.NoError(t, err)
+					assert.Equal(t, "bob", readMultipartField(t, contentType, bytes.NewReader(buffered), "name"))
+					assert.Equal(t, "0xowner", readMultipartField(t, contentType, bytes.NewReader(buffered), "owner"))
+					assert.Equal(t, "base.png", readMultipartField(t, contentType, bytes.NewReader(buffered), "image"))
 
 					return &clients.PostInternalAgentRegistrationResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
@@ -68,6 +68,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 				Owner:             "0xowner",
 				Name:              "bob",
 				Role:              "agent",
+				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
 			})
 
 			assert.NoError(t, err)
@@ -81,7 +82,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalAgentRegistrationResponse{
+			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).Return(&clients.PostInternalAgentRegistrationResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
 				Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
 			}, nil)
@@ -98,6 +99,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 				Owner:             "0xowner",
 				Name:              "bob",
 				Role:              "agent",
+				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
 			})
 
 			var target *apperrors.ValidationError

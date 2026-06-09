@@ -1,24 +1,30 @@
 package requests
 
 import (
+	"encoding/json"
+	"mime/multipart"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-const defaultImageKey = "default"
+const maxImageBytes = 5 * 1024 * 1024
 
-// SaveAgentRegistrationRequest is the draft form. Owner is injected by the
-// gateway from the session; WalletAddress is never accepted (it's the node's).
+// SaveAgentRegistrationRequest is the multipart draft form. Owner is injected by
+// the gateway from the session; WalletAddress is never accepted (it's the
+// node's). Image is the single base image the node frames into the NFT set;
+// Attributes arrives as a JSON object string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {
-	CollectionAddress string            `json:"collectionAddress"`
-	Owner             string            `json:"owner"`
-	Name              string            `json:"name"`
-	Role              string            `json:"role"`
-	CloneOf           *uint64           `json:"cloneOf"`
-	Images            map[string]string `json:"images"`
-	Attributes        map[string]string `json:"attributes"`
+	CollectionAddress string                `form:"collectionAddress"`
+	Owner             string                `form:"owner"`
+	Name              string                `form:"name"`
+	Role              string                `form:"role"`
+	CloneOf           *uint64               `form:"cloneOf"`
+	AttributesRaw     string                `form:"attributes"`
+	Image             *multipart.FileHeader `form:"image"`
+
+	Attributes map[string]string `form:"-"`
 }
 
 func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
@@ -43,8 +49,19 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 	}
 	r.Role = role.String()
 
-	if _, ok := r.Images[defaultImageKey]; !ok {
-		return errors.NewValidationError("images", "must include a \"default\" entry")
+	if r.Image == nil {
+		return errors.NewValidationError("image", "is required")
+	}
+	if r.Image.Size > maxImageBytes {
+		return errors.NewValidationError("image", "must be at most 5MB")
+	}
+
+	if strings.TrimSpace(r.AttributesRaw) == "" {
+		r.Attributes = map[string]string{}
+		return nil
+	}
+	if err := json.Unmarshal([]byte(r.AttributesRaw), &r.Attributes); err != nil {
+		return errors.NewValidationError("attributes", "must be a JSON object of string values")
 	}
 
 	return nil

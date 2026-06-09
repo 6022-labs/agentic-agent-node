@@ -302,26 +302,6 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalIdentity(ctx any, reqEdito
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalIdentity", reflect.TypeOf((*MockClientInterface)(nil).GetInternalIdentity), varargs...)
 }
 
-// PostInternalAgentRegistration mocks base method.
-func (m *MockClientInterface) PostInternalAgentRegistration(ctx context.Context, body clients.PostInternalAgentRegistrationJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, body}
-	for _, a := range reqEditors {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "PostInternalAgentRegistration", varargs...)
-	ret0, _ := ret[0].(*http.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PostInternalAgentRegistration indicates an expected call of PostInternalAgentRegistration.
-func (mr *MockClientInterfaceMockRecorder) PostInternalAgentRegistration(ctx, body any, reqEditors ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistration", reflect.TypeOf((*MockClientInterface)(nil).PostInternalAgentRegistration), varargs...)
-}
-
 // PostInternalAgentRegistrationEnsCheck mocks base method.
 func (m *MockClientInterface) PostInternalAgentRegistrationEnsCheck(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -400,6 +380,26 @@ func (mr *MockClientInterfaceMockRecorder) PostInternalAgentRegistrationWithBody
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, contentType, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistrationWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalAgentRegistrationWithBody), varargs...)
+}
+
+// PostInternalAgentRegistrationWithFormdataBody mocks base method.
+func (m *MockClientInterface) PostInternalAgentRegistrationWithFormdataBody(ctx context.Context, body clients.PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalAgentRegistrationWithFormdataBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalAgentRegistrationWithFormdataBody indicates an expected call of PostInternalAgentRegistrationWithFormdataBody.
+func (mr *MockClientInterfaceMockRecorder) PostInternalAgentRegistrationWithFormdataBody(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistrationWithFormdataBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalAgentRegistrationWithFormdataBody), varargs...)
 }
 
 // PostInternalAuthorize mocks base method.
@@ -986,24 +986,24 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalAgentRegistr
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistrationWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalAgentRegistrationWithBodyWithResponse), varargs...)
 }
 
-// PostInternalAgentRegistrationWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PostInternalAgentRegistrationWithResponse(ctx context.Context, body clients.PostInternalAgentRegistrationJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
+// PostInternalAgentRegistrationWithFormdataBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalAgentRegistrationWithFormdataBodyWithResponse(ctx context.Context, body clients.PostInternalAgentRegistrationFormdataRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "PostInternalAgentRegistrationWithResponse", varargs...)
+	ret := m.ctrl.Call(m, "PostInternalAgentRegistrationWithFormdataBodyWithResponse", varargs...)
 	ret0, _ := ret[0].(*clients.PostInternalAgentRegistrationResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// PostInternalAgentRegistrationWithResponse indicates an expected call of PostInternalAgentRegistrationWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalAgentRegistrationWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+// PostInternalAgentRegistrationWithFormdataBodyWithResponse indicates an expected call of PostInternalAgentRegistrationWithFormdataBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalAgentRegistrationWithFormdataBodyWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistrationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalAgentRegistrationWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalAgentRegistrationWithFormdataBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalAgentRegistrationWithFormdataBodyWithResponse), varargs...)
 }
 
 // PostInternalAuthorizeWithBodyWithResponse mocks base method.
