@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -23,6 +24,7 @@ type SaveAgentRegistration struct {
 	agentCollectionsManagerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface
 	agentCollectionRequester         identity_interfaces.AgentCollectionRequesterInterface
 	walletCredentialsStorage         identity_interfaces.WalletCredentialsStorageInterface
+	agentIdentitySettings            *settings.AgentIdentitySettings
 }
 
 func NewSaveAgentRegistration(
@@ -31,6 +33,7 @@ func NewSaveAgentRegistration(
 	agentCollectionsManagerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
+	agentIdentitySettings *settings.AgentIdentitySettings,
 ) *SaveAgentRegistration {
 	return &SaveAgentRegistration{
 		agentRepository:                  agentRepository,
@@ -38,6 +41,7 @@ func NewSaveAgentRegistration(
 		agentCollectionsManagerRequester: agentCollectionsManagerRequester,
 		agentCollectionRequester:         agentCollectionRequester,
 		walletCredentialsStorage:         walletCredentialsStorage,
+		agentIdentitySettings:            agentIdentitySettings,
 	}
 }
 
@@ -78,7 +82,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		CollectionAddress: collection.Hex(),
 		Name:              req.Name,
 		CloneOf:           req.CloneOf,
-		EnsDomain:         ensDomain(req.Name, collectionName),
+		EnsDomain:         u.ensDomain(req.Name, collectionName),
 		Role:              role,
 		Creator:           owner,
 		WalletAddress:     cred.Address,
@@ -116,7 +120,11 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	return resp, nil
 }
 
-// ensDomain builds the human-readable agent domain label path (agent.collection).
-func ensDomain(name, collectionName string) string {
-	return fmt.Sprintf("%s.%s", strings.ToLower(name), strings.ToLower(collectionName))
+// ensDomain composes the display domain: <name>.<collection>.<baseDomain>.
+func (u *SaveAgentRegistration) ensDomain(name, collectionName string) string {
+	return fmt.Sprintf("%s.%s.%s",
+		strings.ToLower(name),
+		strings.ToLower(collectionName),
+		strings.ToLower(u.agentIdentitySettings.EnsBaseDomain),
+	)
 }

@@ -9,10 +9,14 @@ import (
 
 const AgentIdentitySettingsKey = "agent_identity"
 
-// AgentIdentitySettings holds the public URL this agent is reachable at. The
-// domain publishes it as the `url` ENS text record on the agent's subnode.
+// DefaultEnsBaseDomain is the parent zone used when ens_base_domain is unset.
+const DefaultEnsBaseDomain = "6022.eth"
+
+// AgentIdentitySettings holds the agent's public URL (published as the ENS `url`
+// record) and the base zone its display name is built under.
 type AgentIdentitySettings struct {
-	RuntimeUrl string `koanf:"runtime_url"`
+	RuntimeUrl    string `koanf:"runtime_url"`
+	EnsBaseDomain string `koanf:"ens_base_domain"`
 }
 
 func NewAgentIdentitySettings(logger *zap.Logger, k *koanf.Koanf) *AgentIdentitySettings {
@@ -24,6 +28,11 @@ func NewAgentIdentitySettings(logger *zap.Logger, k *koanf.Koanf) *AgentIdentity
 	s.RuntimeUrl = strings.TrimSpace(s.RuntimeUrl)
 	if len(s.RuntimeUrl) == 0 {
 		logger.Fatal("please set agent_identity.runtime_url (or AGENT_IDENTITY__RUNTIME_URL env)")
+	}
+
+	s.EnsBaseDomain = strings.TrimSpace(s.EnsBaseDomain)
+	if len(s.EnsBaseDomain) == 0 {
+		s.EnsBaseDomain = DefaultEnsBaseDomain
 	}
 
 	return &s

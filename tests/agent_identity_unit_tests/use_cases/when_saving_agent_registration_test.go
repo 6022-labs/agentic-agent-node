@@ -7,6 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -36,7 +37,12 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage)
+	agentIdentitySettings := &settings.AgentIdentitySettings{
+		RuntimeUrl:    "https://agent.example.com",
+		EnsBaseDomain: "6022.eth",
+	}
+
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, agentIdentitySettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
