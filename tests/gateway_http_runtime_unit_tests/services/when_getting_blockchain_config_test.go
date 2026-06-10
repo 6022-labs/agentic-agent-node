@@ -13,30 +13,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingBlockchainConfigOverHttpTestingSuite struct {
+type WhenGettingBlockchainConfigTestingSuite struct {
 	sut *services.HttpBlockchainConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenGettingBlockchainConfigOverHttpBeforeEach(t *testing.T) *WhenGettingBlockchainConfigOverHttpTestingSuite {
+func WhenGettingBlockchainConfigBeforeEach(t *testing.T) *WhenGettingBlockchainConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenGettingBlockchainConfigOverHttpTestingSuite{
+	return &WhenGettingBlockchainConfigTestingSuite{
 		sut:        services.NewHttpBlockchainConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenGettingBlockchainConfigOverHttp(t *testing.T) {
+func TestWhenGettingBlockchainConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the chain config", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingBlockchainConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"chainId":80002,"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens"}`),
@@ -46,7 +46,7 @@ func TestWhenGettingBlockchainConfigOverHttp(t *testing.T) {
 		t.Run("Should decode the config payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingBlockchainConfigOverHttpBeforeEach(t)
+			suite := WhenGettingBlockchainConfigBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Get(context.Background())
@@ -65,7 +65,7 @@ func TestWhenGettingBlockchainConfigOverHttp(t *testing.T) {
 	t.Run("Given the runtime is unreachable", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingBlockchainConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom"}`),
@@ -75,7 +75,7 @@ func TestWhenGettingBlockchainConfigOverHttp(t *testing.T) {
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingBlockchainConfigOverHttpBeforeEach(t)
+			suite := WhenGettingBlockchainConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Get(context.Background())

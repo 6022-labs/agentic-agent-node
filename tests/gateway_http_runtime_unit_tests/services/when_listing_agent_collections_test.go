@@ -13,30 +13,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenListingAgentCollectionsOverHttpTestingSuite struct {
+type WhenListingAgentCollectionsTestingSuite struct {
 	sut *services.HttpAgentCollectionsClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenListingAgentCollectionsOverHttpBeforeEach(t *testing.T) *WhenListingAgentCollectionsOverHttpTestingSuite {
+func WhenListingAgentCollectionsBeforeEach(t *testing.T) *WhenListingAgentCollectionsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenListingAgentCollectionsOverHttpTestingSuite{
+	return &WhenListingAgentCollectionsTestingSuite{
 		sut:        services.NewHttpAgentCollectionsClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenListingAgentCollectionsOverHttp(t *testing.T) {
+func TestWhenListingAgentCollections(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the collections catalog", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenListingAgentCollectionsOverHttpTestingSuite) {
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any()).Return(&clients.GetInternalAgentCollectionsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"collections":[{"address":"0xaaa","name":"alpha","description":"first","moderatorCount":2,"nextTokenId":7}]}`),
@@ -46,7 +46,7 @@ func TestWhenListingAgentCollectionsOverHttp(t *testing.T) {
 		t.Run("Should decode the collections payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenListingAgentCollectionsOverHttpBeforeEach(t)
+			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.List(context.Background())
@@ -64,7 +64,7 @@ func TestWhenListingAgentCollectionsOverHttp(t *testing.T) {
 	t.Run("Given the runtime fails to read the chain", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenListingAgentCollectionsOverHttpTestingSuite) {
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any()).Return(&clients.GetInternalAgentCollectionsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
 				Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
@@ -74,7 +74,7 @@ func TestWhenListingAgentCollectionsOverHttp(t *testing.T) {
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenListingAgentCollectionsOverHttpBeforeEach(t)
+			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.List(context.Background())

@@ -13,30 +13,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenListingMCPConfigsOverHttpTestingSuite struct {
+type WhenListingMCPConfigsTestingSuite struct {
 	sut *services.HttpMCPConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenListingMCPConfigsOverHttpBeforeEach(t *testing.T) *WhenListingMCPConfigsOverHttpTestingSuite {
+func WhenListingMCPConfigsBeforeEach(t *testing.T) *WhenListingMCPConfigsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenListingMCPConfigsOverHttpTestingSuite{
+	return &WhenListingMCPConfigsTestingSuite{
 		sut:        services.NewHttpMCPConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenListingMCPConfigsOverHttp(t *testing.T) {
+func TestWhenListingMCPConfigs(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the configured connections", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenListingMCPConfigsOverHttpTestingSuite) {
+		initSuite := func(suite *WhenListingMCPConfigsTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigMcpWithResponse(gomock.Any()).Return(&clients.GetInternalConfigMcpResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"connections":[{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}]}`),
@@ -46,7 +46,7 @@ func TestWhenListingMCPConfigsOverHttp(t *testing.T) {
 		t.Run("Should decode the MCP connection list payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenListingMCPConfigsOverHttpBeforeEach(t)
+			suite := WhenListingMCPConfigsBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.List(context.Background())
@@ -62,14 +62,14 @@ func TestWhenListingMCPConfigsOverHttp(t *testing.T) {
 	t.Run("Given listing fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenListingMCPConfigsOverHttpTestingSuite) {
+		initSuite := func(suite *WhenListingMCPConfigsTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigMcpWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should propagate the transport error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenListingMCPConfigsOverHttpBeforeEach(t)
+			suite := WhenListingMCPConfigsBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.List(context.Background())

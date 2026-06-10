@@ -14,30 +14,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingLLMConfigOverHttpTestingSuite struct {
+type WhenGettingLLMConfigTestingSuite struct {
 	sut *services.HttpLLMConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenGettingLLMConfigOverHttpBeforeEach(t *testing.T) *WhenGettingLLMConfigOverHttpTestingSuite {
+func WhenGettingLLMConfigBeforeEach(t *testing.T) *WhenGettingLLMConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenGettingLLMConfigOverHttpTestingSuite{
+	return &WhenGettingLLMConfigTestingSuite{
 		sut:        services.NewHttpLLMConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenGettingLLMConfigOverHttp(t *testing.T) {
+func TestWhenGettingLLMConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the configured connection", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.GetInternalConfigLlmResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"id":"llm-1","platform":"openai","model":"gpt-4o","setupStatus":"ready"}`),
@@ -47,7 +47,7 @@ func TestWhenGettingLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should decode the LLM connection payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingLLMConfigOverHttpBeforeEach(t)
+			suite := WhenGettingLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Get(context.Background())
@@ -64,7 +64,7 @@ func TestWhenGettingLLMConfigOverHttp(t *testing.T) {
 	t.Run("Given no LLM connection is configured", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.GetInternalConfigLlmResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
 				Body:         []byte(`{"code":"not_found"}`),
@@ -74,7 +74,7 @@ func TestWhenGettingLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should return ErrLLMConnectionNotFound", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingLLMConfigOverHttpBeforeEach(t)
+			suite := WhenGettingLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Get(context.Background())
@@ -86,14 +86,14 @@ func TestWhenGettingLLMConfigOverHttp(t *testing.T) {
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should propagate the transport error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingLLMConfigOverHttpBeforeEach(t)
+			suite := WhenGettingLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Get(context.Background())

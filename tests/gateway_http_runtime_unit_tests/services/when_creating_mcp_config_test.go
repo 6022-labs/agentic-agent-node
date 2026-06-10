@@ -15,30 +15,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenCreatingMCPConfigOverHttpTestingSuite struct {
+type WhenCreatingMCPConfigTestingSuite struct {
 	sut *services.HttpMCPConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenCreatingMCPConfigOverHttpBeforeEach(t *testing.T) *WhenCreatingMCPConfigOverHttpTestingSuite {
+func WhenCreatingMCPConfigBeforeEach(t *testing.T) *WhenCreatingMCPConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenCreatingMCPConfigOverHttpTestingSuite{
+	return &WhenCreatingMCPConfigTestingSuite{
 		sut:        services.NewHttpMCPConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
+func TestWhenCreatingMCPConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime accepts the new connection", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).DoAndReturn(
 				func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpResponse, error) {
 					raw, err := io.ReadAll(reader)
@@ -59,7 +59,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should decode the created MCP connection payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCreatingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenCreatingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Create(context.Background(), &models.ExternalCreateMCPConnectionPayload{
@@ -79,7 +79,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 	t.Run("Given the runtime rejects the new connection", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigMcpResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom"}`),
@@ -89,7 +89,7 @@ func TestWhenCreatingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCreatingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenCreatingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Create(context.Background(), &models.ExternalCreateMCPConnectionPayload{

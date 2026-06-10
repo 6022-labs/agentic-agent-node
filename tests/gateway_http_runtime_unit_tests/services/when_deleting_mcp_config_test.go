@@ -13,24 +13,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenDeletingMCPConfigOverHttpTestingSuite struct {
+type WhenDeletingMCPConfigTestingSuite struct {
 	sut *services.HttpMCPConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenDeletingMCPConfigOverHttpBeforeEach(t *testing.T) *WhenDeletingMCPConfigOverHttpTestingSuite {
+func WhenDeletingMCPConfigBeforeEach(t *testing.T) *WhenDeletingMCPConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenDeletingMCPConfigOverHttpTestingSuite{
+	return &WhenDeletingMCPConfigTestingSuite{
 		sut:        services.NewHttpMCPConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenDeletingMCPConfigOverHttp(t *testing.T) {
+func TestWhenDeletingMCPConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime deletes the connection", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestWhenDeletingMCPConfigOverHttp(t *testing.T) {
 
 		id := uuid.New()
 
-		initSuite := func(suite *WhenDeletingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenDeletingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.DeleteInternalConfigMcpIdResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
 			}, nil)
@@ -47,7 +47,7 @@ func TestWhenDeletingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should not return an error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenDeletingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenDeletingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			err := suite.sut.Delete(context.Background(), id)
@@ -61,7 +61,7 @@ func TestWhenDeletingMCPConfigOverHttp(t *testing.T) {
 
 		id := uuid.New()
 
-		initSuite := func(suite *WhenDeletingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenDeletingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.DeleteInternalConfigMcpIdResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom"}`),
@@ -71,7 +71,7 @@ func TestWhenDeletingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenDeletingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenDeletingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			err := suite.sut.Delete(context.Background(), id)

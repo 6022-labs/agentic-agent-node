@@ -17,24 +17,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenAuthorizingOverHttpTestingSuite struct {
+type WhenAuthorizingTestingSuite struct {
 	sut *services.HttpAuthorizer
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenAuthorizingOverHttpBeforeEach(t *testing.T) *WhenAuthorizingOverHttpTestingSuite {
+func WhenAuthorizingBeforeEach(t *testing.T) *WhenAuthorizingTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenAuthorizingOverHttpTestingSuite{
+	return &WhenAuthorizingTestingSuite{
 		sut:        services.NewHttpAuthorizer(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenAuthorizingOverHttp(t *testing.T) {
+func TestWhenAuthorizing(t *testing.T) {
 	t.Parallel()
 
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
@@ -42,7 +42,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 	t.Run("Given the runtime authorizes the address", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAuthorizeResponse, error) {
 					var sent models.ExternalAuthorizePayload
@@ -59,7 +59,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 		t.Run("Should send the address and return true", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
 			authorized, err := suite.sut.IsAuthorized(context.Background(), address)
@@ -72,7 +72,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 	t.Run("Given the runtime denies the address", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(&clients.PostInternalAuthorizeResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
@@ -83,7 +83,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 		t.Run("Should return false", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
 			authorized, err := suite.sut.IsAuthorized(context.Background(), address)
@@ -96,7 +96,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAuthorizingOverHttpTestingSuite) {
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(nil, errors.New("runtime down"))
 		}
@@ -104,7 +104,7 @@ func TestWhenAuthorizingOverHttp(t *testing.T) {
 		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAuthorizingOverHttpBeforeEach(t)
+			suite := WhenAuthorizingBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.IsAuthorized(context.Background(), address)

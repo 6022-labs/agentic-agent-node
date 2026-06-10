@@ -17,24 +17,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenCreatingResponseOverHttpTestingSuite struct {
+type WhenCreatingResponseTestingSuite struct {
 	sut *services.HttpResponseClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenCreatingResponseOverHttpBeforeEach(t *testing.T) *WhenCreatingResponseOverHttpTestingSuite {
+func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenCreatingResponseOverHttpTestingSuite{
+	return &WhenCreatingResponseTestingSuite{
 		sut:        services.NewHttpResponseClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenCreatingResponseOverHttp(t *testing.T) {
+func TestWhenCreatingResponse(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
@@ -48,7 +48,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 	t.Run("Given the runtime returns an assistant message", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingResponseOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalResponsesResponse, error) {
 					var sent models.ExternalCreateResponsePayload
@@ -65,7 +65,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 		t.Run("Should send the conversation and decode the message", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCreatingResponseOverHttpBeforeEach(t)
+			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
 			result, err := suite.sut.Create(context.Background(), request)
@@ -81,7 +81,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 	t.Run("Given the runtime returns an empty message", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingResponseOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(&clients.PostInternalResponsesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
@@ -92,7 +92,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 		t.Run("Should return a result with a nil message", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCreatingResponseOverHttpBeforeEach(t)
+			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
 			result, err := suite.sut.Create(context.Background(), request)
@@ -107,7 +107,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingResponseOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(nil, errors.New("runtime down"))
 		}
@@ -115,7 +115,7 @@ func TestWhenCreatingResponseOverHttp(t *testing.T) {
 		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCreatingResponseOverHttpBeforeEach(t)
+			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Create(context.Background(), request)

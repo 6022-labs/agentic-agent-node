@@ -16,30 +16,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenSavingAgentRegistrationOverHttpTestingSuite struct {
+type WhenSavingAgentRegistrationTestingSuite struct {
 	sut *services.HttpAgentRegistrationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenSavingAgentRegistrationOverHttpBeforeEach(t *testing.T) *WhenSavingAgentRegistrationOverHttpTestingSuite {
+func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistrationTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenSavingAgentRegistrationOverHttpTestingSuite{
+	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:        services.NewHttpAgentRegistrationClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
+func TestWhenSavingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime saves the registration draft", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSavingAgentRegistrationOverHttpTestingSuite) {
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, contentType string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
 					assert.Contains(t, contentType, "multipart/form-data")
@@ -60,7 +60,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 		t.Run("Should decode the saved registration payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSavingAgentRegistrationOverHttpBeforeEach(t)
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{
@@ -81,7 +81,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 	t.Run("Given the runtime rejects the registration draft", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSavingAgentRegistrationOverHttpTestingSuite) {
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).Return(&clients.PostInternalAgentRegistrationResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
 				Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
@@ -91,7 +91,7 @@ func TestWhenSavingAgentRegistrationOverHttp(t *testing.T) {
 		t.Run("Should return a ValidationError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSavingAgentRegistrationOverHttpBeforeEach(t)
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{

@@ -13,56 +13,57 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenCheckingAgentEnsOverHttpTestingSuite struct {
+type WhenGettingAgentMintInfoTestingSuite struct {
 	sut *services.HttpAgentRegistrationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenCheckingAgentEnsOverHttpBeforeEach(t *testing.T) *WhenCheckingAgentEnsOverHttpTestingSuite {
+func WhenGettingAgentMintInfoBeforeEach(t *testing.T) *WhenGettingAgentMintInfoTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenCheckingAgentEnsOverHttpTestingSuite{
+	return &WhenGettingAgentMintInfoTestingSuite{
 		sut:        services.NewHttpAgentRegistrationClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenCheckingAgentEnsOverHttp(t *testing.T) {
+func TestWhenGettingAgentMintInfo(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns the ENS status", func(t *testing.T) {
+	t.Run("Given the runtime returns the mint calldata", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCheckingAgentEnsOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"mintStatus":"minted","ensStatus":"published"}`),
+				Body:         []byte(`{"collectionAddress":"0xabc","to":"0xowner","role":"agent","name":"bob","wallets":[]}`),
 			}, nil)
 		}
 
-		t.Run("Should decode the registration status payload", func(t *testing.T) {
+		t.Run("Should decode the mint info payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCheckingAgentEnsOverHttpBeforeEach(t)
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.CheckEns(context.Background())
+			payload, err := suite.sut.MintInfo(context.Background())
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) {
-				assert.Equal(t, "published", payload.EnsStatus)
+				assert.Equal(t, "0xowner", payload.To)
+				assert.Equal(t, "bob", payload.Name)
 			}
 		})
 	})
 
-	t.Run("Given the runtime fails to check the ENS status", func(t *testing.T) {
+	t.Run("Given the runtime fails to compute the mint calldata", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCheckingAgentEnsOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom"}`),
 			}, nil)
@@ -71,10 +72,10 @@ func TestWhenCheckingAgentEnsOverHttp(t *testing.T) {
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCheckingAgentEnsOverHttpBeforeEach(t)
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.CheckEns(context.Background())
+			_, err := suite.sut.MintInfo(context.Background())
 
 			var target *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &target)

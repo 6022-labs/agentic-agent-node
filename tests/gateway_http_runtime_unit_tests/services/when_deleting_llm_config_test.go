@@ -12,30 +12,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenDeletingLLMConfigOverHttpTestingSuite struct {
+type WhenDeletingLLMConfigTestingSuite struct {
 	sut *services.HttpLLMConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenDeletingLLMConfigOverHttpBeforeEach(t *testing.T) *WhenDeletingLLMConfigOverHttpTestingSuite {
+func WhenDeletingLLMConfigBeforeEach(t *testing.T) *WhenDeletingLLMConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenDeletingLLMConfigOverHttpTestingSuite{
+	return &WhenDeletingLLMConfigTestingSuite{
 		sut:        services.NewHttpLLMConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenDeletingLLMConfigOverHttp(t *testing.T) {
+func TestWhenDeletingLLMConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime deletes the connection", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenDeletingLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenDeletingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().DeleteInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.DeleteInternalConfigLlmResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
 			}, nil)
@@ -44,7 +44,7 @@ func TestWhenDeletingLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should delete the LLM connection without error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenDeletingLLMConfigOverHttpBeforeEach(t)
+			suite := WhenDeletingLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			err := suite.sut.Delete(context.Background())
@@ -56,7 +56,7 @@ func TestWhenDeletingLLMConfigOverHttp(t *testing.T) {
 	t.Run("Given the delete fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenDeletingLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenDeletingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().DeleteInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.DeleteInternalConfigLlmResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom"}`),
@@ -66,7 +66,7 @@ func TestWhenDeletingLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenDeletingLLMConfigOverHttpBeforeEach(t)
+			suite := WhenDeletingLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			err := suite.sut.Delete(context.Background())

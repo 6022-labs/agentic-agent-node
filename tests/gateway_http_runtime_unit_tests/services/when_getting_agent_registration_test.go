@@ -13,30 +13,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingAgentRegistrationOverHttpTestingSuite struct {
+type WhenGettingAgentRegistrationTestingSuite struct {
 	sut *services.HttpAgentRegistrationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenGettingAgentRegistrationOverHttpBeforeEach(t *testing.T) *WhenGettingAgentRegistrationOverHttpTestingSuite {
+func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegistrationTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenGettingAgentRegistrationOverHttpTestingSuite{
+	return &WhenGettingAgentRegistrationTestingSuite{
 		sut:        services.NewHttpAgentRegistrationClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenGettingAgentRegistrationOverHttp(t *testing.T) {
+func TestWhenGettingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the registration draft", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingAgentRegistrationOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalAgentRegistrationWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"collectionAddress":"0xabc","name":"bob","role":"agent","owner":"0xowner"}`),
@@ -46,7 +46,7 @@ func TestWhenGettingAgentRegistrationOverHttp(t *testing.T) {
 		t.Run("Should decode the registration payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingAgentRegistrationOverHttpBeforeEach(t)
+			suite := WhenGettingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Get(context.Background())
@@ -61,7 +61,7 @@ func TestWhenGettingAgentRegistrationOverHttp(t *testing.T) {
 	t.Run("Given no registration draft exists", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingAgentRegistrationOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalAgentRegistrationWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
 				Body:         []byte(`{"code":"not_found","message":"no draft"}`),
@@ -71,7 +71,7 @@ func TestWhenGettingAgentRegistrationOverHttp(t *testing.T) {
 		t.Run("Should return a NotFoundError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingAgentRegistrationOverHttpBeforeEach(t)
+			suite := WhenGettingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Get(context.Background())

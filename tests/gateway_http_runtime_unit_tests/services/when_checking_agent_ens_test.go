@@ -2,7 +2,6 @@ package services_test
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"testing"
 
@@ -14,65 +13,68 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenSelfRegisteringAgentOverHttpTestingSuite struct {
+type WhenCheckingAgentEnsTestingSuite struct {
 	sut *services.HttpAgentRegistrationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenSelfRegisteringAgentOverHttpBeforeEach(t *testing.T) *WhenSelfRegisteringAgentOverHttpTestingSuite {
+func WhenCheckingAgentEnsBeforeEach(t *testing.T) *WhenCheckingAgentEnsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenSelfRegisteringAgentOverHttpTestingSuite{
+	return &WhenCheckingAgentEnsTestingSuite{
 		sut:        services.NewHttpAgentRegistrationClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenSelfRegisteringAgentOverHttp(t *testing.T) {
+func TestWhenCheckingAgentEns(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime accepts the self-registration", func(t *testing.T) {
+	t.Run("Given the runtime returns the ENS status", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSelfRegisteringAgentOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationSelfResponse{
+		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"mintStatus":"submitted","ensStatus":"pending"}`),
+				Body:         []byte(`{"mintStatus":"minted","ensStatus":"published"}`),
 			}, nil)
 		}
 
 		t.Run("Should decode the registration status payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSelfRegisteringAgentOverHttpBeforeEach(t)
+			suite := WhenCheckingAgentEnsBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.Self(context.Background())
+			payload, err := suite.sut.CheckEns(context.Background())
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) {
-				assert.Equal(t, "submitted", payload.MintStatus)
+				assert.Equal(t, "published", payload.EnsStatus)
 			}
 		})
 	})
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime fails to check the ENS status", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSelfRegisteringAgentOverHttpTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
+		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+				Body:         []byte(`{"code":"boom"}`),
+			}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSelfRegisteringAgentOverHttpBeforeEach(t)
+			suite := WhenCheckingAgentEnsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Self(context.Background())
+			_, err := suite.sut.CheckEns(context.Background())
 
 			var target *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &target)

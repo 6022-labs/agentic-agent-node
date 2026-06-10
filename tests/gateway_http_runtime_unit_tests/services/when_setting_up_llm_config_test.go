@@ -15,30 +15,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenSettingUpLLMConfigOverHttpTestingSuite struct {
+type WhenSettingUpLLMConfigTestingSuite struct {
 	sut *services.HttpLLMConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenSettingUpLLMConfigOverHttpBeforeEach(t *testing.T) *WhenSettingUpLLMConfigOverHttpTestingSuite {
+func WhenSettingUpLLMConfigBeforeEach(t *testing.T) *WhenSettingUpLLMConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenSettingUpLLMConfigOverHttpTestingSuite{
+	return &WhenSettingUpLLMConfigTestingSuite{
 		sut:        services.NewHttpLLMConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenSettingUpLLMConfigOverHttp(t *testing.T) {
+func TestWhenSettingUpLLMConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime accepts the setup", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSettingUpLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenSettingUpLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalConfigLlmWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).DoAndReturn(
 				func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigLlmResponse, error) {
 					raw, err := io.ReadAll(reader)
@@ -59,7 +59,7 @@ func TestWhenSettingUpLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should decode the created LLM connection payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSettingUpLLMConfigOverHttpBeforeEach(t)
+			suite := WhenSettingUpLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.Setup(context.Background(), &models.ExternalSetupLLMConnectionPayload{
@@ -78,7 +78,7 @@ func TestWhenSettingUpLLMConfigOverHttp(t *testing.T) {
 	t.Run("Given the runtime rejects the setup", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSettingUpLLMConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenSettingUpLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalConfigLlmWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigLlmResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 				Body:         []byte(`{"code":"boom","message":"runtime down"}`),
@@ -88,7 +88,7 @@ func TestWhenSettingUpLLMConfigOverHttp(t *testing.T) {
 		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSettingUpLLMConfigOverHttpBeforeEach(t)
+			suite := WhenSettingUpLLMConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Setup(context.Background(), &models.ExternalSetupLLMConnectionPayload{

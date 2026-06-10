@@ -14,24 +14,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingMCPConfigOverHttpTestingSuite struct {
+type WhenGettingMCPConfigTestingSuite struct {
 	sut *services.HttpMCPConfigClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenGettingMCPConfigOverHttpBeforeEach(t *testing.T) *WhenGettingMCPConfigOverHttpTestingSuite {
+func WhenGettingMCPConfigBeforeEach(t *testing.T) *WhenGettingMCPConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenGettingMCPConfigOverHttpTestingSuite{
+	return &WhenGettingMCPConfigTestingSuite{
 		sut:        services.NewHttpMCPConfigClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenGettingMCPConfigOverHttp(t *testing.T) {
+func TestWhenGettingMCPConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the requested connection", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestWhenGettingMCPConfigOverHttp(t *testing.T) {
 
 		id := uuid.New()
 
-		initSuite := func(suite *WhenGettingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.GetInternalConfigMcpIdResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}`),
@@ -49,7 +49,7 @@ func TestWhenGettingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should decode the MCP connection payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenGettingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.GetById(context.Background(), id)
@@ -66,7 +66,7 @@ func TestWhenGettingMCPConfigOverHttp(t *testing.T) {
 
 		id := uuid.New()
 
-		initSuite := func(suite *WhenGettingMCPConfigOverHttpTestingSuite) {
+		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.GetInternalConfigMcpIdResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
 				Body:         []byte(`{"code":"not_found"}`),
@@ -76,7 +76,7 @@ func TestWhenGettingMCPConfigOverHttp(t *testing.T) {
 		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingMCPConfigOverHttpBeforeEach(t)
+			suite := WhenGettingMCPConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.GetById(context.Background(), id)

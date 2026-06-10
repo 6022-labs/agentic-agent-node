@@ -13,30 +13,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenCheckingAgentMintOverHttpTestingSuite struct {
+type WhenCheckingAgentMintTestingSuite struct {
 	sut *services.HttpAgentRegistrationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
 
-func WhenCheckingAgentMintOverHttpBeforeEach(t *testing.T) *WhenCheckingAgentMintOverHttpTestingSuite {
+func WhenCheckingAgentMintBeforeEach(t *testing.T) *WhenCheckingAgentMintTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
-	return &WhenCheckingAgentMintOverHttpTestingSuite{
+	return &WhenCheckingAgentMintTestingSuite{
 		sut:        services.NewHttpAgentRegistrationClient(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenCheckingAgentMintOverHttp(t *testing.T) {
+func TestWhenCheckingAgentMint(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the mint status", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCheckingAgentMintOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCheckingAgentMintTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"mintStatus":"minted","ensStatus":"pending"}`),
@@ -46,7 +46,7 @@ func TestWhenCheckingAgentMintOverHttp(t *testing.T) {
 		t.Run("Should decode the registration status payload", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCheckingAgentMintOverHttpBeforeEach(t)
+			suite := WhenCheckingAgentMintBeforeEach(t)
 			initSuite(suite)
 
 			payload, err := suite.sut.CheckMint(context.Background())
@@ -61,7 +61,7 @@ func TestWhenCheckingAgentMintOverHttp(t *testing.T) {
 	t.Run("Given a mint is already in flight", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCheckingAgentMintOverHttpTestingSuite) {
+		initSuite := func(suite *WhenCheckingAgentMintTestingSuite) {
 			suite.mockClient.EXPECT().PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
 				Body:         []byte(`{"code":"conflict","message":"already minting"}`),
@@ -71,7 +71,7 @@ func TestWhenCheckingAgentMintOverHttp(t *testing.T) {
 		t.Run("Should return a ConflictError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenCheckingAgentMintOverHttpBeforeEach(t)
+			suite := WhenCheckingAgentMintBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.CheckMint(context.Background())
