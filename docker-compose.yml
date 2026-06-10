@@ -37,7 +37,7 @@ services:
         condition: service_started
 
   agent-node-ipfs:
-    image: "ipfs/kubo:v0.32.1"
+    image: "ipfs/kubo:v0.42.0"
     container_name: agent-node-ipfs
     entrypoint: ["/bin/sh", "-c"]
     command:
