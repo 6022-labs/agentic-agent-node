@@ -1,7 +1,7 @@
 package configurations
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	_ "github.com/6022-labs/agentic-agent-node/src/runtime_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
 	"github.com/gofiber/contrib/fiberzap/v2"
@@ -35,7 +35,7 @@ type registerRoutesParams struct {
 
 	App         *fiber.App
 	Logger      *zap.Logger
-	Controllers []runtime_common.ControllerInterface `group:"runtime_controllers"`
+	Controllers []mvc.ControllerInterface `group:"runtime_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {

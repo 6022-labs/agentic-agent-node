@@ -3,6 +3,7 @@ package agent_identity_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -41,7 +42,7 @@ func (c *AuthorizeController) Authorize(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.authorize.Execute(ctx.UserContext(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

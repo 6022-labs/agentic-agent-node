@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/settings"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )

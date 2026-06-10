@@ -2,7 +2,7 @@ package configurations
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge_mvc"
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"go.uber.org/dig"
 )
 
@@ -14,7 +14,7 @@ func provideController(container *dig.Container, ctor any) {
 	if err := container.Provide(
 		ctor,
 		dig.Group("runtime_controllers"),
-		dig.As(new(runtime_common.ControllerInterface)),
+		dig.As(new(mvc.ControllerInterface)),
 	); err != nil {
 		panic(err)
 	}

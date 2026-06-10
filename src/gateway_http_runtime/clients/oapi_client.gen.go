@@ -148,6 +148,15 @@ type ResponsesAuthorizeResponse struct {
 	Authorized *bool `json:"authorized,omitempty"`
 }
 
+// ResponsesBlockchainConfigResponse defines model for responses.BlockchainConfigResponse.
+type ResponsesBlockchainConfigResponse struct {
+	ChainId                   *int    `json:"chainId,omitempty"`
+	CollectionCreatorAddress  *string `json:"collectionCreatorAddress,omitempty"`
+	CollectionsManagerAddress *string `json:"collectionsManagerAddress,omitempty"`
+	EnsRegistryAddress        *string `json:"ensRegistryAddress,omitempty"`
+	Token6022Address          *string `json:"token6022Address,omitempty"`
+}
+
 // ResponsesConversationMessage defines model for responses.ConversationMessage.
 type ResponsesConversationMessage struct {
 	Content        *string `json:"content,omitempty"`
@@ -462,6 +471,9 @@ type ClientInterface interface {
 
 	PostInternalAuthorize(ctx context.Context, body PostInternalAuthorizeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetInternalConfigBlockchain request
+	GetInternalConfigBlockchain(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteInternalConfigLlm request
 	DeleteInternalConfigLlm(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -637,6 +649,18 @@ func (c *Client) PostInternalAuthorizeWithBody(ctx context.Context, contentType 
 
 func (c *Client) PostInternalAuthorize(ctx context.Context, body PostInternalAuthorizeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInternalAuthorizeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInternalConfigBlockchain(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConfigBlockchainRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1140,6 +1164,33 @@ func NewPostInternalAuthorizeRequestWithBody(server string, contentType string, 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetInternalConfigBlockchainRequest generates requests for GetInternalConfigBlockchain
+func NewGetInternalConfigBlockchainRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/blockchain")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -1696,6 +1747,9 @@ type ClientWithResponsesInterface interface {
 
 	PostInternalAuthorizeWithResponse(ctx context.Context, body PostInternalAuthorizeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalAuthorizeResponse, error)
 
+	// GetInternalConfigBlockchainWithResponse request
+	GetInternalConfigBlockchainWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigBlockchainResponse, error)
+
 	// DeleteInternalConfigLlmWithResponse request
 	DeleteInternalConfigLlmWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigLlmResponse, error)
 
@@ -1951,6 +2005,28 @@ func (r PostInternalAuthorizeResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostInternalAuthorizeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInternalConfigBlockchainResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesBlockchainConfigResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalConfigBlockchainResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalConfigBlockchainResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2384,6 +2460,15 @@ func (c *ClientWithResponses) PostInternalAuthorizeWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParsePostInternalAuthorizeResponse(rsp)
+}
+
+// GetInternalConfigBlockchainWithResponse request returning *GetInternalConfigBlockchainResponse
+func (c *ClientWithResponses) GetInternalConfigBlockchainWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigBlockchainResponse, error) {
+	rsp, err := c.GetInternalConfigBlockchain(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalConfigBlockchainResponse(rsp)
 }
 
 // DeleteInternalConfigLlmWithResponse request returning *DeleteInternalConfigLlmResponse
@@ -2850,6 +2935,32 @@ func ParsePostInternalAuthorizeResponse(rsp *http.Response) (*PostInternalAuthor
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInternalConfigBlockchainResponse parses an HTTP response from a GetInternalConfigBlockchainWithResponse call
+func ParseGetInternalConfigBlockchainResponse(rsp *http.Response) (*GetInternalConfigBlockchainResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalConfigBlockchainResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesBlockchainConfigResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 

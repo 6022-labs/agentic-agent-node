@@ -3,6 +3,7 @@ package agent_reasoning_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -43,7 +44,7 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 func (c *LLMConfigController) Get(ctx *fiber.Ctx) error {
 	resp, err := c.getLLMConnection.Execute(ctx.Context())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -68,7 +69,7 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.setupLLMConnection.Execute(ctx.Context(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -81,7 +82,7 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 // @Router /internal/config/llm [delete]
 func (c *LLMConfigController) Delete(ctx *fiber.Ctx) error {
 	if err := c.deleteLLMConnection.Execute(ctx.Context()); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

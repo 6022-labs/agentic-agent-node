@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/settings"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"go.uber.org/zap"

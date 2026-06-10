@@ -1,6 +1,7 @@
 package agent_knowledge_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
@@ -48,7 +49,7 @@ func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
 func (c *ConversationMessagesController) ListConversations(ctx *fiber.Ctx) error {
 	resp, err := c.listConversations.Execute(ctx.Context())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -81,7 +82,7 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 
 	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -103,7 +104,7 @@ func (c *ConversationMessagesController) List(ctx *fiber.Ctx) error {
 
 	resp, err := c.listConversationMessages.Execute(ctx.Context(), conversationId)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

@@ -2,6 +2,7 @@ package agent_identity_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -33,7 +34,7 @@ func (c *AgentCollectionsController) RegisterRoutes(app fiber.Router) {
 func (c *AgentCollectionsController) List(ctx *fiber.Ctx) error {
 	resp, err := c.listAgentCollections.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

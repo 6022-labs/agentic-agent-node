@@ -1,6 +1,7 @@
 package gateway_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -43,7 +44,7 @@ func (c *ResponseController) CreateResponse(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.createResponse.Execute(ctx.Context(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

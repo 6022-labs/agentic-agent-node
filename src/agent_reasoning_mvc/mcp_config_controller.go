@@ -4,6 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -55,7 +56,7 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
 	resp, err := c.listMCPConnections.Execute(ctx.Context())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -80,7 +81,7 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.createMCPConnection.Execute(ctx.Context(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
@@ -102,7 +103,7 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.getMCPConnection.Execute(ctx.Context(), id)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -133,7 +134,7 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.updateMCPConnection.Execute(ctx.Context(), id, body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -152,7 +153,7 @@ func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
 	if err := c.deleteMCPConnection.Execute(ctx.Context(), id); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

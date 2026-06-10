@@ -184,6 +184,19 @@ components:
         authorized:
           type: boolean
       type: object
+    responses.BlockchainConfigResponse:
+      properties:
+        chainId:
+          type: integer
+        collectionCreatorAddress:
+          type: string
+        collectionsManagerAddress:
+          type: string
+        ensRegistryAddress:
+          type: string
+        token6022Address:
+          type: string
+      type: object
     responses.ConversationMessage:
       properties:
         content:
@@ -574,6 +587,18 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: authorize_failed
       summary: Internal authorize
+      tags:
+      - Internal
+  /internal/config/blockchain:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.BlockchainConfigResponse'
+          description: OK
+      summary: Get blockchain config
       tags:
       - Internal
   /internal/config/llm:

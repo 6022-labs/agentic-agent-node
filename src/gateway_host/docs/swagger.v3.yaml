@@ -210,6 +210,19 @@ components:
           type: array
           uniqueItems: false
       type: object
+    responses.BlockchainConfigResponse:
+      properties:
+        chainId:
+          type: integer
+        collectionCreatorAddress:
+          type: string
+        collectionsManagerAddress:
+          type: string
+        ensRegistryAddress:
+          type: string
+        token6022Address:
+          type: string
+      type: object
     responses.ConversationMessage:
       properties:
         content:
@@ -651,6 +664,18 @@ paths:
       summary: Auth verify
       tags:
       - Auth
+  /config:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.BlockchainConfigResponse'
+          description: OK
+      summary: Public chain config
+      tags:
+      - Config
   /config/llm:
     delete:
       responses:

@@ -1,6 +1,7 @@
 package gateway_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -51,7 +52,7 @@ func (c *ConversationsController) RegisterAuthenticatedRoutes(app fiber.Router) 
 func (c *ConversationsController) List(ctx *fiber.Ctx) error {
 	resp, err := c.listConversations.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -74,7 +75,7 @@ func (c *ConversationsController) ListMessages(ctx *fiber.Ctx) error {
 
 	resp, err := c.listConversationMessages.Execute(ctx.UserContext(), conversationId)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -108,7 +109,7 @@ func (c *ConversationsController) AppendMessages(ctx *fiber.Ctx) error {
 
 	resp, err := c.appendConversationMessages.Execute(ctx.UserContext(), conversationId, body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }

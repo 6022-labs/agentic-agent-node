@@ -1,6 +1,7 @@
 package gateway_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/gofiber/fiber/v2"
 )
@@ -35,7 +36,7 @@ func (c *AgentCollectionsController) RegisterAuthenticatedRoutes(app fiber.Route
 func (c *AgentCollectionsController) List(ctx *fiber.Ctx) error {
 	resp, err := c.listAgentCollections.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

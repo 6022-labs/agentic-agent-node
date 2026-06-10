@@ -10,7 +10,7 @@ import (
 	blockchainhelper "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/helper"
-	ens_settings "github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/settings"
+	ens_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -24,7 +24,7 @@ import (
 type AgentEnsRegistryRequester struct {
 	logger                   *zap.Logger
 	client                   *ethclient.Client
-	blockchainSettings       *ens_settings.EnsBlockchainSettings
+	blockchainSettings       *ens_settings.BlockchainSettings
 	registrySettings         *ens_settings.AgentEnsRegistriesSettings
 	transactorFactory        *factory.TransactorFactory
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface
@@ -33,7 +33,7 @@ type AgentEnsRegistryRequester struct {
 func NewAgentEnsRegistryRequester(
 	logger *zap.Logger,
 	client *ethclient.Client,
-	blockchainSettings *ens_settings.EnsBlockchainSettings,
+	blockchainSettings *ens_settings.BlockchainSettings,
 	registrySettings *ens_settings.AgentEnsRegistriesSettings,
 	transactorFactory *factory.TransactorFactory,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
@@ -77,7 +77,7 @@ func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, collection 
 	if err != nil {
 		return err
 	}
-	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.ChainId)
+	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.Id)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, collection co
 	if err != nil {
 		return err
 	}
-	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.ChainId)
+	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.Id)
 	if err != nil {
 		return err
 	}
@@ -154,5 +154,5 @@ func (r *AgentEnsRegistryRequester) resolveAgentNode(
 		return [32]byte{}, fmt.Errorf("read collection name: %w", err)
 	}
 
-	return helper.ResolveAgentNode(parentNode, r.blockchainSettings.ChainId, collectionName, agentLabel), nil
+	return helper.ResolveAgentNode(parentNode, r.blockchainSettings.Id, collectionName, agentLabel), nil
 }

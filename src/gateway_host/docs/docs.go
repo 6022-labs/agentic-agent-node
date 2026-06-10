@@ -352,6 +352,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Public chain config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.BlockchainConfigResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/config/llm": {
             "get": {
                 "security": [
@@ -1083,6 +1102,26 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/responses.ConversationMessage"
                     }
+                }
+            }
+        },
+        "responses.BlockchainConfigResponse": {
+            "type": "object",
+            "properties": {
+                "chainId": {
+                    "type": "integer"
+                },
+                "collectionCreatorAddress": {
+                    "type": "string"
+                },
+                "collectionsManagerAddress": {
+                    "type": "string"
+                },
+                "ensRegistryAddress": {
+                    "type": "string"
+                },
+                "token6022Address": {
+                    "type": "string"
                 }
             }
         },

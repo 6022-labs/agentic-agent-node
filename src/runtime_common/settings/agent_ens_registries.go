@@ -31,7 +31,7 @@ type AgentEnsRegistriesSettings struct {
 
 func NewAgentEnsRegistriesSettings(
 	logger *zap.Logger,
-	blockchainSettings *EnsBlockchainSettings,
+	blockchainSettings *BlockchainSettings,
 ) *AgentEnsRegistriesSettings {
 	var f agentEnsRegistriesFile
 	if err := json.Unmarshal(agentEnsRegistriesJson, &f); err != nil {
@@ -39,19 +39,19 @@ func NewAgentEnsRegistriesSettings(
 	}
 
 	for _, w := range f.Registries {
-		if w.ChainId != blockchainSettings.ChainId {
+		if w.ChainId != blockchainSettings.Id {
 			continue
 		}
 		addr := strings.TrimSpace(w.Address)
 		if len(addr) == 0 {
 			logger.Fatal(
 				"AgentEnsRegistry address is empty for the configured chain; populate agent_ens_registries.json and rebuild",
-				zap.Uint64("chainId", blockchainSettings.ChainId),
+				zap.Uint64("chainId", blockchainSettings.Id),
 				zap.String("name", w.Name),
 			)
 		}
 		logger.Info("resolved AgentEnsRegistry from built-in registry",
-			zap.Uint64("chainId", blockchainSettings.ChainId),
+			zap.Uint64("chainId", blockchainSettings.Id),
 			zap.String("name", w.Name),
 			zap.String("address", addr),
 		)
@@ -62,7 +62,7 @@ func NewAgentEnsRegistriesSettings(
 
 	logger.Fatal(
 		"no AgentEnsRegistry entry for the configured chain; add an entry to agent_ens_registries.json and rebuild",
-		zap.Uint64("chainId", blockchainSettings.ChainId),
+		zap.Uint64("chainId", blockchainSettings.Id),
 	)
 	return nil
 }

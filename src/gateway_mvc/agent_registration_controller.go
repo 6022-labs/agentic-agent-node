@@ -2,6 +2,7 @@ package gateway_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
@@ -85,15 +86,15 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 		body.Image = image
 	}
 	if err := body.ValidateAndSanitize(); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	owner, ok := ctx.Locals(middlewares.AuthAddressLocalKey).(string)
 	if !ok || owner == "" {
-		return writeError(ctx, errors.NewUnauthorizedError("missing_owner", "authenticated address is required"))
+		return mvc.WriteError(ctx, errors.NewUnauthorizedError("missing_owner", "authenticated address is required"))
 	}
 	resp, err := c.saveAgentRegistration.Execute(ctx.UserContext(), body, owner)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -109,7 +110,7 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
 	resp, err := c.getAgentRegistration.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -124,7 +125,7 @@ func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
 	resp, err := c.getAgentMintInfo.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -139,7 +140,7 @@ func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
 	resp, err := c.checkAgentMint.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -155,7 +156,7 @@ func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
 	resp, err := c.getAgentEnsInfo.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -170,7 +171,7 @@ func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
 	resp, err := c.checkAgentEns.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -186,7 +187,7 @@ func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
 func (c *AgentRegistrationController) Self(ctx *fiber.Ctx) error {
 	resp, err := c.selfRegisterAgent.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

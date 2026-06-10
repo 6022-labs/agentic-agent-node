@@ -62,6 +62,12 @@ func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		services.NewHttpBlockchainConfigClient,
+		dig.As(new(gateway_interfaces.BlockchainConfigClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		services.NewHttpConversationHistoryClient,
 		dig.As(new(gateway_interfaces.ConversationHistoryClientInterface)),
 	); err != nil {

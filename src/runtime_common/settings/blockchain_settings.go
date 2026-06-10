@@ -1,17 +1,16 @@
 package settings
 
 import (
-	"strings"
-
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/zap"
 )
 
 const BlockchainSettingsKey = "blockchain"
 
+// BlockchainSettings is the chain the node is bound to. The RPC endpoint is
+// adapter-only and lives in agent_identity_blockchain/settings.RpcSettings.
 type BlockchainSettings struct {
-	Id         uint64 `koanf:"id"`
-	RpcHttpUrl string `koanf:"rpc_http_url"`
+	Id uint64 `koanf:"id"`
 }
 
 func NewBlockchainSettings(logger *zap.Logger, k *koanf.Koanf) *BlockchainSettings {
@@ -20,13 +19,8 @@ func NewBlockchainSettings(logger *zap.Logger, k *koanf.Koanf) *BlockchainSettin
 		logger.Fatal("failed to unmarshal blockchain settings", zap.Error(err))
 	}
 
-	settings.RpcHttpUrl = strings.TrimSpace(settings.RpcHttpUrl)
-
 	if settings.Id == 0 {
 		logger.Fatal("please set blockchain.id (or BLOCKCHAIN__ID env)")
-	}
-	if len(settings.RpcHttpUrl) == 0 {
-		logger.Fatal("please set blockchain.rpc_http_url (or BLOCKCHAIN__RPC_HTTP_URL env)")
 	}
 
 	return &settings

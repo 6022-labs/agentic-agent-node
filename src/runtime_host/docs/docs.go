@@ -313,6 +313,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/config/blockchain": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get blockchain config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.BlockchainConfigResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/config/llm": {
             "get": {
                 "produces": [
@@ -1097,6 +1116,26 @@ const docTemplate = `{
             "properties": {
                 "authorized": {
                     "type": "boolean"
+                }
+            }
+        },
+        "responses.BlockchainConfigResponse": {
+            "type": "object",
+            "properties": {
+                "chainId": {
+                    "type": "integer"
+                },
+                "collectionCreatorAddress": {
+                    "type": "string"
+                },
+                "collectionsManagerAddress": {
+                    "type": "string"
+                },
+                "ensRegistryAddress": {
+                    "type": "string"
+                },
+                "token6022Address": {
+                    "type": "string"
                 }
             }
         },

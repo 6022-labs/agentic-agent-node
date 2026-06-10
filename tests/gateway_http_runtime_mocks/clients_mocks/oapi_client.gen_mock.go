@@ -202,6 +202,26 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalAgentRegistrationMintInfo(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentRegistrationMintInfo", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentRegistrationMintInfo), varargs...)
 }
 
+// GetInternalConfigBlockchain mocks base method.
+func (m *MockClientInterface) GetInternalConfigBlockchain(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigBlockchain", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigBlockchain indicates an expected call of GetInternalConfigBlockchain.
+func (mr *MockClientInterfaceMockRecorder) GetInternalConfigBlockchain(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigBlockchain", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigBlockchain), varargs...)
+}
+
 // GetInternalConfigLlm mocks base method.
 func (m *MockClientInterface) GetInternalConfigLlm(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -824,6 +844,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentRegistra
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentRegistrationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentRegistrationWithResponse), varargs...)
+}
+
+// GetInternalConfigBlockchainWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalConfigBlockchainWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalConfigBlockchainResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigBlockchainWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalConfigBlockchainResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigBlockchainWithResponse indicates an expected call of GetInternalConfigBlockchainWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigBlockchainWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigBlockchainWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigBlockchainWithResponse), varargs...)
 }
 
 // GetInternalConfigLlmWithResponse mocks base method.

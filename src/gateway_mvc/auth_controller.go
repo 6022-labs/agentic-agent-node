@@ -1,6 +1,7 @@
 package gateway_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -44,7 +45,7 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
 	resp, err := c.getAuthChallenge.Execute()
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -71,7 +72,7 @@ func (c *AuthController) Verify(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

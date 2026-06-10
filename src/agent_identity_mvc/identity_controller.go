@@ -2,6 +2,7 @@ package agent_identity_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -42,7 +43,7 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 	resp, err := c.getAgentIdentity.Execute(ctx.UserContext())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -59,7 +60,7 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 // @Router /internal/identity/ens/publish [post]
 func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
 	if err := c.publishEnsRuntimeRecords.Execute(ctx.UserContext()); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

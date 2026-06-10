@@ -1,6 +1,7 @@
 package gateway_mvc
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -45,7 +46,7 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
 	resp, err := c.getLlmConfig.Execute(ctx.Context())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -71,7 +72,7 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.setLlmConfig.Execute(ctx.Context(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -86,7 +87,7 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
 	if err := c.deleteLlmConfig.Execute(ctx.Context()); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

@@ -1,6 +1,7 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
 	"go.uber.org/dig"
@@ -12,6 +13,7 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 	}
 
 	provideController(container, gateway_mvc.NewHealthController)
+	provideController(container, gateway_mvc.NewConfigController)
 	provideController(container, gateway_mvc.NewAuthController)
 	provideController(container, gateway_mvc.NewResponseController)
 	provideController(container, gateway_mvc.NewLlmConfigController)
@@ -24,8 +26,8 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 func provideController(container *dig.Container, ctor any) {
 	if err := container.Provide(
 		ctor,
-		dig.Group("controllers"),
-		dig.As(new(gateway_mvc.ControllerInterface)),
+		dig.Group("gateway_controllers"),
+		dig.As(new(mvc.AuthAwareControllerInterface)),
 	); err != nil {
 		panic(err)
 	}

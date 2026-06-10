@@ -21,7 +21,7 @@ services:
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret
       - BLOCKCHAIN__ID=80002
-      - BLOCKCHAIN__RPC_HTTP_URL=http://evm-node:8545
+      - RPC__HTTP_URL=http://evm-node:8545
       - RUNTIME_DATABASE__DRIVER=postgres
       - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations

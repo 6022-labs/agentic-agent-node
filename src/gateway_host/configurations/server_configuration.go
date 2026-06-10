@@ -1,9 +1,9 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_host/settings"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
@@ -39,7 +39,7 @@ type registerRoutesParams struct {
 	App         *fiber.App
 	Logger      *zap.Logger
 	JwtAuth     *middlewares.JwtAuthMiddleware
-	Controllers []gateway_mvc.ControllerInterface `group:"controllers"`
+	Controllers []mvc.AuthAwareControllerInterface `group:"gateway_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {

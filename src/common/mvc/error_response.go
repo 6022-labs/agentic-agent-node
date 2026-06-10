@@ -1,14 +1,14 @@
-package agent_knowledge_mvc
+package mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/gofiber/fiber/v2"
 )
 
-// writeError maps a use-case error to its HTTP status. The concrete error
+// WriteError maps a use-case error to its HTTP status. The concrete error
 // types carry the JSON body ({code,message} or {field,message}); an unknown
-// error collapses to 500.
-func writeError(ctx *fiber.Ctx, err error) error {
+// error collapses to 500. Shared by every *_mvc controller package.
+func WriteError(ctx *fiber.Ctx, err error) error {
 	switch e := err.(type) {
 	case *errors.ValidationError:
 		return ctx.Status(fiber.StatusBadRequest).JSON(e)

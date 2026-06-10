@@ -2,6 +2,7 @@ package gateway_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
@@ -50,7 +51,7 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 func (c *McpConfigController) List(ctx *fiber.Ctx) error {
 	resp, err := c.listMcpConnections.Execute(ctx.Context())
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -76,7 +77,7 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.createMcpConnection.Execute(ctx.Context(), body)
 	if err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
@@ -97,7 +98,7 @@ func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("id", "must be a valid uuid"))
 	}
 	if err := c.deleteMcpConnection.Execute(ctx.Context(), id); err != nil {
-		return writeError(ctx, err)
+		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

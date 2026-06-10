@@ -1,0 +1,15 @@
+{
+  "_comment": "Well-known AgentCollectionCreator contract addresses per EVM chain id. Resolved at startup against blockchain.id; leave an address empty until the creator is deployed on that chain.",
+  "creators": [
+    {
+      "chainId": 137,
+      "name": "polygon-mainnet",
+      "address": ""
+    },
+    {
+      "chainId": 80002,
+      "name": "polygon-amoy",
+      "address": "0x9D72199fC7C00416ceD5bC157Bdb2e3775511717"
+    }
+  ]
+}

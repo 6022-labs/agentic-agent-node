@@ -11,15 +11,7 @@ import (
 )
 
 func AddAgentIdentityBlockchainConfiguration(container *dig.Container) {
-	if err := container.Provide(blockchain_settings.NewBlockchainSettings); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(blockchain_settings.NewAgentCollectionsManagersSettings); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(blockchain_settings.NewToken6022Settings); err != nil {
+	if err := container.Provide(blockchain_settings.NewRpcSettings); err != nil {
 		panic(err)
 	}
 
@@ -60,8 +52,8 @@ func AddAgentIdentityBlockchainConfiguration(container *dig.Container) {
 	}
 }
 
-func newEthClient(settings *blockchain_settings.BlockchainSettings, logger *zap.Logger) *ethclient.Client {
-	client, err := ethclient.Dial(settings.RpcHttpUrl)
+func newEthClient(rpcSettings *blockchain_settings.RpcSettings, logger *zap.Logger) *ethclient.Client {
+	client, err := ethclient.Dial(rpcSettings.HttpUrl)
 	if err != nil {
 		logger.Fatal("failed to dial EVM RPC", zap.Error(err))
 	}
