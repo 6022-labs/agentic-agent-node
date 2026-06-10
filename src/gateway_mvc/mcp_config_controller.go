@@ -72,9 +72,6 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
-	}
 	resp, err := c.createMcpConnection.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)

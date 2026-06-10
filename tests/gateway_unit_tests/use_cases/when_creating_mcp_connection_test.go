@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/requests"
@@ -43,6 +45,21 @@ func generateValidGatewayCreateMcpConnectionRequest() *requests.CreateMcpConnect
 
 func TestWhenCreatingMcpConnection(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given a request that fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingMcpConnectionBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.CreateMcpConnectionRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
 
 	t.Run("Given a request with one auth header", func(t *testing.T) {
 		t.Parallel()

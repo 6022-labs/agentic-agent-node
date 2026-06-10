@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"mime/multipart"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -31,6 +32,21 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 	const owner = "0x1111111111111111111111111111111111111111"
 
+	t.Run("Given a request that fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{Name: "Alice"}, owner)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given the runtime accepts the draft", func(t *testing.T) {
 		t.Parallel()
 
@@ -49,7 +65,12 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{Name: "Alice"}, owner)
+			resp, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{
+				CollectionAddress: "0x2222222222222222222222222222222222222222",
+				Name:              "Alice",
+				Role:              "assistant",
+				Image:             &multipart.FileHeader{Filename: "avatar.png", Size: 128},
+			}, owner)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Alice", resp.Name)
@@ -72,7 +93,12 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{}, owner)
+			_, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{
+				CollectionAddress: "0x2222222222222222222222222222222222222222",
+				Name:              "Alice",
+				Role:              "assistant",
+				Image:             &multipart.FileHeader{Filename: "avatar.png", Size: 128},
+			}, owner)
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)

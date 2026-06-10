@@ -19,6 +19,10 @@ func NewSaveAgentRegistration(client gateway_interfaces.AgentRegistrationClientI
 
 // Execute forwards the draft to the runtime, injecting the authenticated owner.
 func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveAgentRegistrationRequest, owner string) (*responses.AgentRegistrationResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	payload, err := u.client.Save(ctx, &models.ExternalSaveAgentRegistrationPayload{
 		CollectionAddress: req.CollectionAddress,
 		Owner:             owner,

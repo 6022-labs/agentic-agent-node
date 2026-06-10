@@ -45,6 +45,21 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 		},
 	}
 
+	t.Run("Given a request that fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesViaGatewayBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), "conv-1", &requests.AppendConversationMessagesRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given the client accepts the messages", func(t *testing.T) {
 		t.Parallel()
 

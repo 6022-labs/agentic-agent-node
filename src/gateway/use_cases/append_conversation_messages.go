@@ -19,6 +19,10 @@ func NewAppendConversationMessages(client interfaces.ConversationHistoryClientIn
 }
 
 func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, request *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	payload := &models.ExternalAppendConversationMessagesPayload{
 		Messages: make([]models.ExternalConversationMessageInput, 0, len(request.Messages)),
 	}

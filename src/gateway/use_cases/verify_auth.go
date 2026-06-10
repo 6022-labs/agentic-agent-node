@@ -42,6 +42,10 @@ func NewVerifyAuth(
 }
 
 func (u *VerifyAuth) Execute(ctx context.Context, req *requests.VerifyAuthRequest) (*responses.VerifyAuthResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	if !u.nonceStore.Consume(req.Nonce) {
 		return nil, apperrors.NewUnauthorizedError("nonce_not_found", ErrNonceNotFound.Error())
 	}

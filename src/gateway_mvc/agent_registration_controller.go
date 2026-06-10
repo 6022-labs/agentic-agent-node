@@ -85,9 +85,6 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 	if image, err := ctx.FormFile("image"); err == nil {
 		body.Image = image
 	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return mvc.WriteError(ctx, err)
-	}
 	owner, ok := ctx.Locals(middlewares.AuthAddressLocalKey).(string)
 	if !ok || owner == "" {
 		return mvc.WriteError(ctx, errors.NewUnauthorizedError("missing_owner", "authenticated address is required"))

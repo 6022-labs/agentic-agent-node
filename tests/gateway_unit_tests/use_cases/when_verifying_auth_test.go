@@ -3,6 +3,7 @@ package use_cases_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,10 +47,12 @@ func WhenVerifyingAuthBeforeEach(t *testing.T) *WhenVerifyingAuthTestingSuite {
 	}
 }
 
+var testSignature = "0x" + strings.Repeat("ab", 65)
+
 func generateValidVerifyAuthRequest(address common.Address) *requests.VerifyAuthRequest {
 	return &requests.VerifyAuthRequest{
 		Address:   address.Hex(),
-		Signature: "0xsig",
+		Signature: testSignature,
 		Nonce:     "nonce-xyz",
 	}
 }
@@ -58,6 +61,21 @@ func TestWhenVerifyingAuth(t *testing.T) {
 	t.Parallel()
 
 	address := common.HexToAddress("0x3333333333333333333333333333333333333333")
+
+	t.Run("Given a request that fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingAuthBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.VerifyAuthRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
 
 	t.Run("Given the nonce is missing or expired", func(t *testing.T) {
 		t.Parallel()
@@ -86,7 +104,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(common.HexToAddress("0xdeadbeef"), nil)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
 		t.Run("Should return Unauthorized with signature_mismatch", func(t *testing.T) {
@@ -109,7 +127,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(common.Address{}, errors.New("malformed"))
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(common.Address{}, errors.New("malformed"))
 		}
 
 		t.Run("Should return InternalError", func(t *testing.T) {
@@ -132,7 +150,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(address, nil)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, nil)
 		}
 
@@ -156,7 +174,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(address, nil)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, common_interfaces.ErrIdentityNotFound)
 		}
 
@@ -180,7 +198,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(address, nil)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
 		}
 
@@ -205,7 +223,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		expectedExp := time.Now().Add(30 * time.Minute)
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", "0xsig").Return(address, nil)
+			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
 		}

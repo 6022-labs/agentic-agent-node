@@ -41,6 +41,21 @@ func TestWhenCreatingResponse(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
+	t.Run("Given a request that fails validation", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+
+			_, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given a valid request the runtime accepts", func(t *testing.T) {
 		t.Parallel()
 
@@ -107,6 +122,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
+				Prompt:         "You are a helpful assistant.",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},
@@ -135,6 +151,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 			_, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				ConversationId: "conv-1",
+				Prompt:         "You are a helpful assistant.",
 				Input: []*requests.InputMessageRequest{
 					{Id: "m1", Role: enums.MessageRoleUser, Content: "hi", Timestamp: now},
 				},

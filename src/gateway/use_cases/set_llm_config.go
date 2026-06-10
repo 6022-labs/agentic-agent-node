@@ -20,6 +20,10 @@ func NewSetLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *SetLlm
 }
 
 func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) (*responses.GetLlmConfigResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	payload, err := u.client.Setup(ctx, &models.ExternalSetupLLMConnectionPayload{
 		Platform: request.Provider,
 		Model:    request.Model,

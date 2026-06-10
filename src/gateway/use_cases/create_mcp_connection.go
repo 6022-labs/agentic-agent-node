@@ -19,6 +19,10 @@ func NewCreateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 }
 
 func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	payload, err := u.client.Create(ctx, &models.ExternalCreateMCPConnectionPayload{
 		Name:       request.Name,
 		Url:        request.Url,
