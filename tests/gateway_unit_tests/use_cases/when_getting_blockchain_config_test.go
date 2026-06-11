@@ -65,64 +65,24 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a prior successful fetch", func(t *testing.T) {
+	t.Run("Given the runtime is unreachable", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalBlockchainConfigPayload{
-				ChainId:                   80002,
-				CollectionsManagerAddress: "0xmanager",
-				CollectionCreatorAddress:  "0xcreator",
-				Token6022Address:          "0xtoken",
-				EnsRegistryAddress:        "0xens",
-			}, nil).Times(1)
+			suite.mockClient.EXPECT().Get(gomock.Any()).
+				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
-		t.Run("Should serve the second call from cache", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingBlockchainConfigBeforeEach(t)
-			initSuite(suite)
-
-			first, err := suite.sut.Execute(context.Background())
-			assert.NoError(t, err)
-			second, err := suite.sut.Execute(context.Background())
-			assert.NoError(t, err)
-
-			assert.Same(t, first, second)
-		})
-	})
-
-	t.Run("Given the runtime is down on the first call", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
-			gomock.InOrder(
-				suite.mockClient.EXPECT().Get(gomock.Any()).
-					Return(nil, errors.NewUnavailableError("runtime_unavailable", "down")),
-				suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalBlockchainConfigPayload{
-					ChainId:                   80002,
-					CollectionsManagerAddress: "0xmanager",
-					CollectionCreatorAddress:  "0xcreator",
-					Token6022Address:          "0xtoken",
-					EnsRegistryAddress:        "0xens",
-				}, nil),
-			)
-		}
-
-		t.Run("Should not cache the error and succeed on retry", func(t *testing.T) {
+		t.Run("Should propagate the UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingBlockchainConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background())
+
 			var target *errors.UnavailableError
 			assert.ErrorAs(t, err, &target)
-
-			resp, err := suite.sut.Execute(context.Background())
-			assert.NoError(t, err)
-			assert.Equal(t, uint64(80002), resp.ChainId)
 		})
 	})
 }

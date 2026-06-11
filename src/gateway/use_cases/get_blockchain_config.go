@@ -2,20 +2,15 @@ package use_cases
 
 import (
 	"context"
-	"sync"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases/responses"
 )
 
-// GetBlockchainConfig proxies the runtime's static chain config, caching the
-// first successful fetch for the life of the process (errors are never cached).
+// GetBlockchainConfig proxies the runtime's chain config.
 type GetBlockchainConfig struct {
 	blockchainConfigClient gateway_interfaces.BlockchainConfigClientInterface
-
-	mu     sync.Mutex
-	cached *responses.BlockchainConfigResponse
 }
 
 func NewGetBlockchainConfig(
@@ -25,20 +20,11 @@ func NewGetBlockchainConfig(
 }
 
 func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.BlockchainConfigResponse, error) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-
-	if u.cached != nil {
-		return u.cached, nil
-	}
-
 	payload, err := u.blockchainConfigClient.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	u.cached = u.toResponse(payload)
-	return u.cached, nil
+	return u.toResponse(payload), nil
 }
 
 func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPayload) *responses.BlockchainConfigResponse {
