@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -48,8 +49,11 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		RuntimeUrl:    "https://agent.example.com",
 		EnsBaseDomain: "6022.eth",
 	}
+	blockchainSettings := &runtime_common_settings.BlockchainSettings{
+		Id: 80002,
+	}
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings, blockchainSettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
@@ -110,6 +114,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Alice", resp.Name)
+			assert.Equal(t, "alice.squad.80002.6022.eth", resp.EnsDomain)
 			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.MintStatus)
 			assert.Equal(t, "QmCid", resp.Images["default"])
 			assert.Equal(t, "QmCid", resp.Images["icon"])

@@ -16,6 +16,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -33,6 +34,7 @@ type SaveAgentRegistration struct {
 	ipfsFileStorage                  identity_interfaces.IPFSFileStorageInterface
 	token6022Requester               identity_interfaces.Token6022RequesterInterface
 	agentIdentitySettings            *settings.AgentIdentitySettings
+	blockchainSettings               *runtime_common_settings.BlockchainSettings
 }
 
 func NewSaveAgentRegistration(
@@ -45,6 +47,7 @@ func NewSaveAgentRegistration(
 	ipfsFileStorage identity_interfaces.IPFSFileStorageInterface,
 	token6022Requester identity_interfaces.Token6022RequesterInterface,
 	agentIdentitySettings *settings.AgentIdentitySettings,
+	blockchainSettings *runtime_common_settings.BlockchainSettings,
 ) *SaveAgentRegistration {
 	return &SaveAgentRegistration{
 		agentRepository:                  agentRepository,
@@ -56,6 +59,7 @@ func NewSaveAgentRegistration(
 		ipfsFileStorage:                  ipfsFileStorage,
 		token6022Requester:               token6022Requester,
 		agentIdentitySettings:            agentIdentitySettings,
+		blockchainSettings:               blockchainSettings,
 	}
 }
 
@@ -200,11 +204,13 @@ func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, err
 	return min(uint8(len(whole)-int(decimals)), 8), nil
 }
 
-// ensDomain composes the display domain: <name>.<collection>.<baseDomain>.
+// ensDomain composes the display domain: <name>.<collection>.<chainId>.<baseDomain>,
+// matching the ENS gateway convention and the registry's node derivation.
 func (u *SaveAgentRegistration) ensDomain(name, collectionName string) string {
-	return fmt.Sprintf("%s.%s.%s",
+	return fmt.Sprintf("%s.%s.%d.%s",
 		strings.ToLower(name),
 		strings.ToLower(collectionName),
+		u.blockchainSettings.Id,
 		strings.ToLower(u.agentIdentitySettings.EnsBaseDomain),
 	)
 }
