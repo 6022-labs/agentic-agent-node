@@ -1,0 +1,69 @@
+export type KeyValue = {
+  key: string
+  value: string
+}
+
+export type AgentRegistration = {
+  collectionAddress: string
+  tokenId: number | null
+  proposalId: number | null
+  name: string
+  role: string
+  cloneOf: number | null
+  owner: string
+  walletAddress: string
+  ensDomain: string
+  images: Record<string, string>
+  attributes: Record<string, string>
+  mintStatus: string
+  ensStatus: string
+}
+
+export type SaveAgentRegistrationRequest = {
+  collectionAddress: string
+  name: string
+  role: string
+  cloneOf?: number | null
+  // Single base image file the node frames into the NFT image set.
+  image: File
+  attributes?: Record<string, string>
+}
+
+export type MintInfo = {
+  collectionAddress: string
+  to: string
+  role: string
+  name: string
+  wallets: string[]
+  images: KeyValue[]
+  attributes: KeyValue[]
+  cloneOf: number | null
+  moderatorCount: number
+  ownerIsModerator: boolean
+}
+
+export type EnsInfo = {
+  collectionAddress: string
+  tokenId: number
+  records: KeyValue[]
+}
+
+export type RegistrationStatus = {
+  mintStatus: string
+  ensStatus: string
+  tokenId: number | null
+  proposalId: number | null
+  mintTxHash: string | null
+  ensTxHash: string | null
+}
+
+// Mirrors the runtime's agent role enum.
+export const AGENT_ROLES = ["clone", "human", "expert", "facilitator"] as const
+
+// Mirrors the runtime's TransactionStatus lifecycle, shared by mint and ENS.
+export const TRANSACTION_STATUS = {
+  pending: "pending",
+  submitted: "submitted",
+  confirmed: "confirmed",
+  failed: "failed",
+} as const
