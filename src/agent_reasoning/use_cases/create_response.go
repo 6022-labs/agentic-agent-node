@@ -23,6 +23,10 @@ func NewCreateResponse(responseDriver interfaces.ResponseDriverInterface) *Creat
 }
 
 func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Inputs))
 	for _, m := range request.Inputs {
 		inputs = append(inputs, knowledge_interfaces.ConversationMessage{

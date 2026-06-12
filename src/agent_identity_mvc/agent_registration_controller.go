@@ -82,9 +82,6 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 	if image, err := ctx.FormFile("image"); err == nil {
 		body.Image = image
 	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
-	}
 	resp, err := c.saveAgentRegistration.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)

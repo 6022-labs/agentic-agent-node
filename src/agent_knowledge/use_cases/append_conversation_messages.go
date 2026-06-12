@@ -19,6 +19,10 @@ func NewAppendConversationMessages(messageAppender interfaces.MessageAppenderInt
 }
 
 func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	domainMessages := make([]models.ConversationMessage, 0, len(req.Messages))
 	for _, m := range req.Messages {
 		domainMessages = append(domainMessages, models.ConversationMessage{

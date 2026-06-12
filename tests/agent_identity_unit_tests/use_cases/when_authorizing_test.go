@@ -38,6 +38,21 @@ func TestWhenAuthorizing(t *testing.T) {
 
 	address := "0x3333333333333333333333333333333333333333"
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.AuthorizeRequest{Address: "not-an-address"})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given the authorizer accepts the address", func(t *testing.T) {
 		t.Parallel()
 

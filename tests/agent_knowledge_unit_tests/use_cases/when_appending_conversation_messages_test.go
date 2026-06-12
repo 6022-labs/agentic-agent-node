@@ -29,7 +29,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 	sut := use_cases.NewAppendConversationMessages(mockMessageAppender)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
-		sut:                            sut,
+		sut:                 sut,
 		mockMessageAppender: mockMessageAppender,
 	}
 }
@@ -39,6 +39,21 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	now := time.Now()
 	conversationId := "conv-1"
+
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), conversationId, &requests.AppendConversationMessagesRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
 
 	t.Run("Given the message appender persists the messages", func(t *testing.T) {
 		t.Parallel()

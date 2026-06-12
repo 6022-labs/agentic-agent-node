@@ -42,6 +42,21 @@ func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectio
 func TestWhenCreatingMCPConnection(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingMCPConnectionBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.CreateMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given a request with one header", func(t *testing.T) {
 		t.Parallel()
 

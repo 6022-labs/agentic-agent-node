@@ -76,9 +76,6 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
-	}
 	resp, err := c.createMCPConnection.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
@@ -128,9 +125,6 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	body := new(requests.UpdateMCPConnectionRequest)
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
-	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
 	}
 	resp, err := c.updateMCPConnection.Execute(ctx.Context(), id, body)
 	if err != nil {

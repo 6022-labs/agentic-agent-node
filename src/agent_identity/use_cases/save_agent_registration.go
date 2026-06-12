@@ -64,6 +64,10 @@ func NewSaveAgentRegistration(
 }
 
 func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveAgentRegistrationRequest) (*responses.AgentRegistrationResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	collection := common.HexToAddress(req.CollectionAddress)
 
 	known, err := u.agentCollectionsManagerRequester.IsKnownCollection(collection)

@@ -19,6 +19,10 @@ func NewAuthorize(authorizer common_interfaces.AuthorizerInterface) *Authorize {
 }
 
 func (u *Authorize) Execute(ctx context.Context, req *requests.AuthorizeRequest) (*responses.AuthorizeResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	authorized, err := u.authorizer.IsAuthorized(ctx, common.HexToAddress(req.Address))
 	if err != nil {
 		return nil, errors.NewInternalError("authorize_failed", err.Error())

@@ -41,6 +41,21 @@ func TestWhenCreatingResponse(t *testing.T) {
 	conversationId := "conv-1"
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+
+			_, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{ConversationId: "   "})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given the response driver returns a persisted assistant message", func(t *testing.T) {
 		t.Parallel()
 

@@ -28,6 +28,10 @@ func NewSetupLLMConnection(
 // upsert fails the secret stays in Vault — next setup attempt will overwrite
 // it. The reverse order would risk a row pointing at a missing secret.
 func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.SetupLLMConnectionRequest) (*responses.LLMConnectionResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	if err := u.secretStorage.Save(ctx, request.ApiKey); err != nil {
 		return nil, errors.NewInternalError("setup_failed", err.Error())
 	}

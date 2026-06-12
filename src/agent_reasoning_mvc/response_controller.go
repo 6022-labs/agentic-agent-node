@@ -3,7 +3,6 @@ package agent_reasoning_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
 )
@@ -36,12 +35,6 @@ func (c *ResponseController) RegisterRoutes(app fiber.Router) {
 func (c *ResponseController) CreateResponse(ctx *fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)
 	if err := ctx.BodyParser(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
-	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		if vErr, ok := err.(*errors.ValidationError); ok {
-			return ctx.Status(fiber.StatusBadRequest).JSON(vErr)
-		}
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 	resp, err := c.createResponse.Execute(ctx.Context(), body)

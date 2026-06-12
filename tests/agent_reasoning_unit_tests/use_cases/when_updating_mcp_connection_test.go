@@ -42,6 +42,21 @@ func WhenUpdatingMCPConnectionBeforeEach(t *testing.T) *WhenUpdatingMCPConnectio
 func TestWhenUpdatingMCPConnection(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), uuid.New(), &requests.UpdateMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given an unknown id", func(t *testing.T) {
 		t.Parallel()
 

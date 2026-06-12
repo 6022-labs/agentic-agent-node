@@ -82,6 +82,24 @@ func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 func TestWhenSavingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			request := validSaveRequest(t)
+			request.Name = ""
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given the collection is known and the wallet is ready", func(t *testing.T) {
 		t.Parallel()
 

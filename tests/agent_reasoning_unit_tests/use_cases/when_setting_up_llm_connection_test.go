@@ -50,6 +50,24 @@ func generateValidSetupLLMConnectionRequest() *requests.SetupLLMConnectionReques
 func TestWhenSettingUpLLMConnection(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the request is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+
+			request := generateValidSetupLLMConnectionRequest()
+			request.Model = ""
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given a valid request", func(t *testing.T) {
 		t.Parallel()
 

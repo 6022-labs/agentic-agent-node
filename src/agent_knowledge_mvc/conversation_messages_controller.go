@@ -76,9 +76,6 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	if err := body.ValidateAndSanitize(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(err)
-	}
 
 	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
 	if err != nil {
