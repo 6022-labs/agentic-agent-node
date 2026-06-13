@@ -1,8 +1,11 @@
 package requests_test
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,19 +15,16 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 
 	generateSavePaymentRuleRequest := func() *requests.SavePaymentRuleRequest {
 		return &requests.SavePaymentRuleRequest{
-			Name:            "  Public price  ",
-			Network:         "eip155:80002",
-			Asset:           "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-			PayTo:           "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-			Price:           "10000",
-			AddressPatterns: []string{requests.EveryoneAddressPattern, " 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 "},
+			Name:   "  Public price  ",
+			Price:  "10000",
+			Config: json.RawMessage(`{"network":"eip155:80002"}`),
 		}
 	}
 
 	t.Run("Given the request is valid", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should sanitize and apply defaults", func(t *testing.T) {
+		t.Run("Should trim the name and default the method to x402", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
@@ -32,11 +32,34 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Public price", req.Name)
-			assert.Equal(t, ".*", req.AddressPatterns[0])
-			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", req.AddressPatterns[1])
-			assert.Equal(t, 60, req.MaxTimeoutSeconds)
-			assert.Equal(t, "USDC", req.Eip712Name)
-			assert.Equal(t, "2", req.Eip712Version)
+			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
+		})
+	})
+
+	t.Run("Given an explicit supported method", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should normalize it", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Method = " X402 "
+
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
+		})
+	})
+
+	t.Run("Given an unsupported method", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Method = "lightning"
+
+			assert.Error(t, req.ValidateAndSanitize())
 		})
 	})
 
@@ -53,27 +76,14 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the rule has no address patterns", func(t *testing.T) {
+	t.Run("Given the rule name exceeds 64 characters", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
-			req.AddressPatterns = nil
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the rule has an invalid regex pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.AddressPatterns = []string{"[invalid"}
+			req.Name = strings.Repeat("a", 65)
 
 			assert.Error(t, req.ValidateAndSanitize())
 		})
@@ -105,14 +115,14 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the rule has a non-eip155 network", func(t *testing.T) {
+	t.Run("Given the rule has a non-numeric price", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
-			req.Network = "solana:mainnet"
+			req.Price = "abc"
 
 			assert.Error(t, req.ValidateAndSanitize())
 		})

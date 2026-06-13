@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -55,9 +56,9 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			initSuite(suite)
 
 			rule, err := suite.sut.Execute(context.Background(), "rule-id", &requests.SavePaymentRuleRequest{
-				Name:            "Renamed",
-				Network:         "eip155:80002",
-				AddressPatterns: []string{".*"},
+				Name:   "Renamed",
+				Method: "x402",
+				Config: json.RawMessage(`{"network":"eip155:80002"}`),
 			})
 
 			assert.NoError(t, err)

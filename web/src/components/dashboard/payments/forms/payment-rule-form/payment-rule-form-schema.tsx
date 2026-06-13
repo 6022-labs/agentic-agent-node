@@ -12,6 +12,7 @@ export const paymentRuleFormSchema = z
       .trim()
       .min(1, "Name is required")
       .max(64, "Max 64 characters"),
+    method: z.string().min(1),
     network: z
       .string()
       .regex(/^eip155:\d+$/, "Must be a CAIP-2 id, e.g. eip155:80002"),

@@ -14,6 +14,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
+	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares/interfaces"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
@@ -29,7 +30,7 @@ const (
 )
 
 type WhenHandlingX402GateTestingSuite struct {
-	sut *middlewares.X402GateMiddleware
+	sut *middlewares.PaymentGateMiddleware
 	app *fiber.App
 
 	handlerCalled bool
@@ -50,13 +51,16 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	mockX402PaymentVerifier := interfaces_mocks.NewMockX402PaymentVerifierInterface(mockController)
 	mockX402FacilitatorClient := interfaces_mocks.NewMockX402FacilitatorClientInterface(mockController)
 
-	sut := middlewares.NewX402GateMiddleware(
+	x402Method := middlewares.NewX402PaymentMethodMiddleware(
 		zap.NewNop(),
-		mockPaymentRuleClient,
 		mockPaymentFacilitatorClient,
 		mockX402PaymentVerifier,
 		mockX402FacilitatorClient,
 	)
+	sut := middlewares.NewPaymentGateMiddleware(middlewares.NewPaymentGateMiddlewareParams{
+		PaymentRuleClient: mockPaymentRuleClient,
+		PaymentMethods:    []middleware_interfaces.PaymentMethodInterface{x402Method},
+	})
 
 	suite := &WhenHandlingX402GateTestingSuite{
 		sut:                          sut,
@@ -78,25 +82,29 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	return suite
 }
 
-func x402GatePublicRule() models.ExternalPaymentRule {
+// x402GateRule builds an x402 rule with its settings serialized into Config.
+func x402GateRule(price string, payTo string, patterns []string) models.ExternalPaymentRule {
+	config, _ := json.Marshal(x402.X402Config{
+		Network:         "eip155:80002",
+		Asset:           "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+		PayTo:           payTo,
+		Eip712Name:      "USDC",
+		Eip712Version:   "2",
+		AddressPatterns: patterns,
+	})
 	return models.ExternalPaymentRule{
-		Network:           "eip155:80002",
-		Asset:             "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-		PayTo:             x402TestPayToHex,
-		Price:             "10000",
-		MaxTimeoutSeconds: 60,
-		Eip712Name:        "USDC",
-		Eip712Version:     "2",
-		AddressPatterns:   []string{".*"},
+		Method: "x402",
+		Price:  price,
+		Config: config,
 	}
 }
 
+func x402GatePublicRule() models.ExternalPaymentRule {
+	return x402GateRule("10000", x402TestPayToHex, []string{".*"})
+}
+
 func x402GateFreeRule(patterns ...string) models.ExternalPaymentRule {
-	rule := x402GatePublicRule()
-	rule.PayTo = x402TestAgentWalletHex
-	rule.Price = "0"
-	rule.AddressPatterns = patterns
-	return rule
+	return x402GateRule("0", x402TestAgentWalletHex, patterns)
 }
 
 func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPaymentRule {
@@ -105,8 +113,10 @@ func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPay
 
 // x402GateFacilitators is the network → facilitator mapping for a node whose
 // chain can settle. The "no facilitator" scenarios return an empty map.
-func x402GateFacilitators() map[string]string {
-	return map[string]string{"eip155:80002": "https://x402-amoy.polygon.technology"}
+func x402GateFacilitators() map[string]models.ExternalPaymentFacilitator {
+	return map[string]models.ExternalPaymentFacilitator{
+		"eip155:80002": {Network: "eip155:80002", BaseUrl: "https://x402-amoy.polygon.technology", MaxTimeoutSeconds: 120},
+	}
 }
 
 // x402GatePaymentHeader builds a PAYMENT-SIGNATURE header aimed at `to` with
@@ -239,6 +249,8 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			// The scoped zero-price rule is a private offer — not listed.
 			assert.Len(t, required.Accepts, 1)
 			assert.Equal(t, "10000", required.Accepts[0].Amount)
+			// The settlement timeout is advertised from the facilitator config.
+			assert.Equal(t, 120, required.Accepts[0].MaxTimeoutSeconds)
 
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			var body x402.PaymentRequired
@@ -401,8 +413,8 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ *x402.PaymentPayload, accept *models.ExternalPaymentRule) (common.Address, error) {
-					assert.Equal(t, x402TestAgentWalletHex, accept.PayTo)
+				DoAndReturn(func(_ *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
+					assert.Equal(t, x402TestAgentWalletHex, config.PayTo)
 					return common.HexToAddress(x402TestPayerHex), nil
 				}).
 				Times(1)
@@ -466,7 +478,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
 			// No facilitator configured for the rule's network.
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]string{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
 		}
 
 		t.Run("Should return 402 without advertising the unsettleable rule", func(t *testing.T) {
@@ -491,7 +503,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GateFreeRule(strings.ToLower(x402TestPayerHex))), nil).
 				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]string{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
@@ -522,7 +534,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]string{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
@@ -584,9 +596,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			discounted := x402GatePublicRule()
-			discounted.Price = "5000"
-			discounted.AddressPatterns = []string{strings.ToLower(x402TestPayerHex)}
+			discounted := x402GateRule("5000", x402TestPayToHex, []string{strings.ToLower(x402TestPayerHex)})
 
 			suite.mockPaymentRuleClient.EXPECT().
 				List(gomock.Any()).
@@ -602,8 +612,10 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			suite.mockX402FacilitatorClient.EXPECT().
 				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ any, _ string, _ *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.VerifyResponse, error) {
-					// The cheapest entitled rule prices the call.
+					// The cheapest entitled rule prices the call; the timeout
+					// comes from the facilitator config.
 					assert.Equal(t, "5000", requirements.Amount)
+					assert.Equal(t, 120, requirements.MaxTimeoutSeconds)
 					return &x402.VerifyResponse{IsValid: true}, nil
 				}).
 				Times(1)

@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
+	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +25,7 @@ type WhenListingPaymentRulesTestingSuite struct {
 	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
 	mockPaymentPolicyRepository *payment_repositories_mocks.MockPaymentPolicyRepositoryInterface
 	mockPaymentRuleRepository   *payment_repositories_mocks.MockPaymentRuleRepositoryInterface
+	mockStrategy                *payment_interfaces_mocks.MockPaymentMethodStrategyInterface
 }
 
 func WhenListingPaymentRulesBeforeEach(t *testing.T) *WhenListingPaymentRulesTestingSuite {
@@ -36,16 +39,15 @@ func WhenListingPaymentRulesBeforeEach(t *testing.T) *WhenListingPaymentRulesTes
 	token6022Settings := &runtime_common_settings.Token6022Settings{
 		SmartContractAddress: common.HexToAddress("0x4242424242424242424242424242424242424242"),
 	}
-	paymentFacilitatorsSettings := &runtime_common_settings.PaymentFacilitatorsSettings{
-		"eip155:80002": "https://x402-amoy.polygon.technology",
-	}
+	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenListingPaymentRulesTestingSuite{
-		sut: use_cases.NewListPaymentRules(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, blockchainSettings, token6022Settings, paymentFacilitatorsSettings),
+		sut: use_cases.NewListPaymentRules(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, blockchainSettings, token6022Settings),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockPaymentPolicyRepository: mockPaymentPolicyRepository,
 		mockPaymentRuleRepository:   mockPaymentRuleRepository,
+		mockStrategy:                mockStrategy,
 	}
 }
 
@@ -63,10 +65,15 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().Get(gomock.Any()).Return(policy, nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().List(gomock.Any()).Return([]models.PaymentRule{*rule}, nil).Times(1)
+			// Each rule's config is joined back from its method's table.
+			suite.mockStrategy.EXPECT().
+				LoadConfig(gomock.Any(), rule.Id).
+				Return(json.RawMessage(`{"network":"eip155:80002"}`), nil).
+				Times(1)
 			return rule
 		}
 
-		t.Run("Should return the rules", func(t *testing.T) {
+		t.Run("Should return the rules with their config", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingPaymentRulesBeforeEach(t)
@@ -78,6 +85,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			if assert.Len(t, result.Rules, 1) {
 				assert.Equal(t, rule.Id, result.Rules[0].Id)
 				assert.Equal(t, rule.Name, result.Rules[0].Name)
+				assert.JSONEq(t, `{"network":"eip155:80002"}`, string(result.Rules[0].Config))
 			}
 		})
 	})
@@ -92,7 +100,10 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(&models.PaymentRule{}, nil).Times(1)
+			// Seeding the default rule persists its config, then the empty list
+			// is returned.
+			suite.mockPaymentRuleRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(model_builders.NewPaymentRuleBuilder().Build(), nil).Times(1)
+			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().List(gomock.Any()).Return([]models.PaymentRule{}, nil).Times(1)
 		}
 

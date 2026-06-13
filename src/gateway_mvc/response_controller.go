@@ -11,25 +11,26 @@ import (
 const ResponsesEndpoint = "/responses"
 
 type ResponseController struct {
-	createResponse     use_cases.CreateResponseInterface
-	x402GateMiddleware *middlewares.X402GateMiddleware
+	createResponse        use_cases.CreateResponseInterface
+	paymentGateMiddleware *middlewares.PaymentGateMiddleware
 }
 
 func NewResponseController(
 	createResponse use_cases.CreateResponseInterface,
-	x402GateMiddleware *middlewares.X402GateMiddleware,
+	paymentGateMiddleware *middlewares.PaymentGateMiddleware,
 ) *ResponseController {
 	return &ResponseController{
-		createResponse:     createResponse,
-		x402GateMiddleware: x402GateMiddleware,
+		createResponse:        createResponse,
+		paymentGateMiddleware: paymentGateMiddleware,
 	}
 }
 
 // RegisterUnauthenticatedRoutes mounts /responses outside the JWT group: the
-// route is x402-only — the gate prices each caller via the accept options
-// whose address patterns match them (price 0 = free).
+// payment gate dispatches to the method matching the caller's proof (today
+// only x402), pricing each caller via the rules whose patterns match them
+// (price 0 = free).
 func (c *ResponseController) RegisterUnauthenticatedRoutes(app fiber.Router) {
-	app.Post(ResponsesEndpoint, c.x402GateMiddleware.Handle, c.CreateResponse)
+	app.Post(ResponsesEndpoint, c.paymentGateMiddleware.Handle, c.CreateResponse)
 }
 
 func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}

@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -42,7 +43,8 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 				Create(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, rule *models.ExternalPaymentRule) (*models.ExternalPaymentRule, error) {
 					assert.Equal(t, "Public price", rule.Name)
-					assert.Equal(t, []string{".*"}, rule.AddressPatterns)
+					assert.Equal(t, "x402", rule.Method)
+					assert.JSONEq(t, `{"network":"eip155:80002"}`, string(rule.Config))
 					rule.Id = "rule-id"
 					return rule, nil
 				}).
@@ -56,9 +58,9 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 			initSuite(suite)
 
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{
-				Name:            "Public price",
-				Network:         "eip155:80002",
-				AddressPatterns: []string{".*"},
+				Name:   "Public price",
+				Method: "x402",
+				Config: json.RawMessage(`{"network":"eip155:80002"}`),
 			})
 
 			assert.NoError(t, err)

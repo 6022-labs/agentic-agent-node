@@ -38,7 +38,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"rules":[{"id":"r1","name":"Public price","network":"eip155:80002","addressPatterns":[".*"]}]}`),
+				Body:         []byte(`{"rules":[{"id":"r1","name":"Public price","method":"x402","config":{"network":"eip155:80002","addressPatterns":[".*"]}}]}`),
 			}, nil)
 		}
 
@@ -53,7 +53,8 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.Len(t, rules, 1) {
 				assert.Equal(t, "r1", rules[0].Id)
-				assert.Equal(t, []string{".*"}, rules[0].AddressPatterns)
+				assert.Equal(t, "x402", rules[0].Method)
+				assert.JSONEq(t, `{"network":"eip155:80002","addressPatterns":[".*"]}`, string(rules[0].Config))
 			}
 		})
 	})

@@ -83,14 +83,12 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 					assert.NoError(t, err)
 
 					rule.Name = "renamed"
-					rule.AddressPatterns = []string{".*"}
 					_, err = suite.sut.Update(context.Background(), rule)
 					assert.NoError(t, err)
 
 					stored, err := suite.sut.GetById(context.Background(), rule.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, "renamed", stored.Name)
-					assert.Equal(t, []string{".*"}, stored.AddressPatterns)
 					assert.Equal(t, rule.Position, stored.Position)
 					assert.Equal(t, suite.policy.Id, stored.PolicyId)
 				})

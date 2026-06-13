@@ -10,38 +10,44 @@ import (
 
 const PaymentFacilitatorsSettingsKey = "payment.facilitators"
 
-// PaymentFacilitatorConfig is one network's x402 facilitator.
-type PaymentFacilitatorConfig struct {
-	BaseUrl string `koanf:"base_url"`
-}
+// defaultMaxTimeoutSeconds is the x402 settlement window applied when a
+// facilitator entry doesn't set one.
+const defaultMaxTimeoutSeconds = 60
 
-// PaymentFacilitatorEntry pairs a network with its facilitator base URL.
-type PaymentFacilitatorEntry struct {
-	Network string
-	BaseUrl string
+// PaymentFacilitator is one network's x402 facilitator: where to settle and how
+// long callers have to do it. The timeout is network-level, shared by every
+// rule on that network. Network is the map key, set on Entries() output.
+type PaymentFacilitator struct {
+	Network           string `koanf:"-"`
+	BaseUrl           string `koanf:"base_url"`
+	MaxTimeoutSeconds int    `koanf:"max_timeout_seconds"`
 }
 
 // PaymentFacilitatorsSettings holds the operator-configured x402 facilitators
 // keyed by network. Paid rules may only target a configured network.
-type PaymentFacilitatorsSettings map[string]string
+type PaymentFacilitatorsSettings map[string]PaymentFacilitator
 
 func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf) *PaymentFacilitatorsSettings {
-	configByNetwork := map[string]*PaymentFacilitatorConfig{}
+	configByNetwork := map[string]*PaymentFacilitator{}
 	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByNetwork, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
 	}
 
 	settings := PaymentFacilitatorsSettings{}
-	for network, config := range configByNetwork {
+	for network, facilitator := range configByNetwork {
 		network = strings.TrimSpace(network)
-		if config == nil {
+		if facilitator == nil {
 			logger.Fatal("payment facilitator config is nil", zap.String("network", network))
 		}
-		baseUrl := strings.TrimRight(strings.TrimSpace(config.BaseUrl), "/")
+		baseUrl := strings.TrimRight(strings.TrimSpace(facilitator.BaseUrl), "/")
 		if len(network) == 0 || len(baseUrl) == 0 {
 			logger.Fatal("payment facilitator needs a network key and base_url", zap.String("network", network))
 		}
-		settings[network] = baseUrl
+		maxTimeoutSeconds := facilitator.MaxTimeoutSeconds
+		if maxTimeoutSeconds <= 0 {
+			maxTimeoutSeconds = defaultMaxTimeoutSeconds
+		}
+		settings[network] = PaymentFacilitator{BaseUrl: baseUrl, MaxTimeoutSeconds: maxTimeoutSeconds}
 	}
 
 	return &settings
@@ -52,11 +58,11 @@ func (s *PaymentFacilitatorsSettings) BaseUrlFor(network string) (string, bool) 
 	if s == nil {
 		return "", false
 	}
-	baseUrl, ok := (*s)[network]
-	return baseUrl, ok
+	facilitator, ok := (*s)[network]
+	return facilitator.BaseUrl, ok
 }
 
-// Networks lists the configured networks in sorted order (the map has none).
+// Networks lists the configured networks, sorted (map iteration is unordered).
 func (s *PaymentFacilitatorsSettings) Networks() []string {
 	if s == nil {
 		return nil
@@ -69,12 +75,15 @@ func (s *PaymentFacilitatorsSettings) Networks() []string {
 	return networks
 }
 
-// Entries lists the configured facilitators in sorted-network order.
-func (s *PaymentFacilitatorsSettings) Entries() []PaymentFacilitatorEntry {
+// Entries lists the facilitators in sorted-network order, each tagged with its
+// network (the map key).
+func (s *PaymentFacilitatorsSettings) Entries() []PaymentFacilitator {
 	networks := s.Networks()
-	entries := make([]PaymentFacilitatorEntry, len(networks))
+	entries := make([]PaymentFacilitator, len(networks))
 	for i, network := range networks {
-		entries[i] = PaymentFacilitatorEntry{Network: network, BaseUrl: (*s)[network]}
+		facilitator := (*s)[network]
+		facilitator.Network = network
+		entries[i] = facilitator
 	}
 	return entries
 }

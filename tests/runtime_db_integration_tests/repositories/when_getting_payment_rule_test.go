@@ -102,7 +102,7 @@ func TestWhenGettingPaymentRule(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, created.Name, rule.Name)
-					assert.Equal(t, created.AddressPatterns, rule.AddressPatterns)
+					assert.Equal(t, created.Method, rule.Method)
 				})
 			})
 		})

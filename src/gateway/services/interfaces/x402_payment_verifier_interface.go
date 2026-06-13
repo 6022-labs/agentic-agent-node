@@ -3,7 +3,6 @@ package interfaces
 import (
 	"errors"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -18,5 +17,5 @@ type X402PaymentVerifierInterface interface {
 	// RecoverPayer checks recipient binding and validity window (not the
 	// amount — the facilitator's concern) and returns the EIP-712 signer,
 	// which must match the authorization's From.
-	RecoverPayer(payload *x402.PaymentPayload, accept *models.ExternalPaymentRule) (common.Address, error)
+	RecoverPayer(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error)
 }

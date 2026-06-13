@@ -24,7 +24,7 @@ type WhenUpdatingPaymentRuleTestingSuite struct {
 	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
 	mockPaymentPolicyRepository *payment_repositories_mocks.MockPaymentPolicyRepositoryInterface
 	mockPaymentRuleRepository   *payment_repositories_mocks.MockPaymentRuleRepositoryInterface
-	mockErc20Validator          *payment_interfaces_mocks.MockErc20ValidatorInterface
+	mockStrategy                *payment_interfaces_mocks.MockPaymentMethodStrategyInterface
 }
 
 func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTestingSuite {
@@ -38,18 +38,15 @@ func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTes
 	token6022Settings := &runtime_common_settings.Token6022Settings{
 		SmartContractAddress: common.HexToAddress("0x4242424242424242424242424242424242424242"),
 	}
-	paymentFacilitatorsSettings := &runtime_common_settings.PaymentFacilitatorsSettings{
-		"eip155:80002": "https://x402-amoy.polygon.technology",
-	}
-	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
+	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenUpdatingPaymentRuleTestingSuite{
-		sut: use_cases.NewUpdatePaymentRule(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, blockchainSettings, token6022Settings, paymentFacilitatorsSettings, mockErc20Validator),
+		sut: use_cases.NewUpdatePaymentRule(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, blockchainSettings, token6022Settings),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockPaymentPolicyRepository: mockPaymentPolicyRepository,
 		mockPaymentRuleRepository:   mockPaymentRuleRepository,
-		mockErc20Validator:          mockErc20Validator,
+		mockStrategy:                mockStrategy,
 	}
 }
 
@@ -62,8 +59,8 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) *models.PaymentRule {
 			rule := model_builders.NewPaymentRuleBuilder().Build()
 
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().
 				Update(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, updated *models.PaymentRule) (*models.PaymentRule, error) {
@@ -74,10 +71,11 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 					return updated, nil
 				}).
 				Times(1)
+			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), rule.Id, gomock.Any()).Return(nil).Times(1)
 			return rule
 		}
 
-		t.Run("Should replace the rule's fields", func(t *testing.T) {
+		t.Run("Should replace the rule's fields and its config", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
@@ -110,22 +108,72 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a paid rule targets a network without a facilitator", func(t *testing.T) {
+	t.Run("Given the strategy rejects the config", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error before any lookup", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			suite.mockStrategy.EXPECT().
+				Validate(gomock.Any(), gomock.Any()).
+				Return(apperrors.NewValidationError("config.network", "unsupported")).
+				Times(1)
 
-			request := generateSavePaymentRuleRequest()
-			request.Network = "eip155:8453"
-			updated, err := suite.sut.Execute(context.Background(), uuid.New(), request)
+			updated, err := suite.sut.Execute(context.Background(), uuid.New(), generateSavePaymentRuleRequest())
 
 			assert.Nil(t, updated)
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "network", validationErr.Field)
+			assert.Equal(t, "config.network", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+		}
+
+		t.Run("Should return an internal error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			updated, err := suite.sut.Execute(context.Background(), uuid.New(), generateSavePaymentRuleRequest())
+
+			assert.Nil(t, updated)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given the repository fails to persist the update", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) *models.PaymentRule {
+			rule := model_builders.NewPaymentRuleBuilder().Build()
+
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+			return rule
+		}
+
+		t.Run("Should return an internal error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			rule := initSuite(suite)
+
+			updated, err := suite.sut.Execute(context.Background(), rule.Id, generateSavePaymentRuleRequest())
+
+			assert.Nil(t, updated)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
 		})
 	})
 
@@ -133,6 +181,7 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
 		}
 

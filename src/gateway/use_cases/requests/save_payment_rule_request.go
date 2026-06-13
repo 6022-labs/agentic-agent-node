@@ -1,15 +1,13 @@
 package requests
 
+import "encoding/json"
+
 // SavePaymentRuleRequest is one pricing rule in the gateway's payment-policy API.
-// Validation is owned by the runtime — the gateway forwards as-is.
+// Validation is owned by the runtime — the gateway forwards as-is. Name/Price/
+// Method are method-neutral; Config carries the method-specific settings.
 type SavePaymentRuleRequest struct {
-	Name              string   `json:"name"`
-	Network           string   `json:"network"`
-	Asset             string   `json:"asset"`
-	PayTo             string   `json:"payTo"`
-	Price             string   `json:"price"`
-	MaxTimeoutSeconds int      `json:"maxTimeoutSeconds,omitempty"`
-	Eip712Name        string   `json:"eip712Name,omitempty"`
-	Eip712Version     string   `json:"eip712Version,omitempty"`
-	AddressPatterns   []string `json:"addressPatterns"`
+	Name   string          `json:"name"`
+	Price  string          `json:"price"`
+	Method string          `json:"method,omitempty"`
+	Config json.RawMessage `json:"config" swaggertype:"object"`
 }

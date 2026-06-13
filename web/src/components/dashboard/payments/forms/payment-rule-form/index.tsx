@@ -21,7 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { EVERYONE_PATTERN, type PaymentRule } from "@/models/payment-policy"
+import {
+  EVERYONE_PATTERN,
+  X402_METHOD,
+  type PaymentRule,
+} from "@/models/payment-policy"
 import { getAppConfig } from "@/configs/app-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { fetchErc20Info, isLookupSupported, type Erc20Info } from "@/lib/erc20"
@@ -76,6 +80,7 @@ export default function PaymentRuleForm({
     defaultValues: initialRule
       ? {
           name: initialRule.name,
+          method: initialRule.method || X402_METHOD,
           network: initialRule.network,
           asset: initialRule.asset,
           payTo: initialRule.payTo,
@@ -90,6 +95,7 @@ export default function PaymentRuleForm({
       : // New rules default to a facilitator network and the $6022 token.
         {
           name: "",
+          method: X402_METHOD,
           network: defaultNewRuleNetwork,
           asset: getAppConfig().token6022Address,
           payTo: agentWalletAddress,
@@ -217,6 +223,32 @@ export default function PaymentRuleForm({
               <FormControl>
                 <Input placeholder="Public price" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="method"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Payment method</FormLabel>
+              {/* Locked to x402 — the seam is in place for future methods. */}
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={X402_METHOD}>x402</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>Only x402 is supported today.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -94,15 +94,10 @@ type RequestsCreateResponseRequestInput struct {
 
 // RequestsSavePaymentRuleRequest defines model for requests.SavePaymentRuleRequest.
 type RequestsSavePaymentRuleRequest struct {
-	AddressPatterns   *[]string `json:"addressPatterns,omitempty"`
-	Asset             *string   `json:"asset,omitempty"`
-	Eip712Name        *string   `json:"eip712Name,omitempty"`
-	Eip712Version     *string   `json:"eip712Version,omitempty"`
-	MaxTimeoutSeconds *int      `json:"maxTimeoutSeconds,omitempty"`
-	Name              *string   `json:"name,omitempty"`
-	Network           *string   `json:"network,omitempty"`
-	PayTo             *string   `json:"payTo,omitempty"`
-	Price             *string   `json:"price,omitempty"`
+	Config *map[string]interface{} `json:"config,omitempty"`
+	Method *string                 `json:"method,omitempty"`
+	Name   *string                 `json:"name,omitempty"`
+	Price  *string                 `json:"price,omitempty"`
 }
 
 // RequestsSetupLLMConnectionRequest defines model for requests.SetupLLMConnectionRequest.
@@ -277,8 +272,9 @@ type ResponsesMintInfoResponse struct {
 
 // ResponsesPaymentFacilitatorResponse defines model for responses.PaymentFacilitatorResponse.
 type ResponsesPaymentFacilitatorResponse struct {
-	BaseUrl *string `json:"baseUrl,omitempty"`
-	Network *string `json:"network,omitempty"`
+	BaseUrl           *string `json:"baseUrl,omitempty"`
+	MaxTimeoutSeconds *int    `json:"maxTimeoutSeconds,omitempty"`
+	Network           *string `json:"network,omitempty"`
 }
 
 // ResponsesPaymentFacilitatorsResponse defines model for responses.PaymentFacilitatorsResponse.
@@ -297,18 +293,13 @@ type ResponsesPaymentPolicyResponse struct {
 
 // ResponsesPaymentRuleResponse defines model for responses.PaymentRuleResponse.
 type ResponsesPaymentRuleResponse struct {
-	AddressPatterns   *[]string `json:"addressPatterns,omitempty"`
-	Asset             *string   `json:"asset,omitempty"`
-	CreatedAt         *string   `json:"createdAt,omitempty"`
-	Eip712Name        *string   `json:"eip712Name,omitempty"`
-	Eip712Version     *string   `json:"eip712Version,omitempty"`
-	Id                *string   `json:"id,omitempty"`
-	MaxTimeoutSeconds *int      `json:"maxTimeoutSeconds,omitempty"`
-	Name              *string   `json:"name,omitempty"`
-	Network           *string   `json:"network,omitempty"`
-	PayTo             *string   `json:"payTo,omitempty"`
-	Price             *string   `json:"price,omitempty"`
-	UpdatedAt         *string   `json:"updatedAt,omitempty"`
+	Config    *map[string]interface{} `json:"config,omitempty"`
+	CreatedAt *string                 `json:"createdAt,omitempty"`
+	Id        *string                 `json:"id,omitempty"`
+	Method    *string                 `json:"method,omitempty"`
+	Name      *string                 `json:"name,omitempty"`
+	Price     *string                 `json:"price,omitempty"`
+	UpdatedAt *string                 `json:"updatedAt,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.

@@ -95,23 +95,11 @@ definitions:
     type: object
   requests.SavePaymentRuleRequest:
     properties:
-      addressPatterns:
-        items:
-          type: string
-        type: array
-      asset:
+      config:
+        type: object
+      method:
         type: string
-      eip712Name:
-        type: string
-      eip712Version:
-        type: string
-      maxTimeoutSeconds:
-        type: integer
       name:
-        type: string
-      network:
-        type: string
-      payTo:
         type: string
       price:
         type: string
@@ -380,6 +368,8 @@ definitions:
     properties:
       baseUrl:
         type: string
+      maxTimeoutSeconds:
+        type: integer
       network:
         type: string
     type: object
@@ -405,27 +395,15 @@ definitions:
     type: object
   responses.PaymentRuleResponse:
     properties:
-      addressPatterns:
-        items:
-          type: string
-        type: array
-      asset:
-        type: string
+      config:
+        type: object
       createdAt:
-        type: string
-      eip712Name:
-        type: string
-      eip712Version:
         type: string
       id:
         type: string
-      maxTimeoutSeconds:
-        type: integer
+      method:
+        type: string
       name:
-        type: string
-      network:
-        type: string
-      payTo:
         type: string
       price:
         type: string

@@ -2,16 +2,20 @@ package use_cases_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
+	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -22,6 +26,7 @@ type WhenGettingPaymentPolicyTestingSuite struct {
 	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
 	mockPaymentPolicyRepository *payment_repositories_mocks.MockPaymentPolicyRepositoryInterface
 	mockPaymentRuleRepository   *payment_repositories_mocks.MockPaymentRuleRepositoryInterface
+	mockStrategy                *payment_interfaces_mocks.MockPaymentMethodStrategyInterface
 }
 
 func WhenGettingPaymentPolicyBeforeEach(t *testing.T) *WhenGettingPaymentPolicyTestingSuite {
@@ -35,16 +40,15 @@ func WhenGettingPaymentPolicyBeforeEach(t *testing.T) *WhenGettingPaymentPolicyT
 	token6022Settings := &runtime_common_settings.Token6022Settings{
 		SmartContractAddress: common.HexToAddress("0x4242424242424242424242424242424242424242"),
 	}
-	paymentFacilitatorsSettings := &runtime_common_settings.PaymentFacilitatorsSettings{
-		"eip155:80002": "https://x402-amoy.polygon.technology",
-	}
+	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenGettingPaymentPolicyTestingSuite{
-		sut: use_cases.NewGetPaymentPolicy(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, blockchainSettings, token6022Settings, paymentFacilitatorsSettings),
+		sut: use_cases.NewGetPaymentPolicy(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, blockchainSettings, token6022Settings),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockPaymentPolicyRepository: mockPaymentPolicyRepository,
 		mockPaymentRuleRepository:   mockPaymentRuleRepository,
+		mockStrategy:                mockStrategy,
 	}
 }
 
@@ -95,13 +99,23 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 			suite.mockPaymentRuleRepository.EXPECT().
 				Create(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, rule *models.PaymentRule) (*models.PaymentRule, error) {
-					// The seeded default: free access for the agent wallet (+ owner),
-					// on the node's chain with the $6022 token as signing context.
+					// The seeded default: free access for the agent wallet (+ owner).
 					assert.Equal(t, "0", rule.Price)
 					assert.Equal(t, "Owner free access", rule.Name)
-					assert.Equal(t, "eip155:80002", rule.Network)
-					assert.Equal(t, "0x4242424242424242424242424242424242424242", rule.Asset)
+					assert.Equal(t, enums.PaymentMethodX402, rule.Method)
 					return rule, nil
+				}).
+				Times(1)
+			// The default rule's x402 config is persisted on the node's chain
+			// with the $6022 token as the signing context.
+			suite.mockStrategy.EXPECT().
+				SaveConfig(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ uuid.UUID, raw json.RawMessage) error {
+					config := &models.PaymentRuleX402Config{}
+					assert.NoError(t, config.Parse(raw))
+					assert.Equal(t, "eip155:80002", config.Network)
+					assert.Equal(t, "0x4242424242424242424242424242424242424242", config.Asset)
+					return nil
 				}).
 				Times(1)
 		}

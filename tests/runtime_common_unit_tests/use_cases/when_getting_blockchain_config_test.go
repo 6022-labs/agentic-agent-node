@@ -30,7 +30,7 @@ func WhenGettingBlockchainConfigBeforeEach(_ *testing.T) *WhenGettingBlockchainC
 			RegistryAddress: common.HexToAddress("0xb02c3D72cf0939c38C26291e5645d25De18478b7"),
 		},
 		&settings.PaymentFacilitatorsSettings{
-			"eip155:80002": "https://x402-amoy.polygon.technology",
+			"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology"},
 		},
 	)
 

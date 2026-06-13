@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/services"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
@@ -25,20 +24,21 @@ func WhenRecoveringX402PayerBeforeEach() *WhenRecoveringX402PayerTestingSuite {
 	return &WhenRecoveringX402PayerTestingSuite{sut: services.NewX402PaymentVerifier()}
 }
 
-func x402TestAcceptOption() *models.ExternalPaymentRule {
-	return &models.ExternalPaymentRule{
-		Network:           "eip155:80002",
-		Asset:             "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-		PayTo:             "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		Price:             "10000",
-		MaxTimeoutSeconds: 60,
-		Eip712Name:        "USDC",
-		Eip712Version:     "2",
+// testPrice is the authorization value; price lives on the rule, not the config.
+const testPrice = "10000"
+
+func x402TestAcceptOption() *x402.X402Config {
+	return &x402.X402Config{
+		Network:       "eip155:80002",
+		Asset:         "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+		PayTo:         "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+		Eip712Name:    "USDC",
+		Eip712Version: "2",
 	}
 }
 
 // signX402Payment signs the EIP-3009 typed data exactly like an x402 client.
-func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.ExactEvmAuthorization, accept *models.ExternalPaymentRule) *x402.PaymentPayload {
+func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.ExactEvmAuthorization, accept *x402.X402Config) *x402.PaymentPayload {
 	t.Helper()
 
 	chainId, err := x402.ParseEip155ChainId(accept.Network)
@@ -94,12 +94,12 @@ func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.ExactEvmAuth
 	}
 }
 
-func x402TestAuthorization(from string, accept *models.ExternalPaymentRule) x402.ExactEvmAuthorization {
+func x402TestAuthorization(from string, accept *x402.X402Config) x402.ExactEvmAuthorization {
 	now := time.Now().Unix()
 	return x402.ExactEvmAuthorization{
 		From:        from,
 		To:          accept.PayTo,
-		Value:       accept.Price,
+		Value:       testPrice,
 		ValidAfter:  fmt.Sprintf("%d", now-60),
 		ValidBefore: fmt.Sprintf("%d", now+300),
 		Nonce:       "0x" + hex.EncodeToString(crypto.Keccak256([]byte("test-nonce"))),

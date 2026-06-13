@@ -1,11 +1,16 @@
+// PaymentRule is the flat view model the UI works with. The wire format is
+// method-neutral (name/price/method + a per-method config blob); the query
+// layer maps between the two so the table and form keep flat fields.
 export type PaymentRule = {
   id?: string
   name: string
+  // The payment method; only X402_METHOD exists today. The form select is
+  // locked to it, leaving room for future methods (e.g. Lightning).
+  method: string
   network: string
   asset: string
   payTo: string
   price: string
-  maxTimeoutSeconds?: number
   eip712Name?: string
   eip712Version?: string
   // Regexes full-matched against the caller's lowercase 0x address;
@@ -17,6 +22,33 @@ export type PaymentRule = {
 export type ListPaymentRulesResponse = {
   rules: PaymentRule[]
 }
+
+// PaymentRuleConfig is the x402 method's per-rule settings, carried in the
+// wire rule's method-specific config blob.
+export type PaymentRuleConfig = {
+  network: string
+  asset: string
+  payTo: string
+  eip712Name?: string
+  eip712Version?: string
+  addressPatterns: string[]
+}
+
+// PaymentRuleWire mirrors the gateway's rule: method-neutral fields plus a
+// method-specific config blob.
+export type PaymentRuleWire = {
+  id?: string
+  name: string
+  price: string
+  method: string
+  config: PaymentRuleConfig
+}
+
+export type ListPaymentRulesResponseWire = {
+  rules: PaymentRuleWire[]
+}
+
+export const X402_METHOD = "x402"
 
 // The policy head; rules are fetched separately. agentWalletAddress is
 // exposed to pre-fill rules paying the agent itself.

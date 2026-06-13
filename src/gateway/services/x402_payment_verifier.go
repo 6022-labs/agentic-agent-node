@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,7 +22,7 @@ func NewX402PaymentVerifier() *X402PaymentVerifier {
 	return &X402PaymentVerifier{}
 }
 
-func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, accept *models.ExternalPaymentRule) (common.Address, error) {
+func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
 	auth := payload.Payload.Authorization
 
 	if _, err := parseDecimal(auth.Value); err != nil {
@@ -43,7 +42,7 @@ func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, accept 
 
 	// The amount is not checked here: the facilitator prices paid calls and
 	// free-access signatures carry value 0.
-	if common.HexToAddress(auth.To) != common.HexToAddress(accept.PayTo) {
+	if common.HexToAddress(auth.To) != common.HexToAddress(config.PayTo) {
 		return common.Address{}, errors.New("authorization recipient does not match payTo")
 	}
 	now := big.NewInt(time.Now().Unix())
@@ -51,12 +50,12 @@ func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, accept 
 		return common.Address{}, gateway_interfaces.ErrX402AuthorizationExpired
 	}
 
-	chainId, err := x402.ParseEip155ChainId(accept.Network)
+	chainId, err := x402.ParseEip155ChainId(config.Network)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	digest, err := transferWithAuthorizationDigest(auth, accept, chainId)
+	digest, err := transferWithAuthorizationDigest(auth, config, chainId)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -88,7 +87,7 @@ func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, accept 
 
 // transferWithAuthorizationDigest hashes the EIP-3009 typed data under the
 // asset contract's EIP-712 domain.
-func transferWithAuthorizationDigest(auth x402.ExactEvmAuthorization, accept *models.ExternalPaymentRule, chainId int64) ([]byte, error) {
+func transferWithAuthorizationDigest(auth x402.ExactEvmAuthorization, config *x402.X402Config, chainId int64) ([]byte, error) {
 	typedData := apitypes.TypedData{
 		Types: apitypes.Types{
 			"EIP712Domain": {
@@ -108,10 +107,10 @@ func transferWithAuthorizationDigest(auth x402.ExactEvmAuthorization, accept *mo
 		},
 		PrimaryType: "TransferWithAuthorization",
 		Domain: apitypes.TypedDataDomain{
-			Name:              accept.Eip712Name,
-			Version:           accept.Eip712Version,
+			Name:              config.Eip712Name,
+			Version:           config.Eip712Version,
 			ChainId:           math.NewHexOrDecimal256(chainId),
-			VerifyingContract: accept.Asset,
+			VerifyingContract: config.Asset,
 		},
 		Message: apitypes.TypedDataMessage{
 			"from":        auth.From,

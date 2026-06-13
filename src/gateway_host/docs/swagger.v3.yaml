@@ -37,26 +37,13 @@ components:
       type: object
     models.ExternalPaymentRule:
       properties:
-        addressPatterns:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        asset:
-          type: string
-        eip712Name:
-          type: string
-        eip712Version:
-          type: string
+        config:
+          type: object
         id:
           type: string
-        maxTimeoutSeconds:
-          type: integer
+        method:
+          type: string
         name:
-          type: string
-        network:
-          type: string
-        payTo:
           type: string
         price:
           type: string
@@ -160,24 +147,11 @@ components:
       type: object
     requests.SavePaymentRuleRequest:
       properties:
-        addressPatterns:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        asset:
+        config:
+          type: object
+        method:
           type: string
-        eip712Name:
-          type: string
-        eip712Version:
-          type: string
-        maxTimeoutSeconds:
-          type: integer
         name:
-          type: string
-        network:
-          type: string
-        payTo:
           type: string
         price:
           type: string

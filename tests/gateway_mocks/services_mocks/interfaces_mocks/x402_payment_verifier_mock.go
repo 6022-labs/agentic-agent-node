@@ -12,7 +12,6 @@ package interfaces_mocks
 import (
 	reflect "reflect"
 
-	models "github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	x402 "github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "go.uber.org/mock/gomock"
@@ -43,16 +42,16 @@ func (m *MockX402PaymentVerifierInterface) EXPECT() *MockX402PaymentVerifierInte
 }
 
 // RecoverPayer mocks base method.
-func (m *MockX402PaymentVerifierInterface) RecoverPayer(payload *x402.PaymentPayload, accept *models.ExternalPaymentRule) (common.Address, error) {
+func (m *MockX402PaymentVerifierInterface) RecoverPayer(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RecoverPayer", payload, accept)
+	ret := m.ctrl.Call(m, "RecoverPayer", payload, config)
 	ret0, _ := ret[0].(common.Address)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RecoverPayer indicates an expected call of RecoverPayer.
-func (mr *MockX402PaymentVerifierInterfaceMockRecorder) RecoverPayer(payload, accept any) *gomock.Call {
+func (mr *MockX402PaymentVerifierInterfaceMockRecorder) RecoverPayer(payload, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecoverPayer", reflect.TypeOf((*MockX402PaymentVerifierInterface)(nil).RecoverPayer), payload, accept)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecoverPayer", reflect.TypeOf((*MockX402PaymentVerifierInterface)(nil).RecoverPayer), payload, config)
 }

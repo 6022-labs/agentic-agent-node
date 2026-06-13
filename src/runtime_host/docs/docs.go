@@ -1207,31 +1207,13 @@ const docTemplate = `{
         "requests.SavePaymentRuleRequest": {
             "type": "object",
             "properties": {
-                "addressPatterns": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "config": {
+                    "type": "object"
                 },
-                "asset": {
+                "method": {
                     "type": "string"
-                },
-                "eip712Name": {
-                    "type": "string"
-                },
-                "eip712Version": {
-                    "type": "string"
-                },
-                "maxTimeoutSeconds": {
-                    "type": "integer"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "payTo": {
                     "type": "string"
                 },
                 "price": {
@@ -1646,6 +1628,9 @@ const docTemplate = `{
                 "baseUrl": {
                     "type": "string"
                 },
+                "maxTimeoutSeconds": {
+                    "type": "integer"
+                },
                 "network": {
                     "type": "string"
                 }
@@ -1685,37 +1670,19 @@ const docTemplate = `{
         "responses.PaymentRuleResponse": {
             "type": "object",
             "properties": {
-                "addressPatterns": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "asset": {
-                    "type": "string"
+                "config": {
+                    "type": "object"
                 },
                 "createdAt": {
-                    "type": "string"
-                },
-                "eip712Name": {
-                    "type": "string"
-                },
-                "eip712Version": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "maxTimeoutSeconds": {
-                    "type": "integer"
+                "method": {
+                    "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "payTo": {
                     "type": "string"
                 },
                 "price": {

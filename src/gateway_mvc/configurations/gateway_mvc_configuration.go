@@ -4,6 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
+	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares/interfaces"
 	"go.uber.org/dig"
 )
 
@@ -11,7 +12,14 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 	if err := container.Provide(middlewares.NewJwtAuthMiddleware); err != nil {
 		panic(err)
 	}
-	if err := container.Provide(middlewares.NewX402GateMiddleware); err != nil {
+	if err := container.Provide(middlewares.NewPaymentGateMiddleware); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		middlewares.NewX402PaymentMethodMiddleware,
+		dig.Group("payment_methods"),
+		dig.As(new(middleware_interfaces.PaymentMethodInterface)),
+	); err != nil {
 		panic(err)
 	}
 

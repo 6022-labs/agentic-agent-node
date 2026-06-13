@@ -88,14 +88,18 @@ export function usePlaygroundChat() {
       // /responses is x402-gated; the console signs a zero-value
       // authorization against a free rule the connected wallet is
       // entitled to (the agent wallet + owner have one by default).
-      const { data: rulesData } = await listPaymentRules()
-      const freeRule = findFreeRule(rulesData.rules ?? [], address)
+      const { rules } = await listPaymentRules()
+      const freeRule = findFreeRule(rules, address)
       if (!freeRule) {
         throw new Error(
           "No free access for this wallet — add a zero-price rule for it in the Payment policy"
         )
       }
-      const paymentHeader = await getX402PaymentHeader(wallet, address, freeRule)
+      const paymentHeader = await getX402PaymentHeader(
+        wallet,
+        address,
+        freeRule
+      )
 
       const { data } = await createResponse(
         {

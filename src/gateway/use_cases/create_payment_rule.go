@@ -24,14 +24,9 @@ func (u *CreatePaymentRule) Execute(ctx context.Context, request *requests.SaveP
 
 func toExternalPaymentRule(request *requests.SavePaymentRuleRequest) *models.ExternalPaymentRule {
 	return &models.ExternalPaymentRule{
-		Name:              request.Name,
-		Network:           request.Network,
-		Asset:             request.Asset,
-		PayTo:             request.PayTo,
-		Price:             request.Price,
-		MaxTimeoutSeconds: request.MaxTimeoutSeconds,
-		Eip712Name:        request.Eip712Name,
-		Eip712Version:     request.Eip712Version,
-		AddressPatterns:   request.AddressPatterns,
+		Name:   request.Name,
+		Price:  request.Price,
+		Method: request.Method,
+		Config: request.Config,
 	}
 }

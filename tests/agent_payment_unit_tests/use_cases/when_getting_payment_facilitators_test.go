@@ -15,8 +15,8 @@ type WhenGettingPaymentFacilitatorsTestingSuite struct {
 
 func WhenGettingPaymentFacilitatorsBeforeEach(_ *testing.T) *WhenGettingPaymentFacilitatorsTestingSuite {
 	paymentFacilitatorsSettings := &runtime_common_settings.PaymentFacilitatorsSettings{
-		"eip155:80002": "https://x402-amoy.polygon.technology",
-		"eip155:84532": "https://x402.org/facilitator",
+		"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology", MaxTimeoutSeconds: 90},
+		"eip155:84532": {BaseUrl: "https://x402.org/facilitator", MaxTimeoutSeconds: 60},
 	}
 
 	return &WhenGettingPaymentFacilitatorsTestingSuite{
@@ -41,7 +41,9 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 			if assert.Len(t, resp.Facilitators, 2) {
 				assert.Equal(t, "eip155:80002", resp.Facilitators[0].Network)
 				assert.Equal(t, "https://x402-amoy.polygon.technology", resp.Facilitators[0].BaseUrl)
+				assert.Equal(t, 90, resp.Facilitators[0].MaxTimeoutSeconds)
 				assert.Equal(t, "eip155:84532", resp.Facilitators[1].Network)
+				assert.Equal(t, 60, resp.Facilitators[1].MaxTimeoutSeconds)
 			}
 		})
 	})

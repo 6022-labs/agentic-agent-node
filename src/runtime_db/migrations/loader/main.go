@@ -28,6 +28,7 @@ func main() {
 
 		&agent_payment_models.PaymentPolicy{},
 		&agent_payment_models.PaymentRule{},
+		&agent_payment_models.PaymentRuleX402Config{},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)

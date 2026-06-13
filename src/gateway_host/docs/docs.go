@@ -1091,34 +1091,16 @@ const docTemplate = `{
         "models.ExternalPaymentRule": {
             "type": "object",
             "properties": {
-                "addressPatterns": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "asset": {
-                    "type": "string"
-                },
-                "eip712Name": {
-                    "type": "string"
-                },
-                "eip712Version": {
-                    "type": "string"
+                "config": {
+                    "type": "object"
                 },
                 "id": {
                     "type": "string"
                 },
-                "maxTimeoutSeconds": {
-                    "type": "integer"
+                "method": {
+                    "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "payTo": {
                     "type": "string"
                 },
                 "price": {
@@ -1272,31 +1254,13 @@ const docTemplate = `{
         "requests.SavePaymentRuleRequest": {
             "type": "object",
             "properties": {
-                "addressPatterns": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "config": {
+                    "type": "object"
                 },
-                "asset": {
+                "method": {
                     "type": "string"
-                },
-                "eip712Name": {
-                    "type": "string"
-                },
-                "eip712Version": {
-                    "type": "string"
-                },
-                "maxTimeoutSeconds": {
-                    "type": "integer"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "payTo": {
                     "type": "string"
                 },
                 "price": {

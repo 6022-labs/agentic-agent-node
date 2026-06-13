@@ -38,11 +38,11 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 		initSuite := func(suite *WhenGettingPaymentFacilitatorsTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigPaymentFacilitatorsWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"facilitators":[{"network":"eip155:80002","baseUrl":"https://x402-amoy.polygon.technology"}]}`),
+				Body:         []byte(`{"facilitators":[{"network":"eip155:80002","baseUrl":"https://x402-amoy.polygon.technology","maxTimeoutSeconds":90}]}`),
 			}, nil)
 		}
 
-		t.Run("Should decode them into a network → base URL map", func(t *testing.T) {
+		t.Run("Should decode them into a network → facilitator map", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentFacilitatorsBeforeEach(t)
@@ -51,7 +51,8 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 			facilitators, err := suite.sut.Get(context.Background())
 
 			assert.NoError(t, err)
-			assert.Equal(t, "https://x402-amoy.polygon.technology", facilitators["eip155:80002"])
+			assert.Equal(t, "https://x402-amoy.polygon.technology", facilitators["eip155:80002"].BaseUrl)
+			assert.Equal(t, 90, facilitators["eip155:80002"].MaxTimeoutSeconds)
 		})
 	})
 

@@ -52,6 +52,18 @@ import { truncateEthAddress } from "@/lib/utils"
 
 const MAX_CALLER_CHIPS = 3
 
+// The fields the rule form actually renders; runtime errors on any other
+// (defaulted) config field are toasted instead of pinned to a control.
+const FORM_FIELDS: Array<keyof PaymentRuleFormSchemaType> = [
+  "name",
+  "method",
+  "network",
+  "asset",
+  "payTo",
+  "price",
+  "addresses",
+]
+
 export default function PaymentPolicySection() {
   const [policy, setPolicy] = React.useState<PaymentPolicy | null>(null)
   const [rules, setRules] = React.useState<PaymentRule[]>([])
@@ -66,7 +78,7 @@ export default function PaymentPolicySection() {
         listPaymentRules(),
       ])
       setPolicy(policyResponse.data)
-      setRules(rulesResponse.data.rules ?? [])
+      setRules(rulesResponse.rules)
     } catch (error) {
       toast.error(extractErrorMessage(error, "Failed to load payment policy"))
     } finally {
@@ -79,8 +91,8 @@ export default function PaymentPolicySection() {
   }, [load])
 
   const reloadRules = async () => {
-    const { data } = await listPaymentRules()
-    setRules(data.rules ?? [])
+    const { rules } = await listPaymentRules()
+    setRules(rules)
   }
 
   // The form deals in plain addresses; custom regex patterns set via the API
@@ -90,10 +102,15 @@ export default function PaymentPolicySection() {
     existing?: PaymentRule
   ): PaymentRule => ({
     name: values.name,
+    method: values.method,
     network: values.network,
     asset: values.asset,
     payTo: values.payTo,
     price: values.price,
+    // Carried verbatim from the edited rule; the runtime defaults them on
+    // create when absent.
+    eip712Name: existing?.eip712Name,
+    eip712Version: existing?.eip712Version,
     addressPatterns: values.allowEveryone
       ? [EVERYONE_PATTERN]
       : [
@@ -127,16 +144,23 @@ export default function PaymentPolicySection() {
       } catch (error) {
         const validation = extractValidationError(error)
         if (validation) {
-          // Re-home errors on wire-only fields onto the form field they
-          // originate from.
-          const field = (
-            validation.field === "addressPatterns"
-              ? "addresses"
-              : validation.field === "facilitatorBaseUrl"
-                ? "network"
-                : validation.field
-          ) as keyof PaymentRuleFormSchemaType
-          return { error: { field, message: validation.message } }
+          // Runtime errors on the x402 config come back prefixed (e.g.
+          // "config.network"); strip it and re-home patterns onto the form's
+          // address list.
+          const bare = validation.field.replace(/^config\./, "")
+          const field = bare === "addressPatterns" ? "addresses" : bare
+          if (FORM_FIELDS.includes(field as keyof PaymentRuleFormSchemaType)) {
+            return {
+              error: {
+                field: field as keyof PaymentRuleFormSchemaType,
+                message: validation.message,
+              },
+            }
+          }
+          // A config field with no form control (e.g. a defaulted one): toast
+          // it rather than silently swallow the error.
+          toast.error(validation.message)
+          return {}
         }
         toast.error(extractErrorMessage(error, "Failed to save pricing rule"))
         return {}

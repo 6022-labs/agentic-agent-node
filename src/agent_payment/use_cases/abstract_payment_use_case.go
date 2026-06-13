@@ -2,15 +2,17 @@ package use_cases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
+	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
@@ -18,43 +20,30 @@ import (
 // AbstractPaymentUseCase carries the repositories every payment use case
 // needs and the shared policy-materialization behavior.
 type AbstractPaymentUseCase struct {
-	agentRepository             identity_repositories.AgentRepositoryInterface
-	paymentPolicyRepository     repositories.PaymentPolicyRepositoryInterface
-	paymentRuleRepository       repositories.PaymentRuleRepositoryInterface
-	blockchainSettings          *runtime_common_settings.BlockchainSettings
-	token6022Settings           *runtime_common_settings.Token6022Settings
-	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings
+	agentRepository         identity_repositories.AgentRepositoryInterface
+	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface
+	paymentRuleRepository   repositories.PaymentRuleRepositoryInterface
+	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface
+	blockchainSettings      *runtime_common_settings.BlockchainSettings
+	token6022Settings       *runtime_common_settings.Token6022Settings
 }
 
 func NewAbstractPaymentUseCase(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
+	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
 	blockchainSettings *runtime_common_settings.BlockchainSettings,
 	token6022Settings *runtime_common_settings.Token6022Settings,
-	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
 ) *AbstractPaymentUseCase {
 	return &AbstractPaymentUseCase{
-		agentRepository:             agentRepository,
-		paymentPolicyRepository:     paymentPolicyRepository,
-		paymentRuleRepository:       paymentRuleRepository,
-		blockchainSettings:          blockchainSettings,
-		token6022Settings:           token6022Settings,
-		paymentFacilitatorsSettings: paymentFacilitatorsSettings,
+		agentRepository:         agentRepository,
+		paymentPolicyRepository: paymentPolicyRepository,
+		paymentRuleRepository:   paymentRuleRepository,
+		paymentMethodStrategies: paymentMethodStrategies,
+		blockchainSettings:      blockchainSettings,
+		token6022Settings:       token6022Settings,
 	}
-}
-
-// requireFacilitatorForPaidRule rejects a paid rule whose network has no
-// configured facilitator. Free rules never settle, so they're exempt.
-func (u *AbstractPaymentUseCase) requireFacilitatorForPaidRule(request *requests.SavePaymentRuleRequest) error {
-	price, ok := new(big.Int).SetString(request.Price, 10)
-	if !ok || price.Sign() == 0 {
-		return nil
-	}
-	if _, configured := u.paymentFacilitatorsSettings.BaseUrlFor(request.Network); !configured {
-		return errors.NewValidationError("network", "no facilitator configured for this network")
-	}
-	return nil
 }
 
 // ensurePaymentPolicy returns the policy head, materializing it with the
@@ -80,18 +69,26 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 	}
-	if rule := u.defaultRule(policy, agent); rule != nil {
-		if _, err := u.paymentRuleRepository.Create(ctx, rule); err != nil {
+	if rule, config := u.defaultRule(policy, agent); rule != nil {
+		created, err := u.paymentRuleRepository.Create(ctx, rule)
+		if err != nil {
 			return nil, nil, errors.NewInternalError("policy_failed", err.Error())
+		}
+		if strategy, ok := u.paymentMethodStrategies.For(created.Method); ok {
+			if err := strategy.SaveConfig(ctx, created.Id, config); err != nil {
+				return nil, nil, errors.NewInternalError("policy_failed", err.Error())
+			}
 		}
 	}
 	return policy, agent, nil
 }
 
-// defaultRule seeds a zero-price route to the agent's own wallet, scoped to
-// agent wallet + owner, on the node's chain. The $6022 token is only the
-// EIP-712 signing context — zero-price rules never settle on-chain.
-func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent) *models.PaymentRule {
+// defaultRule seeds a zero-price x402 rule routing to the agent's own wallet,
+// scoped to agent wallet + owner on the node's chain, and returns it with the
+// config JSON the x402 strategy persists. The $6022 token is only the EIP-712
+// signing context — zero-price rules never settle on-chain. Returns (nil, nil)
+// when the agent has no addresses to scope to.
+func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent) (*models.PaymentRule, json.RawMessage) {
 	patterns := []string{}
 	if len(agent.WalletAddress) != 0 {
 		patterns = append(patterns, strings.ToLower(agent.WalletAddress))
@@ -100,18 +97,24 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 		patterns = append(patterns, strings.ToLower(*agent.Owner))
 	}
 	if len(patterns) == 0 {
-		return nil
+		return nil, nil
+	}
+	config := &models.PaymentRuleX402Config{
+		Network:         fmt.Sprintf("eip155:%d", u.blockchainSettings.Id),
+		Asset:           u.token6022Settings.SmartContractAddress.Hex(),
+		PayTo:           agent.WalletAddress,
+		Eip712Name:      services.DefaultEip712Name,
+		Eip712Version:   services.DefaultEip712Version,
+		AddressPatterns: patterns,
+	}
+	rawConfig, err := config.Marshal()
+	if err != nil {
+		return nil, nil
 	}
 	return &models.PaymentRule{
-		PolicyId:          policy.Id,
-		Name:              "Owner free access",
-		Network:           fmt.Sprintf("eip155:%d", u.blockchainSettings.Id),
-		Asset:             u.token6022Settings.SmartContractAddress.Hex(),
-		PayTo:             agent.WalletAddress,
-		Price:             "0",
-		MaxTimeoutSeconds: 60,
-		Eip712Name:        "USDC",
-		Eip712Version:     "2",
-		AddressPatterns:   patterns,
-	}
+		PolicyId: policy.Id,
+		Name:     "Owner free access",
+		Price:    "0",
+		Method:   enums.PaymentMethodX402,
+	}, rawConfig
 }

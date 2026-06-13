@@ -1,29 +1,28 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
-// ExternalPaymentRule mirrors a runtime rule: atomic-unit Price ("0" = free),
-// CAIP-2 Network, AddressPatterns regexes (".*" = everyone). Id is empty in
-// create/update bodies. The facilitator is network-level config, fetched
-// separately (ExternalPaymentFacilitatorsPayload), not carried on the rule.
+// ExternalPaymentRule mirrors a runtime rule: method-neutral Name/Price/Method
+// plus a method-specific Config blob. Id is empty in create/update bodies. The
+// facilitator is network-level config fetched separately
+// (ExternalPaymentFacilitatorsPayload), not carried on the rule.
 type ExternalPaymentRule struct {
-	Id                string   `json:"id,omitempty"`
-	Name              string   `json:"name"`
-	Network           string   `json:"network"`
-	Asset             string   `json:"asset"`
-	PayTo             string   `json:"payTo"`
-	Price             string   `json:"price"`
-	MaxTimeoutSeconds int      `json:"maxTimeoutSeconds"`
-	Eip712Name        string   `json:"eip712Name"`
-	Eip712Version     string   `json:"eip712Version"`
-	AddressPatterns   []string `json:"addressPatterns"`
+	Id     string          `json:"id,omitempty"`
+	Name   string          `json:"name"`
+	Price  string          `json:"price"`
+	Method string          `json:"method"`
+	Config json.RawMessage `json:"config" swaggertype:"object"`
 }
 
 // ExternalPaymentFacilitator mirrors one network's runtime-configured x402
 // facilitator.
 type ExternalPaymentFacilitator struct {
-	Network string `json:"network"`
-	BaseUrl string `json:"baseUrl"`
+	Network           string `json:"network"`
+	BaseUrl           string `json:"baseUrl"`
+	MaxTimeoutSeconds int    `json:"maxTimeoutSeconds"`
 }
 
 // ExternalPaymentFacilitatorsPayload mirrors GET /internal/config/payment-facilitators.

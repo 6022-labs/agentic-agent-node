@@ -16,7 +16,7 @@ func NewHttpPaymentFacilitatorClient(client clients.ClientWithResponsesInterface
 	return &HttpPaymentFacilitatorClient{client: client}
 }
 
-func (c *HttpPaymentFacilitatorClient) Get(ctx context.Context) (map[string]string, error) {
+func (c *HttpPaymentFacilitatorClient) Get(ctx context.Context) (map[string]models.ExternalPaymentFacilitator, error) {
 	resp, err := c.client.GetInternalConfigPaymentFacilitatorsWithResponse(ctx)
 	if err != nil {
 		return nil, err
@@ -25,9 +25,9 @@ func (c *HttpPaymentFacilitatorClient) Get(ctx context.Context) (map[string]stri
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
-	byNetwork := make(map[string]string, len(payload.Facilitators))
+	byNetwork := make(map[string]models.ExternalPaymentFacilitator, len(payload.Facilitators))
 	for _, facilitator := range payload.Facilitators {
-		byNetwork[facilitator.Network] = facilitator.BaseUrl
+		byNetwork[facilitator.Network] = facilitator
 	}
 	return byNetwork, nil
 }

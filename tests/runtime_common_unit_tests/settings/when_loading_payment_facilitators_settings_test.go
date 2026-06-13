@@ -41,6 +41,31 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a facilitator with and without an explicit timeout", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"payment.facilitators": map[string]any{
+				"eip155:80002": map[string]any{"base_url": "https://x402-amoy.polygon.technology", "max_timeout_seconds": 120},
+				"eip155:84532": map[string]any{"base_url": "https://x402.org/facilitator"},
+			},
+		}, "."), nil)
+
+		t.Run("Should keep the explicit timeout and default the missing one", func(t *testing.T) {
+			t.Parallel()
+
+			entries := settings.NewPaymentFacilitatorsSettings(zap.NewNop(), k).Entries()
+
+			if assert.Len(t, entries, 2) {
+				assert.Equal(t, "eip155:80002", entries[0].Network)
+				assert.Equal(t, 120, entries[0].MaxTimeoutSeconds)
+				assert.Equal(t, "eip155:84532", entries[1].Network)
+				assert.Equal(t, 60, entries[1].MaxTimeoutSeconds)
+			}
+		})
+	})
+
 	t.Run("Given a network with no configured facilitator", func(t *testing.T) {
 		t.Parallel()
 

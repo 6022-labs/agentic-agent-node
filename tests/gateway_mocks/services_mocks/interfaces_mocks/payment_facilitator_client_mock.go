@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	models "github.com/6022-labs/agentic-agent-node/src/gateway/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,10 +42,10 @@ func (m *MockPaymentFacilitatorClientInterface) EXPECT() *MockPaymentFacilitator
 }
 
 // Get mocks base method.
-func (m *MockPaymentFacilitatorClientInterface) Get(ctx context.Context) (map[string]string, error) {
+func (m *MockPaymentFacilitatorClientInterface) Get(ctx context.Context) (map[string]models.ExternalPaymentFacilitator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx)
-	ret0, _ := ret[0].(map[string]string)
+	ret0, _ := ret[0].(map[string]models.ExternalPaymentFacilitator)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

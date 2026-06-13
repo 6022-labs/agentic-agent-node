@@ -64,6 +64,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		repositories.NewPaymentRuleX402ConfigRepository,
+		dig.As(new(payment_repositories.PaymentRuleX402ConfigRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 // newDatabaseClient opens the DB and runs migrations at boot. A failure here
