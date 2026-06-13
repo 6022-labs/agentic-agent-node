@@ -1,0 +1,87 @@
+package use_cases_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/models"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/services_mocks/interfaces_mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+)
+
+type WhenGettingPaymentPolicyTestingSuite struct {
+	sut *use_cases.GetPaymentPolicy
+
+	mockPaymentPolicyClient *interfaces_mocks.MockPaymentPolicyClientInterface
+}
+
+func WhenGettingPaymentPolicyBeforeEach(t *testing.T) *WhenGettingPaymentPolicyTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockPaymentPolicyClient := interfaces_mocks.NewMockPaymentPolicyClientInterface(mockController)
+
+	return &WhenGettingPaymentPolicyTestingSuite{
+		sut: use_cases.NewGetPaymentPolicy(mockPaymentPolicyClient),
+
+		mockPaymentPolicyClient: mockPaymentPolicyClient,
+	}
+}
+
+func TestWhenGettingPaymentPolicy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given the runtime returns the policy head", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
+			suite.mockPaymentPolicyClient.EXPECT().
+				Get(gomock.Any()).
+				Return(&models.ExternalPaymentPolicyPayload{
+					Id:                 "policy-id",
+					AgentWalletAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+				}, nil).
+				Times(1)
+		}
+
+		t.Run("Should return the head", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, "policy-id", result.Id)
+			assert.Equal(t, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", result.AgentWalletAddress)
+		})
+	})
+
+	t.Run("Given the runtime is unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
+			suite.mockPaymentPolicyClient.EXPECT().
+				Get(gomock.Any()).
+				Return(nil, errors.New("connection refused")).
+				Times(1)
+		}
+
+		t.Run("Should return an unavailable error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+}

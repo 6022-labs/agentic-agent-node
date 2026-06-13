@@ -8,6 +8,9 @@ export type AppConfig = {
   collectionCreatorAddress: string
   token6022Address: string
   ensRegistryAddress: string
+  // CAIP-2 networks the runtime can settle x402 payments on; paid rules are
+  // restricted to these.
+  facilitatorNetworks: string[]
 }
 
 let appConfig: AppConfig | null = null

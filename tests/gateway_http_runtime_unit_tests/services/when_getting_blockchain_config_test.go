@@ -39,7 +39,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"chainId":80002,"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens"}`),
+				Body:         []byte(`{"chainId":80002,"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","facilitatorNetworks":["eip155:80002"]}`),
 			}, nil)
 		}
 
@@ -58,6 +58,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 				assert.Equal(t, "0xcreator", payload.CollectionCreatorAddress)
 				assert.Equal(t, "0xtoken", payload.Token6022Address)
 				assert.Equal(t, "0xens", payload.EnsRegistryAddress)
+				assert.Equal(t, []string{"eip155:80002"}, payload.FacilitatorNetworks)
 			}
 		})
 	})

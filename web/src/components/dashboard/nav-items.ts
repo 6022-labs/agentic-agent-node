@@ -1,6 +1,7 @@
 import {
   Brain,
   BrainCircuit,
+  Coins,
   Fingerprint,
   MessagesSquare,
   Plug,
@@ -18,6 +19,7 @@ export const configureNavItems: NavItem[] = [
   { title: "LLM", path: "/dashboard/llm", icon: Brain },
   { title: "MCP Connections", path: "/dashboard/mcp", icon: Plug },
   { title: "Memory", path: "/dashboard/memory", icon: BrainCircuit },
+  { title: "Payments", path: "/dashboard/payments", icon: Coins },
 ]
 
 export const testNavItems: NavItem[] = [

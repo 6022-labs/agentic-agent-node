@@ -29,6 +29,9 @@ func WhenGettingBlockchainConfigBeforeEach(_ *testing.T) *WhenGettingBlockchainC
 		&settings.AgentEnsRegistriesSettings{
 			RegistryAddress: common.HexToAddress("0xb02c3D72cf0939c38C26291e5645d25De18478b7"),
 		},
+		&settings.PaymentFacilitatorsSettings{
+			"eip155:80002": "https://x402-amoy.polygon.technology",
+		},
 	)
 
 	return &WhenGettingBlockchainConfigTestingSuite{sut: sut}
@@ -53,6 +56,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 			assert.Equal(t, "0x9D72199fC7C00416ceD5bC157Bdb2e3775511717", resp.CollectionCreatorAddress)
 			assert.Equal(t, "0xbB2CEbf252EaDdf1674Cc7C458FCf4877704820F", resp.Token6022Address)
 			assert.Equal(t, "0xb02c3D72cf0939c38C26291e5645d25De18478b7", resp.EnsRegistryAddress)
+			assert.Equal(t, []string{"eip155:80002"}, resp.FacilitatorNetworks)
 		})
 	})
 }

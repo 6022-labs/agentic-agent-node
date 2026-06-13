@@ -93,6 +93,29 @@ definitions:
       timestamp:
         type: string
     type: object
+  requests.SavePaymentRuleRequest:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      asset:
+        type: string
+      eip712Name:
+        type: string
+      eip712Version:
+        type: string
+      maxTimeoutSeconds:
+        type: integer
+      name:
+        type: string
+      network:
+        type: string
+      payTo:
+        type: string
+      price:
+        type: string
+    type: object
   requests.SetupLLMConnectionRequest:
     properties:
       apiKey:
@@ -190,6 +213,10 @@ definitions:
         type: string
       ensRegistryAddress:
         type: string
+      facilitatorNetworks:
+        items:
+          type: string
+        type: array
       token6022Address:
         type: string
     type: object
@@ -289,6 +316,13 @@ definitions:
           $ref: '#/definitions/responses.ConversationSummary'
         type: array
     type: object
+  responses.ListPaymentRulesResponse:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/responses.PaymentRuleResponse'
+        type: array
+    type: object
   responses.MCPConnectionListResponse:
     properties:
       connections:
@@ -341,6 +375,62 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  responses.PaymentFacilitatorResponse:
+    properties:
+      baseUrl:
+        type: string
+      network:
+        type: string
+    type: object
+  responses.PaymentFacilitatorsResponse:
+    properties:
+      facilitators:
+        items:
+          $ref: '#/definitions/responses.PaymentFacilitatorResponse'
+        type: array
+    type: object
+  responses.PaymentPolicyResponse:
+    properties:
+      agentId:
+        type: string
+      agentWalletAddress:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  responses.PaymentRuleResponse:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      asset:
+        type: string
+      createdAt:
+        type: string
+      eip712Name:
+        type: string
+      eip712Version:
+        type: string
+      id:
+        type: string
+      maxTimeoutSeconds:
+        type: integer
+      name:
+        type: string
+      network:
+        type: string
+      payTo:
+        type: string
+      price:
+        type: string
+      updatedAt:
+        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -763,6 +853,148 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal update MCP connection
+      tags:
+      - Internal
+  /internal/config/payment-facilitators:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentFacilitatorsResponse'
+      summary: Internal get payment facilitators
+      tags:
+      - Internal
+  /internal/config/payment-policy:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: delete_payment_policy_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete payment policy
+      tags:
+      - Internal
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentPolicyResponse'
+        "500":
+          description: get_payment_policy_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal get payment policy
+      tags:
+      - Internal
+  /internal/config/payment-policy/rules:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListPaymentRulesResponse'
+        "500":
+          description: list_payment_rules_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list payment rules
+      tags:
+      - Internal
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payment rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: create_payment_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal create payment rule
+      tags:
+      - Internal
+  /internal/config/payment-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: delete_payment_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete payment rule
+      tags:
+      - Internal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: payment rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: update_payment_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal update payment rule
       tags:
       - Internal
   /internal/conversations:

@@ -16,6 +16,7 @@ func AddRuntimeCommonConfiguration(container *dig.Container) {
 		settings.NewAgentCollectionCreatorsSettings,
 		settings.NewToken6022Settings,
 		settings.NewAgentEnsRegistriesSettings,
+		settings.NewPaymentFacilitatorsSettings,
 	}
 	for _, p := range settingsProviders {
 		if err := container.Provide(p); err != nil {

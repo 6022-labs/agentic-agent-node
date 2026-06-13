@@ -594,6 +594,239 @@ const docTemplate = `{
                 }
             }
         },
+        "/config/payment-policy": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Get payment policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetPaymentPolicyResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Delete payment policy",
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/payment-policy/rules": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "List payment rules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListPaymentRulesResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Create payment rule",
+                "parameters": [
+                    {
+                        "description": "payment rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/payment-policy/rules/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Update payment rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "payment rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Delete payment rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/conversations": {
             "get": {
                 "security": [
@@ -746,11 +979,7 @@ const docTemplate = `{
         },
         "/responses": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
+                "description": "x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays the cheapest accept option whose address patterns match them — zero-price options (agent wallet and NFT owner by default) are served free without settlement. Anonymous 402 responses advertise only the options open to everyone.",
                 "consumes": [
                     "application/json"
                 ],
@@ -762,6 +991,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create response",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "x402 v2 payment payload (base64 JSON)",
+                        "name": "PAYMENT-SIGNATURE",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Conversation turn",
                         "name": "request",
@@ -783,6 +1019,12 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "402": {
+                        "description": "Payment Required",
+                        "schema": {
+                            "$ref": "#/definitions/x402.PaymentRequired"
                         }
                     },
                     "502": {
@@ -820,6 +1062,17 @@ const docTemplate = `{
                 "MessageRoleSystem"
             ]
         },
+        "errors.NotFoundError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "errors.ValidationError": {
             "type": "object",
             "properties": {
@@ -834,6 +1087,44 @@ const docTemplate = `{
         "fiber.Map": {
             "type": "object",
             "additionalProperties": true
+        },
+        "models.ExternalPaymentRule": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "asset": {
+                    "type": "string"
+                },
+                "eip712Name": {
+                    "type": "string"
+                },
+                "eip712Version": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxTimeoutSeconds": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "payTo": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
         },
         "requests.AppendConversationMessageInput": {
             "type": "object",
@@ -975,6 +1266,41 @@ const docTemplate = `{
                 "parameters": {
                     "type": "object",
                     "additionalProperties": {}
+                }
+            }
+        },
+        "requests.SavePaymentRuleRequest": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "asset": {
+                    "type": "string"
+                },
+                "eip712Name": {
+                    "type": "string"
+                },
+                "eip712Version": {
+                    "type": "string"
+                },
+                "maxTimeoutSeconds": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "payTo": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
                 }
             }
         },
@@ -1120,6 +1446,12 @@ const docTemplate = `{
                 "ensRegistryAddress": {
                     "type": "string"
                 },
+                "facilitatorNetworks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "token6022Address": {
                     "type": "string"
                 }
@@ -1227,6 +1559,26 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.GetPaymentPolicyResponse": {
+            "type": "object",
+            "properties": {
+                "agentId": {
+                    "type": "string"
+                },
+                "agentWalletAddress": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.KeyValue": {
             "type": "object",
             "properties": {
@@ -1267,6 +1619,17 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/responses.McpConnectionResponse"
+                    }
+                }
+            }
+        },
+        "responses.ListPaymentRulesResponse": {
+            "type": "object",
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalPaymentRule"
                     }
                 }
             }
@@ -1422,6 +1785,67 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "x402.PaymentRequired": {
+            "type": "object",
+            "properties": {
+                "accepts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/x402.PaymentRequirements"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "resource": {
+                    "$ref": "#/definitions/x402.ResourceInfo"
+                },
+                "x402Version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "x402.PaymentRequirements": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "asset": {
+                    "type": "string"
+                },
+                "extra": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "maxTimeoutSeconds": {
+                    "type": "integer"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "payTo": {
+                    "type": "string"
+                },
+                "scheme": {
+                    "type": "string"
+                }
+            }
+        },
+        "x402.ResourceInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "mimeType": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

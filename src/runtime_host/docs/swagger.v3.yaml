@@ -95,6 +95,30 @@ components:
         timestamp:
           type: string
       type: object
+    requests.SavePaymentRuleRequest:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        asset:
+          type: string
+        eip712Name:
+          type: string
+        eip712Version:
+          type: string
+        maxTimeoutSeconds:
+          type: integer
+        name:
+          type: string
+        network:
+          type: string
+        payTo:
+          type: string
+        price:
+          type: string
+      type: object
     requests.SetupLLMConnectionRequest:
       properties:
         apiKey:
@@ -194,6 +218,11 @@ components:
           type: string
         ensRegistryAddress:
           type: string
+        facilitatorNetworks:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
         token6022Address:
           type: string
       type: object
@@ -296,6 +325,14 @@ components:
           type: array
           uniqueItems: false
       type: object
+    responses.ListPaymentRulesResponse:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/responses.PaymentRuleResponse'
+          type: array
+          uniqueItems: false
+      type: object
     responses.MCPConnectionListResponse:
       properties:
         connections:
@@ -353,6 +390,64 @@ components:
             type: string
           type: array
           uniqueItems: false
+      type: object
+    responses.PaymentFacilitatorResponse:
+      properties:
+        baseUrl:
+          type: string
+        network:
+          type: string
+      type: object
+    responses.PaymentFacilitatorsResponse:
+      properties:
+        facilitators:
+          items:
+            $ref: '#/components/schemas/responses.PaymentFacilitatorResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.PaymentPolicyResponse:
+      properties:
+        agentId:
+          type: string
+        agentWalletAddress:
+          type: string
+        createdAt:
+          type: string
+        id:
+          type: string
+        updatedAt:
+          type: string
+      type: object
+    responses.PaymentRuleResponse:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        asset:
+          type: string
+        createdAt:
+          type: string
+        eip712Name:
+          type: string
+        eip712Version:
+          type: string
+        id:
+          type: string
+        maxTimeoutSeconds:
+          type: integer
+        name:
+          type: string
+        network:
+          type: string
+        payTo:
+          type: string
+        price:
+          type: string
+        updatedAt:
+          type: string
       type: object
     responses.RegistrationStatusResponse:
       properties:
@@ -832,6 +927,175 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: update_mcp_connection_failed
       summary: Internal update MCP connection
+      tags:
+      - Internal
+  /internal/config/payment-facilitators:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentFacilitatorsResponse'
+          description: OK
+      summary: Internal get payment facilitators
+      tags:
+      - Internal
+  /internal/config/payment-policy:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: delete_payment_policy_failed
+      summary: Internal delete payment policy
+      tags:
+      - Internal
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentPolicyResponse'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: get_payment_policy_failed
+      summary: Internal get payment policy
+      tags:
+      - Internal
+  /internal/config/payment-policy/rules:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListPaymentRulesResponse'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: list_payment_rules_failed
+      summary: Internal list payment rules
+      tags:
+      - Internal
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+                description: payment rule
+                summary: request
+        description: payment rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: create_payment_rule_failed
+      summary: Internal create payment rule
+      tags:
+      - Internal
+  /internal/config/payment-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: delete_payment_rule_failed
+      summary: Internal delete payment rule
+      tags:
+      - Internal
+    put:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+                description: payment rule
+                summary: request
+        description: payment rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: update_payment_rule_failed
+      summary: Internal update payment rule
       tags:
       - Internal
   /internal/conversations:

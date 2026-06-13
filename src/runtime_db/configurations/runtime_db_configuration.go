@@ -3,6 +3,7 @@ package configurations
 import (
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	knowledge_repositories "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	payment_repositories "github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
@@ -48,6 +49,18 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		repositories.NewAgentRegistrationStateRepository,
 		dig.As(new(identity_repositories.AgentRegistrationStateRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewPaymentPolicyRepository,
+		dig.As(new(payment_repositories.PaymentPolicyRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewPaymentRuleRepository,
+		dig.As(new(payment_repositories.PaymentRuleRepositoryInterface)),
 	); err != nil {
 		panic(err)
 	}

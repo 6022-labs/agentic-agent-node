@@ -45,6 +45,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 				CollectionCreatorAddress:  "0xcreator",
 				Token6022Address:          "0xtoken",
 				EnsRegistryAddress:        "0xens",
+				FacilitatorNetworks:       []string{"eip155:80002"},
 			}, nil)
 		}
 
@@ -62,6 +63,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 			assert.Equal(t, "0xcreator", resp.CollectionCreatorAddress)
 			assert.Equal(t, "0xtoken", resp.Token6022Address)
 			assert.Equal(t, "0xens", resp.EnsRegistryAddress)
+			assert.Equal(t, []string{"eip155:80002"}, resp.FacilitatorNetworks)
 		})
 	})
 

@@ -34,5 +34,6 @@ func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPaylo
 		CollectionCreatorAddress:  p.CollectionCreatorAddress,
 		Token6022Address:          p.Token6022Address,
 		EnsRegistryAddress:        p.EnsRegistryAddress,
+		FacilitatorNetworks:       p.FacilitatorNetworks,
 	}
 }

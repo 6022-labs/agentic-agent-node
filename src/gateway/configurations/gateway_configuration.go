@@ -28,6 +28,13 @@ func AddGatewayConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		services.NewX402PaymentVerifier,
+		dig.As(new(gateway_interfaces.X402PaymentVerifierInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewJwtIssuer,
 		dig.As(new(gateway_interfaces.JwtIssuerInterface)),
 	); err != nil {
@@ -47,6 +54,12 @@ func AddGatewayConfiguration(container *dig.Container) {
 		use_cases.NewGetLlmConfig,
 		use_cases.NewSetLlmConfig,
 		use_cases.NewDeleteLlmConfig,
+		use_cases.NewGetPaymentPolicy,
+		use_cases.NewDeletePaymentPolicy,
+		use_cases.NewListPaymentRules,
+		use_cases.NewCreatePaymentRule,
+		use_cases.NewUpdatePaymentRule,
+		use_cases.NewDeletePaymentRule,
 		use_cases.NewListMcpConnections,
 		use_cases.NewCreateMcpConnection,
 		use_cases.NewDeleteMcpConnection,

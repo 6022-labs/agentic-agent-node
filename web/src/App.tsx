@@ -14,6 +14,7 @@ import DashboardIdentityPage from "@/pages/dashboard-identity"
 import DashboardLlmPage from "@/pages/dashboard-llm"
 import DashboardMcpPage from "@/pages/dashboard-mcp"
 import DashboardMemoryPage from "@/pages/dashboard-memory"
+import DashboardPaymentsPage from "@/pages/dashboard-payments"
 import DashboardPlaygroundPage from "@/pages/dashboard-playground"
 
 const metadata = {
@@ -63,6 +64,7 @@ function App() {
           <Route path="llm" element={<DashboardLlmPage />} />
           <Route path="mcp" element={<DashboardMcpPage />} />
           <Route path="memory" element={<DashboardMemoryPage />} />
+          <Route path="payments" element={<DashboardPaymentsPage />} />
           <Route path="playground" element={<DashboardPlaygroundPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

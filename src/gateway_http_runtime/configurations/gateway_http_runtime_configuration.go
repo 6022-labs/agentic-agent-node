@@ -73,4 +73,22 @@ func AddGatewayHttpRuntimeConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		services.NewHttpPaymentPolicyClient,
+		dig.As(new(gateway_interfaces.PaymentPolicyClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		services.NewHttpPaymentRuleClient,
+		dig.As(new(gateway_interfaces.PaymentRuleClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		services.NewHttpPaymentFacilitatorClient,
+		dig.As(new(gateway_interfaces.PaymentFacilitatorClientInterface)),
+	); err != nil {
+		panic(err)
+	}
 }

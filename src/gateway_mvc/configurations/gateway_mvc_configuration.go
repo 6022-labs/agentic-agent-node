@@ -11,6 +11,9 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 	if err := container.Provide(middlewares.NewJwtAuthMiddleware); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(middlewares.NewX402GateMiddleware); err != nil {
+		panic(err)
+	}
 
 	provideController(container, gateway_mvc.NewHealthController)
 	provideController(container, gateway_mvc.NewConfigController)
@@ -18,6 +21,8 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 	provideController(container, gateway_mvc.NewResponseController)
 	provideController(container, gateway_mvc.NewLlmConfigController)
 	provideController(container, gateway_mvc.NewMcpConfigController)
+	provideController(container, gateway_mvc.NewPaymentPolicyController)
+	provideController(container, gateway_mvc.NewPaymentRuleController)
 	provideController(container, gateway_mvc.NewAgentRegistrationController)
 	provideController(container, gateway_mvc.NewAgentCollectionsController)
 	provideController(container, gateway_mvc.NewConversationsController)

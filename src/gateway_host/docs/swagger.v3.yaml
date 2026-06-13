@@ -18,6 +18,13 @@ components:
       - MessageRoleUser
       - MessageRoleAssistant
       - MessageRoleSystem
+    errors.NotFoundError:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      type: object
     errors.ValidationError:
       properties:
         field:
@@ -27,6 +34,32 @@ components:
       type: object
     fiber.Map:
       additionalProperties: {}
+      type: object
+    models.ExternalPaymentRule:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        asset:
+          type: string
+        eip712Name:
+          type: string
+        eip712Version:
+          type: string
+        id:
+          type: string
+        maxTimeoutSeconds:
+          type: integer
+        name:
+          type: string
+        network:
+          type: string
+        payTo:
+          type: string
+        price:
+          type: string
       type: object
     requests.AppendConversationMessageInput:
       properties:
@@ -125,6 +158,30 @@ components:
           additionalProperties: {}
           type: object
       type: object
+    requests.SavePaymentRuleRequest:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        asset:
+          type: string
+        eip712Name:
+          type: string
+        eip712Version:
+          type: string
+        maxTimeoutSeconds:
+          type: integer
+        name:
+          type: string
+        network:
+          type: string
+        payTo:
+          type: string
+        price:
+          type: string
+      type: object
     requests.SetLlmConfigRequest:
       properties:
         apiKey:
@@ -220,6 +277,11 @@ components:
           type: string
         ensRegistryAddress:
           type: string
+        facilitatorNetworks:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
         token6022Address:
           type: string
       type: object
@@ -290,6 +352,19 @@ components:
         updatedAt:
           type: string
       type: object
+    responses.GetPaymentPolicyResponse:
+      properties:
+        agentId:
+          type: string
+        agentWalletAddress:
+          type: string
+        createdAt:
+          type: string
+        id:
+          type: string
+        updatedAt:
+          type: string
+      type: object
     responses.KeyValue:
       properties:
         key:
@@ -318,6 +393,14 @@ components:
         connections:
           items:
             $ref: '#/components/schemas/responses.McpConnectionResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.ListPaymentRulesResponse:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/models.ExternalPaymentRule'
           type: array
           uniqueItems: false
       type: object
@@ -425,6 +508,47 @@ components:
         expiresAt:
           type: string
         token:
+          type: string
+      type: object
+    x402.PaymentRequired:
+      properties:
+        accepts:
+          items:
+            $ref: '#/components/schemas/x402.PaymentRequirements'
+          type: array
+          uniqueItems: false
+        error:
+          type: string
+        resource:
+          $ref: '#/components/schemas/x402.ResourceInfo'
+        x402Version:
+          type: integer
+      type: object
+    x402.PaymentRequirements:
+      properties:
+        amount:
+          type: string
+        asset:
+          type: string
+        extra:
+          additionalProperties: {}
+          type: object
+        maxTimeoutSeconds:
+          type: integer
+        network:
+          type: string
+        payTo:
+          type: string
+        scheme:
+          type: string
+      type: object
+    x402.ResourceInfo:
+      properties:
+        description:
+          type: string
+        mimeType:
+          type: string
+        url:
           type: string
       type: object
   securitySchemes:
@@ -830,6 +954,173 @@ paths:
       summary: Delete MCP connection
       tags:
       - Config
+  /config/payment-policy:
+    delete:
+      responses:
+        "204": {}
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Delete payment policy
+      tags:
+      - Config
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.GetPaymentPolicyResponse'
+          description: OK
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Get payment policy
+      tags:
+      - Config
+  /config/payment-policy/rules:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListPaymentRulesResponse'
+          description: OK
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: List payment rules
+      tags:
+      - Config
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+                description: payment rule
+                summary: request
+        description: payment rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.ExternalPaymentRule'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Create payment rule
+      tags:
+      - Config
+  /config/payment-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204": {}
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Delete payment rule
+      tags:
+      - Config
+    put:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+                description: payment rule
+                summary: request
+        description: payment rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.ExternalPaymentRule'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Update payment rule
+      tags:
+      - Config
   /conversations:
     get:
       responses:
@@ -941,6 +1232,17 @@ paths:
       - Health
   /responses:
     post:
+      description: 'x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays
+        the cheapest accept option whose address patterns match them — zero-price
+        options (agent wallet and NFT owner by default) are served free without settlement.
+        Anonymous 402 responses advertise only the options open to everyone.'
+      parameters:
+      - description: x402 v2 payment payload (base64 JSON)
+        in: header
+        name: PAYMENT-SIGNATURE
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -965,14 +1267,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/x402.PaymentRequired'
+          description: Payment Required
         "502":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/fiber.Map'
           description: runtime_failed
-      security:
-      - BearerAuth: []
       summary: Create response
       tags:
       - Responses

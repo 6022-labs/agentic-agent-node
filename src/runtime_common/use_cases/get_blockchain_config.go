@@ -15,6 +15,7 @@ type GetBlockchainConfig struct {
 	agentCollectionCreatorsSettings  *settings.AgentCollectionCreatorsSettings
 	token6022Settings                *settings.Token6022Settings
 	agentEnsRegistriesSettings       *settings.AgentEnsRegistriesSettings
+	paymentFacilitatorsSettings      *settings.PaymentFacilitatorsSettings
 }
 
 func NewGetBlockchainConfig(
@@ -23,6 +24,7 @@ func NewGetBlockchainConfig(
 	agentCollectionCreatorsSettings *settings.AgentCollectionCreatorsSettings,
 	token6022Settings *settings.Token6022Settings,
 	agentEnsRegistriesSettings *settings.AgentEnsRegistriesSettings,
+	paymentFacilitatorsSettings *settings.PaymentFacilitatorsSettings,
 ) *GetBlockchainConfig {
 	return &GetBlockchainConfig{
 		blockchainSettings:               blockchainSettings,
@@ -30,6 +32,7 @@ func NewGetBlockchainConfig(
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 		token6022Settings:                token6022Settings,
 		agentEnsRegistriesSettings:       agentEnsRegistriesSettings,
+		paymentFacilitatorsSettings:      paymentFacilitatorsSettings,
 	}
 }
 
@@ -40,5 +43,6 @@ func (u *GetBlockchainConfig) Execute(_ context.Context) (*responses.BlockchainC
 		CollectionCreatorAddress:  u.agentCollectionCreatorsSettings.CreatorAddress.Hex(),
 		Token6022Address:          u.token6022Settings.SmartContractAddress.Hex(),
 		EnsRegistryAddress:        u.agentEnsRegistriesSettings.RegistryAddress.Hex(),
+		FacilitatorNetworks:       u.paymentFacilitatorsSettings.Networks(),
 	}, nil
 }
