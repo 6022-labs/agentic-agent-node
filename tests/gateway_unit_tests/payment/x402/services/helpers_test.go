@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"

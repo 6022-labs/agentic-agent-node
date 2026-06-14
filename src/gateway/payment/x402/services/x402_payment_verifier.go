@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"

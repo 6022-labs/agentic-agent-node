@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
 	"github.com/stretchr/testify/assert"
 )

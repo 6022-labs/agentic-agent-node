@@ -3,7 +3,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 )
 
 // X402FacilitatorClientInterface is the port for an x402 v2 facilitator;

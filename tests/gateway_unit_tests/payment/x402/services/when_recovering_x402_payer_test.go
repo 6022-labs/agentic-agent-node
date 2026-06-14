@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/services"
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services"
+	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 )

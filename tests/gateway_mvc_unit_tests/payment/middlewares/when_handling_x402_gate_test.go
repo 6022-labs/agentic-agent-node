@@ -9,12 +9,13 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares/interfaces"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
+	x402_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/x402_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -38,8 +39,8 @@ type WhenHandlingX402GateTestingSuite struct {
 
 	mockPaymentRuleClient        *interfaces_mocks.MockPaymentRuleClientInterface
 	mockPaymentFacilitatorClient *interfaces_mocks.MockPaymentFacilitatorClientInterface
-	mockX402PaymentVerifier      *interfaces_mocks.MockX402PaymentVerifierInterface
-	mockX402FacilitatorClient    *interfaces_mocks.MockX402FacilitatorClientInterface
+	mockX402PaymentVerifier      *x402_mocks.MockX402PaymentVerifierInterface
+	mockX402FacilitatorClient    *x402_mocks.MockX402FacilitatorClientInterface
 }
 
 func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSuite {
@@ -47,8 +48,8 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 
 	mockPaymentRuleClient := interfaces_mocks.NewMockPaymentRuleClientInterface(mockController)
 	mockPaymentFacilitatorClient := interfaces_mocks.NewMockPaymentFacilitatorClientInterface(mockController)
-	mockX402PaymentVerifier := interfaces_mocks.NewMockX402PaymentVerifierInterface(mockController)
-	mockX402FacilitatorClient := interfaces_mocks.NewMockX402FacilitatorClientInterface(mockController)
+	mockX402PaymentVerifier := x402_mocks.NewMockX402PaymentVerifierInterface(mockController)
+	mockX402FacilitatorClient := x402_mocks.NewMockX402FacilitatorClientInterface(mockController)
 
 	x402Method := middlewares.NewX402PaymentMethodMiddleware(
 		zap.NewNop(),
@@ -333,7 +334,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.Address{}, gateway_interfaces.ErrX402AuthorizationExpired).
+				Return(common.Address{}, x402_interfaces.ErrX402AuthorizationExpired).
 				Times(1)
 		}
 

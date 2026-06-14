@@ -10,8 +10,9 @@ import (
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
@@ -38,15 +39,15 @@ const (
 type X402PaymentMethodMiddleware struct {
 	logger                   *zap.Logger
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface
-	x402PaymentVerifier      gateway_interfaces.X402PaymentVerifierInterface
-	x402FacilitatorClient    gateway_interfaces.X402FacilitatorClientInterface
+	x402PaymentVerifier      x402_interfaces.X402PaymentVerifierInterface
+	x402FacilitatorClient    x402_interfaces.X402FacilitatorClientInterface
 }
 
 func NewX402PaymentMethodMiddleware(
 	logger *zap.Logger,
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface,
-	x402PaymentVerifier gateway_interfaces.X402PaymentVerifierInterface,
-	x402FacilitatorClient gateway_interfaces.X402FacilitatorClientInterface,
+	x402PaymentVerifier x402_interfaces.X402PaymentVerifierInterface,
+	x402FacilitatorClient x402_interfaces.X402FacilitatorClientInterface,
 ) *X402PaymentMethodMiddleware {
 	return &X402PaymentMethodMiddleware{
 		logger:                   logger,
@@ -97,7 +98,7 @@ func (m *X402PaymentMethodMiddleware) Handle(ctx *fiber.Ctx, rules []models.Exte
 	// Candidates share network+payTo but may differ in asset (= EIP-712
 	// domain), so recovery is attempted per candidate.
 	payer, recovered, err := m.recoverAgainstCandidates(payload, candidates)
-	if errors.Is(err, gateway_interfaces.ErrX402AuthorizationExpired) {
+	if errors.Is(err, x402_interfaces.ErrX402AuthorizationExpired) {
 		return m.paymentRequired(ctx, x402Rules, facilitators, "authorization_expired")
 	}
 	if err != nil {
@@ -164,7 +165,7 @@ func (m *X402PaymentMethodMiddleware) recoverAgainstCandidates(payload *x402.Pay
 	var lastErr error
 	for _, candidate := range candidates {
 		p, err := m.x402PaymentVerifier.RecoverPayer(payload, candidate.config)
-		if errors.Is(err, gateway_interfaces.ErrX402AuthorizationExpired) {
+		if errors.Is(err, x402_interfaces.ErrX402AuthorizationExpired) {
 			return common.Address{}, nil, err
 		}
 		if err != nil {

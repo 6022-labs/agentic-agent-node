@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_x402/clients"
 	"go.uber.org/dig"
 )
