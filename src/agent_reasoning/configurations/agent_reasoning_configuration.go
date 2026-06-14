@@ -41,6 +41,20 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewLLMSecretStorage,
+		dig.As(new(interfaces.LLMSecretStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewMCPHeaderAuthSecretStorage,
+		dig.As(new(interfaces.MCPHeaderAuthSecretStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	providers := []any{
 		use_cases.NewSetupLLMConnection,
 		use_cases.NewGetLLMConnection,

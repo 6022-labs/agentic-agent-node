@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	vault "github.com/hashicorp/vault/api"
 )
-
-var ErrSecretNotFound = errors.New("secret not found")
 
 type KvV1SecretStorage struct {
 	client   *vault.Client
@@ -19,7 +18,6 @@ func NewKvV1SecretStorage(client *vault.Client, settings *vault_settings.VaultSe
 	return &KvV1SecretStorage{client: client, settings: settings}
 }
 
-// Write upserts a KV v1 secret as a flat string map.
 func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[string]string) error {
 	payload := make(map[string]any, len(data))
 	for k, v := range data {
@@ -28,21 +26,20 @@ func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[stri
 	return s.client.KVv1(s.settings.KvV1MountPath).Put(ctx, key, payload)
 }
 
-// Read returns the secret as a flat string map. Returns ErrSecretNotFound if absent.
 func (s *KvV1SecretStorage) Read(ctx context.Context, key string) (map[string]string, error) {
 	secret, err := s.client.KVv1(s.settings.KvV1MountPath).Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, vault.ErrSecretNotFound) {
-			return nil, ErrSecretNotFound
+			return nil, runtime_common_interfaces.ErrSecretNotFound
 		}
 		var respErr *vault.ResponseError
 		if errors.As(err, &respErr) && respErr.StatusCode == 404 {
-			return nil, ErrSecretNotFound
+			return nil, runtime_common_interfaces.ErrSecretNotFound
 		}
 		return nil, err
 	}
 	if secret == nil || secret.Data == nil {
-		return nil, ErrSecretNotFound
+		return nil, runtime_common_interfaces.ErrSecretNotFound
 	}
 
 	out := make(map[string]string, len(secret.Data))

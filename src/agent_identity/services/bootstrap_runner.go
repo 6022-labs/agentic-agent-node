@@ -5,35 +5,43 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	"go.uber.org/zap"
 )
 
-// BootstrapRunner loads or generates the agent's wallet in the local Vault, then
-// best-effort refreshes the agent's ENS runtime records. On-chain identity
-// resolves lazily via AgentIdentityResolver.
+// BootstrapRunner ensures the agent row exists (so secret paths can be scoped by
+// its id), loads or generates the wallet, then best-effort refreshes ENS records.
 type BootstrapRunner struct {
 	logger                   *zap.Logger
+	agentRepository          repositories.AgentRepositoryInterface
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
 	ensPublisher             identity_interfaces.EnsPublisherInterface
 }
 
 func NewBootstrapRunner(
 	logger *zap.Logger,
+	agentRepository repositories.AgentRepositoryInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	ensPublisher identity_interfaces.EnsPublisherInterface,
 ) *BootstrapRunner {
 	return &BootstrapRunner{
 		logger:                   logger,
+		agentRepository:          agentRepository,
 		walletCredentialsStorage: walletCredentialsStorage,
 		ensPublisher:             ensPublisher,
 	}
 }
 
-// Run loads (or generates) the wallet synchronously (Vault-backed, fast), then
-// kicks off the ENS runtime-records refresh in the background.
 func (r *BootstrapRunner) Run(ctx context.Context) error {
+	// The agent row must exist before any secret op: its id scopes every secret path.
+	if err := r.ensureAgent(ctx); err != nil {
+		r.logger.Error(fmt.Sprintf("agent bootstrap failed: %v", err))
+		return err
+	}
+
 	cred, err := r.walletCredentialsStorage.GetOrGenerate(ctx)
 	if err != nil {
 		msg := fmt.Sprintf("wallet bootstrap failed: %v", err)
@@ -46,6 +54,24 @@ func (r *BootstrapRunner) Run(ctx context.Context) error {
 	// Best-effort, non-blocking: refresh ENS records if minted (e.g. URL changed).
 	go r.refreshEnsRuntimeRecords(ctx)
 
+	return nil
+}
+
+// ensureAgent creates an empty agent draft if none exists; registration later fills the same row.
+func (r *BootstrapRunner) ensureAgent(ctx context.Context) error {
+	agent, err := r.agentRepository.Get(ctx)
+	if err != nil {
+		return err
+	}
+	if agent != nil {
+		return nil
+	}
+
+	created, err := r.agentRepository.Upsert(ctx, &models.Agent{})
+	if err != nil {
+		return err
+	}
+	r.logger.Info("agent draft created", zap.String("id", created.Id.String()))
 	return nil
 }
 

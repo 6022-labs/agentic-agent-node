@@ -6,28 +6,36 @@ import (
 	"fmt"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	vault_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services/interfaces"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (
-	walletSecretKey       = "agent/wallet"
+	walletSecretKey       = "wallet"
 	walletFieldPrivateKey = "privateKey"
 	walletFieldAddress    = "address"
 )
 
 type WalletCredentialsStorage struct {
-	storage vault_interfaces.KvV1SecretStorageInterface
+	storage               runtime_common_interfaces.SecretStorageInterface
+	agentScopedKeyBuilder identity_interfaces.AgentScopedKeyBuilderInterface
 }
 
-func NewWalletCredentialsStorage(storage vault_interfaces.KvV1SecretStorageInterface) *WalletCredentialsStorage {
-	return &WalletCredentialsStorage{storage: storage}
+func NewWalletCredentialsStorage(
+	storage runtime_common_interfaces.SecretStorageInterface,
+	agentScopedKeyBuilder identity_interfaces.AgentScopedKeyBuilderInterface,
+) *WalletCredentialsStorage {
+	return &WalletCredentialsStorage{storage: storage, agentScopedKeyBuilder: agentScopedKeyBuilder}
 }
 
 func (w *WalletCredentialsStorage) Get(ctx context.Context) (*identity_interfaces.WalletCredentials, bool, error) {
-	data, err := w.storage.Read(ctx, walletSecretKey)
-	if errors.Is(err, ErrSecretNotFound) {
+	key, err := w.agentScopedKeyBuilder.ScopedKey(ctx, walletSecretKey)
+	if err != nil {
+		return nil, false, err
+	}
+	data, err := w.storage.Read(ctx, key)
+	if errors.Is(err, runtime_common_interfaces.ErrSecretNotFound) {
 		return nil, false, nil
 	}
 	if err != nil {
@@ -55,7 +63,11 @@ func (w *WalletCredentialsStorage) Save(ctx context.Context, cred *identity_inte
 	if cred == nil || len(cred.PrivateKeyHex) == 0 || len(cred.Address) == 0 {
 		return errors.New("wallet credentials must have both privateKey and address")
 	}
-	return w.storage.Write(ctx, walletSecretKey, map[string]string{
+	key, err := w.agentScopedKeyBuilder.ScopedKey(ctx, walletSecretKey)
+	if err != nil {
+		return err
+	}
+	return w.storage.Write(ctx, key, map[string]string{
 		walletFieldPrivateKey: cred.PrivateKeyHex,
 		walletFieldAddress:    cred.Address,
 	})

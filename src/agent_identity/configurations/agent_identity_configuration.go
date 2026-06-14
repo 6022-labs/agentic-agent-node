@@ -38,6 +38,20 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewAgentScopedKeyBuilder,
+		dig.As(new(identity_interfaces.AgentScopedKeyBuilderInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewWalletCredentialsStorage,
+		dig.As(new(identity_interfaces.WalletCredentialsStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(services.NewBootstrapRunner); err != nil {
 		panic(err)
 	}

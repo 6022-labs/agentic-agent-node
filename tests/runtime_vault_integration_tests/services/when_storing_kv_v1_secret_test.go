@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	vault_services "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
@@ -57,7 +58,7 @@ func TestWhenStoringKvV1Secret(t *testing.T) {
 
 			data, err := suite.sut.Read(context.Background(), "missing")
 			assert.Nil(t, data)
-			assert.True(t, errors.Is(err, vault_services.ErrSecretNotFound))
+			assert.True(t, errors.Is(err, runtime_common_interfaces.ErrSecretNotFound))
 		})
 	})
 
@@ -115,7 +116,7 @@ func TestWhenStoringKvV1Secret(t *testing.T) {
 
 			data, err := suite.sut.Read(ctx, "gamma")
 			assert.Nil(t, data)
-			assert.True(t, errors.Is(err, vault_services.ErrSecretNotFound))
+			assert.True(t, errors.Is(err, runtime_common_interfaces.ErrSecretNotFound))
 		})
 	})
 }
