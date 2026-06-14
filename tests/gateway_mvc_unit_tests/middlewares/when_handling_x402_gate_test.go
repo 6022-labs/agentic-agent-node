@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -80,89 +78,6 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	suite.app = app
 
 	return suite
-}
-
-// x402GateRule builds an x402 rule with its settings serialized into Config.
-func x402GateRule(price string, payTo string, patterns []string) models.ExternalPaymentRule {
-	config, _ := json.Marshal(x402.X402Config{
-		Network:         "eip155:80002",
-		Asset:           "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-		PayTo:           payTo,
-		Eip712Name:      "USDC",
-		Eip712Version:   "2",
-		AddressPatterns: patterns,
-	})
-	return models.ExternalPaymentRule{
-		Method: "x402",
-		Price:  price,
-		Config: config,
-	}
-}
-
-func x402GatePublicRule() models.ExternalPaymentRule {
-	return x402GateRule("10000", x402TestPayToHex, []string{".*"})
-}
-
-func x402GateFreeRule(patterns ...string) models.ExternalPaymentRule {
-	return x402GateRule("0", x402TestAgentWalletHex, patterns)
-}
-
-func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPaymentRule {
-	return rules
-}
-
-// x402GateFacilitators is the network → facilitator mapping for a node whose
-// chain can settle. The "no facilitator" scenarios return an empty map.
-func x402GateFacilitators() map[string]models.ExternalPaymentFacilitator {
-	return map[string]models.ExternalPaymentFacilitator{
-		"eip155:80002": {Network: "eip155:80002", BaseUrl: "https://x402-amoy.polygon.technology", MaxTimeoutSeconds: 120},
-	}
-}
-
-// x402GatePaymentHeader builds a PAYMENT-SIGNATURE header aimed at `to` with
-// the given value on the given network.
-func x402GatePaymentHeader(t *testing.T, network string, to string, value string) string {
-	t.Helper()
-
-	header, err := x402.EncodeBase64Json(&x402.PaymentPayload{
-		X402Version: x402.Version,
-		Scheme:      x402.SchemeExact,
-		Network:     network,
-		Payload: x402.ExactEvmPayload{
-			Signature: "0xsignature",
-			Authorization: x402.ExactEvmAuthorization{
-				From:        x402TestPayerHex,
-				To:          to,
-				Value:       value,
-				ValidAfter:  "0",
-				ValidBefore: "9999999999",
-				Nonce:       "0x0000000000000000000000000000000000000000000000000000000000000001",
-			},
-		},
-	})
-	assert.NoError(t, err)
-	return header
-}
-
-func x402GateRequest(paymentHeader string) *http.Request {
-	req := httptest.NewRequest(http.MethodPost, "/responses", nil)
-	req.Header.Set("Content-Type", "application/json")
-	if len(paymentHeader) != 0 {
-		req.Header.Set(middlewares.PaymentSignatureHeader, paymentHeader)
-	}
-	return req
-}
-
-func decodePaymentRequiredHeader(t *testing.T, resp *http.Response) *x402.PaymentRequired {
-	t.Helper()
-
-	raw := resp.Header.Get(middlewares.PaymentRequiredHeader)
-	assert.NotEmpty(t, raw)
-	decoded, err := base64.StdEncoding.DecodeString(raw)
-	assert.NoError(t, err)
-	var body x402.PaymentRequired
-	assert.NoError(t, json.Unmarshal(decoded, &body))
-	return &body
 }
 
 func TestWhenHandlingX402Gate(t *testing.T) {
@@ -251,11 +166,48 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.Equal(t, "10000", required.Accepts[0].Amount)
 			// The settlement timeout is advertised from the facilitator config.
 			assert.Equal(t, 120, required.Accepts[0].MaxTimeoutSeconds)
+			// The signing method is advertised so the client knows how to sign;
+			// eip3009 also carries the token's EIP-712 domain.
+			assert.Equal(t, x402.AssetTransferMethodEip3009, required.Accepts[0].Extra["assetTransferMethod"])
+			assert.Equal(t, "USDC", required.Accepts[0].Extra["name"])
+			assert.Equal(t, "2", required.Accepts[0].Extra["version"])
 
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			var body x402.PaymentRequired
 			assert.NoError(t, json.Unmarshal(bodyBytes, &body))
 			assert.Len(t, body.Accepts, 1)
+		})
+	})
+
+	t.Run("Given a public permit2 rule and no payment header", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePermit2Rule()), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+		}
+
+		t.Run("Should advertise permit2 with no EIP-712 domain", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.app.Test(x402GateRequest(""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+
+			required := decodePaymentRequiredHeader(t, resp)
+			assert.Len(t, required.Accepts, 1)
+			extra := required.Accepts[0].Extra
+			assert.Equal(t, x402.AssetTransferMethodPermit2, extra["assetTransferMethod"])
+			// Permit2 signs over its own fixed domain — no token name/version.
+			assert.NotContains(t, extra, "name")
+			assert.NotContains(t, extra, "version")
 		})
 	})
 

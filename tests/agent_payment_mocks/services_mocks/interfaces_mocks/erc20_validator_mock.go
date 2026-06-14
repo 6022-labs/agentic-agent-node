@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	enums "github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,11 +42,14 @@ func (m *MockErc20ValidatorInterface) EXPECT() *MockErc20ValidatorInterfaceMockR
 }
 
 // ValidateErc20 mocks base method.
-func (m *MockErc20ValidatorInterface) ValidateErc20(ctx context.Context, chainId int64, asset string) error {
+func (m *MockErc20ValidatorInterface) ValidateErc20(ctx context.Context, chainId int64, asset string) (enums.AssetTransferMethod, string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateErc20", ctx, chainId, asset)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(enums.AssetTransferMethod)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(string)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // ValidateErc20 indicates an expected call of ValidateErc20.

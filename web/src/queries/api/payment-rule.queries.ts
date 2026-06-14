@@ -19,8 +19,6 @@ const toWire = (rule: PaymentRule): PaymentRuleWire => ({
     network: rule.network,
     asset: rule.asset,
     payTo: rule.payTo,
-    eip712Name: rule.eip712Name,
-    eip712Version: rule.eip712Version,
     addressPatterns: rule.addressPatterns,
   },
 })
@@ -34,6 +32,7 @@ const fromWire = (wire: PaymentRuleWire): PaymentRule => ({
   network: wire.config.network,
   asset: wire.config.asset,
   payTo: wire.config.payTo,
+  assetTransferMethod: wire.config.assetTransferMethod,
   eip712Name: wire.config.eip712Name,
   eip712Version: wire.config.eip712Version,
   addressPatterns: wire.config.addressPatterns ?? [],

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -21,30 +22,34 @@ import (
 
 const (
 	caip2Eip155Prefix = "eip155:"
-	// DefaultEip712Name/Version are the USDC EIP-712 domain defaults applied
-	// when a rule's config omits them.
+	// DefaultEip712Name/Version are the placeholder domain for the seeded free
+	// rule, which never settles — operator rules derive the real domain
+	// on-chain.
 	DefaultEip712Name    = "USDC"
 	DefaultEip712Version = "2"
 )
 
 // X402PaymentMethodStrategy is the x402 payment method: it validates a rule's
-// config (CAIP-2 network, hex asset/payTo, address patterns, EIP-712 defaults,
-// a real ERC-20 asset, a facilitator for paid rules) and persists/loads it in
-// the typed payment_rule_x402_configs table. The settlement timeout is
-// network-level, so it lives in the facilitator config, not here.
+// config (must target the node's chain, hex asset/payTo, address patterns, a
+// real ERC-20 asset whose EIP-712 domain is derived on-chain, a facilitator for
+// paid rules) and persists/loads it in the typed payment_rule_x402_configs
+// table. The settlement timeout is network-level (facilitator config), not here.
 type X402PaymentMethodStrategy struct {
 	paymentFacilitatorsSettings     *runtime_common_settings.PaymentFacilitatorsSettings
+	blockchainSettings              *runtime_common_settings.BlockchainSettings
 	erc20Validator                  payment_interfaces.Erc20ValidatorInterface
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface
 }
 
 func NewX402PaymentMethodStrategy(
 	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
+	blockchainSettings *runtime_common_settings.BlockchainSettings,
 	erc20Validator payment_interfaces.Erc20ValidatorInterface,
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface,
 ) *X402PaymentMethodStrategy {
 	return &X402PaymentMethodStrategy{
 		paymentFacilitatorsSettings:     paymentFacilitatorsSettings,
+		blockchainSettings:              blockchainSettings,
 		erc20Validator:                  erc20Validator,
 		paymentRuleX402ConfigRepository: paymentRuleX402ConfigRepository,
 	}
@@ -63,12 +68,15 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 	config.Network = strings.TrimSpace(config.Network)
 	config.Asset = strings.TrimSpace(config.Asset)
 	config.PayTo = strings.TrimSpace(config.PayTo)
-	config.Eip712Name = strings.TrimSpace(config.Eip712Name)
-	config.Eip712Version = strings.TrimSpace(config.Eip712Version)
 
 	chainId, err := s.parseEip155ChainId(config.Network)
 	if err != nil {
 		return err
+	}
+	// Rules can only target the node's chain — it's the only one the node can
+	// RPC to validate the asset and derive its EIP-712 domain.
+	if uint64(chainId) != s.blockchainSettings.Id {
+		return errors.NewValidationError("config.network", fmt.Sprintf("must target the node's chain (eip155:%d)", s.blockchainSettings.Id))
 	}
 	if !common.IsHexAddress(config.Asset) {
 		return errors.NewValidationError("config.asset", "must be a hex address")
@@ -90,16 +98,23 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 		config.AddressPatterns[i] = trimmed
 	}
 
-	if len(config.Eip712Name) == 0 {
-		config.Eip712Name = DefaultEip712Name
-	}
-	if len(config.Eip712Version) == 0 {
-		config.Eip712Version = DefaultEip712Version
-	}
-
-	if err := s.erc20Validator.ValidateErc20(ctx, chainId, config.Asset); err != nil {
+	// The transfer method + EIP-712 domain belong to the token, so detect them
+	// on-chain rather than trust the operator — a wrong domain would silently
+	// fail settlement.
+	method, eip712Name, eip712Version, err := s.erc20Validator.ValidateErc20(ctx, chainId, config.Asset)
+	if err != nil {
 		return errors.NewValidationError("config.asset", err.Error())
 	}
+	config.AssetTransferMethod = method
+	// Only eip3009 carries the token's EIP-712 domain; permit2 leaves it nil.
+	if method == enums.AssetTransferMethodEip3009 {
+		config.Eip712Name = &eip712Name
+		config.Eip712Version = &eip712Version
+	} else {
+		config.Eip712Name = nil
+		config.Eip712Version = nil
+	}
+
 	if err := s.requireFacilitatorForPaidRule(request.Price, config.Network); err != nil {
 		return err
 	}

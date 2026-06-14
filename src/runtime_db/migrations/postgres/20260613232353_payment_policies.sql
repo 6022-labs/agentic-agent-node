@@ -30,8 +30,9 @@ CREATE TABLE "public"."payment_rule_x402_configs" (
   "network" character varying(64) NOT NULL,
   "asset" character varying(42) NOT NULL,
   "pay_to" character varying(42) NOT NULL,
-  "eip712_name" character varying(64) NOT NULL,
-  "eip712_version" character varying(16) NOT NULL,
+  "asset_transfer_method" character varying(16) NOT NULL,
+  "eip712_name" character varying(64) NULL,
+  "eip712_version" character varying(16) NULL,
   "address_patterns" text NOT NULL,
   PRIMARY KEY ("payment_rule_id"),
   CONSTRAINT "fk_payment_rule_x402_configs_payment_rule" FOREIGN KEY ("payment_rule_id") REFERENCES "public"."payment_rules" ("id") ON UPDATE NO ACTION ON DELETE CASCADE

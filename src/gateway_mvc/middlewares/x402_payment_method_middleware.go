@@ -226,10 +226,10 @@ func (m *X402PaymentMethodMiddleware) matchRules(x402Rules []x402Rule, payload *
 	if payload.Scheme != x402.SchemeExact {
 		return nil
 	}
-	if !common.IsHexAddress(payload.Payload.Authorization.To) {
+	if !common.IsHexAddress(payload.RecipientAddress()) {
 		return nil
 	}
-	to := common.HexToAddress(payload.Payload.Authorization.To)
+	to := common.HexToAddress(payload.RecipientAddress())
 
 	var candidates []x402Rule
 	for _, candidate := range x402Rules {
@@ -295,12 +295,20 @@ func (m *X402PaymentMethodMiddleware) isZeroPrice(price string) bool {
 }
 
 func (m *X402PaymentMethodMiddleware) coversPrice(payload *x402.PaymentPayload, rule *models.ExternalPaymentRule) bool {
-	value, valueOk := new(big.Int).SetString(payload.Payload.Authorization.Value, 10)
+	value, valueOk := new(big.Int).SetString(payload.Amount(), 10)
 	price, priceOk := new(big.Int).SetString(rule.Price, 10)
 	return valueOk && priceOk && value.Cmp(price) >= 0
 }
 
 func (m *X402PaymentMethodMiddleware) toPaymentRequirements(candidate *x402Rule, maxTimeoutSeconds int) *x402.PaymentRequirements {
+	// assetTransferMethod tells the client how to sign; eip3009 also needs the
+	// token's EIP-712 domain. Permit2 signs over its own fixed domain, so it
+	// carries no name/version.
+	extra := map[string]any{"assetTransferMethod": candidate.config.AssetTransferMethod}
+	if candidate.config.AssetTransferMethod != x402.AssetTransferMethodPermit2 {
+		extra["name"] = candidate.config.Eip712Name
+		extra["version"] = candidate.config.Eip712Version
+	}
 	return &x402.PaymentRequirements{
 		Scheme:            x402.SchemeExact,
 		Network:           candidate.config.Network,
@@ -308,9 +316,6 @@ func (m *X402PaymentMethodMiddleware) toPaymentRequirements(candidate *x402Rule,
 		Asset:             candidate.config.Asset,
 		PayTo:             candidate.config.PayTo,
 		MaxTimeoutSeconds: maxTimeoutSeconds,
-		Extra: map[string]any{
-			"name":    candidate.config.Eip712Name,
-			"version": candidate.config.Eip712Version,
-		},
+		Extra:             extra,
 	}
 }

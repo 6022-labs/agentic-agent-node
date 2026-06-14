@@ -11,6 +11,7 @@ export type PaymentRule = {
   asset: string
   payTo: string
   price: string
+  assetTransferMethod?: string
   eip712Name?: string
   eip712Version?: string
   // Regexes full-matched against the caller's lowercase 0x address;
@@ -29,6 +30,7 @@ export type PaymentRuleConfig = {
   network: string
   asset: string
   payTo: string
+  assetTransferMethod?: string
   eip712Name?: string
   eip712Version?: string
   addressPatterns: string[]
@@ -49,6 +51,11 @@ export type ListPaymentRulesResponseWire = {
 }
 
 export const X402_METHOD = "x402"
+
+// How an x402 "exact" payment moves the token (mirrors the gateway enum); the
+// asset's method is detected on-chain at save, never operator input.
+export const ASSET_TRANSFER_METHOD_EIP3009 = "eip3009"
+export const ASSET_TRANSFER_METHOD_PERMIT2 = "permit2"
 
 // The policy head; rules are fetched separately. agentWalletAddress is
 // exposed to pre-fill rules paying the agent itself.

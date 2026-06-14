@@ -99,13 +99,16 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 	if len(patterns) == 0 {
 		return nil, nil
 	}
+	eip712Name := services.DefaultEip712Name
+	eip712Version := services.DefaultEip712Version
 	config := &models.PaymentRuleX402Config{
-		Network:         fmt.Sprintf("eip155:%d", u.blockchainSettings.Id),
-		Asset:           u.token6022Settings.SmartContractAddress.Hex(),
-		PayTo:           agent.WalletAddress,
-		Eip712Name:      services.DefaultEip712Name,
-		Eip712Version:   services.DefaultEip712Version,
-		AddressPatterns: patterns,
+		Network:             fmt.Sprintf("eip155:%d", u.blockchainSettings.Id),
+		Asset:               u.token6022Settings.SmartContractAddress.Hex(),
+		PayTo:               agent.WalletAddress,
+		AssetTransferMethod: enums.AssetTransferMethodEip3009,
+		Eip712Name:          &eip712Name,
+		Eip712Version:       &eip712Version,
+		AddressPatterns:     patterns,
 	}
 	rawConfig, err := config.Marshal()
 	if err != nil {

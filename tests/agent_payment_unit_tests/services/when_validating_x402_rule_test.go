@@ -2,12 +2,11 @@ package services_test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
@@ -23,24 +22,24 @@ type WhenValidatingX402RuleTestingSuite struct {
 }
 
 func WhenValidatingX402RuleBeforeEach(t *testing.T) *WhenValidatingX402RuleTestingSuite {
-	mockController := gomock.NewController(t)
-
-	facilitators := &runtime_common_settings.PaymentFacilitatorsSettings{
+	return validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{
 		"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology"},
-	}
-	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
-	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
-
-	return &WhenValidatingX402RuleTestingSuite{
-		sut:                services.NewX402PaymentMethodStrategy(facilitators, mockErc20Validator, mockConfigRepository),
-		mockErc20Validator: mockErc20Validator,
-	}
+	})
 }
 
-func generateSaveRequest(config string, price string) *requests.SavePaymentRuleRequest {
-	return &requests.SavePaymentRuleRequest{
-		Price:  price,
-		Config: json.RawMessage(config),
+// validatingX402RuleSuite builds the suite with a given facilitator config (the
+// node chain is always eip155:80002) so the facilitator-gate cases can run with
+// no facilitator configured.
+func validatingX402RuleSuite(t *testing.T, facilitators *runtime_common_settings.PaymentFacilitatorsSettings) *WhenValidatingX402RuleTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
+	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
+	blockchainSettings := &runtime_common_settings.BlockchainSettings{Id: 80002}
+
+	return &WhenValidatingX402RuleTestingSuite{
+		sut:                services.NewX402PaymentMethodStrategy(facilitators, blockchainSettings, mockErc20Validator, mockConfigRepository),
+		mockErc20Validator: mockErc20Validator,
 	}
 }
 
@@ -52,13 +51,14 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 	t.Run("Given the config is valid", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should sanitize, apply defaults and re-marshal the config", func(t *testing.T) {
+		t.Run("Should sanitize and set the derived EIP-712 domain", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
+			// Distinct from the seed defaults to prove the derived domain wins.
 			suite.mockErc20Validator.EXPECT().
 				ValidateErc20(gomock.Any(), int64(80002), "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
-				Return(nil).
+				Return(enums.AssetTransferMethodEip3009, "USD Coin", "7", nil).
 				Times(1)
 
 			request := generateSaveRequest(validConfig, "10000")
@@ -69,8 +69,33 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			assert.NoError(t, config.Parse(request.Config))
 			assert.Equal(t, ".*", config.AddressPatterns[0])
 			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", config.AddressPatterns[1])
-			assert.Equal(t, services.DefaultEip712Name, config.Eip712Name)
-			assert.Equal(t, services.DefaultEip712Version, config.Eip712Version)
+			assert.Equal(t, enums.AssetTransferMethodEip3009, config.AssetTransferMethod)
+			assert.Equal(t, "USD Coin", *config.Eip712Name)
+			assert.Equal(t, "7", *config.Eip712Version)
+		})
+	})
+
+	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should set permit2 with an empty domain", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), int64(80002), "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				Return(enums.AssetTransferMethodPermit2, "", "", nil).
+				Times(1)
+
+			request := generateSaveRequest(validConfig, "10000")
+			err := suite.sut.Validate(context.Background(), request)
+
+			assert.NoError(t, err)
+			config := &models.PaymentRuleX402Config{}
+			assert.NoError(t, config.Parse(request.Config))
+			assert.Equal(t, enums.AssetTransferMethodPermit2, config.AssetTransferMethod)
+			assert.Nil(t, config.Eip712Name)
+			assert.Nil(t, config.Eip712Version)
 		})
 	})
 
@@ -108,6 +133,23 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 				assert.Equal(t, "config.network", validationErr.Field)
 			})
 		}
+	})
+
+	t.Run("Given a chain other than the node's", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on config.network", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+
+			request := generateSaveRequest(`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			err := suite.sut.Validate(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "config.network", validationErr.Field)
+		})
 	})
 
 	t.Run("Given the asset is not a hex address", func(t *testing.T) {
@@ -195,16 +237,16 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a paid rule on a network without a facilitator", func(t *testing.T) {
+	t.Run("Given a paid rule and the node chain has no facilitator", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error on config.network", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
+			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).Times(1)
 
-			request := generateSaveRequest(`{"network":"eip155:8453","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(validConfig, "10000")
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -213,16 +255,16 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a free rule on a network without a facilitator", func(t *testing.T) {
+	t.Run("Given a free rule and the node chain has no facilitator", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should be allowed (free rules never settle)", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
+			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).Times(1)
 
-			request := generateSaveRequest(`{"network":"eip155:8453","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "0")
+			request := generateSaveRequest(validConfig, "0")
 			err := suite.sut.Validate(context.Background(), request)
 
 			assert.NoError(t, err)
@@ -236,7 +278,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(assert.AnError).Times(1)
+			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethod(""), "", "", assert.AnError).Times(1)
 
 			request := generateSaveRequest(validConfig, "10000")
 			err := suite.sut.Validate(context.Background(), request)

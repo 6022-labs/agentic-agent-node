@@ -107,10 +107,6 @@ export default function PaymentPolicySection() {
     asset: values.asset,
     payTo: values.payTo,
     price: values.price,
-    // Carried verbatim from the edited rule; the runtime defaults them on
-    // create when absent.
-    eip712Name: existing?.eip712Name,
-    eip712Version: existing?.eip712Version,
     addressPatterns: values.allowEveryone
       ? [EVERYONE_PATTERN]
       : [

@@ -28,8 +28,9 @@ CREATE TABLE `payment_rule_x402_configs` (
   `network` varchar(64) NOT NULL,
   `asset` varchar(42) NOT NULL,
   `pay_to` varchar(42) NOT NULL,
-  `eip712_name` varchar(64) NOT NULL,
-  `eip712_version` varchar(16) NOT NULL,
+  `asset_transfer_method` varchar(16) NOT NULL,
+  `eip712_name` varchar(64) NULL,
+  `eip712_version` varchar(16) NULL,
   `address_patterns` longtext NOT NULL,
   PRIMARY KEY (`payment_rule_id`),
   CONSTRAINT `fk_payment_rule_x402_configs_payment_rule` FOREIGN KEY (`payment_rule_id`) REFERENCES `payment_rules` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE

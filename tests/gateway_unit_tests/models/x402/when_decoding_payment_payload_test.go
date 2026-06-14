@@ -23,7 +23,7 @@ func TestWhenDecodingPaymentPayload(t *testing.T) {
 				Network:     "eip155:80002",
 				Payload: x402.ExactEvmPayload{
 					Signature: "0xsignature",
-					Authorization: x402.ExactEvmAuthorization{
+					Authorization: &x402.Eip3009Authorization{
 						From:  "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
 						To:    "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 						Value: "10000",

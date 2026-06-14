@@ -1,18 +1,14 @@
 package services_test
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/services"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,88 +18,6 @@ type WhenRecoveringX402PayerTestingSuite struct {
 
 func WhenRecoveringX402PayerBeforeEach() *WhenRecoveringX402PayerTestingSuite {
 	return &WhenRecoveringX402PayerTestingSuite{sut: services.NewX402PaymentVerifier()}
-}
-
-// testPrice is the authorization value; price lives on the rule, not the config.
-const testPrice = "10000"
-
-func x402TestAcceptOption() *x402.X402Config {
-	return &x402.X402Config{
-		Network:       "eip155:80002",
-		Asset:         "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-		PayTo:         "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		Eip712Name:    "USDC",
-		Eip712Version: "2",
-	}
-}
-
-// signX402Payment signs the EIP-3009 typed data exactly like an x402 client.
-func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.ExactEvmAuthorization, accept *x402.X402Config) *x402.PaymentPayload {
-	t.Helper()
-
-	chainId, err := x402.ParseEip155ChainId(accept.Network)
-	assert.NoError(t, err)
-
-	typedData := apitypes.TypedData{
-		Types: apitypes.Types{
-			"EIP712Domain": {
-				{Name: "name", Type: "string"},
-				{Name: "version", Type: "string"},
-				{Name: "chainId", Type: "uint256"},
-				{Name: "verifyingContract", Type: "address"},
-			},
-			"TransferWithAuthorization": {
-				{Name: "from", Type: "address"},
-				{Name: "to", Type: "address"},
-				{Name: "value", Type: "uint256"},
-				{Name: "validAfter", Type: "uint256"},
-				{Name: "validBefore", Type: "uint256"},
-				{Name: "nonce", Type: "bytes32"},
-			},
-		},
-		PrimaryType: "TransferWithAuthorization",
-		Domain: apitypes.TypedDataDomain{
-			Name:              accept.Eip712Name,
-			Version:           accept.Eip712Version,
-			ChainId:           math.NewHexOrDecimal256(chainId),
-			VerifyingContract: accept.Asset,
-		},
-		Message: apitypes.TypedDataMessage{
-			"from":        auth.From,
-			"to":          auth.To,
-			"value":       auth.Value,
-			"validAfter":  auth.ValidAfter,
-			"validBefore": auth.ValidBefore,
-			"nonce":       auth.Nonce,
-		},
-	}
-	digest, _, err := apitypes.TypedDataAndHash(typedData)
-	assert.NoError(t, err)
-
-	signature, err := crypto.Sign(digest, key)
-	assert.NoError(t, err)
-
-	return &x402.PaymentPayload{
-		X402Version: x402.Version,
-		Scheme:      x402.SchemeExact,
-		Network:     accept.Network,
-		Payload: x402.ExactEvmPayload{
-			Signature:     "0x" + hex.EncodeToString(signature),
-			Authorization: auth,
-		},
-	}
-}
-
-func x402TestAuthorization(from string, accept *x402.X402Config) x402.ExactEvmAuthorization {
-	now := time.Now().Unix()
-	return x402.ExactEvmAuthorization{
-		From:        from,
-		To:          accept.PayTo,
-		Value:       testPrice,
-		ValidAfter:  fmt.Sprintf("%d", now-60),
-		ValidBefore: fmt.Sprintf("%d", now+300),
-		Nonce:       "0x" + hex.EncodeToString(crypto.Keccak256([]byte("test-nonce"))),
-	}
 }
 
 func TestWhenRecoveringX402Payer(t *testing.T) {
@@ -278,6 +192,25 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 			_, err := suite.sut.RecoverPayer(payload, accept)
 
 			assert.Error(t, err)
+		})
+	})
+
+	t.Run("Given an unsupported asset transfer method", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject the payment without defaulting to a method", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringX402PayerBeforeEach()
+			key, _ := crypto.GenerateKey()
+			signer := crypto.PubkeyToAddress(key.PublicKey)
+			accept := x402TestAcceptOption()
+			payload := signX402Payment(t, key, x402TestAuthorization(signer.Hex(), accept), accept)
+			accept.AssetTransferMethod = "unknown"
+
+			_, err := suite.sut.RecoverPayer(payload, accept)
+
+			assert.ErrorContains(t, err, "unsupported asset transfer method")
 		})
 	})
 }

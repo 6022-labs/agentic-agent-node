@@ -5,12 +5,14 @@ package x402
 const (
 	Version     = 2
 	SchemeExact = "exact"
+
+	// Mirror the runtime's enums.AssetTransferMethod (gateway can't import it).
+	AssetTransferMethodEip3009 = "eip3009"
+	AssetTransferMethodPermit2 = "permit2"
 )
 
-// PaymentRequirements is one way the resource can be paid for. Amount is in
-// the asset's atomic units; Network is a CAIP-2 identifier. Extra carries the
-// asset's EIP-712 domain ({"name", "version"}) so clients can sign EIP-3009
-// transfers.
+// PaymentRequirements is one accepted way to pay. Extra carries the asset's
+// EIP-712 domain ({name, version}) for eip3009 signing; omitted for permit2.
 type PaymentRequirements struct {
 	Scheme            string         `json:"scheme"`
 	Network           string         `json:"network"`
@@ -27,8 +29,7 @@ type ResourceInfo struct {
 	MimeType    string `json:"mimeType,omitempty"`
 }
 
-// PaymentRequired is the 402 response body, also carried base64-encoded in
-// the PAYMENT-REQUIRED header.
+// PaymentRequired is the 402 body, also base64-encoded in the PAYMENT-REQUIRED header.
 type PaymentRequired struct {
 	X402Version int                   `json:"x402Version"`
 	Resource    ResourceInfo          `json:"resource"`
@@ -36,29 +37,43 @@ type PaymentRequired struct {
 	Error       string                `json:"error,omitempty"`
 }
 
-// ExactEvmAuthorization mirrors EIP-3009 TransferWithAuthorization fields.
-// Value/ValidAfter/ValidBefore are decimal strings; Nonce is 0x-hex 32 bytes.
-type ExactEvmAuthorization struct {
-	From        string `json:"from"`
-	To          string `json:"to"`
-	Value       string `json:"value"`
-	ValidAfter  string `json:"validAfter"`
-	ValidBefore string `json:"validBefore"`
-	Nonce       string `json:"nonce"`
-}
-
+// ExactEvmPayload carries exactly one signed authorization, per the asset's
+// transfer method: eip3009 fills Authorization, permit2 fills
+// Permit2Authorization. The unused one stays nil and is omitted from the wire.
 type ExactEvmPayload struct {
-	Signature     string                `json:"signature"`
-	Authorization ExactEvmAuthorization `json:"authorization"`
+	Signature            string                `json:"signature"`
+	Authorization        *Eip3009Authorization `json:"authorization,omitempty"`
+	Permit2Authorization *Permit2Authorization `json:"permit2Authorization,omitempty"`
 }
 
-// PaymentPayload is the decoded PAYMENT-SIGNATURE header: the client's
-// scheme/network selection plus the signed authorization.
+// PaymentPayload is the decoded PAYMENT-SIGNATURE header.
 type PaymentPayload struct {
 	X402Version int             `json:"x402Version"`
 	Scheme      string          `json:"scheme"`
 	Network     string          `json:"network"`
 	Payload     ExactEvmPayload `json:"payload"`
+}
+
+// RecipientAddress is the payee, method-neutral: EIP-3009 `to` or Permit2 witness `to`.
+func (p *PaymentPayload) RecipientAddress() string {
+	if p.Payload.Permit2Authorization != nil {
+		return p.Payload.Permit2Authorization.Witness.To
+	}
+	if p.Payload.Authorization != nil {
+		return p.Payload.Authorization.To
+	}
+	return ""
+}
+
+// Amount is the atomic-unit amount, method-neutral: EIP-3009 `value` or Permit2 `permitted.amount`.
+func (p *PaymentPayload) Amount() string {
+	if p.Payload.Permit2Authorization != nil {
+		return p.Payload.Permit2Authorization.Permitted.Amount
+	}
+	if p.Payload.Authorization != nil {
+		return p.Payload.Authorization.Value
+	}
+	return ""
 }
 
 // VerifyResponse is the facilitator's POST /verify result.
@@ -68,8 +83,8 @@ type VerifyResponse struct {
 	Payer         string `json:"payer,omitempty"`
 }
 
-// SettleResponse is the facilitator's POST /settle result, returned to the
-// client base64-encoded in the PAYMENT-RESPONSE header.
+// SettleResponse is the facilitator's POST /settle result, base64-encoded back
+// to the client in the PAYMENT-RESPONSE header.
 type SettleResponse struct {
 	Success     bool   `json:"success"`
 	ErrorReason string `json:"errorReason,omitempty"`

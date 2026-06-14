@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
@@ -94,6 +95,32 @@ func TestWhenUpsertingPaymentRuleX402Config(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, config.Network, stored.Network)
 					assert.Equal(t, []string{".*"}, stored.AddressPatterns)
+					// eip3009 keeps the token's EIP-712 domain.
+					assert.Equal(t, config.Eip712Name, stored.Eip712Name)
+					assert.Equal(t, config.Eip712Version, stored.Eip712Version)
+				})
+			})
+
+			t.Run("Given a permit2 config with no EIP-712 domain", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should round-trip the domain as NULL", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentRuleX402ConfigAfterEach(suite)
+
+					config := model_builders.NewPaymentRuleX402ConfigBuilder().
+						WithPaymentRuleId(suite.rule.Id).
+						WithAssetTransferMethod(enums.AssetTransferMethodPermit2).
+						Build()
+					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
+
+					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+
+					assert.NoError(t, err)
+					assert.Equal(t, enums.AssetTransferMethodPermit2, stored.AssetTransferMethod)
+					assert.Nil(t, stored.Eip712Name)
+					assert.Nil(t, stored.Eip712Version)
 				})
 			})
 

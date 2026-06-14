@@ -3,23 +3,27 @@ package models
 import (
 	"encoding/json"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/google/uuid"
 )
 
 // PaymentRuleX402Config is the x402 method's typed settings for one rule — both
 // the DB row (gorm tags) and the wire shape of the config blob (json tags);
-// PaymentRuleId/PaymentRule are persistence-only (json:"-"). The settlement
-// timeout is network-level (facilitator config), not here.
+// PaymentRuleId/PaymentRule are persistence-only (json:"-"). AssetTransferMethod
+// + the EIP-712 domain are detected from the asset on-chain at save.
+// Eip712Name/Version are nil for permit2, which signs over Permit2's own fixed
+// domain rather than the token's.
 type PaymentRuleX402Config struct {
-	PaymentRuleId   uuid.UUID   `gorm:"primaryKey;size:36" json:"-"`
-	PaymentRule     PaymentRule `gorm:"foreignKey:PaymentRuleId;references:Id;constraint:OnDelete:CASCADE" json:"-"`
-	Network         string      `gorm:"not null;size:64" json:"network"`
-	Asset           string      `gorm:"not null;size:42" json:"asset"`
-	PayTo           string      `gorm:"not null;size:42" json:"payTo"`
-	Eip712Name      string      `gorm:"not null;size:64" json:"eip712Name,omitempty"`
-	Eip712Version   string      `gorm:"not null;size:16" json:"eip712Version,omitempty"`
-	AddressPatterns []string    `gorm:"serializer:json;not null" json:"addressPatterns"`
+	PaymentRuleId       uuid.UUID                 `gorm:"primaryKey;size:36" json:"-"`
+	PaymentRule         PaymentRule               `gorm:"foreignKey:PaymentRuleId;references:Id;constraint:OnDelete:CASCADE" json:"-"`
+	Network             string                    `gorm:"not null;size:64" json:"network"`
+	Asset               string                    `gorm:"not null;size:42" json:"asset"`
+	PayTo               string                    `gorm:"not null;size:42" json:"payTo"`
+	AssetTransferMethod enums.AssetTransferMethod `gorm:"not null;size:16" json:"assetTransferMethod"`
+	Eip712Name          *string                   `gorm:"size:64" json:"eip712Name,omitempty"`
+	Eip712Version       *string                   `gorm:"size:16" json:"eip712Version,omitempty"`
+	AddressPatterns     []string                  `gorm:"serializer:json;not null" json:"addressPatterns"`
 }
 
 func (PaymentRuleX402Config) TableName() string {
