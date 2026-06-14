@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -81,13 +82,12 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		persisted := []models.ConversationMessage{
-			{
-				Role:           "user",
-				Content:        "hi",
-				ConversationId: conversationId,
-				Hash:           "computed-by-service",
-				Timestamp:      now,
-			},
+			model_builders.NewConversationMessageBuilder().
+				WithRole("user").
+				WithContent("hi").
+				WithConversationId(conversationId).
+				WithTimestamp(now).
+				Build(),
 		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {

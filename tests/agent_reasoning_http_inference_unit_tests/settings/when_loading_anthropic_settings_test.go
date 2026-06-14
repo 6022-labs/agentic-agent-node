@@ -11,15 +11,23 @@ import (
 )
 
 func TestWhenLoadingAnthropicSettings(t *testing.T) {
-	t.Run("Loads settings", func(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given a base url configuration", func(t *testing.T) {
+		t.Parallel()
+
 		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]interface{}{
+		_ = k.Load(confmap.Provider(map[string]any{
 			"anthropic.base_url": "https://anthropic.example.com",
 		}, "."), nil)
 
-		result := settings.NewAnthropicSettings(zap.NewNop(), k)
+		t.Run("Should load the base url as provided", func(t *testing.T) {
+			t.Parallel()
 
-		assert.NotNil(t, result)
-		assert.Equal(t, "https://anthropic.example.com", result.BaseUrl)
+			result := settings.NewAnthropicSettings(zap.NewNop(), k)
+
+			assert.NotNil(t, result)
+			assert.Equal(t, "https://anthropic.example.com", result.BaseUrl)
+		})
 	})
 }

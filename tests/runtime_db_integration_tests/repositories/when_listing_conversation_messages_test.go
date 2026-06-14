@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -86,9 +87,9 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 					now := time.Now().UTC().Truncate(time.Microsecond)
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
-						{ConversationId: "a", Role: "user", Content: "a-second", Timestamp: now.Add(time.Second)},
-						{ConversationId: "a", Role: "user", Content: "a-first", Timestamp: now},
-						{ConversationId: "b", Role: "user", Content: "b-only", Timestamp: now},
+						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-second").WithTimestamp(now.Add(time.Second)).Build(),
+						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-first").WithTimestamp(now).Build(),
+						model_builders.NewConversationMessageBuilder().WithConversationId("b").WithContent("b-only").WithTimestamp(now).Build(),
 					})
 
 					assert.NoError(t, err)

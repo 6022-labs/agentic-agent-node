@@ -119,8 +119,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given some inputs match existing hashes", func(t *testing.T) {
 		t.Parallel()
 
-		duplicateInput := model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build()
-		duplicateInput.ConversationId = conversationId
+		duplicateInput := model_builders.NewConversationMessageBuilder().WithConversationId(conversationId).WithRole("user").WithContent("dup").WithTimestamp(now).Build()
 		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {

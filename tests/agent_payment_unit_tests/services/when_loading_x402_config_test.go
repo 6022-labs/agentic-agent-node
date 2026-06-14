@@ -40,14 +40,19 @@ func TestWhenLoadingX402Config(t *testing.T) {
 	t.Run("Given the rule has a config", func(t *testing.T) {
 		t.Parallel()
 
+		row := model_builders.NewPaymentRuleX402ConfigBuilder().
+			WithAddressPatterns([]string{".*"}).
+			Build()
+
+		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), row.PaymentRuleId).Return(row, nil).Times(1)
+		}
+
 		t.Run("Should return it as the wire blob", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenLoadingX402ConfigBeforeEach(t)
-			row := model_builders.NewPaymentRuleX402ConfigBuilder().
-				WithAddressPatterns([]string{".*"}).
-				Build()
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), row.PaymentRuleId).Return(row, nil).Times(1)
+			initSuite(suite)
 
 			raw, err := suite.sut.LoadConfig(context.Background(), row.PaymentRuleId)
 
@@ -62,11 +67,15 @@ func TestWhenLoadingX402Config(t *testing.T) {
 	t.Run("Given the rule has no config", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+		}
+
 		t.Run("Should return nil", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenLoadingX402ConfigBeforeEach(t)
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+			initSuite(suite)
 
 			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
 
@@ -78,11 +87,15 @@ func TestWhenLoadingX402Config(t *testing.T) {
 	t.Run("Given the repository fails", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+		}
+
 		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenLoadingX402ConfigBeforeEach(t)
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+			initSuite(suite)
 
 			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
 

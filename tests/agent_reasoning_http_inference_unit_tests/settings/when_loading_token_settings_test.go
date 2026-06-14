@@ -11,15 +11,23 @@ import (
 )
 
 func TestWhenLoadingTokenSettings(t *testing.T) {
-	t.Run("Loads settings", func(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given a max tokens per request configuration", func(t *testing.T) {
+		t.Parallel()
+
 		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]interface{}{
+		_ = k.Load(confmap.Provider(map[string]any{
 			"token.max_tokens_per_request": uint(1234),
 		}, "."), nil)
 
-		result := settings.NewTokenSettings(zap.NewNop(), k)
+		t.Run("Should load the max tokens per request as provided", func(t *testing.T) {
+			t.Parallel()
 
-		assert.NotNil(t, result)
-		assert.Equal(t, uint(1234), result.MaxTokensPerRequest)
+			result := settings.NewTokenSettings(zap.NewNop(), k)
+
+			assert.NotNil(t, result)
+			assert.Equal(t, uint(1234), result.MaxTokensPerRequest)
+		})
 	})
 }

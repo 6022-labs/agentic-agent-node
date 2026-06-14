@@ -11,15 +11,23 @@ import (
 )
 
 func TestWhenLoadingDeepSeekSettings(t *testing.T) {
-	t.Run("Loads settings", func(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given a base url configuration", func(t *testing.T) {
+		t.Parallel()
+
 		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]interface{}{
+		_ = k.Load(confmap.Provider(map[string]any{
 			"deepseek.base_url": "https://deepseek.example.com",
 		}, "."), nil)
 
-		result := settings.NewDeepSeekSettings(zap.NewNop(), k)
+		t.Run("Should load the base url as provided", func(t *testing.T) {
+			t.Parallel()
 
-		assert.NotNil(t, result)
-		assert.Equal(t, "https://deepseek.example.com", result.BaseUrl)
+			result := settings.NewDeepSeekSettings(zap.NewNop(), k)
+
+			assert.NotNil(t, result)
+			assert.Equal(t, "https://deepseek.example.com", result.BaseUrl)
+		})
 	})
 }

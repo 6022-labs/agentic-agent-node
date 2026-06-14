@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -46,13 +47,12 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		stored := []models.ConversationMessage{
-			{
-				Role:           "user",
-				Content:        "hi :fire:",
-				ConversationId: conversationId,
-				Hash:           "ignored-by-dto",
-				Timestamp:      now,
-			},
+			model_builders.NewConversationMessageBuilder().
+				WithRole("user").
+				WithContent("hi :fire:").
+				WithConversationId(conversationId).
+				WithTimestamp(now).
+				Build(),
 		}
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {

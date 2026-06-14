@@ -8,9 +8,17 @@ import (
 )
 
 func TestWhenLoadingOllamaSettings(t *testing.T) {
-	t.Run("Loads settings", func(t *testing.T) {
-		result := settings.NewOllamaSettings()
+	t.Parallel()
 
-		assert.NotNil(t, result)
+	t.Run("Given no configuration", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should build the settings", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewOllamaSettings()
+
+			assert.NotNil(t, result)
+		})
 	})
 }

@@ -111,14 +111,18 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 	t.Run("Given the strategy rejects the config", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error before any lookup", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().
 				Validate(gomock.Any(), gomock.Any()).
 				Return(apperrors.NewValidationError("config.network", "unsupported")).
 				Times(1)
+		}
+
+		t.Run("Should return a validation error before any lookup", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
 
 			updated, err := suite.sut.Execute(context.Background(), uuid.New(), generateSavePaymentRuleRequest())
 

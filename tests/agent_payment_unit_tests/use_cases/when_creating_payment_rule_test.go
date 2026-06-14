@@ -196,14 +196,18 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 	t.Run("Given the strategy rejects the config", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return the validation error before touching the policy", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingPaymentRuleBeforeEach(t)
+		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().
 				Validate(gomock.Any(), gomock.Any()).
 				Return(apperrors.NewValidationError("config.network", "unsupported")).
 				Times(1)
+		}
+
+		t.Run("Should return the validation error before touching the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
 
 			rule, err := suite.sut.Execute(context.Background(), generateSavePaymentRuleRequest())
 

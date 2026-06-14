@@ -8,9 +8,17 @@ import (
 )
 
 func TestWhenLoadingAmazonBedrockSettings(t *testing.T) {
-	t.Run("Loads settings", func(t *testing.T) {
-		result := settings.NewAmazonBedrockSettings()
+	t.Parallel()
 
-		assert.NotNil(t, result)
+	t.Run("Given no configuration", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should build the settings", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewAmazonBedrockSettings()
+
+			assert.NotNil(t, result)
+		})
 	})
 }

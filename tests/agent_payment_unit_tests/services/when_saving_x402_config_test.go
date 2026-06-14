@@ -40,11 +40,9 @@ func TestWhenSavingX402Config(t *testing.T) {
 	t.Run("Given a valid config blob", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should upsert the typed config keyed by the rule id", func(t *testing.T) {
-			t.Parallel()
+		ruleId := uuid.New()
 
-			suite := WhenSavingX402ConfigBeforeEach(t)
-			ruleId := uuid.New()
+		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
 			suite.mockConfigRepository.EXPECT().
 				Upsert(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, config *models.PaymentRuleX402Config) error {
@@ -54,6 +52,13 @@ func TestWhenSavingX402Config(t *testing.T) {
 					return nil
 				}).
 				Times(1)
+		}
+
+		t.Run("Should upsert the typed config keyed by the rule id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingX402ConfigBeforeEach(t)
+			initSuite(suite)
 
 			err := suite.sut.SaveConfig(context.Background(), ruleId, json.RawMessage(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`))
 
@@ -78,11 +83,15 @@ func TestWhenSavingX402Config(t *testing.T) {
 	t.Run("Given the repository fails", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(assert.AnError).Times(1)
+		}
+
 		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSavingX402ConfigBeforeEach(t)
-			suite.mockConfigRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(assert.AnError).Times(1)
+			initSuite(suite)
 
 			err := suite.sut.SaveConfig(context.Background(), uuid.New(), json.RawMessage(`{"network":"eip155:80002","addressPatterns":[".*"]}`))
 
