@@ -2,9 +2,15 @@ package helpers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
+
+// JsonContentType is the content type sent on every bodied runtime request.
+const JsonContentType = "application/json"
 
 // RuntimeStatusError carries a non-2xx runtime response so callers can preserve
 // the semantic status (404/409/400). Error() keeps the legacy string form.
@@ -46,4 +52,21 @@ func DecodeRuntimeResponse(httpResponse *http.Response, body []byte, out any, no
 		return nil
 	}
 	return json.Unmarshal(body, out)
+}
+
+// MapRuntimeError maps the runtime's HTTP-status error to a domain error,
+// preserving 400/404/409 and collapsing the rest to 502.
+func MapRuntimeError(err error) error {
+	var statusErr *RuntimeStatusError
+	if errors.As(err, &statusErr) {
+		switch statusErr.StatusCode {
+		case http.StatusBadRequest:
+			return apperrors.NewValidationError(statusErr.Field, statusErr.Message)
+		case http.StatusNotFound:
+			return apperrors.NewNotFoundError(statusErr.Code, statusErr.Message)
+		case http.StatusConflict:
+			return apperrors.NewConflictError(statusErr.Code, statusErr.Message)
+		}
+	}
+	return apperrors.NewUnavailableError("runtime_unavailable", err.Error())
 }

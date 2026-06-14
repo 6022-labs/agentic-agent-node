@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_host/settings"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

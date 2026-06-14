@@ -2,38 +2,66 @@ package configurations
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares"
-	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/middlewares/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core"
+	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/identity"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/knowledge"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment"
+	payment_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
+	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning"
 	"go.uber.org/dig"
 )
 
+// AddGatewayMvcConfiguration wires the gateway controllers and middlewares by
+// delegating to each per-domain sub-configuration.
 func AddGatewayMvcConfiguration(container *dig.Container) {
-	if err := container.Provide(middlewares.NewJwtAuthMiddleware); err != nil {
+	addCoreConfiguration(container)
+	addIdentityConfiguration(container)
+	addKnowledgeConfiguration(container)
+	addPaymentConfiguration(container)
+	addReasoningConfiguration(container)
+}
+
+func addCoreConfiguration(container *dig.Container) {
+	if err := container.Provide(core_middlewares.NewJwtAuthMiddleware); err != nil {
 		panic(err)
 	}
-	if err := container.Provide(middlewares.NewPaymentGateMiddleware); err != nil {
+
+	provideController(container, core.NewHealthController)
+	provideController(container, core.NewAuthController)
+	provideController(container, core.NewConfigController)
+}
+
+func addIdentityConfiguration(container *dig.Container) {
+	provideController(container, identity.NewAgentRegistrationController)
+	provideController(container, identity.NewAgentCollectionsController)
+}
+
+func addKnowledgeConfiguration(container *dig.Container) {
+	provideController(container, knowledge.NewConversationsController)
+}
+
+func addPaymentConfiguration(container *dig.Container) {
+	if err := container.Provide(payment_middlewares.NewPaymentGateMiddleware); err != nil {
 		panic(err)
 	}
 	if err := container.Provide(
-		middlewares.NewX402PaymentMethodMiddleware,
+		payment_middlewares.NewX402PaymentMethodMiddleware,
 		dig.Group("payment_methods"),
 		dig.As(new(middleware_interfaces.PaymentMethodInterface)),
 	); err != nil {
 		panic(err)
 	}
 
-	provideController(container, gateway_mvc.NewHealthController)
-	provideController(container, gateway_mvc.NewConfigController)
-	provideController(container, gateway_mvc.NewAuthController)
-	provideController(container, gateway_mvc.NewResponseController)
-	provideController(container, gateway_mvc.NewLlmConfigController)
-	provideController(container, gateway_mvc.NewMcpConfigController)
-	provideController(container, gateway_mvc.NewPaymentPolicyController)
-	provideController(container, gateway_mvc.NewPaymentRuleController)
-	provideController(container, gateway_mvc.NewAgentRegistrationController)
-	provideController(container, gateway_mvc.NewAgentCollectionsController)
-	provideController(container, gateway_mvc.NewConversationsController)
+	provideController(container, payment.NewPaymentPolicyController)
+	provideController(container, payment.NewPaymentRuleController)
+}
+
+func addReasoningConfiguration(container *dig.Container) {
+	provideController(container, reasoning.NewResponseController)
+	provideController(container, reasoning.NewLlmConfigController)
+	provideController(container, reasoning.NewMcpConfigController)
 }
 
 func provideController(container *dig.Container, ctor any) {

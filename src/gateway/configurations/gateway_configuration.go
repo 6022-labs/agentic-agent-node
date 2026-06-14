@@ -1,80 +1,136 @@
 package configurations
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/gateway/services"
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/settings"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/use_cases"
+	core_services "github.com/6022-labs/agentic-agent-node/src/gateway/core/services"
+	core_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
+	core_settings "github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
+	core_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
+	identity_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
+	knowledge_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
+	payment_services "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services"
+	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
+	reasoning_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"go.uber.org/dig"
 )
 
+// AddGatewayConfiguration wires the gateway domain by delegating to each
+// per-domain sub-configuration (core, identity, knowledge, payment, reasoning).
 func AddGatewayConfiguration(container *dig.Container) {
-	if err := container.Provide(settings.NewJwtSettings); err != nil {
+	addCoreConfiguration(container)
+	addIdentityConfiguration(container)
+	addKnowledgeConfiguration(container)
+	addPaymentConfiguration(container)
+	addReasoningConfiguration(container)
+}
+
+func addCoreConfiguration(container *dig.Container) {
+	if err := container.Provide(core_settings.NewJwtSettings); err != nil {
 		panic(err)
 	}
 
 	if err := container.Provide(
 		newNonceStore,
-		dig.As(new(gateway_interfaces.NonceStoreInterface)),
+		dig.As(new(core_interfaces.NonceStoreInterface)),
 	); err != nil {
 		panic(err)
 	}
 
 	if err := container.Provide(
-		services.NewSignatureVerifier,
-		dig.As(new(gateway_interfaces.SignatureVerifierInterface)),
+		core_services.NewSignatureVerifier,
+		dig.As(new(core_interfaces.SignatureVerifierInterface)),
 	); err != nil {
 		panic(err)
 	}
 
 	if err := container.Provide(
-		services.NewX402PaymentVerifier,
-		dig.As(new(gateway_interfaces.X402PaymentVerifierInterface)),
+		core_services.NewJwtIssuer,
+		dig.As(new(core_interfaces.JwtIssuerInterface)),
 	); err != nil {
 		panic(err)
 	}
 
 	if err := container.Provide(
-		services.NewJwtIssuer,
-		dig.As(new(gateway_interfaces.JwtIssuerInterface)),
-	); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(
-		services.NewJwtValidator,
-		dig.As(new(gateway_interfaces.JwtValidatorInterface)),
+		core_services.NewJwtValidator,
+		dig.As(new(core_interfaces.JwtValidatorInterface)),
 	); err != nil {
 		panic(err)
 	}
 
 	useCaseProviders := []any{
-		use_cases.NewGetAuthChallenge,
-		use_cases.NewVerifyAuth,
-		use_cases.NewGetLlmConfig,
-		use_cases.NewSetLlmConfig,
-		use_cases.NewDeleteLlmConfig,
-		use_cases.NewGetPaymentPolicy,
-		use_cases.NewDeletePaymentPolicy,
-		use_cases.NewListPaymentRules,
-		use_cases.NewCreatePaymentRule,
-		use_cases.NewUpdatePaymentRule,
-		use_cases.NewDeletePaymentRule,
-		use_cases.NewListMcpConnections,
-		use_cases.NewCreateMcpConnection,
-		use_cases.NewDeleteMcpConnection,
-		use_cases.NewSaveAgentRegistration,
-		use_cases.NewGetAgentRegistration,
-		use_cases.NewGetAgentMintInfo,
-		use_cases.NewCheckAgentMint,
-		use_cases.NewGetAgentEnsInfo,
-		use_cases.NewCheckAgentEns,
-		use_cases.NewSelfRegisterAgent,
-		use_cases.NewListAgentCollections,
-		use_cases.NewGetBlockchainConfig,
-		use_cases.NewListConversations,
-		use_cases.NewListConversationMessages,
-		use_cases.NewAppendConversationMessages,
+		core_use_cases.NewGetAuthChallenge,
+		core_use_cases.NewVerifyAuth,
+		core_use_cases.NewGetBlockchainConfig,
+	}
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func addIdentityConfiguration(container *dig.Container) {
+	useCaseProviders := []any{
+		identity_use_cases.NewSaveAgentRegistration,
+		identity_use_cases.NewGetAgentRegistration,
+		identity_use_cases.NewGetAgentMintInfo,
+		identity_use_cases.NewCheckAgentMint,
+		identity_use_cases.NewGetAgentEnsInfo,
+		identity_use_cases.NewCheckAgentEns,
+		identity_use_cases.NewSelfRegisterAgent,
+		identity_use_cases.NewListAgentCollections,
+	}
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func addKnowledgeConfiguration(container *dig.Container) {
+	useCaseProviders := []any{
+		knowledge_use_cases.NewListConversations,
+		knowledge_use_cases.NewListConversationMessages,
+		knowledge_use_cases.NewAppendConversationMessages,
+	}
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func addPaymentConfiguration(container *dig.Container) {
+	if err := container.Provide(
+		payment_services.NewX402PaymentVerifier,
+		dig.As(new(payment_interfaces.X402PaymentVerifierInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	useCaseProviders := []any{
+		payment_use_cases.NewGetPaymentPolicy,
+		payment_use_cases.NewDeletePaymentPolicy,
+		payment_use_cases.NewListPaymentRules,
+		payment_use_cases.NewCreatePaymentRule,
+		payment_use_cases.NewUpdatePaymentRule,
+		payment_use_cases.NewDeletePaymentRule,
+	}
+	for _, p := range useCaseProviders {
+		if err := container.Provide(p); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func addReasoningConfiguration(container *dig.Container) {
+	useCaseProviders := []any{
+		reasoning_use_cases.NewGetLlmConfig,
+		reasoning_use_cases.NewSetLlmConfig,
+		reasoning_use_cases.NewDeleteLlmConfig,
+		reasoning_use_cases.NewListMcpConnections,
+		reasoning_use_cases.NewCreateMcpConnection,
+		reasoning_use_cases.NewDeleteMcpConnection,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {
@@ -83,13 +139,13 @@ func AddGatewayConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
-		use_cases.NewCreateResponse,
-		dig.As(new(use_cases.CreateResponseInterface)),
+		reasoning_use_cases.NewCreateResponse,
+		dig.As(new(reasoning_use_cases.CreateResponseInterface)),
 	); err != nil {
 		panic(err)
 	}
 }
 
-func newNonceStore(jwtSettings *settings.JwtSettings) *services.NonceStore {
-	return services.NewNonceStore(jwtSettings.NonceTtl)
+func newNonceStore(jwtSettings *core_settings.JwtSettings) *core_services.NonceStore {
+	return core_services.NewNonceStore(jwtSettings.NonceTtl)
 }

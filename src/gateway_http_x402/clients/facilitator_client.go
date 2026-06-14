@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/models/x402"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models/x402"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
