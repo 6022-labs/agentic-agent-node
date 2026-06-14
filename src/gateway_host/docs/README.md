@@ -15,8 +15,13 @@ Writes:
 
 ## View
 
-When the gateway is running:
+When the gateway is running directly (`go run ./src/gateway_host`):
 
 ```
 http://localhost:5000/swagger/index.html
 ```
+
+Through the container's nginx (docker compose) the UI is at
+`http://localhost:5500/api/swagger/index.html` (nginx strips `/api`). Note
+"Try it out" targets the origin root there, so use the direct gateway URL
+for interactive calls.

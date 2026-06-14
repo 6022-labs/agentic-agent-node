@@ -21,16 +21,17 @@ go test ./tests/<package>_unit_tests/...             # one package
 - **Mocks** are generated, not hand-written. Regenerate after changing any interface: `deepsearch-mockgen -S ./src -O ./tests -A -P` (CLI: https://github.com/FournyP/deepsearch-mockgen-cli).
 - **Migrations**: `src/runtime_db/migrations/generate_migrations.sh` (atlas+gorm, per-driver SQL under `postgres/`, `mysql/`, `mariadb/`).
 - **Swagger docs**: `./scripts/generate_swagger_docs_for_hosts.sh [--host gateway_host]` — regenerates `*_host/docs/{docs.go,swagger.json,swagger.yaml}` from `// @` annotations in host `main.go` and controllers.
-- **Run locally**: `docker compose up` — one container runs both hosts plus Vault, Postgres, pgAdmin.
+- **Run locally**: `docker compose up` — one container runs nginx + both hosts (console at `http://localhost:5500`, API at `http://localhost:5500/api`), plus Vault, Postgres, pgAdmin. Web dev mode: `cd web && npm run dev` (proxies `/api` to :5500).
 
 Conventions for writing tests live in `.claude/skills/go-*-test-conventions` — follow them (`when_<behavior>_test.go`, `Given.../Should...` nested `t.Run`, suite `BeforeEach`, gomock, testify, `model_builders`).
 
 ## Architecture
 
-Single Go module, **two binaries** built from one image:
+Single Go module, **two binaries** plus the web console, all in one image. nginx is the single public listener (port 5000): web console at `/`, gateway proxied behind `/api` (**prefix stripped** — gateway routes stay at root), `/.well-known/*` proxied verbatim to the gateway (reserved for the A2A agent card).
 
-- **`gateway_host`** (public) — the only externally-reachable surface. Wallet auth (challenge nonce → EIP-191 `personal_sign` → JWT), config endpoints, `/responses`. Authenticated routes proxy over the loopback to runtime_host via `gateway_http_runtime`.
+- **`gateway_host`** (loopback, behind nginx) — wallet auth (challenge nonce → EIP-191 `personal_sign` → JWT), config endpoints, `/responses`. Authenticated routes proxy over the loopback to runtime_host via `gateway_http_runtime`.
 - **`runtime_host`** (internal, bound to 127.0.0.1) — everything under `/internal`: inference loop, knowledge persistence, MCP/LLM config, identity. Owns wallet bootstrap (runs synchronously at startup before serving).
+- **`web/`** (React + Vite) — built in the image's `web-builder` stage, served by nginx from `/web`; talks to the gateway via the relative `/api` base URL.
 
 One agent = one container. The runtime DB therefore holds **zero or one** LLM connection row.
 

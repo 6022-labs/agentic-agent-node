@@ -20,13 +20,22 @@ wallets, and axios for the gateway API.
     `GET .../ens-info` → `AgentEnsRegistry.initAgentTexts` → `POST .../ens/check`.
 - **Playground** — chat through `POST /responses`.
 
-## Setup
+## Serving
+
+In the agent-node container the console is built at image-build time and served
+by nginx at `/`; nginx proxies `/api/*` to the gateway (stripping the prefix).
+The default `VITE_GATEWAY_API_BASE_URL=/api` is therefore relative — no host is
+baked into the bundle.
+
+## Setup (dev)
 
 ```bash
 npm install
-cp .env.example .env   # then edit values
-npm run dev
+npm run dev   # no .env needed: /api is proxied to the compose container on :5500
 ```
+
+The Vite dev server proxies `/api` to `http://localhost:5500` (the container's
+nginx), mirroring production routing. Create a `.env` only to override.
 
 ### Environment
 
@@ -36,7 +45,7 @@ All vars are optional and fall back to Polygon Amoy defaults (see
 | Var | Purpose | Default |
 | --- | --- | --- |
 | `VITE_APP_KIT_PROJECT_ID` | Reown AppKit project id | a shared dev id |
-| `VITE_GATEWAY_API_BASE_URL` | Gateway host base URL | `http://localhost:5000` |
+| `VITE_GATEWAY_API_BASE_URL` | Gateway API base URL | `/api` (relative) |
 | `VITE_SCANNER_BASE_URL` | Block explorer base URL | Amoy polygonscan |
 | `VITE_ENVIRONMENT` | `development` / `production` | `development` |
 

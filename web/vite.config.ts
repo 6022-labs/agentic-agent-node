@@ -11,4 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Mirror the container's nginx: /api goes to the agent-node container
+    // (docker compose publishes nginx on 5500), which strips the prefix.
+    proxy: {
+      "/api": { target: "http://localhost:5500", changeOrigin: true },
+    },
+  },
 })

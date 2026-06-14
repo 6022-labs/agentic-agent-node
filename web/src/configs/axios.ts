@@ -1,12 +1,14 @@
 import axios from "axios"
 
+import { config as envConfig } from "./env"
+
 export const initAxiosDefaults = () => {
-  // Point at the agent-node gateway (the only public surface). Falls back to the
-  // legacy var name so an existing .env keeps working.
+  // Point at the agent-node gateway through the env config so the /api
+  // fallback applies when no .env is present.
   // Note: no blanket Content-Type default — axios picks application/json for
   // plain objects and multipart/form-data for FormData bodies; forcing json
   // here would make axios serialize FormData (drafts, image upload) to JSON.
-  axios.defaults.baseURL = import.meta.env.VITE_GATEWAY_API_BASE_URL
+  axios.defaults.baseURL = envConfig.gatewayApiBaseUrl
 
   axios.interceptors.request.use((config) => {
     const jwt = localStorage.getItem("jwt")

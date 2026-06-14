@@ -20,6 +20,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		_ = k.Load(confmap.Provider(map[string]any{
 			"runtime_host.api_port":         6060,
 			"runtime_host.body_limit_bytes": 1024 * 1024,
+			"runtime_host.listen_address":   "127.0.0.1",
 		}, "."), nil)
 
 		t.Run("Should load every field as provided", func(t *testing.T) {
@@ -30,6 +31,22 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 			assert.NotNil(t, result)
 			assert.Equal(t, 6060, result.ApiPort)
 			assert.Equal(t, 1024*1024, result.BodyLimitBytes)
+			assert.Equal(t, "127.0.0.1", result.ListenAddress)
+		})
+	})
+
+	t.Run("Given listen_address is missing", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{}, "."), nil)
+
+		t.Run("Should default to empty (all interfaces)", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewHostSettings(zap.NewNop(), k)
+
+			assert.Equal(t, "", result.ListenAddress)
 		})
 	})
 

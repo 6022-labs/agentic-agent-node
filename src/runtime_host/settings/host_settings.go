@@ -8,8 +8,9 @@ import (
 const HostSettingsKey = "runtime_host"
 
 type HostSettings struct {
-	ApiPort        int `koanf:"api_port"`
-	BodyLimitBytes int `koanf:"body_limit_bytes"`
+	ApiPort        int    `koanf:"api_port"`
+	BodyLimitBytes int    `koanf:"body_limit_bytes"`
+	ListenAddress  string `koanf:"listen_address"` // empty = all interfaces
 }
 
 func NewHostSettings(logger *zap.Logger, k *koanf.Koanf) *HostSettings {

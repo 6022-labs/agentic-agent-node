@@ -51,12 +51,12 @@ func main() {
 	}
 
 	err = container.Invoke(func(app *fiber.App, logger *zap.Logger, hostSettings *settings.HostSettings) error {
-		port := fmt.Sprintf(":%d", hostSettings.ApiPort)
-		logger.Info("Starting runtime server", zap.String("port", port))
+		address := fmt.Sprintf("%s:%d", hostSettings.ListenAddress, hostSettings.ApiPort)
+		logger.Info("Starting runtime server", zap.String("address", address))
 
 		serverErrCh := make(chan error, 1)
 		go func() {
-			serverErrCh <- app.Listen(port)
+			serverErrCh <- app.Listen(address)
 		}()
 
 		sigCh := make(chan os.Signal, 1)

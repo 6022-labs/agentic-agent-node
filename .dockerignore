@@ -20,6 +20,8 @@ bin/
 *.test
 *.out
 coverage.*
+web/node_modules
+web/dist
 
 # Documentation generation outputs
 **/docs/.tmp-v3
