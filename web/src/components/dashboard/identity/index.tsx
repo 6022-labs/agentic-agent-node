@@ -9,7 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -26,13 +26,19 @@ import {
   computeWizardStep,
   type WizardStepNumber,
 } from "@/components/dashboard/identity/wizard-step"
-import { getEnsAppUrl } from "@/configs/networks"
+import {
+  getEnsAppUrl,
+  getOpenSeaUrl,
+  getRaribleUrl,
+  getScannerAddressUrl,
+} from "@/configs/networks"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import {
   checkAgentEns,
   checkAgentMint,
 } from "@/queries/api/registration.queries"
 import { extractErrorMessage } from "@/lib/api-errors"
+import { ipfsImageUrl } from "@/lib/ipfs"
 
 const statusVariant = (status: string) => {
   if (status === "confirmed") return "default"
@@ -125,6 +131,18 @@ export default function IdentitySection() {
     )
   }
 
+  const imageUrl = ipfsImageUrl(draft.images?.default)
+  const openSeaUrl = getOpenSeaUrl(
+    draft.chainId,
+    draft.collectionAddress,
+    draft.tokenId
+  )
+  const raribleUrl = getRaribleUrl(
+    draft.chainId,
+    draft.collectionAddress,
+    draft.tokenId
+  )
+
   return (
     <Card>
       <CardHeader>
@@ -150,50 +168,129 @@ export default function IdentitySection() {
       </CardHeader>
       <CardContent className="space-y-5">
         <EnsDriftAlert />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Name" value={draft.name} />
-          <Field label="Role" value={draft.role} />
-          <Field label="Collection" value={draft.collectionAddress} mono />
-          <Field
-            label="Token id"
-            value={draft.tokenId != null ? `#${draft.tokenId}` : "—"}
-          />
-          {draft.walletAddress ? (
-            <Field label="Agent wallet" value={draft.walletAddress} mono />
-          ) : null}
-          {draft.ensDomain ? (
-            <Field
-              label="ENS domain"
-              value={draft.ensDomain}
-              mono
-              href={getEnsAppUrl(draft.chainId, draft.ensDomain)}
-            />
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Mint</span>
-          <Badge variant={statusVariant(draft.mintStatus)}>
-            {draft.mintStatus}
-          </Badge>
-          <span className="ml-3 text-sm text-muted-foreground">ENS</span>
-          <Badge variant={statusVariant(draft.ensStatus)}>
-            {draft.ensStatus}
-          </Badge>
-          {!isComplete ? (
-            <span className="ml-auto flex items-center gap-2">
-              {!isMinted ? (
-                <Button variant="ghost" size="sm" onClick={() => openWizard(1)}>
-                  <Pencil />
-                  Edit details
-                </Button>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-stretch">
+          {imageUrl || openSeaUrl || raribleUrl ? (
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-64">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={draft.name}
+                  className="w-full rounded-lg border"
+                />
               ) : null}
-              <Button size="sm" onClick={() => openWizard()}>
-                Continue setup
-                <ArrowRight />
-              </Button>
-            </span>
+              {openSeaUrl || raribleUrl ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {openSeaUrl ? (
+                    <a
+                      href={openSeaUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className: "w-full",
+                      })}
+                    >
+                      OpenSea
+                      <ExternalLink />
+                    </a>
+                  ) : null}
+                  {raribleUrl ? (
+                    <a
+                      href={raribleUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className: "w-full",
+                      })}
+                    >
+                      Rarible
+                      <ExternalLink />
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           ) : null}
+          <div className="flex flex-1 flex-col justify-center gap-6">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {draft.name}
+                </h2>
+                {draft.role ? (
+                  <Badge variant="secondary" className="capitalize">
+                    {draft.role}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mint</span>
+                <Badge variant={statusVariant(draft.mintStatus)}>
+                  {draft.mintStatus}
+                </Badge>
+                <span className="ml-2 text-sm text-muted-foreground">ENS</span>
+                <Badge variant={statusVariant(draft.ensStatus)}>
+                  {draft.ensStatus}
+                </Badge>
+                {!isComplete ? (
+                  <span className="ml-auto flex items-center gap-2">
+                    {!isMinted ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openWizard(1)}
+                      >
+                        <Pencil />
+                        Edit details
+                      </Button>
+                    ) : null}
+                    <Button size="sm" onClick={() => openWizard()}>
+                      Continue setup
+                      <ArrowRight />
+                    </Button>
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <dl className="divide-y rounded-lg border">
+              <Row
+                label="Collection"
+                value={draft.collectionAddress}
+                mono
+                href={getScannerAddressUrl(
+                  draft.chainId,
+                  draft.collectionAddress
+                )}
+              />
+              <Row
+                label="Token id"
+                value={draft.tokenId != null ? `#${draft.tokenId}` : "—"}
+              />
+              {draft.walletAddress ? (
+                <Row
+                  label="Agent wallet"
+                  value={draft.walletAddress}
+                  mono
+                  href={getScannerAddressUrl(
+                    draft.chainId,
+                    draft.walletAddress
+                  )}
+                />
+              ) : null}
+              {draft.ensDomain ? (
+                <Row
+                  label="ENS domain"
+                  value={draft.ensDomain}
+                  mono
+                  href={getEnsAppUrl(draft.chainId, draft.ensDomain)}
+                />
+              ) : null}
+            </dl>
+          </div>
         </div>
       </CardContent>
       {wizard}
@@ -201,7 +298,7 @@ export default function IdentitySection() {
   )
 }
 
-function Field({
+function Row({
   label,
   value,
   mono,
@@ -213,21 +310,25 @@ function Field({
   href?: string | null
 }) {
   return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className={`flex items-center gap-1 text-sm hover:underline ${mono ? "font-mono" : ""}`}
-        >
-          <span className="truncate">{value}</span>
-          <ExternalLink className="size-3 shrink-0" />
-        </a>
-      ) : (
-        <p className={`truncate text-sm ${mono ? "font-mono" : ""}`}>{value}</p>
-      )}
+    <div className="grid grid-cols-[7.5rem_1fr] items-baseline gap-4 px-4 py-3.5 sm:grid-cols-[9rem_1fr]">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="min-w-0">
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className={`flex items-center gap-1 text-sm hover:underline ${mono ? "font-mono" : ""}`}
+          >
+            <span className="truncate">{value}</span>
+            <ExternalLink className="size-3.5 shrink-0" />
+          </a>
+        ) : (
+          <span className={`block truncate text-sm ${mono ? "font-mono" : ""}`}>
+            {value}
+          </span>
+        )}
+      </dd>
     </div>
   )
 }

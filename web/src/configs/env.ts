@@ -11,4 +11,7 @@ export const config = {
   gatewayApiBaseUrl: env.VITE_GATEWAY_API_BASE_URL || "/api",
   // Scales the network's suggested gas fees on every tx; 1 = no override.
   txGasMultiplier: Math.max(Number(env.VITE_TX_GAS_MULTIPLIER) || 1, 1),
+  // Gateway used to resolve bare IPFS CIDs (e.g. the agent's default image) into
+  // displayable URLs; public default so the app works without a .env.
+  ipfsGateway: env.VITE_IPFS_GATEWAY || "https://ipfs.io/ipfs/",
 }
