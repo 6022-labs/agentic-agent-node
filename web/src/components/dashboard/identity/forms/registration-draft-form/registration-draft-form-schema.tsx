@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { AGENT_ROLES } from "@/models/agent-registration"
+import { AGENT_ROLES } from "@/models/enums/agent-role"
 
 export const registrationDraftFormSchema = z.object({
   chainId: z.string().min(1, "Select a chain"),

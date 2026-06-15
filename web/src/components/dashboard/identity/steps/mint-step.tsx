@@ -14,10 +14,8 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
-import {
-  TRANSACTION_STATUS,
-  type AgentRegistration,
-} from "@/models/agent-registration"
+import type { AgentRegistration } from "@/models/agent-registration"
+import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
 import { checkAgentMint } from "@/queries/api/registration.queries"
 import { canMintDirectly } from "@/queries/contracts/agent-collection"
 import { extractErrorMessage } from "@/lib/api-errors"

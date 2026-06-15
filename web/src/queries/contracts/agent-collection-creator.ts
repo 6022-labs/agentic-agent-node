@@ -2,8 +2,7 @@ import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionCreatorABI } from "@/abi/agent-collection-creator"
 import { getChainConfigOrThrow } from "@/configs/app-config"
-
-import { getScaledTxGasOverrides } from "./tx-gas-overrides"
+import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
 
 const collectionCreatedInterface = new ethers.Interface([
   "event CollectionCreated(uint256 indexed collectionId, address collectionAddress, string name, string symbol)",

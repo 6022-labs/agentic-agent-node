@@ -1,7 +1,5 @@
-import {
-  TRANSACTION_STATUS,
-  type AgentRegistration,
-} from "@/models/agent-registration"
+import type { AgentRegistration } from "@/models/agent-registration"
+import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
 
 export type WizardStepNumber = 1 | 2 | 3
 

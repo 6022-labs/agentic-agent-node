@@ -5,8 +5,7 @@ import { AgentEnsRegistryABI } from "@/abi/agent-ens-registry"
 import { getChainConfigOrThrow } from "@/configs/app-config"
 import { resolveAgentNode } from "@/lib/ens-node"
 import type { EnsInfo, KeyValue } from "@/models/agent-registration"
-
-import { getScaledTxGasOverrides } from "./tx-gas-overrides"
+import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
 
 const logAndRethrow = (error: unknown) => {
   try {

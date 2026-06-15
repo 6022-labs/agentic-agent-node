@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
-import { TRANSACTION_STATUS } from "@/models/agent-registration"
+import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
 import RegistrationDraftForm from "./forms/registration-draft-form"
 import StepIndicator from "./step-indicator"
 import MintStep from "./steps/mint-step"

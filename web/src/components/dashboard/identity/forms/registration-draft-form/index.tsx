@@ -22,10 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  AGENT_ROLES,
-  type AgentRegistration,
-} from "@/models/agent-registration"
+import type { AgentRegistration } from "@/models/agent-registration"
+import { AGENT_ROLES } from "@/models/enums/agent-role"
 import { saveAgentRegistration } from "@/queries/api/registration.queries"
 import { getMintableChainIds } from "@/configs/app-config"
 import { findEvmNetwork } from "@/models/networks"

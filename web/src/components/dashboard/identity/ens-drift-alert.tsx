@@ -4,7 +4,7 @@ import { Send, TriangleAlert } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet-provider-context"
-import { useEnsRecordsDrift } from "@/hooks/use-ens-records-drift"
+import { useEnsRecordsDrift } from "./use-ens-records-drift"
 import { extractErrorMessage } from "@/lib/api-errors"
 import {
   initAgentTexts,

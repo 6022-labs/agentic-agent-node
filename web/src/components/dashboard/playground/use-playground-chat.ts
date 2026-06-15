@@ -2,7 +2,7 @@ import React from "react"
 import { toast } from "sonner"
 
 import type { ChatMessage } from "@/components/dashboard/playground/chat-transcript"
-import type { MessageRole } from "@/models/response"
+import type { MessageRole } from "@/models/enums/message-role"
 import type { ConversationSummary } from "@/models/conversation"
 import { createResponse } from "@/queries/api/responses.queries"
 import { listPaymentRules } from "@/queries/api/payment-rule.queries"

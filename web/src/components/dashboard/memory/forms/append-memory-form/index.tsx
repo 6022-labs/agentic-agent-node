@@ -11,10 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type {
-  ConversationMessageRole,
-  ConversationSummary,
-} from "@/models/conversation"
+import type { ConversationSummary } from "@/models/conversation"
+import type { ConversationMessageRole } from "@/models/enums/conversation-message-role"
 import { formatRelativeTime } from "@/lib/format"
 import { newId } from "@/lib/utils"
 import { emptyMessage, type DraftMessage } from "./draft-message"

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import type { AgentRegistration } from "@/models/agent-registration"
 import { selfRegisterAgent } from "@/queries/api/registration.queries"
-import { sendNative } from "@/queries/contracts/native-transfer"
+import { sendNative } from "@/lib/native-transfer"
 import { extractErrorMessage } from "@/lib/api-errors"
 
 type Props = {

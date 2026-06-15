@@ -12,10 +12,8 @@ import { Button } from "@/components/ui/button"
 import { getEnsAppUrl } from "@/configs/networks"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
-import {
-  TRANSACTION_STATUS,
-  type AgentRegistration,
-} from "@/models/agent-registration"
+import type { AgentRegistration } from "@/models/agent-registration"
+import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
 import {
   checkAgentEns,
   checkAgentMint,

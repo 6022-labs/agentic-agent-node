@@ -2,8 +2,7 @@ import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionABI } from "@/abi/agent-collection"
 import type { KeyValue } from "@/models/agent-registration"
-
-import { getScaledTxGasOverrides } from "./tx-gas-overrides"
+import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
 
 // The agent-node AgentCollectionV1.mint has NO signer/nonce/signature — it is the
 // direct (moderator/open) mint. cloneOf is a NullableUint256 { isSet, value }.

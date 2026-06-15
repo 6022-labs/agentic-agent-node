@@ -1,3 +1,5 @@
+import type { ConversationMessageRole } from "@/models/enums/conversation-message-role"
+
 export type ConversationSummary = {
   conversationId: string
   messageCount: number
@@ -20,8 +22,6 @@ export type ConversationMessage = {
 export type ListConversationMessagesResponse = {
   messages: ConversationMessage[]
 }
-
-export type ConversationMessageRole = "user" | "assistant" | "system"
 
 export type AppendConversationMessageInput = {
   role: ConversationMessageRole

@@ -1,4 +1,4 @@
-import type { ConversationMessageRole } from "@/models/conversation"
+import type { ConversationMessageRole } from "@/models/enums/conversation-message-role"
 import { newId } from "@/lib/utils"
 
 export type DraftMessage = {

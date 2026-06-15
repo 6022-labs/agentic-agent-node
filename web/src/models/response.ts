@@ -1,4 +1,4 @@
-export type MessageRole = "user" | "assistant" | "system"
+import type { MessageRole } from "@/models/enums/message-role"
 
 export type InputMessage = {
   id: string

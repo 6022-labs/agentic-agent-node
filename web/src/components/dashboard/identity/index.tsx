@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import EmptyState from "@/components/dashboard/empty-state"
-import EnsDriftAlert from "@/components/dashboard/ens-drift-alert"
+import EnsDriftAlert from "./ens-drift-alert"
 import IdentityWizard from "@/components/dashboard/identity/identity-wizard"
 import {
   computeWizardStep,
