@@ -26,6 +26,7 @@ func (u *GetAgentRegistration) Execute(ctx context.Context) (*responses.AgentReg
 
 func (u *GetAgentRegistration) toResponse(p *models.ExternalAgentRegistrationPayload) *responses.AgentRegistrationResponse {
 	return &responses.AgentRegistrationResponse{
+		ChainId:           p.ChainId,
 		CollectionAddress: p.CollectionAddress,
 		TokenId:           p.TokenId,
 		ProposalId:        p.ProposalId,

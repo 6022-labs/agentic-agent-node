@@ -151,7 +151,7 @@ function EnsDomainLink({
   chainId: string
   ensDomain: string
 }) {
-  const href = getEnsAppUrl(Number(chainId), ensDomain)
+  const href = getEnsAppUrl(chainId, ensDomain)
   if (!href) return <span className="font-mono">{ensDomain}</span>
   return (
     <a

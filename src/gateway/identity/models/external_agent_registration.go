@@ -23,6 +23,7 @@ type ExternalSaveAgentRegistrationPayload struct {
 
 // ExternalAgentRegistrationPayload mirrors the runtime draft + status response.
 type ExternalAgentRegistrationPayload struct {
+	ChainId           string            `json:"chainId"`
 	CollectionAddress string            `json:"collectionAddress"`
 	TokenId           *uint64           `json:"tokenId"`
 	ProposalId        *uint64           `json:"proposalId"`

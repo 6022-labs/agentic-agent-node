@@ -40,6 +40,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 
 func (u *SaveAgentRegistration) toResponse(p *models.ExternalAgentRegistrationPayload) *responses.AgentRegistrationResponse {
 	return &responses.AgentRegistrationResponse{
+		ChainId:           p.ChainId,
 		CollectionAddress: p.CollectionAddress,
 		TokenId:           p.TokenId,
 		ProposalId:        p.ProposalId,

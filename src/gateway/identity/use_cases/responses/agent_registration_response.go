@@ -3,6 +3,7 @@ package responses
 // AgentRegistrationResponse is the gateway-shaped draft + on-chain status,
 // returned by the save and get-draft endpoints.
 type AgentRegistrationResponse struct {
+	ChainId           string            `json:"chainId"`
 	CollectionAddress string            `json:"collectionAddress"`
 	TokenId           *uint64           `json:"tokenId"`
 	ProposalId        *uint64           `json:"proposalId"`

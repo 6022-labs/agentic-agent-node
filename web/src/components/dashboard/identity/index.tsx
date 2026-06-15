@@ -166,7 +166,7 @@ export default function IdentitySection() {
               label="ENS domain"
               value={draft.ensDomain}
               mono
-              href={getEnsAppUrl(Number(draft.chainId), draft.ensDomain)}
+              href={getEnsAppUrl(draft.chainId, draft.ensDomain)}
             />
           ) : null}
         </div>
