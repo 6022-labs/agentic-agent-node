@@ -20,8 +20,8 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"payment.facilitators": map[string]any{
-				"eip155:80002": map[string]any{"base_url": "https://x402-amoy.polygon.technology/"},
-				"eip155:84532": map[string]any{"base_url": "https://x402.org/facilitator"},
+				"80002": map[string]any{"base_url": "https://x402-amoy.polygon.technology/"},
+				"84532": map[string]any{"base_url": "https://x402.org/facilitator"},
 			},
 		}, "."), nil)
 
@@ -48,8 +48,8 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"payment.facilitators": map[string]any{
-				"eip155:80002": map[string]any{"base_url": "https://x402-amoy.polygon.technology", "max_timeout_seconds": 120},
-				"eip155:84532": map[string]any{"base_url": "https://x402.org/facilitator"},
+				"80002": map[string]any{"base_url": "https://x402-amoy.polygon.technology", "max_timeout_seconds": 120},
+				"84532": map[string]any{"base_url": "https://x402.org/facilitator"},
 			},
 		}, "."), nil)
 
@@ -91,7 +91,7 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 		_ = k.Load(confmap.Provider(map[string]any{
 			"payment.facilitators": map[string]any{
 				// 8453 has a facilitator but no entry in reachableChains().
-				"eip155:8453": map[string]any{"base_url": "https://x402.org/facilitator"},
+				"8453": map[string]any{"base_url": "https://x402.org/facilitator"},
 			},
 		}, "."), nil)
 

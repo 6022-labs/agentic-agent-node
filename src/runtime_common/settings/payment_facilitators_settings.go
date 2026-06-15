@@ -31,37 +31,39 @@ type PaymentFacilitator struct {
 type PaymentFacilitatorsSettings map[string]PaymentFacilitator
 
 func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, chainsSettings *ChainsSettings) *PaymentFacilitatorsSettings {
-	configByNetwork := map[string]*PaymentFacilitator{}
-	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByNetwork, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
+	configByChainId := map[string]*PaymentFacilitator{}
+	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByChainId, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
 	}
 
 	settings := PaymentFacilitatorsSettings{}
-	for network, facilitator := range configByNetwork {
-		network = strings.TrimSpace(network)
+	for chainIdKey, facilitator := range configByChainId {
+		chainIdKey = strings.TrimSpace(chainIdKey)
 		if facilitator == nil {
-			logger.Fatal("payment facilitator config is nil", zap.String("network", network))
+			logger.Fatal("payment facilitator config is nil", zap.String("chainId", chainIdKey))
 		}
 		baseUrl := strings.TrimRight(strings.TrimSpace(facilitator.BaseUrl), "/")
-		if len(network) == 0 || len(baseUrl) == 0 {
-			logger.Fatal("payment facilitator needs a network key and base_url", zap.String("network", network))
+		if len(chainIdKey) == 0 || len(baseUrl) == 0 {
+			logger.Fatal("payment facilitator needs a chain id key and base_url", zap.String("chainId", chainIdKey))
 		}
 
-		chainId, err := helpers.ParseCaip2(network)
-		if err != nil {
-			logger.Fatal("payment facilitator network must be a CAIP-2 eip155 identifier, e.g. eip155:80002", zap.String("network", network))
+		// Config keys facilitators by bare chain id to mirror blockchain.chains;
+		// the payment domain matches on CAIP-2, so the stored key is reconstructed.
+		chainId, err := strconv.ParseUint(chainIdKey, 10, 64)
+		if err != nil || chainId == 0 {
+			logger.Fatal("payment facilitator key must be a numeric chain id, e.g. 80002", zap.String("chainId", chainIdKey))
 		}
-		if !chainsSettings.Has(strconv.FormatUint(chainId, 10)) {
+		if !chainsSettings.Has(chainIdKey) {
 			logger.Fatal("payment facilitator has no matching RPC in blockchain.chains; add the chain or drop the facilitator",
-				zap.String("network", network),
-				zap.String("chainId", strconv.FormatUint(chainId, 10)),
+				zap.String("chainId", chainIdKey),
 			)
 		}
+
 		maxTimeoutSeconds := facilitator.MaxTimeoutSeconds
 		if maxTimeoutSeconds <= 0 {
 			maxTimeoutSeconds = defaultMaxTimeoutSeconds
 		}
-		settings[network] = PaymentFacilitator{BaseUrl: baseUrl, MaxTimeoutSeconds: maxTimeoutSeconds}
+		settings[helpers.FormatCaip2(chainId)] = PaymentFacilitator{BaseUrl: baseUrl, MaxTimeoutSeconds: maxTimeoutSeconds}
 	}
 
 	return &settings
