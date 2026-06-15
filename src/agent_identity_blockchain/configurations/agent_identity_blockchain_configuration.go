@@ -43,4 +43,11 @@ func AddAgentIdentityBlockchainConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+
+	if err := container.Provide(
+		blockchain_services.NewAgentEnsRegistryRequester,
+		dig.As(new(identity_interfaces.EnsRegistrarInterface)),
+	); err != nil {
+		panic(err)
+	}
 }

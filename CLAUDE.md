@@ -40,7 +40,7 @@ One agent = one container. The runtime DB therefore holds **zero or one** LLM co
 | Domain | HTTP/infra adapters |
 |--------|--------|
 | `agent_reasoning` (inference loop, MCP + LLM connections) | `agent_reasoning_http_inference` (per-provider LLM clients: anthropic/openai/bedrock/ollama/...), `agent_reasoning_http_mcp` (MCP tool calls) |
-| `agent_identity` (on-chain NFT identity) | `agent_identity_blockchain` (ERC721 collections via AgentCollectionsManager), `agent_identity_ens` (AgentEnsRegistry) |
+| `agent_identity` (on-chain NFT identity) | `agent_identity_blockchain` (one on-chain writer adapter: ERC721 collections via AgentCollectionsManager + AgentEnsRegistry; shared RPC/transactor/signing infra, ENS binding in its own `abi_ens` package) |
 | `agent_knowledge` (conversation transcripts) | `runtime_db` (gorm + goose migrations) |
 | `gateway` (auth, config proxy) | `gateway_http_runtime` (HTTP client to runtime), `gateway_mvc` (fiber controllers) |
 

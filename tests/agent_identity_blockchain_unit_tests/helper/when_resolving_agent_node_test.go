@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/helper"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 )

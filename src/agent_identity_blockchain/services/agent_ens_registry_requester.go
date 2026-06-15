@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/abi"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/factory"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/helper"
+	abi "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi_ens"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

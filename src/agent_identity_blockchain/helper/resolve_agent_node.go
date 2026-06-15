@@ -1,4 +1,3 @@
-// Package helper holds pure ENS adapter helpers.
 package helper
 
 import (
