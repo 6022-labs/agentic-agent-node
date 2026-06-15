@@ -1,7 +1,7 @@
 import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionCreatorABI } from "@/abi/agent-collection-creator"
-import { getAppConfig } from "@/configs/app-config"
+import { getChainConfigOrThrow } from "@/configs/app-config"
 
 import { getScaledTxGasOverrides } from "./tx-gas-overrides"
 
@@ -26,12 +26,13 @@ const logAndRethrow = (error: unknown) => {
 
 // Mirrors the contract gate: minimum authorized-token balance OR locked collateral.
 export const canCreateCollection = async (
+  chainId: string,
   address: string,
   walletProvider: Eip1193Provider
 ): Promise<boolean> => {
   const provider = new BrowserProvider(walletProvider)
   const contract = new ethers.Contract(
-    getAppConfig().collectionCreatorAddress,
+    getChainConfigOrThrow(chainId).collectionCreatorAddress,
     AgentCollectionCreatorABI,
     provider
   )
@@ -42,6 +43,7 @@ export const canCreateCollection = async (
 // returns the new collection address parsed from the manager's
 // CollectionCreated log, or null if the log can't be decoded.
 export const createCollection = async (
+  chainId: string,
   name: string,
   symbol: string,
   description: string,
@@ -49,10 +51,11 @@ export const createCollection = async (
   moderator: string,
   walletProvider: Eip1193Provider
 ): Promise<string | null> => {
+  const chainConfig = getChainConfigOrThrow(chainId)
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
-    getAppConfig().collectionCreatorAddress,
+    chainConfig.collectionCreatorAddress,
     AgentCollectionCreatorABI,
     signer
   )
@@ -67,8 +70,7 @@ export const createCollection = async (
       await getScaledTxGasOverrides(signer)
     )
     const receipt = await tx.wait()
-    const managerAddress =
-      getAppConfig().collectionsManagerAddress.toLowerCase()
+    const managerAddress = chainConfig.collectionsManagerAddress.toLowerCase()
     for (const log of receipt?.logs ?? []) {
       if (log.address.toLowerCase() !== managerAddress) continue
       try {

@@ -24,11 +24,24 @@ const docTemplate = `{
                     "Internal"
                 ],
                 "summary": "List agent collections",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "chainId",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.AgentCollectionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "chain_id_required",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "502": {
@@ -1295,6 +1308,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "chainId": {
+                    "type": "string"
+                },
                 "cloneOf": {
                     "type": "integer"
                 },
@@ -1358,9 +1374,17 @@ const docTemplate = `{
         "responses.BlockchainConfigResponse": {
             "type": "object",
             "properties": {
-                "chainId": {
-                    "type": "integer"
-                },
+                "chains": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/responses.ChainConfig"
+                    }
+                }
+            }
+        },
+        "responses.ChainConfig": {
+            "type": "object",
+            "properties": {
                 "collectionCreatorAddress": {
                     "type": "string"
                 },
@@ -1370,11 +1394,11 @@ const docTemplate = `{
                 "ensRegistryAddress": {
                     "type": "string"
                 },
-                "facilitatorNetworks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "facilitatorNetwork": {
+                    "type": "string"
+                },
+                "mintable": {
+                    "type": "boolean"
                 },
                 "token6022Address": {
                     "type": "string"

@@ -26,7 +26,11 @@ import {
   X402_METHOD,
   type PaymentRule,
 } from "@/models/payment-policy"
-import { getAppConfig } from "@/configs/app-config"
+import {
+  getAppConfig,
+  getChainConfig,
+  getFacilitatorNetworks,
+} from "@/configs/app-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { fetchErc20Info, isLookupSupported, type Erc20Info } from "@/lib/erc20"
 import {
@@ -67,13 +71,19 @@ export default function PaymentRuleForm({
   preservedPatternCount = 0,
   onFormComplete,
 }: Props) {
-  const facilitatorNetworks = getAppConfig().facilitatorNetworks
-  const nodeNetwork = `eip155:${getAppConfig().chainId}`
-  // New rules are paid by default, so they need a facilitator network — the
-  // node's own chain when it has one, otherwise the first configured.
-  const defaultNewRuleNetwork = facilitatorNetworks.includes(nodeNetwork)
-    ? nodeNetwork
-    : (facilitatorNetworks[0] ?? nodeNetwork)
+  const facilitatorNetworks = getFacilitatorNetworks()
+  // Reachable chains as CAIP-2 networks (the x402 rule shape): free rules may
+  // target any reachable chain, paid rules only facilitator networks.
+  const reachableNetworks = React.useMemo(
+    () => Object.keys(getAppConfig().chains).map((id) => `eip155:${id}`),
+    []
+  )
+  const defaultNewRuleNetwork =
+    facilitatorNetworks[0] ?? reachableNetworks[0] ?? ""
+  // Default the asset to the $6022 token on the default network's chain.
+  const defaultToken =
+    getChainConfig(defaultNewRuleNetwork.replace("eip155:", ""))
+      ?.token6022Address ?? ""
 
   const form = useForm<PaymentRuleFormSchemaType>({
     resolver: zodResolver(paymentRuleFormSchema),
@@ -97,7 +107,7 @@ export default function PaymentRuleForm({
           name: "",
           method: X402_METHOD,
           network: defaultNewRuleNetwork,
-          asset: getAppConfig().token6022Address,
+          asset: defaultToken,
           payTo: agentWalletAddress,
           price: "0.01",
           allowEveryone: true,
@@ -121,14 +131,14 @@ export default function PaymentRuleForm({
   const price = form.watch("price")
 
   // Paid rules can only target a configured-facilitator network; free rules
-  // never settle, so they also offer the node's own chain. The edited rule's
+  // never settle, so they offer every reachable chain. The edited rule's
   // network is always kept so editing never drops it.
   const networkOptions = React.useMemo(() => {
     const ids = new Set<string>(facilitatorNetworks)
-    if (isZeroAmount(price)) ids.add(nodeNetwork)
+    if (isZeroAmount(price)) reachableNetworks.forEach((n) => ids.add(n))
     if (initialRule) ids.add(initialRule.network)
     return [...ids]
-  }, [price, initialRule, facilitatorNetworks, nodeNetwork])
+  }, [price, initialRule, facilitatorNetworks, reachableNetworks])
 
   React.useEffect(() => {
     if (!evmAddress.test(asset) || !caip2Network.test(network)) {

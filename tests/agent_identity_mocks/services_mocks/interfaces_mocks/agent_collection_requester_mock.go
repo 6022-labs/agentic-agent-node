@@ -42,106 +42,106 @@ func (m *MockAgentCollectionRequesterInterface) EXPECT() *MockAgentCollectionReq
 }
 
 // CollectionName mocks base method.
-func (m *MockAgentCollectionRequesterInterface) CollectionName(collectionAddress common.Address) (string, error) {
+func (m *MockAgentCollectionRequesterInterface) CollectionName(chainId string, collectionAddress common.Address) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CollectionName", collectionAddress)
+	ret := m.ctrl.Call(m, "CollectionName", chainId, collectionAddress)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CollectionName indicates an expected call of CollectionName.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) CollectionName(collectionAddress any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) CollectionName(chainId, collectionAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionName", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).CollectionName), collectionAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionName", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).CollectionName), chainId, collectionAddress)
 }
 
 // InformationOf mocks base method.
-func (m *MockAgentCollectionRequesterInterface) InformationOf(collectionAddress common.Address, tokenId uint64) (interfaces.OnChainAgentInfo, error) {
+func (m *MockAgentCollectionRequesterInterface) InformationOf(chainId string, collectionAddress common.Address, tokenId uint64) (interfaces.OnChainAgentInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InformationOf", collectionAddress, tokenId)
+	ret := m.ctrl.Call(m, "InformationOf", chainId, collectionAddress, tokenId)
 	ret0, _ := ret[0].(interfaces.OnChainAgentInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // InformationOf indicates an expected call of InformationOf.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) InformationOf(collectionAddress, tokenId any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) InformationOf(chainId, collectionAddress, tokenId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InformationOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).InformationOf), collectionAddress, tokenId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InformationOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).InformationOf), chainId, collectionAddress, tokenId)
 }
 
 // IsModerator mocks base method.
-func (m *MockAgentCollectionRequesterInterface) IsModerator(collectionAddress, account common.Address) (bool, error) {
+func (m *MockAgentCollectionRequesterInterface) IsModerator(chainId string, collectionAddress, account common.Address) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsModerator", collectionAddress, account)
+	ret := m.ctrl.Call(m, "IsModerator", chainId, collectionAddress, account)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IsModerator indicates an expected call of IsModerator.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) IsModerator(collectionAddress, account any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) IsModerator(chainId, collectionAddress, account any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsModerator", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).IsModerator), collectionAddress, account)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsModerator", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).IsModerator), chainId, collectionAddress, account)
 }
 
 // ModeratorCount mocks base method.
-func (m *MockAgentCollectionRequesterInterface) ModeratorCount(collectionAddress common.Address) (uint64, error) {
+func (m *MockAgentCollectionRequesterInterface) ModeratorCount(chainId string, collectionAddress common.Address) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ModeratorCount", collectionAddress)
+	ret := m.ctrl.Call(m, "ModeratorCount", chainId, collectionAddress)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ModeratorCount indicates an expected call of ModeratorCount.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) ModeratorCount(collectionAddress any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) ModeratorCount(chainId, collectionAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModeratorCount", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).ModeratorCount), collectionAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModeratorCount", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).ModeratorCount), chainId, collectionAddress)
 }
 
 // NameToTokenId mocks base method.
-func (m *MockAgentCollectionRequesterInterface) NameToTokenId(collectionAddress common.Address, name string) (uint64, error) {
+func (m *MockAgentCollectionRequesterInterface) NameToTokenId(chainId string, collectionAddress common.Address, name string) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NameToTokenId", collectionAddress, name)
+	ret := m.ctrl.Call(m, "NameToTokenId", chainId, collectionAddress, name)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NameToTokenId indicates an expected call of NameToTokenId.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) NameToTokenId(collectionAddress, name any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) NameToTokenId(chainId, collectionAddress, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NameToTokenId", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).NameToTokenId), collectionAddress, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NameToTokenId", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).NameToTokenId), chainId, collectionAddress, name)
 }
 
 // OwnerOf mocks base method.
-func (m *MockAgentCollectionRequesterInterface) OwnerOf(collectionAddress common.Address, tokenId uint64) (common.Address, error) {
+func (m *MockAgentCollectionRequesterInterface) OwnerOf(chainId string, collectionAddress common.Address, tokenId uint64) (common.Address, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OwnerOf", collectionAddress, tokenId)
+	ret := m.ctrl.Call(m, "OwnerOf", chainId, collectionAddress, tokenId)
 	ret0, _ := ret[0].(common.Address)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // OwnerOf indicates an expected call of OwnerOf.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) OwnerOf(collectionAddress, tokenId any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) OwnerOf(chainId, collectionAddress, tokenId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OwnerOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).OwnerOf), collectionAddress, tokenId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OwnerOf", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).OwnerOf), chainId, collectionAddress, tokenId)
 }
 
 // WalletToTokenId mocks base method.
-func (m *MockAgentCollectionRequesterInterface) WalletToTokenId(collectionAddress, wallet common.Address) (uint64, error) {
+func (m *MockAgentCollectionRequesterInterface) WalletToTokenId(chainId string, collectionAddress, wallet common.Address) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WalletToTokenId", collectionAddress, wallet)
+	ret := m.ctrl.Call(m, "WalletToTokenId", chainId, collectionAddress, wallet)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // WalletToTokenId indicates an expected call of WalletToTokenId.
-func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) WalletToTokenId(collectionAddress, wallet any) *gomock.Call {
+func (mr *MockAgentCollectionRequesterInterfaceMockRecorder) WalletToTokenId(chainId, collectionAddress, wallet any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WalletToTokenId", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).WalletToTokenId), collectionAddress, wallet)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WalletToTokenId", reflect.TypeOf((*MockAgentCollectionRequesterInterface)(nil).WalletToTokenId), chainId, collectionAddress, wallet)
 }

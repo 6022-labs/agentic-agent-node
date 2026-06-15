@@ -2,7 +2,7 @@ import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionABI } from "@/abi/agent-collection"
 import { AgentEnsRegistryABI } from "@/abi/agent-ens-registry"
-import { getAppConfig } from "@/configs/app-config"
+import { getChainConfigOrThrow } from "@/configs/app-config"
 import { resolveAgentNode } from "@/lib/ens-node"
 import type { EnsInfo, KeyValue } from "@/models/agent-registration"
 
@@ -26,6 +26,7 @@ const logAndRethrow = (error: unknown) => {
 // initAgentTexts(collection, tokenId, records[]) on the AgentEnsRegistry. The
 // registry address comes from the gateway's /config at boot.
 export const initAgentTexts = async (
+  chainId: string,
   collectionAddress: string,
   tokenId: number,
   records: KeyValue[],
@@ -34,7 +35,7 @@ export const initAgentTexts = async (
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
-    getAppConfig().ensRegistryAddress,
+    getChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     signer
   )
@@ -66,13 +67,14 @@ export type EnsRecordsState = {
 // node's desired values (mirrors the Go EnsPublisher reconciliation, which can
 // silently fail at boot when the node wallet can't pay gas).
 export const getEnsRecordsDrift = async (
+  chainId: string,
   ensInfo: EnsInfo,
   agentLabel: string,
   walletProvider: Eip1193Provider
 ): Promise<EnsRecordsState> => {
   const provider = new BrowserProvider(walletProvider)
   const registry = new ethers.Contract(
-    getAppConfig().ensRegistryAddress,
+    getChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     provider
   )
@@ -88,7 +90,7 @@ export const getEnsRecordsDrift = async (
   ])
   const node = resolveAgentNode(
     parentNode,
-    getAppConfig().chainId,
+    Number(chainId),
     collectionName,
     agentLabel
   )
@@ -108,6 +110,7 @@ export const getEnsRecordsDrift = async (
 // setAgentText from the OWNER's browser wallet — repair path when the node
 // wallet couldn't afford its boot-time reconciliation tx.
 export const setAgentText = async (
+  chainId: string,
   collectionAddress: string,
   tokenId: number,
   key: string,
@@ -117,7 +120,7 @@ export const setAgentText = async (
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
-    getAppConfig().ensRegistryAddress,
+    getChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     signer
   )

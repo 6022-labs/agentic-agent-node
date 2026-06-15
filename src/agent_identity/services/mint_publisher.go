@@ -59,7 +59,7 @@ func (s *MintPublisher) SelfMint(
 	nodeWallet := common.HexToAddress(cred.Address)
 	collection := common.HexToAddress(agent.CollectionAddress)
 
-	canMintDirectly, err := s.canMintDirectly(collection, nodeWallet)
+	canMintDirectly, err := s.canMintDirectly(agent.ChainId, collection, nodeWallet)
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +89,11 @@ func (s *MintPublisher) createMint(
 	nodeWallet common.Address,
 	params identity_interfaces.MintParams,
 ) (*identity_interfaces.MintResult, error) {
-	txHash, err := s.agentMinter.Mint(ctx, params)
+	txHash, err := s.agentMinter.Mint(ctx, agent.ChainId, params)
 	if err != nil {
 		return nil, fmt.Errorf("mint: %w", err)
 	}
-	tokenId, err := s.agentCollectionRequester.WalletToTokenId(collection, nodeWallet)
+	tokenId, err := s.agentCollectionRequester.WalletToTokenId(agent.ChainId, collection, nodeWallet)
 	if err != nil {
 		return nil, fmt.Errorf("read minted token: %w", err)
 	}
@@ -119,14 +119,14 @@ func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Ag
 	nodeWallet := common.HexToAddress(cred.Address)
 	collection := common.HexToAddress(agent.CollectionAddress)
 
-	tokenId, err := s.agentCollectionRequester.WalletToTokenId(collection, nodeWallet)
+	tokenId, err := s.agentCollectionRequester.WalletToTokenId(agent.ChainId, collection, nodeWallet)
 	if err != nil {
 		return common.Address{}, 0, fmt.Errorf("read minted token: %w", err)
 	}
 
 	// Fallback: the draft's collection may be wrong/empty; scan the manager.
 	if tokenId == 0 {
-		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByWallet(nodeWallet)
+		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByWallet(agent.ChainId, nodeWallet)
 		if findErr != nil {
 			return common.Address{}, 0, fmt.Errorf("scan collections: %w", findErr)
 		}
@@ -140,15 +140,15 @@ func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Ag
 
 // canMintDirectly is true when the collection has no moderators or the node
 // wallet is one of them; otherwise the mint must go through a proposal.
-func (s *MintPublisher) canMintDirectly(collection, nodeWallet common.Address) (bool, error) {
-	moderatorCount, err := s.agentCollectionRequester.ModeratorCount(collection)
+func (s *MintPublisher) canMintDirectly(chainId string, collection, nodeWallet common.Address) (bool, error) {
+	moderatorCount, err := s.agentCollectionRequester.ModeratorCount(chainId, collection)
 	if err != nil {
 		return false, fmt.Errorf("read moderator count: %w", err)
 	}
 	if moderatorCount == 0 {
 		return true, nil
 	}
-	isModerator, err := s.agentCollectionRequester.IsModerator(collection, nodeWallet)
+	isModerator, err := s.agentCollectionRequester.IsModerator(chainId, collection, nodeWallet)
 	if err != nil {
 		return false, fmt.Errorf("read moderator: %w", err)
 	}
@@ -161,7 +161,7 @@ func (s *MintPublisher) createMintProposal(
 	state *models.AgentRegistrationState,
 	params identity_interfaces.MintParams,
 ) (*identity_interfaces.MintResult, error) {
-	txHash, proposalId, err := s.agentMinter.CreateMintProposal(ctx, params)
+	txHash, proposalId, err := s.agentMinter.CreateMintProposal(ctx, agent.ChainId, params)
 	if err != nil {
 		return nil, fmt.Errorf("create mint proposal: %w", err)
 	}

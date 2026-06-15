@@ -39,13 +39,13 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 	collection := common.HexToAddress(agent.CollectionAddress)
 	owner := common.HexToAddress(*agent.Owner)
 
-	moderatorCount, err := u.agentCollectionRequester.ModeratorCount(collection)
+	moderatorCount, err := u.agentCollectionRequester.ModeratorCount(agent.ChainId, collection)
 	if err != nil {
 		return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
 	}
 	ownerIsModerator := false
 	if moderatorCount > 0 {
-		ownerIsModerator, err = u.agentCollectionRequester.IsModerator(collection, owner)
+		ownerIsModerator, err = u.agentCollectionRequester.IsModerator(agent.ChainId, collection, owner)
 		if err != nil {
 			return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
 		}

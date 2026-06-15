@@ -44,59 +44,59 @@ func (m *MockEnsRegistrarInterface) EXPECT() *MockEnsRegistrarInterfaceMockRecor
 }
 
 // InitRecords mocks base method.
-func (m *MockEnsRegistrarInterface) InitRecords(ctx context.Context, collection common.Address, tokenId *big.Int, records []interfaces.EnsRecord) error {
+func (m *MockEnsRegistrarInterface) InitRecords(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, records []interfaces.EnsRecord) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitRecords", ctx, collection, tokenId, records)
+	ret := m.ctrl.Call(m, "InitRecords", ctx, chainId, collection, tokenId, records)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InitRecords indicates an expected call of InitRecords.
-func (mr *MockEnsRegistrarInterfaceMockRecorder) InitRecords(ctx, collection, tokenId, records any) *gomock.Call {
+func (mr *MockEnsRegistrarInterfaceMockRecorder) InitRecords(ctx, chainId, collection, tokenId, records any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitRecords", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).InitRecords), ctx, collection, tokenId, records)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitRecords", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).InitRecords), ctx, chainId, collection, tokenId, records)
 }
 
 // Provisioned mocks base method.
-func (m *MockEnsRegistrarInterface) Provisioned(ctx context.Context, collection common.Address, agentName string) (bool, error) {
+func (m *MockEnsRegistrarInterface) Provisioned(ctx context.Context, chainId string, collection common.Address, agentName string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Provisioned", ctx, collection, agentName)
+	ret := m.ctrl.Call(m, "Provisioned", ctx, chainId, collection, agentName)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Provisioned indicates an expected call of Provisioned.
-func (mr *MockEnsRegistrarInterfaceMockRecorder) Provisioned(ctx, collection, agentName any) *gomock.Call {
+func (mr *MockEnsRegistrarInterfaceMockRecorder) Provisioned(ctx, chainId, collection, agentName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provisioned", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).Provisioned), ctx, collection, agentName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provisioned", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).Provisioned), ctx, chainId, collection, agentName)
 }
 
 // SetRecord mocks base method.
-func (m *MockEnsRegistrarInterface) SetRecord(ctx context.Context, collection common.Address, tokenId *big.Int, key, value string) error {
+func (m *MockEnsRegistrarInterface) SetRecord(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, key, value string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetRecord", ctx, collection, tokenId, key, value)
+	ret := m.ctrl.Call(m, "SetRecord", ctx, chainId, collection, tokenId, key, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetRecord indicates an expected call of SetRecord.
-func (mr *MockEnsRegistrarInterfaceMockRecorder) SetRecord(ctx, collection, tokenId, key, value any) *gomock.Call {
+func (mr *MockEnsRegistrarInterfaceMockRecorder) SetRecord(ctx, chainId, collection, tokenId, key, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRecord", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).SetRecord), ctx, collection, tokenId, key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRecord", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).SetRecord), ctx, chainId, collection, tokenId, key, value)
 }
 
 // Text mocks base method.
-func (m *MockEnsRegistrarInterface) Text(ctx context.Context, collection common.Address, agentName, key string) (string, error) {
+func (m *MockEnsRegistrarInterface) Text(ctx context.Context, chainId string, collection common.Address, agentName, key string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Text", ctx, collection, agentName, key)
+	ret := m.ctrl.Call(m, "Text", ctx, chainId, collection, agentName, key)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Text indicates an expected call of Text.
-func (mr *MockEnsRegistrarInterfaceMockRecorder) Text(ctx, collection, agentName, key any) *gomock.Call {
+func (mr *MockEnsRegistrarInterfaceMockRecorder) Text(ctx, chainId, collection, agentName, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Text", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).Text), ctx, collection, agentName, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Text", reflect.TypeOf((*MockEnsRegistrarInterface)(nil).Text), ctx, chainId, collection, agentName, key)
 }

@@ -21,7 +21,6 @@ func NewListPaymentRules(
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
-	blockchainSettings *runtime_common_settings.BlockchainSettings,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *ListPaymentRules {
 	return &ListPaymentRules{
@@ -30,7 +29,6 @@ func NewListPaymentRules(
 			paymentPolicyRepository,
 			paymentRuleRepository,
 			paymentMethodStrategies,
-			blockchainSettings,
 			token6022Settings,
 		),
 	}

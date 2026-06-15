@@ -42,18 +42,18 @@ func (m *MockToken6022RequesterInterface) EXPECT() *MockToken6022RequesterInterf
 }
 
 // BalanceOf mocks base method.
-func (m *MockToken6022RequesterInterface) BalanceOf(account common.Address) (*big.Int, error) {
+func (m *MockToken6022RequesterInterface) BalanceOf(chainId string, account common.Address) (*big.Int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BalanceOf", account)
+	ret := m.ctrl.Call(m, "BalanceOf", chainId, account)
 	ret0, _ := ret[0].(*big.Int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // BalanceOf indicates an expected call of BalanceOf.
-func (mr *MockToken6022RequesterInterfaceMockRecorder) BalanceOf(account any) *gomock.Call {
+func (mr *MockToken6022RequesterInterfaceMockRecorder) BalanceOf(chainId, account any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BalanceOf", reflect.TypeOf((*MockToken6022RequesterInterface)(nil).BalanceOf), account)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BalanceOf", reflect.TypeOf((*MockToken6022RequesterInterface)(nil).BalanceOf), chainId, account)
 }
 
 // Decimals mocks base method.

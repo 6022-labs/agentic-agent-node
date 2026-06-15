@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
@@ -66,10 +67,11 @@ func (v *X402PaymentVerifier) recoverEip3009(payload *x402.PaymentPayload, confi
 		return common.Address{}, gateway_interfaces.ErrX402AuthorizationExpired
 	}
 
-	chainId, err := x402.ParseEip155ChainId(config.Network)
+	parsedChainId, err := helpers.ParseCaip2(config.Network)
 	if err != nil {
 		return common.Address{}, err
 	}
+	chainId := int64(parsedChainId)
 
 	digest, err := v.transferWithAuthorizationDigest(auth, config, chainId)
 	if err != nil {
@@ -129,10 +131,11 @@ func (v *X402PaymentVerifier) recoverPermit2(payload *x402.PaymentPayload, confi
 		return common.Address{}, gateway_interfaces.ErrX402AuthorizationExpired
 	}
 
-	chainId, err := x402.ParseEip155ChainId(config.Network)
+	parsedChainId, err := helpers.ParseCaip2(config.Network)
 	if err != nil {
 		return common.Address{}, err
 	}
+	chainId := int64(parsedChainId)
 
 	digest, err := v.permitWitnessTransferFromDigest(auth, chainId)
 	if err != nil {

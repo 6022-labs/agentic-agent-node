@@ -22,11 +22,11 @@ type EnsRecord struct {
 // state and touches no repositories. Orchestration lives in EnsPublisher.
 type EnsRegistrarInterface interface {
 	// Provisioned reports whether the agent's subnode already has records.
-	Provisioned(ctx context.Context, collection common.Address, agentName string) (bool, error)
+	Provisioned(ctx context.Context, chainId string, collection common.Address, agentName string) (bool, error)
 	// Text reads a single text record off the agent's subnode.
-	Text(ctx context.Context, collection common.Address, agentName, key string) (string, error)
+	Text(ctx context.Context, chainId string, collection common.Address, agentName, key string) (string, error)
 	// InitRecords seeds the agent's subnode with its initial records.
-	InitRecords(ctx context.Context, collection common.Address, tokenId *big.Int, records []EnsRecord) error
+	InitRecords(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, records []EnsRecord) error
 	// SetRecord overwrites a single record on the agent's subnode.
-	SetRecord(ctx context.Context, collection common.Address, tokenId *big.Int, key, value string) error
+	SetRecord(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, key, value string) error
 }

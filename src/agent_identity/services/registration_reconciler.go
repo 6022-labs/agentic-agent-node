@@ -38,11 +38,11 @@ func (s *RegistrationReconciler) ReconcileMint(
 	tokenId uint64,
 	mintTxHash *string,
 ) (*models.Agent, *models.AgentRegistrationState, error) {
-	info, err := s.agentCollectionRequester.InformationOf(collection, tokenId)
+	info, err := s.agentCollectionRequester.InformationOf(agent.ChainId, collection, tokenId)
 	if err != nil {
 		return nil, nil, err
 	}
-	owner, err := s.agentCollectionRequester.OwnerOf(collection, tokenId)
+	owner, err := s.agentCollectionRequester.OwnerOf(agent.ChainId, collection, tokenId)
 	if err != nil {
 		return nil, nil, err
 	}

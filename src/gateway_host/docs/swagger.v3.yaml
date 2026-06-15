@@ -243,19 +243,23 @@ components:
       type: object
     responses.BlockchainConfigResponse:
       properties:
-        chainId:
-          type: integer
+        chains:
+          additionalProperties:
+            $ref: '#/components/schemas/responses.ChainConfig'
+          type: object
+      type: object
+    responses.ChainConfig:
+      properties:
         collectionCreatorAddress:
           type: string
         collectionsManagerAddress:
           type: string
         ensRegistryAddress:
           type: string
-        facilitatorNetworks:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
+        facilitatorNetwork:
+          type: string
+        mintable:
+          type: boolean
         token6022Address:
           type: string
       type: object

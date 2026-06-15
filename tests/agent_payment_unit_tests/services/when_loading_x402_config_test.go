@@ -29,7 +29,7 @@ func WhenLoadingX402ConfigBeforeEach(t *testing.T) *WhenLoadingX402ConfigTesting
 	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
 
 	return &WhenLoadingX402ConfigTestingSuite{
-		sut:                  services.NewX402PaymentMethodStrategy(facilitators, &runtime_common_settings.BlockchainSettings{}, mockErc20Validator, mockConfigRepository),
+		sut:                  services.NewX402PaymentMethodStrategy(facilitators, &runtime_common_settings.ChainsSettings{}, mockErc20Validator, mockConfigRepository),
 		mockConfigRepository: mockConfigRepository,
 	}
 }

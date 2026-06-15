@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -15,13 +14,13 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 )
 
 const (
-	caip2Eip155Prefix = "eip155:"
 	// DefaultEip712Name/Version are the placeholder domain for the seeded free
 	// rule, which never settles — operator rules derive the real domain
 	// on-chain.
@@ -30,26 +29,26 @@ const (
 )
 
 // X402PaymentMethodStrategy is the x402 payment method: it validates a rule's
-// config (must target the node's chain, hex asset/payTo, address patterns, a
+// config (must target a reachable chain, hex asset/payTo, address patterns, a
 // real ERC-20 asset whose EIP-712 domain is derived on-chain, a facilitator for
 // paid rules) and persists/loads it in the typed payment_rule_x402_configs
 // table. The settlement timeout is network-level (facilitator config), not here.
 type X402PaymentMethodStrategy struct {
 	paymentFacilitatorsSettings     *runtime_common_settings.PaymentFacilitatorsSettings
-	blockchainSettings              *runtime_common_settings.BlockchainSettings
+	chainsSettings                  *runtime_common_settings.ChainsSettings
 	erc20Validator                  payment_interfaces.Erc20ValidatorInterface
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface
 }
 
 func NewX402PaymentMethodStrategy(
 	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
-	blockchainSettings *runtime_common_settings.BlockchainSettings,
+	chainsSettings *runtime_common_settings.ChainsSettings,
 	erc20Validator payment_interfaces.Erc20ValidatorInterface,
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface,
 ) *X402PaymentMethodStrategy {
 	return &X402PaymentMethodStrategy{
 		paymentFacilitatorsSettings:     paymentFacilitatorsSettings,
-		blockchainSettings:              blockchainSettings,
+		chainsSettings:                  chainsSettings,
 		erc20Validator:                  erc20Validator,
 		paymentRuleX402ConfigRepository: paymentRuleX402ConfigRepository,
 	}
@@ -69,14 +68,15 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 	config.Asset = strings.TrimSpace(config.Asset)
 	config.PayTo = strings.TrimSpace(config.PayTo)
 
-	chainId, err := s.parseEip155ChainId(config.Network)
+	// The x402 network is CAIP-2; map it to the plain chain id.
+	parsedChainId, err := helpers.ParseCaip2(config.Network)
 	if err != nil {
-		return err
+		return errors.NewValidationError("config.network", err.Error())
 	}
-	// Rules can only target the node's chain — it's the only one the node can
-	// RPC to validate the asset and derive its EIP-712 domain.
-	if uint64(chainId) != s.blockchainSettings.Id {
-		return errors.NewValidationError("config.network", fmt.Sprintf("must target the node's chain (eip155:%d)", s.blockchainSettings.Id))
+	chainId := strconv.FormatUint(parsedChainId, 10)
+	// Rules can only target a reachable chain (needed to validate the asset).
+	if !s.chainsSettings.Has(chainId) {
+		return errors.NewValidationError("config.network", "node has no RPC for this network")
 	}
 	if !common.IsHexAddress(config.Asset) {
 		return errors.NewValidationError("config.asset", "must be a hex address")
@@ -158,18 +158,4 @@ func (s *X402PaymentMethodStrategy) requireFacilitatorForPaidRule(price string, 
 		return errors.NewValidationError("config.network", "no facilitator configured for this network")
 	}
 	return nil
-}
-
-// parseEip155ChainId extracts the chain id from a CAIP-2 eip155 network
-// identifier ("eip155:80002" → 80002).
-func (s *X402PaymentMethodStrategy) parseEip155ChainId(network string) (int64, error) {
-	rest, found := strings.CutPrefix(network, caip2Eip155Prefix)
-	if !found {
-		return 0, errors.NewValidationError("config.network", "must be a CAIP-2 eip155 identifier, e.g. eip155:80002")
-	}
-	chainId, err := strconv.ParseInt(rest, 10, 64)
-	if err != nil || chainId <= 0 {
-		return 0, errors.NewValidationError("config.network", "must be a CAIP-2 eip155 identifier, e.g. eip155:80002")
-	}
-	return chainId, nil
 }

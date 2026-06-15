@@ -42,9 +42,9 @@ func (m *MockAgentCollectionsManagerRequesterInterface) EXPECT() *MockAgentColle
 }
 
 // FindAgentByWallet mocks base method.
-func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(wallet common.Address) (common.Address, uint64, string, error) {
+func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(chainId string, wallet common.Address) (common.Address, uint64, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAgentByWallet", wallet)
+	ret := m.ctrl.Call(m, "FindAgentByWallet", chainId, wallet)
 	ret0, _ := ret[0].(common.Address)
 	ret1, _ := ret[1].(uint64)
 	ret2, _ := ret[2].(string)
@@ -53,37 +53,37 @@ func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(wallet
 }
 
 // FindAgentByWallet indicates an expected call of FindAgentByWallet.
-func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentByWallet(wallet any) *gomock.Call {
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentByWallet(chainId, wallet any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByWallet", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByWallet), wallet)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByWallet", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByWallet), chainId, wallet)
 }
 
 // IsKnownCollection mocks base method.
-func (m *MockAgentCollectionsManagerRequesterInterface) IsKnownCollection(collection common.Address) (bool, error) {
+func (m *MockAgentCollectionsManagerRequesterInterface) IsKnownCollection(chainId string, collection common.Address) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsKnownCollection", collection)
+	ret := m.ctrl.Call(m, "IsKnownCollection", chainId, collection)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IsKnownCollection indicates an expected call of IsKnownCollection.
-func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) IsKnownCollection(collection any) *gomock.Call {
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) IsKnownCollection(chainId, collection any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsKnownCollection", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).IsKnownCollection), collection)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsKnownCollection", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).IsKnownCollection), chainId, collection)
 }
 
 // ListCollections mocks base method.
-func (m *MockAgentCollectionsManagerRequesterInterface) ListCollections() ([]models.AgentCollection, error) {
+func (m *MockAgentCollectionsManagerRequesterInterface) ListCollections(chainId string) ([]models.AgentCollection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCollections")
+	ret := m.ctrl.Call(m, "ListCollections", chainId)
 	ret0, _ := ret[0].([]models.AgentCollection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCollections indicates an expected call of ListCollections.
-func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) ListCollections() *gomock.Call {
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) ListCollections(chainId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCollections", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).ListCollections))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCollections", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).ListCollections), chainId)
 }

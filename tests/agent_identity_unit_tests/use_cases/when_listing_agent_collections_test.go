@@ -7,6 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections().Return([]models.AgentCollection{
+			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return([]models.AgentCollection{
 				{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
 				{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
 			}, nil)
@@ -52,7 +53,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Collections, 2)
@@ -67,7 +68,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections().Return([]models.AgentCollection{}, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return([]models.AgentCollection{}, nil)
 		}
 
 		t.Run("Should return an empty list, not null", func(t *testing.T) {
@@ -76,7 +77,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
 
 			assert.NoError(t, err)
 			assert.NotNil(t, resp.Collections)
@@ -88,7 +89,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections().Return(nil, errors.New("rpc down"))
+			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return(nil, errors.New("rpc down"))
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
@@ -97,9 +98,24 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
 
 			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given a blank chain id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError without touching the chain", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "  "})
+
+			var target *apperrors.ValidationError
 			assert.ErrorAs(t, err, &target)
 		})
 	})

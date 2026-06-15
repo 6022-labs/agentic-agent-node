@@ -49,11 +49,17 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		RuntimeUrl:    "https://agent.example.com",
 		EnsBaseDomain: "6022.eth",
 	}
-	blockchainSettings := &runtime_common_settings.BlockchainSettings{
-		Id: 80002,
+	// 84532 is reachable but has no creator, so it's a payable/rating chain but
+	// not identity-capable.
+	chainsSettings := &runtime_common_settings.ChainsSettings{
+		"80002": {ChainId: "80002", HttpUrl: "http://localhost:8545"},
+		"84532": {ChainId: "84532", HttpUrl: "http://localhost:8546"},
+	}
+	agentCollectionCreatorsSettings := &runtime_common_settings.AgentCollectionCreatorsSettings{
+		"80002": common_tests.RandomEthAddress(),
 	}
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings, blockchainSettings)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings, chainsSettings, agentCollectionCreatorsSettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
@@ -70,6 +76,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 
 func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 	return &requests.SaveAgentRegistrationRequest{
+		ChainId:           "80002",
 		CollectionAddress: common_tests.RandomEthAddress().Hex(),
 		Owner:             common_tests.RandomEthAddress().Hex(),
 		Name:              "Alice",
@@ -104,11 +111,14 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection(gomock.Any()).Return(true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName(gomock.Any()).Return("squad", nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-			suite.mockToken6022Requester.EXPECT().BalanceOf(gomock.Any()).Return(big.NewInt(1_000_000), nil)
+			suite.mockToken6022Requester.EXPECT().BalanceOf("80002", gomock.Any()).Return(big.NewInt(1_000_000), nil)
+			// $6022 balance is summed across every reachable chain; a chain the
+			// creator can't be read on is skipped (best-effort).
+			suite.mockToken6022Requester.EXPECT().BalanceOf("84532", gomock.Any()).Return(nil, assert.AnError)
 			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(18), nil)
 			cid := "QmCid"
 			suite.mockGenerateAgentImages.EXPECT().Generate(gomock.Any()).Return(map[string][]byte{"default": []byte("a"), "icon": []byte("b")}, nil)
@@ -143,7 +153,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection(gomock.Any()).Return(false, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(false, nil)
 		}
 
 		t.Run("Should return a validation error on collectionAddress", func(t *testing.T) {
@@ -157,6 +167,44 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "collectionAddress", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a chain the node has no RPC for", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on chainId without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			request := validSaveRequest(t)
+			request.ChainId = "999999"
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "chainId", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a reachable chain with no collection creator", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on chainId without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			request := validSaveRequest(t)
+			request.ChainId = "84532"
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "chainId", validationErr.Field)
 		})
 	})
 }

@@ -4,6 +4,8 @@ export type KeyValue = {
 }
 
 export type AgentRegistration = {
+  // Plain chain id the identity lives on (e.g. "80002").
+  chainId: string
   collectionAddress: string
   tokenId: number | null
   proposalId: number | null
@@ -20,6 +22,7 @@ export type AgentRegistration = {
 }
 
 export type SaveAgentRegistrationRequest = {
+  chainId: string
   collectionAddress: string
   name: string
   role: string

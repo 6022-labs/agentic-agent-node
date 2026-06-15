@@ -2,8 +2,10 @@ package settings
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/zap"
 )
@@ -24,10 +26,11 @@ type PaymentFacilitator struct {
 }
 
 // PaymentFacilitatorsSettings holds the operator-configured x402 facilitators
-// keyed by network. Paid rules may only target a configured network.
+// keyed by CAIP-2 network. Each must have a matching RPC in blockchain.chains,
+// else its assets can't be validated and it could never settle.
 type PaymentFacilitatorsSettings map[string]PaymentFacilitator
 
-func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf) *PaymentFacilitatorsSettings {
+func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, chainsSettings *ChainsSettings) *PaymentFacilitatorsSettings {
 	configByNetwork := map[string]*PaymentFacilitator{}
 	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByNetwork, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
@@ -42,6 +45,17 @@ func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf) *Payment
 		baseUrl := strings.TrimRight(strings.TrimSpace(facilitator.BaseUrl), "/")
 		if len(network) == 0 || len(baseUrl) == 0 {
 			logger.Fatal("payment facilitator needs a network key and base_url", zap.String("network", network))
+		}
+
+		chainId, err := helpers.ParseCaip2(network)
+		if err != nil {
+			logger.Fatal("payment facilitator network must be a CAIP-2 eip155 identifier, e.g. eip155:80002", zap.String("network", network))
+		}
+		if !chainsSettings.Has(strconv.FormatUint(chainId, 10)) {
+			logger.Fatal("payment facilitator has no matching RPC in blockchain.chains; add the chain or drop the facilitator",
+				zap.String("network", network),
+				zap.String("chainId", strconv.FormatUint(chainId, 10)),
+			)
 		}
 		maxTimeoutSeconds := facilitator.MaxTimeoutSeconds
 		if maxTimeoutSeconds <= 0 {

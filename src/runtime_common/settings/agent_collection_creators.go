@@ -3,6 +3,7 @@ package settings
 import (
 	_ "embed"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,46 +23,34 @@ type agentCollectionCreatorsFile struct {
 	Creators []agentCollectionCreatorEntry `json:"creators"`
 }
 
-// AgentCollectionCreatorsSettings holds the AgentCollectionCreator address
-// for this agent's chain, bound at startup from BlockchainSettings.Id.
-type AgentCollectionCreatorsSettings struct {
-	CreatorAddress common.Address
-}
+// AgentCollectionCreatorsSettings holds the AgentCollectionCreator address per
+// chain id. Inner join of the built-in registry and the configured chains: a
+// chain present here is mintable.
+type AgentCollectionCreatorsSettings map[string]common.Address
 
-func NewAgentCollectionCreatorsSettings(
-	logger *zap.Logger,
-	blockchainSettings *BlockchainSettings,
-) *AgentCollectionCreatorsSettings {
+func NewAgentCollectionCreatorsSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentCollectionCreatorsSettings {
 	var f agentCollectionCreatorsFile
 	if err := json.Unmarshal(agentCollectionCreatorsJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collection_creators.json", zap.Error(err))
 	}
 
+	settings := AgentCollectionCreatorsSettings{}
 	for _, c := range f.Creators {
-		if c.ChainId != blockchainSettings.Id {
+		addr := strings.TrimSpace(c.Address)
+		chainId := strconv.FormatUint(c.ChainId, 10)
+		if len(addr) == 0 || !chainsSettings.Has(chainId) {
 			continue
 		}
-		addr := strings.TrimSpace(c.Address)
-		if len(addr) == 0 {
-			logger.Fatal(
-				"AgentCollectionCreator address is empty for the configured chain; populate agent_collection_creators.json and rebuild",
-				zap.Uint64("chainId", blockchainSettings.Id),
-				zap.String("name", c.Name),
-			)
-		}
-		logger.Info("resolved AgentCollectionCreator from built-in registry",
-			zap.Uint64("chainId", blockchainSettings.Id),
-			zap.String("name", c.Name),
-			zap.String("address", addr),
-		)
-		return &AgentCollectionCreatorsSettings{
-			CreatorAddress: common.HexToAddress(addr),
-		}
+		settings[chainId] = common.HexToAddress(addr)
 	}
+	return &settings
+}
 
-	logger.Fatal(
-		"no AgentCollectionCreator entry for the configured chain; add an entry to agent_collection_creators.json and rebuild",
-		zap.Uint64("chainId", blockchainSettings.Id),
-	)
-	return nil
+// AddressFor returns the AgentCollectionCreator address for a chain, if any.
+func (s *AgentCollectionCreatorsSettings) AddressFor(chainId string) (common.Address, bool) {
+	if s == nil {
+		return common.Address{}, false
+	}
+	addr, ok := (*s)[chainId]
+	return addr, ok
 }

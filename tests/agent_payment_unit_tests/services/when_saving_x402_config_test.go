@@ -29,7 +29,7 @@ func WhenSavingX402ConfigBeforeEach(t *testing.T) *WhenSavingX402ConfigTestingSu
 	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
 
 	return &WhenSavingX402ConfigTestingSuite{
-		sut:                  services.NewX402PaymentMethodStrategy(facilitators, &runtime_common_settings.BlockchainSettings{}, mockErc20Validator, mockConfigRepository),
+		sut:                  services.NewX402PaymentMethodStrategy(facilitators, &runtime_common_settings.ChainsSettings{}, mockErc20Validator, mockConfigRepository),
 		mockConfigRepository: mockConfigRepository,
 	}
 }

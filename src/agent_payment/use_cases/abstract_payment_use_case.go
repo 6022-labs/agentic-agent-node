@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"strings"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -14,6 +14,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
 
@@ -24,7 +25,6 @@ type AbstractPaymentUseCase struct {
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface
 	paymentRuleRepository   repositories.PaymentRuleRepositoryInterface
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface
-	blockchainSettings      *runtime_common_settings.BlockchainSettings
 	token6022Settings       *runtime_common_settings.Token6022Settings
 }
 
@@ -33,7 +33,6 @@ func NewAbstractPaymentUseCase(
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
-	blockchainSettings *runtime_common_settings.BlockchainSettings,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *AbstractPaymentUseCase {
 	return &AbstractPaymentUseCase{
@@ -41,7 +40,6 @@ func NewAbstractPaymentUseCase(
 		paymentPolicyRepository: paymentPolicyRepository,
 		paymentRuleRepository:   paymentRuleRepository,
 		paymentMethodStrategies: paymentMethodStrategies,
-		blockchainSettings:      blockchainSettings,
 		token6022Settings:       token6022Settings,
 	}
 }
@@ -84,10 +82,10 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 }
 
 // defaultRule seeds a zero-price x402 rule routing to the agent's own wallet,
-// scoped to agent wallet + owner on the node's chain, and returns it with the
-// config JSON the x402 strategy persists. The $6022 token is only the EIP-712
-// signing context — zero-price rules never settle on-chain. Returns (nil, nil)
-// when the agent has no addresses to scope to.
+// scoped to agent wallet + owner on the agent's identity chain, and returns it
+// with the config JSON the x402 strategy persists. The $6022 token is only the
+// EIP-712 signing context — zero-price rules never settle on-chain. Returns
+// (nil, nil) when the agent has no addresses to scope to.
 func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent) (*models.PaymentRule, json.RawMessage) {
 	patterns := []string{}
 	if len(agent.WalletAddress) != 0 {
@@ -101,9 +99,12 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 	}
 	eip712Name := services.DefaultEip712Name
 	eip712Version := services.DefaultEip712Version
+	asset, _ := u.token6022Settings.AddressFor(agent.ChainId)
+	// x402 networks are CAIP-2; the agent stores a plain chain id.
+	evmChainId, _ := strconv.ParseUint(agent.ChainId, 10, 64)
 	config := &models.PaymentRuleX402Config{
-		Network:             fmt.Sprintf("eip155:%d", u.blockchainSettings.Id),
-		Asset:               u.token6022Settings.SmartContractAddress.Hex(),
+		Network:             helpers.FormatCaip2(evmChainId),
+		Asset:               asset.Hex(),
 		PayTo:               agent.WalletAddress,
 		AssetTransferMethod: enums.AssetTransferMethodEip3009,
 		Eip712Name:          &eip712Name,

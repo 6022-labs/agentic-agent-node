@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { getAppConfig } from "@/configs/app-config"
 import { getEnsAppUrl } from "@/configs/networks"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
@@ -63,6 +62,7 @@ export default function EnsStep({ draft, onClose }: Props) {
     try {
       const { data: info } = await getAgentEnsInfo()
       await initAgentTexts(
+        draft.chainId,
         info.collectionAddress,
         info.tokenId,
         info.records,
@@ -89,7 +89,11 @@ export default function EnsStep({ draft, onClose }: Props) {
             {draft.ensDomain ? (
               <>
                 {" "}
-                at <EnsDomainLink ensDomain={draft.ensDomain} />
+                at{" "}
+                <EnsDomainLink
+                  chainId={draft.chainId}
+                  ensDomain={draft.ensDomain}
+                />
               </>
             ) : null}
             .
@@ -140,8 +144,14 @@ export default function EnsStep({ draft, onClose }: Props) {
   )
 }
 
-function EnsDomainLink({ ensDomain }: { ensDomain: string }) {
-  const href = getEnsAppUrl(getAppConfig().chainId, ensDomain)
+function EnsDomainLink({
+  chainId,
+  ensDomain,
+}: {
+  chainId: string
+  ensDomain: string
+}) {
+  const href = getEnsAppUrl(Number(chainId), ensDomain)
   if (!href) return <span className="font-mono">{ensDomain}</span>
   return (
     <a

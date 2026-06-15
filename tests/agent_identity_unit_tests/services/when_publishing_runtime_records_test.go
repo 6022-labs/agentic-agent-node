@@ -90,10 +90,10 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(false, nil)
+			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(false, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
-			suite.mockEnsRegistrar.EXPECT().InitRecords(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ common.Address, _ *big.Int, records []identity_interfaces.EnsRecord) error {
+			suite.mockEnsRegistrar.EXPECT().InitRecords(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ string, _ common.Address, _ *big.Int, records []identity_interfaces.EnsRecord) error {
 					assert.Equal(t, runtimeRecords, records)
 					return nil
 				})
@@ -122,10 +122,10 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(true, nil)
+			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
-			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), "alice", "url").Return("https://old.example.com", nil)
-			suite.mockEnsRegistrar.EXPECT().SetRecord(gomock.Any(), gomock.Any(), gomock.Any(), "url", runtimeUrl).Return(nil)
+			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), gomock.Any(), "alice", "url").Return("https://old.example.com", nil)
+			suite.mockEnsRegistrar.EXPECT().SetRecord(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "url", runtimeUrl).Return(nil)
 		}
 
 		t.Run("Should overwrite it via SetRecord with the current url", func(t *testing.T) {
@@ -151,9 +151,9 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(true, nil)
+			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
-			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), "alice", "url").Return(runtimeUrl, nil)
+			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), gomock.Any(), "alice", "url").Return(runtimeUrl, nil)
 		}
 
 		t.Run("Should not write anything", func(t *testing.T) {

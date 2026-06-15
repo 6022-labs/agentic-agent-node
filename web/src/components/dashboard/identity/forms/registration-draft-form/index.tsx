@@ -27,6 +27,8 @@ import {
   type AgentRegistration,
 } from "@/models/agent-registration"
 import { saveAgentRegistration } from "@/queries/api/registration.queries"
+import { getMintableChainIds } from "@/configs/app-config"
+import { findEvmNetwork } from "@/models/networks"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 import {
   registrationDraftFormSchema,
@@ -35,6 +37,9 @@ import {
 import { useAgentCollections } from "./use-agent-collections"
 import CollectionField from "./collection-field"
 import AttributeFields from "./attribute-fields"
+
+const chainLabel = (chainId: string) =>
+  findEvmNetwork(`eip155:${chainId}`)?.name ?? `Chain ${chainId}`
 
 type Props = {
   draft: AgentRegistration | null
@@ -49,11 +54,12 @@ export default function RegistrationDraftForm({
   onContinue,
 }: Props) {
   const [saving, setSaving] = React.useState(false)
-  const { collections, loadCollections } = useAgentCollections()
+  const mintableChainIds = React.useMemo(() => getMintableChainIds(), [])
 
   const form = useForm<RegistrationDraftFormSchemaType>({
     resolver: zodResolver(registrationDraftFormSchema),
     defaultValues: {
+      chainId: draft?.chainId ?? mintableChainIds[0] ?? "",
       collectionAddress: draft?.collectionAddress ?? "",
       name: draft?.name ?? "",
       role: AGENT_ROLES.find((role) => role === draft?.role),
@@ -65,10 +71,16 @@ export default function RegistrationDraftForm({
     },
   })
 
+  // Collections are per-chain: reload them (and clear the stale selection) when
+  // the chosen chain changes.
+  const selectedChainId = form.watch("chainId")
+  const { collections, loadCollections } = useAgentCollections(selectedChainId)
+
   const onSubmit = async (values: RegistrationDraftFormSchemaType) => {
     setSaving(true)
     try {
       const { data } = await saveAgentRegistration({
+        chainId: values.chainId,
         collectionAddress: values.collectionAddress,
         name: values.name,
         role: values.role,
@@ -104,8 +116,44 @@ export default function RegistrationDraftForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="chainId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chain</FormLabel>
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value)
+                  // The previous chain's collection no longer applies.
+                  form.setValue("collectionAddress", "")
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a chain" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {mintableChainIds.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {chainLabel(id)} ({id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                The chain this agent's identity is minted on. Only chains the
+                node can reach and mint on are listed.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <CollectionField
           form={form}
+          chainId={selectedChainId}
           collections={collections}
           onReloadCollections={loadCollections}
         />

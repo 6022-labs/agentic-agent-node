@@ -237,18 +237,23 @@ definitions:
     type: object
   responses.BlockchainConfigResponse:
     properties:
-      chainId:
-        type: integer
+      chains:
+        additionalProperties:
+          $ref: '#/definitions/responses.ChainConfig'
+        type: object
+    type: object
+  responses.ChainConfig:
+    properties:
       collectionCreatorAddress:
         type: string
       collectionsManagerAddress:
         type: string
       ensRegistryAddress:
         type: string
-      facilitatorNetworks:
-        items:
-          type: string
-        type: array
+      facilitatorNetwork:
+        type: string
+      mintable:
+        type: boolean
       token6022Address:
         type: string
     type: object

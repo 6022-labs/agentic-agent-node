@@ -18,6 +18,7 @@ export const saveAgentRegistration = async (
   request: SaveAgentRegistrationRequest
 ) => {
   const form = new FormData()
+  form.append("chainId", request.chainId)
   form.append("collectionAddress", request.collectionAddress)
   form.append("name", request.name)
   form.append("role", request.role)

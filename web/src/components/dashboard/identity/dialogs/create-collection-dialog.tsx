@@ -24,13 +24,14 @@ import {
 import { extractErrorMessage } from "@/lib/api-errors"
 
 type Props = {
+  chainId: string
   onCreated: (created: {
     address: string | null
     name: string
   }) => Promise<void> | void
 }
 
-export default function CreateCollectionDialog({ onCreated }: Props) {
+export default function CreateCollectionDialog({ chainId, onCreated }: Props) {
   const { user } = useAuth()
   const { wallet } = useWallet()
 
@@ -42,7 +43,7 @@ export default function CreateCollectionDialog({ onCreated }: Props) {
   React.useEffect(() => {
     if (!open || !wallet || !user?.address) return
     let active = true
-    canCreateCollection(user.address, wallet)
+    canCreateCollection(chainId, user.address, wallet)
       .then((ok) => {
         if (active) setAllowed(ok)
       })
@@ -52,7 +53,7 @@ export default function CreateCollectionDialog({ onCreated }: Props) {
     return () => {
       active = false
     }
-  }, [open, wallet, user?.address])
+  }, [open, wallet, user?.address, chainId])
 
   const onFormComplete = async (
     values: CreateCollectionFormSchemaType
@@ -65,6 +66,7 @@ export default function CreateCollectionDialog({ onCreated }: Props) {
     setSaving(true)
     try {
       const address = await createCollection(
+        chainId,
         values.name,
         values.symbol,
         values.description ?? "",

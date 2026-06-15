@@ -5,6 +5,7 @@ import "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 // AgentRegistrationResponse is the stored draft + current on-chain status,
 // used both as the save result and to pre-fill the form on retry.
 type AgentRegistrationResponse struct {
+	ChainId           string            `json:"chainId"`
 	CollectionAddress string            `json:"collectionAddress"`
 	TokenId           *uint64           `json:"tokenId"`
 	ProposalId        *uint64           `json:"proposalId"`
@@ -25,6 +26,7 @@ func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, state *models
 	if agent.Owner != nil {
 		owner = *agent.Owner
 	}
+	r.ChainId = agent.ChainId
 	r.CollectionAddress = agent.CollectionAddress
 	r.TokenId = agent.CollectionTokenId
 	r.ProposalId = agent.ProposalId

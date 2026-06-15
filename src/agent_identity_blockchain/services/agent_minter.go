@@ -3,46 +3,50 @@ package services
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"go.uber.org/zap"
 )
 
 // AgentMinter sends mint transactions with the node's bootstrap wallet (from
 // Vault). Used by the self-mint flow once the owner has funded that wallet.
 type AgentMinter struct {
-	logger             *zap.Logger
-	client             *ethclient.Client
-	blockchainSettings *settings.BlockchainSettings
-	transactorFactory  *factory.TransactorFactory
+	logger            *zap.Logger
+	ethClientFactory  *factory.EthClientFactory
+	transactorFactory *factory.TransactorFactory
 }
 
 func NewAgentMinter(
 	logger *zap.Logger,
-	client *ethclient.Client,
-	blockchainSettings *settings.BlockchainSettings,
+	ethClientFactory *factory.EthClientFactory,
 	transactorFactory *factory.TransactorFactory,
 ) *AgentMinter {
 	return &AgentMinter{
-		logger:             logger,
-		client:             client,
-		blockchainSettings: blockchainSettings,
-		transactorFactory:  transactorFactory,
+		logger:            logger,
+		ethClientFactory:  ethClientFactory,
+		transactorFactory: transactorFactory,
 	}
 }
 
-func (m *AgentMinter) Mint(ctx context.Context, params identity_interfaces.MintParams) (string, error) {
-	opts, err := m.transactorFactory.Create(ctx, m.blockchainSettings.Id)
+func (m *AgentMinter) Mint(ctx context.Context, chainId string, params identity_interfaces.MintParams) (string, error) {
+	client, err := m.ethClientFactory.For(chainId)
 	if err != nil {
 		return "", err
 	}
-	contract, err := abi.NewAgentCollectionV1(params.Collection, m.client)
+	evmChainId, err := strconv.ParseUint(chainId, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	opts, err := m.transactorFactory.Create(ctx, evmChainId)
+	if err != nil {
+		return "", err
+	}
+	contract, err := abi.NewAgentCollectionV1(params.Collection, client)
 	if err != nil {
 		return "", fmt.Errorf("bind AgentCollectionV1: %w", err)
 	}
@@ -51,7 +55,7 @@ func (m *AgentMinter) Mint(ctx context.Context, params identity_interfaces.MintP
 	if err != nil {
 		return "", fmt.Errorf("mint: %w", err)
 	}
-	if err := helper.WaitForSuccess(ctx, m.client, tx); err != nil {
+	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return tx.Hash().Hex(), fmt.Errorf("mint: %w", err)
 	}
 
@@ -63,12 +67,20 @@ func (m *AgentMinter) Mint(ctx context.Context, params identity_interfaces.MintP
 	return tx.Hash().Hex(), nil
 }
 
-func (m *AgentMinter) CreateMintProposal(ctx context.Context, params identity_interfaces.MintParams) (string, uint64, error) {
-	opts, err := m.transactorFactory.Create(ctx, m.blockchainSettings.Id)
+func (m *AgentMinter) CreateMintProposal(ctx context.Context, chainId string, params identity_interfaces.MintParams) (string, uint64, error) {
+	client, err := m.ethClientFactory.For(chainId)
 	if err != nil {
 		return "", 0, err
 	}
-	contract, err := abi.NewAgentCollectionV1(params.Collection, m.client)
+	evmChainId, err := strconv.ParseUint(chainId, 10, 64)
+	if err != nil {
+		return "", 0, err
+	}
+	opts, err := m.transactorFactory.Create(ctx, evmChainId)
+	if err != nil {
+		return "", 0, err
+	}
+	contract, err := abi.NewAgentCollectionV1(params.Collection, client)
 	if err != nil {
 		return "", 0, fmt.Errorf("bind AgentCollectionV1: %w", err)
 	}
@@ -77,7 +89,7 @@ func (m *AgentMinter) CreateMintProposal(ctx context.Context, params identity_in
 	if err != nil {
 		return "", 0, fmt.Errorf("createMintProposal: %w", err)
 	}
-	receipt, err := helper.WaitForReceipt(ctx, m.client, tx)
+	receipt, err := helper.WaitForReceipt(ctx, client, tx)
 	if err != nil {
 		return tx.Hash().Hex(), 0, fmt.Errorf("createMintProposal: %w", err)
 	}

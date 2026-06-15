@@ -79,9 +79,9 @@ func TestWhenSelfMinting(t *testing.T) {
 			mintedState := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
 
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any()).Return(uint64(5), nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
+			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(5), nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(5), gomock.Any()).Return(mintedAgent, mintedState, nil)
 		}
 
@@ -108,10 +108,10 @@ func TestWhenSelfMinting(t *testing.T) {
 			mintedState := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
 
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(2), nil)
-			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any()).Return(true, nil)
-			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any()).Return(uint64(5), nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(2), nil)
+			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
+			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(5), nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(5), gomock.Any()).Return(mintedAgent, mintedState, nil)
 		}
 
@@ -133,9 +133,9 @@ func TestWhenSelfMinting(t *testing.T) {
 
 		initSuite := func(suite *WhenSelfMintingTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(2), nil)
-			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any()).Return(false, nil)
-			suite.mockAgentMinter.EXPECT().CreateMintProposal(gomock.Any(), gomock.Any()).Return("0xtx", uint64(9), nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(2), nil)
+			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil)
+			suite.mockAgentMinter.EXPECT().CreateMintProposal(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", uint64(9), nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
 			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -165,9 +165,9 @@ func TestWhenSelfMinting(t *testing.T) {
 
 		initSuite := func(suite *WhenSelfMintingTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
+			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
 		}
 
 		t.Run("Should return an error without reconciling", func(t *testing.T) {

@@ -1398,9 +1398,17 @@ const docTemplate = `{
         "responses.BlockchainConfigResponse": {
             "type": "object",
             "properties": {
-                "chainId": {
-                    "type": "integer"
-                },
+                "chains": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/responses.ChainConfig"
+                    }
+                }
+            }
+        },
+        "responses.ChainConfig": {
+            "type": "object",
+            "properties": {
                 "collectionCreatorAddress": {
                     "type": "string"
                 },
@@ -1410,11 +1418,11 @@ const docTemplate = `{
                 "ensRegistryAddress": {
                     "type": "string"
                 },
-                "facilitatorNetworks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "facilitatorNetwork": {
+                    "type": "string"
+                },
+                "mintable": {
+                    "type": "boolean"
                 },
                 "token6022Address": {
                     "type": "string"

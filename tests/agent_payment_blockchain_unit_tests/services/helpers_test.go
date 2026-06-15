@@ -1,17 +1,28 @@
 package services_test
 
 import (
+	"encoding/json"
 	"math/big"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	contract_abi "github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
+
+// erc20Method is one method's canned eth_call answer: packed return data, or an
+// empty answer (the binding then checks code). A method absent from the script
+// reverts.
+type erc20Method struct {
+	data  []byte
+	empty bool
+}
 
 // packErc20Output encodes a method return the way the contract would.
 func packErc20Output(t *testing.T, method string, values ...any) []byte {
@@ -24,17 +35,80 @@ func packErc20Output(t *testing.T, method string, values ...any) []byte {
 	return packed
 }
 
-// erc20Probes are the three decode-checked ERC-20 reads the validator runs
-// before resolving the EIP-712 domain.
-func erc20Probes(t *testing.T, suite *WhenValidatingErc20TestingSuite) []any {
+// newErc20RpcServer answers the validator's eth_call probes from a per-method
+// script and eth_getCode from hasCode, so a real ethclient drives the test.
+func newErc20RpcServer(t *testing.T, methods map[string]erc20Method, hasCode bool) *httptest.Server {
 	t.Helper()
-	return []any{
-		suite.erc20CallerMock.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(packErc20Output(t, "decimals", uint8(6)), nil),
-		suite.erc20CallerMock.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(packErc20Output(t, "symbol", "USDC"), nil),
-		suite.erc20CallerMock.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(packErc20Output(t, "totalSupply", big.NewInt(1_000_000)), nil),
+
+	parsed, err := abi.JSON(strings.NewReader(contract_abi.Erc20MetaData.ABI))
+	assert.NoError(t, err)
+	bySelector := map[string]string{}
+	for name, method := range parsed.Methods {
+		bySelector[hexutil.Encode(method.ID)] = name
+	}
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Id     json.RawMessage   `json:"id"`
+			Method string            `json:"method"`
+			Params []json.RawMessage `json:"params"`
+		}
+		assert.NoError(t, json.NewDecoder(r.Body).Decode(&request))
+
+		switch request.Method {
+		case "eth_getCode":
+			code := "0x"
+			if hasCode {
+				code = "0x60"
+			}
+			writeRpcResult(t, w, request.Id, code)
+		case "eth_call":
+			var call struct {
+				Data  string `json:"data"`
+				Input string `json:"input"`
+			}
+			assert.NoError(t, json.Unmarshal(request.Params[0], &call))
+			data := call.Data
+			if data == "" {
+				data = call.Input
+			}
+			method, answer := methods[bySelector[data[:10]]]
+			if !answer {
+				writeRpcRevert(t, w, request.Id)
+			} else if method.empty {
+				writeRpcResult(t, w, request.Id, "0x")
+			} else {
+				writeRpcResult(t, w, request.Id, hexutil.Encode(method.data))
+			}
+		default:
+			writeRpcRevert(t, w, request.Id)
+		}
+	}))
+}
+
+func writeRpcResult(t *testing.T, w http.ResponseWriter, id json.RawMessage, result string) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	assert.NoError(t, json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": id, "result": result}))
+}
+
+func writeRpcRevert(t *testing.T, w http.ResponseWriter, id json.RawMessage) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	assert.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+		"jsonrpc": "2.0", "id": id,
+		"error": map[string]any{"code": 3, "message": "execution reverted"},
+	}))
+}
+
+// erc20ProbeMethods are the three decode-checked reads (decimals/symbol/
+// totalSupply) every successful validation answers before domain resolution.
+func erc20ProbeMethods(t *testing.T) map[string]erc20Method {
+	t.Helper()
+	return map[string]erc20Method{
+		"decimals":    {data: packErc20Output(t, "decimals", uint8(6))},
+		"symbol":      {data: packErc20Output(t, "symbol", "USDC")},
+		"totalSupply": {data: packErc20Output(t, "totalSupply", big.NewInt(1_000_000))},
 	}
 }
 

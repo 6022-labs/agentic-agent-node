@@ -230,6 +230,9 @@
                         },
                         "type": "object"
                     },
+                    "chainId": {
+                        "type": "string"
+                    },
                     "cloneOf": {
                         "type": "integer"
                     },
@@ -294,9 +297,17 @@
             },
             "responses.BlockchainConfigResponse": {
                 "properties": {
-                    "chainId": {
-                        "type": "integer"
-                    },
+                    "chains": {
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/responses.ChainConfig"
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ChainConfig": {
+                "properties": {
                     "collectionCreatorAddress": {
                         "type": "string"
                     },
@@ -306,12 +317,11 @@
                     "ensRegistryAddress": {
                         "type": "string"
                     },
-                    "facilitatorNetworks": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "facilitatorNetwork": {
+                        "type": "string"
+                    },
+                    "mintable": {
+                        "type": "boolean"
                     },
                     "token6022Address": {
                         "type": "string"
@@ -688,6 +698,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "chain_id_required"
                     },
                     "502": {
                         "content": {

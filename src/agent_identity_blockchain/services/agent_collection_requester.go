@@ -5,36 +5,46 @@ import (
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type AgentCollectionRequester struct {
-	client *ethclient.Client
+	ethClientFactory *factory.EthClientFactory
 }
 
-func NewAgentCollectionRequester(client *ethclient.Client) *AgentCollectionRequester {
-	return &AgentCollectionRequester{client: client}
+func NewAgentCollectionRequester(ethClientFactory *factory.EthClientFactory) *AgentCollectionRequester {
+	return &AgentCollectionRequester{
+		ethClientFactory: ethClientFactory,
+	}
 }
 
-func (r *AgentCollectionRequester) OwnerOf(collectionAddress common.Address, tokenId uint64) (common.Address, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) collection(chainId string, collectionAddress common.Address) (*abi.AgentCollectionV1, error) {
+	client, err := r.ethClientFactory.For(chainId)
+	if err != nil {
+		return nil, err
+	}
+	return abi.NewAgentCollectionV1(collectionAddress, client)
+}
+
+func (r *AgentCollectionRequester) OwnerOf(chainId string, collectionAddress common.Address, tokenId uint64) (common.Address, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return common.Address{}, err
 	}
 	return contract.OwnerOf(nil, new(big.Int).SetUint64(tokenId))
 }
 
-func (r *AgentCollectionRequester) CollectionName(collectionAddress common.Address) (string, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) CollectionName(chainId string, collectionAddress common.Address) (string, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return "", err
 	}
 	return contract.Name(nil)
 }
 
-func (r *AgentCollectionRequester) WalletToTokenId(collectionAddress common.Address, wallet common.Address) (uint64, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) WalletToTokenId(chainId string, collectionAddress common.Address, wallet common.Address) (uint64, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -45,8 +55,8 @@ func (r *AgentCollectionRequester) WalletToTokenId(collectionAddress common.Addr
 	return id.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) NameToTokenId(collectionAddress common.Address, name string) (uint64, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) NameToTokenId(chainId string, collectionAddress common.Address, name string) (uint64, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -57,8 +67,8 @@ func (r *AgentCollectionRequester) NameToTokenId(collectionAddress common.Addres
 	return id.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) InformationOf(collectionAddress common.Address, tokenId uint64) (identity_interfaces.OnChainAgentInfo, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) InformationOf(chainId string, collectionAddress common.Address, tokenId uint64) (identity_interfaces.OnChainAgentInfo, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return identity_interfaces.OnChainAgentInfo{}, err
 	}
@@ -80,8 +90,8 @@ func (r *AgentCollectionRequester) InformationOf(collectionAddress common.Addres
 	}, nil
 }
 
-func (r *AgentCollectionRequester) ModeratorCount(collectionAddress common.Address) (uint64, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) ModeratorCount(chainId string, collectionAddress common.Address) (uint64, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -92,8 +102,8 @@ func (r *AgentCollectionRequester) ModeratorCount(collectionAddress common.Addre
 	return count.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) IsModerator(collectionAddress common.Address, account common.Address) (bool, error) {
-	contract, err := abi.NewAgentCollectionV1(collectionAddress, r.client)
+func (r *AgentCollectionRequester) IsModerator(chainId string, collectionAddress common.Address, account common.Address) (bool, error) {
+	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return false, err
 	}

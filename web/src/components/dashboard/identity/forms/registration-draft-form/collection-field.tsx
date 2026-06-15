@@ -18,21 +18,24 @@ import {
 } from "@/components/ui/select"
 import CreateCollectionDialog from "@/components/dashboard/identity/dialogs/create-collection-dialog"
 import type { AgentCollection } from "@/models/agent-collection"
-import { getAppConfig } from "@/configs/app-config"
+import { getChainConfig } from "@/configs/app-config"
 import { truncateEthAddress } from "@/lib/utils"
 import type { RegistrationDraftFormSchemaType } from "./registration-draft-form-schema"
 
 type Props = {
   form: UseFormReturn<RegistrationDraftFormSchemaType>
+  chainId: string
   collections: AgentCollection[] | null
   onReloadCollections: () => Promise<AgentCollection[]>
 }
 
 export default function CollectionField({
   form,
+  chainId,
   collections,
   onReloadCollections,
 }: Props) {
+  const canCreate = Boolean(getChainConfig(chainId)?.collectionCreatorAddress)
   return (
     <FormField
       control={form.control}
@@ -47,8 +50,9 @@ export default function CollectionField({
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>Collection</FormLabel>
-              {getAppConfig().collectionCreatorAddress ? (
+              {canCreate ? (
                 <CreateCollectionDialog
+                  chainId={chainId}
                   onCreated={async ({ address, name }) => {
                     const loaded = await onReloadCollections()
                     const resolved =

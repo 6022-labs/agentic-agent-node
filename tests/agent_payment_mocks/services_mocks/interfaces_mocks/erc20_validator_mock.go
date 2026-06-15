@@ -42,7 +42,7 @@ func (m *MockErc20ValidatorInterface) EXPECT() *MockErc20ValidatorInterfaceMockR
 }
 
 // ValidateErc20 mocks base method.
-func (m *MockErc20ValidatorInterface) ValidateErc20(ctx context.Context, chainId int64, asset string) (enums.AssetTransferMethod, string, string, error) {
+func (m *MockErc20ValidatorInterface) ValidateErc20(ctx context.Context, chainId, asset string) (enums.AssetTransferMethod, string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateErc20", ctx, chainId, asset)
 	ret0, _ := ret[0].(enums.AssetTransferMethod)

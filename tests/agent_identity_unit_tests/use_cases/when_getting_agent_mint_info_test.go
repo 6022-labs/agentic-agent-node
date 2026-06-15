@@ -47,7 +47,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).WithName("alice").Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
 		}
 
 		t.Run("Should assemble the calldata and report no moderators", func(t *testing.T) {
@@ -71,8 +71,8 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any()).Return(uint64(2), nil)
-			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any()).Return(true, nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(2), nil)
+			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 		}
 
 		t.Run("Should report the owner's moderator status", func(t *testing.T) {

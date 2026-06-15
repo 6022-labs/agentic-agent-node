@@ -28,12 +28,16 @@ func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.Blockchai
 }
 
 func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPayload) *responses.BlockchainConfigResponse {
-	return &responses.BlockchainConfigResponse{
-		ChainId:                   p.ChainId,
-		CollectionsManagerAddress: p.CollectionsManagerAddress,
-		CollectionCreatorAddress:  p.CollectionCreatorAddress,
-		Token6022Address:          p.Token6022Address,
-		EnsRegistryAddress:        p.EnsRegistryAddress,
-		FacilitatorNetworks:       p.FacilitatorNetworks,
+	chains := make(map[string]responses.ChainConfig, len(p.Chains))
+	for chainId, c := range p.Chains {
+		chains[chainId] = responses.ChainConfig{
+			CollectionsManagerAddress: c.CollectionsManagerAddress,
+			CollectionCreatorAddress:  c.CollectionCreatorAddress,
+			Token6022Address:          c.Token6022Address,
+			EnsRegistryAddress:        c.EnsRegistryAddress,
+			Mintable:                  c.Mintable,
+			FacilitatorNetwork:        c.FacilitatorNetwork,
+		}
 	}
+	return &responses.BlockchainConfigResponse{Chains: chains}
 }

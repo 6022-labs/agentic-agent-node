@@ -4,11 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 )
-
-const caip2Eip155Prefix = "eip155:"
 
 // EncodeBase64Json renders v the way x402 headers carry JSON payloads.
 func EncodeBase64Json(v any) (string, error) {
@@ -36,16 +33,3 @@ func DecodePaymentPayload(header string) (*PaymentPayload, error) {
 	return &payload, nil
 }
 
-// ParseEip155ChainId extracts the chain id from a CAIP-2 eip155 network
-// identifier ("eip155:80002" → 80002).
-func ParseEip155ChainId(network string) (int64, error) {
-	rest, found := strings.CutPrefix(network, caip2Eip155Prefix)
-	if !found {
-		return 0, fmt.Errorf("network %q is not a CAIP-2 eip155 identifier", network)
-	}
-	chainId, err := strconv.ParseInt(rest, 10, 64)
-	if err != nil || chainId <= 0 {
-		return 0, fmt.Errorf("network %q has an invalid chain id", network)
-	}
-	return chainId, nil
-}

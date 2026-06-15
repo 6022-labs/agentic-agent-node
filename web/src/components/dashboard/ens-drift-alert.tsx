@@ -16,10 +16,10 @@ import {
 // republishes from their own wallet — setAgentText allows owner or agent wallet.
 export default function EnsDriftAlert() {
   const { wallet } = useWallet()
-  const { drift, provisioned, ensInfo, recheck } = useEnsRecordsDrift()
+  const { chainId, drift, provisioned, ensInfo, recheck } = useEnsRecordsDrift()
   const [publishing, setPublishing] = React.useState(false)
 
-  if (drift.length === 0 || !ensInfo || !wallet) return null
+  if (drift.length === 0 || !ensInfo || !wallet || !chainId) return null
 
   const republish = async () => {
     setPublishing(true)
@@ -28,6 +28,7 @@ export default function EnsDriftAlert() {
         // Fresh registry (e.g. after a redeploy): setAgentText reverts with
         // NotProvisioned until the full record set is initialized.
         await initAgentTexts(
+          chainId,
           ensInfo.collectionAddress,
           ensInfo.tokenId,
           ensInfo.records,
@@ -36,6 +37,7 @@ export default function EnsDriftAlert() {
       } else {
         for (const record of drift) {
           await setAgentText(
+            chainId,
             ensInfo.collectionAddress,
             ensInfo.tokenId,
             record.key,

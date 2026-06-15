@@ -78,7 +78,7 @@ func TestWhenCheckingEnsProvisioning(t *testing.T) {
 		initSuite := func(suite *WhenCheckingEnsProvisioningTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).WithName("alice").Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), "alice").Return(true, nil)
+			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 		}
 
 		t.Run("Should report the registrar's provisioning result", func(t *testing.T) {

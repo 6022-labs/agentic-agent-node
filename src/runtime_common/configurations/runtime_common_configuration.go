@@ -6,12 +6,12 @@ import (
 	"go.uber.org/dig"
 )
 
-// AddRuntimeCommonConfiguration registers the node's chain binding: the chain
-// id, the well-known contract addresses, and the use case serving them to the
-// gateway. The /internal endpoint lives in runtime_common_mvc.
+// AddRuntimeCommonConfiguration registers the reachable chains, the per-chain
+// contract registries, and the use case serving them to the gateway. Each
+// blockchain adapter owns its own RPC clients.
 func AddRuntimeCommonConfiguration(container *dig.Container) {
 	settingsProviders := []any{
-		settings.NewBlockchainSettings,
+		settings.NewChainsSettings,
 		settings.NewAgentCollectionsManagersSettings,
 		settings.NewAgentCollectionCreatorsSettings,
 		settings.NewToken6022Settings,

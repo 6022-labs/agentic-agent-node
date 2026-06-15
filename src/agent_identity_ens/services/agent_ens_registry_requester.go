@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
-	blockchainhelper "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/abi"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_ens/helper"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +22,7 @@ import (
 // guard, init vs refresh) lives in the EnsPublisher domain service.
 type AgentEnsRegistryRequester struct {
 	logger                   *zap.Logger
-	client                   *ethclient.Client
-	blockchainSettings       *ens_settings.BlockchainSettings
+	ethClientFactory         *factory.EthClientFactory
 	registrySettings         *ens_settings.AgentEnsRegistriesSettings
 	transactorFactory        *factory.TransactorFactory
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface
@@ -32,52 +30,54 @@ type AgentEnsRegistryRequester struct {
 
 func NewAgentEnsRegistryRequester(
 	logger *zap.Logger,
-	client *ethclient.Client,
-	blockchainSettings *ens_settings.BlockchainSettings,
+	ethClientFactory *factory.EthClientFactory,
 	registrySettings *ens_settings.AgentEnsRegistriesSettings,
 	transactorFactory *factory.TransactorFactory,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *AgentEnsRegistryRequester {
 	return &AgentEnsRegistryRequester{
 		logger:                   logger,
-		client:                   client,
-		blockchainSettings:       blockchainSettings,
+		ethClientFactory:         ethClientFactory,
 		registrySettings:         registrySettings,
 		transactorFactory:        transactorFactory,
 		agentCollectionRequester: agentCollectionRequester,
 	}
 }
 
-func (r *AgentEnsRegistryRequester) Provisioned(ctx context.Context, collection common.Address, agentName string) (bool, error) {
-	registry, err := r.registry()
+func (r *AgentEnsRegistryRequester) Provisioned(ctx context.Context, chainId string, collection common.Address, agentName string) (bool, error) {
+	registry, err := r.registry(chainId)
 	if err != nil {
 		return false, err
 	}
-	node, err := r.resolveAgentNode(ctx, registry, collection, agentName)
+	node, err := r.resolveAgentNode(ctx, chainId, registry, collection, agentName)
 	if err != nil {
 		return false, err
 	}
 	return registry.Provisioned(&bind.CallOpts{Context: ctx}, node)
 }
 
-func (r *AgentEnsRegistryRequester) Text(ctx context.Context, collection common.Address, agentName, key string) (string, error) {
-	registry, err := r.registry()
+func (r *AgentEnsRegistryRequester) Text(ctx context.Context, chainId string, collection common.Address, agentName, key string) (string, error) {
+	registry, err := r.registry(chainId)
 	if err != nil {
 		return "", err
 	}
-	node, err := r.resolveAgentNode(ctx, registry, collection, agentName)
+	node, err := r.resolveAgentNode(ctx, chainId, registry, collection, agentName)
 	if err != nil {
 		return "", err
 	}
 	return registry.Text(&bind.CallOpts{Context: ctx}, node, key)
 }
 
-func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, collection common.Address, tokenId *big.Int, records []identity_interfaces.EnsRecord) error {
-	registry, err := r.registry()
+func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, records []identity_interfaces.EnsRecord) error {
+	client, err := r.ethClientFactory.For(chainId)
 	if err != nil {
 		return err
 	}
-	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.Id)
+	registry, err := r.registry(chainId)
+	if err != nil {
+		return err
+	}
+	opts, err := r.transactor(ctx, chainId)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, collection 
 	if err != nil {
 		return fmt.Errorf("initAgentTexts: %w", err)
 	}
-	if err := blockchainhelper.WaitForSuccess(ctx, r.client, tx); err != nil {
+	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return fmt.Errorf("initAgentTexts: %w", err)
 	}
 
@@ -102,12 +102,16 @@ func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, collection 
 	return nil
 }
 
-func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, collection common.Address, tokenId *big.Int, key, value string) error {
-	registry, err := r.registry()
+func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, key, value string) error {
+	client, err := r.ethClientFactory.For(chainId)
 	if err != nil {
 		return err
 	}
-	opts, err := r.transactorFactory.Create(ctx, r.blockchainSettings.Id)
+	registry, err := r.registry(chainId)
+	if err != nil {
+		return err
+	}
+	opts, err := r.transactor(ctx, chainId)
 	if err != nil {
 		return err
 	}
@@ -116,7 +120,7 @@ func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, collection co
 	if err != nil {
 		return fmt.Errorf("setAgentText %s: %w", key, err)
 	}
-	if err := blockchainhelper.WaitForSuccess(ctx, r.client, tx); err != nil {
+	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return fmt.Errorf("setAgentText %s: %w", key, err)
 	}
 
@@ -128,31 +132,53 @@ func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, collection co
 	return nil
 }
 
-func (r *AgentEnsRegistryRequester) registry() (*abi.AgentEnsRegistry, error) {
-	registry, err := abi.NewAgentEnsRegistry(r.registrySettings.RegistryAddress, r.client)
+func (r *AgentEnsRegistryRequester) registry(chainId string) (*abi.AgentEnsRegistry, error) {
+	address, ok := r.registrySettings.AddressFor(chainId)
+	if !ok {
+		return nil, fmt.Errorf("no AgentEnsRegistry configured for chainId %s", chainId)
+	}
+	client, err := r.ethClientFactory.For(chainId)
+	if err != nil {
+		return nil, err
+	}
+	registry, err := abi.NewAgentEnsRegistry(address, client)
 	if err != nil {
 		return nil, fmt.Errorf("bind AgentEnsRegistry: %w", err)
 	}
 	return registry, nil
 }
 
+// transactor builds a signing transactor bound to the chain's EVM id.
+func (r *AgentEnsRegistryRequester) transactor(ctx context.Context, chainId string) (*bind.TransactOpts, error) {
+	evmChainId, err := strconv.ParseUint(chainId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return r.transactorFactory.Create(ctx, evmChainId)
+}
+
 // resolveAgentNode reads parentNode + collection name on chain, then computes
 // the agent's ENS namehash.
 func (r *AgentEnsRegistryRequester) resolveAgentNode(
 	ctx context.Context,
+	chainId string,
 	registry *abi.AgentEnsRegistry,
 	collection common.Address,
 	agentLabel string,
 ) ([32]byte, error) {
+	evmChainId, err := strconv.ParseUint(chainId, 10, 64)
+	if err != nil {
+		return [32]byte{}, err
+	}
 	parentNode, err := registry.ParentNode(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("read parentNode: %w", err)
 	}
 
-	collectionName, err := r.agentCollectionRequester.CollectionName(collection)
+	collectionName, err := r.agentCollectionRequester.CollectionName(chainId, collection)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("read collection name: %w", err)
 	}
 
-	return helper.ResolveAgentNode(parentNode, r.blockchainSettings.Id, collectionName, agentLabel), nil
+	return helper.ResolveAgentNode(parentNode, evmChainId, collectionName, agentLabel), nil
 }

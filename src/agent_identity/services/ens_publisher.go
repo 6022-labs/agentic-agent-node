@@ -59,24 +59,24 @@ func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
 	collection := common.HexToAddress(agent.CollectionAddress)
 	tokenId := new(big.Int).SetUint64(*agent.CollectionTokenId)
 
-	provisioned, err := s.ensRegistrar.Provisioned(ctx, collection, agent.Name)
+	provisioned, err := s.ensRegistrar.Provisioned(ctx, agent.ChainId, collection, agent.Name)
 	if err != nil {
 		return err
 	}
 
 	if !provisioned {
-		return s.ensRegistrar.InitRecords(ctx, collection, tokenId, s.runtimeRecordsProvider.RuntimeRecords())
+		return s.ensRegistrar.InitRecords(ctx, agent.ChainId, collection, tokenId, s.runtimeRecordsProvider.RuntimeRecords())
 	}
 
 	for _, record := range s.runtimeRecordsProvider.RuntimeRecords() {
-		current, err := s.ensRegistrar.Text(ctx, collection, agent.Name, record.Key)
+		current, err := s.ensRegistrar.Text(ctx, agent.ChainId, collection, agent.Name, record.Key)
 		if err != nil {
 			return err
 		}
 		if current == record.Value {
 			continue
 		}
-		if err := s.ensRegistrar.SetRecord(ctx, collection, tokenId, record.Key, record.Value); err != nil {
+		if err := s.ensRegistrar.SetRecord(ctx, agent.ChainId, collection, tokenId, record.Key, record.Value); err != nil {
 			return err
 		}
 		s.logger.Info("agent ENS text record refreshed",
@@ -97,5 +97,5 @@ func (s *EnsPublisher) IsProvisioned(ctx context.Context) (bool, error) {
 	if agent == nil || agent.CollectionTokenId == nil {
 		return false, common_interfaces.ErrIdentityNotFound
 	}
-	return s.ensRegistrar.Provisioned(ctx, common.HexToAddress(agent.CollectionAddress), agent.Name)
+	return s.ensRegistrar.Provisioned(ctx, agent.ChainId, common.HexToAddress(agent.CollectionAddress), agent.Name)
 }

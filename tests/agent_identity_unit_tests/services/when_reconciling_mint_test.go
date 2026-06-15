@@ -51,8 +51,8 @@ func TestWhenReconcilingMint(t *testing.T) {
 		nftOwner := common_tests.RandomEthAddress()
 
 		initSuite := func(suite *WhenReconcilingMintTestingSuite) {
-			suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), uint64(5)).Return(nftOwner, nil)
+			suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).Return(nftOwner, nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
 			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(

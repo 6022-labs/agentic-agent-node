@@ -3,6 +3,7 @@ import { z } from "zod"
 import { AGENT_ROLES } from "@/models/agent-registration"
 
 export const registrationDraftFormSchema = z.object({
+  chainId: z.string().min(1, "Select a chain"),
   collectionAddress: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/, "Must be a 0x-prefixed address"),

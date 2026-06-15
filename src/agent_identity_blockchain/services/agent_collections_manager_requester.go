@@ -1,14 +1,15 @@
 package services
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // Collections scanned per findAgentByWallet call, to keep each RPC under the node limit.
@@ -18,23 +19,35 @@ const findAgentByWalletPageSize = 50
 const listCollectionsPageSize = 50
 
 type AgentCollectionsManagerRequester struct {
-	client           *ethclient.Client
+	ethClientFactory *factory.EthClientFactory
 	managersSettings *settings.AgentCollectionsManagersSettings
 }
 
 func NewAgentCollectionsManagerRequester(
-	client *ethclient.Client,
+	ethClientFactory *factory.EthClientFactory,
 	managersSettings *settings.AgentCollectionsManagersSettings,
 ) *AgentCollectionsManagerRequester {
 	return &AgentCollectionsManagerRequester{
-		client:           client,
+		ethClientFactory: ethClientFactory,
 		managersSettings: managersSettings,
 	}
 }
 
+func (r *AgentCollectionsManagerRequester) manager(chainId string) (*abi.AgentCollectionsManager, error) {
+	address, ok := r.managersSettings.AddressFor(chainId)
+	if !ok {
+		return nil, fmt.Errorf("no AgentCollectionsManager configured for chainId %s", chainId)
+	}
+	client, err := r.ethClientFactory.For(chainId)
+	if err != nil {
+		return nil, err
+	}
+	return abi.NewAgentCollectionsManager(address, client)
+}
+
 // IsKnownCollection reports whether the manager governs this collection.
-func (r *AgentCollectionsManagerRequester) IsKnownCollection(collection common.Address) (bool, error) {
-	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)
+func (r *AgentCollectionsManagerRequester) IsKnownCollection(chainId string, collection common.Address) (bool, error) {
+	contract, err := r.manager(chainId)
 	if err != nil {
 		return false, err
 	}
@@ -42,8 +55,8 @@ func (r *AgentCollectionsManagerRequester) IsKnownCollection(collection common.A
 }
 
 // FindAgentByWallet returns the agent NFT a wallet controls, or a zero address if none. The manager scans collections on-chain, paginated by the cursor.
-func (r *AgentCollectionsManagerRequester) FindAgentByWallet(wallet common.Address) (common.Address, uint64, string, error) {
-	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)
+func (r *AgentCollectionsManagerRequester) FindAgentByWallet(chainId string, wallet common.Address) (common.Address, uint64, string, error) {
+	contract, err := r.manager(chainId)
 	if err != nil {
 		return common.Address{}, 0, "", err
 	}
@@ -71,8 +84,8 @@ func (r *AgentCollectionsManagerRequester) FindAgentByWallet(wallet common.Addre
 	}
 }
 
-func (r *AgentCollectionsManagerRequester) ListCollections() ([]models.AgentCollection, error) {
-	contract, err := abi.NewAgentCollectionsManager(r.managersSettings.ManagerAddress, r.client)
+func (r *AgentCollectionsManagerRequester) ListCollections(chainId string) ([]models.AgentCollection, error) {
+	contract, err := r.manager(chainId)
 	if err != nil {
 		return nil, err
 	}

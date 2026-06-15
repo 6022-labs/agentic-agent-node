@@ -3,6 +3,7 @@ package settings
 import (
 	_ "embed"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,46 +23,33 @@ type agentCollectionsManagersFile struct {
 	Managers []agentCollectionsManagerEntry `json:"managers"`
 }
 
-// AgentCollectionsManagersSettings holds the AgentCollectionsManager address
-// for this agent's chain, bound at startup from BlockchainSettings.Id.
-type AgentCollectionsManagersSettings struct {
-	ManagerAddress common.Address
-}
+// AgentCollectionsManagersSettings holds the AgentCollectionsManager address per
+// chain id (inner join of the built-in registry and the configured chains).
+type AgentCollectionsManagersSettings map[string]common.Address
 
-func NewAgentCollectionsManagersSettings(
-	logger *zap.Logger,
-	blockchainSettings *BlockchainSettings,
-) *AgentCollectionsManagersSettings {
+func NewAgentCollectionsManagersSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentCollectionsManagersSettings {
 	var f agentCollectionsManagersFile
 	if err := json.Unmarshal(agentCollectionsManagersJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collections_managers.json", zap.Error(err))
 	}
 
+	settings := AgentCollectionsManagersSettings{}
 	for _, m := range f.Managers {
-		if m.ChainId != blockchainSettings.Id {
+		addr := strings.TrimSpace(m.Address)
+		chainId := strconv.FormatUint(m.ChainId, 10)
+		if len(addr) == 0 || !chainsSettings.Has(chainId) {
 			continue
 		}
-		addr := strings.TrimSpace(m.Address)
-		if len(addr) == 0 {
-			logger.Fatal(
-				"AgentCollectionsManager address is empty for the configured chain; populate agent_collections_managers.json and rebuild",
-				zap.Uint64("chainId", blockchainSettings.Id),
-				zap.String("name", m.Name),
-			)
-		}
-		logger.Info("resolved AgentCollectionsManager from built-in registry",
-			zap.Uint64("chainId", blockchainSettings.Id),
-			zap.String("name", m.Name),
-			zap.String("address", addr),
-		)
-		return &AgentCollectionsManagersSettings{
-			ManagerAddress: common.HexToAddress(addr),
-		}
+		settings[chainId] = common.HexToAddress(addr)
 	}
+	return &settings
+}
 
-	logger.Fatal(
-		"no AgentCollectionsManager entry for the configured chain; add an entry to agent_collections_managers.json and rebuild",
-		zap.Uint64("chainId", blockchainSettings.Id),
-	)
-	return nil
+// AddressFor returns the AgentCollectionsManager address for a chain, if any.
+func (s *AgentCollectionsManagersSettings) AddressFor(chainId string) (common.Address, bool) {
+	if s == nil {
+		return common.Address{}, false
+	}
+	addr, ok := (*s)[chainId]
+	return addr, ok
 }

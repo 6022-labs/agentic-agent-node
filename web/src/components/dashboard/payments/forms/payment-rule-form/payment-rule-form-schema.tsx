@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { getAppConfig } from "@/configs/app-config"
+import { getFacilitatorNetworks } from "@/configs/app-config"
 import { isZeroAmount } from "@/lib/token-format"
 
 const evmAddress = /^0x[0-9a-fA-F]{40}$/
@@ -44,7 +44,7 @@ export const paymentRuleFormSchema = z
     // networks; free rules never contact one.
     if (
       !isZeroAmount(data.price) &&
-      !getAppConfig().facilitatorNetworks.includes(data.network)
+      !getFacilitatorNetworks().includes(data.network)
     ) {
       ctx.addIssue({
         code: "custom",

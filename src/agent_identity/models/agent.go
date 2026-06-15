@@ -13,6 +13,8 @@ import (
 type Agent struct {
 	Id uuid.UUID `gorm:"primaryKey;size:36" json:"id"`
 
+	ChainId string `gorm:"not null;size:64" json:"chainId"`
+
 	CollectionTokenId *uint64 `json:"collectionTokenId"`
 	CollectionAddress string  `gorm:"size:42" json:"collectionAddress"`
 	ProposalId        *uint64 `json:"proposalId"`

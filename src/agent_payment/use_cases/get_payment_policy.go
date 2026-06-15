@@ -19,7 +19,6 @@ func NewGetPaymentPolicy(
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
-	blockchainSettings *runtime_common_settings.BlockchainSettings,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *GetPaymentPolicy {
 	return &GetPaymentPolicy{
@@ -28,7 +27,6 @@ func NewGetPaymentPolicy(
 			paymentPolicyRepository,
 			paymentRuleRepository,
 			paymentMethodStrategies,
-			blockchainSettings,
 			token6022Settings,
 		),
 	}

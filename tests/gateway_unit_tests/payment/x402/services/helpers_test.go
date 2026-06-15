@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -44,8 +45,9 @@ func x402TestAuthorization(from string, accept *x402.X402Config) x402.Eip3009Aut
 func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.Eip3009Authorization, accept *x402.X402Config) *x402.PaymentPayload {
 	t.Helper()
 
-	chainId, err := x402.ParseEip155ChainId(accept.Network)
+	parsedChainId, err := helpers.ParseCaip2(accept.Network)
 	assert.NoError(t, err)
+	chainId := int64(parsedChainId)
 
 	typedData := apitypes.TypedData{
 		Types: apitypes.Types{
@@ -168,8 +170,9 @@ func permit2TypedData(t *testing.T, auth *x402.Permit2Authorization, chainId int
 func signPermit2Payment(t *testing.T, key *ecdsa.PrivateKey, auth *x402.Permit2Authorization, config *x402.X402Config) *x402.PaymentPayload {
 	t.Helper()
 
-	chainId, err := x402.ParseEip155ChainId(config.Network)
+	parsedChainId, err := helpers.ParseCaip2(config.Network)
 	assert.NoError(t, err)
+	chainId := int64(parsedChainId)
 
 	digest, _, err := apitypes.TypedDataAndHash(permit2TypedData(t, auth, chainId))
 	assert.NoError(t, err)

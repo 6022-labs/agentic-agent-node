@@ -152,6 +152,8 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      chainId:
+        type: string
       cloneOf:
         type: integer
       collectionAddress:
@@ -193,18 +195,23 @@ definitions:
     type: object
   responses.BlockchainConfigResponse:
     properties:
-      chainId:
-        type: integer
+      chains:
+        additionalProperties:
+          $ref: '#/definitions/responses.ChainConfig'
+        type: object
+    type: object
+  responses.ChainConfig:
+    properties:
       collectionCreatorAddress:
         type: string
       collectionsManagerAddress:
         type: string
       ensRegistryAddress:
         type: string
-      facilitatorNetworks:
-        items:
-          type: string
-        type: array
+      facilitatorNetwork:
+        type: string
+      mintable:
+        type: boolean
       token6022Address:
         type: string
     type: object
@@ -434,6 +441,10 @@ info:
 paths:
   /internal/agent/collections:
     get:
+      parameters:
+      - in: query
+        name: chainId
+        type: string
       produces:
       - application/json
       responses:
@@ -441,6 +452,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentCollectionsResponse'
+        "400":
+          description: chain_id_required
+          schema:
+            $ref: '#/definitions/fiber.Map'
         "502":
           description: collections_read_failed
           schema:

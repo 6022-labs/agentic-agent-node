@@ -36,14 +36,13 @@ func WhenGettingPaymentPolicyBeforeEach(t *testing.T) *WhenGettingPaymentPolicyT
 	mockPaymentPolicyRepository := payment_repositories_mocks.NewMockPaymentPolicyRepositoryInterface(mockController)
 	mockPaymentRuleRepository := payment_repositories_mocks.NewMockPaymentRuleRepositoryInterface(mockController)
 
-	blockchainSettings := &runtime_common_settings.BlockchainSettings{Id: 80002}
 	token6022Settings := &runtime_common_settings.Token6022Settings{
-		SmartContractAddress: common.HexToAddress("0x4242424242424242424242424242424242424242"),
+		"80002": common.HexToAddress("0x4242424242424242424242424242424242424242"),
 	}
 	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenGettingPaymentPolicyTestingSuite{
-		sut: use_cases.NewGetPaymentPolicy(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, blockchainSettings, token6022Settings),
+		sut: use_cases.NewGetPaymentPolicy(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, token6022Settings),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockPaymentPolicyRepository: mockPaymentPolicyRepository,

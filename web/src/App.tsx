@@ -27,10 +27,14 @@ const metadata = {
 function App() {
   React.useMemo(() => {
     // App renders under ConfigGate, so the runtime config is loaded by now.
-    const { chainId } = getAppConfig()
-    const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
-      networkByChainId[chainId] ?? polygonAmoy,
-    ]
+    // AppKit is initialized with every chain the node serves.
+    const configured = Object.keys(getAppConfig().chains)
+      .map((id) => networkByChainId[Number(id)])
+      .filter((n): n is AppKitNetwork => Boolean(n))
+    const networks: [AppKitNetwork, ...AppKitNetwork[]] =
+      configured.length > 0
+        ? (configured as [AppKitNetwork, ...AppKitNetwork[]])
+        : [polygonAmoy]
     createAppKit({
       adapters: [new EthersAdapter()],
       networks,

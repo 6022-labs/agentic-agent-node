@@ -41,7 +41,7 @@ import {
   listPaymentRules,
   updatePaymentRule,
 } from "@/queries/api/payment-rule.queries"
-import { getAppConfig } from "@/configs/app-config"
+import { getFacilitatorNetworks } from "@/configs/app-config"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 import {
   formatNetwork,
@@ -193,7 +193,7 @@ export default function PaymentPolicySection() {
     rule.addressPatterns?.includes(EVERYONE_PATTERN)
   // A paid rule whose network has no configured facilitator can't be settled,
   // so callers can never pay it — flag it.
-  const facilitatorNetworks = getAppConfig().facilitatorNetworks
+  const facilitatorNetworks = getFacilitatorNetworks()
   const isUnsettleable = (rule: PaymentRule) =>
     rule.price !== "0" && !facilitatorNetworks.includes(rule.network)
   const acceptingPayments = rules.some(

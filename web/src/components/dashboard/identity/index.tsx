@@ -26,7 +26,6 @@ import {
   computeWizardStep,
   type WizardStepNumber,
 } from "@/components/dashboard/identity/wizard-step"
-import { getAppConfig } from "@/configs/app-config"
 import { getEnsAppUrl } from "@/configs/networks"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import {
@@ -167,7 +166,7 @@ export default function IdentitySection() {
               label="ENS domain"
               value={draft.ensDomain}
               mono
-              href={getEnsAppUrl(getAppConfig().chainId, draft.ensDomain)}
+              href={getEnsAppUrl(Number(draft.chainId), draft.ensDomain)}
             />
           ) : null}
         </div>

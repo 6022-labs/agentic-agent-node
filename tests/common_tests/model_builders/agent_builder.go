@@ -12,6 +12,7 @@ import (
 
 type AgentBuilder struct {
 	id                uuid.UUID
+	chainId           string
 	collectionTokenId *uint64
 	collectionAddress string
 	proposalId        *uint64
@@ -41,6 +42,7 @@ func NewAgentBuilder() *AgentBuilder {
 
 	return &AgentBuilder{
 		id:                uuid.New(),
+		chainId:           "80002",
 		collectionTokenId: &collectionTokenId,
 		collectionAddress: common_tests.RandomEthAddress().Hex(),
 		name:              faker.Name(),
@@ -54,6 +56,11 @@ func NewAgentBuilder() *AgentBuilder {
 		createdAt:         createdAt,
 		updatedAt:         updatedAt,
 	}
+}
+
+func (b *AgentBuilder) WithChainId(chainId string) *AgentBuilder {
+	b.chainId = chainId
+	return b
 }
 
 func (b *AgentBuilder) WithId(id uuid.UUID) *AgentBuilder {
@@ -140,6 +147,7 @@ func (b *AgentBuilder) WithUpdatedAt(updatedAt time.Time) *AgentBuilder {
 func (b *AgentBuilder) Build() *models.Agent {
 	return &models.Agent{
 		Id:                b.id,
+		ChainId:           b.chainId,
 		CollectionTokenId: b.collectionTokenId,
 		CollectionAddress: b.collectionAddress,
 		ProposalId:        b.proposalId,

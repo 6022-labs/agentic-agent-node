@@ -39,7 +39,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
 			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"chainId":80002,"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","facilitatorNetworks":["eip155:80002"]}`),
+				Body:         []byte(`{"chains":{"80002":{"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","mintable":true,"facilitatorNetwork":"eip155:80002"}}}`),
 			}, nil)
 		}
 
@@ -53,12 +53,17 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) {
-				assert.Equal(t, uint64(80002), payload.ChainId)
-				assert.Equal(t, "0xmanager", payload.CollectionsManagerAddress)
-				assert.Equal(t, "0xcreator", payload.CollectionCreatorAddress)
-				assert.Equal(t, "0xtoken", payload.Token6022Address)
-				assert.Equal(t, "0xens", payload.EnsRegistryAddress)
-				assert.Equal(t, []string{"eip155:80002"}, payload.FacilitatorNetworks)
+				if assert.Len(t, payload.Chains, 1) {
+					chain := payload.Chains["80002"]
+					assert.Equal(t, "0xmanager", chain.CollectionsManagerAddress)
+					assert.Equal(t, "0xcreator", chain.CollectionCreatorAddress)
+					assert.Equal(t, "0xtoken", chain.Token6022Address)
+					assert.Equal(t, "0xens", chain.EnsRegistryAddress)
+					assert.True(t, chain.Mintable)
+					if assert.NotNil(t, chain.FacilitatorNetwork) {
+						assert.Equal(t, "eip155:80002", *chain.FacilitatorNetwork)
+					}
+				}
 			}
 		})
 	})

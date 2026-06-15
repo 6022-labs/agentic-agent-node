@@ -42,9 +42,9 @@ func (m *MockAgentMinterInterface) EXPECT() *MockAgentMinterInterfaceMockRecorde
 }
 
 // CreateMintProposal mocks base method.
-func (m *MockAgentMinterInterface) CreateMintProposal(ctx context.Context, params interfaces.MintParams) (string, uint64, error) {
+func (m *MockAgentMinterInterface) CreateMintProposal(ctx context.Context, chainId string, params interfaces.MintParams) (string, uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateMintProposal", ctx, params)
+	ret := m.ctrl.Call(m, "CreateMintProposal", ctx, chainId, params)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(uint64)
 	ret2, _ := ret[2].(error)
@@ -52,22 +52,22 @@ func (m *MockAgentMinterInterface) CreateMintProposal(ctx context.Context, param
 }
 
 // CreateMintProposal indicates an expected call of CreateMintProposal.
-func (mr *MockAgentMinterInterfaceMockRecorder) CreateMintProposal(ctx, params any) *gomock.Call {
+func (mr *MockAgentMinterInterfaceMockRecorder) CreateMintProposal(ctx, chainId, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMintProposal", reflect.TypeOf((*MockAgentMinterInterface)(nil).CreateMintProposal), ctx, params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMintProposal", reflect.TypeOf((*MockAgentMinterInterface)(nil).CreateMintProposal), ctx, chainId, params)
 }
 
 // Mint mocks base method.
-func (m *MockAgentMinterInterface) Mint(ctx context.Context, params interfaces.MintParams) (string, error) {
+func (m *MockAgentMinterInterface) Mint(ctx context.Context, chainId string, params interfaces.MintParams) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Mint", ctx, params)
+	ret := m.ctrl.Call(m, "Mint", ctx, chainId, params)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Mint indicates an expected call of Mint.
-func (mr *MockAgentMinterInterfaceMockRecorder) Mint(ctx, params any) *gomock.Call {
+func (mr *MockAgentMinterInterfaceMockRecorder) Mint(ctx, chainId, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Mint", reflect.TypeOf((*MockAgentMinterInterface)(nil).Mint), ctx, params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Mint", reflect.TypeOf((*MockAgentMinterInterface)(nil).Mint), ctx, chainId, params)
 }

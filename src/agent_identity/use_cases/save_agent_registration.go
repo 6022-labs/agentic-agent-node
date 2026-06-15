@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/big"
 	"mime/multipart"
 	"strings"
 	"time"
@@ -34,7 +35,8 @@ type SaveAgentRegistration struct {
 	ipfsFileStorage                  identity_interfaces.IPFSFileStorageInterface
 	token6022Requester               identity_interfaces.Token6022RequesterInterface
 	agentIdentitySettings            *settings.AgentIdentitySettings
-	blockchainSettings               *runtime_common_settings.BlockchainSettings
+	chainsSettings                   *runtime_common_settings.ChainsSettings
+	agentCollectionCreatorsSettings  *runtime_common_settings.AgentCollectionCreatorsSettings
 }
 
 func NewSaveAgentRegistration(
@@ -47,7 +49,8 @@ func NewSaveAgentRegistration(
 	ipfsFileStorage identity_interfaces.IPFSFileStorageInterface,
 	token6022Requester identity_interfaces.Token6022RequesterInterface,
 	agentIdentitySettings *settings.AgentIdentitySettings,
-	blockchainSettings *runtime_common_settings.BlockchainSettings,
+	chainsSettings *runtime_common_settings.ChainsSettings,
+	agentCollectionCreatorsSettings *runtime_common_settings.AgentCollectionCreatorsSettings,
 ) *SaveAgentRegistration {
 	return &SaveAgentRegistration{
 		agentRepository:                  agentRepository,
@@ -59,7 +62,8 @@ func NewSaveAgentRegistration(
 		ipfsFileStorage:                  ipfsFileStorage,
 		token6022Requester:               token6022Requester,
 		agentIdentitySettings:            agentIdentitySettings,
-		blockchainSettings:               blockchainSettings,
+		chainsSettings:                   chainsSettings,
+		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 	}
 }
 
@@ -68,9 +72,17 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, err
 	}
 
+	// Identity-capable = reachable + a creator is deployed.
+	if !u.chainsSettings.Has(req.ChainId) {
+		return nil, errors.NewValidationError("chainId", "node has no RPC for this chain")
+	}
+	if _, ok := u.agentCollectionCreatorsSettings.AddressFor(req.ChainId); !ok {
+		return nil, errors.NewValidationError("chainId", "no agent collection creator is deployed on this chain")
+	}
+
 	collection := common.HexToAddress(req.CollectionAddress)
 
-	known, err := u.agentCollectionsManagerRequester.IsKnownCollection(collection)
+	known, err := u.agentCollectionsManagerRequester.IsKnownCollection(req.ChainId, collection)
 	if err != nil {
 		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
 	}
@@ -86,7 +98,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet")
 	}
 
-	collectionName, err := u.agentCollectionRequester.CollectionName(collection)
+	collectionName, err := u.agentCollectionRequester.CollectionName(req.ChainId, collection)
 	if err != nil {
 		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
 	}
@@ -101,10 +113,11 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	_ = role.Set(req.Role)
 
 	agent := &models.Agent{
+		ChainId:           req.ChainId,
 		CollectionAddress: collection.Hex(),
 		Name:              req.Name,
 		CloneOf:           req.CloneOf,
-		EnsDomain:         u.ensDomain(req.Name, collectionName),
+		EnsDomain:         u.ensDomain(req.ChainId, req.Name, collectionName),
 		Role:              role,
 		Creator:           owner,
 		WalletAddress:     cred.Address,
@@ -187,12 +200,17 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.
 	return images, nil
 }
 
-// computeStars maps the creator's $6022 balance to a 0-8 rating by the number
-// of whole-token digits (matches the orchestrator's create-agent flow).
+// computeStars maps the creator's $6022 balance to a 0-8 rating by whole-token
+// digit count. The balance is summed across every reachable chain, best-effort
+// (chains that fail to read are skipped).
 func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, error) {
-	balance, err := u.token6022Requester.BalanceOf(creator)
-	if err != nil {
-		return 0, err
+	total := new(big.Int)
+	for _, chainId := range u.chainsSettings.ChainIds() {
+		balance, err := u.token6022Requester.BalanceOf(chainId, creator)
+		if err != nil {
+			continue
+		}
+		total.Add(total, balance)
 	}
 
 	decimals, err := u.token6022Requester.Decimals()
@@ -200,7 +218,7 @@ func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, err
 		return 0, err
 	}
 
-	whole := balance.String()
+	whole := total.String()
 	if len(whole) <= int(decimals) {
 		return 0, nil
 	}
@@ -210,11 +228,11 @@ func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, err
 
 // ensDomain composes the display domain: <name>.<collection>.<chainId>.<baseDomain>,
 // matching the ENS gateway convention and the registry's node derivation.
-func (u *SaveAgentRegistration) ensDomain(name, collectionName string) string {
-	return fmt.Sprintf("%s.%s.%d.%s",
+func (u *SaveAgentRegistration) ensDomain(chainId, name, collectionName string) string {
+	return fmt.Sprintf("%s.%s.%s.%s",
 		strings.ToLower(name),
 		strings.ToLower(collectionName),
-		u.blockchainSettings.Id,
+		chainId,
 		strings.ToLower(u.agentIdentitySettings.EnsBaseDomain),
 	)
 }

@@ -3,6 +3,7 @@ package settings
 import (
 	_ "embed"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,47 +23,33 @@ type agentEnsRegistriesFile struct {
 	Registries []agentEnsRegistryEntry `json:"registries"`
 }
 
-// AgentEnsRegistriesSettings holds the AgentEnsRegistry contract address bound
-// to the chain this agent runs against. Resolved at startup from the built-in
-// registry; fail-fast if no entry exists for the configured chain.
-type AgentEnsRegistriesSettings struct {
-	RegistryAddress common.Address
-}
+// AgentEnsRegistriesSettings holds the AgentEnsRegistry contract address per
+// chain id (inner join of the built-in registry and the configured chains).
+type AgentEnsRegistriesSettings map[string]common.Address
 
-func NewAgentEnsRegistriesSettings(
-	logger *zap.Logger,
-	blockchainSettings *BlockchainSettings,
-) *AgentEnsRegistriesSettings {
+func NewAgentEnsRegistriesSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentEnsRegistriesSettings {
 	var f agentEnsRegistriesFile
 	if err := json.Unmarshal(agentEnsRegistriesJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_ens_registries.json", zap.Error(err))
 	}
 
+	settings := AgentEnsRegistriesSettings{}
 	for _, w := range f.Registries {
-		if w.ChainId != blockchainSettings.Id {
+		addr := strings.TrimSpace(w.Address)
+		chainId := strconv.FormatUint(w.ChainId, 10)
+		if len(addr) == 0 || !chainsSettings.Has(chainId) {
 			continue
 		}
-		addr := strings.TrimSpace(w.Address)
-		if len(addr) == 0 {
-			logger.Fatal(
-				"AgentEnsRegistry address is empty for the configured chain; populate agent_ens_registries.json and rebuild",
-				zap.Uint64("chainId", blockchainSettings.Id),
-				zap.String("name", w.Name),
-			)
-		}
-		logger.Info("resolved AgentEnsRegistry from built-in registry",
-			zap.Uint64("chainId", blockchainSettings.Id),
-			zap.String("name", w.Name),
-			zap.String("address", addr),
-		)
-		return &AgentEnsRegistriesSettings{
-			RegistryAddress: common.HexToAddress(addr),
-		}
+		settings[chainId] = common.HexToAddress(addr)
 	}
+	return &settings
+}
 
-	logger.Fatal(
-		"no AgentEnsRegistry entry for the configured chain; add an entry to agent_ens_registries.json and rebuild",
-		zap.Uint64("chainId", blockchainSettings.Id),
-	)
-	return nil
+// AddressFor returns the AgentEnsRegistry address for a chain, if any.
+func (s *AgentEnsRegistriesSettings) AddressFor(chainId string) (common.Address, bool) {
+	if s == nil {
+		return common.Address{}, false
+	}
+	addr, ok := (*s)[chainId]
+	return addr, ok
 }

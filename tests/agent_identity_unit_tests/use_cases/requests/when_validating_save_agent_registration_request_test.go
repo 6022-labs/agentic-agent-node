@@ -17,6 +17,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 
 	generateSaveAgentRegistrationRequest := func(t *testing.T) *requests.SaveAgentRegistrationRequest {
 		return &requests.SaveAgentRegistrationRequest{
+			ChainId:           "80002",
 			CollectionAddress: "  " + common_tests.RandomEthAddress().Hex() + "  ",
 			Owner:             common_tests.RandomEthAddress().Hex(),
 			Name:              "  Alice  ",
@@ -53,6 +54,19 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 
 			assert.NoError(t, req.ValidateAndSanitize())
 			assert.Equal(t, map[string]string{}, req.Attributes)
+		})
+	})
+
+	t.Run("Given the chain id is empty", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.ChainId = "   "
+
+			assert.Error(t, req.ValidateAndSanitize())
 		})
 	})
 

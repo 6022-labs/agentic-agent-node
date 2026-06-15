@@ -27,7 +27,12 @@ export function useEnsRecordsDrift() {
     }
     try {
       const { data: info } = await getAgentEnsInfo()
-      const state = await getEnsRecordsDrift(info, registration.name, wallet)
+      const state = await getEnsRecordsDrift(
+        registration.chainId,
+        info,
+        registration.name,
+        wallet
+      )
       setEnsInfo(info)
       setProvisioned(state.provisioned)
       setDrift(state.drift)
@@ -41,5 +46,11 @@ export function useEnsRecordsDrift() {
     void recheck()
   }, [recheck])
 
-  return { drift, provisioned, ensInfo, recheck }
+  return {
+    chainId: registration?.chainId,
+    drift,
+    provisioned,
+    ensInfo,
+    recheck,
+  }
 }
