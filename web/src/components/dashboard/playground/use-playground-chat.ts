@@ -101,34 +101,34 @@ export function usePlaygroundChat() {
         freeRule
       )
 
+      // OpenAI Responses contract: the server owns history (keyed by the
+      // conversation id), so we send only the new turn and continue the
+      // thread via previous_response_id.
       const { data } = await createResponse(
         {
-          conversationId,
-          platform: "none",
-          prompt,
-          input: nextMessages.map(
-            ({ id, author, role, content, timestamp }) => ({
-              id,
-              author,
-              role,
-              content,
-              timestamp,
-            })
-          ),
+          input: content,
+          instructions: prompt,
+          previous_response_id: conversationId,
         },
         paymentHeader
       )
 
-      const output = data.output?.[0]
+      if (data.id && data.id !== conversationId) {
+        setConversationId(data.id)
+      }
+
+      const output = data.output?.find((item) => item.type === "message")
+      const text =
+        output?.content
+          ?.filter((part) => part.type === "output_text")
+          .map((part) => part.text)
+          .join("") || "(no output)"
       const assistantMessage: ChatMessage = {
-        id: output?.id ?? newId(),
+        id: output?.id || newId(),
         author: "assistant",
         role: "assistant",
-        content: output?.content ?? "(no output)",
-        timestamp: output?.timestamp ?? new Date().toISOString(),
-        stats: data.stats
-          ? `${data.stats.iterations} iters · ${data.stats.toolCalls} tools · ${data.stats.tokens} tokens · ${data.stats.wallClockMs}ms`
-          : undefined,
+        content: text,
+        timestamp: new Date().toISOString(),
       }
       setMessages((prev) => [...prev, assistantMessage])
       void loadConversations()

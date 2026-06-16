@@ -1,42 +1,55 @@
 import type { MessageRole } from "@/models/enums/message-role"
 
-export type InputMessage = {
-  id: string
-  author: string
+export type InputMessageItem = {
+  type?: "message"
   role: MessageRole
   content: string
-  timestamp: string
 }
 
+// Mirrors the OpenAI Responses `create` body. Continuation is by
+// previous_response_id (or conversation); only the new turn is sent.
 export type CreateResponseRequest = {
-  conversationId: string
-  platform: "none" | "slack"
-  prompt: string
-  input: InputMessage[]
-  forceConclusion?: boolean
-  options?: {
-    temperature?: number
-    maxTokens?: number
-    stop?: string[]
-  }
+  model?: string
+  instructions?: string
+  input: string | InputMessageItem[]
+  conversation?: string | { id: string }
+  previous_response_id?: string
+  temperature?: number
+  max_output_tokens?: number
+  metadata?: Record<string, string>
 }
 
-export type OutputMessage = {
+export type OutputContent = {
+  type: string
+  text: string
+  annotations: unknown[]
+}
+
+export type OutputItem = {
+  type: string
   id: string
-  content: string
-  timestamp: string
+  status: string
+  role: string
+  content: OutputContent[]
 }
 
-export type ResponseStats = {
-  iterations: number
-  toolCalls: number
-  tokens: number
-  wallClockMs: number
+export type Usage = {
+  input_tokens: number
+  output_tokens: number
+  total_tokens: number
 }
 
+// Mirrors the OpenAI Responses object.
 export type AgentResponse = {
   id: string
-  isFinal: boolean
-  output: OutputMessage[]
-  stats?: ResponseStats
+  object: string
+  created_at: number
+  status: string
+  model?: string
+  output: OutputItem[]
+  usage: Usage | null
+  previous_response_id: string | null
+  conversation: { id: string } | null
+  metadata?: Record<string, string>
+  error: { code: string; message: string } | null
 }
