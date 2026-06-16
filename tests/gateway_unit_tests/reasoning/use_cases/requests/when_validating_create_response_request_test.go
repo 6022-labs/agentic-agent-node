@@ -1,30 +1,20 @@
 package requests_test
 
 import (
+	"encoding/json"
 	"testing"
-	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
-func validInputMessage() *requests.InputMessageRequest {
-	return &requests.InputMessageRequest{
-		Id:        "msg-1",
-		Author:    "alice.eth",
-		Role:      enums.MessageRoleUser,
-		Content:   "hello",
-		Timestamp: time.Now(),
-	}
-}
 
 func validCreateResponseRequest() *requests.CreateResponseRequest {
 	return &requests.CreateResponseRequest{
-		ConversationId: "conv-1",
-		Platform:       enums.ConversationPlatformSlack,
-		Prompt:         "do the thing",
-		Input:          []*requests.InputMessageRequest{validInputMessage()},
+		PreviousResponseId: "conv-1",
+		Input: requests.ResponseInput{
+			Messages: []requests.InputMessage{{Role: "user", Content: "hello"}},
+		},
 	}
 }
 
@@ -42,124 +32,105 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given conversationId is whitespace", func(t *testing.T) {
+	t.Run("Given input has no messages", func(t *testing.T) {
 		t.Parallel()
 		req := validCreateResponseRequest()
-		req.ConversationId = "   "
+		req.Input.Messages = nil
 
-		t.Run("Should reject with a validation error on conversationId", func(t *testing.T) {
+		t.Run("Should reject with a validation error on input", func(t *testing.T) {
 			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "conversationId")
-		})
-	})
-
-	t.Run("Given prompt is empty", func(t *testing.T) {
-		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Prompt = ""
-
-		t.Run("Should reject with a validation error on prompt", func(t *testing.T) {
-			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "prompt")
-		})
-	})
-
-	t.Run("Given platform is unknown", func(t *testing.T) {
-		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Platform = "telepathy"
-
-		t.Run("Should fall back to ConversationPlatformNone without erroring", func(t *testing.T) {
-			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.NoError(t, err)
-			assert.Equal(t, enums.ConversationPlatformNone, req.Platform)
-		})
-	})
-
-	t.Run("Given an input message has an empty id", func(t *testing.T) {
-		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Input[0].Id = ""
-
-		t.Run("Should reject with a validation error referencing the index", func(t *testing.T) {
-			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "input.id")
-			assert.Contains(t, err.Error(), "0")
+			assert.Contains(t, err.Error(), "input")
 		})
 	})
 
 	t.Run("Given an input message has empty content", func(t *testing.T) {
 		t.Parallel()
 		req := validCreateResponseRequest()
-		req.Input[0].Content = "  "
+		req.Input.Messages[0].Content = "  "
 
-		t.Run("Should reject", func(t *testing.T) {
+		t.Run("Should reject referencing the index", func(t *testing.T) {
 			t.Parallel()
 			err := req.ValidateAndSanitize()
 			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "input.content")
+			assert.Contains(t, err.Error(), "input")
+			assert.Contains(t, err.Error(), "0")
+		})
+	})
+}
+
+func TestWhenUnmarshallingCreateResponseRequest(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given input is a bare string", func(t *testing.T) {
+		t.Parallel()
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":"hello"}`), &req))
+
+		t.Run("Should map to a single user message", func(t *testing.T) {
+			t.Parallel()
+			require.Len(t, req.Input.Messages, 1)
+			assert.Equal(t, "user", req.Input.Messages[0].Role)
+			assert.Equal(t, "hello", req.Input.Messages[0].Content)
 		})
 	})
 
-	t.Run("Given an input message has a zero timestamp", func(t *testing.T) {
+	t.Run("Given input is an array of message items with string content", func(t *testing.T) {
 		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Input[0].Timestamp = time.Time{}
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":[{"type":"message","role":"user","content":"hi"}]}`), &req))
 
-		t.Run("Should reject", func(t *testing.T) {
+		t.Run("Should map role and content", func(t *testing.T) {
 			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "input.timestamp")
+			require.Len(t, req.Input.Messages, 1)
+			assert.Equal(t, "user", req.Input.Messages[0].Role)
+			assert.Equal(t, "hi", req.Input.Messages[0].Content)
 		})
 	})
 
-	t.Run("Given an input message has an unknown role", func(t *testing.T) {
+	t.Run("Given input content is an array of text parts", func(t *testing.T) {
 		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Input[0].Role = "wizard"
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":[{"role":"user","content":[{"type":"input_text","text":"a"},{"type":"input_text","text":"b"}]}]}`), &req))
 
-		t.Run("Should reject and list the allowed roles", func(t *testing.T) {
+		t.Run("Should concatenate the parts", func(t *testing.T) {
 			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "input.role")
+			require.Len(t, req.Input.Messages, 1)
+			assert.Equal(t, "ab", req.Input.Messages[0].Content)
 		})
 	})
 
-	t.Run("Given a tool has an empty name", func(t *testing.T) {
+	t.Run("Given conversation is a bare string", func(t *testing.T) {
 		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Tools = []*requests.InputToolRequest{{Name: "  "}}
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":"hi","conversation":"conv-9"}`), &req))
 
-		t.Run("Should reject with a validation error on tools.name", func(t *testing.T) {
+		t.Run("Should resolve the conversation key", func(t *testing.T) {
 			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "tools.name")
+			assert.Equal(t, "conv-9", req.ConversationKey())
 		})
 	})
 
-	t.Run("Given a tool sets endpoint without url", func(t *testing.T) {
+	t.Run("Given conversation is an object", func(t *testing.T) {
 		t.Parallel()
-		req := validCreateResponseRequest()
-		req.Tools = []*requests.InputToolRequest{{
-			Name:     "search",
-			Endpoint: &requests.InputToolEndpointRequest{Url: ""},
-		}}
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":"hi","conversation":{"id":"conv-7"}}`), &req))
 
-		t.Run("Should reject with a validation error on tools.endpoint.url", func(t *testing.T) {
+		t.Run("Should resolve the conversation key", func(t *testing.T) {
 			t.Parallel()
-			err := req.ValidateAndSanitize()
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "tools.endpoint.url")
+			assert.Equal(t, "conv-7", req.ConversationKey())
+		})
+	})
+
+	t.Run("Given both previous_response_id and conversation are set", func(t *testing.T) {
+		t.Parallel()
+		var req requests.CreateResponseRequest
+		require.NoError(t, json.Unmarshal([]byte(`{"input":"hi","previous_response_id":"resp-1","conversation":"conv-7"}`), &req))
+
+		t.Run("Should prefer previous_response_id", func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, "resp-1", req.ConversationKey())
 		})
 	})
 }

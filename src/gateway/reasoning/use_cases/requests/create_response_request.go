@@ -1,89 +1,135 @@
 package requests
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models/enums"
 )
 
-type InputMessageRequest struct {
-	Id        string            `json:"id"`
-	Author    string            `json:"author"`
-	Role      enums.MessageRole `json:"role"`
-	Content   string            `json:"content"`
-	Timestamp time.Time         `json:"timestamp"`
-}
-
-type InputToolEndpointRequest struct {
-	Kind       string `json:"kind"`
-	Url        string `json:"url"`
-	AuthHeader string `json:"authHeader,omitempty"`
-}
-
-type InputToolRequest struct {
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	Parameters  map[string]any            `json:"parameters"`
-	Endpoint    *InputToolEndpointRequest `json:"endpoint,omitempty"`
-}
-
-type InputOptionsRequest struct {
-	Temperature *float64 `json:"temperature,omitempty"`
-	MaxTokens   *int     `json:"maxTokens,omitempty"`
-	Stop        []string `json:"stop,omitempty"`
-}
-
 type CreateResponseRequest struct {
-	ConversationId  string                     `json:"conversationId"`
-	Platform        enums.ConversationPlatform `json:"platform"`
-	Prompt          string                     `json:"prompt"`
-	Input           []*InputMessageRequest     `json:"input"`
-	ForceConclusion bool                       `json:"forceConclusion"`
-	Tools           []*InputToolRequest        `json:"tools,omitempty"`
-	Options         *InputOptionsRequest       `json:"options,omitempty"`
+	Model              string            `json:"model,omitempty"`
+	Instructions       string            `json:"instructions,omitempty"`
+	Input              ResponseInput     `json:"input"`
+	Conversation       *ConversationRef  `json:"conversation,omitempty"`
+	PreviousResponseId string            `json:"previous_response_id,omitempty"`
+	Temperature        *float64          `json:"temperature,omitempty"`
+	TopP               *float64          `json:"top_p,omitempty"`
+	MaxOutputTokens    *int              `json:"max_output_tokens,omitempty"`
+	Store              *bool             `json:"store,omitempty"`
+	Stream             bool              `json:"stream,omitempty"`
+	Metadata           map[string]string `json:"metadata,omitempty"`
+}
+
+type InputMessage struct {
+	Role    string
+	Content string
+}
+
+type ResponseInput struct {
+	Messages []InputMessage
+}
+
+func (r *ResponseInput) UnmarshalJSON(data []byte) error {
+	var asString string
+	if err := json.Unmarshal(data, &asString); err == nil {
+		r.Messages = []InputMessage{{Role: "user", Content: asString}}
+		return nil
+	}
+
+	var items []struct {
+		Type    string       `json:"type"`
+		Role    string       `json:"role"`
+		Content inputContent `json:"content"`
+	}
+	if err := json.Unmarshal(data, &items); err != nil {
+		return err
+	}
+
+	r.Messages = make([]InputMessage, 0, len(items))
+	for _, item := range items {
+		if item.Type != "" && item.Type != "message" {
+			continue
+		}
+		role := item.Role
+		if role == "" {
+			role = "user"
+		}
+		r.Messages = append(r.Messages, InputMessage{Role: role, Content: item.Content.Text})
+	}
+	return nil
+}
+
+type inputContent struct {
+	Text string
+}
+
+func (c *inputContent) UnmarshalJSON(data []byte) error {
+	var asString string
+	if err := json.Unmarshal(data, &asString); err == nil {
+		c.Text = asString
+		return nil
+	}
+
+	var parts []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(data, &parts); err != nil {
+		return err
+	}
+
+	var builder strings.Builder
+	for _, part := range parts {
+		switch part.Type {
+		case "", "text", "input_text", "output_text":
+			builder.WriteString(part.Text)
+		}
+	}
+	c.Text = builder.String()
+	return nil
+}
+
+type ConversationRef struct {
+	Id string `json:"id"`
+}
+
+func (c *ConversationRef) UnmarshalJSON(data []byte) error {
+	var asString string
+	if err := json.Unmarshal(data, &asString); err == nil {
+		c.Id = asString
+		return nil
+	}
+
+	var object struct {
+		Id string `json:"id"`
+	}
+	if err := json.Unmarshal(data, &object); err != nil {
+		return err
+	}
+	c.Id = object.Id
+	return nil
+}
+
+func (r *CreateResponseRequest) ConversationKey() string {
+	if key := strings.TrimSpace(r.PreviousResponseId); key != "" {
+		return key
+	}
+	if r.Conversation != nil {
+		return strings.TrimSpace(r.Conversation.Id)
+	}
+	return ""
 }
 
 func (r *CreateResponseRequest) ValidateAndSanitize() error {
-	if len(strings.TrimSpace(r.ConversationId)) == 0 {
-		return errors.NewValidationError("conversationId", "cannot be empty")
+	if len(r.Input.Messages) == 0 {
+		return errors.NewValidationError("input", "cannot be empty")
 	}
-
-	if len(strings.TrimSpace(r.Prompt)) == 0 {
-		return errors.NewValidationError("prompt", "cannot be empty")
-	}
-
-	if !enums.GetAllConversationPlatforms().Contains(r.Platform) {
-		r.Platform = enums.ConversationPlatformNone
-	}
-
-	for index, message := range r.Input {
-		if len(strings.TrimSpace(message.Id)) == 0 {
-			return errors.NewValidationError("input.id", "cannot be empty, check input message at index "+strconv.Itoa(index))
-		}
-		if len(strings.TrimSpace(message.Content)) == 0 {
-			return errors.NewValidationError("input.content", "cannot be empty, check input message at index "+strconv.Itoa(index))
-		}
-		if message.Timestamp.IsZero() {
-			return errors.NewValidationError("input.timestamp", "cannot be empty, check input message at index "+strconv.Itoa(index))
-		}
-		if !enums.GetAllMessageRoles().Contains(message.Role) {
-			return errors.NewValidationError("input.role", "invalid role, must be one of: "+enums.GetAllMessageRoles().String()+", check input message at index "+strconv.Itoa(index))
+	for index := range r.Input.Messages {
+		if len(strings.TrimSpace(r.Input.Messages[index].Content)) == 0 {
+			return errors.NewValidationError("input", "message content cannot be empty, check input at index "+strconv.Itoa(index))
 		}
 	}
-
-	for index, tool := range r.Tools {
-		if len(strings.TrimSpace(tool.Name)) == 0 {
-			return errors.NewValidationError("tools.name", "cannot be empty, check tool at index "+strconv.Itoa(index))
-		}
-		if tool.Endpoint != nil {
-			if len(strings.TrimSpace(tool.Endpoint.Url)) == 0 {
-				return errors.NewValidationError("tools.endpoint.url", "cannot be empty when endpoint is set, check tool at index "+strconv.Itoa(index))
-			}
-		}
-	}
-
 	return nil
 }

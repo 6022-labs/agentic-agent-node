@@ -93,6 +93,14 @@
                 },
                 "type": "object"
             },
+            "requests.ConversationRef": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.CreateMCPConnectionRequest": {
                 "properties": {
                     "headerAuth": {
@@ -112,20 +120,50 @@
             },
             "requests.CreateResponseRequest": {
                 "properties": {
-                    "conversationId": {
-                        "type": "string"
+                    "conversation": {
+                        "$ref": "#/components/schemas/requests.ConversationRef"
                     },
-                    "inputs": {
+                    "input": {
                         "items": {
-                            "$ref": "#/components/schemas/requests.CreateResponseRequestInput"
+                            "$ref": "#/components/schemas/requests.InputMessage"
                         },
                         "type": "array",
                         "uniqueItems": false
+                    },
+                    "instructions": {
+                        "type": "string"
+                    },
+                    "max_output_tokens": {
+                        "type": "integer"
+                    },
+                    "metadata": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "previous_response_id": {
+                        "type": "string"
+                    },
+                    "store": {
+                        "type": "boolean"
+                    },
+                    "stream": {
+                        "type": "boolean"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "top_p": {
+                        "type": "number"
                     }
                 },
                 "type": "object"
             },
-            "requests.CreateResponseRequestInput": {
+            "requests.InputMessage": {
                 "properties": {
                     "content": {
                         "type": "string"
@@ -133,7 +171,7 @@
                     "role": {
                         "type": "string"
                     },
-                    "timestamp": {
+                    "type": {
                         "type": "string"
                     }
                 },
@@ -349,6 +387,14 @@
                 },
                 "type": "object"
             },
+            "responses.ConversationRef": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "responses.ConversationSummary": {
                 "properties": {
                     "conversationId": {
@@ -366,24 +412,47 @@
                 },
                 "type": "object"
             },
-            "responses.CreateResponseMessage": {
-                "properties": {
-                    "content": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "timestamp": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "responses.CreateResponseResponse": {
                 "properties": {
-                    "message": {
-                        "$ref": "#/components/schemas/responses.CreateResponseMessage"
+                    "conversation": {
+                        "$ref": "#/components/schemas/responses.ConversationRef"
+                    },
+                    "created_at": {
+                        "type": "integer"
+                    },
+                    "error": {
+                        "$ref": "#/components/schemas/responses.ResponseError"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "object": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.OutputItem"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "previous_response_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/responses.Usage"
                     }
                 },
                 "type": "object"
@@ -579,6 +648,46 @@
                 },
                 "type": "object"
             },
+            "responses.OutputContent": {
+                "properties": {
+                    "annotations": {
+                        "items": {},
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.OutputItem": {
+                "properties": {
+                    "content": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.OutputContent"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "responses.PaymentFacilitatorResponse": {
                 "properties": {
                     "baseUrl": {
@@ -669,6 +778,31 @@
                         "type": "integer"
                     },
                     "tokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ResponseError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.Usage": {
+                "properties": {
+                    "input_tokens": {
+                        "type": "integer"
+                    },
+                    "output_tokens": {
+                        "type": "integer"
+                    },
+                    "total_tokens": {
                         "type": "integer"
                     }
                 },

@@ -1172,6 +1172,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.ConversationRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.CreateMCPConnectionRequest": {
             "type": "object",
             "properties": {
@@ -1192,18 +1200,48 @@ const docTemplate = `{
         "requests.CreateResponseRequest": {
             "type": "object",
             "properties": {
-                "conversationId": {
-                    "type": "string"
+                "conversation": {
+                    "$ref": "#/definitions/requests.ConversationRef"
                 },
-                "inputs": {
+                "input": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/requests.CreateResponseRequestInput"
+                        "$ref": "#/definitions/requests.InputMessage"
                     }
+                },
+                "instructions": {
+                    "type": "string"
+                },
+                "max_output_tokens": {
+                    "type": "integer"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "previous_response_id": {
+                    "type": "string"
+                },
+                "store": {
+                    "type": "boolean"
+                },
+                "stream": {
+                    "type": "boolean"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "top_p": {
+                    "type": "number"
                 }
             }
         },
-        "requests.CreateResponseRequestInput": {
+        "requests.InputMessage": {
             "type": "object",
             "properties": {
                 "content": {
@@ -1212,7 +1250,7 @@ const docTemplate = `{
                 "role": {
                     "type": "string"
                 },
-                "timestamp": {
+                "type": {
                     "type": "string"
                 }
             }
@@ -1425,6 +1463,14 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.ConversationRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.ConversationSummary": {
             "type": "object",
             "properties": {
@@ -1442,25 +1488,47 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.CreateResponseMessage": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "type": "string"
-                }
-            }
-        },
         "responses.CreateResponseResponse": {
             "type": "object",
             "properties": {
-                "message": {
-                    "$ref": "#/definitions/responses.CreateResponseMessage"
+                "conversation": {
+                    "$ref": "#/definitions/responses.ConversationRef"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "error": {
+                    "$ref": "#/definitions/responses.ResponseError"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "object": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.OutputItem"
+                    }
+                },
+                "previous_response_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "usage": {
+                    "$ref": "#/definitions/responses.Usage"
                 }
             }
         },
@@ -1646,6 +1714,44 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.OutputContent": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "array",
+                    "items": {}
+                },
+                "text": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.OutputItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.OutputContent"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.PaymentFacilitatorResponse": {
             "type": "object",
             "properties": {
@@ -1736,6 +1842,31 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "tokenId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "responses.ResponseError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.Usage": {
+            "type": "object",
+            "properties": {
+                "input_tokens": {
+                    "type": "integer"
+                },
+                "output_tokens": {
+                    "type": "integer"
+                },
+                "total_tokens": {
                     "type": "integer"
                 }
             }

@@ -64,6 +64,11 @@ definitions:
       timestamp:
         type: string
     type: object
+  requests.ConversationRef:
+    properties:
+      id:
+        type: string
+    type: object
   requests.CreateMCPConnectionRequest:
     properties:
       headerAuth:
@@ -77,20 +82,40 @@ definitions:
     type: object
   requests.CreateResponseRequest:
     properties:
-      conversationId:
-        type: string
-      inputs:
+      conversation:
+        $ref: '#/definitions/requests.ConversationRef'
+      input:
         items:
-          $ref: '#/definitions/requests.CreateResponseRequestInput'
+          $ref: '#/definitions/requests.InputMessage'
         type: array
+      instructions:
+        type: string
+      max_output_tokens:
+        type: integer
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      model:
+        type: string
+      previous_response_id:
+        type: string
+      store:
+        type: boolean
+      stream:
+        type: boolean
+      temperature:
+        type: number
+      top_p:
+        type: number
     type: object
-  requests.CreateResponseRequestInput:
+  requests.InputMessage:
     properties:
       content:
         type: string
       role:
         type: string
-      timestamp:
+      type:
         type: string
     type: object
   requests.SavePaymentRuleRequest:
@@ -228,6 +253,11 @@ definitions:
       timestamp:
         type: string
     type: object
+  responses.ConversationRef:
+    properties:
+      id:
+        type: string
+    type: object
   responses.ConversationSummary:
     properties:
       conversationId:
@@ -239,19 +269,34 @@ definitions:
       messageCount:
         type: integer
     type: object
-  responses.CreateResponseMessage:
-    properties:
-      content:
-        type: string
-      role:
-        type: string
-      timestamp:
-        type: string
-    type: object
   responses.CreateResponseResponse:
     properties:
-      message:
-        $ref: '#/definitions/responses.CreateResponseMessage'
+      conversation:
+        $ref: '#/definitions/responses.ConversationRef'
+      created_at:
+        type: integer
+      error:
+        $ref: '#/definitions/responses.ResponseError'
+      id:
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      model:
+        type: string
+      object:
+        type: string
+      output:
+        items:
+          $ref: '#/definitions/responses.OutputItem'
+        type: array
+      previous_response_id:
+        type: string
+      status:
+        type: string
+      usage:
+        $ref: '#/definitions/responses.Usage'
     type: object
   responses.EnsInfoResponse:
     properties:
@@ -371,6 +416,31 @@ definitions:
           type: string
         type: array
     type: object
+  responses.OutputContent:
+    properties:
+      annotations:
+        items: {}
+        type: array
+      text:
+        type: string
+      type:
+        type: string
+    type: object
+  responses.OutputItem:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/responses.OutputContent'
+        type: array
+      id:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
   responses.PaymentFacilitatorResponse:
     properties:
       baseUrl:
@@ -430,6 +500,22 @@ definitions:
       proposalId:
         type: integer
       tokenId:
+        type: integer
+    type: object
+  responses.ResponseError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  responses.Usage:
+    properties:
+      input_tokens:
+        type: integer
+      output_tokens:
+        type: integer
+      total_tokens:
         type: integer
     type: object
 info:

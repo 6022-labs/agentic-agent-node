@@ -1,13 +1,5 @@
 basePath: /
 definitions:
-  enums.ConversationPlatform:
-    enum:
-    - none
-    - slack
-    type: string
-    x-enum-varnames:
-    - ConversationPlatformNone
-    - ConversationPlatformSlack
   enums.MessageRole:
     enum:
     - user
@@ -64,6 +56,11 @@ definitions:
           $ref: '#/definitions/requests.AppendConversationMessageInput'
         type: array
     type: object
+  requests.ConversationRef:
+    properties:
+      id:
+        type: string
+    type: object
   requests.CreateMcpConnectionRequest:
     properties:
       authHeaderName:
@@ -77,69 +74,44 @@ definitions:
     type: object
   requests.CreateResponseRequest:
     properties:
-      conversationId:
-        type: string
-      forceConclusion:
-        type: boolean
+      conversation:
+        $ref: '#/definitions/requests.ConversationRef'
       input:
-        items:
-          $ref: '#/definitions/requests.InputMessageRequest'
-        type: array
-      options:
-        $ref: '#/definitions/requests.InputOptionsRequest'
-      platform:
-        $ref: '#/definitions/enums.ConversationPlatform'
-      prompt:
+        $ref: '#/definitions/requests.ResponseInput'
+      instructions:
         type: string
-      tools:
-        items:
-          $ref: '#/definitions/requests.InputToolRequest'
-        type: array
-    type: object
-  requests.InputMessageRequest:
-    properties:
-      author:
-        type: string
-      content:
-        type: string
-      id:
-        type: string
-      role:
-        $ref: '#/definitions/enums.MessageRole'
-      timestamp:
-        type: string
-    type: object
-  requests.InputOptionsRequest:
-    properties:
-      maxTokens:
+      max_output_tokens:
         type: integer
-      stop:
-        items:
+      metadata:
+        additionalProperties:
           type: string
-        type: array
+        type: object
+      model:
+        type: string
+      previous_response_id:
+        type: string
+      store:
+        type: boolean
+      stream:
+        type: boolean
       temperature:
         type: number
+      top_p:
+        type: number
     type: object
-  requests.InputToolEndpointRequest:
+  requests.InputMessage:
     properties:
-      authHeader:
+      content:
         type: string
-      kind:
-        type: string
-      url:
+      role:
         type: string
     type: object
-  requests.InputToolRequest:
+  requests.ResponseInput:
     properties:
-      description:
-        type: string
-      endpoint:
-        $ref: '#/definitions/requests.InputToolEndpointRequest'
-      name:
-        type: string
-      parameters:
-        additionalProperties: {}
-        type: object
+      messages:
+        items:
+          $ref: '#/definitions/requests.InputMessage'
+        type: array
     type: object
   requests.SavePaymentRuleRequest:
     properties:
@@ -201,6 +173,8 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      chainId:
+        type: string
       cloneOf:
         type: integer
       collectionAddress:
@@ -268,6 +242,11 @@ definitions:
       role:
         type: string
       timestamp:
+        type: string
+    type: object
+  responses.ConversationRef:
+    properties:
+      id:
         type: string
     type: object
   responses.ConversationSummary:
@@ -417,13 +396,29 @@ definitions:
           type: string
         type: array
     type: object
-  responses.OutputMessage:
+  responses.OutputContent:
+    properties:
+      annotations:
+        items: {}
+        type: array
+      text:
+        type: string
+      type:
+        type: string
+    type: object
+  responses.OutputItem:
     properties:
       content:
-        type: string
+        items:
+          $ref: '#/definitions/responses.OutputContent'
+        type: array
       id:
         type: string
-      timestamp:
+      role:
+        type: string
+      status:
+        type: string
+      type:
         type: string
     type: object
   responses.RegistrationStatusResponse:
@@ -443,26 +438,47 @@ definitions:
     type: object
   responses.Response:
     properties:
+      conversation:
+        $ref: '#/definitions/responses.ConversationRef'
+      created_at:
+        type: integer
+      error:
+        $ref: '#/definitions/responses.ResponseError'
       id:
         type: string
-      isFinal:
-        type: boolean
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      model:
+        type: string
+      object:
+        type: string
       output:
         items:
-          $ref: '#/definitions/responses.OutputMessage'
+          $ref: '#/definitions/responses.OutputItem'
         type: array
-      stats:
-        $ref: '#/definitions/responses.ResponseStats'
+      previous_response_id:
+        type: string
+      status:
+        type: string
+      usage:
+        $ref: '#/definitions/responses.Usage'
     type: object
-  responses.ResponseStats:
+  responses.ResponseError:
     properties:
-      iterations:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  responses.Usage:
+    properties:
+      input_tokens:
         type: integer
-      tokens:
+      output_tokens:
         type: integer
-      toolCalls:
-        type: integer
-      wallClockMs:
+      total_tokens:
         type: integer
     type: object
   responses.VerifyAuthResponse:

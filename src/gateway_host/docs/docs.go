@@ -1038,17 +1038,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "enums.ConversationPlatform": {
-            "type": "string",
-            "enum": [
-                "none",
-                "slack"
-            ],
-            "x-enum-varnames": [
-                "ConversationPlatformNone",
-                "ConversationPlatformSlack"
-            ]
-        },
         "enums.MessageRole": {
             "type": "string",
             "enum": [
@@ -1133,6 +1122,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.ConversationRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.CreateMcpConnectionRequest": {
             "type": "object",
             "properties": {
@@ -1153,101 +1150,63 @@ const docTemplate = `{
         "requests.CreateResponseRequest": {
             "type": "object",
             "properties": {
-                "conversationId": {
-                    "type": "string"
-                },
-                "forceConclusion": {
-                    "type": "boolean"
+                "conversation": {
+                    "$ref": "#/definitions/requests.ConversationRef"
                 },
                 "input": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/requests.InputMessageRequest"
-                    }
+                    "$ref": "#/definitions/requests.ResponseInput"
                 },
-                "options": {
-                    "$ref": "#/definitions/requests.InputOptionsRequest"
-                },
-                "platform": {
-                    "$ref": "#/definitions/enums.ConversationPlatform"
-                },
-                "prompt": {
+                "instructions": {
                     "type": "string"
                 },
-                "tools": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/requests.InputToolRequest"
-                    }
-                }
-            }
-        },
-        "requests.InputMessageRequest": {
-            "type": "object",
-            "properties": {
-                "author": {
-                    "type": "string"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/enums.MessageRole"
-                },
-                "timestamp": {
-                    "type": "string"
-                }
-            }
-        },
-        "requests.InputOptionsRequest": {
-            "type": "object",
-            "properties": {
-                "maxTokens": {
+                "max_output_tokens": {
                     "type": "integer"
                 },
-                "stop": {
-                    "type": "array",
-                    "items": {
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
                         "type": "string"
                     }
                 },
+                "model": {
+                    "type": "string"
+                },
+                "previous_response_id": {
+                    "type": "string"
+                },
+                "store": {
+                    "type": "boolean"
+                },
+                "stream": {
+                    "type": "boolean"
+                },
                 "temperature": {
+                    "type": "number"
+                },
+                "top_p": {
                     "type": "number"
                 }
             }
         },
-        "requests.InputToolEndpointRequest": {
+        "requests.InputMessage": {
             "type": "object",
             "properties": {
-                "authHeader": {
+                "content": {
                     "type": "string"
                 },
-                "kind": {
-                    "type": "string"
-                },
-                "url": {
+                "role": {
                     "type": "string"
                 }
             }
         },
-        "requests.InputToolRequest": {
+        "requests.ResponseInput": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "endpoint": {
-                    "$ref": "#/definitions/requests.InputToolEndpointRequest"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parameters": {
-                    "type": "object",
-                    "additionalProperties": {}
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.InputMessage"
+                    }
                 }
             }
         },
@@ -1342,6 +1301,9 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "chainId": {
+                    "type": "string"
                 },
                 "cloneOf": {
                     "type": "integer"
@@ -1445,6 +1407,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ConversationRef": {
+            "type": "object",
+            "properties": {
+                "id": {
                     "type": "string"
                 }
             }
@@ -1676,16 +1646,40 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.OutputMessage": {
+        "responses.OutputContent": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "array",
+                    "items": {}
+                },
+                "text": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.OutputItem": {
             "type": "object",
             "properties": {
                 "content": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.OutputContent"
+                    }
                 },
                 "id": {
                     "type": "string"
                 },
-                "timestamp": {
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
@@ -1716,36 +1710,68 @@ const docTemplate = `{
         "responses.Response": {
             "type": "object",
             "properties": {
+                "conversation": {
+                    "$ref": "#/definitions/responses.ConversationRef"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "error": {
+                    "$ref": "#/definitions/responses.ResponseError"
+                },
                 "id": {
                     "type": "string"
                 },
-                "isFinal": {
-                    "type": "boolean"
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "object": {
+                    "type": "string"
                 },
                 "output": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/responses.OutputMessage"
+                        "$ref": "#/definitions/responses.OutputItem"
                     }
                 },
-                "stats": {
-                    "$ref": "#/definitions/responses.ResponseStats"
+                "previous_response_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "usage": {
+                    "$ref": "#/definitions/responses.Usage"
                 }
             }
         },
-        "responses.ResponseStats": {
+        "responses.ResponseError": {
             "type": "object",
             "properties": {
-                "iterations": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.Usage": {
+            "type": "object",
+            "properties": {
+                "input_tokens": {
                     "type": "integer"
                 },
-                "tokens": {
+                "output_tokens": {
                     "type": "integer"
                 },
-                "toolCalls": {
-                    "type": "integer"
-                },
-                "wallClockMs": {
+                "total_tokens": {
                     "type": "integer"
                 }
             }

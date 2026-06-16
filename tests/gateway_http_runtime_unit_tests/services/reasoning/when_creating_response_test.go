@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
@@ -37,15 +36,14 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 func TestWhenCreatingResponse(t *testing.T) {
 	t.Parallel()
 
-	now := time.Now().UTC().Truncate(time.Microsecond)
 	request := &models.ExternalCreateResponsePayload{
-		ConversationId: "conv-1",
-		Inputs: []models.ExternalCreateResponseInputPayload{
-			{Role: "user", Content: "hello", Timestamp: now},
+		PreviousResponseId: "conv-1",
+		Input: []models.ExternalInputMessagePayload{
+			{Type: "message", Role: "user", Content: "hello"},
 		},
 	}
 
-	t.Run("Given the runtime returns an assistant message", func(t *testing.T) {
+	t.Run("Given the runtime returns a completed response", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
@@ -54,42 +52,15 @@ func TestWhenCreatingResponse(t *testing.T) {
 					var sent models.ExternalCreateResponsePayload
 					raw, _ := io.ReadAll(reader)
 					_ = json.Unmarshal(raw, &sent)
-					assert.Equal(t, "conv-1", sent.ConversationId)
+					assert.Equal(t, "conv-1", sent.PreviousResponseId)
 					return &clients.PostInternalResponsesResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"message":{"role":"assistant","content":"hi","timestamp":"2026-01-01T00:00:00Z"}}`),
+						Body:         []byte(`{"id":"conv-1","object":"response","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}]}`),
 					}, nil
 				})
 		}
 
-		t.Run("Should send the conversation and decode the message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Create(context.Background(), request)
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Message) {
-				assert.Equal(t, "assistant", result.Message.Role)
-				assert.Equal(t, "hi", result.Message.Content)
-			}
-		})
-	})
-
-	t.Run("Given the runtime returns an empty message", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalResponsesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-					Body:         []byte(`{}`),
-				}, nil)
-		}
-
-		t.Run("Should return a result with a nil message", func(t *testing.T) {
+		t.Run("Should send the request and decode the OpenAI response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -99,7 +70,38 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
-				assert.Nil(t, result.Message)
+				assert.Equal(t, "conv-1", result.Id)
+				assert.Equal(t, "completed", result.Status)
+				if assert.Len(t, result.Output, 1) && assert.Len(t, result.Output[0].Content, 1) {
+					assert.Equal(t, "hi", result.Output[0].Content[0].Text)
+				}
+			}
+		})
+	})
+
+	t.Run("Given the runtime returns an incomplete response", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalResponsesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"id":"conv-1","object":"response","status":"incomplete","output":[]}`),
+				}, nil)
+		}
+
+		t.Run("Should return a result with no output", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Create(context.Background(), request)
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, "incomplete", result.Status)
+				assert.Empty(t, result.Output)
 			}
 		})
 	})
