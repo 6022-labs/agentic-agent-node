@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import AddMcpConnectionDialog from "@/components/dashboard/mcp/dialogs/add-mcp-connection-dialog"
@@ -67,20 +75,11 @@ export default function McpConfigSection() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <ul className="divide-y">
+          <div className="space-y-2">
             {[0, 1, 2].map((i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between gap-4 py-3"
-              >
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-56" />
-                </div>
-                <Skeleton className="size-8 rounded-md" />
-              </li>
+              <Skeleton key={i} className="h-10 w-full" />
             ))}
-          </ul>
+          </div>
         ) : connections.length === 0 ? (
           <EmptyState
             icon={Plug}
@@ -88,42 +87,56 @@ export default function McpConfigSection() {
             description="Connect an external tool server so the agent can call its tools while reasoning."
           />
         ) : (
-          <ul className="divide-y">
-            {connections.map((connection) => (
-              <li
-                key={connection.id}
-                className="flex items-center justify-between gap-4 py-3"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">
-                      {connection.name}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Connection</TableHead>
+                <TableHead>Server URL</TableHead>
+                <TableHead>Auth</TableHead>
+                <TableHead className="w-20" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {connections.map((connection) => (
+                <TableRow key={connection.id}>
+                  <TableCell className="font-medium">
+                    {connection.name}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className="font-mono text-xs text-muted-foreground"
+                      title={connection.url}
+                    >
+                      {connection.url}
                     </span>
+                  </TableCell>
+                  <TableCell>
                     {connection.headerAuthKeys?.length ? (
                       <Badge variant="secondary">auth</Badge>
-                    ) : null}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {connection.url}
-                  </p>
-                </div>
-                <ConfirmDialog
-                  title="Remove MCP connection?"
-                  description={`The agent will no longer be able to call tools from "${connection.name}".`}
-                  confirmLabel="Remove"
-                  onConfirm={() => onDelete(connection.id)}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Remove connection"
-                  >
-                    <Trash2 />
-                  </Button>
-                </ConfirmDialog>
-              </li>
-            ))}
-          </ul>
+                    ) : (
+                      <Badge variant="outline">none</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ConfirmDialog
+                      title="Remove MCP connection?"
+                      description={`The agent will no longer be able to call tools from "${connection.name}".`}
+                      confirmLabel="Remove"
+                      onConfirm={() => onDelete(connection.id)}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Remove connection"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </ConfirmDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>
