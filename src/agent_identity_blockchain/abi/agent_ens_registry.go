@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package abi_ens
+package abi
 
 import (
 	"errors"
@@ -29,11 +29,7 @@ var (
 	_ = abi.ConvertType
 )
 
-// KeyValue is an auto generated low-level Go binding around an user-defined struct.
-type KeyValue struct {
-	Key   string
-	Value string
-}
+// KeyValue is declared once in agent_collection_v1.go; the dedup generate step strips the duplicate abigen emits here.
 
 // AgentEnsRegistryMetaData contains all meta data concerning the AgentEnsRegistry contract.
 var AgentEnsRegistryMetaData = &bind.MetaData{

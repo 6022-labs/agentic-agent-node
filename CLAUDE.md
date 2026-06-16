@@ -51,7 +51,7 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 | Domain (`src/<domain>`) | Purpose | Adapter modules implementing its ports |
 |---|---|---|
 | `agent_reasoning` | inference loop, LLM + MCP connections | `agent_reasoning_http_inference` (per-provider LLM clients: anthropic/openai/bedrock/ollama/…), `agent_reasoning_http_mcp` (MCP tool calls), `agent_reasoning_mvc` (controllers), `runtime_db` (connection rows), `runtime_vault` (api keys, MCP header-auth) |
-| `agent_identity` | on-chain NFT identity, ENS, wallet bootstrap | `agent_identity_blockchain` (ERC721 mint via AgentCollectionsManager, ENS text records via AgentEnsRegistry, $6022 token reads; shared RPC/transactor/signing infra, ENS bindings in `abi_ens`), `agent_identity_http_ipfs` (image/metadata to IPFS), `agent_identity_mvc`, `runtime_db`, `runtime_vault` (wallet key) |
+| `agent_identity` | on-chain NFT identity, ENS, wallet bootstrap | `agent_identity_blockchain` (ERC721 mint via AgentCollectionsManager, ENS text records via AgentEnsRegistry, $6022 token reads; shared RPC/transactor/signing infra; all contract bindings in `abi`), `agent_identity_http_ipfs` (image/metadata to IPFS), `agent_identity_mvc`, `runtime_db`, `runtime_vault` (wallet key) |
 | `agent_knowledge` | conversation transcripts | `agent_knowledge_mvc`, `runtime_db` |
 | `agent_payment` | payment policy + rules, x402 protocol | `agent_payment_blockchain` (on-chain ERC-20 validation), `agent_payment_mvc`, `runtime_db`; settled via the x402 facilitator (see below) |
 | `runtime_common` | shared blockchain/operator config (chains, $6022 token, payment facilitators, collection managers, ENS registries) read from settings | `runtime_common_mvc` (exposes blockchain config) |

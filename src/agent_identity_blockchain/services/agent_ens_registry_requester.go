@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	abi "github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi_ens"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
