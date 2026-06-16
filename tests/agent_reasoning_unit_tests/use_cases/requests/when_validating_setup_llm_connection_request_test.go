@@ -63,13 +63,14 @@ func TestWhenValidatingSetupLLMConnectionRequest(t *testing.T) {
 	t.Run("Given the api key is empty", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should pass validation and sanitize to an empty string", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSetupLLMConnectionRequest()
 			req.ApiKey = "   "
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, "", req.ApiKey)
 		})
 	})
 }

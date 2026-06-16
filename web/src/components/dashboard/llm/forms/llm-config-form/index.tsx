@@ -154,6 +154,7 @@ export default function LlmConfigForm({ config, onFormComplete }: Props) {
                 </FormControl>
                 <FormDescription>
                   Stored in the node vault, never returned by the API.
+                  {config ? " Leave blank to keep the current key." : ""}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

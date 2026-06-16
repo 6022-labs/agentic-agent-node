@@ -38,11 +38,11 @@ func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *models.ExternalSe
 	}
 	resp, err := c.client.PostInternalConfigLlmWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalLLMConnectionPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }

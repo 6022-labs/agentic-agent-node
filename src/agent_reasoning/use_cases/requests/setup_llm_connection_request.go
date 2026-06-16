@@ -32,8 +32,5 @@ func (r *SetupLLMConnectionRequest) ValidateAndSanitize() error {
 	if len(r.Model) == 0 {
 		return errors.NewValidationError("model", "cannot be empty")
 	}
-	if len(r.ApiKey) == 0 {
-		return errors.NewValidationError("apiKey", "cannot be empty")
-	}
 	return nil
 }

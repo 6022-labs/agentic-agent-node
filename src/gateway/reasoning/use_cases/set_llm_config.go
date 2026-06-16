@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -31,7 +30,7 @@ func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConf
 		ApiKey:   request.ApiKey,
 	})
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 	return u.toResponse(payload), nil
 }

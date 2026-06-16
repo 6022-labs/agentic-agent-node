@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/reasoning"
@@ -98,6 +99,32 @@ func TestWhenSettingUpLLMConfig(t *testing.T) {
 			})
 
 			assert.Error(t, err)
+		})
+	})
+
+	t.Run("Given the runtime rejects the setup with a validation error", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSettingUpLLMConfigTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalConfigLlmWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigLlmResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+				Body:         []byte(`{"code":"validation_error","field":"apiKey","message":"cannot be empty on first setup"}`),
+			}, nil)
+		}
+
+		t.Run("Should map it to a ValidationError preserving the field", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Setup(context.Background(), &models.ExternalSetupLLMConnectionPayload{
+				Platform: "openai",
+				Model:    "gpt-4o",
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
 		})
 	})
 }

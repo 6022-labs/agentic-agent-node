@@ -97,6 +97,54 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the api key is empty and one is already stored", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			gomock.InOrder(
+				suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("sk-existing", true, nil),
+				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
+					return c, nil
+				}),
+			)
+		}
+
+		t.Run("Should keep the stored key and upsert the row without saving", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			request := generateValidSetupLLMConnectionRequest()
+			request.ApiKey = ""
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the api key is empty and none is stored yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
+		}
+
+		t.Run("Should return a validation error without touching the repository", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			request := generateValidSetupLLMConnectionRequest()
+			request.ApiKey = ""
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
 	t.Run("Given vault save fails", func(t *testing.T) {
 		t.Parallel()
 

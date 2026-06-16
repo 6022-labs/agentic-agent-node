@@ -21,8 +21,5 @@ func (r *SetLlmConfigRequest) ValidateAndSanitize() error {
 	if len(strings.TrimSpace(r.Model)) == 0 {
 		return errors.NewValidationError("model", "cannot be empty")
 	}
-	if len(strings.TrimSpace(r.ApiKey)) == 0 {
-		return errors.NewValidationError("apiKey", "cannot be empty")
-	}
 	return nil
 }
