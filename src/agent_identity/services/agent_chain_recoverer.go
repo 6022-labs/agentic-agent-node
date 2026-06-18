@@ -61,8 +61,7 @@ func (s *AgentChainRecoverer) Recover(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// Nothing to do without a local agent, or once its mint is already recorded.
-	if agent == nil || agent.CollectionTokenId != nil {
+	if agent == nil {
 		return false, nil
 	}
 

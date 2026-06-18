@@ -108,28 +108,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the DB agent is already minted", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
-			tokenId := uint64(9)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId, CollectionTokenId: &tokenId}, nil)
-		}
-
-		t.Run("Should skip recovery without touching the wallet or chain", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringAgentFromChainBeforeEach(t)
-			initSuite(suite)
-
-			recovered, err := suite.sut.Recover(context.Background())
-
-			assert.NoError(t, err)
-			assert.False(t, recovered)
-		})
-	})
-
-	t.Run("Given the unminted agent's wallet owns a minted, ENS-provisioned NFT", func(t *testing.T) {
+	t.Run("Given agent's wallet owns a minted, ENS-provisioned NFT", func(t *testing.T) {
 		t.Parallel()
 
 		var capturedAgent *models.Agent
@@ -174,7 +153,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the unminted agent's wallet owns an NFT whose ENS is not provisioned", func(t *testing.T) {
+	t.Run("Given agent's wallet owns an NFT whose ENS is not provisioned", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
@@ -201,7 +180,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the unminted agent's wallet owns no NFT on any chain", func(t *testing.T) {
+	t.Run("Given agent's wallet owns no NFT on any chain", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
