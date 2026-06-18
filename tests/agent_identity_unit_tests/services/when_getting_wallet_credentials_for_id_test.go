@@ -12,27 +12,27 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingWalletCredentialsTestingSuite struct {
+type WhenGettingWalletCredentialsForIdTestingSuite struct {
 	sut *identity_services.WalletCredentialsStorage
 
 	mockStorage *runtime_common_mocks.MockSecretStorageInterface
 }
 
-func WhenGettingWalletCredentialsBeforeEach(t *testing.T) *WhenGettingWalletCredentialsTestingSuite {
+func WhenGettingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingWalletCredentialsForIdTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockStorage := runtime_common_mocks.NewMockSecretStorageInterface(mockController)
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
-	mockAgentScopedKeyBuilder.EXPECT().ScopedKey(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, key string) (string, error) { return "scope/" + key, nil }).AnyTimes()
+	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
 
-	return &WhenGettingWalletCredentialsTestingSuite{
+	return &WhenGettingWalletCredentialsForIdTestingSuite{
 		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
 		mockStorage: mockStorage,
 	}
 }
 
-func TestWhenGettingWalletCredentials(t *testing.T) {
+func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
 	const scopedKey = "scope/wallet"
@@ -40,17 +40,17 @@ func TestWhenGettingWalletCredentials(t *testing.T) {
 	t.Run("Given no wallet has been persisted", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 		}
 
 		t.Run("Should report not-found", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, found, err := suite.sut.Get(context.Background())
+			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1")
 
 			assert.NoError(t, err)
 			assert.False(t, found)
@@ -61,7 +61,7 @@ func TestWhenGettingWalletCredentials(t *testing.T) {
 	t.Run("Given a complete wallet has been persisted", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{
 				"privateKey": "0xdeadbeef",
 				"address":    "0xABCD",
@@ -71,10 +71,10 @@ func TestWhenGettingWalletCredentials(t *testing.T) {
 		t.Run("Should return the credentials", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, found, err := suite.sut.Get(context.Background())
+			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1")
 
 			assert.NoError(t, err)
 			assert.True(t, found)
@@ -86,7 +86,7 @@ func TestWhenGettingWalletCredentials(t *testing.T) {
 	t.Run("Given the persisted secret is missing the privateKey field", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{
 				"address": "0xABCD",
 			}, nil)
@@ -95,10 +95,10 @@ func TestWhenGettingWalletCredentials(t *testing.T) {
 		t.Run("Should error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			_, _, err := suite.sut.Get(context.Background())
+			_, _, err := suite.sut.GetForId(context.Background(), "agent-1")
 
 			assert.Error(t, err)
 		})

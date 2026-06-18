@@ -7,6 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
+	identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
@@ -16,6 +17,7 @@ import (
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -59,7 +61,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		"80002": common_tests.RandomEthAddress(),
 	}
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, agentIdentitySettings, chainsSettings, agentCollectionCreatorsSettings)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, identity_services.NewEnsDomainBuilder(agentIdentitySettings), chainsSettings, agentCollectionCreatorsSettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
@@ -112,9 +114,9 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().Get(gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 			suite.mockToken6022Requester.EXPECT().BalanceOf("80002", gomock.Any()).Return(big.NewInt(1_000_000), nil)
 			// $6022 balance is summed across every reachable chain; a chain the
 			// creator can't be read on is skipped (best-effort).

@@ -41,47 +41,47 @@ func (m *MockWalletCredentialsStorageInterface) EXPECT() *MockWalletCredentialsS
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockWalletCredentialsStorageInterface) Get(ctx context.Context) (*interfaces.WalletCredentials, bool, error) {
+// GetForId mocks base method.
+func (m *MockWalletCredentialsStorageInterface) GetForId(ctx context.Context, agentId string) (*interfaces.WalletCredentials, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx)
+	ret := m.ctrl.Call(m, "GetForId", ctx, agentId)
 	ret0, _ := ret[0].(*interfaces.WalletCredentials)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) Get(ctx any) *gomock.Call {
+// GetForId indicates an expected call of GetForId.
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetForId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).Get), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetForId), ctx, agentId)
 }
 
-// GetOrGenerate mocks base method.
-func (m *MockWalletCredentialsStorageInterface) GetOrGenerate(ctx context.Context) (*interfaces.WalletCredentials, error) {
+// GetOrGenerateForId mocks base method.
+func (m *MockWalletCredentialsStorageInterface) GetOrGenerateForId(ctx context.Context, agentId string) (*interfaces.WalletCredentials, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrGenerate", ctx)
+	ret := m.ctrl.Call(m, "GetOrGenerateForId", ctx, agentId)
 	ret0, _ := ret[0].(*interfaces.WalletCredentials)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrGenerate indicates an expected call of GetOrGenerate.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetOrGenerate(ctx any) *gomock.Call {
+// GetOrGenerateForId indicates an expected call of GetOrGenerateForId.
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetOrGenerateForId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrGenerate", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetOrGenerate), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrGenerateForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetOrGenerateForId), ctx, agentId)
 }
 
-// Save mocks base method.
-func (m *MockWalletCredentialsStorageInterface) Save(ctx context.Context, cred *interfaces.WalletCredentials) error {
+// SaveForId mocks base method.
+func (m *MockWalletCredentialsStorageInterface) SaveForId(ctx context.Context, agentId string, cred *interfaces.WalletCredentials) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", ctx, cred)
+	ret := m.ctrl.Call(m, "SaveForId", ctx, agentId, cred)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Save indicates an expected call of Save.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) Save(ctx, cred any) *gomock.Call {
+// SaveForId indicates an expected call of SaveForId.
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) SaveForId(ctx, agentId, cred any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).Save), ctx, cred)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).SaveForId), ctx, agentId, cred)
 }

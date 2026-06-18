@@ -46,8 +46,22 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		services.NewEnsDomainBuilder,
+		dig.As(new(identity_interfaces.EnsDomainBuilderInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewWalletCredentialsStorage,
 		dig.As(new(identity_interfaces.WalletCredentialsStorageInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewAgentChainRecoverer,
+		dig.As(new(identity_interfaces.AgentChainRecovererInterface)),
 	); err != nil {
 		panic(err)
 	}

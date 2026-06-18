@@ -9,6 +9,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 )
 
+// agentScopePrefix is the parent path every agent's secrets are namespaced under.
+const agentScopePrefix = "agents"
+
 // AgentScopedKeyBuilder prefixes secret keys with the persisted agent id, cached
 // after the first lookup since it never changes.
 type AgentScopedKeyBuilder struct {
@@ -27,7 +30,11 @@ func (b *AgentScopedKeyBuilder) ScopedKey(ctx context.Context, key string) (stri
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("agents/%s/%s", scope, key), nil
+	return b.ScopedKeyFor(scope, key), nil
+}
+
+func (b *AgentScopedKeyBuilder) ScopedKeyFor(agentId, key string) string {
+	return fmt.Sprintf("%s/%s/%s", agentScopePrefix, agentId, key)
 }
 
 func (b *AgentScopedKeyBuilder) scope(ctx context.Context) (string, error) {

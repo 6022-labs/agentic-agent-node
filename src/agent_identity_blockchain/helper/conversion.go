@@ -16,6 +16,15 @@ func ToKeyValues(in []identity_interfaces.MintKeyValue) []abi.KeyValue {
 	return out
 }
 
+// KeyValuesToMap collapses an AgentCollectionV1 key/value list into a map.
+func KeyValuesToMap(in []abi.KeyValue) map[string]string {
+	out := make(map[string]string, len(in))
+	for _, kv := range in {
+		out[kv.Key] = kv.Value
+	}
+	return out
+}
+
 // ToNullableUint256 maps an optional uint64 to the AgentCollectionV1 abi type.
 func ToNullableUint256(v *uint64) abi.NullableUint256 {
 	if v == nil {
