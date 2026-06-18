@@ -125,3 +125,6 @@ worktrees/
 
 ### Local refactor scratch ###
 PLAN.md
+
+### Agent image preview output (TestPreviewAgentImages) ###
+/tmp/

@@ -1,0 +1,120 @@
+services:
+  agent-node-host:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: agent-node-host
+    ports:
+      - "5500:5000" # nginx: web console at /, gateway proxied behind /api
+    environment:
+      - GATEWAY_HOST__API_PORT=5001 # loopback, behind nginx (5000 is nginx)
+      - RUNTIME_HOST__API_PORT=5400
+      - RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1
+      - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400
+      - RUNTIME_CLIENT__TIMEOUT=5
+      - IPFS__NODE_HTTP_URL=http://agent-node-ipfs:5001
+      - IPFS__BEARER_TOKEN=
+      - JWT__SIGNING_KEY=dev-secret
+      - JWT__TOKEN_TTL=1800
+      - JWT__NONCE_TTL=300
+      - VAULT__ADDRESS=http://agent-node-vault:8200
+      - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
+      - VAULT__KV_V1_MOUNT_PATH=secret
+      - BLOCKCHAIN__CHAINS__80002__HTTP_URL=http://evm-node:8545
+      - RUNTIME_DATABASE__DRIVER=postgres
+      - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
+      - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
+      - AGENT_IDENTITY__RUNTIME_URL=http://localhost:5500
+      - AGENT_RUNTIME_DEV_MODE=true
+    networks:
+      agent-node-network:
+    depends_on:
+      agent-node-db:
+        condition: service_healthy
+      agent-node-vault:
+        condition: service_started
+      agent-node-ipfs:
+        condition: service_started
+
+  agent-node-ipfs:
+    image: "ipfs/kubo:v0.42.0"
+    container_name: agent-node-ipfs
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        ipfs init --profile=server 2>/dev/null || true;
+        ipfs config Addresses.API /ip4/0.0.0.0/tcp/5001;
+        exec ipfs daemon --migrate=true
+    ports:
+      - "5001:5001" # RPC API (the runtime talks to this)
+      - "8080:8080" # HTTP gateway
+      - "4001:4001" # libp2p swarm (tcp)
+      - "4001:4001/udp" # libp2p swarm (quic)
+    volumes:
+      - agent-node-ipfs-data:/data/ipfs
+    networks:
+      agent-node-network:
+
+  agent-node-db:
+    image: "postgres:18-alpine"
+    container_name: agent-node-db
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      agent-node-network:
+    volumes:
+      - agent-node-db-data:/var/lib/postgresql/data
+
+  agent-node-pgadmin:
+    image: "dpage/pgadmin4:9.14"
+    container_name: agent-node-pgadmin
+    user: "root"
+    depends_on:
+      agent-node-db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "pgadmin4@pgadmin.org"
+      PGADMIN_DEFAULT_PASSWORD: "root"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    networks:
+      agent-node-network:
+    volumes:
+      - ./pgadmin-servers.json:/pgadmin4/servers.json
+
+  agent-node-vault:
+    image: hashicorp/vault:1.21
+    container_name: agent-node-vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "wBGKZCJjfIGqIKB3HMmvcQVt"
+    volumes:
+      - agent-node-vault-data:/vault/file
+    networks:
+      agent-node-network:
+    command: >
+      /bin/sh -c "
+      vault server -dev -dev-listen-address=0.0.0.0:8200 -dev-root-token-id=wBGKZCJjfIGqIKB3HMmvcQVt &
+      sleep 5 &&
+      VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt vault secrets disable secret &&
+      VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt vault secrets enable -version=1 -path=secret kv &&
+      wait"
+
+networks:
+  agent-node-network:
+
+volumes:
+  agent-node-db-data:
+  agent-node-vault-data:
+  agent-node-ipfs-data:

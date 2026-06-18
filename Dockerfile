@@ -1,0 +1,118 @@
+FROM node:22-alpine AS web-builder
+
+WORKDIR /web
+
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+COPY web/ ./
+
+# Vite inlines these at build time. The API base URL stays relative: nginx in
+# this same image routes /api to the gateway, whatever host serves the bundle.
+ARG VITE_GATEWAY_API_BASE_URL=/api
+ARG VITE_APP_KIT_PROJECT_ID=6e030f5fb755b144ec2cb0d10f2572ae
+ARG VITE_SCANNER_BASE_URL=https://amoy.polygonscan.com
+ARG VITE_ENVIRONMENT=production
+ENV VITE_GATEWAY_API_BASE_URL=$VITE_GATEWAY_API_BASE_URL \
+    VITE_APP_KIT_PROJECT_ID=$VITE_APP_KIT_PROJECT_ID \
+    VITE_SCANNER_BASE_URL=$VITE_SCANNER_BASE_URL \
+    VITE_ENVIRONMENT=$VITE_ENVIRONMENT
+
+RUN npm run build
+
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /usr/local/go/src/github.com/6022-labs/agentic-agent-node
+
+COPY ./go.mod ./
+COPY ./go.sum ./
+
+RUN go mod download
+
+COPY ./ ./
+
+# Build both binaries with the same flags (statically linked).
+RUN CGO_ENABLED=0 go build -installsuffix 'static' -o /gateway ./src/gateway_host \
+ && CGO_ENABLED=0 go build -installsuffix 'static' -o /runtime ./src/runtime_host
+
+FROM alpine:3.20 AS final
+
+# tini handles PID 1 + signal forwarding so SIGTERM reaches the children
+# cleanly. ca-certificates lets outbound TLS calls work (Vault, RPC,
+# proxy.golang.org during dev). nginx is the single public listener: web
+# console at /, gateway proxied behind /api, /.well-known reserved.
+RUN apk add --no-cache tini ca-certificates nginx
+
+COPY --from=builder /gateway /usr/local/bin/gateway
+COPY --from=builder /runtime /usr/local/bin/runtime
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/postgres /migrations/postgres
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mysql    /migrations/mysql
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mariadb  /migrations/mariadb
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_host/images/nft_mark.png /images/nft_mark.png
+COPY --from=web-builder /web/dist /web
+COPY nginx.conf /etc/nginx/http.d/default.conf
+
+# Pre-filled defaults that hold whenever the three processes share a container:
+# both Go hosts bind the loopback interface (only nginx is reachable from
+# outside) and the gateway can reach the runtime at it. Anything sensitive
+# (Vault token, JWT signing key, chain RPC, agent DB URL) must still be
+# supplied at runtime.
+ENV GATEWAY_HOST__API_PORT=5001 \
+    GATEWAY_HOST__BODY_LIMIT_BYTES=4194304 \
+    GATEWAY_HOST__LISTEN_ADDRESS=127.0.0.1 \
+    RUNTIME_HOST__API_PORT=5400 \
+    RUNTIME_HOST__BODY_LIMIT_BYTES=4194304 \
+    RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1 \
+    RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400 \
+    RUNTIME_CLIENT__TIMEOUT=5s \
+    JWT__TOKEN_TTL=30m \
+    JWT__NONCE_TTL=5m \
+    VAULT__KV_V1_MOUNT_PATH=secret \
+    IMAGE_GENERATION__IMAGE_MARK_PATH=/images/nft_mark.png \
+    RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
+
+# Entrypoint script: runtime first, then gateway, then nginx in front.
+# Tini reaps and forwards signals; if any child dies the script exits and
+# the container restarts (per orchestrator restart policy).
+COPY <<'EOF' /usr/local/bin/run.sh
+#!/bin/sh
+set -eu
+
+cleanup() {
+    for PID in "${NGINX_PID:-}" "${GATEWAY_PID:-}" "${RUNTIME_PID:-}"; do
+        [ -n "$PID" ] && kill -TERM "$PID" 2>/dev/null || true
+    done
+    for PID in "${NGINX_PID:-}" "${GATEWAY_PID:-}" "${RUNTIME_PID:-}"; do
+        [ -n "$PID" ] && wait "$PID" 2>/dev/null || true
+    done
+}
+trap 'cleanup; exit 143' TERM INT
+
+runtime &
+RUNTIME_PID=$!
+
+# Give the runtime a moment to bind 127.0.0.1:$RUNTIME_HOST__API_PORT before
+# the gateway starts dialling /internal/* on it.
+sleep 1
+
+gateway &
+GATEWAY_PID=$!
+
+nginx -g 'daemon off;' &
+NGINX_PID=$!
+
+# Exit as soon as any child dies. Poll instead of `wait -n pid...`:
+# busybox ash ignores the PID list, so an already-dead child never wakes it.
+while kill -0 "$RUNTIME_PID" 2>/dev/null \
+   && kill -0 "$GATEWAY_PID" 2>/dev/null \
+   && kill -0 "$NGINX_PID" 2>/dev/null; do
+    sleep 2
+done
+cleanup
+exit 1
+EOF
+RUN chmod +x /usr/local/bin/run.sh
+
+EXPOSE 5000
+
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/run.sh"]

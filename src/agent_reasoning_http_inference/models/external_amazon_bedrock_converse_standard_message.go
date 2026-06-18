@@ -1,0 +1,54 @@
+package models
+
+// This type is used by both request and response
+type ExternalAmazonBedrockConverseStandardMessage struct {
+	Role    string                                                `json:"role"`
+	Content []ExternalAmazonBedrockConverseStandardMessageContent `json:"content"`
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContent struct {
+	Text             *string                                                              `json:"text,omitempty"`
+	ReasoningContent *ExternalAmazonBedrockConverseStandardMessageContentReasoningContent `json:"reasoningContent,omitempty"`
+	ToolResult       *ExternalAmazonBedrockConverseStandardMessageContentToolResult       `json:"toolResult,omitempty"`
+	ToolUse          *ExternalAmazonBedrockConverseStandardMessageContentToolUse          `json:"toolUse,omitempty"`
+}
+
+func (c *ExternalAmazonBedrockConverseStandardMessageContent) ContentType() string {
+	switch {
+	case c.Text != nil:
+		return "text"
+	case c.ReasoningContent != nil:
+		return "reasoningContent"
+	case c.ToolUse != nil:
+		return "toolUse"
+	case c.ToolResult != nil:
+		return "toolResult"
+	default:
+		return "unknown"
+	}
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContentReasoningContent struct {
+	ReasoningText *ExternalAmazonBedrockConverseStandardMessageContentReasoningContentReasoningText `json:"reasoningText,omitempty"`
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContentReasoningContentReasoningText struct {
+	Text      string  `json:"text"`
+	Signature *string `json:"signature,omitempty"`
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContentToolUse struct {
+	Name      string         `json:"name"`
+	Input     map[string]any `json:"input"`
+	ToolUseId string         `json:"toolUseId"`
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContentToolResult struct {
+	Content   []ExternalAmazonBedrockConverseStandardMessageContentToolResultContent `json:"content"`
+	ToolUseId string                                                                 `json:"toolUseId"`
+}
+
+type ExternalAmazonBedrockConverseStandardMessageContentToolResultContent struct {
+	Json any     `json:"json,omitempty"`
+	Text *string `json:"text,omitempty"`
+}

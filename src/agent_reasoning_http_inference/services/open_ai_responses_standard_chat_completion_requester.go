@@ -1,0 +1,184 @@
+package services
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/google/uuid"
+	"github.com/samber/lo"
+	"go.uber.org/zap"
+)
+
+type OpenAIResponsesStandardChatCompletionRequesterInterface interface {
+	ChatCompletion(
+		baseUrl, apiKey string,
+		hasDirectAccessToMcp bool,
+		llmConnection *models.LLMConnection,
+		mcpConnections []*models.MCPConnection,
+		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		messages []*interfaces.ChatCompletionMessage,
+	) (*interfaces.LLMCompletion, error)
+}
+
+type OpenAIResponsesStandardChatCompletionRequester struct {
+	logger                *zap.Logger
+	openAIResponsesClient clients.OpenAIResponsesStandardClientInterface
+}
+
+func NewOpenAIResponsesStandardChatCompletionRequester(
+	logger *zap.Logger,
+	openAIResponsesClient clients.OpenAIResponsesStandardClientInterface,
+) *OpenAIResponsesStandardChatCompletionRequester {
+	return &OpenAIResponsesStandardChatCompletionRequester{
+		logger:                logger,
+		openAIResponsesClient: openAIResponsesClient,
+	}
+}
+
+func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
+	baseUrl, apiKey string,
+	hasDirectAccessToMcp bool,
+	llmConnection *models.LLMConnection,
+	mcpConnections []*models.MCPConnection,
+	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	messages []*interfaces.ChatCompletionMessage,
+) (*interfaces.LLMCompletion, error) {
+	inputs, err := r.buildRequestInputs(messages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build openai responses inputs: %w", err)
+	}
+
+	externalRequest := external_models.NewExternalOpenAIResponsesStandardRequest(llmConnection.Model, inputs, nil)
+
+	if hasDirectAccessToMcp {
+		externalRequest.AddMcpConnectionsAsMcpTools(mcpConnections)
+	} else {
+		for _, mcpConnection := range mcpConnections {
+			tools := mcpToolsByConnectionId[mcpConnection.Id]
+			if len(tools) == 0 {
+				continue
+			}
+			externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
+		}
+	}
+
+	r.logger.Debug("Request to Responses endpoint")
+
+	response, err := r.openAIResponsesClient.Responses(baseUrl, apiKey, externalRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	outputTypes := lo.Map(response.Output, func(o external_models.ExternalOpenAIResponsesStandardResponseOutput, _ int) string {
+		return o.Type
+	})
+
+	r.logger.Debug("Response from Responses endpoint",
+		zap.Strings("outputTypes", outputTypes),
+	)
+
+	completion := &interfaces.LLMCompletion{}
+
+	for _, o := range response.Output {
+		switch o.Type {
+		case "message":
+			for _, c := range o.Content {
+				if c.Type == "output_text" || c.Type == "text" {
+					text := c.Text
+					completion.Text = &text
+				}
+			}
+		case "function_call":
+			if o.Name == nil || o.CallId == nil {
+				return nil, fmt.Errorf("openai responses function_call missing name or call_id")
+			}
+			args, err := o.ParsedArguments()
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse openai responses function_call arguments: %w", err)
+			}
+			completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
+				Id:        *o.CallId,
+				Name:      *o.Name,
+				Arguments: args,
+			})
+		}
+	}
+
+	if completion.Text == nil && len(completion.ToolCalls) == 0 {
+		r.logger.Warn(
+			"No actionable output found in response",
+			zap.String("status", response.Status),
+			zap.Any("incompleteDetails", response.IncompleteDetails),
+			zap.Strings("outputTypes", outputTypes),
+		)
+		return nil, fmt.Errorf("openai responses returned no actionable output: status=%q outputTypes=%v", response.Status, outputTypes)
+	}
+
+	return completion, nil
+}
+
+// buildRequestInputs flattens domain messages into the OpenAI Responses input
+// stream: assistant tool_calls split into a text message + one function_call
+// each; role=tool messages become function_call_output entries.
+func (r *OpenAIResponsesStandardChatCompletionRequester) buildRequestInputs(
+	messages []*interfaces.ChatCompletionMessage,
+) ([]external_models.ExternalOpenAIResponsesStandardRequestInput, error) {
+	out := make([]external_models.ExternalOpenAIResponsesStandardRequestInput, 0, len(messages))
+
+	for _, m := range messages {
+		switch m.Role {
+		case "system", "user":
+			role := m.Role
+			content := m.Content
+			out = append(out, external_models.ExternalOpenAIResponsesStandardRequestInput{
+				Type:    "message",
+				Role:    &role,
+				Content: &content,
+			})
+
+		case "assistant":
+			if m.Content != "" {
+				role := "assistant"
+				content := m.Content
+				out = append(out, external_models.ExternalOpenAIResponsesStandardRequestInput{
+					Type:    "message",
+					Role:    &role,
+					Content: &content,
+				})
+			}
+			for _, tc := range m.ToolCalls {
+				argsBytes, err := json.Marshal(tc.Arguments)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal tool call arguments: %w", err)
+				}
+				argsStr := string(argsBytes)
+				name := tc.Name
+				callId := tc.Id
+				out = append(out, external_models.ExternalOpenAIResponsesStandardRequestInput{
+					Type:      "function_call",
+					Name:      &name,
+					CallId:    &callId,
+					Arguments: &argsStr,
+				})
+			}
+
+		case "tool":
+			callId := m.ToolCallId
+			content := m.Content
+			out = append(out, external_models.ExternalOpenAIResponsesStandardRequestInput{
+				Type:   "function_call_output",
+				CallId: &callId,
+				Output: &content,
+			})
+
+		default:
+			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)
+		}
+	}
+
+	return out, nil
+}

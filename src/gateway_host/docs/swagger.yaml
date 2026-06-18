@@ -1,0 +1,1184 @@
+basePath: /
+definitions:
+  enums.MessageRole:
+    enum:
+    - user
+    - assistant
+    - system
+    type: string
+    x-enum-varnames:
+    - MessageRoleUser
+    - MessageRoleAssistant
+    - MessageRoleSystem
+  errors.NotFoundError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  errors.ValidationError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  fiber.Map:
+    additionalProperties: true
+    type: object
+  models.ExternalPaymentRule:
+    properties:
+      config:
+        type: object
+      id:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      price:
+        type: string
+    type: object
+  requests.AppendConversationMessageInput:
+    properties:
+      content:
+        type: string
+      role:
+        $ref: '#/definitions/enums.MessageRole'
+      timestamp:
+        type: string
+    type: object
+  requests.AppendConversationMessagesRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/requests.AppendConversationMessageInput'
+        type: array
+    type: object
+  requests.ConversationRef:
+    properties:
+      id:
+        type: string
+    type: object
+  requests.CreateMcpConnectionRequest:
+    properties:
+      authHeaderName:
+        type: string
+      authHeaderValue:
+        type: string
+      name:
+        type: string
+      url:
+        type: string
+    type: object
+  requests.CreateResponseRequest:
+    properties:
+      conversation:
+        $ref: '#/definitions/requests.ConversationRef'
+      input:
+        $ref: '#/definitions/requests.ResponseInput'
+      instructions:
+        type: string
+      max_output_tokens:
+        type: integer
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      model:
+        type: string
+      previous_response_id:
+        type: string
+      store:
+        type: boolean
+      stream:
+        type: boolean
+      temperature:
+        type: number
+      top_p:
+        type: number
+    type: object
+  requests.InputMessage:
+    properties:
+      content:
+        type: string
+      role:
+        type: string
+    type: object
+  requests.ResponseInput:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/requests.InputMessage'
+        type: array
+    type: object
+  requests.SavePaymentRuleRequest:
+    properties:
+      config:
+        type: object
+      method:
+        type: string
+      name:
+        type: string
+      price:
+        type: string
+    type: object
+  requests.SetLlmConfigRequest:
+    properties:
+      apiKey:
+        type: string
+      baseUrl:
+        type: string
+      extensions:
+        additionalProperties: {}
+        type: object
+      model:
+        type: string
+      provider:
+        type: string
+    type: object
+  requests.VerifyAuthRequest:
+    properties:
+      address:
+        type: string
+      nonce:
+        type: string
+      signature:
+        type: string
+    type: object
+  responses.AgentCollectionResponse:
+    properties:
+      address:
+        type: string
+      description:
+        type: string
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      nextTokenId:
+        type: integer
+    type: object
+  responses.AgentCollectionsResponse:
+    properties:
+      collections:
+        items:
+          $ref: '#/definitions/responses.AgentCollectionResponse'
+        type: array
+    type: object
+  responses.AgentRegistrationResponse:
+    properties:
+      attributes:
+        additionalProperties:
+          type: string
+        type: object
+      chainId:
+        type: string
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      ensDomain:
+        type: string
+      ensStatus:
+        type: string
+      images:
+        additionalProperties:
+          type: string
+        type: object
+      mintStatus:
+        type: string
+      name:
+        type: string
+      owner:
+        type: string
+      proposalId:
+        type: integer
+      role:
+        type: string
+      tokenId:
+        type: integer
+      walletAddress:
+        type: string
+    type: object
+  responses.AppendConversationMessagesResponse:
+    properties:
+      inserted:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+  responses.BlockchainConfigResponse:
+    properties:
+      chains:
+        additionalProperties:
+          $ref: '#/definitions/responses.ChainConfig'
+        type: object
+    type: object
+  responses.ChainConfig:
+    properties:
+      collectionCreatorAddress:
+        type: string
+      collectionsManagerAddress:
+        type: string
+      ensRegistryAddress:
+        type: string
+      facilitatorNetwork:
+        type: string
+      mintable:
+        type: boolean
+      token6022Address:
+        type: string
+    type: object
+  responses.ConversationMessage:
+    properties:
+      content:
+        type: string
+      conversationId:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  responses.ConversationRef:
+    properties:
+      id:
+        type: string
+    type: object
+  responses.ConversationSummary:
+    properties:
+      conversationId:
+        type: string
+      firstMessageAt:
+        type: string
+      lastMessageAt:
+        type: string
+      messageCount:
+        type: integer
+    type: object
+  responses.EnsInfoResponse:
+    properties:
+      collectionAddress:
+        type: string
+      records:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      tokenId:
+        type: integer
+    type: object
+  responses.GetAuthChallengeResponse:
+    properties:
+      expiresAt:
+        type: string
+      nonce:
+        type: string
+    type: object
+  responses.GetHealthResponse:
+    properties:
+      status:
+        type: string
+      uptimeSeconds:
+        type: integer
+    type: object
+  responses.GetLlmConfigResponse:
+    properties:
+      baseUrl:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      model:
+        type: string
+      provider:
+        type: string
+      setupStatus:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  responses.GetPaymentPolicyResponse:
+    properties:
+      agentId:
+        type: string
+      agentWalletAddress:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  responses.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  responses.ListConversationMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/responses.ConversationMessage'
+        type: array
+    type: object
+  responses.ListConversationsResponse:
+    properties:
+      conversations:
+        items:
+          $ref: '#/definitions/responses.ConversationSummary'
+        type: array
+    type: object
+  responses.ListMcpConnectionsResponse:
+    properties:
+      connections:
+        items:
+          $ref: '#/definitions/responses.McpConnectionResponse'
+        type: array
+    type: object
+  responses.ListPaymentRulesResponse:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/models.ExternalPaymentRule'
+        type: array
+    type: object
+  responses.McpConnectionResponse:
+    properties:
+      createdAt:
+        type: string
+      headerAuthKeys:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+      url:
+        type: string
+    type: object
+  responses.MintInfoResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      cloneOf:
+        type: integer
+      collectionAddress:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/responses.KeyValue'
+        type: array
+      moderatorCount:
+        type: integer
+      name:
+        type: string
+      ownerIsModerator:
+        type: boolean
+      role:
+        type: string
+      to:
+        type: string
+      wallets:
+        items:
+          type: string
+        type: array
+    type: object
+  responses.OutputContent:
+    properties:
+      annotations:
+        items: {}
+        type: array
+      text:
+        type: string
+      type:
+        type: string
+    type: object
+  responses.OutputItem:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/responses.OutputContent'
+        type: array
+      id:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  responses.RegistrationStatusResponse:
+    properties:
+      ensStatus:
+        type: string
+      ensTxHash:
+        type: string
+      mintStatus:
+        type: string
+      mintTxHash:
+        type: string
+      proposalId:
+        type: integer
+      tokenId:
+        type: integer
+    type: object
+  responses.Response:
+    properties:
+      conversation:
+        $ref: '#/definitions/responses.ConversationRef'
+      created_at:
+        type: integer
+      error:
+        $ref: '#/definitions/responses.ResponseError'
+      id:
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      model:
+        type: string
+      object:
+        type: string
+      output:
+        items:
+          $ref: '#/definitions/responses.OutputItem'
+        type: array
+      previous_response_id:
+        type: string
+      status:
+        type: string
+      usage:
+        $ref: '#/definitions/responses.Usage'
+    type: object
+  responses.ResponseError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  responses.Usage:
+    properties:
+      input_tokens:
+        type: integer
+      output_tokens:
+        type: integer
+      total_tokens:
+        type: integer
+    type: object
+  responses.VerifyAuthResponse:
+    properties:
+      expiresAt:
+        type: string
+      token:
+        type: string
+    type: object
+  x402.PaymentRequired:
+    properties:
+      accepts:
+        items:
+          $ref: '#/definitions/x402.PaymentRequirements'
+        type: array
+      error:
+        type: string
+      resource:
+        $ref: '#/definitions/x402.ResourceInfo'
+      x402Version:
+        type: integer
+    type: object
+  x402.PaymentRequirements:
+    properties:
+      amount:
+        type: string
+      asset:
+        type: string
+      extra:
+        additionalProperties: {}
+        type: object
+      maxTimeoutSeconds:
+        type: integer
+      network:
+        type: string
+      payTo:
+        type: string
+      scheme:
+        type: string
+    type: object
+  x402.ResourceInfo:
+    properties:
+      description:
+        type: string
+      mimeType:
+        type: string
+      url:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: 'Public HTTP front for one agent: auth (JWT + EIP-191), bootstrap status,
+    config endpoints, /responses. Authenticated routes proxy to runtime_host on the
+    loopback interface.'
+  title: Agentic Agent Node — Gateway Host API
+  version: "1.0"
+paths:
+  /agent/collections:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentCollectionsResponse'
+      security:
+      - BearerAuth: []
+      summary: List agent collections
+      tags:
+      - AgentCollections
+  /agent/registration:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentRegistrationResponse'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get agent registration draft
+      tags:
+      - AgentRegistration
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Collection address
+        in: formData
+        name: collectionAddress
+        required: true
+        type: string
+      - description: Agent name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Agent role
+        in: formData
+        name: role
+        required: true
+        type: string
+      - description: Token id this agent clones
+        in: formData
+        name: cloneOf
+        type: integer
+      - description: Attributes as a JSON object string
+        in: formData
+        name: attributes
+        type: string
+      - description: Base image to frame
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentRegistrationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+      security:
+      - BearerAuth: []
+      summary: Save agent registration draft
+      tags:
+      - AgentRegistration
+  /agent/registration/ens-info:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.EnsInfoResponse'
+        "409":
+          description: not_minted
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get ENS calldata
+      tags:
+      - AgentRegistration
+  /agent/registration/ens/check:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Check ENS status
+      tags:
+      - AgentRegistration
+  /agent/registration/mint-info:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.MintInfoResponse'
+      security:
+      - BearerAuth: []
+      summary: Get mint calldata
+      tags:
+      - AgentRegistration
+  /agent/registration/mint/check:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Check mint status
+      tags:
+      - AgentRegistration
+  /agent/registration/self:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.RegistrationStatusResponse'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Self mint + ENS register
+      tags:
+      - AgentRegistration
+  /auth/challenge:
+    get:
+      description: Returns a fresh nonce + expiry. The caller signs the nonce with
+        their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetAuthChallengeResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Auth challenge
+      tags:
+      - Auth
+  /auth/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the EIP-191 signature, checks the recovered address against
+        the NFT owner via the worker, and issues a HS256 JWT.
+      parameters:
+      - description: Address + signature + nonce
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.VerifyAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.VerifyAuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: nonce_not_found | signature_mismatch | not_authorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "502":
+          description: identity_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Auth verify
+      tags:
+      - Auth
+  /config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.BlockchainConfigResponse'
+      summary: Public chain config
+      tags:
+      - Config
+  /config/llm:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete LLM config
+      tags:
+      - Config
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetLlmConfigResponse'
+        "404":
+          description: not_configured
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get LLM config
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: LLM config
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetLlmConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetLlmConfigResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Set LLM config
+      tags:
+      - Config
+  /config/mcp-connections:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListMcpConnectionsResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List MCP connections
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: MCP connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateMcpConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.McpConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Create MCP connection
+      tags:
+      - Config
+  /config/mcp-connections/{id}:
+    delete:
+      parameters:
+      - description: MCP connection id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete MCP connection
+      tags:
+      - Config
+  /config/payment-policy:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete payment policy
+      tags:
+      - Config
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetPaymentPolicyResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get payment policy
+      tags:
+      - Config
+  /config/payment-policy/rules:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListPaymentRulesResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List payment rules
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payment rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalPaymentRule'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Create payment rule
+      tags:
+      - Config
+  /config/payment-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete payment rule
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: payment rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExternalPaymentRule'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update payment rule
+      tags:
+      - Config
+  /conversations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationsResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List conversations
+      tags:
+      - Conversations
+  /conversations/{conversationId}/messages:
+    get:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List conversation messages
+      tags:
+      - Conversations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      - description: Messages
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AppendConversationMessagesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.AppendConversationMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Append conversation messages
+      tags:
+      - Conversations
+  /health:
+    get:
+      description: Liveness probe; serves before bootstrap completes.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetHealthResponse'
+      summary: Health
+      tags:
+      - Health
+  /responses:
+    post:
+      consumes:
+      - application/json
+      description: 'x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays
+        the cheapest accept option whose address patterns match them — zero-price
+        options (agent wallet and NFT owner by default) are served free without settlement.
+        Anonymous 402 responses advertise only the options open to everyone.'
+      parameters:
+      - description: x402 v2 payment payload (base64 JSON)
+        in: header
+        name: PAYMENT-SIGNATURE
+        required: true
+        type: string
+      - description: Conversation turn
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateResponseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "402":
+          description: Payment Required
+          schema:
+            $ref: '#/definitions/x402.PaymentRequired'
+        "502":
+          description: runtime_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Create response
+      tags:
+      - Responses
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

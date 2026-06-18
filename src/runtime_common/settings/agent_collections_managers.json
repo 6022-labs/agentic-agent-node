@@ -1,0 +1,15 @@
+{
+  "_comment": "Well-known AgentCollectionsManager contract addresses per EVM chain id. Add an entry once a manager is deployed. Operators can override via the blockchain.agent_collections_manager_address setting (or BLOCKCHAIN__AGENT_COLLECTIONS_MANAGER_ADDRESS env).",
+  "managers": [
+    {
+      "chainId": 137,
+      "name": "polygon-mainnet",
+      "address": "0xA39dC43bCAf07C142FF230cC73A8229347287958"
+    },
+    {
+      "chainId": 80002,
+      "name": "polygon-amoy",
+      "address": "0x33Fec4914A2f3e81Af2665B60b15Fb68c438e0d8"
+    }
+  ]
+}

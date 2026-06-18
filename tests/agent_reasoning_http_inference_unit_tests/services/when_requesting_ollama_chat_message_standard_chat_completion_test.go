@@ -1,0 +1,175 @@
+package services_test
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
+	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/clients_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	"go.uber.org/zap"
+)
+
+type WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite struct {
+	sut *services.OllamaChatMessageStandardChatCompletionRequester
+
+	mockOllamaClient *clients_mocks.MockOllamaChatMessageStandardClientInterface
+}
+
+func WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockOllamaClient := clients_mocks.NewMockOllamaChatMessageStandardClientInterface(mockController)
+
+	sut := services.NewOllamaChatMessageStandardChatCompletionRequester(
+		zap.NewNop(),
+		mockOllamaClient,
+	)
+
+	return &WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite{
+		sut:              sut,
+		mockOllamaClient: mockOllamaClient,
+	}
+}
+
+func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
+	t.Parallel()
+
+	const baseUrl = "https://ollama.example.com"
+
+	llmConnection := model_builders.NewLLMConnectionBuilder().
+		WithModel("llama3").
+		Build()
+
+	messages := []*interfaces.ChatCompletionMessage{
+		{Role: "user", Content: "hello"},
+	}
+
+	t.Run("Given the LLM returns plain text", func(t *testing.T) {
+		t.Parallel()
+
+		expectedContent := "hi there"
+
+		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
+			suite.mockOllamaClient.EXPECT().
+				ChatMessage(baseUrl, gomock.Any()).
+				DoAndReturn(func(_ string, request *external_models.ExternalOllamaChatMessageStandardRequest) (*external_models.ExternalOllamaChatMessageStandardResponse, error) {
+					assert.Equal(t, llmConnection.Model, request.Model)
+					if assert.Len(t, request.Messages, 1) {
+						assert.Equal(t, "user", request.Messages[0].Role)
+						assert.Equal(t, "hello", request.Messages[0].Content)
+					}
+					assert.Nil(t, request.Tools)
+
+					return &external_models.ExternalOllamaChatMessageStandardResponse{
+						Model: llmConnection.Model,
+						Message: external_models.ExternalOllamaChatMessageStandardMessage{
+							Role:    "assistant",
+							Content: expectedContent,
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the message content", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
+				assert.Equal(t, expectedContent, *result.Text)
+			}
+		})
+	})
+
+	t.Run("Given the response has empty content", func(t *testing.T) {
+		t.Parallel()
+
+		doneReason := "length"
+
+		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
+			suite.mockOllamaClient.EXPECT().
+				ChatMessage(baseUrl, gomock.Any()).
+				Return(&external_models.ExternalOllamaChatMessageStandardResponse{
+					Model: llmConnection.Model,
+					Message: external_models.ExternalOllamaChatMessageStandardMessage{
+						Role:    "assistant",
+						Content: "",
+					},
+					DoneReason: &doneReason,
+				}, nil)
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages)
+			assert.Nil(t, result)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, "ollama returned empty content")
+			assert.ErrorContains(t, err, doneReason)
+		})
+	})
+
+	t.Run("Given the LLM emits a tool call", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			WithUrl("https://mcp.example.com").
+			Build()
+		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		toolArgs := map[string]any{"query": "value"}
+
+		toolsByConn := map[uuid.UUID][]*interfaces.McpTool{
+			mcpConnection.Id: {mcpTool},
+		}
+
+		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
+			suite.mockOllamaClient.EXPECT().
+				ChatMessage(baseUrl, gomock.Any()).
+				Return(&external_models.ExternalOllamaChatMessageStandardResponse{
+					Model: llmConnection.Model,
+					Message: external_models.ExternalOllamaChatMessageStandardMessage{
+						Role: "assistant",
+						ToolCalls: []external_models.ExternalOllamaChatMessageStandardMessageToolCall{
+							{
+								Function: &external_models.ExternalOllamaChatMessageStandardMessageToolCallFunction{
+									Name:      functionName,
+									Arguments: toolArgs,
+								},
+							},
+						},
+					},
+				}, nil)
+		}
+
+		t.Run("Should return the ToolCall (id == function name)", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, []*models.MCPConnection{mcpConnection}, toolsByConn, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
+				assert.Equal(t, functionName, result.ToolCalls[0].Id)
+				assert.Equal(t, functionName, result.ToolCalls[0].Name)
+				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
+			}
+		})
+	})
+}

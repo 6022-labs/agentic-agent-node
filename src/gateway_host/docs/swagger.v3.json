@@ -1,0 +1,2080 @@
+{
+    "components": {
+        "schemas": {
+            "enums.MessageRole": {
+                "enum": [
+                    "user",
+                    "assistant",
+                    "system"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "MessageRoleUser",
+                    "MessageRoleAssistant",
+                    "MessageRoleSystem"
+                ]
+            },
+            "errors.NotFoundError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "errors.ValidationError": {
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "fiber.Map": {
+                "additionalProperties": {},
+                "type": "object"
+            },
+            "models.ExternalPaymentRule": {
+                "properties": {
+                    "config": {
+                        "type": "object"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.AppendConversationMessageInput": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/enums.MessageRole"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.AppendConversationMessagesRequest": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.AppendConversationMessageInput"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.ConversationRef": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.CreateMcpConnectionRequest": {
+                "properties": {
+                    "authHeaderName": {
+                        "type": "string"
+                    },
+                    "authHeaderValue": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.CreateResponseRequest": {
+                "properties": {
+                    "conversation": {
+                        "$ref": "#/components/schemas/requests.ConversationRef"
+                    },
+                    "input": {
+                        "$ref": "#/components/schemas/requests.ResponseInput"
+                    },
+                    "instructions": {
+                        "type": "string"
+                    },
+                    "max_output_tokens": {
+                        "type": "integer"
+                    },
+                    "metadata": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "previous_response_id": {
+                        "type": "string"
+                    },
+                    "store": {
+                        "type": "boolean"
+                    },
+                    "stream": {
+                        "type": "boolean"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "top_p": {
+                        "type": "number"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.InputMessage": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.ResponseInput": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.InputMessage"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.SavePaymentRuleRequest": {
+                "properties": {
+                    "config": {
+                        "type": "object"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.SetLlmConfigRequest": {
+                "properties": {
+                    "apiKey": {
+                        "type": "string"
+                    },
+                    "baseUrl": {
+                        "type": "string"
+                    },
+                    "extensions": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.VerifyAuthRequest": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    },
+                    "nonce": {
+                        "type": "string"
+                    },
+                    "signature": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentCollectionResponse": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "moderatorCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "nextTokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentCollectionsResponse": {
+                "properties": {
+                    "collections": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.AgentCollectionResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentRegistrationResponse": {
+                "properties": {
+                    "attributes": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "chainId": {
+                        "type": "string"
+                    },
+                    "cloneOf": {
+                        "type": "integer"
+                    },
+                    "collectionAddress": {
+                        "type": "string"
+                    },
+                    "ensDomain": {
+                        "type": "string"
+                    },
+                    "ensStatus": {
+                        "type": "string"
+                    },
+                    "images": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "mintStatus": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "owner": {
+                        "type": "string"
+                    },
+                    "proposalId": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "tokenId": {
+                        "type": "integer"
+                    },
+                    "walletAddress": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AppendConversationMessagesResponse": {
+                "properties": {
+                    "inserted": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.BlockchainConfigResponse": {
+                "properties": {
+                    "chains": {
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/responses.ChainConfig"
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ChainConfig": {
+                "properties": {
+                    "collectionCreatorAddress": {
+                        "type": "string"
+                    },
+                    "collectionsManagerAddress": {
+                        "type": "string"
+                    },
+                    "ensRegistryAddress": {
+                        "type": "string"
+                    },
+                    "facilitatorNetwork": {
+                        "type": "string"
+                    },
+                    "mintable": {
+                        "type": "boolean"
+                    },
+                    "token6022Address": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ConversationMessage": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ConversationRef": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ConversationSummary": {
+                "properties": {
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "firstMessageAt": {
+                        "type": "string"
+                    },
+                    "lastMessageAt": {
+                        "type": "string"
+                    },
+                    "messageCount": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.EnsInfoResponse": {
+                "properties": {
+                    "collectionAddress": {
+                        "type": "string"
+                    },
+                    "records": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.KeyValue"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "tokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetAuthChallengeResponse": {
+                "properties": {
+                    "expiresAt": {
+                        "type": "string"
+                    },
+                    "nonce": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetHealthResponse": {
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "uptimeSeconds": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetLlmConfigResponse": {
+                "properties": {
+                    "baseUrl": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "setupStatus": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.GetPaymentPolicyResponse": {
+                "properties": {
+                    "agentId": {
+                        "type": "string"
+                    },
+                    "agentWalletAddress": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.KeyValue": {
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListConversationMessagesResponse": {
+                "properties": {
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationMessage"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListConversationsResponse": {
+                "properties": {
+                    "conversations": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.ConversationSummary"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListMcpConnectionsResponse": {
+                "properties": {
+                    "connections": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.McpConnectionResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ListPaymentRulesResponse": {
+                "properties": {
+                    "rules": {
+                        "items": {
+                            "$ref": "#/components/schemas/models.ExternalPaymentRule"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.McpConnectionResponse": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "headerAuthKeys": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.MintInfoResponse": {
+                "properties": {
+                    "attributes": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.KeyValue"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "cloneOf": {
+                        "type": "integer"
+                    },
+                    "collectionAddress": {
+                        "type": "string"
+                    },
+                    "images": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.KeyValue"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "moderatorCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "ownerIsModerator": {
+                        "type": "boolean"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "wallets": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.OutputContent": {
+                "properties": {
+                    "annotations": {
+                        "items": {},
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.OutputItem": {
+                "properties": {
+                    "content": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.OutputContent"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.RegistrationStatusResponse": {
+                "properties": {
+                    "ensStatus": {
+                        "type": "string"
+                    },
+                    "ensTxHash": {
+                        "type": "string"
+                    },
+                    "mintStatus": {
+                        "type": "string"
+                    },
+                    "mintTxHash": {
+                        "type": "string"
+                    },
+                    "proposalId": {
+                        "type": "integer"
+                    },
+                    "tokenId": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.Response": {
+                "properties": {
+                    "conversation": {
+                        "$ref": "#/components/schemas/responses.ConversationRef"
+                    },
+                    "created_at": {
+                        "type": "integer"
+                    },
+                    "error": {
+                        "$ref": "#/components/schemas/responses.ResponseError"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "object": {
+                        "type": "string"
+                    },
+                    "output": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.OutputItem"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "previous_response_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "usage": {
+                        "$ref": "#/components/schemas/responses.Usage"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.ResponseError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.Usage": {
+                "properties": {
+                    "input_tokens": {
+                        "type": "integer"
+                    },
+                    "output_tokens": {
+                        "type": "integer"
+                    },
+                    "total_tokens": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.VerifyAuthResponse": {
+                "properties": {
+                    "expiresAt": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "x402.PaymentRequired": {
+                "properties": {
+                    "accepts": {
+                        "items": {
+                            "$ref": "#/components/schemas/x402.PaymentRequirements"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "resource": {
+                        "$ref": "#/components/schemas/x402.ResourceInfo"
+                    },
+                    "x402Version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "x402.PaymentRequirements": {
+                "properties": {
+                    "amount": {
+                        "type": "string"
+                    },
+                    "asset": {
+                        "type": "string"
+                    },
+                    "extra": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "maxTimeoutSeconds": {
+                        "type": "integer"
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "payTo": {
+                        "type": "string"
+                    },
+                    "scheme": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "x402.ResourceInfo": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "mimeType": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "in": "header",
+                "name": "Authorization",
+                "type": "apiKey"
+            }
+        }
+    },
+    "info": {
+        "description": "Public HTTP front for one agent: auth (JWT + EIP-191), bootstrap status, config endpoints, /responses. Authenticated routes proxy to runtime_host on the loopback interface.",
+        "title": "Agentic Agent Node — Gateway Host API",
+        "version": "1.0"
+    },
+    "externalDocs": {
+        "description": "",
+        "url": ""
+    },
+    "paths": {
+        "/agent/collections": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentCollectionsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List agent collections",
+                "tags": [
+                    "AgentCollections"
+                ]
+            }
+        },
+        "/agent/registration": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentRegistrationResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get agent registration draft",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "title": "collectionAddress",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "name",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "role",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "cloneOf",
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "title": "attributes",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "title": "image",
+                                        "type": "file"
+                                    }
+                                ]
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Collection address | Agent name | Agent role | Token id this agent clones | Attributes as a JSON object string | Base image to frame",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentRegistrationResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Save agent registration draft",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/agent/registration/ens-info": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.EnsInfoResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "not_minted"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get ENS calldata",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/agent/registration/ens/check": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.RegistrationStatusResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Check ENS status",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/agent/registration/mint-info": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.MintInfoResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get mint calldata",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/agent/registration/mint/check": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.RegistrationStatusResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Check mint status",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/agent/registration/self": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.RegistrationStatusResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Self mint + ENS register",
+                "tags": [
+                    "AgentRegistration"
+                ]
+            }
+        },
+        "/auth/challenge": {
+            "get": {
+                "description": "Returns a fresh nonce + expiry. The caller signs the nonce with their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetAuthChallengeResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Auth challenge",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/auth/verify": {
+            "post": {
+                "description": "Verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.VerifyAuthRequest",
+                                        "summary": "request",
+                                        "description": "Address + signature + nonce"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Address + signature + nonce",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.VerifyAuthResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "nonce_not_found | signature_mismatch | not_authorized"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_not_found"
+                    }
+                },
+                "summary": "Auth verify",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/config": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.BlockchainConfigResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Public chain config",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/llm": {
+            "delete": {
+                "responses": {
+                    "204": {},
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete LLM config",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetLlmConfigResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "not_configured"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get LLM config",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SetLlmConfigRequest",
+                                        "summary": "request",
+                                        "description": "LLM config"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "LLM config",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetLlmConfigResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Set LLM config",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/mcp-connections": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListMcpConnectionsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List MCP connections",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.CreateMcpConnectionRequest",
+                                        "summary": "request",
+                                        "description": "MCP connection"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "MCP connection",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.McpConnectionResponse"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create MCP connection",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/mcp-connections/{id}": {
+            "delete": {
+                "parameters": [
+                    {
+                        "description": "MCP connection id",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {},
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete MCP connection",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/payment-policy": {
+            "delete": {
+                "responses": {
+                    "204": {},
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete payment policy",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetPaymentPolicyResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get payment policy",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/payment-policy/rules": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListPaymentRulesResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List payment rules",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SavePaymentRuleRequest",
+                                        "summary": "request",
+                                        "description": "payment rule"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "payment rule",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ExternalPaymentRule"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create payment rule",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/config/payment-policy/rules/{id}": {
+            "delete": {
+                "parameters": [
+                    {
+                        "description": "rule id",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {},
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Delete payment rule",
+                "tags": [
+                    "Config"
+                ]
+            },
+            "put": {
+                "parameters": [
+                    {
+                        "description": "rule id",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SavePaymentRuleRequest",
+                                        "summary": "request",
+                                        "description": "payment rule"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "payment rule",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ExternalPaymentRule"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update payment rule",
+                "tags": [
+                    "Config"
+                ]
+            }
+        },
+        "/conversations": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListConversationsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List conversations",
+                "tags": [
+                    "Conversations"
+                ]
+            }
+        },
+        "/conversations/{conversationId}/messages": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "Conversation id",
+                        "in": "path",
+                        "name": "conversationId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.ListConversationMessagesResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List conversation messages",
+                "tags": [
+                    "Conversations"
+                ]
+            },
+            "post": {
+                "parameters": [
+                    {
+                        "description": "Conversation id",
+                        "in": "path",
+                        "name": "conversationId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.AppendConversationMessagesRequest",
+                                        "summary": "request",
+                                        "description": "Messages"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Messages",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AppendConversationMessagesResponse"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Append conversation messages",
+                "tags": [
+                    "Conversations"
+                ]
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Liveness probe; serves before bootstrap completes.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.GetHealthResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Health",
+                "tags": [
+                    "Health"
+                ]
+            }
+        },
+        "/responses": {
+            "post": {
+                "description": "x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays the cheapest accept option whose address patterns match them — zero-price options (agent wallet and NFT owner by default) are served free without settlement. Anonymous 402 responses advertise only the options open to everyone.",
+                "parameters": [
+                    {
+                        "description": "x402 v2 payment payload (base64 JSON)",
+                        "in": "header",
+                        "name": "PAYMENT-SIGNATURE",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.CreateResponseRequest",
+                                        "summary": "request",
+                                        "description": "Conversation turn"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Conversation turn",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "402": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/x402.PaymentRequired"
+                                }
+                            }
+                        },
+                        "description": "Payment Required"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "runtime_failed"
+                    }
+                },
+                "summary": "Create response",
+                "tags": [
+                    "Responses"
+                ]
+            }
+        }
+    },
+    "openapi": "3.1.0",
+    "servers": [
+        {
+            "url": "/"
+        }
+    ]
+}
