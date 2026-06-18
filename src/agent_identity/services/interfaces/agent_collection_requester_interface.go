@@ -5,10 +5,12 @@ import "github.com/ethereum/go-ethereum/common"
 // OnChainAgentInfo is the subset of AgentCollectionV1.informationOf the node
 // reconciles into its local agent row after a mint completes.
 type OnChainAgentInfo struct {
-	Name    string
-	Role    string
-	Creator common.Address
-	CloneOf *uint64
+	Name       string
+	Role       string
+	Creator    common.Address
+	CloneOf    *uint64
+	Images     map[string]string
+	Attributes map[string]string
 }
 
 // AgentCollectionRequesterInterface reads from an ERC721 agent collection. The

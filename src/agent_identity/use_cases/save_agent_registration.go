@@ -2,18 +2,15 @@ package use_cases
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math/big"
 	"mime/multipart"
-	"strings"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -34,7 +31,7 @@ type SaveAgentRegistration struct {
 	generateAgentImages              identity_interfaces.GenerateAgentImagesInterface
 	ipfsFileStorage                  identity_interfaces.IPFSFileStorageInterface
 	token6022Requester               identity_interfaces.Token6022RequesterInterface
-	agentIdentitySettings            *settings.AgentIdentitySettings
+	ensDomainBuilder                 identity_interfaces.EnsDomainBuilderInterface
 	chainsSettings                   *runtime_common_settings.ChainsSettings
 	agentCollectionCreatorsSettings  *runtime_common_settings.AgentCollectionCreatorsSettings
 }
@@ -48,7 +45,7 @@ func NewSaveAgentRegistration(
 	generateAgentImages identity_interfaces.GenerateAgentImagesInterface,
 	ipfsFileStorage identity_interfaces.IPFSFileStorageInterface,
 	token6022Requester identity_interfaces.Token6022RequesterInterface,
-	agentIdentitySettings *settings.AgentIdentitySettings,
+	ensDomainBuilder identity_interfaces.EnsDomainBuilderInterface,
 	chainsSettings *runtime_common_settings.ChainsSettings,
 	agentCollectionCreatorsSettings *runtime_common_settings.AgentCollectionCreatorsSettings,
 ) *SaveAgentRegistration {
@@ -61,7 +58,7 @@ func NewSaveAgentRegistration(
 		generateAgentImages:              generateAgentImages,
 		ipfsFileStorage:                  ipfsFileStorage,
 		token6022Requester:               token6022Requester,
-		agentIdentitySettings:            agentIdentitySettings,
+		ensDomainBuilder:                 ensDomainBuilder,
 		chainsSettings:                   chainsSettings,
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 	}
@@ -90,7 +87,15 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, errors.NewValidationError("collectionAddress", "collection is not governed by the manager")
 	}
 
-	cred, found, err := u.walletCredentialsStorage.Get(ctx)
+	existing, err := u.agentRepository.Get(ctx)
+	if err != nil {
+		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
+	}
+	if existing == nil {
+		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet")
+	}
+
+	cred, found, err := u.walletCredentialsStorage.GetForId(ctx, existing.Id.String())
 	if err != nil {
 		return nil, errors.NewInternalError("wallet_lookup_failed", err.Error())
 	}
@@ -103,11 +108,6 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
 	}
 
-	existing, err := u.agentRepository.Get(ctx)
-	if err != nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
-	}
-
 	owner := req.Owner
 	var role enums.AgentRole
 	_ = role.Set(req.Role)
@@ -117,7 +117,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		CollectionAddress: collection.Hex(),
 		Name:              req.Name,
 		CloneOf:           req.CloneOf,
-		EnsDomain:         u.ensDomain(req.ChainId, req.Name, collectionName),
+		EnsDomain:         u.ensDomainBuilder.Build(req.Name, collectionName, req.ChainId),
 		Role:              role,
 		Creator:           owner,
 		WalletAddress:     cred.Address,
@@ -125,10 +125,8 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		Attributes:        req.Attributes,
 	}
 	// Preserve an already-minted identity if the owner re-edits the form.
-	if existing != nil {
-		agent.CollectionTokenId = existing.CollectionTokenId
-		agent.ProposalId = existing.ProposalId
-	}
+	agent.CollectionTokenId = existing.CollectionTokenId
+	agent.ProposalId = existing.ProposalId
 
 	images, err := u.buildImages(agent, common.HexToAddress(owner), cred.Address, req.Image)
 	if err != nil {
@@ -224,17 +222,6 @@ func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, err
 	}
 
 	return min(uint8(len(whole)-int(decimals)), 8), nil
-}
-
-// ensDomain composes the display domain: <name>.<collection>.<chainId>.<baseDomain>,
-// matching the ENS gateway convention and the registry's node derivation.
-func (u *SaveAgentRegistration) ensDomain(chainId, name, collectionName string) string {
-	return fmt.Sprintf("%s.%s.%s.%s",
-		strings.ToLower(name),
-		strings.ToLower(collectionName),
-		chainId,
-		strings.ToLower(u.agentIdentitySettings.EnsBaseDomain),
-	)
 }
 
 // readMultipartFile opens an uploaded file and reads its bytes.

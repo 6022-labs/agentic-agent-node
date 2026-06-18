@@ -3,6 +3,7 @@ package settings
 import (
 	_ "embed"
 	"encoding/json"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -52,4 +53,17 @@ func (s *AgentCollectionsManagersSettings) AddressFor(chainId string) (common.Ad
 	}
 	addr, ok := (*s)[chainId]
 	return addr, ok
+}
+
+// ChainIds lists the chains with a configured manager, sorted (map iteration is unordered).
+func (s *AgentCollectionsManagersSettings) ChainIds() []string {
+	if s == nil {
+		return nil
+	}
+	chainIds := make([]string, 0, len(*s))
+	for chainId := range *s {
+		chainIds = append(chainIds, chainId)
+	}
+	slices.Sort(chainIds)
+	return chainIds
 }

@@ -13,27 +13,27 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingOrGeneratingWalletCredentialsTestingSuite struct {
+type WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite struct {
 	sut *identity_services.WalletCredentialsStorage
 
 	mockStorage *runtime_common_mocks.MockSecretStorageInterface
 }
 
-func WhenGettingOrGeneratingWalletCredentialsBeforeEach(t *testing.T) *WhenGettingOrGeneratingWalletCredentialsTestingSuite {
+func WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockStorage := runtime_common_mocks.NewMockSecretStorageInterface(mockController)
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
-	mockAgentScopedKeyBuilder.EXPECT().ScopedKey(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, key string) (string, error) { return "scope/" + key, nil }).AnyTimes()
+	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
 
-	return &WhenGettingOrGeneratingWalletCredentialsTestingSuite{
+	return &WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite{
 		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
 		mockStorage: mockStorage,
 	}
 }
 
-func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
+func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
 	const scopedKey = "scope/wallet"
@@ -41,7 +41,7 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 	t.Run("Given a wallet already exists", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{
 				"privateKey": "0xpk",
 				"address":    "0xaddr",
@@ -51,10 +51,10 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 		t.Run("Should return it without writing", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingOrGeneratingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, err := suite.sut.GetOrGenerate(context.Background())
+			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
 
 			assert.NoError(t, err)
 			assert.Equal(t, "0xaddr", cred.Address)
@@ -64,7 +64,7 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 	t.Run("Given no wallet exists yet", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(nil)
 		}
@@ -72,10 +72,10 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 		t.Run("Should generate a new wallet and persist it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingOrGeneratingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, err := suite.sut.GetOrGenerate(context.Background())
+			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, cred.PrivateKeyHex)
@@ -86,7 +86,7 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 	t.Run("Given persisting the generated wallet fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(errors.New("vault down"))
 		}
@@ -94,10 +94,10 @@ func TestWhenGettingOrGeneratingWalletCredentials(t *testing.T) {
 		t.Run("Should propagate the persistence error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingOrGeneratingWalletCredentialsBeforeEach(t)
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.GetOrGenerate(context.Background())
+			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
 
 			assert.ErrorContains(t, err, "vault down")
 		})

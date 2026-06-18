@@ -6,6 +6,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -83,10 +84,12 @@ func (r *AgentCollectionRequester) InformationOf(chainId string, collectionAddre
 		cloneOf = &v
 	}
 	return identity_interfaces.OnChainAgentInfo{
-		Name:    info.Name,
-		Role:    info.Role,
-		Creator: info.Creator,
-		CloneOf: cloneOf,
+		Name:       info.Name,
+		Role:       info.Role,
+		Creator:    info.Creator,
+		CloneOf:    cloneOf,
+		Images:     helper.KeyValuesToMap(info.Images),
+		Attributes: helper.KeyValuesToMap(info.Attributes),
 	}, nil
 }
 

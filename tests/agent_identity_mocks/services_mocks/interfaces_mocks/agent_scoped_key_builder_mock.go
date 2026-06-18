@@ -54,3 +54,17 @@ func (mr *MockAgentScopedKeyBuilderInterfaceMockRecorder) ScopedKey(ctx, key any
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScopedKey", reflect.TypeOf((*MockAgentScopedKeyBuilderInterface)(nil).ScopedKey), ctx, key)
 }
+
+// ScopedKeyFor mocks base method.
+func (m *MockAgentScopedKeyBuilderInterface) ScopedKeyFor(agentId, key string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScopedKeyFor", agentId, key)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// ScopedKeyFor indicates an expected call of ScopedKeyFor.
+func (mr *MockAgentScopedKeyBuilderInterfaceMockRecorder) ScopedKeyFor(agentId, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScopedKeyFor", reflect.TypeOf((*MockAgentScopedKeyBuilderInterface)(nil).ScopedKeyFor), agentId, key)
+}

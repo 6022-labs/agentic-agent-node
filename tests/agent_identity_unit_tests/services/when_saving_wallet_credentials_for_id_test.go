@@ -12,27 +12,27 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenSavingWalletCredentialsTestingSuite struct {
+type WhenSavingWalletCredentialsForIdTestingSuite struct {
 	sut *identity_services.WalletCredentialsStorage
 
 	mockStorage *runtime_common_mocks.MockSecretStorageInterface
 }
 
-func WhenSavingWalletCredentialsBeforeEach(t *testing.T) *WhenSavingWalletCredentialsTestingSuite {
+func WhenSavingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenSavingWalletCredentialsForIdTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockStorage := runtime_common_mocks.NewMockSecretStorageInterface(mockController)
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
-	mockAgentScopedKeyBuilder.EXPECT().ScopedKey(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(_ context.Context, key string) (string, error) { return "scope/" + key, nil }).AnyTimes()
+	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
 
-	return &WhenSavingWalletCredentialsTestingSuite{
+	return &WhenSavingWalletCredentialsForIdTestingSuite{
 		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
 		mockStorage: mockStorage,
 	}
 }
 
-func TestWhenSavingWalletCredentials(t *testing.T) {
+func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
 	const scopedKey = "scope/wallet"
@@ -40,7 +40,7 @@ func TestWhenSavingWalletCredentials(t *testing.T) {
 	t.Run("Given valid credentials", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSavingWalletCredentialsTestingSuite) {
+		initSuite := func(suite *WhenSavingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, map[string]string{
 				"privateKey": "0xpk",
 				"address":    "0xaddr",
@@ -50,10 +50,10 @@ func TestWhenSavingWalletCredentials(t *testing.T) {
 		t.Run("Should write them to the scoped key", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSavingWalletCredentialsBeforeEach(t)
+			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Save(context.Background(), &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"})
+			err := suite.sut.SaveForId(context.Background(), "agent-1", &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"})
 
 			assert.NoError(t, err)
 		})
@@ -65,9 +65,9 @@ func TestWhenSavingWalletCredentials(t *testing.T) {
 		t.Run("Should reject without writing", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenSavingWalletCredentialsBeforeEach(t)
+			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 
-			err := suite.sut.Save(context.Background(), &identity_interfaces.WalletCredentials{})
+			err := suite.sut.SaveForId(context.Background(), "agent-1", &identity_interfaces.WalletCredentials{})
 
 			assert.Error(t, err)
 		})
