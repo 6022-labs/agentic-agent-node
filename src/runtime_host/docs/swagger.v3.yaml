@@ -547,6 +547,12 @@ openapi: 3.1.0
 paths:
   /internal/agent/collections:
     get:
+      parameters:
+      - in: query
+        name: chainId
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:

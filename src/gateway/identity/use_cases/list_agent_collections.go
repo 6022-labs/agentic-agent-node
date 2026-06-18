@@ -5,6 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/identity/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/responses"
 )
 
@@ -18,8 +19,12 @@ func NewListAgentCollections(
 	return &ListAgentCollections{agentCollectionsClient: agentCollectionsClient}
 }
 
-func (u *ListAgentCollections) Execute(ctx context.Context) (*responses.AgentCollectionsResponse, error) {
-	payload, err := u.agentCollectionsClient.List(ctx)
+func (u *ListAgentCollections) Execute(ctx context.Context, req *requests.ListAgentCollectionsRequest) (*responses.AgentCollectionsResponse, error) {
+	if err := req.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
+	payload, err := u.agentCollectionsClient.List(ctx, req.ChainId)
 	if err != nil {
 		return nil, err
 	}

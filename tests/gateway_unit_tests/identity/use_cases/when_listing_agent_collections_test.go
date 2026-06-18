@@ -7,6 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -39,7 +40,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any()).Return(&models.ExternalAgentCollectionsPayload{
+			suite.mockClient.EXPECT().List(gomock.Any(), "80002").Return(&models.ExternalAgentCollectionsPayload{
 				Collections: []models.ExternalAgentCollectionPayload{
 					{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
 					{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
@@ -53,7 +54,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Collections, 2)
@@ -67,7 +68,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any()).
+			suite.mockClient.EXPECT().List(gomock.Any(), "80002").
 				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
@@ -77,7 +78,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
 
 			var target *errors.UnavailableError
 			assert.ErrorAs(t, err, &target)

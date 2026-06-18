@@ -16,8 +16,10 @@ func NewHttpAgentCollectionsClient(client clients.ClientWithResponsesInterface) 
 	return &HttpAgentCollectionsClient{client: client}
 }
 
-func (c *HttpAgentCollectionsClient) List(ctx context.Context) (*models.ExternalAgentCollectionsPayload, error) {
-	resp, err := c.client.GetInternalAgentCollectionsWithResponse(ctx)
+func (c *HttpAgentCollectionsClient) List(ctx context.Context, chainId string) (*models.ExternalAgentCollectionsPayload, error) {
+	resp, err := c.client.GetInternalAgentCollectionsWithResponse(ctx, &clients.GetInternalAgentCollectionsParams{
+		ChainId: chainId,
+	})
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

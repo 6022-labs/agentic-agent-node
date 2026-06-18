@@ -42,16 +42,16 @@ func (m *MockAgentCollectionsClientInterface) EXPECT() *MockAgentCollectionsClie
 }
 
 // List mocks base method.
-func (m *MockAgentCollectionsClientInterface) List(ctx context.Context) (*models.ExternalAgentCollectionsPayload, error) {
+func (m *MockAgentCollectionsClientInterface) List(ctx context.Context, chainId string) (*models.ExternalAgentCollectionsPayload, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx)
+	ret := m.ctrl.Call(m, "List", ctx, chainId)
 	ret0, _ := ret[0].(*models.ExternalAgentCollectionsPayload)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockAgentCollectionsClientInterfaceMockRecorder) List(ctx any) *gomock.Call {
+func (mr *MockAgentCollectionsClientInterfaceMockRecorder) List(ctx, chainId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockAgentCollectionsClientInterface)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockAgentCollectionsClientInterface)(nil).List), ctx, chainId)
 }

@@ -37,7 +37,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any()).Return(&clients.GetInternalAgentCollectionsResponse{
+			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).Return(&clients.GetInternalAgentCollectionsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				Body:         []byte(`{"collections":[{"address":"0xaaa","name":"alpha","description":"first","moderatorCount":2,"nextTokenId":7}]}`),
 			}, nil)
@@ -49,7 +49,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.List(context.Background())
+			payload, err := suite.sut.List(context.Background(), "80002")
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) {
@@ -65,7 +65,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any()).Return(&clients.GetInternalAgentCollectionsResponse{
+			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).Return(&clients.GetInternalAgentCollectionsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
 				Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
 			}, nil)
@@ -77,7 +77,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.List(context.Background())
+			_, err := suite.sut.List(context.Background(), "80002")
 
 			var target *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &target)

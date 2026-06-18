@@ -9,6 +9,6 @@ import (
 // AgentCollectionsClientInterface is the gateway-side port for the runtime's
 // on-chain collections catalog. Implemented over HTTP.
 type AgentCollectionsClientInterface interface {
-	// List returns every collection the on-chain manager governs.
-	List(ctx context.Context) (*models.ExternalAgentCollectionsPayload, error)
+	// List returns every collection the on-chain manager governs on the given chain.
+	List(ctx context.Context, chainId string) (*models.ExternalAgentCollectionsPayload, error)
 }

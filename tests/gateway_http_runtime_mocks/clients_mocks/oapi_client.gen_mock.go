@@ -163,9 +163,9 @@ func (mr *MockClientInterfaceMockRecorder) DeleteInternalConfigPaymentPolicyRule
 }
 
 // GetInternalAgentCollections mocks base method.
-func (m *MockClientInterface) GetInternalAgentCollections(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetInternalAgentCollections(ctx context.Context, params *clients.GetInternalAgentCollectionsParams, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx}
+	varargs := []any{ctx, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -176,9 +176,9 @@ func (m *MockClientInterface) GetInternalAgentCollections(ctx context.Context, r
 }
 
 // GetInternalAgentCollections indicates an expected call of GetInternalAgentCollections.
-func (mr *MockClientInterfaceMockRecorder) GetInternalAgentCollections(ctx any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) GetInternalAgentCollections(ctx, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, reqEditors...)
+	varargs := append([]any{ctx, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollections", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentCollections), varargs...)
 }
 
@@ -987,9 +987,9 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteInternalConfigPaym
 }
 
 // GetInternalAgentCollectionsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentCollectionsResponse, error) {
+func (m *MockClientWithResponsesInterface) GetInternalAgentCollectionsWithResponse(ctx context.Context, params *clients.GetInternalAgentCollectionsParams, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentCollectionsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx}
+	varargs := []any{ctx, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -1000,9 +1000,9 @@ func (m *MockClientWithResponsesInterface) GetInternalAgentCollectionsWithRespon
 }
 
 // GetInternalAgentCollectionsWithResponse indicates an expected call of GetInternalAgentCollectionsWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentCollectionsWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentCollectionsWithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, reqEditors...)
+	varargs := append([]any{ctx, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollectionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentCollectionsWithResponse), varargs...)
 }
 

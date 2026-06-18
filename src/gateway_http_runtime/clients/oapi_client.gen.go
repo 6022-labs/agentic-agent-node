@@ -72,6 +72,11 @@ type RequestsConversationMessageInput struct {
 	Timestamp *string `json:"timestamp,omitempty"`
 }
 
+// RequestsConversationRef defines model for requests.ConversationRef.
+type RequestsConversationRef struct {
+	Id *string `json:"id,omitempty"`
+}
+
 // RequestsCreateMCPConnectionRequest defines model for requests.CreateMCPConnectionRequest.
 type RequestsCreateMCPConnectionRequest struct {
 	HeaderAuth *map[string]string `json:"headerAuth,omitempty"`
@@ -81,15 +86,24 @@ type RequestsCreateMCPConnectionRequest struct {
 
 // RequestsCreateResponseRequest defines model for requests.CreateResponseRequest.
 type RequestsCreateResponseRequest struct {
-	ConversationId *string                               `json:"conversationId,omitempty"`
-	Inputs         *[]RequestsCreateResponseRequestInput `json:"inputs,omitempty"`
+	Conversation       *RequestsConversationRef `json:"conversation,omitempty"`
+	Input              *[]RequestsInputMessage  `json:"input,omitempty"`
+	Instructions       *string                  `json:"instructions,omitempty"`
+	MaxOutputTokens    *int                     `json:"max_output_tokens,omitempty"`
+	Metadata           *map[string]string       `json:"metadata,omitempty"`
+	Model              *string                  `json:"model,omitempty"`
+	PreviousResponseId *string                  `json:"previous_response_id,omitempty"`
+	Store              *bool                    `json:"store,omitempty"`
+	Stream             *bool                    `json:"stream,omitempty"`
+	Temperature        *float32                 `json:"temperature,omitempty"`
+	TopP               *float32                 `json:"top_p,omitempty"`
 }
 
-// RequestsCreateResponseRequestInput defines model for requests.CreateResponseRequestInput.
-type RequestsCreateResponseRequestInput struct {
-	Content   *string `json:"content,omitempty"`
-	Role      *string `json:"role,omitempty"`
-	Timestamp *string `json:"timestamp,omitempty"`
+// RequestsInputMessage defines model for requests.InputMessage.
+type RequestsInputMessage struct {
+	Content *string `json:"content,omitempty"`
+	Role    *string `json:"role,omitempty"`
+	Type    *string `json:"type,omitempty"`
 }
 
 // RequestsSavePaymentRuleRequest defines model for requests.SavePaymentRuleRequest.
@@ -132,6 +146,7 @@ type ResponsesAgentCollectionsResponse struct {
 // ResponsesAgentRegistrationResponse defines model for responses.AgentRegistrationResponse.
 type ResponsesAgentRegistrationResponse struct {
 	Attributes        *map[string]string `json:"attributes,omitempty"`
+	ChainId           *string            `json:"chainId,omitempty"`
 	CloneOf           *int               `json:"cloneOf,omitempty"`
 	CollectionAddress *string            `json:"collectionAddress,omitempty"`
 	EnsDomain         *string            `json:"ensDomain,omitempty"`
@@ -158,12 +173,17 @@ type ResponsesAuthorizeResponse struct {
 
 // ResponsesBlockchainConfigResponse defines model for responses.BlockchainConfigResponse.
 type ResponsesBlockchainConfigResponse struct {
-	ChainId                   *int      `json:"chainId,omitempty"`
-	CollectionCreatorAddress  *string   `json:"collectionCreatorAddress,omitempty"`
-	CollectionsManagerAddress *string   `json:"collectionsManagerAddress,omitempty"`
-	EnsRegistryAddress        *string   `json:"ensRegistryAddress,omitempty"`
-	FacilitatorNetworks       *[]string `json:"facilitatorNetworks,omitempty"`
-	Token6022Address          *string   `json:"token6022Address,omitempty"`
+	Chains *map[string]ResponsesChainConfig `json:"chains,omitempty"`
+}
+
+// ResponsesChainConfig defines model for responses.ChainConfig.
+type ResponsesChainConfig struct {
+	CollectionCreatorAddress  *string `json:"collectionCreatorAddress,omitempty"`
+	CollectionsManagerAddress *string `json:"collectionsManagerAddress,omitempty"`
+	EnsRegistryAddress        *string `json:"ensRegistryAddress,omitempty"`
+	FacilitatorNetwork        *string `json:"facilitatorNetwork,omitempty"`
+	Mintable                  *bool   `json:"mintable,omitempty"`
+	Token6022Address          *string `json:"token6022Address,omitempty"`
 }
 
 // ResponsesConversationMessage defines model for responses.ConversationMessage.
@@ -175,6 +195,11 @@ type ResponsesConversationMessage struct {
 	Timestamp      *string `json:"timestamp,omitempty"`
 }
 
+// ResponsesConversationRef defines model for responses.ConversationRef.
+type ResponsesConversationRef struct {
+	Id *string `json:"id,omitempty"`
+}
+
 // ResponsesConversationSummary defines model for responses.ConversationSummary.
 type ResponsesConversationSummary struct {
 	ConversationId *string `json:"conversationId,omitempty"`
@@ -183,16 +208,19 @@ type ResponsesConversationSummary struct {
 	MessageCount   *int    `json:"messageCount,omitempty"`
 }
 
-// ResponsesCreateResponseMessage defines model for responses.CreateResponseMessage.
-type ResponsesCreateResponseMessage struct {
-	Content   *string `json:"content,omitempty"`
-	Role      *string `json:"role,omitempty"`
-	Timestamp *string `json:"timestamp,omitempty"`
-}
-
 // ResponsesCreateResponseResponse defines model for responses.CreateResponseResponse.
 type ResponsesCreateResponseResponse struct {
-	Message *ResponsesCreateResponseMessage `json:"message,omitempty"`
+	Conversation       *ResponsesConversationRef `json:"conversation,omitempty"`
+	CreatedAt          *int                      `json:"created_at,omitempty"`
+	Error              *ResponsesResponseError   `json:"error,omitempty"`
+	Id                 *string                   `json:"id,omitempty"`
+	Metadata           *map[string]string        `json:"metadata,omitempty"`
+	Model              *string                   `json:"model,omitempty"`
+	Object             *string                   `json:"object,omitempty"`
+	Output             *[]ResponsesOutputItem    `json:"output,omitempty"`
+	PreviousResponseId *string                   `json:"previous_response_id,omitempty"`
+	Status             *string                   `json:"status,omitempty"`
+	Usage              *ResponsesUsage           `json:"usage,omitempty"`
 }
 
 // ResponsesEnsInfoResponse defines model for responses.EnsInfoResponse.
@@ -270,6 +298,22 @@ type ResponsesMintInfoResponse struct {
 	Wallets           *[]string            `json:"wallets,omitempty"`
 }
 
+// ResponsesOutputContent defines model for responses.OutputContent.
+type ResponsesOutputContent struct {
+	Annotations *[]interface{} `json:"annotations,omitempty"`
+	Text        *string        `json:"text,omitempty"`
+	Type        *string        `json:"type,omitempty"`
+}
+
+// ResponsesOutputItem defines model for responses.OutputItem.
+type ResponsesOutputItem struct {
+	Content *[]ResponsesOutputContent `json:"content,omitempty"`
+	Id      *string                   `json:"id,omitempty"`
+	Role    *string                   `json:"role,omitempty"`
+	Status  *string                   `json:"status,omitempty"`
+	Type    *string                   `json:"type,omitempty"`
+}
+
 // ResponsesPaymentFacilitatorResponse defines model for responses.PaymentFacilitatorResponse.
 type ResponsesPaymentFacilitatorResponse struct {
 	BaseUrl           *string `json:"baseUrl,omitempty"`
@@ -310,6 +354,24 @@ type ResponsesRegistrationStatusResponse struct {
 	MintTxHash *string `json:"mintTxHash,omitempty"`
 	ProposalId *int    `json:"proposalId,omitempty"`
 	TokenId    *int    `json:"tokenId,omitempty"`
+}
+
+// ResponsesResponseError defines model for responses.ResponseError.
+type ResponsesResponseError struct {
+	Code    *string `json:"code,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
+// ResponsesUsage defines model for responses.Usage.
+type ResponsesUsage struct {
+	InputTokens  *int `json:"input_tokens,omitempty"`
+	OutputTokens *int `json:"output_tokens,omitempty"`
+	TotalTokens  *int `json:"total_tokens,omitempty"`
+}
+
+// GetInternalAgentCollectionsParams defines parameters for GetInternalAgentCollections.
+type GetInternalAgentCollectionsParams struct {
+	ChainId string `form:"chainId" json:"chainId"`
 }
 
 // PostInternalAgentRegistrationFormdataBody defines parameters for PostInternalAgentRegistration.
@@ -509,7 +571,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// GetInternalAgentCollections request
-	GetInternalAgentCollections(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetInternalAgentCollections(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalAgentRegistration request
 	GetInternalAgentRegistration(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -620,8 +682,8 @@ type ClientInterface interface {
 	PostInternalResponses(ctx context.Context, body PostInternalResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetInternalAgentCollections(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInternalAgentCollectionsRequest(c.Server)
+func (c *Client) GetInternalAgentCollections(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalAgentCollectionsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,7 +1163,7 @@ func (c *Client) PostInternalResponses(ctx context.Context, body PostInternalRes
 }
 
 // NewGetInternalAgentCollectionsRequest generates requests for GetInternalAgentCollections
-func NewGetInternalAgentCollectionsRequest(server string) (*http.Request, error) {
+func NewGetInternalAgentCollectionsRequest(server string, params *GetInternalAgentCollectionsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -1117,6 +1179,24 @@ func NewGetInternalAgentCollectionsRequest(server string) (*http.Request, error)
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chainId", runtime.ParamLocationQuery, params.ChainId); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -2147,7 +2227,7 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetInternalAgentCollectionsWithResponse request
-	GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error)
+	GetInternalAgentCollectionsWithResponse(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error)
 
 	// GetInternalAgentRegistrationWithResponse request
 	GetInternalAgentRegistrationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationResponse, error)
@@ -2262,6 +2342,7 @@ type GetInternalAgentCollectionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesAgentCollectionsResponse
+	JSON400      *FiberMap
 	JSON502      *FiberMap
 }
 
@@ -2983,8 +3064,8 @@ func (r PostInternalResponsesResponse) StatusCode() int {
 }
 
 // GetInternalAgentCollectionsWithResponse request returning *GetInternalAgentCollectionsResponse
-func (c *ClientWithResponses) GetInternalAgentCollectionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error) {
-	rsp, err := c.GetInternalAgentCollections(ctx, reqEditors...)
+func (c *ClientWithResponses) GetInternalAgentCollectionsWithResponse(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error) {
+	rsp, err := c.GetInternalAgentCollections(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -3353,6 +3434,13 @@ func ParseGetInternalAgentCollectionsResponse(rsp *http.Response) (*GetInternalA
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
 		var dest FiberMap

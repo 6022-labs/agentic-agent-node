@@ -8,7 +8,7 @@ import (
 
 // ListAgentCollectionsRequest is the chain to list collections for.
 type ListAgentCollectionsRequest struct {
-	ChainId string `query:"chainId" form:"chainId"`
+	ChainId string `query:"chainId" json:"chainId" binding:"required"`
 }
 
 func (r *ListAgentCollectionsRequest) ValidateAndSanitize() error {

@@ -28,7 +28,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "chainId",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
