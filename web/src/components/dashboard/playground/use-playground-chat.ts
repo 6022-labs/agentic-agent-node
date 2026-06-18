@@ -1,4 +1,5 @@
 import React from "react"
+import axios from "axios"
 import { toast } from "sonner"
 
 import type { ChatMessage } from "@/components/dashboard/playground/chat-transcript"
@@ -82,36 +83,43 @@ export function usePlaygroundChat() {
     setSending(true)
 
     try {
-      if (!wallet || !address) {
-        throw new Error("Connect a wallet to talk to the agent")
+      // OpenAI Responses contract: the server owns history so we send
+      // only the new turn and continue the thread via previous_response_id.
+      const body = {
+        input: content,
+        instructions: prompt,
+        previous_response_id: conversationId,
       }
-      // /responses is x402-gated; the console signs a zero-value
-      // authorization against a free rule the connected wallet is
-      // entitled to (the agent wallet + owner have one by default).
-      const { rules } = await listPaymentRules()
-      const freeRule = findFreeRule(rules, address)
-      if (!freeRule) {
-        throw new Error(
-          "No free access for this wallet — add a zero-price rule for it in the Payment policy"
-        )
-      }
-      const paymentHeader = await getX402PaymentHeader(
-        wallet,
-        address,
-        freeRule
-      )
 
-      // OpenAI Responses contract: the server owns history (keyed by the
-      // conversation id), so we send only the new turn and continue the
-      // thread via previous_response_id.
-      const { data } = await createResponse(
-        {
-          input: content,
-          instructions: prompt,
-          previous_response_id: conversationId,
-        },
-        paymentHeader
-      )
+      // JWT free access needs no signature; sign only on a 402 fallback.
+      let response: Awaited<ReturnType<typeof createResponse>>
+      try {
+        response = await createResponse(body)
+      } catch (error) {
+        if (!axios.isAxiosError(error) || error.response?.status !== 402) {
+          throw error
+        }
+        if (!wallet || !address) {
+          throw new Error("Connect a wallet to talk to the agent", {
+            cause: error,
+          })
+        }
+        const { rules } = await listPaymentRules()
+        const freeRule = findFreeRule(rules, address)
+        if (!freeRule) {
+          throw new Error(
+            "No free access for this wallet — add a zero-price rule for it in the Payment policy",
+            { cause: error }
+          )
+        }
+        const paymentHeader = await getX402PaymentHeader(
+          wallet,
+          address,
+          freeRule
+        )
+        response = await createResponse(body, paymentHeader)
+      }
+      const { data } = response
 
       if (data.id && data.id !== conversationId) {
         setConversationId(data.id)

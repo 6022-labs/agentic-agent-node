@@ -28,28 +28,29 @@ const (
 
 	methodX402 = "x402"
 
+	// x402Priority runs the payment link last (terminal fallback).
+	x402Priority = 100
+
 	// Rules carrying this pattern are public and advertised in 402s.
 	everyoneAddressPattern = ".*"
 )
 
-// X402PaymentMethodMiddleware gates a request over x402 v2: the payer gets the
-// cheapest rule whose patterns match them (price "0" served free, never
-// settled), no match = refused. The x402 settings live in each rule's Config
-// blob; the settlement timeout comes from the network's facilitator config.
-type X402PaymentMethodMiddleware struct {
+// X402AccessMethod gates a request over x402 v2: the payer gets the cheapest
+// rule whose patterns match (price "0" free, never settled), else refused.
+type X402AccessMethod struct {
 	logger                   *zap.Logger
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface
 	x402PaymentVerifier      x402_interfaces.X402PaymentVerifierInterface
 	x402FacilitatorClient    x402_interfaces.X402FacilitatorClientInterface
 }
 
-func NewX402PaymentMethodMiddleware(
+func NewX402AccessMethod(
 	logger *zap.Logger,
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface,
 	x402PaymentVerifier x402_interfaces.X402PaymentVerifierInterface,
 	x402FacilitatorClient x402_interfaces.X402FacilitatorClientInterface,
-) *X402PaymentMethodMiddleware {
-	return &X402PaymentMethodMiddleware{
+) *X402AccessMethod {
+	return &X402AccessMethod{
 		logger:                   logger,
 		paymentFacilitatorClient: paymentFacilitatorClient,
 		x402PaymentVerifier:      x402PaymentVerifier,
@@ -63,17 +64,26 @@ type x402Rule struct {
 	config *x402.X402Config
 }
 
-func (m *X402PaymentMethodMiddleware) Method() string {
-	return methodX402
+func (m *X402AccessMethod) Priority() int {
+	return x402Priority
 }
 
-func (m *X402PaymentMethodMiddleware) HasProof(ctx *fiber.Ctx) bool {
-	return len(ctx.Get(PaymentSignatureHeader)) != 0
+// x402 is terminal: it always handles, settling a payment or advertising a 402.
+func (m *X402AccessMethod) TryHandle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+	return true, m.handle(ctx, rules)
 }
 
-func (m *X402PaymentMethodMiddleware) Handle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) error {
-	// The facilitator is network-level config, joined here: a rule is settleable
-	// only if its network has one.
+func (m *X402AccessMethod) MatchesFreeRule(rules []models.ExternalPaymentRule, address common.Address) bool {
+	for _, candidate := range m.parseX402Rules(rules) {
+		if m.matchesAddressPatterns(candidate.config.AddressPatterns, address) && m.isZeroPrice(candidate.rule.Price) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) error {
+	// A rule is settleable only if its network has a facilitator.
 	facilitators, err := m.paymentFacilitatorClient.Get(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_facilitators_unavailable", err.Error()))
@@ -95,8 +105,7 @@ func (m *X402PaymentMethodMiddleware) Handle(ctx *fiber.Ctx, rules []models.Exte
 		return m.paymentRequired(ctx, x402Rules, facilitators, "no_matching_payment_requirements")
 	}
 
-	// Candidates share network+payTo but may differ in asset (= EIP-712
-	// domain), so recovery is attempted per candidate.
+	// Candidates share network+payTo but differ in asset (EIP-712 domain), so recover per candidate.
 	payer, recovered, err := m.recoverAgainstCandidates(payload, candidates)
 	if errors.Is(err, x402_interfaces.ErrX402AuthorizationExpired) {
 		return m.paymentRequired(ctx, x402Rules, facilitators, "authorization_expired")
@@ -159,7 +168,7 @@ func (m *X402PaymentMethodMiddleware) Handle(ctx *fiber.Ctx, rules []models.Exte
 	return nil
 }
 
-func (m *X402PaymentMethodMiddleware) recoverAgainstCandidates(payload *x402.PaymentPayload, candidates []x402Rule) (common.Address, []x402Rule, error) {
+func (m *X402AccessMethod) recoverAgainstCandidates(payload *x402.PaymentPayload, candidates []x402Rule) (common.Address, []x402Rule, error) {
 	var payer common.Address
 	var recovered []x402Rule
 	var lastErr error
@@ -181,9 +190,8 @@ func (m *X402PaymentMethodMiddleware) recoverAgainstCandidates(payload *x402.Pay
 	return payer, recovered, nil
 }
 
-// paymentRequired writes the spec 402 (header + body), advertising only the
-// public rules — listing scoped ones would leak their patterns.
-func (m *X402PaymentMethodMiddleware) paymentRequired(ctx *fiber.Ctx, x402Rules []x402Rule, facilitators map[string]models.ExternalPaymentFacilitator, errorCode string) error {
+// paymentRequired writes the spec 402, advertising only public rules (scoped ones would leak patterns).
+func (m *X402AccessMethod) paymentRequired(ctx *fiber.Ctx, x402Rules []x402Rule, facilitators map[string]models.ExternalPaymentFacilitator, errorCode string) error {
 	accepts := []x402.PaymentRequirements{}
 	for i := range x402Rules {
 		if slices.Contains(x402Rules[i].config.AddressPatterns, everyoneAddressPattern) && !m.unsettleablePaidRule(&x402Rules[i], facilitators) {
@@ -207,9 +215,8 @@ func (m *X402PaymentMethodMiddleware) paymentRequired(ctx *fiber.Ctx, x402Rules 
 	return ctx.Status(fiber.StatusPaymentRequired).JSON(body)
 }
 
-// parseX402Rules keeps the x402-method rules and decodes their config, skipping
-// any that don't parse.
-func (m *X402PaymentMethodMiddleware) parseX402Rules(rules []models.ExternalPaymentRule) []x402Rule {
+// parseX402Rules keeps x402-method rules and decodes their config, skipping unparseable ones.
+func (m *X402AccessMethod) parseX402Rules(rules []models.ExternalPaymentRule) []x402Rule {
 	var out []x402Rule
 	for i := range rules {
 		if rules[i].Method != methodX402 {
@@ -224,7 +231,7 @@ func (m *X402PaymentMethodMiddleware) parseX402Rules(rules []models.ExternalPaym
 	return out
 }
 
-func (m *X402PaymentMethodMiddleware) matchRules(x402Rules []x402Rule, payload *x402.PaymentPayload) []x402Rule {
+func (m *X402AccessMethod) matchRules(x402Rules []x402Rule, payload *x402.PaymentPayload) []x402Rule {
 	if payload.Scheme != x402.SchemeExact {
 		return nil
 	}
@@ -242,9 +249,8 @@ func (m *X402PaymentMethodMiddleware) matchRules(x402Rules []x402Rule, payload *
 	return candidates
 }
 
-// cheapestEntitledRule picks the lowest-priced rule whose patterns match the
-// payer, skipping paid rules whose network has no facilitator (unsettleable).
-func (m *X402PaymentMethodMiddleware) cheapestEntitledRule(x402Rules []x402Rule, payer common.Address, facilitators map[string]models.ExternalPaymentFacilitator) *x402Rule {
+// cheapestEntitledRule picks the lowest-priced pattern-matching rule, skipping unsettleable paid ones.
+func (m *X402AccessMethod) cheapestEntitledRule(x402Rules []x402Rule, payer common.Address, facilitators map[string]models.ExternalPaymentFacilitator) *x402Rule {
 	var best *x402Rule
 	var bestPrice *big.Int
 	for i := range x402Rules {
@@ -267,17 +273,15 @@ func (m *X402PaymentMethodMiddleware) cheapestEntitledRule(x402Rules []x402Rule,
 	return best
 }
 
-// unsettleablePaidRule is true for a paid rule whose network has no configured
-// facilitator — it can't be verified or settled, so it's never advertised or
-// honored.
-func (m *X402PaymentMethodMiddleware) unsettleablePaidRule(candidate *x402Rule, facilitators map[string]models.ExternalPaymentFacilitator) bool {
+// unsettleablePaidRule is a paid rule whose network has no facilitator — never advertised or honored.
+func (m *X402AccessMethod) unsettleablePaidRule(candidate *x402Rule, facilitators map[string]models.ExternalPaymentFacilitator) bool {
 	_, hasFacilitator := facilitators[candidate.config.Network]
 	return !m.isZeroPrice(candidate.rule.Price) && !hasFacilitator
 }
 
 // matchesAddressPatterns full-matches the payer's lowercase address; invalid
 // patterns never match.
-func (m *X402PaymentMethodMiddleware) matchesAddressPatterns(patterns []string, payer common.Address) bool {
+func (m *X402AccessMethod) matchesAddressPatterns(patterns []string, payer common.Address) bool {
 	payerHex := strings.ToLower(payer.Hex())
 	for _, pattern := range patterns {
 		re, err := regexp.Compile("^(?:" + pattern + ")$")
@@ -291,21 +295,19 @@ func (m *X402PaymentMethodMiddleware) matchesAddressPatterns(patterns []string, 
 	return false
 }
 
-func (m *X402PaymentMethodMiddleware) isZeroPrice(price string) bool {
+func (m *X402AccessMethod) isZeroPrice(price string) bool {
 	value, ok := new(big.Int).SetString(price, 10)
 	return ok && value.Sign() == 0
 }
 
-func (m *X402PaymentMethodMiddleware) coversPrice(payload *x402.PaymentPayload, rule *models.ExternalPaymentRule) bool {
+func (m *X402AccessMethod) coversPrice(payload *x402.PaymentPayload, rule *models.ExternalPaymentRule) bool {
 	value, valueOk := new(big.Int).SetString(payload.Amount(), 10)
 	price, priceOk := new(big.Int).SetString(rule.Price, 10)
 	return valueOk && priceOk && value.Cmp(price) >= 0
 }
 
-func (m *X402PaymentMethodMiddleware) toPaymentRequirements(candidate *x402Rule, maxTimeoutSeconds int) *x402.PaymentRequirements {
-	// assetTransferMethod tells the client how to sign; eip3009 also needs the
-	// token's EIP-712 domain. Permit2 signs over its own fixed domain, so it
-	// carries no name/version.
+func (m *X402AccessMethod) toPaymentRequirements(candidate *x402Rule, maxTimeoutSeconds int) *x402.PaymentRequirements {
+	// assetTransferMethod tells the client how to sign; eip3009 also needs the token's EIP-712 domain.
 	extra := map[string]any{"assetTransferMethod": candidate.config.AssetTransferMethod}
 	if candidate.config.AssetTransferMethod != x402.AssetTransferMethodPermit2 {
 		extra["name"] = candidate.config.Eip712Name

@@ -4,33 +4,30 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	"github.com/gofiber/fiber/v2"
 )
 
 const ResponsesEndpoint = "/responses"
 
 type ResponseController struct {
-	createResponse        use_cases.CreateResponseInterface
-	paymentGateMiddleware *middlewares.PaymentGateMiddleware
+	createResponse               use_cases.CreateResponseInterface
+	responseAccessGateMiddleware *middlewares.ResponseAccessGateMiddleware
 }
 
 func NewResponseController(
 	createResponse use_cases.CreateResponseInterface,
-	paymentGateMiddleware *middlewares.PaymentGateMiddleware,
+	responseAccessGateMiddleware *middlewares.ResponseAccessGateMiddleware,
 ) *ResponseController {
 	return &ResponseController{
-		createResponse:        createResponse,
-		paymentGateMiddleware: paymentGateMiddleware,
+		createResponse:               createResponse,
+		responseAccessGateMiddleware: responseAccessGateMiddleware,
 	}
 }
 
-// RegisterUnauthenticatedRoutes mounts /responses outside the JWT group: the
-// payment gate dispatches to the method matching the caller's proof (today
-// only x402), pricing each caller via the rules whose patterns match them
-// (price 0 = free).
+// RegisterUnauthenticatedRoutes mounts /responses outside the JWT group, gated by the access chain.
 func (c *ResponseController) RegisterUnauthenticatedRoutes(app fiber.Router) {
-	app.Post(ResponsesEndpoint, c.paymentGateMiddleware.Handle, c.CreateResponse)
+	app.Post(ResponsesEndpoint, c.responseAccessGateMiddleware.Handle, c.CreateResponse)
 }
 
 func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}

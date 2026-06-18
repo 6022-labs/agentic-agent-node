@@ -12,8 +12,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
-	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
+	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
+	core_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
 	x402_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/x402_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,7 +31,7 @@ const (
 )
 
 type WhenHandlingX402GateTestingSuite struct {
-	sut *middlewares.PaymentGateMiddleware
+	sut *middlewares.ResponseAccessGateMiddleware
 	app *fiber.App
 
 	handlerCalled bool
@@ -39,6 +40,7 @@ type WhenHandlingX402GateTestingSuite struct {
 
 	mockPaymentRuleClient        *interfaces_mocks.MockPaymentRuleClientInterface
 	mockPaymentFacilitatorClient *interfaces_mocks.MockPaymentFacilitatorClientInterface
+	mockJwtValidator             *core_interfaces_mocks.MockJwtValidatorInterface
 	mockX402PaymentVerifier      *x402_mocks.MockX402PaymentVerifierInterface
 	mockX402FacilitatorClient    *x402_mocks.MockX402FacilitatorClientInterface
 }
@@ -48,24 +50,30 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 
 	mockPaymentRuleClient := interfaces_mocks.NewMockPaymentRuleClientInterface(mockController)
 	mockPaymentFacilitatorClient := interfaces_mocks.NewMockPaymentFacilitatorClientInterface(mockController)
+	mockJwtValidator := core_interfaces_mocks.NewMockJwtValidatorInterface(mockController)
 	mockX402PaymentVerifier := x402_mocks.NewMockX402PaymentVerifierInterface(mockController)
 	mockX402FacilitatorClient := x402_mocks.NewMockX402FacilitatorClientInterface(mockController)
 
-	x402Method := middlewares.NewX402PaymentMethodMiddleware(
+	x402Method := middlewares.NewX402AccessMethod(
 		zap.NewNop(),
 		mockPaymentFacilitatorClient,
 		mockX402PaymentVerifier,
 		mockX402FacilitatorClient,
 	)
-	sut := middlewares.NewPaymentGateMiddleware(middlewares.NewPaymentGateMiddlewareParams{
+	jwtMethod := middlewares.NewJwtFreeAccessMethod(middlewares.NewJwtFreeAccessMethodParams{
+		JwtValidator:     mockJwtValidator,
+		FreeRuleMatchers: []middleware_interfaces.FreeRuleMatcherInterface{x402Method},
+	})
+	sut := middlewares.NewResponseAccessGateMiddleware(middlewares.NewResponseAccessGateMiddlewareParams{
 		PaymentRuleClient: mockPaymentRuleClient,
-		PaymentMethods:    []middleware_interfaces.PaymentMethodInterface{x402Method},
+		AccessMethods:     []middleware_interfaces.AccessMethodInterface{x402Method, jwtMethod},
 	})
 
 	suite := &WhenHandlingX402GateTestingSuite{
 		sut:                          sut,
 		mockPaymentRuleClient:        mockPaymentRuleClient,
 		mockPaymentFacilitatorClient: mockPaymentFacilitatorClient,
+		mockJwtValidator:             mockJwtValidator,
 		mockX402PaymentVerifier:      mockX402PaymentVerifier,
 		mockX402FacilitatorClient:    mockX402FacilitatorClient,
 	}
@@ -832,6 +840,104 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.NotContains(t, string(bodyBytes), "42")
 			assert.Equal(t, "settlement_failed", decodePaymentRequiredHeader(t, resp).Error)
 			assert.Empty(t, resp.Header.Get(middlewares.PaymentResponseHeader))
+		})
+	})
+
+	t.Run("Given a JWT whose address has a zero-price rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(
+					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
+				), nil).
+				Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify("valid.jwt.token").
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+		}
+
+		t.Run("Should serve free without a signature or the facilitator", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+			// Identity comes from the JWT, not a recovered signature.
+			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenAddress)
+			assert.Empty(t, suite.seenPayer)
+		})
+	})
+
+	t.Run("Given a JWT whose address has only a paid rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePublicRule()), nil).
+				Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify("valid.jwt.token").
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+		}
+
+		t.Run("Should fall through to the 402 so the caller signs", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.False(t, suite.handlerCalled)
+		})
+	})
+
+	t.Run("Given an invalid JWT alongside a payment signature", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(
+					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
+				), nil).
+				Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify("expired.jwt.token").
+				Return(common.Address{}, errors.New("token expired")).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+		}
+
+		t.Run("Should ignore the JWT and honor the signature path", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			resp, err := suite.app.Test(x402GateBearerRequest("expired.jwt.token", header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
 		})
 	})
 }
