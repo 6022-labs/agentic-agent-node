@@ -7,9 +7,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/identity"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/knowledge"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment"
-	payment_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
-	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning"
+	reasoning_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
+	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	"go.uber.org/dig"
 )
 
@@ -43,22 +43,49 @@ func addKnowledgeConfiguration(container *dig.Container) {
 }
 
 func addPaymentConfiguration(container *dig.Container) {
-	if err := container.Provide(payment_middlewares.NewPaymentGateMiddleware); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
-		payment_middlewares.NewX402PaymentMethodMiddleware,
-		dig.Group("payment_methods"),
-		dig.As(new(middleware_interfaces.PaymentMethodInterface)),
-	); err != nil {
-		panic(err)
-	}
-
 	provideController(container, payment.NewPaymentPolicyController)
 	provideController(container, payment.NewPaymentRuleController)
 }
 
 func addReasoningConfiguration(container *dig.Container) {
+	if err := container.Provide(reasoning_middlewares.NewResponseAccessGateMiddleware); err != nil {
+		panic(err)
+	}
+
+	// One x402 instance exposed under two groups: the access chain and the
+	// free-access evaluators the JWT link consults.
+	if err := container.Provide(reasoning_middlewares.NewX402AccessMethod); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		func(x *reasoning_middlewares.X402AccessMethod) middleware_interfaces.AccessMethodInterface {
+			return x
+		},
+		dig.Group("access_methods"),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		func(x *reasoning_middlewares.X402AccessMethod) middleware_interfaces.FreeRuleMatcherInterface {
+			return x
+		},
+		dig.Group("free_rule_matchers"),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(reasoning_middlewares.NewJwtFreeAccessMethod); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		func(x *reasoning_middlewares.JwtFreeAccessMethod) middleware_interfaces.AccessMethodInterface {
+			return x
+		},
+		dig.Group("access_methods"),
+	); err != nil {
+		panic(err)
+	}
+
 	provideController(container, reasoning.NewResponseController)
 	provideController(container, reasoning.NewLlmConfigController)
 	provideController(container, reasoning.NewMcpConfigController)

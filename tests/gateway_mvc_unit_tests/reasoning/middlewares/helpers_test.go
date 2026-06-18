@@ -9,7 +9,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,6 +94,16 @@ func x402GateRequest(paymentHeader string) *http.Request {
 	req.Header.Set("Content-Type", "application/json")
 	if len(paymentHeader) != 0 {
 		req.Header.Set(middlewares.PaymentSignatureHeader, paymentHeader)
+	}
+	return req
+}
+
+// x402GateBearerRequest builds a /responses request carrying an Authorization
+// bearer (and optionally a payment header) — the JWT free-access path.
+func x402GateBearerRequest(bearer string, paymentHeader string) *http.Request {
+	req := x402GateRequest(paymentHeader)
+	if len(bearer) != 0 {
+		req.Header.Set("Authorization", "Bearer "+bearer)
 	}
 	return req
 }
