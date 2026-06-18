@@ -4,9 +4,16 @@ import { Loader2, MessagesSquare } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import EmptyState from "@/components/dashboard/empty-state"
 import { cn } from "@/lib/utils"
-import type { InputMessage } from "@/models/response"
+import type { MessageRole } from "@/models/enums/message-role"
 
-export type ChatMessage = InputMessage & { stats?: string }
+export type ChatMessage = {
+  id: string
+  author: string
+  role: MessageRole
+  content: string
+  timestamp: string
+  stats?: string
+}
 
 type Props = {
   messages: ChatMessage[]
