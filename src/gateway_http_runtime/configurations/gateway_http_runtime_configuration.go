@@ -19,11 +19,10 @@ import (
 	"go.uber.org/dig"
 )
 
-// newRuntimeClient builds the generated runtime client (oapi-codegen) bound to
-// the configured base URL and timeout.
+// newRuntimeClient builds the generated runtime client (oapi-codegen) bound to the
+// configured base URL.
 func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResponsesInterface, error) {
-	httpClient := &http.Client{Timeout: s.Timeout}
-	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
+	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(&http.Client{}))
 }
 
 // AddGatewayHttpRuntimeConfiguration wires the shared runtime client plus each

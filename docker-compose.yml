@@ -11,7 +11,6 @@ services:
       - RUNTIME_HOST__API_PORT=5400
       - RUNTIME_HOST__LISTEN_ADDRESS=127.0.0.1
       - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400
-      - RUNTIME_CLIENT__TIMEOUT=5
       - IPFS__NODE_HTTP_URL=http://agent-node-ipfs:5001
       - IPFS__BEARER_TOKEN=
       - JWT__SIGNING_KEY=dev-secret
