@@ -12,6 +12,7 @@ type ExternalKeyValue struct {
 // injected by the gateway. The client serializes it as multipart/form-data,
 // streaming Image as the file part.
 type ExternalSaveAgentRegistrationPayload struct {
+	ChainId           string
 	CollectionAddress string
 	Owner             string
 	Name              string

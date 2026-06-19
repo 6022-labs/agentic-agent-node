@@ -24,6 +24,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	}
 
 	payload, err := u.client.Save(ctx, &models.ExternalSaveAgentRegistrationPayload{
+		ChainId:           req.ChainId,
 		CollectionAddress: req.CollectionAddress,
 		Owner:             owner,
 		Name:              req.Name,

@@ -53,6 +53,7 @@ func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *models.Ext
 // writeSaveFields writes the non-file draft fields; attributes go as a JSON object string.
 func (c *HttpAgentRegistrationClient) writeSaveFields(writer *multipart.Writer, body *models.ExternalSaveAgentRegistrationPayload) error {
 	fields := map[string]string{
+		"chainId":           body.ChainId,
 		"collectionAddress": body.CollectionAddress,
 		"owner":             body.Owner,
 		"name":              body.Name,

@@ -18,6 +18,7 @@ var ethAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
 // single base image the runtime frames; Attributes arrives as a JSON object
 // string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {
+	ChainId           string                `form:"chainId"`
 	CollectionAddress string                `form:"collectionAddress"`
 	Name              string                `form:"name"`
 	Role              string                `form:"role"`
@@ -29,6 +30,11 @@ type SaveAgentRegistrationRequest struct {
 }
 
 func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
+	r.ChainId = strings.TrimSpace(r.ChainId)
+	if len(r.ChainId) == 0 {
+		return errors.NewValidationError("chainId", "is required")
+	}
+
 	r.CollectionAddress = strings.TrimSpace(r.CollectionAddress)
 	if !ethAddressPattern.MatchString(r.CollectionAddress) {
 		return errors.NewValidationError("collectionAddress", "must be a 0x-prefixed 20-byte hex address")
