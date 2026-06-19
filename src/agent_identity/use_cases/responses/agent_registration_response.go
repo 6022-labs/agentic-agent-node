@@ -38,6 +38,8 @@ func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, state *models
 	r.EnsDomain = agent.EnsDomain
 	r.Images = agent.Images
 	r.Attributes = agent.Attributes
-	r.MintStatus = state.MintStatus.String()
-	r.EnsStatus = state.EnsRegistryStatus.String()
+	if state != nil {
+		r.MintStatus = state.MintStatus.String()
+		r.EnsStatus = state.EnsRegistryStatus.String()
+	}
 }
