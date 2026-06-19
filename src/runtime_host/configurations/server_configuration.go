@@ -39,7 +39,33 @@ type registerRoutesParams struct {
 }
 
 func registerRoutes(p registerRoutesParams) {
-	p.App.Use(fiberzap.New(fiberzap.Config{Logger: p.Logger}))
+	p.App.Use(fiberzap.New(fiberzap.Config{
+		Logger: p.Logger,
+	}))
+
+	p.App.Use(func(ctx *fiber.Ctx) error {
+		err := ctx.Next()
+		status := ctx.Response().StatusCode()
+
+		if status < fiber.StatusBadRequest || status == fiber.StatusNotFound {
+			return err
+		}
+		fields := []zap.Field{
+			zap.String("method", ctx.Method()),
+			zap.String("path", ctx.OriginalURL()),
+			zap.Int("status", status),
+			zap.ByteString("response", ctx.Response().Body()),
+		}
+		if err != nil {
+			fields = append(fields, zap.Error(err))
+		}
+		if status >= fiber.StatusInternalServerError {
+			p.Logger.Error("runtime request failed", fields...)
+		} else {
+			p.Logger.Warn("runtime request rejected", fields...)
+		}
+		return err
+	})
 
 	p.App.Get("/swagger/*", swagger.New())
 
