@@ -39,6 +39,15 @@ import AttributeFields from "./attribute-fields"
 const chainLabel = (chainId: string) =>
   findEvmNetwork(`eip155:${chainId}`)?.name ?? `Chain ${chainId}`
 
+const isDraftComplete = (draft: AgentRegistration | null) =>
+  !!draft &&
+  !!draft.chainId &&
+  !!draft.collectionAddress &&
+  !!draft.name &&
+  !!draft.role &&
+  !!draft.images &&
+  Object.keys(draft.images).length > 0
+
 type Props = {
   draft: AgentRegistration | null
   onSaved: (registration: AgentRegistration) => void
@@ -226,7 +235,7 @@ export default function RegistrationDraftForm({
             <Button
               type="button"
               onClick={onContinue}
-              disabled={!draft || saving}
+              disabled={!isDraftComplete(draft) || saving}
             >
               Continue
               <ArrowRight />
