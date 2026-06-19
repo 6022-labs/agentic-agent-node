@@ -41,6 +41,7 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 		return agent, nil
 	}
 
+	existing.ChainId = agent.ChainId
 	existing.CollectionTokenId = agent.CollectionTokenId
 	existing.CollectionAddress = agent.CollectionAddress
 	existing.ProposalId = agent.ProposalId
@@ -53,7 +54,11 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 	existing.Owner = agent.Owner
 	existing.Images = agent.Images
 	existing.Attributes = agent.Attributes
-	if err := r.client.GetDB().WithContext(ctx).Save(existing).Error; err != nil {
+	if err := r.client.
+		GetDB().
+		WithContext(ctx).
+		Save(existing).
+		Error; err != nil {
 		return nil, err
 	}
 	return existing, nil
