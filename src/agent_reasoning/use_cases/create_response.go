@@ -58,10 +58,10 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 		return nil, errors.NewInternalError("create_response_failed", err.Error())
 	}
 
-	return buildResponse(request, conversationId, persisted), nil
+	return u.buildResponse(request, conversationId, persisted), nil
 }
 
-func buildResponse(request *requests.CreateResponseRequest, conversationId string, persisted *knowledge_interfaces.ConversationMessage) *responses.CreateResponseResponse {
+func (u *CreateResponse) buildResponse(request *requests.CreateResponseRequest, conversationId string, persisted *knowledge_interfaces.ConversationMessage) *responses.CreateResponseResponse {
 	response := &responses.CreateResponseResponse{
 		Id:           conversationId,
 		Object:       "response",
