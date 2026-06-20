@@ -9,8 +9,8 @@ import (
 
 	agent_identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	"github.com/6022-labs/agentic-agent-node/src/common/host_configurations"
+	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/configurations"
-	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"

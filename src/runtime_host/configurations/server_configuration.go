@@ -2,8 +2,8 @@ package configurations
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
+	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	_ "github.com/6022-labs/agentic-agent-node/src/runtime_host/docs"
-	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"

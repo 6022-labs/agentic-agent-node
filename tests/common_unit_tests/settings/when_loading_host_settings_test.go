@@ -3,7 +3,7 @@ package settings_test
 import (
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/runtime_host/settings"
+	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/v2"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 func TestWhenLoadingHostSettings(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a complete configuration", func(t *testing.T) {
+	t.Run("Given a complete configuration under the given key", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
@@ -26,7 +26,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		t.Run("Should load every field as provided", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewHostSettings(zap.NewNop(), k)
+			result := settings.NewHostSettings(zap.NewNop(), k, "runtime_host", 5400)
 
 			assert.NotNil(t, result)
 			assert.Equal(t, 6060, result.ApiPort)
@@ -44,7 +44,7 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		t.Run("Should default to empty (all interfaces)", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewHostSettings(zap.NewNop(), k)
+			result := settings.NewHostSettings(zap.NewNop(), k, "runtime_host", 5400)
 
 			assert.Equal(t, "", result.ListenAddress)
 		})
@@ -56,12 +56,14 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{}, "."), nil)
 
-		t.Run("Should default api_port to 5400", func(t *testing.T) {
+		t.Run("Should fall back to the provided default api_port", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewHostSettings(zap.NewNop(), k)
+			runtime := settings.NewHostSettings(zap.NewNop(), k, "runtime_host", 5400)
+			gateway := settings.NewHostSettings(zap.NewNop(), k, "gateway_host", 5000)
 
-			assert.Equal(t, 5400, result.ApiPort)
+			assert.Equal(t, 5400, runtime.ApiPort)
+			assert.Equal(t, 5000, gateway.ApiPort)
 		})
 	})
 
@@ -70,16 +72,15 @@ func TestWhenLoadingHostSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"runtime_host.body_limit_bytes": 0,
+			"gateway_host.body_limit_bytes": 0,
 		}, "."), nil)
 
 		t.Run("Should default body_limit_bytes to 4MB", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewHostSettings(zap.NewNop(), k)
+			result := settings.NewHostSettings(zap.NewNop(), k, "gateway_host", 5000)
 
 			assert.Equal(t, 4*1024*1024, result.BodyLimitBytes)
 		})
 	})
-
 }

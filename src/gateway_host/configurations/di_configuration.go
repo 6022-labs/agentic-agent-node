@@ -1,20 +1,23 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	gateway_configurations "github.com/6022-labs/agentic-agent-node/src/gateway/configurations"
-	gateway_host_settings "github.com/6022-labs/agentic-agent-node/src/gateway_host/settings"
 	gateway_http_runtime_configurations "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/configurations"
 	gateway_http_x402_configurations "github.com/6022-labs/agentic-agent-node/src/gateway_http_x402/configurations"
 	gateway_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/configurations"
 
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/dig"
+	"go.uber.org/zap"
 )
 
 func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	container := dig.New()
 
-	if err := container.Provide(gateway_host_settings.NewHostSettings); err != nil {
+	if err := container.Provide(func(logger *zap.Logger, k *koanf.Koanf) *settings.HostSettings {
+		return settings.NewHostSettings(logger, k, "gateway_host", 5000)
+	}); err != nil {
 		panic(err)
 	}
 	if err := container.Provide(func() *koanf.Koanf {
