@@ -21,6 +21,7 @@ type WhenListingExistingHashesTestingSuite struct {
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.ConversationMessageRepository
+	conversationRepository   *repositories.ConversationRepository
 }
 
 func WhenListingExistingHashesBeforeEach(tc *repositoryTestCase) *WhenListingExistingHashesTestingSuite {
@@ -49,6 +50,7 @@ func WhenListingExistingHashesBeforeEach(tc *repositoryTestCase) *WhenListingExi
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
 		sut:                      repositories.NewConversationMessageRepository(dbClient),
+		conversationRepository:   repositories.NewConversationRepository(dbClient),
 	}
 }
 
@@ -94,6 +96,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					suite := WhenListingExistingHashesBeforeEach(tc)
 					defer WhenListingExistingHashesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-partial")
 					stored := newHashableMessage("conv-partial", "stored")
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{stored})
 					assert.NoError(t, err)
@@ -114,6 +117,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					suite := WhenListingExistingHashesBeforeEach(tc)
 					defer WhenListingExistingHashesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-all-match")
 					a := newHashableMessage("conv-all-match", "alpha")
 					b := newHashableMessage("conv-all-match", "beta")
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{a, b})
@@ -150,6 +154,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					suite := WhenListingExistingHashesBeforeEach(tc)
 					defer WhenListingExistingHashesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-other")
 					otherConv := newHashableMessage("conv-other", "shared content")
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{otherConv})
 					assert.NoError(t, err)

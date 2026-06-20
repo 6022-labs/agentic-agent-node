@@ -13,6 +13,7 @@ import (
 // not here. Schema owned by runtime_db/migrations/.
 type LLMConnection struct {
 	Id          uuid.UUID                      `gorm:"primaryKey;size:36"`
+	AgentId     uuid.UUID                      `gorm:"not null;size:36;uniqueIndex"`
 	Platform    enums.LLMConnectionPlatform    `gorm:"not null;size:64"`
 	Model       string                         `gorm:"not null;size:255"`
 	BaseUrl     *string                        `gorm:"type:text"`

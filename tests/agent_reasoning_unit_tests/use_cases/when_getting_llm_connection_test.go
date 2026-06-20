@@ -7,6 +7,7 @@ import (
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -16,20 +17,23 @@ import (
 type WhenGettingLLMConnectionTestingSuite struct {
 	sut *use_cases.GetLLMConnection
 
-	mockRepository *repositories_mocks.MockLLMConnectionRepositoryInterface
+	mockRepository      *repositories_mocks.MockLLMConnectionRepositoryInterface
+	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenGettingLLMConnectionBeforeEach(t *testing.T) *WhenGettingLLMConnectionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewGetLLMConnection(mockRepository)
+	sut := use_cases.NewGetLLMConnection(mockRepository, mockAgentRepository)
 
 	return &WhenGettingLLMConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository: mockRepository,
+		mockRepository:      mockRepository,
+		mockAgentRepository: mockAgentRepository,
 	}
 }
 
@@ -40,7 +44,8 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound", func(t *testing.T) {
@@ -65,7 +70,8 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 			WithModel("gpt-4o").
 			Build()
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().Get(gomock.Any()).Return(stored, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the wire response", func(t *testing.T) {

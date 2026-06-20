@@ -13,8 +13,12 @@ type ListConversationMessages struct {
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 }
 
-func NewListConversationMessages(conversationMessageRepository repositories.ConversationMessageRepositoryInterface) *ListConversationMessages {
-	return &ListConversationMessages{conversationMessageRepository: conversationMessageRepository}
+func NewListConversationMessages(
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
+) *ListConversationMessages {
+	return &ListConversationMessages{
+		conversationMessageRepository: conversationMessageRepository,
+	}
 }
 
 func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
@@ -23,7 +27,7 @@ func (u *ListConversationMessages) Execute(ctx context.Context, conversationId s
 		return &responses.ListConversationMessagesResponse{Messages: toWireMessages(nil)}, nil
 	}
 
-	messages, err := u.conversationMessageRepository.ListByConversation(ctx, conversationId)
+	messages, err := u.conversationMessageRepository.ListByConversationId(ctx, conversationId)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}

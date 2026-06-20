@@ -56,7 +56,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return DTOs with only the semantic fields exposed", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return([]models.ConversationMessage{}, nil)
 		}
 
 		t.Run("Should return an empty DTO slice", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {

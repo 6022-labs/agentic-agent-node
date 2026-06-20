@@ -127,7 +127,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			suite.mockIPFSFileStorage.EXPECT().UploadFile(gomock.Any(), gomock.Any()).Return(&cid, nil).Times(2)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 					return s, nil

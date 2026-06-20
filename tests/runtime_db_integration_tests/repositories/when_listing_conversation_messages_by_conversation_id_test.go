@@ -16,14 +16,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type WhenListingConversationMessagesTestingSuite struct {
+type WhenListingConversationMessagesByConversationIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.ConversationMessageRepository
+	conversationRepository   *repositories.ConversationRepository
 }
 
-func WhenListingConversationMessagesBeforeEach(tc *repositoryTestCase) *WhenListingConversationMessagesTestingSuite {
+func WhenListingConversationMessagesByConversationIdBeforeEach(tc *repositoryTestCase) *WhenListingConversationMessagesByConversationIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -44,19 +45,20 @@ func WhenListingConversationMessagesBeforeEach(tc *repositoryTestCase) *WhenList
 		panic(err)
 	}
 
-	return &WhenListingConversationMessagesTestingSuite{
+	return &WhenListingConversationMessagesByConversationIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
 		sut:                      repositories.NewConversationMessageRepository(dbClient),
+		conversationRepository:   repositories.NewConversationRepository(dbClient),
 	}
 }
 
-func WhenListingConversationMessagesAfterEach(suite *WhenListingConversationMessagesTestingSuite) {
+func WhenListingConversationMessagesByConversationIdAfterEach(suite *WhenListingConversationMessagesByConversationIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenListingConversationMessages(t *testing.T) {
+func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
@@ -68,10 +70,10 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 				t.Run("Should return an empty slice", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingConversationMessagesBeforeEach(tc)
-					defer WhenListingConversationMessagesAfterEach(suite)
+					suite := WhenListingConversationMessagesByConversationIdBeforeEach(tc)
+					defer WhenListingConversationMessagesByConversationIdAfterEach(suite)
 
-					messages, err := suite.sut.ListByConversation(context.Background(), "missing")
+					messages, err := suite.sut.ListByConversationId(context.Background(), "missing")
 					assert.NoError(t, err)
 					assert.Empty(t, messages)
 				})
@@ -82,9 +84,10 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 				t.Run("Should return only the requested conversation, ordered by timestamp ASC", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingConversationMessagesBeforeEach(tc)
-					defer WhenListingConversationMessagesAfterEach(suite)
+					suite := WhenListingConversationMessagesByConversationIdBeforeEach(tc)
+					defer WhenListingConversationMessagesByConversationIdAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "a", "b")
 					now := time.Now().UTC().Truncate(time.Microsecond)
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-second").WithTimestamp(now.Add(time.Second)).Build(),
@@ -94,13 +97,13 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 					assert.NoError(t, err)
 
-					messages, err := suite.sut.ListByConversation(context.Background(), "a")
+					messages, err := suite.sut.ListByConversationId(context.Background(), "a")
 					assert.NoError(t, err)
 					assert.Len(t, messages, 2)
 					assert.Equal(t, "a-first", messages[0].Content)
 					assert.Equal(t, "a-second", messages[1].Content)
 
-					otherMessages, err := suite.sut.ListByConversation(context.Background(), "b")
+					otherMessages, err := suite.sut.ListByConversationId(context.Background(), "b")
 					assert.NoError(t, err)
 					assert.Len(t, otherMessages, 1)
 					assert.Equal(t, "b-only", otherMessages[0].Content)

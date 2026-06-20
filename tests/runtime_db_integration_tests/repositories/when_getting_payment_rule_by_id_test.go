@@ -11,20 +11,20 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenGettingPaymentRuleX402ConfigTestingSuite struct {
+type WhenGettingPaymentRuleByIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.PaymentRuleX402ConfigRepository
-	paymentRuleRepository    *repositories.PaymentRuleRepository
-	rule                     *models.PaymentRule
+	sut                      *repositories.PaymentRuleRepository
+	policy                   *models.PaymentPolicy
 }
 
-func WhenGettingPaymentRuleX402ConfigBeforeEach(tc *repositoryTestCase) *WhenGettingPaymentRuleX402ConfigTestingSuite {
+func WhenGettingPaymentRuleByIdBeforeEach(tc *repositoryTestCase) *WhenGettingPaymentRuleByIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -50,66 +50,59 @@ func WhenGettingPaymentRuleX402ConfigBeforeEach(tc *repositoryTestCase) *WhenGet
 	if err != nil {
 		panic(err)
 	}
-	paymentRuleRepository := repositories.NewPaymentRuleRepository(dbClient)
-	rule, err := paymentRuleRepository.Create(
-		context.Background(), model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build())
-	if err != nil {
-		panic(err)
-	}
 
-	return &WhenGettingPaymentRuleX402ConfigTestingSuite{
+	return &WhenGettingPaymentRuleByIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewPaymentRuleX402ConfigRepository(dbClient),
-		paymentRuleRepository:    paymentRuleRepository,
-		rule:                     rule,
+		sut:                      repositories.NewPaymentRuleRepository(dbClient),
+		policy:                   policy,
 	}
 }
 
-func WhenGettingPaymentRuleX402ConfigAfterEach(suite *WhenGettingPaymentRuleX402ConfigTestingSuite) {
+func WhenGettingPaymentRuleByIdAfterEach(suite *WhenGettingPaymentRuleByIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenGettingPaymentRuleX402Config(t *testing.T) {
+func TestWhenGettingPaymentRuleById(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given the rule has no config", func(t *testing.T) {
+			t.Run("Given the rule does not exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingPaymentRuleX402ConfigBeforeEach(tc)
-					defer WhenGettingPaymentRuleX402ConfigAfterEach(suite)
+					suite := WhenGettingPaymentRuleByIdBeforeEach(tc)
+					defer WhenGettingPaymentRuleByIdAfterEach(suite)
 
-					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+					rule, err := suite.sut.GetById(context.Background(), uuid.New())
 
 					assert.NoError(t, err)
-					assert.Nil(t, stored)
+					assert.Nil(t, rule)
 				})
 			})
 
-			t.Run("Given the rule is deleted", func(t *testing.T) {
+			t.Run("Given the rule exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should cascade-delete the config", func(t *testing.T) {
+				t.Run("Should return it with the patterns decoded", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingPaymentRuleX402ConfigBeforeEach(tc)
-					defer WhenGettingPaymentRuleX402ConfigAfterEach(suite)
+					suite := WhenGettingPaymentRuleByIdBeforeEach(tc)
+					defer WhenGettingPaymentRuleByIdAfterEach(suite)
 
-					config := model_builders.NewPaymentRuleX402ConfigBuilder().WithPaymentRuleId(suite.rule.Id).Build()
-					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
+					created, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					assert.NoError(t, err)
 
-					assert.NoError(t, suite.paymentRuleRepository.DeleteById(context.Background(), suite.rule.Id))
-
-					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+					rule, err := suite.sut.GetById(context.Background(), created.Id)
 
 					assert.NoError(t, err)
-					assert.Nil(t, stored)
+					assert.Equal(t, created.Name, rule.Name)
+					assert.Equal(t, created.Method, rule.Method)
 				})
 			})
 		})

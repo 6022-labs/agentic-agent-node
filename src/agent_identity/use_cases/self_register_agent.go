@@ -49,7 +49,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 		return nil, apperrors.NewConflictError("owner_missing", "agent draft has no owner")
 	}
 
-	state, err := u.agentRegistrationStateRepository.Get(ctx)
+	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, apperrors.NewInternalError("state_lookup_failed", err.Error())
 	}
@@ -74,7 +74,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 		if err := u.ensPublisher.PublishRuntimeRecords(ctx); err != nil {
 			return nil, apperrors.NewInternalError("self_ens_failed", err.Error())
 		}
-		state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, state)
+		state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, agent.Id, state)
 		if err != nil {
 			return nil, apperrors.NewInternalError("ens_reconcile_failed", err.Error())
 		}

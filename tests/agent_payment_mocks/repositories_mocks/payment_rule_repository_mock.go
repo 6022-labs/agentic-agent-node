@@ -86,19 +86,19 @@ func (mr *MockPaymentRuleRepositoryInterfaceMockRecorder) GetById(ctx, id any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockPaymentRuleRepositoryInterface)(nil).GetById), ctx, id)
 }
 
-// List mocks base method.
-func (m *MockPaymentRuleRepositoryInterface) List(ctx context.Context) ([]models.PaymentRule, error) {
+// ListByPolicyId mocks base method.
+func (m *MockPaymentRuleRepositoryInterface) ListByPolicyId(ctx context.Context, policyId uuid.UUID) ([]models.PaymentRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx)
+	ret := m.ctrl.Call(m, "ListByPolicyId", ctx, policyId)
 	ret0, _ := ret[0].([]models.PaymentRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// List indicates an expected call of List.
-func (mr *MockPaymentRuleRepositoryInterfaceMockRecorder) List(ctx any) *gomock.Call {
+// ListByPolicyId indicates an expected call of ListByPolicyId.
+func (mr *MockPaymentRuleRepositoryInterfaceMockRecorder) ListByPolicyId(ctx, policyId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockPaymentRuleRepositoryInterface)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByPolicyId", reflect.TypeOf((*MockPaymentRuleRepositoryInterface)(nil).ListByPolicyId), ctx, policyId)
 }
 
 // Update mocks base method.

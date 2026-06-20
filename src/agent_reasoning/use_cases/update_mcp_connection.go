@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
@@ -14,6 +15,7 @@ import (
 )
 
 type UpdateMCPConnection struct {
+	*AbstractReasoningUseCase
 	repository    repositories.MCPConnectionRepositoryInterface
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
 }
@@ -21,8 +23,13 @@ type UpdateMCPConnection struct {
 func NewUpdateMCPConnection(
 	repository repositories.MCPConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *UpdateMCPConnection {
-	return &UpdateMCPConnection{repository: repository, secretStorage: secretStorage}
+	return &UpdateMCPConnection{
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		repository:               repository,
+		secretStorage:            secretStorage,
+	}
 }
 
 // Execute applies full-replacement semantics: name, url, and the entire
@@ -33,7 +40,12 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 		return nil, err
 	}
 
-	existing, err := u.repository.GetById(ctx, id)
+	agent, err := u.resolveAgent(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := u.repository.GetById(ctx, agent.Id, id)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}

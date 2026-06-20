@@ -76,7 +76,7 @@ func TestWhenCreatingPaymentPolicy(t *testing.T) {
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, created.Id)
 
-					stored, err := suite.sut.Get(context.Background())
+					stored, err := suite.sut.GetByAgentId(context.Background(), created.AgentId)
 					assert.NoError(t, err)
 					assert.Equal(t, created.Id, stored.Id)
 					assert.Equal(t, created.AgentId, stored.AgentId)

@@ -10,11 +10,12 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenDeletingPaymentPolicyTestingSuite struct {
+type WhenDeletingPaymentPolicyByAgentIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
@@ -22,7 +23,7 @@ type WhenDeletingPaymentPolicyTestingSuite struct {
 	paymentRuleRepository    *repositories.PaymentRuleRepository
 }
 
-func WhenDeletingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenDeletingPaymentPolicyTestingSuite {
+func WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc *repositoryTestCase) *WhenDeletingPaymentPolicyByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -43,7 +44,7 @@ func WhenDeletingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenDeletingPa
 		panic(err)
 	}
 
-	return &WhenDeletingPaymentPolicyTestingSuite{
+	return &WhenDeletingPaymentPolicyByAgentIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
@@ -52,11 +53,11 @@ func WhenDeletingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenDeletingPa
 	}
 }
 
-func WhenDeletingPaymentPolicyAfterEach(suite *WhenDeletingPaymentPolicyTestingSuite) {
+func WhenDeletingPaymentPolicyByAgentIdAfterEach(suite *WhenDeletingPaymentPolicyByAgentIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenDeletingPaymentPolicy(t *testing.T) {
+func TestWhenDeletingPaymentPolicyByAgentId(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
@@ -68,10 +69,10 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 
 				t.Run("Should be a no-op", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingPaymentPolicyBeforeEach(tc)
-					defer WhenDeletingPaymentPolicyAfterEach(suite)
+					suite := WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc)
+					defer WhenDeletingPaymentPolicyByAgentIdAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Delete(context.Background()))
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), uuid.New()))
 				})
 			})
 
@@ -80,21 +81,21 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 
 				t.Run("Should remove the head and its rules", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingPaymentPolicyBeforeEach(tc)
-					defer WhenDeletingPaymentPolicyAfterEach(suite)
+					suite := WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc)
+					defer WhenDeletingPaymentPolicyByAgentIdAfterEach(suite)
 
 					policy, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().Build())
 					assert.NoError(t, err)
 					_, err = suite.paymentRuleRepository.Create(context.Background(), model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build())
 					assert.NoError(t, err)
 
-					assert.NoError(t, suite.sut.Delete(context.Background()))
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))
 
-					gone, err := suite.sut.Get(context.Background())
+					gone, err := suite.sut.GetByAgentId(context.Background(), policy.AgentId)
 					assert.NoError(t, err)
 					assert.Nil(t, gone)
 
-					rules, err := suite.paymentRuleRepository.List(context.Background())
+					rules, err := suite.paymentRuleRepository.ListByPolicyId(context.Background(), policy.Id)
 					assert.NoError(t, err)
 					assert.Empty(t, rules)
 				})

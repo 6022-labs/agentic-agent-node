@@ -79,7 +79,7 @@ func TestWhenCheckingEns(t *testing.T) {
 			confirmedState := model_builders.NewAgentRegistrationStateBuilder().WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(confirmedState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(confirmedState, nil)
 		}
 
 		t.Run("Should return confirmed without reading the chain", func(t *testing.T) {
@@ -105,8 +105,8 @@ func TestWhenCheckingEns(t *testing.T) {
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(true, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(pendingState, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any()).Return(confirmedState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(pendingState, nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), gomock.Any()).Return(confirmedState, nil)
 		}
 
 		t.Run("Should reconcile ENS and report confirmed", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestWhenCheckingEns(t *testing.T) {
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(pendingState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(pendingState, nil)
 		}
 
 		t.Run("Should report ENS still pending without reconciling", func(t *testing.T) {

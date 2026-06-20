@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -18,20 +19,31 @@ import (
 type WhenAppendingConversationMessagesTestingSuite struct {
 	sut *services.MessageAppender
 
-	mockRepository *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockRepository             *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
+	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
+	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := services.NewMessageAppender(mockRepository)
+	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
-		sut:            sut,
-		mockRepository: mockRepository,
+		sut:                        sut,
+		mockRepository:             mockRepository,
+		mockConversationRepository: mockConversationRepository,
+		mockAgentRepository:        mockAgentRepository,
 	}
+}
+
+func (suite *WhenAppendingConversationMessagesTestingSuite) expectAgentResolutionAndEnsure() {
+	suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+	suite.mockConversationRepository.EXPECT().Ensure(gomock.Any(), gomock.Any()).Return(nil)
 }
 
 func TestWhenAppendingConversationMessages(t *testing.T) {
@@ -81,6 +93,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{}, nil)
@@ -123,6 +137,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{dupHash}, nil)
@@ -162,6 +178,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		dupHash, _ := utils.ComputeConversationMessageHash(input.Role, input.Content, conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{dupHash}, nil)
@@ -185,6 +203,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return(nil, errors.New("db blew"))
@@ -207,6 +227,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{}, nil)

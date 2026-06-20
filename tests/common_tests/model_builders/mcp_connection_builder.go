@@ -10,6 +10,7 @@ import (
 
 type MCPConnectionBuilder struct {
 	id        uuid.UUID
+	agentId   uuid.UUID
 	name      string
 	url       string
 	createdAt time.Time
@@ -34,6 +35,7 @@ func NewMCPConnectionBuilder() *MCPConnectionBuilder {
 
 	return &MCPConnectionBuilder{
 		id:             id,
+		agentId:        uuid.New(),
 		url:            url,
 		name:           name,
 		createdAt:      createdAt,
@@ -44,6 +46,11 @@ func NewMCPConnectionBuilder() *MCPConnectionBuilder {
 
 func (b *MCPConnectionBuilder) WithId(id uuid.UUID) *MCPConnectionBuilder {
 	b.id = id
+	return b
+}
+
+func (b *MCPConnectionBuilder) WithAgentId(agentId uuid.UUID) *MCPConnectionBuilder {
+	b.agentId = agentId
 	return b
 }
 
@@ -78,6 +85,7 @@ func (b *MCPConnectionBuilder) Build() *models.MCPConnection {
 
 	return &models.MCPConnection{
 		Id:             b.id,
+		AgentId:        b.agentId,
 		Url:            b.url,
 		Name:           b.name,
 		CreatedAt:      b.createdAt,

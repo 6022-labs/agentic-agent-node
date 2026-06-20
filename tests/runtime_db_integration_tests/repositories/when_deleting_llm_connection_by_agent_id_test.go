@@ -12,18 +12,19 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenDeletingLLMConnectionTestingSuite struct {
+type WhenDeletingLLMConnectionByAgentIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.LLMConnectionRepository
 }
 
-func WhenDeletingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenDeletingLLMConnectionTestingSuite {
+func WhenDeletingLLMConnectionByAgentIdBeforeEach(tc *repositoryTestCase) *WhenDeletingLLMConnectionByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -44,7 +45,7 @@ func WhenDeletingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenDeletingLL
 		panic(err)
 	}
 
-	return &WhenDeletingLLMConnectionTestingSuite{
+	return &WhenDeletingLLMConnectionByAgentIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
@@ -52,11 +53,11 @@ func WhenDeletingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenDeletingLL
 	}
 }
 
-func WhenDeletingLLMConnectionAfterEach(suite *WhenDeletingLLMConnectionTestingSuite) {
+func WhenDeletingLLMConnectionByAgentIdAfterEach(suite *WhenDeletingLLMConnectionByAgentIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenDeletingLLMConnection(t *testing.T) {
+func TestWhenDeletingLLMConnectionByAgentId(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
@@ -68,10 +69,10 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 
 				t.Run("Should be a no-op", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingLLMConnectionBeforeEach(tc)
-					defer WhenDeletingLLMConnectionAfterEach(suite)
+					suite := WhenDeletingLLMConnectionByAgentIdBeforeEach(tc)
+					defer WhenDeletingLLMConnectionByAgentIdAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Delete(context.Background()))
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), uuid.New()))
 				})
 			})
 
@@ -80,10 +81,12 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 
 				t.Run("Should clear the row", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingLLMConnectionBeforeEach(tc)
-					defer WhenDeletingLLMConnectionAfterEach(suite)
+					suite := WhenDeletingLLMConnectionByAgentIdBeforeEach(tc)
+					defer WhenDeletingLLMConnectionByAgentIdAfterEach(suite)
 
+					agentId := uuid.New()
 					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
 						WithModel("gpt-4o").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
@@ -91,7 +94,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 
 					assert.NoError(t, err)
 
-					assert.NoError(t, suite.sut.Delete(context.Background()))
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), agentId))
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)

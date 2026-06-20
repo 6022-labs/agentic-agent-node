@@ -11,6 +11,7 @@ import (
 
 type LLMConnectionBuilder struct {
 	id          uuid.UUID
+	agentId     uuid.UUID
 	model       string
 	baseUrl     *string
 	platform    enums.LLMConnectionPlatform
@@ -37,6 +38,7 @@ func NewLLMConnectionBuilder() *LLMConnectionBuilder {
 
 	return &LLMConnectionBuilder{
 		id:          id,
+		agentId:     uuid.New(),
 		baseUrl:     &baseUrl,
 		model:       model,
 		platform:    platform,
@@ -48,6 +50,11 @@ func NewLLMConnectionBuilder() *LLMConnectionBuilder {
 
 func (b *LLMConnectionBuilder) WithId(id uuid.UUID) *LLMConnectionBuilder {
 	b.id = id
+	return b
+}
+
+func (b *LLMConnectionBuilder) WithAgentId(agentId uuid.UUID) *LLMConnectionBuilder {
+	b.agentId = agentId
 	return b
 }
 
@@ -84,6 +91,7 @@ func (b *LLMConnectionBuilder) WithUpdatedAt(updatedAt time.Time) *LLMConnection
 func (b *LLMConnectionBuilder) Build() *models.LLMConnection {
 	return &models.LLMConnection{
 		Id:          b.id,
+		AgentId:     b.agentId,
 		Model:       b.model,
 		BaseUrl:     b.baseUrl,
 		Platform:    b.platform,

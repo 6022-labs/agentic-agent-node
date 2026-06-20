@@ -11,11 +11,12 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenListingPaymentRulesTestingSuite struct {
+type WhenDeletingPaymentRuleByIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
@@ -23,7 +24,7 @@ type WhenListingPaymentRulesTestingSuite struct {
 	policy                   *models.PaymentPolicy
 }
 
-func WhenListingPaymentRulesBeforeEach(tc *repositoryTestCase) *WhenListingPaymentRulesTestingSuite {
+func WhenDeletingPaymentRuleByIdBeforeEach(tc *repositoryTestCase) *WhenDeletingPaymentRuleByIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -50,7 +51,7 @@ func WhenListingPaymentRulesBeforeEach(tc *repositoryTestCase) *WhenListingPayme
 		panic(err)
 	}
 
-	return &WhenListingPaymentRulesTestingSuite{
+	return &WhenDeletingPaymentRuleByIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
@@ -59,53 +60,50 @@ func WhenListingPaymentRulesBeforeEach(tc *repositoryTestCase) *WhenListingPayme
 	}
 }
 
-func WhenListingPaymentRulesAfterEach(suite *WhenListingPaymentRulesTestingSuite) {
+func WhenDeletingPaymentRuleByIdAfterEach(suite *WhenDeletingPaymentRuleByIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenListingPaymentRules(t *testing.T) {
+func TestWhenDeletingPaymentRuleById(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no rules exist", func(t *testing.T) {
+			t.Run("Given the rule does not exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return an empty list", func(t *testing.T) {
+				t.Run("Should be a no-op", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingPaymentRulesBeforeEach(tc)
-					defer WhenListingPaymentRulesAfterEach(suite)
+					suite := WhenDeletingPaymentRuleByIdBeforeEach(tc)
+					defer WhenDeletingPaymentRuleByIdAfterEach(suite)
 
-					rules, err := suite.sut.List(context.Background())
-
-					assert.NoError(t, err)
-					assert.Empty(t, rules)
+					assert.NoError(t, suite.sut.DeleteById(context.Background(), uuid.New()))
 				})
 			})
 
 			t.Run("Given several rules exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return them in creation order", func(t *testing.T) {
+				t.Run("Should remove only the targeted rule", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingPaymentRulesBeforeEach(tc)
-					defer WhenListingPaymentRulesAfterEach(suite)
+					suite := WhenDeletingPaymentRuleByIdBeforeEach(tc)
+					defer WhenDeletingPaymentRuleByIdAfterEach(suite)
 
-					_, err := suite.sut.Create(context.Background(),
-						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).WithName("first").Build())
+					first, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(),
-						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).WithName("second").Build())
+					second, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
 					assert.NoError(t, err)
 
-					rules, err := suite.sut.List(context.Background())
+					assert.NoError(t, suite.sut.DeleteById(context.Background(), first.Id))
 
+					rules, err := suite.sut.ListByPolicyId(context.Background(), suite.policy.Id)
 					assert.NoError(t, err)
-					if assert.Len(t, rules, 2) {
-						assert.Equal(t, "first", rules[0].Name)
-						assert.Equal(t, "second", rules[1].Name)
+					if assert.Len(t, rules, 1) {
+						assert.Equal(t, second.Id, rules[0].Id)
 					}
 				})
 			})

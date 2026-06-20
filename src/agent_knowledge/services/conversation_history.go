@@ -31,7 +31,7 @@ func (h *ConversationHistory) Read(ctx context.Context, conversationId string) (
 	if len(conversationId) == 0 {
 		return nil, nil
 	}
-	stored, err := h.conversationMessageRepository.ListByConversation(ctx, conversationId)
+	stored, err := h.conversationMessageRepository.ListByConversationId(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}

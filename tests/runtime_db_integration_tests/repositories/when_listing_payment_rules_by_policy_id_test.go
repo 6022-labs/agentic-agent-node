@@ -11,12 +11,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenDeletingPaymentRuleTestingSuite struct {
+type WhenListingPaymentRulesByPolicyIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
@@ -24,7 +23,7 @@ type WhenDeletingPaymentRuleTestingSuite struct {
 	policy                   *models.PaymentPolicy
 }
 
-func WhenDeletingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenDeletingPaymentRuleTestingSuite {
+func WhenListingPaymentRulesByPolicyIdBeforeEach(tc *repositoryTestCase) *WhenListingPaymentRulesByPolicyIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -51,7 +50,7 @@ func WhenDeletingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenDeletingPaym
 		panic(err)
 	}
 
-	return &WhenDeletingPaymentRuleTestingSuite{
+	return &WhenListingPaymentRulesByPolicyIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
@@ -60,50 +59,53 @@ func WhenDeletingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenDeletingPaym
 	}
 }
 
-func WhenDeletingPaymentRuleAfterEach(suite *WhenDeletingPaymentRuleTestingSuite) {
+func WhenListingPaymentRulesByPolicyIdAfterEach(suite *WhenListingPaymentRulesByPolicyIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenDeletingPaymentRule(t *testing.T) {
+func TestWhenListingPaymentRulesByPolicyId(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given the rule does not exist", func(t *testing.T) {
+			t.Run("Given no rules exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should be a no-op", func(t *testing.T) {
+				t.Run("Should return an empty list", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingPaymentRuleBeforeEach(tc)
-					defer WhenDeletingPaymentRuleAfterEach(suite)
+					suite := WhenListingPaymentRulesByPolicyIdBeforeEach(tc)
+					defer WhenListingPaymentRulesByPolicyIdAfterEach(suite)
 
-					assert.NoError(t, suite.sut.DeleteById(context.Background(), uuid.New()))
+					rules, err := suite.sut.ListByPolicyId(context.Background(), suite.policy.Id)
+
+					assert.NoError(t, err)
+					assert.Empty(t, rules)
 				})
 			})
 
 			t.Run("Given several rules exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should remove only the targeted rule", func(t *testing.T) {
+				t.Run("Should return them in creation order", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenDeletingPaymentRuleBeforeEach(tc)
-					defer WhenDeletingPaymentRuleAfterEach(suite)
+					suite := WhenListingPaymentRulesByPolicyIdBeforeEach(tc)
+					defer WhenListingPaymentRulesByPolicyIdAfterEach(suite)
 
-					first, err := suite.sut.Create(context.Background(),
-						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					_, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).WithName("first").Build())
 					assert.NoError(t, err)
-					second, err := suite.sut.Create(context.Background(),
-						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					_, err = suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).WithName("second").Build())
 					assert.NoError(t, err)
 
-					assert.NoError(t, suite.sut.DeleteById(context.Background(), first.Id))
+					rules, err := suite.sut.ListByPolicyId(context.Background(), suite.policy.Id)
 
-					rules, err := suite.sut.List(context.Background())
 					assert.NoError(t, err)
-					if assert.Len(t, rules, 1) {
-						assert.Equal(t, second.Id, rules[0].Id)
+					if assert.Len(t, rules, 2) {
+						assert.Equal(t, "first", rules[0].Name)
+						assert.Equal(t, "second", rules[1].Name)
 					}
 				})
 			})

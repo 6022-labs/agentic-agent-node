@@ -27,20 +27,21 @@ func NewNftOwnerAuthorizer(
 }
 
 func (a *NftOwnerAuthorizer) IsAuthorized(ctx context.Context, address common.Address) (bool, error) {
-	state, err := a.stateRepository.Get(ctx)
-	if err != nil {
-		return false, err
-	}
-	if !state.IsMinted() {
-		// No NFT yet: open login while unclaimed.
-		return true, nil
-	}
-
 	agent, err := a.agentRepository.Get(ctx)
 	if err != nil {
 		return false, err
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
+		// No NFT yet: open login while unclaimed.
+		return true, nil
+	}
+
+	state, err := a.stateRepository.GetByAgentId(ctx, agent.Id)
+	if err != nil {
+		return false, err
+	}
+	if !state.IsMinted() {
+		// No NFT yet: open login while unclaimed.
 		return true, nil
 	}
 

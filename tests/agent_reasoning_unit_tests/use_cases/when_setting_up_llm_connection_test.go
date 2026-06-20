@@ -10,8 +10,10 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -19,8 +21,9 @@ import (
 type WhenSettingUpLLMConnectionTestingSuite struct {
 	sut *use_cases.SetupLLMConnection
 
-	mockRepository    *repositories_mocks.MockLLMConnectionRepositoryInterface
-	mockSecretStorage *interfaces_mocks.MockLLMSecretStorageInterface
+	mockRepository      *repositories_mocks.MockLLMConnectionRepositoryInterface
+	mockSecretStorage   *interfaces_mocks.MockLLMSecretStorageInterface
+	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnectionTestingSuite {
@@ -28,14 +31,16 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 
 	mockRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockLLMSecretStorageInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewSetupLLMConnection(mockRepository, mockSecretStorage)
+	sut := use_cases.NewSetupLLMConnection(mockRepository, mockSecretStorage, mockAgentRepository)
 
 	return &WhenSettingUpLLMConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:    mockRepository,
-		mockSecretStorage: mockSecretStorage,
+		mockRepository:      mockRepository,
+		mockSecretStorage:   mockSecretStorage,
+		mockAgentRepository: mockAgentRepository,
 	}
 }
 
@@ -72,6 +77,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			gomock.InOrder(
 				suite.mockSecretStorage.EXPECT().Save(gomock.Any(), "sk-secret").Return(nil),
 				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
@@ -101,6 +107,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			gomock.InOrder(
 				suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("sk-existing", true, nil),
 				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {

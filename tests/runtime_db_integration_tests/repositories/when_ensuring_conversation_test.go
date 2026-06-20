@@ -10,18 +10,19 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenGettingPaymentPolicyTestingSuite struct {
+type WhenEnsuringConversationTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.PaymentPolicyRepository
+	sut                      *repositories.ConversationRepository
 }
 
-func WhenGettingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenGettingPaymentPolicyTestingSuite {
+func WhenEnsuringConversationBeforeEach(tc *repositoryTestCase) *WhenEnsuringConversationTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -42,56 +43,42 @@ func WhenGettingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenGettingPaym
 		panic(err)
 	}
 
-	return &WhenGettingPaymentPolicyTestingSuite{
+	return &WhenEnsuringConversationTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewPaymentPolicyRepository(dbClient),
+		sut:                      repositories.NewConversationRepository(dbClient),
 	}
 }
 
-func WhenGettingPaymentPolicyAfterEach(suite *WhenGettingPaymentPolicyTestingSuite) {
+func WhenEnsuringConversationAfterEach(suite *WhenEnsuringConversationTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenGettingPaymentPolicy(t *testing.T) {
+func TestWhenEnsuringConversation(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no policy exists", func(t *testing.T) {
+			t.Run("Given the same conversation is ensured twice", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return nil without error", func(t *testing.T) {
+				t.Run("Should keep a single row via ON CONFLICT DO NOTHING", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingPaymentPolicyBeforeEach(tc)
-					defer WhenGettingPaymentPolicyAfterEach(suite)
+					suite := WhenEnsuringConversationBeforeEach(tc)
+					defer WhenEnsuringConversationAfterEach(suite)
 
-					policy, err := suite.sut.Get(context.Background())
+					agentId := uuid.New()
+					conversation := model_builders.NewConversationBuilder().WithId("conv-dup").WithAgentId(agentId).Build()
 
+					assert.NoError(t, suite.sut.Ensure(context.Background(), conversation))
+					assert.NoError(t, suite.sut.Ensure(context.Background(), conversation))
+
+					list, err := suite.sut.ListByAgentId(context.Background(), agentId)
 					assert.NoError(t, err)
-					assert.Nil(t, policy)
-				})
-			})
-
-			t.Run("Given a policy exists", func(t *testing.T) {
-				t.Parallel()
-
-				t.Run("Should return it", func(t *testing.T) {
-					t.Parallel()
-					suite := WhenGettingPaymentPolicyBeforeEach(tc)
-					defer WhenGettingPaymentPolicyAfterEach(suite)
-
-					created, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().Build())
-					assert.NoError(t, err)
-
-					policy, err := suite.sut.Get(context.Background())
-
-					assert.NoError(t, err)
-					assert.Equal(t, created.Id, policy.Id)
-					assert.Equal(t, created.AgentId, policy.AgentId)
+					assert.Len(t, list, 1)
 				})
 			})
 		})

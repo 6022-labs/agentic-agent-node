@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -56,31 +57,31 @@ func (mr *MockPaymentPolicyRepositoryInterfaceMockRecorder) Create(ctx, policy a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockPaymentPolicyRepositoryInterface)(nil).Create), ctx, policy)
 }
 
-// Delete mocks base method.
-func (m *MockPaymentPolicyRepositoryInterface) Delete(ctx context.Context) error {
+// DeleteByAgentId mocks base method.
+func (m *MockPaymentPolicyRepositoryInterface) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx)
+	ret := m.ctrl.Call(m, "DeleteByAgentId", ctx, agentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Delete indicates an expected call of Delete.
-func (mr *MockPaymentPolicyRepositoryInterfaceMockRecorder) Delete(ctx any) *gomock.Call {
+// DeleteByAgentId indicates an expected call of DeleteByAgentId.
+func (mr *MockPaymentPolicyRepositoryInterfaceMockRecorder) DeleteByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockPaymentPolicyRepositoryInterface)(nil).Delete), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByAgentId", reflect.TypeOf((*MockPaymentPolicyRepositoryInterface)(nil).DeleteByAgentId), ctx, agentId)
 }
 
-// Get mocks base method.
-func (m *MockPaymentPolicyRepositoryInterface) Get(ctx context.Context) (*models.PaymentPolicy, error) {
+// GetByAgentId mocks base method.
+func (m *MockPaymentPolicyRepositoryInterface) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.PaymentPolicy, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx)
+	ret := m.ctrl.Call(m, "GetByAgentId", ctx, agentId)
 	ret0, _ := ret[0].(*models.PaymentPolicy)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockPaymentPolicyRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
+// GetByAgentId indicates an expected call of GetByAgentId.
+func (mr *MockPaymentPolicyRepositoryInterfaceMockRecorder) GetByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockPaymentPolicyRepositoryInterface)(nil).Get), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByAgentId", reflect.TypeOf((*MockPaymentPolicyRepositoryInterface)(nil).GetByAgentId), ctx, agentId)
 }

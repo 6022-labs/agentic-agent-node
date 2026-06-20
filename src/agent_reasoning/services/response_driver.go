@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
@@ -22,6 +23,7 @@ type ResponseDriver struct {
 	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface
 	conversationHistory        knowledge_interfaces.ConversationHistoryInterface
+	agentRepository            identity_repositories.AgentRepositoryInterface
 }
 
 func NewResponseDriver(
@@ -30,6 +32,7 @@ func NewResponseDriver(
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface,
 	conversationHistory knowledge_interfaces.ConversationHistoryInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *ResponseDriver {
 	return &ResponseDriver{
 		logger:                     logger,
@@ -37,6 +40,7 @@ func NewResponseDriver(
 		mcpConnectionRepository:    mcpConnectionRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		conversationHistory:        conversationHistory,
+		agentRepository:            agentRepository,
 	}
 }
 
@@ -151,7 +155,14 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 }
 
 func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPConnection, error) {
-	raw, err := d.mcpConnectionRepository.List(ctx)
+	agent, err := d.agentRepository.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load agent identity: %w", err)
+	}
+	if agent == nil {
+		return nil, fmt.Errorf("agent identity is not initialized yet")
+	}
+	raw, err := d.mcpConnectionRepository.ListByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mcp connections: %w", err)
 	}

@@ -9,19 +9,20 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenGettingMCPConnectionTestingSuite struct {
+type WhenGettingConversationByIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.MCPConnectionRepository
+	sut                      *repositories.ConversationRepository
 }
 
-func WhenGettingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenGettingMCPConnectionTestingSuite {
+func WhenGettingConversationByIdBeforeEach(tc *repositoryTestCase) *WhenGettingConversationByIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -42,57 +43,52 @@ func WhenGettingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenGettingMCPC
 		panic(err)
 	}
 
-	return &WhenGettingMCPConnectionTestingSuite{
+	return &WhenGettingConversationByIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewMCPConnectionRepository(dbClient),
+		sut:                      repositories.NewConversationRepository(dbClient),
 	}
 }
 
-func WhenGettingMCPConnectionAfterEach(suite *WhenGettingMCPConnectionTestingSuite) {
+func WhenGettingConversationByIdAfterEach(suite *WhenGettingConversationByIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenGettingMCPConnection(t *testing.T) {
+func TestWhenGettingConversationById(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given a non-existent Id", func(t *testing.T) {
+			t.Run("Given a conversation exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return nil without error", func(t *testing.T) {
+				t.Run("Should be returned by its id, carrying its owner AgentId", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingMCPConnectionBeforeEach(tc)
-					defer WhenGettingMCPConnectionAfterEach(suite)
+					suite := WhenGettingConversationByIdBeforeEach(tc)
+					defer WhenGettingConversationByIdAfterEach(suite)
 
-					got, err := suite.sut.GetById(context.Background(), uuid.New())
+					ownerAgentId := uuid.New()
+					assert.NoError(t, suite.sut.Ensure(context.Background(),
+						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(ownerAgentId).Build()))
+
+					got, err := suite.sut.GetById(context.Background(), "conv-mine")
+					assert.NoError(t, err)
+					assert.NotNil(t, got)
+					assert.Equal(t, "conv-mine", got.Id)
+					assert.Equal(t, ownerAgentId, got.AgentId)
+				})
+
+				t.Run("Should return nil for an unknown id", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenGettingConversationByIdBeforeEach(tc)
+					defer WhenGettingConversationByIdAfterEach(suite)
+
+					got, err := suite.sut.GetById(context.Background(), "missing")
 					assert.NoError(t, err)
 					assert.Nil(t, got)
-				})
-			})
-
-			t.Run("Given a connection has been created", func(t *testing.T) {
-				t.Parallel()
-
-				t.Run("Should return the persisted row by Id", func(t *testing.T) {
-					t.Parallel()
-					suite := WhenGettingMCPConnectionBeforeEach(tc)
-					defer WhenGettingMCPConnectionAfterEach(suite)
-
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
-					assert.NoError(t, err)
-
-					got, err := suite.sut.GetById(context.Background(), inserted.Id)
-					assert.NoError(t, err)
-					assert.Equal(t, inserted.Id, got.Id)
-					assert.Equal(t, "github", got.Name)
-					assert.Equal(t, "https://mcp.github.example", got.Url)
-					assert.Len(t, got.HeaderAuthKeys, 1)
-					assert.Equal(t, "Authorization", string(got.HeaderAuthKeys[0]))
 				})
 			})
 		})

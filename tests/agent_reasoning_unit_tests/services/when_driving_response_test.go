@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	knowledge_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
@@ -26,6 +27,7 @@ type WhenDrivingResponseTestingSuite struct {
 	mockMCPRepository              *repositories_mocks.MockMCPConnectionRepositoryInterface
 	mockMCPHeaderAuthSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
 	mockConversationHistory        *knowledge_interfaces_mocks.MockConversationHistoryInterface
+	mockAgentRepository            *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuite {
@@ -35,6 +37,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuit
 	mockMCPRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockMCPHeaderAuthSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
 	mockConversationHistory := knowledge_interfaces_mocks.NewMockConversationHistoryInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
 	sut := services.NewResponseDriver(
 		zap.NewNop(),
@@ -42,6 +45,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuit
 		mockMCPRepository,
 		mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory,
+		mockAgentRepository,
 	)
 
 	return &WhenDrivingResponseTestingSuite{
@@ -50,6 +54,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuit
 		mockMCPRepository:              mockMCPRepository,
 		mockMCPHeaderAuthSecretStorage: mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory:        mockConversationHistory,
+		mockAgentRepository:            mockAgentRepository,
 	}
 }
 
@@ -69,7 +74,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -119,7 +125,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -163,7 +170,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
@@ -208,7 +216,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				Return([]*interfaces.ChatCompletionMessage{
@@ -248,7 +257,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
 
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
@@ -287,7 +297,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
@@ -344,7 +355,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
@@ -370,7 +382,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
@@ -404,7 +417,8 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockMCPRepository.EXPECT().List(gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
 				Return("", false, errors.New("vault down"))

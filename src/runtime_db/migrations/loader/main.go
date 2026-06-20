@@ -21,6 +21,7 @@ func main() {
 		&agent_reasoning_models.MCPConnection{},
 		&agent_reasoning_models.LLMConnection{},
 
+		&agent_knowledge_models.Conversation{},
 		&agent_knowledge_models.ConversationMessage{},
 
 		&agent_identity_models.Agent{},

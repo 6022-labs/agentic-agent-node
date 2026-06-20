@@ -61,7 +61,7 @@ func TestWhenCheckingMint(t *testing.T) {
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(common_tests.RandomEthAddress(), uint64(7), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(7), gomock.Any()).Return(savedAgent, savedState, nil)
 		}
 
@@ -88,7 +88,7 @@ func TestWhenCheckingMint(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should return confirmed without reading the chain", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestWhenCheckingMint(t *testing.T) {
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(common.Address{}, uint64(0), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should report mint still pending", func(t *testing.T) {

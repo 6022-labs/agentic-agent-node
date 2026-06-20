@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,33 +42,33 @@ func (m *MockLLMConnectionRepositoryInterface) EXPECT() *MockLLMConnectionReposi
 	return m.recorder
 }
 
-// Delete mocks base method.
-func (m *MockLLMConnectionRepositoryInterface) Delete(ctx context.Context) error {
+// DeleteByAgentId mocks base method.
+func (m *MockLLMConnectionRepositoryInterface) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx)
+	ret := m.ctrl.Call(m, "DeleteByAgentId", ctx, agentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Delete indicates an expected call of Delete.
-func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Delete(ctx any) *gomock.Call {
+// DeleteByAgentId indicates an expected call of DeleteByAgentId.
+func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) DeleteByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Delete), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByAgentId", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).DeleteByAgentId), ctx, agentId)
 }
 
-// Get mocks base method.
-func (m *MockLLMConnectionRepositoryInterface) Get(ctx context.Context) (*models.LLMConnection, error) {
+// GetByAgentId mocks base method.
+func (m *MockLLMConnectionRepositoryInterface) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.LLMConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx)
+	ret := m.ctrl.Call(m, "GetByAgentId", ctx, agentId)
 	ret0, _ := ret[0].(*models.LLMConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
+// GetByAgentId indicates an expected call of GetByAgentId.
+func (mr *MockLLMConnectionRepositoryInterfaceMockRecorder) GetByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).Get), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByAgentId", reflect.TypeOf((*MockLLMConnectionRepositoryInterface)(nil).GetByAgentId), ctx, agentId)
 }
 
 // Upsert mocks base method.

@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -18,17 +19,23 @@ import (
 type WhenListingConversationsTestingSuite struct {
 	sut *use_cases.ListConversations
 
-	mockRepository *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockRepository             *knowledge_mocks.MockConversationMessageRepositoryInterface
+	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
+	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenListingConversationsBeforeEach(t *testing.T) *WhenListingConversationsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
+	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
 	return &WhenListingConversationsTestingSuite{
-		sut:            use_cases.NewListConversations(mockRepository),
-		mockRepository: mockRepository,
+		sut:                        use_cases.NewListConversations(mockRepository, mockConversationRepository, mockAgentRepository),
+		mockRepository:             mockRepository,
+		mockConversationRepository: mockConversationRepository,
+		mockAgentRepository:        mockAgentRepository,
 	}
 }
 
@@ -42,12 +49,16 @@ func TestWhenListingConversations(t *testing.T) {
 		second := first.Add(time.Minute)
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockRepository.EXPECT().ListConversationIds(gomock.Any()).Return([]string{"a", "b"}, nil)
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), "a").Return([]models.ConversationMessage{
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.Conversation{
+				*model_builders.NewConversationBuilder().WithId("a").Build(),
+				*model_builders.NewConversationBuilder().WithId("b").Build(),
+			}, nil)
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), "a").Return([]models.ConversationMessage{
 				model_builders.NewConversationMessageBuilder().WithConversationId("a").WithTimestamp(first).Build(),
 				model_builders.NewConversationMessageBuilder().WithConversationId("a").WithTimestamp(second).Build(),
 			}, nil)
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), "b").Return([]models.ConversationMessage{
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), "b").Return([]models.ConversationMessage{
 				model_builders.NewConversationMessageBuilder().WithConversationId("b").WithTimestamp(first).Build(),
 			}, nil)
 		}
@@ -75,8 +86,11 @@ func TestWhenListingConversations(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockRepository.EXPECT().ListConversationIds(gomock.Any()).Return([]string{"empty"}, nil)
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), "empty").Return(nil, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.Conversation{
+				*model_builders.NewConversationBuilder().WithId("empty").Build(),
+			}, nil)
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), "empty").Return(nil, nil)
 		}
 
 		t.Run("Should skip it", func(t *testing.T) {
@@ -96,7 +110,8 @@ func TestWhenListingConversations(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockRepository.EXPECT().ListConversationIds(gomock.Any()).Return(nil, errors.New("db blew"))
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {

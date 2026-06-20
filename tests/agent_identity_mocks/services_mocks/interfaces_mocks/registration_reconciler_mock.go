@@ -15,6 +15,7 @@ import (
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	common "github.com/ethereum/go-ethereum/common"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -43,18 +44,18 @@ func (m *MockRegistrationReconcilerInterface) EXPECT() *MockRegistrationReconcil
 }
 
 // ReconcileEnsRegistry mocks base method.
-func (m *MockRegistrationReconcilerInterface) ReconcileEnsRegistry(ctx context.Context, state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+func (m *MockRegistrationReconcilerInterface) ReconcileEnsRegistry(ctx context.Context, agentId uuid.UUID, state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileEnsRegistry", ctx, state)
+	ret := m.ctrl.Call(m, "ReconcileEnsRegistry", ctx, agentId, state)
 	ret0, _ := ret[0].(*models.AgentRegistrationState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ReconcileEnsRegistry indicates an expected call of ReconcileEnsRegistry.
-func (mr *MockRegistrationReconcilerInterfaceMockRecorder) ReconcileEnsRegistry(ctx, state any) *gomock.Call {
+func (mr *MockRegistrationReconcilerInterfaceMockRecorder) ReconcileEnsRegistry(ctx, agentId, state any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileEnsRegistry", reflect.TypeOf((*MockRegistrationReconcilerInterface)(nil).ReconcileEnsRegistry), ctx, state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileEnsRegistry", reflect.TypeOf((*MockRegistrationReconcilerInterface)(nil).ReconcileEnsRegistry), ctx, agentId, state)
 }
 
 // ReconcileMint mocks base method.

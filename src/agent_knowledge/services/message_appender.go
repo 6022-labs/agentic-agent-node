@@ -4,25 +4,52 @@ import (
 	"context"
 	"strings"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 )
 
 // MessageAppender demojizes content, stamps conversationId, hashes, drops
-// dupes against stored rows, then inserts the rest.
+// dupes against stored rows, then inserts the rest. It materializes the
+// agent-scoped Conversation head before the first append.
 type MessageAppender struct {
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
+	conversationRepository        repositories.ConversationRepositoryInterface
+	agentRepository               identity_repositories.AgentRepositoryInterface
 }
 
-func NewMessageAppender(conversationMessageRepository repositories.ConversationMessageRepositoryInterface) *MessageAppender {
-	return &MessageAppender{conversationMessageRepository: conversationMessageRepository}
+func NewMessageAppender(
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
+	conversationRepository repositories.ConversationRepositoryInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
+) *MessageAppender {
+	return &MessageAppender{
+		conversationMessageRepository: conversationMessageRepository,
+		conversationRepository:        conversationRepository,
+		agentRepository:               agentRepository,
+	}
 }
 
 func (s *MessageAppender) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 || len(messages) == 0 {
 		return nil, nil
+	}
+
+	agent, err := s.agentRepository.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if agent == nil {
+		return nil, errors.NewInternalError("append_failed", "agent identity is not initialized yet")
+	}
+	if err := s.conversationRepository.Ensure(ctx, &models.Conversation{
+		Id:      conversationId,
+		AgentId: agent.Id,
+	}); err != nil {
+		return nil, err
 	}
 
 	prepared := make([]models.ConversationMessage, 0, len(messages))

@@ -44,7 +44,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
 			state := model_builders.NewAgentRegistrationStateBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should return the stored draft and status", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return the draft without panicking on the nil state", func(t *testing.T) {

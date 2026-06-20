@@ -10,6 +10,7 @@ import (
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -61,7 +62,7 @@ func TestWhenReconcilingEnsRegistry(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().
 				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
 				Build()
-			savedState, err := suite.sut.ReconcileEnsRegistry(context.Background(), state)
+			savedState, err := suite.sut.ReconcileEnsRegistry(context.Background(), uuid.New(), state)
 
 			assert.NoError(t, err)
 			assert.Equal(t, identity_enums.TransactionStatusConfirmed, savedState.EnsRegistryStatus)

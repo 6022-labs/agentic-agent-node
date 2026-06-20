@@ -120,14 +120,14 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(recoveryChainId, gomock.Any()).Return(collection, uint64(9), "alice", nil)
 			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).DoAndReturn(
 				func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
 					capturedAgent = agent
 					return agent, savedState, nil
 				})
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), recoveryChainId, collection, "alice").Return(true, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), savedState).Return(savedState, nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), savedState).Return(savedState, nil)
 		}
 
 		t.Run("Should recover the full identity in place and confirm ENS", func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(recoveryChainId, gomock.Any()).Return(collection, uint64(9), "alice", nil)
 			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).Return(&models.Agent{}, &models.AgentRegistrationState{}, nil)
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), recoveryChainId, collection, "alice").Return(false, nil)
 		}

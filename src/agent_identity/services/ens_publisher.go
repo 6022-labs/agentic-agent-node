@@ -40,19 +40,19 @@ func NewEnsPublisher(
 }
 
 func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
-	state, err := s.agentRegistrationStateRepository.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("load registration state: %w", err)
-	}
-	if !state.IsMinted() {
-		return common_interfaces.ErrIdentityNotFound
-	}
-
 	agent, err := s.agentRepository.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("load agent: %w", err)
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
+		return common_interfaces.ErrIdentityNotFound
+	}
+
+	state, err := s.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
+	if err != nil {
+		return fmt.Errorf("load registration state: %w", err)
+	}
+	if !state.IsMinted() {
 		return common_interfaces.ErrIdentityNotFound
 	}
 

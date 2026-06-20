@@ -6,6 +6,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,9 +18,9 @@ func NewPaymentPolicyRepository(client *runtime_db.DatabaseClient) *PaymentPolic
 	return &PaymentPolicyRepository{client: client}
 }
 
-func (r *PaymentPolicyRepository) Get(ctx context.Context) (*models.PaymentPolicy, error) {
+func (r *PaymentPolicyRepository) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.PaymentPolicy, error) {
 	var entity models.PaymentPolicy
-	err := r.client.GetDB().WithContext(ctx).First(&entity).Error
+	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -36,12 +37,19 @@ func (r *PaymentPolicyRepository) Create(ctx context.Context, policy *models.Pay
 	return policy, nil
 }
 
-func (r *PaymentPolicyRepository) Delete(ctx context.Context) error {
+func (r *PaymentPolicyRepository) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
 	return r.client.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		session := tx.Session(&gorm.Session{AllowGlobalUpdate: true})
-		if err := session.Delete(&models.PaymentRule{}).Error; err != nil {
+		var policy models.PaymentPolicy
+		err := tx.First(&policy, "agent_id = ?", agentId).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		if err != nil {
 			return err
 		}
-		return session.Delete(&models.PaymentPolicy{}).Error
+		if err := tx.Where("policy_id = ?", policy.Id).Delete(&models.PaymentRule{}).Error; err != nil {
+			return err
+		}
+		return tx.Where("id = ?", policy.Id).Delete(&models.PaymentPolicy{}).Error
 	})
 }

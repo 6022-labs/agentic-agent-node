@@ -10,6 +10,7 @@ import (
 
 type AgentRegistrationStateBuilder struct {
 	id                uuid.UUID
+	agentId           uuid.UUID
 	mintStatus        enums.TransactionStatus
 	mintChainId       *uint64
 	mintTxHash        *string
@@ -28,6 +29,7 @@ func NewAgentRegistrationStateBuilder() *AgentRegistrationStateBuilder {
 
 	return &AgentRegistrationStateBuilder{
 		id:                uuid.New(),
+		agentId:           uuid.New(),
 		mintStatus:        enums.TransactionStatusPending,
 		ensRegistryStatus: enums.TransactionStatusPending,
 		createdAt:         createdAt,
@@ -37,6 +39,11 @@ func NewAgentRegistrationStateBuilder() *AgentRegistrationStateBuilder {
 
 func (b *AgentRegistrationStateBuilder) WithId(id uuid.UUID) *AgentRegistrationStateBuilder {
 	b.id = id
+	return b
+}
+
+func (b *AgentRegistrationStateBuilder) WithAgentId(agentId uuid.UUID) *AgentRegistrationStateBuilder {
+	b.agentId = agentId
 	return b
 }
 
@@ -93,6 +100,7 @@ func (b *AgentRegistrationStateBuilder) WithUpdatedAt(updatedAt time.Time) *Agen
 func (b *AgentRegistrationStateBuilder) Build() *models.AgentRegistrationState {
 	return &models.AgentRegistrationState{
 		Id:                b.id,
+		AgentId:           b.agentId,
 		MintStatus:        b.mintStatus,
 		MintChainId:       b.mintChainId,
 		MintTxHash:        b.mintTxHash,

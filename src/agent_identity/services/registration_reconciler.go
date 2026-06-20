@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 )
 
 // RegistrationReconciler writes the agent + state rows from confirmed on-chain facts.
@@ -60,6 +61,7 @@ func (s *RegistrationReconciler) ReconcileMint(
 	if state == nil {
 		state = &models.AgentRegistrationState{EnsRegistryStatus: enums.TransactionStatusPending}
 	}
+	state.AgentId = savedAgent.Id
 	state.MarkMintConfirmed()
 	if mintTxHash != nil {
 		state.MintTxHash = mintTxHash
@@ -73,11 +75,13 @@ func (s *RegistrationReconciler) ReconcileMint(
 
 func (s *RegistrationReconciler) ReconcileEnsRegistry(
 	ctx context.Context,
+	agentId uuid.UUID,
 	state *models.AgentRegistrationState,
 ) (*models.AgentRegistrationState, error) {
 	if state == nil {
 		state = &models.AgentRegistrationState{MintStatus: enums.TransactionStatusPending}
 	}
+	state.AgentId = agentId
 	state.MarkEnsConfirmed()
 	return s.agentRegistrationStateRepository.Upsert(ctx, state)
 }

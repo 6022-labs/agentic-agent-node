@@ -101,7 +101,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("anon", "https://mcp.anon.example"))
 					assert.NoError(t, err)
 
-					got, err := suite.sut.GetById(context.Background(), inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
 					assert.NoError(t, err)
 					assert.NotNil(t, got)
 					assert.Empty(t, got.HeaderAuthKeys)

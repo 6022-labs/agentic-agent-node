@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
@@ -13,6 +14,7 @@ import (
 )
 
 type SetupLLMConnection struct {
+	*AbstractReasoningUseCase
 	repository    repositories.LLMConnectionRepositoryInterface
 	secretStorage reasoning_interfaces.LLMSecretStorageInterface
 }
@@ -20,8 +22,13 @@ type SetupLLMConnection struct {
 func NewSetupLLMConnection(
 	repository repositories.LLMConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.LLMSecretStorageInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *SetupLLMConnection {
-	return &SetupLLMConnection{repository: repository, secretStorage: secretStorage}
+	return &SetupLLMConnection{
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		repository:               repository,
+		secretStorage:            secretStorage,
+	}
 }
 
 // Execute resolves the api key before upserting, so the row never points at a missing secret.
@@ -34,7 +41,13 @@ func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.Setu
 		return nil, err
 	}
 
+	agent, err := u.resolveAgent(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	connection, err := u.repository.Upsert(ctx, &models.LLMConnection{
+		AgentId:     agent.Id,
 		Platform:    request.Platform,
 		Model:       request.Model,
 		BaseUrl:     request.BaseUrl,

@@ -29,6 +29,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		repositories.NewConversationRepository,
+		dig.As(new(knowledge_repositories.ConversationRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		repositories.NewLLMConnectionRepository,
 		dig.As(new(reasoning_repositories.LLMConnectionRepositoryInterface)),
 	); err != nil {

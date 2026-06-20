@@ -18,9 +18,9 @@ func NewPaymentRuleRepository(client *runtime_db.DatabaseClient) *PaymentRuleRep
 	return &PaymentRuleRepository{client: client}
 }
 
-func (r *PaymentRuleRepository) List(ctx context.Context) ([]models.PaymentRule, error) {
+func (r *PaymentRuleRepository) ListByPolicyId(ctx context.Context, policyId uuid.UUID) ([]models.PaymentRule, error) {
 	rules := []models.PaymentRule{}
-	err := r.client.GetDB().WithContext(ctx).Order("position ASC").Find(&rules).Error
+	err := r.client.GetDB().WithContext(ctx).Where("policy_id = ?", policyId).Order("position ASC").Find(&rules).Error
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (r *PaymentRuleRepository) GetById(ctx context.Context, id uuid.UUID) (*mod
 func (r *PaymentRuleRepository) Create(ctx context.Context, rule *models.PaymentRule) (*models.PaymentRule, error) {
 	err := r.client.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var maxPosition *int
-		if err := tx.Model(&models.PaymentRule{}).Select("MAX(position)").Scan(&maxPosition).Error; err != nil {
+		if err := tx.Model(&models.PaymentRule{}).Where("policy_id = ?", rule.PolicyId).Select("MAX(position)").Scan(&maxPosition).Error; err != nil {
 			return err
 		}
 		if maxPosition != nil {

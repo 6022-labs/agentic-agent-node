@@ -21,19 +21,19 @@ func NewGetAgentIdentity(
 }
 
 func (u *GetAgentIdentity) Execute(ctx context.Context) (*responses.GetAgentIdentityResponse, error) {
-	state, err := u.agentRegistrationStateRepository.Get(ctx)
-	if err != nil {
-		return nil, errors.NewInternalError("identity_lookup_failed", err.Error())
-	}
-	if !state.IsMinted() {
-		return nil, errors.NewNotFoundError("identity_not_found", "agent identity not found")
-	}
-
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("identity_lookup_failed", err.Error())
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
+		return nil, errors.NewNotFoundError("identity_not_found", "agent identity not found")
+	}
+
+	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("identity_lookup_failed", err.Error())
+	}
+	if !state.IsMinted() {
 		return nil, errors.NewNotFoundError("identity_not_found", "agent identity not found")
 	}
 

@@ -4,25 +4,24 @@ import (
 	"context"
 	"testing"
 
-	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
-	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenGettingLLMConnectionTestingSuite struct {
+type WhenGettingMCPConnectionByIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.LLMConnectionRepository
+	sut                      *repositories.MCPConnectionRepository
 }
 
-func WhenGettingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenGettingLLMConnectionTestingSuite {
+func WhenGettingMCPConnectionByIdBeforeEach(tc *repositoryTestCase) *WhenGettingMCPConnectionByIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -43,62 +42,57 @@ func WhenGettingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenGettingLLMC
 		panic(err)
 	}
 
-	return &WhenGettingLLMConnectionTestingSuite{
+	return &WhenGettingMCPConnectionByIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewLLMConnectionRepository(dbClient),
+		sut:                      repositories.NewMCPConnectionRepository(dbClient),
 	}
 }
 
-func WhenGettingLLMConnectionAfterEach(suite *WhenGettingLLMConnectionTestingSuite) {
+func WhenGettingMCPConnectionByIdAfterEach(suite *WhenGettingMCPConnectionByIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenGettingLLMConnection(t *testing.T) {
+func TestWhenGettingMCPConnectionById(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no connection has been configured", func(t *testing.T) {
+			t.Run("Given a non-existent Id", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingLLMConnectionBeforeEach(tc)
-					defer WhenGettingLLMConnectionAfterEach(suite)
+					suite := WhenGettingMCPConnectionByIdBeforeEach(tc)
+					defer WhenGettingMCPConnectionByIdAfterEach(suite)
 
-					got, err := suite.sut.Get(context.Background())
+					got, err := suite.sut.GetById(context.Background(), uuid.New(), uuid.New())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
 			})
 
-			t.Run("Given a connection has been configured", func(t *testing.T) {
+			t.Run("Given a connection has been created", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return the persisted row", func(t *testing.T) {
+				t.Run("Should return the persisted row by Id", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingLLMConnectionBeforeEach(tc)
-					defer WhenGettingLLMConnectionAfterEach(suite)
+					suite := WhenGettingMCPConnectionByIdBeforeEach(tc)
+					defer WhenGettingMCPConnectionByIdAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
-						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
-						WithModel("gpt-4o").
-						WithBaseUrl("https://api.openai.com/v1").
-						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
-						Build())
-
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
 					assert.NoError(t, err)
 
-					got, err := suite.sut.Get(context.Background())
+					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
-					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, got.Platform)
-					assert.Equal(t, "gpt-4o", got.Model)
-					assert.Equal(t, "https://api.openai.com/v1", *got.BaseUrl)
+					assert.Equal(t, "github", got.Name)
+					assert.Equal(t, "https://mcp.github.example", got.Url)
+					assert.Len(t, got.HeaderAuthKeys, 1)
+					assert.Equal(t, "Authorization", string(got.HeaderAuthKeys[0]))
 				})
 			})
 		})

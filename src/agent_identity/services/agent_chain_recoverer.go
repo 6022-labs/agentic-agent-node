@@ -130,7 +130,7 @@ func (s *AgentChainRecoverer) recoverMintedAgent(
 	agent.Images = info.Images
 	agent.Attributes = info.Attributes
 
-	state, err := s.agentRegistrationStateRepository.Get(ctx)
+	state, err := s.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
 		return fmt.Errorf("load registration state: %w", err)
 	}
@@ -145,7 +145,7 @@ func (s *AgentChainRecoverer) recoverMintedAgent(
 	if err != nil {
 		s.logger.Warn("ENS provisioned check failed during recovery; leaving ENS status pending", zap.Error(err))
 	} else if provisioned {
-		if _, err := s.registrationReconciler.ReconcileEnsRegistry(ctx, savedState); err != nil {
+		if _, err := s.registrationReconciler.ReconcileEnsRegistry(ctx, agent.Id, savedState); err != nil {
 			return fmt.Errorf("reconcile ens registry: %w", err)
 		}
 	}

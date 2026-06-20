@@ -9,8 +9,10 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -19,8 +21,9 @@ import (
 type WhenCreatingMCPConnectionTestingSuite struct {
 	sut *use_cases.CreateMCPConnection
 
-	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectionTestingSuite {
@@ -28,14 +31,16 @@ func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectio
 
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage)
+	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage, mockAgentRepository)
 
 	return &WhenCreatingMCPConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:    mockRepository,
-		mockSecretStorage: mockSecretStorage,
+		mockRepository:      mockRepository,
+		mockSecretStorage:   mockSecretStorage,
+		mockAgentRepository: mockAgentRepository,
 	}
 }
 
@@ -62,6 +67,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 		generatedId := uuid.New()
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "github", c.Name)
 				assert.Equal(t, "https://mcp.github.example", c.Url)
@@ -96,6 +102,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Empty(t, c.HeaderAuthKeys)
 				c.Id = uuid.New()
@@ -121,6 +128,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 

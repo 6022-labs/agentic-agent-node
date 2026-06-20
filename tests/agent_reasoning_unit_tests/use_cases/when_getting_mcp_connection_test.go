@@ -6,6 +6,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -17,8 +18,9 @@ import (
 type WhenGettingMCPConnectionTestingSuite struct {
 	sut *use_cases.GetMCPConnection
 
-	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenGettingMCPConnectionBeforeEach(t *testing.T) *WhenGettingMCPConnectionTestingSuite {
@@ -26,14 +28,16 @@ func WhenGettingMCPConnectionBeforeEach(t *testing.T) *WhenGettingMCPConnectionT
 
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewGetMCPConnection(mockRepository, mockSecretStorage)
+	sut := use_cases.NewGetMCPConnection(mockRepository, mockSecretStorage, mockAgentRepository)
 
 	return &WhenGettingMCPConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:    mockRepository,
-		mockSecretStorage: mockSecretStorage,
+		mockRepository:      mockRepository,
+		mockSecretStorage:   mockSecretStorage,
+		mockAgentRepository: mockAgentRepository,
 	}
 }
 
@@ -45,7 +49,8 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(nil, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound without touching the secret storage", func(t *testing.T) {
@@ -73,7 +78,8 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			WithHeaderAuthKeys([]string{"Authorization", "X-Trace"}).
 			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("Bearer abc", true, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "X-Trace").Return("trace-1", true, nil)
 		}
@@ -101,7 +107,8 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			WithHeaderAuthKeys([]string{"Authorization"}).
 			Build()
 		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
 		}
 

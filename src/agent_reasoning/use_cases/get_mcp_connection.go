@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
@@ -11,6 +12,7 @@ import (
 )
 
 type GetMCPConnection struct {
+	*AbstractReasoningUseCase
 	repository    repositories.MCPConnectionRepositoryInterface
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
 }
@@ -18,13 +20,22 @@ type GetMCPConnection struct {
 func NewGetMCPConnection(
 	repository repositories.MCPConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *GetMCPConnection {
-	return &GetMCPConnection{repository: repository, secretStorage: secretStorage}
+	return &GetMCPConnection{
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		repository:               repository,
+		secretStorage:            secretStorage,
+	}
 }
 
 // Execute returns the connection with HeaderAuth hydrated from Vault.
 func (u *GetMCPConnection) Execute(ctx context.Context, id uuid.UUID) (*responses.MCPConnectionResponse, error) {
-	connection, err := u.repository.GetById(ctx, id)
+	agent, err := u.resolveAgent(ctx)
+	if err != nil {
+		return nil, err
+	}
+	connection, err := u.repository.GetById(ctx, agent.Id, id)
 	if err != nil {
 		return nil, errors.NewInternalError("get_failed", err.Error())
 	}

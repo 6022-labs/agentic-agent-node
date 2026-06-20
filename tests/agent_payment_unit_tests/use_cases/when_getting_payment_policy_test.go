@@ -62,7 +62,7 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockPaymentPolicyRepository.EXPECT().Get(gomock.Any()).Return(policy, nil).Times(1)
+			suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
 			return policy
 		}
 
@@ -87,7 +87,7 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockPaymentPolicyRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().
 				Create(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, policy *models.PaymentPolicy) (*models.PaymentPolicy, error) {

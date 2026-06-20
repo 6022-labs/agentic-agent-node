@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -21,6 +22,7 @@ type WhenExecutingLLMTestingSuite struct {
 
 	mockLLMConnectionRepository *repositories_mocks.MockLLMConnectionRepositoryInterface
 	mockChatCompletionRequester *interfaces_mocks.MockChatCompletionRequesterInterface
+	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenExecutingLLMBeforeEach(t *testing.T) *WhenExecutingLLMTestingSuite {
@@ -28,16 +30,19 @@ func WhenExecutingLLMBeforeEach(t *testing.T) *WhenExecutingLLMTestingSuite {
 
 	mockLLMConnectionRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockChatCompletionRequester := interfaces_mocks.NewMockChatCompletionRequesterInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
 	sut := services.NewLLMExecutor(
 		mockLLMConnectionRepository,
 		mockChatCompletionRequester,
+		mockAgentRepository,
 	)
 
 	return &WhenExecutingLLMTestingSuite{
 		sut:                         sut,
 		mockLLMConnectionRepository: mockLLMConnectionRepository,
 		mockChatCompletionRequester: mockChatCompletionRequester,
+		mockAgentRepository:         mockAgentRepository,
 	}
 }
 
@@ -57,7 +62,9 @@ func TestWhenExecutingLLM(t *testing.T) {
 		expectedText := "hi there"
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().
@@ -84,7 +91,9 @@ func TestWhenExecutingLLM(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, nil)
 		}
 
@@ -105,7 +114,9 @@ func TestWhenExecutingLLM(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("db down"))
 		}
 
@@ -135,7 +146,9 @@ func TestWhenExecutingLLM(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockLLMConnectionRepository.EXPECT().Get(gomock.Any()).
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().

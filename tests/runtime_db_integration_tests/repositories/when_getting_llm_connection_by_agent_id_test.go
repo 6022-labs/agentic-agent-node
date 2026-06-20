@@ -4,25 +4,26 @@ import (
 	"context"
 	"testing"
 
-	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
+	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenGettingAgentRegistrationStateTestingSuite struct {
+type WhenGettingLLMConnectionByAgentIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.AgentRegistrationStateRepository
+	sut                      *repositories.LLMConnectionRepository
 }
 
-func WhenGettingAgentRegistrationStateBeforeEach(tc *repositoryTestCase) *WhenGettingAgentRegistrationStateTestingSuite {
+func WhenGettingLLMConnectionByAgentIdBeforeEach(tc *repositoryTestCase) *WhenGettingLLMConnectionByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -43,64 +44,64 @@ func WhenGettingAgentRegistrationStateBeforeEach(tc *repositoryTestCase) *WhenGe
 		panic(err)
 	}
 
-	return &WhenGettingAgentRegistrationStateTestingSuite{
+	return &WhenGettingLLMConnectionByAgentIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewAgentRegistrationStateRepository(dbClient),
+		sut:                      repositories.NewLLMConnectionRepository(dbClient),
 	}
 }
 
-func WhenGettingAgentRegistrationStateAfterEach(suite *WhenGettingAgentRegistrationStateTestingSuite) {
+func WhenGettingLLMConnectionByAgentIdAfterEach(suite *WhenGettingLLMConnectionByAgentIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenGettingAgentRegistrationState(t *testing.T) {
+func TestWhenGettingLLMConnectionByAgentId(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no state has been persisted", func(t *testing.T) {
+			t.Run("Given no connection has been configured", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingAgentRegistrationStateBeforeEach(tc)
-					defer WhenGettingAgentRegistrationStateAfterEach(suite)
+					suite := WhenGettingLLMConnectionByAgentIdBeforeEach(tc)
+					defer WhenGettingLLMConnectionByAgentIdAfterEach(suite)
 
-					got, err := suite.sut.Get(context.Background())
+					got, err := suite.sut.GetByAgentId(context.Background(), uuid.New())
 					assert.NoError(t, err)
 					assert.Nil(t, got)
 				})
 			})
 
-			t.Run("Given a state has been persisted with mint detail", func(t *testing.T) {
+			t.Run("Given a connection has been configured", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return the persisted row including nullable chain fields", func(t *testing.T) {
+				t.Run("Should return the persisted row", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenGettingAgentRegistrationStateBeforeEach(tc)
-					defer WhenGettingAgentRegistrationStateAfterEach(suite)
+					suite := WhenGettingLLMConnectionByAgentIdBeforeEach(tc)
+					defer WhenGettingLLMConnectionByAgentIdAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
-						WithMintStatus(identity_enums.TransactionStatusConfirmed).
-						WithMintChainId(80002).
-						WithMintTxHash("0xabc").
-						WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+					agentId := uuid.New()
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithModel("gpt-4o").
+						WithBaseUrl("https://api.openai.com/v1").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
 
 					assert.NoError(t, err)
 
-					got, err := suite.sut.Get(context.Background())
+					got, err := suite.sut.GetByAgentId(context.Background(), agentId)
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
-					assert.Equal(t, identity_enums.TransactionStatusConfirmed, got.MintStatus)
-					assert.Equal(t, uint64(80002), *got.MintChainId)
-					assert.Equal(t, "0xabc", *got.MintTxHash)
-					assert.Equal(t, identity_enums.TransactionStatusPending, got.EnsRegistryStatus)
-					assert.Nil(t, got.EnsTxHash)
+					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, got.Platform)
+					assert.Equal(t, "gpt-4o", got.Model)
+					assert.Equal(t, "https://api.openai.com/v1", *got.BaseUrl)
 				})
 			})
 		})

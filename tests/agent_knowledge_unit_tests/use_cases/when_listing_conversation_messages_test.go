@@ -48,7 +48,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(stored, nil)
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return(stored, nil)
 		}
 
 		t.Run("Should return Ok with the rows on the wire", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversation(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
+			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {

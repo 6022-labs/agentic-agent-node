@@ -9,8 +9,8 @@ import (
 
 // PaymentRuleRepositoryInterface persists the policy's pricing rules.
 type PaymentRuleRepositoryInterface interface {
-	// List returns every rule, ordered by position.
-	List(ctx context.Context) ([]models.PaymentRule, error)
+	// ListByPolicyId returns the policy's rules, ordered by position.
+	ListByPolicyId(ctx context.Context, policyId uuid.UUID) ([]models.PaymentRule, error)
 	// GetById returns the rule, or (nil, nil) if it does not exist.
 	GetById(ctx context.Context, id uuid.UUID) (*models.PaymentRule, error)
 	// Create appends the rule at the end of the table order.

@@ -35,10 +35,11 @@ func NewListPaymentRules(
 }
 
 func (u *ListPaymentRules) Execute(ctx context.Context) (*responses.ListPaymentRulesResponse, error) {
-	if _, _, err := u.ensurePaymentPolicy(ctx); err != nil {
+	policy, _, err := u.ensurePaymentPolicy(ctx)
+	if err != nil {
 		return nil, err
 	}
-	rules, err := u.paymentRuleRepository.List(ctx)
+	rules, err := u.paymentRuleRepository.ListByPolicyId(ctx, policy.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}

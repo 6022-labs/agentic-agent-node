@@ -4,23 +4,25 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-type WhenListingMCPConnectionsTestingSuite struct {
+type WhenDeletingMCPConnectionByIdTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.MCPConnectionRepository
 }
 
-func WhenListingMCPConnectionsBeforeEach(tc *repositoryTestCase) *WhenListingMCPConnectionsTestingSuite {
+func WhenDeletingMCPConnectionByIdBeforeEach(tc *repositoryTestCase) *WhenDeletingMCPConnectionByIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -41,7 +43,7 @@ func WhenListingMCPConnectionsBeforeEach(tc *repositoryTestCase) *WhenListingMCP
 		panic(err)
 	}
 
-	return &WhenListingMCPConnectionsTestingSuite{
+	return &WhenDeletingMCPConnectionByIdTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
@@ -49,49 +51,49 @@ func WhenListingMCPConnectionsBeforeEach(tc *repositoryTestCase) *WhenListingMCP
 	}
 }
 
-func WhenListingMCPConnectionsAfterEach(suite *WhenListingMCPConnectionsTestingSuite) {
+func WhenDeletingMCPConnectionByIdAfterEach(suite *WhenDeletingMCPConnectionByIdTestingSuite) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenListingMCPConnections(t *testing.T) {
+func TestWhenDeletingMCPConnectionById(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range repositoryTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no connections exist", func(t *testing.T) {
+			t.Run("Given a non-existent Id", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return an empty slice", func(t *testing.T) {
+				t.Run("Should be a no-op", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingMCPConnectionsBeforeEach(tc)
-					defer WhenListingMCPConnectionsAfterEach(suite)
+					suite := WhenDeletingMCPConnectionByIdBeforeEach(tc)
+					defer WhenDeletingMCPConnectionByIdAfterEach(suite)
 
-					list, err := suite.sut.List(context.Background())
-					assert.NoError(t, err)
-					assert.Empty(t, list)
+					assert.NoError(t, suite.sut.DeleteById(context.Background(), uuid.New(), uuid.New()))
 				})
 			})
 
-			t.Run("Given multiple connections were created", func(t *testing.T) {
+			t.Run("Given an existing connection", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return them ordered by created_at ASC", func(t *testing.T) {
+				t.Run("Should remove the row", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingMCPConnectionsBeforeEach(tc)
-					defer WhenListingMCPConnectionsAfterEach(suite)
+					suite := WhenDeletingMCPConnectionByIdBeforeEach(tc)
+					defer WhenDeletingMCPConnectionByIdAfterEach(suite)
 
-					_, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example"))
-					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), newMCPConnection("beta", "https://b.example"))
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example"))
 					assert.NoError(t, err)
 
-					list, err := suite.sut.List(context.Background())
+					assert.NoError(t, suite.sut.DeleteById(context.Background(), inserted.AgentId, inserted.Id))
+
+					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
 					assert.NoError(t, err)
-					assert.Len(t, list, 2)
-					assert.Equal(t, "alpha", list[0].Name)
-					assert.Equal(t, "beta", list[1].Name)
+					assert.Nil(t, got)
+
+					var count int64
+					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					assert.Equal(t, int64(0), count)
 				})
 			})
 		})

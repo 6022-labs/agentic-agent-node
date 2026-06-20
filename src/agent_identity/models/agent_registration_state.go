@@ -11,7 +11,8 @@ import (
 // AgentRegistrationState tracks the agent's mint (Amoy) and ENS (Ethereum)
 // lifecycles, which advance independently. At most one row.
 type AgentRegistrationState struct {
-	Id uuid.UUID `gorm:"primaryKey;size:36"`
+	Id      uuid.UUID `gorm:"primaryKey;size:36"`
+	AgentId uuid.UUID `gorm:"not null;size:36;uniqueIndex"`
 
 	MintStatus  enums.TransactionStatus `gorm:"not null;size:32"`
 	MintChainId *uint64

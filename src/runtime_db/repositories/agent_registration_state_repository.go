@@ -6,6 +6,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,9 +18,9 @@ func NewAgentRegistrationStateRepository(client *runtime_db.DatabaseClient) *Age
 	return &AgentRegistrationStateRepository{client: client}
 }
 
-func (r *AgentRegistrationStateRepository) Get(ctx context.Context) (*models.AgentRegistrationState, error) {
+func (r *AgentRegistrationStateRepository) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.AgentRegistrationState, error) {
 	var entity models.AgentRegistrationState
-	err := r.client.GetDB().WithContext(ctx).First(&entity).Error
+	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -30,7 +31,7 @@ func (r *AgentRegistrationStateRepository) Get(ctx context.Context) (*models.Age
 }
 
 func (r *AgentRegistrationStateRepository) Upsert(ctx context.Context, state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
-	existing, err := r.Get(ctx)
+	existing, err := r.GetByAgentId(ctx, state.AgentId)
 	if err != nil {
 		return nil, err
 	}

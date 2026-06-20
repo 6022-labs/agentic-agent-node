@@ -52,6 +52,7 @@ type WhenAppendingConversationMessagesTestingSuite struct {
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.ConversationMessageRepository
+	conversationRepository   *repositories.ConversationRepository
 }
 
 func WhenAppendingConversationMessagesBeforeEach(tc *repositoryTestCase) *WhenAppendingConversationMessagesTestingSuite {
@@ -80,6 +81,7 @@ func WhenAppendingConversationMessagesBeforeEach(tc *repositoryTestCase) *WhenAp
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
 		sut:                      repositories.NewConversationMessageRepository(dbClient),
+		conversationRepository:   repositories.NewConversationRepository(dbClient),
 	}
 }
 
@@ -94,6 +96,16 @@ func newMessage(conversationId, content string) models.ConversationMessage {
 		WithContent(content).
 		WithTimestamp(time.Now().UTC().Truncate(time.Microsecond)).
 		Build()
+}
+
+// ensureConversations seeds the conversation heads that messages reference,
+// satisfying the conversation_messages.conversation_id FK.
+func ensureConversations(conversationRepository *repositories.ConversationRepository, conversationIds ...string) {
+	for _, id := range conversationIds {
+		if err := conversationRepository.Ensure(context.Background(), model_builders.NewConversationBuilder().WithId(id).Build()); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func TestWhenAppendingConversationMessages(t *testing.T) {
@@ -125,6 +137,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-1")
 					inserted, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						newMessage("conv-1", "hello"),
 						newMessage("conv-1", "world"),
@@ -147,6 +160,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-2")
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{newMessage("conv-2", "hi")})
 					assert.NoError(t, err)
 
@@ -171,6 +185,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					suite := WhenAppendingConversationMessagesBeforeEach(tc)
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
+					ensureConversations(suite.conversationRepository, "conv-3")
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						newMessage("conv-3", "same"),
 						newMessage("conv-3", "same"),

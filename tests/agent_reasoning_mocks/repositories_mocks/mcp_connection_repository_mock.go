@@ -57,48 +57,48 @@ func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) Create(ctx, connecti
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).Create), ctx, connection)
 }
 
-// Delete mocks base method.
-func (m *MockMCPConnectionRepositoryInterface) Delete(ctx context.Context, id uuid.UUID) error {
+// DeleteById mocks base method.
+func (m *MockMCPConnectionRepositoryInterface) DeleteById(ctx context.Context, agentId, id uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteById", ctx, agentId, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Delete indicates an expected call of Delete.
-func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) Delete(ctx, id any) *gomock.Call {
+// DeleteById indicates an expected call of DeleteById.
+func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) DeleteById(ctx, agentId, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).Delete), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteById", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).DeleteById), ctx, agentId, id)
 }
 
 // GetById mocks base method.
-func (m *MockMCPConnectionRepositoryInterface) GetById(ctx context.Context, id uuid.UUID) (*models.MCPConnection, error) {
+func (m *MockMCPConnectionRepositoryInterface) GetById(ctx context.Context, agentId, id uuid.UUID) (*models.MCPConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetById", ctx, id)
+	ret := m.ctrl.Call(m, "GetById", ctx, agentId, id)
 	ret0, _ := ret[0].(*models.MCPConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetById indicates an expected call of GetById.
-func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) GetById(ctx, id any) *gomock.Call {
+func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) GetById(ctx, agentId, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).GetById), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).GetById), ctx, agentId, id)
 }
 
-// List mocks base method.
-func (m *MockMCPConnectionRepositoryInterface) List(ctx context.Context) ([]models.MCPConnection, error) {
+// ListByAgentId mocks base method.
+func (m *MockMCPConnectionRepositoryInterface) ListByAgentId(ctx context.Context, agentId uuid.UUID) ([]models.MCPConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx)
+	ret := m.ctrl.Call(m, "ListByAgentId", ctx, agentId)
 	ret0, _ := ret[0].([]models.MCPConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// List indicates an expected call of List.
-func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) List(ctx any) *gomock.Call {
+// ListByAgentId indicates an expected call of ListByAgentId.
+func (mr *MockMCPConnectionRepositoryInterfaceMockRecorder) ListByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByAgentId", reflect.TypeOf((*MockMCPConnectionRepositoryInterface)(nil).ListByAgentId), ctx, agentId)
 }
 
 // Update mocks base method.

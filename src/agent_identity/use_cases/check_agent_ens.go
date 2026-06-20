@@ -43,7 +43,7 @@ func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationSta
 		return nil, apperrors.NewConflictError("not_minted", "agent NFT must be minted before ENS registration")
 	}
 
-	state, err := u.agentRegistrationStateRepository.Get(ctx)
+	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, apperrors.NewInternalError("state_lookup_failed", err.Error())
 	}
@@ -55,7 +55,7 @@ func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationSta
 			return nil, apperrors.NewUnavailableError("ens_read_failed", err.Error())
 		}
 		if provisioned {
-			state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, state)
+			state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, agent.Id, state)
 			if err != nil {
 				return nil, apperrors.NewInternalError("ens_reconcile_failed", err.Error())
 			}

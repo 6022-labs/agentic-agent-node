@@ -139,12 +139,13 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, errors.NewInternalError("agent_save_failed", err.Error())
 	}
 
-	state, err := u.agentRegistrationStateRepository.Get(ctx)
+	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, saved.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("state_lookup_failed", err.Error())
 	}
 	if state == nil {
 		state, err = u.agentRegistrationStateRepository.Upsert(ctx, &models.AgentRegistrationState{
+			AgentId:           saved.Id,
 			MintStatus:        enums.TransactionStatusPending,
 			EnsRegistryStatus: enums.TransactionStatusPending,
 		})

@@ -51,8 +51,8 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 				WithCollectionTokenId(42).
 				WithName("Alice").
 				Build()
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should return Ok with the identity on the wire", func(t *testing.T) {
@@ -74,7 +74,9 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound with identity_not_found", func(t *testing.T) {
@@ -98,7 +100,9 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().
 				WithMintStatus(identity_enums.TransactionStatusSubmitted).
 				Build()
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 		}
 
 		t.Run("Should return NotFound with identity_not_found", func(t *testing.T) {
@@ -119,7 +123,9 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {

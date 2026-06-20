@@ -41,7 +41,7 @@ func (u *CheckAgentMint) Execute(ctx context.Context) (*responses.RegistrationSt
 		return nil, errors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")
 	}
 
-	state, err := u.agentRegistrationStateRepository.Get(ctx)
+	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("state_lookup_failed", err.Error())
 	}

@@ -78,11 +78,11 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockMintPublisher.EXPECT().SelfMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 				&identity_interfaces.MintResult{Agent: mintedAgent, State: mintedState}, nil)
 			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any()).Return(registeredState, nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), gomock.Any()).Return(registeredState, nil)
 		}
 
 		t.Run("Should confirm both mint and ENS", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockMintPublisher.EXPECT().SelfMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 				&identity_interfaces.MintResult{Agent: proposalAgent, State: submittedState, ProposalPending: true}, nil)
 		}

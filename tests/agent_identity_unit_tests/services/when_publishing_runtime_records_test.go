@@ -64,7 +64,8 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should report ErrIdentityNotFound without touching the registrar", func(t *testing.T) {
@@ -88,8 +89,8 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(false, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
 			suite.mockEnsRegistrar.EXPECT().InitRecords(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
@@ -120,8 +121,8 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
 			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), gomock.Any(), "alice", "url").Return("https://old.example.com", nil)
@@ -149,8 +150,8 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(state, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
 			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return(runtimeRecords)
 			suite.mockEnsRegistrar.EXPECT().Text(gomock.Any(), gomock.Any(), gomock.Any(), "alice", "url").Return(runtimeUrl, nil)
@@ -172,7 +173,9 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
-			suite.mockAgentRegistrationStateRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {

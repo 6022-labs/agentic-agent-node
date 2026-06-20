@@ -79,7 +79,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, "alpha-renamed", updated.Name)
 
-					got, err := suite.sut.GetById(context.Background(), inserted.Id)
+					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, "alpha-renamed", got.Name)
 					assert.Equal(t, "https://renamed.example", got.Url)

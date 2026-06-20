@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -19,8 +20,9 @@ import (
 type WhenUpdatingMCPConnectionTestingSuite struct {
 	sut *use_cases.UpdateMCPConnection
 
-	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenUpdatingMCPConnectionBeforeEach(t *testing.T) *WhenUpdatingMCPConnectionTestingSuite {
@@ -28,14 +30,16 @@ func WhenUpdatingMCPConnectionBeforeEach(t *testing.T) *WhenUpdatingMCPConnectio
 
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
+	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewUpdateMCPConnection(mockRepository, mockSecretStorage)
+	sut := use_cases.NewUpdateMCPConnection(mockRepository, mockSecretStorage, mockAgentRepository)
 
 	return &WhenUpdatingMCPConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:    mockRepository,
-		mockSecretStorage: mockSecretStorage,
+		mockRepository:      mockRepository,
+		mockSecretStorage:   mockSecretStorage,
+		mockAgentRepository: mockAgentRepository,
 	}
 }
 
@@ -62,7 +66,8 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(nil, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, nil)
 		}
 
 		t.Run("Should return NotFound without touching update or vault", func(t *testing.T) {
@@ -90,7 +95,8 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				WithUrl("https://old").
 				WithHeaderAuthKeys([]string{"Authorization", "X-Drop"}).
 				Build()
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), id).Return(row, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
 			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "new-name", c.Name)

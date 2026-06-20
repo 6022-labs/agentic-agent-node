@@ -56,34 +56,19 @@ func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) AppendMessages
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendMessages", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).AppendMessages), ctx, messages)
 }
 
-// ListByConversation mocks base method.
-func (m *MockConversationMessageRepositoryInterface) ListByConversation(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
+// ListByConversationId mocks base method.
+func (m *MockConversationMessageRepositoryInterface) ListByConversationId(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByConversation", ctx, conversationId)
+	ret := m.ctrl.Call(m, "ListByConversationId", ctx, conversationId)
 	ret0, _ := ret[0].([]models.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListByConversation indicates an expected call of ListByConversation.
-func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListByConversation(ctx, conversationId any) *gomock.Call {
+// ListByConversationId indicates an expected call of ListByConversationId.
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListByConversationId(ctx, conversationId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByConversation", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListByConversation), ctx, conversationId)
-}
-
-// ListConversationIds mocks base method.
-func (m *MockConversationMessageRepositoryInterface) ListConversationIds(ctx context.Context) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListConversationIds", ctx)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListConversationIds indicates an expected call of ListConversationIds.
-func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) ListConversationIds(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConversationIds", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListConversationIds), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByConversationId", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).ListByConversationId), ctx, conversationId)
 }
 
 // ListExistingHashes mocks base method.

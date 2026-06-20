@@ -175,6 +175,7 @@ func (s *MintPublisher) createMintProposal(
 	if state == nil {
 		state = &models.AgentRegistrationState{EnsRegistryStatus: enums.TransactionStatusPending}
 	}
+	state.AgentId = savedAgent.Id
 	state.MintStatus = enums.TransactionStatusSubmitted
 	state.MintTxHash = &txHash
 	savedState, err := s.agentRegistrationStateRepository.Upsert(ctx, state)

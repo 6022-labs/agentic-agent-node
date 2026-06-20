@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
@@ -12,6 +13,7 @@ import (
 )
 
 type CreateMCPConnection struct {
+	*AbstractReasoningUseCase
 	repository    repositories.MCPConnectionRepositoryInterface
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
 }
@@ -19,8 +21,13 @@ type CreateMCPConnection struct {
 func NewCreateMCPConnection(
 	repository repositories.MCPConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *CreateMCPConnection {
-	return &CreateMCPConnection{repository: repository, secretStorage: secretStorage}
+	return &CreateMCPConnection{
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		repository:               repository,
+		secretStorage:            secretStorage,
+	}
 }
 
 // Execute creates the row first to get a stable connectionId, then writes
@@ -38,7 +45,13 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Cre
 	}
 	keys.FromArray(headerNames)
 
+	agent, err := u.resolveAgent(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	created, err := u.repository.Create(ctx, &models.MCPConnection{
+		AgentId:        agent.Id,
 		Name:           request.Name,
 		Url:            request.Url,
 		HeaderAuthKeys: keys,

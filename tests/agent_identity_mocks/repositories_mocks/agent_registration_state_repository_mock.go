@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,19 +42,19 @@ func (m *MockAgentRegistrationStateRepositoryInterface) EXPECT() *MockAgentRegis
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockAgentRegistrationStateRepositoryInterface) Get(ctx context.Context) (*models.AgentRegistrationState, error) {
+// GetByAgentId mocks base method.
+func (m *MockAgentRegistrationStateRepositoryInterface) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.AgentRegistrationState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx)
+	ret := m.ctrl.Call(m, "GetByAgentId", ctx, agentId)
 	ret0, _ := ret[0].(*models.AgentRegistrationState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
+// GetByAgentId indicates an expected call of GetByAgentId.
+func (mr *MockAgentRegistrationStateRepositoryInterfaceMockRecorder) GetByAgentId(ctx, agentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).Get), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByAgentId", reflect.TypeOf((*MockAgentRegistrationStateRepositoryInterface)(nil).GetByAgentId), ctx, agentId)
 }
 
 // Upsert mocks base method.
