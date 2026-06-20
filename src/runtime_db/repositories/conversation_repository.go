@@ -19,11 +19,15 @@ func NewConversationRepository(client *runtime_db.DatabaseClient) *ConversationR
 	return &ConversationRepository{client: client}
 }
 
-func (r *ConversationRepository) Ensure(ctx context.Context, conversation *models.Conversation) error {
-	return r.client.GetDB().
+func (r *ConversationRepository) Ensure(ctx context.Context, conversation *models.Conversation) (bool, error) {
+	result := r.client.GetDB().
 		WithContext(ctx).
 		Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "id"}}, DoNothing: true}).
-		Create(conversation).Error
+		Create(conversation)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
 }
 
 func (r *ConversationRepository) GetById(ctx context.Context, id string) (*models.Conversation, error) {

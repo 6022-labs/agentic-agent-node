@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -25,7 +26,11 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 
 	mockResponseDriver := interfaces_mocks.NewMockResponseDriverInterface(mockController)
 
-	sut := use_cases.NewCreateResponse(mockResponseDriver)
+	mockResponseMetrics := metrics_interfaces_mocks.NewMockResponseMetricsInterface(mockController)
+	mockResponseMetrics.EXPECT().RecordResponseSucceeded(gomock.Any()).AnyTimes()
+	mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
+
+	sut := use_cases.NewCreateResponse(mockResponseDriver, mockResponseMetrics)
 
 	return &WhenCreatingResponseTestingSuite{
 		sut:                sut,

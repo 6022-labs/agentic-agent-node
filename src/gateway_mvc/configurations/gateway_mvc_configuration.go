@@ -49,6 +49,13 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		metrics.NewPaymentMetrics,
+		dig.As(new(metrics_interfaces.PaymentMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	provideController(container, core.NewHealthController)
 	provideController(container, core.NewAuthController)
 	provideController(container, core.NewConfigController)

@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
@@ -16,6 +17,7 @@ type CheckAgentMint struct {
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	mintPublisher                    identity_interfaces.MintPublisherInterface
 	registrationReconciler           identity_interfaces.RegistrationReconcilerInterface
+	mintMetrics                      metrics_interfaces.MintMetricsInterface
 }
 
 func NewCheckAgentMint(
@@ -23,12 +25,14 @@ func NewCheckAgentMint(
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	mintPublisher identity_interfaces.MintPublisherInterface,
 	registrationReconciler identity_interfaces.RegistrationReconcilerInterface,
+	mintMetrics metrics_interfaces.MintMetricsInterface,
 ) *CheckAgentMint {
 	return &CheckAgentMint{
 		agentRepository:                  agentRepository,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		mintPublisher:                    mintPublisher,
 		registrationReconciler:           registrationReconciler,
+		mintMetrics:                      mintMetrics,
 	}
 }
 
@@ -67,8 +71,10 @@ func (u *CheckAgentMint) Execute(ctx context.Context) (*responses.RegistrationSt
 
 	savedAgent, savedState, err := u.registrationReconciler.ReconcileMint(ctx, agent, state, collection, tokenId, nil)
 	if err != nil {
+		u.mintMetrics.RecordMintFailed(ctx)
 		return nil, errors.NewInternalError("mint_reconcile_failed", err.Error())
 	}
+	u.mintMetrics.RecordMintSucceeded(ctx)
 	resp := &responses.RegistrationStatusResponse{}
 	resp.FromModel(savedAgent, savedState)
 	return resp, nil

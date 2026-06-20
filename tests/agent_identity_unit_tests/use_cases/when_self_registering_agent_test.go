@@ -9,6 +9,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -36,12 +37,18 @@ func WhenSelfRegisteringAgentBeforeEach(t *testing.T) *WhenSelfRegisteringAgentT
 	mockEnsPublisher := interface_mocks.NewMockEnsPublisherInterface(mockController)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
+	mockRegistrationMetrics := metrics_mocks.NewMockRegistrationMetricsInterface(mockController)
+	mockRegistrationMetrics.EXPECT().RecordRegistrationSucceeded(gomock.Any()).AnyTimes()
+	mockRegistrationMetrics.EXPECT().RecordRegistrationPending(gomock.Any()).AnyTimes()
+	mockRegistrationMetrics.EXPECT().RecordRegistrationFailed(gomock.Any()).AnyTimes()
+
 	sut := use_cases.NewSelfRegisterAgent(
 		mockAgentRepository,
 		mockAgentRegistrationStateRepository,
 		mockMintPublisher,
 		mockEnsPublisher,
 		mockRegistrationReconciler,
+		mockRegistrationMetrics,
 	)
 
 	return &WhenSelfRegisteringAgentTestingSuite{

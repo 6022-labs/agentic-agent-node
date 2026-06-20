@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,12 @@ func WhenAuthorizingBeforeEach(t *testing.T) *WhenAuthorizingTestingSuite {
 
 	mockAuthorizer := common_mocks.NewMockAuthorizerInterface(mockController)
 
-	sut := use_cases.NewAuthorize(mockAuthorizer)
+	mockAuthorizationMetrics := metrics_mocks.NewMockAuthorizationMetricsInterface(mockController)
+	mockAuthorizationMetrics.EXPECT().RecordAuthorizationAuthorized(gomock.Any()).AnyTimes()
+	mockAuthorizationMetrics.EXPECT().RecordAuthorizationDenied(gomock.Any()).AnyTimes()
+	mockAuthorizationMetrics.EXPECT().RecordAuthorizationFailed(gomock.Any()).AnyTimes()
+
+	sut := use_cases.NewAuthorize(mockAuthorizer, mockAuthorizationMetrics)
 
 	return &WhenAuthorizingTestingSuite{
 		sut:            sut,

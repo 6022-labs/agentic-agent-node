@@ -17,6 +17,7 @@ import (
 	core_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
 	x402_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/x402_mocks/services_mocks/interfaces_mocks"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mvc_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -54,11 +55,16 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	mockX402PaymentVerifier := x402_mocks.NewMockX402PaymentVerifierInterface(mockController)
 	mockX402FacilitatorClient := x402_mocks.NewMockX402FacilitatorClientInterface(mockController)
 
+	mockPaymentMetrics := metrics_mocks.NewMockPaymentMetricsInterface(mockController)
+	mockPaymentMetrics.EXPECT().RecordSettled(gomock.Any(), gomock.Any()).AnyTimes()
+	mockPaymentMetrics.EXPECT().RecordRejected(gomock.Any(), gomock.Any()).AnyTimes()
+
 	x402Method := middlewares.NewX402AccessMethod(
 		zap.NewNop(),
 		mockPaymentFacilitatorClient,
 		mockX402PaymentVerifier,
 		mockX402FacilitatorClient,
+		mockPaymentMetrics,
 	)
 	jwtMethod := middlewares.NewJwtFreeAccessMethod(middlewares.NewJwtFreeAccessMethodParams{
 		JwtValidator:     mockJwtValidator,

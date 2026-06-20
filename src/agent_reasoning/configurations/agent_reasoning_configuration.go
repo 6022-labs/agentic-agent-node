@@ -23,6 +23,13 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		metrics.NewResponseMetrics,
+		dig.As(new(metrics_interfaces.ResponseMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewLLMExecutor,
 		dig.As(new(interfaces.LLMExecutorInterface)),
 	); err != nil {

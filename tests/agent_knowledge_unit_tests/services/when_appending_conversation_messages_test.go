@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,11 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository)
+	mockKnowledgeMetrics := metrics_mocks.NewMockKnowledgeMetricsInterface(mockController)
+	mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any()).AnyTimes()
+	mockKnowledgeMetrics.EXPECT().RecordMessageAppended(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository, mockKnowledgeMetrics)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:                        sut,
@@ -43,7 +48,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 
 func (suite *WhenAppendingConversationMessagesTestingSuite) expectAgentResolutionAndEnsure() {
 	suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-	suite.mockConversationRepository.EXPECT().Ensure(gomock.Any(), gomock.Any()).Return(nil)
+	suite.mockConversationRepository.EXPECT().Ensure(gomock.Any(), gomock.Any()).Return(false, nil)
 }
 
 func TestWhenAppendingConversationMessages(t *testing.T) {

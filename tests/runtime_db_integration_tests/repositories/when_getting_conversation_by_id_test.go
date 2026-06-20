@@ -71,8 +71,9 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					ownerAgentId := uuid.New()
-					assert.NoError(t, suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(ownerAgentId).Build()))
+					_, ensureErr := suite.sut.Ensure(context.Background(),
+						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(ownerAgentId).Build())
+					assert.NoError(t, ensureErr)
 
 					got, err := suite.sut.GetById(context.Background(), "conv-mine")
 					assert.NoError(t, err)

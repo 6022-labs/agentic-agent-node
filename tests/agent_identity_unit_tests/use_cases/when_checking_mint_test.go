@@ -6,6 +6,7 @@ import (
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -32,11 +33,16 @@ func WhenCheckingMintBeforeEach(t *testing.T) *WhenCheckingMintTestingSuite {
 	mockMintPublisher := interface_mocks.NewMockMintPublisherInterface(mockController)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
+	mockMintMetrics := metrics_mocks.NewMockMintMetricsInterface(mockController)
+	mockMintMetrics.EXPECT().RecordMintSucceeded(gomock.Any()).AnyTimes()
+	mockMintMetrics.EXPECT().RecordMintFailed(gomock.Any()).AnyTimes()
+
 	sut := use_cases.NewCheckAgentMint(
 		mockAgentRepository,
 		mockAgentRegistrationStateRepository,
 		mockMintPublisher,
 		mockRegistrationReconciler,
+		mockMintMetrics,
 	)
 
 	return &WhenCheckingMintTestingSuite{
