@@ -6,6 +6,13 @@ type ExternalOpenAICompletionsStandardResponse struct {
 	Model       string                                            `json:"model"`
 	Choices     []ExternalOpenAICompletionsStandardResponseChoice `json:"choices"`
 	ServiceTier string                                            `json:"service_tier"`
+	Usage       ExternalOpenAICompletionsStandardResponseUsage    `json:"usage"`
+}
+
+type ExternalOpenAICompletionsStandardResponseUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
 }
 
 type ExternalOpenAICompletionsStandardResponseChoice struct {

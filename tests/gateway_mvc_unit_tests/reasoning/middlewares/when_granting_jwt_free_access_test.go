@@ -22,8 +22,8 @@ const jwtTestToken = "header.payload.signature"
 type WhenGrantingJwtFreeAccessTestingSuite struct {
 	app              *fiber.App
 	mockJwtValidator *core_mocks.MockJwtValidatorInterface
-	matcherA       *access_mocks.MockFreeRuleMatcherInterface
-	matcherB       *access_mocks.MockFreeRuleMatcherInterface
+	matcherA         *access_mocks.MockFreeRuleMatcherInterface
+	matcherB         *access_mocks.MockFreeRuleMatcherInterface
 
 	downstreamRan bool
 	seenAddress   string
@@ -33,8 +33,8 @@ func WhenGrantingJwtFreeAccessBeforeEach(t *testing.T) *WhenGrantingJwtFreeAcces
 	mockController := gomock.NewController(t)
 	return &WhenGrantingJwtFreeAccessTestingSuite{
 		mockJwtValidator: core_mocks.NewMockJwtValidatorInterface(mockController),
-		matcherA:       access_mocks.NewMockFreeRuleMatcherInterface(mockController),
-		matcherB:       access_mocks.NewMockFreeRuleMatcherInterface(mockController),
+		matcherA:         access_mocks.NewMockFreeRuleMatcherInterface(mockController),
+		matcherB:         access_mocks.NewMockFreeRuleMatcherInterface(mockController),
 	}
 }
 
@@ -43,7 +43,7 @@ func WhenGrantingJwtFreeAccessBeforeEach(t *testing.T) *WhenGrantingJwtFreeAcces
 // only runs when the link grants access.
 func (s *WhenGrantingJwtFreeAccessTestingSuite) build(matchers ...middleware_interfaces.FreeRuleMatcherInterface) {
 	sut := middlewares.NewJwtFreeAccessMethod(middlewares.NewJwtFreeAccessMethodParams{
-		JwtValidator:         s.mockJwtValidator,
+		JwtValidator:     s.mockJwtValidator,
 		FreeRuleMatchers: matchers,
 	})
 	app := fiber.New()

@@ -25,6 +25,10 @@ services:
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
       - AGENT_IDENTITY__RUNTIME_URL=http://localhost:5500
       - AGENT_RUNTIME_DEV_MODE=true
+      - TELEMETRY__ENABLED=true
+      - TELEMETRY__ENDPOINT=agent-node-alloy:4317
+      - TELEMETRY__INSECURE=true
+      - TELEMETRY__NODE_ID=local-dev
     networks:
       agent-node-network:
     depends_on:
@@ -110,6 +114,72 @@ services:
       VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt vault secrets enable -version=1 -path=secret kv &&
       wait"
 
+  # ---------------------------------------------------------------------------
+  # Observability stack: Alloy (OTLP collector) -> Mimir (metrics) + Loki (logs),
+  # visualized in Grafana. Multiple agent nodes can point at one shared stack;
+  # the agent.node.id / service.instance.id resource attribute distinguishes them.
+  # ---------------------------------------------------------------------------
+  agent-node-alloy:
+    image: "grafana/alloy:latest"
+    container_name: agent-node-alloy
+    environment:
+      - LOKI_URL=http://agent-node-loki:3100
+      - MIMIR_URL=http://agent-node-mimir:9009
+    command:
+      ["run", "--stability.level=experimental", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./grafana/alloy/alloy-config.alloy:/etc/alloy/config.alloy
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    networks:
+      agent-node-network:
+
+  agent-node-mimir:
+    image: "grafana/mimir:latest"
+    container_name: agent-node-mimir
+    command: ["--config.file=/etc/mimir/mimir.yml", "--target=all"]
+    volumes:
+      - ./grafana/mimir/mimir-config.yaml:/etc/mimir/mimir.yml
+      - agent-node-mimir-data:/mimir-data
+    ports:
+      - "9009:9009"
+    networks:
+      agent-node-network:
+
+  agent-node-loki:
+    image: "grafana/loki:latest"
+    container_name: agent-node-loki
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./grafana/loki/loki-config.yaml:/etc/loki/loki.yaml
+      - agent-node-loki-data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      agent-node-network:
+
+  agent-node-grafana:
+    image: "grafana/grafana:12.3"
+    container_name: agent-node-grafana
+    depends_on:
+      - agent-node-mimir
+      - agent-node-loki
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      MIMIR_URL: "http://agent-node-mimir:9009"
+      LOKI_URL: "http://agent-node-loki:3100"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      agent-node-network:
+
 networks:
   agent-node-network:
 
@@ -117,3 +187,5 @@ volumes:
   agent-node-db-data:
   agent-node-vault-data:
   agent-node-ipfs-data:
+  agent-node-mimir-data:
+  agent-node-loki-data:

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -31,6 +32,10 @@ func main() {
 
 	container := configurations.ConfigureDI(config)
 	host_configurations.ConfigureLogging(container)
+
+	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, "agentic-gateway")
+	defer func() { _ = shutdownTelemetry(context.Background()) }()
+
 	configurations.ConfigureServer(container)
 
 	err = container.Invoke(func(app *fiber.App, logger *zap.Logger, hostSettings *settings.HostSettings) error {

@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/services_mocks"
 	reasoning_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -48,6 +49,10 @@ func WhenRequestingChatCompletionBeforeEach(t *testing.T) *WhenRequestingChatCom
 	mockOpenAICompletionsStandardChatCompletionRequester := services_mocks.NewMockOpenAICompletionsStandardChatCompletionRequesterInterface(mockController)
 	mockAmazonBedrockConverseStandardChatCompletionRequester := services_mocks.NewMockAmazonBedrockConverseStandardChatCompletionRequesterInterface(mockController)
 
+	mockMetrics := metrics_interfaces_mocks.NewMockLlmInferenceMetricsInterface(mockController)
+	mockMetrics.EXPECT().RecordOperationDuration(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().RecordTokenUsage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
 	tokenSettings := &settings.TokenSettings{MaxTokensPerRequest: 4096}
 	xSettings := &settings.XSettings{}
 	openAiSettings := &settings.OpenAISettings{}
@@ -63,6 +68,7 @@ func WhenRequestingChatCompletionBeforeEach(t *testing.T) *WhenRequestingChatCom
 		xSettings,
 		tokenSettings,
 		mockLlmSecretStorage,
+		mockMetrics,
 		openAiSettings,
 		ollamaSettings,
 		mistralSettings,

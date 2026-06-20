@@ -5,8 +5,11 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics/interfaces"
 	http_inference_services "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
+	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.uber.org/dig"
 )
 
@@ -53,6 +56,15 @@ func AddAgentReasoningHttpInferenceConfiguration(container *dig.Container) {
 	}
 
 	err = container.Provide(settings.NewTokenSettings)
+	if err != nil {
+		panic(err)
+	}
+
+	// Metrics
+	err = container.Provide(
+		metrics.NewLlmInferenceMetrics,
+		dig.As(new(metrics_interfaces.LlmInferenceMetricsInterface)),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -147,9 +159,13 @@ func AddAgentReasoningHttpInferenceConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
-	// Http clients
+	// Http clients — transport wrapped so raw calls also emit http.client.* metrics.
 	err = container.Provide(func() *http.Client {
-		return http.DefaultClient
+		return &http.Client{
+			Transport: common_metrics.NewHttpMetricsRoundTripper(
+				http.DefaultTransport,
+				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_inference"),
+			)}
 	}, dig.Name("llm-inference-http-client"))
 	if err != nil {
 		panic(err)

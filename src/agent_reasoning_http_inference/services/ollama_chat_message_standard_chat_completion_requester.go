@@ -70,7 +70,12 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 		zap.Int("toolCallCount", len(response.Message.ToolCalls)),
 	)
 
-	completion := &interfaces.LLMCompletion{}
+	completion := &interfaces.LLMCompletion{
+		Usage: &interfaces.LLMUsage{
+			InputTokens:  response.PromptEvalCount,
+			OutputTokens: response.EvalCount,
+		},
+	}
 
 	if response.Message.Content != "" {
 		text := response.Message.Content

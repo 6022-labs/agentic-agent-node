@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
@@ -21,6 +23,7 @@ type InferenceLoop struct {
 	llmExecutor  interfaces.LLMExecutorInterface
 	mcpRequester interfaces.McpRequesterInterface
 	settings     *settings.InferenceLoopSettings
+	metrics      metrics_interfaces.ReasoningMetricsInterface
 }
 
 func NewInferenceLoop(
@@ -28,12 +31,14 @@ func NewInferenceLoop(
 	llmExecutor interfaces.LLMExecutorInterface,
 	mcpRequester interfaces.McpRequesterInterface,
 	settings *settings.InferenceLoopSettings,
+	metrics metrics_interfaces.ReasoningMetricsInterface,
 ) *InferenceLoop {
 	return &InferenceLoop{
 		logger:       logger,
 		llmExecutor:  llmExecutor,
 		mcpRequester: mcpRequester,
 		settings:     settings,
+		metrics:      metrics,
 	}
 }
 
@@ -44,6 +49,8 @@ func (l *InferenceLoop) Run(
 	mcpConnections []*models.MCPConnection,
 	messages []*interfaces.ChatCompletionMessage,
 ) ([]*interfaces.ChatCompletionMessage, error) {
+	start := time.Now()
+
 	toolsByConnectionId, err := l.listToolsByConnection(mcpConnections)
 	if err != nil {
 		return nil, err
@@ -65,8 +72,11 @@ func (l *InferenceLoop) Run(
 		messages = append(messages, assistantMessage)
 
 		if len(completion.ToolCalls) == 0 {
+			l.metrics.RecordLoopCompleted(ctx, time.Since(start), int64(iteration+1))
 			return messages, nil
 		}
+
+		l.metrics.RecordToolCalls(ctx, int64(len(completion.ToolCalls)))
 
 		toolMessages, err := l.dispatchToolCalls(completion.ToolCalls, mcpConnections, toolsByConnectionId)
 		if err != nil {
@@ -74,6 +84,8 @@ func (l *InferenceLoop) Run(
 		}
 		messages = append(messages, toolMessages...)
 	}
+
+	l.metrics.RecordLoopExceeded(ctx, time.Since(start), int64(l.settings.MaxIterations))
 
 	return nil, fmt.Errorf("%w: %d", interfaces.ErrInferenceLoopMaxIterationsExceeded, l.settings.MaxIterations)
 }

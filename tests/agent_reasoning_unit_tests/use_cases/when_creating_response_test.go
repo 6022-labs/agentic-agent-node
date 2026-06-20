@@ -36,7 +36,7 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 func userInputRequest(conversationId, content string) *requests.CreateResponseRequest {
 	return &requests.CreateResponseRequest{
 		PreviousResponseId: conversationId,
-		Input: []requests.InputMessage{{Role: "user", Content: content}},
+		Input:              []requests.InputMessage{{Role: "user", Content: content}},
 	}
 }
 
@@ -89,7 +89,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				PreviousResponseId: conversationId,
 				Instructions:       "be nice",
-				Input: []requests.InputMessage{{Role: "user", Content: "hello"}},
+				Input:              []requests.InputMessage{{Role: "user", Content: "hello"}},
 			})
 
 			assert.NoError(t, err)

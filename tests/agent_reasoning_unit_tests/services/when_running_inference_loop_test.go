@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
@@ -31,11 +32,17 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 	mockLLMExecutor := interfaces_mocks.NewMockLLMExecutorInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
 
+	mockMetrics := metrics_interfaces_mocks.NewMockReasoningMetricsInterface(mockController)
+	mockMetrics.EXPECT().RecordLoopCompleted(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().RecordLoopExceeded(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().RecordToolCalls(gomock.Any(), gomock.Any()).AnyTimes()
+
 	sut := services.NewInferenceLoop(
 		zap.NewNop(),
 		mockLLMExecutor,
 		mockMcpRequester,
 		&settings.InferenceLoopSettings{MaxIterations: maxIterations},
+		mockMetrics,
 	)
 
 	return &WhenRunningInferenceLoopTestingSuite{

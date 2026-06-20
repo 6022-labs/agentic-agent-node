@@ -98,7 +98,12 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		zap.Strings("contentTypes", contentTypes),
 	)
 
-	completion := &interfaces.LLMCompletion{}
+	completion := &interfaces.LLMCompletion{
+		Usage: &interfaces.LLMUsage{
+			InputTokens:  response.Usage.InputTokens,
+			OutputTokens: response.Usage.OutputTokens,
+		},
+	}
 
 	for _, c := range response.Content {
 		switch c.Type {

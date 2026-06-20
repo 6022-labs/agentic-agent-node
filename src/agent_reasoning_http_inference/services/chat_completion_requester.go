@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
 	"github.com/google/uuid"
 	"github.com/pkoukk/tiktoken-go"
@@ -22,6 +24,7 @@ type ChatCompletionRequester struct {
 
 	tokenSettings    *settings.TokenSettings
 	llmSecretStorage reasoning_interfaces.LLMSecretStorageInterface
+	metrics          metrics_interfaces.LlmInferenceMetricsInterface
 
 	xSettings             *settings.XSettings
 	openAiSettings        *settings.OpenAISettings
@@ -44,6 +47,7 @@ func NewChatCompletionRequester(
 	xSettings *settings.XSettings,
 	tokenSettings *settings.TokenSettings,
 	llmSecretStorage reasoning_interfaces.LLMSecretStorageInterface,
+	metrics metrics_interfaces.LlmInferenceMetricsInterface,
 	openAiSettings *settings.OpenAISettings,
 	ollamaSettings *settings.OllamaSettings,
 	mistralSettings *settings.MistralSettings,
@@ -62,6 +66,7 @@ func NewChatCompletionRequester(
 
 		tokenSettings:    tokenSettings,
 		llmSecretStorage: llmSecretStorage,
+		metrics:          metrics,
 
 		xSettings:             xSettings,
 		openAiSettings:        openAiSettings,
@@ -102,7 +107,11 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		return nil, err
 	}
 
-	return r.completeUsingAppropriateStandard(
+	provider := genAiProviderName(llmConnection.Platform)
+	model := llmConnection.Model
+
+	start := time.Now()
+	completion, err := r.completeUsingAppropriateStandard(
 		llmConnection,
 		mcpConnections,
 		mcpToolsByConnectionId,
@@ -110,6 +119,43 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		platformSettings,
 		apiKey,
 	)
+
+	// Per GenAI semconv, request volume and error rate come from the duration
+	// histogram's count + the error.type attribute (no separate counters).
+	if err != nil {
+		r.metrics.RecordOperationDuration(ctx, provider, model, time.Since(start), "_OTHER")
+		return nil, err
+	}
+	r.metrics.RecordOperationDuration(ctx, provider, model, time.Since(start), "")
+
+	if completion != nil && completion.Usage != nil {
+		r.metrics.RecordTokenUsage(ctx, provider, model, "input", int64(completion.Usage.InputTokens))
+		r.metrics.RecordTokenUsage(ctx, provider, model, "output", int64(completion.Usage.OutputTokens))
+	}
+
+	return completion, nil
+}
+
+// genAiProviderName maps the platform enum to gen_ai.provider.name well-known values (raw value when unmapped).
+func genAiProviderName(platform enums.LLMConnectionPlatform) string {
+	switch platform {
+	case enums.LLMConnectionPlatformOpenAI:
+		return "openai"
+	case enums.LLMConnectionPlatformAnthropic:
+		return "anthropic"
+	case enums.LLMConnectionPlatformAmazonBedrock:
+		return "aws.bedrock"
+	case enums.LLMConnectionPlatformMistral:
+		return "mistral_ai"
+	case enums.LLMConnectionPlatformX:
+		return "x_ai"
+	case enums.LLMConnectionPlatformDeepseek:
+		return "deepseek"
+	case enums.LLMConnectionPlatformOllama:
+		return "ollama"
+	default:
+		return string(platform)
+	}
 }
 
 func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, error) {

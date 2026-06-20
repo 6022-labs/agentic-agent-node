@@ -30,6 +30,10 @@ func main() {
 
 	container := configurations.ConfigureDI(config)
 	host_configurations.ConfigureLogging(container)
+
+	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, "agentic-runtime")
+	defer func() { _ = shutdownTelemetry(context.Background()) }()
+
 	configurations.ConfigureServer(container)
 
 	bootstrapCtx, cancelBootstrap := context.WithCancel(context.Background())

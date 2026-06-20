@@ -1,7 +1,8 @@
 package configurations
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
+	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
+	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
@@ -36,10 +37,11 @@ func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 type registerRoutesParams struct {
 	dig.In
 
-	App         *fiber.App
-	Logger      *zap.Logger
-	JwtAuth     *middlewares.JwtAuthMiddleware
-	Controllers []mvc.AuthAwareControllerInterface `group:"gateway_controllers"`
+	App            *fiber.App
+	Logger         *zap.Logger
+	JwtAuth        *middlewares.JwtAuthMiddleware
+	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
+	Controllers    []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -47,6 +49,8 @@ func registerRoutes(p registerRoutesParams) {
 		AllowOrigins: "*",
 		AllowHeaders: "*",
 	}))
+
+	p.App.Use(p.RequestMetrics.Handle)
 
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,

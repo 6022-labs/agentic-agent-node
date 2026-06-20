@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	core_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/identity/services/interfaces"
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/services/interfaces"
@@ -19,10 +20,15 @@ import (
 	"go.uber.org/dig"
 )
 
-// newRuntimeClient builds the generated runtime client (oapi-codegen) bound to the
-// configured base URL.
+// newRuntimeClient builds the generated runtime client with a metrics-wrapped transport.
 func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResponsesInterface, error) {
-	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(&http.Client{}))
+	httpClient := &http.Client{
+		Transport: common_metrics.NewHttpMetricsRoundTripper(
+			http.DefaultTransport,
+			common_metrics.NewExternalHttpMetrics("agentic_gateway_http_runtime"),
+		),
+	}
+	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
 }
 
 // AddGatewayHttpRuntimeConfiguration wires the shared runtime client plus each

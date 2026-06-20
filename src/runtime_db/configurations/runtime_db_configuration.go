@@ -6,6 +6,8 @@ import (
 	payment_repositories "github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_db/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"go.uber.org/dig"
@@ -17,6 +19,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(settings.NewMigrationsSettings); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		metrics.NewDbQueryMetrics,
+		dig.As(new(metrics_interfaces.DbQueryMetricsInterface)),
+	); err != nil {
 		panic(err)
 	}
 	if err := container.Provide(newDatabaseClient); err != nil {
@@ -84,10 +92,14 @@ func newDatabaseClient(
 	dbSettings *settings.DatabaseSettings,
 	migrationsSettings *settings.MigrationsSettings,
 	logger *zap.Logger,
+	dbMetrics metrics_interfaces.DbQueryMetricsInterface,
 ) *runtime_db.DatabaseClient {
 	client, err := runtime_db.NewDatabaseClient(dbSettings, migrationsSettings, logger)
 	if err != nil {
 		logger.Fatal("failed to create runtime database client", zap.Error(err))
+	}
+	if err := client.GetDB().Use(metrics.NewGormMetricsPlugin(dbMetrics)); err != nil {
+		logger.Fatal("failed to register db metrics plugin", zap.Error(err))
 	}
 	if err := client.Migrate(); err != nil {
 		logger.Fatal("failed to migrate runtime database", zap.Error(err))

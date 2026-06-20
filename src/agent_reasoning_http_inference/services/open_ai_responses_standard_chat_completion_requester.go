@@ -81,7 +81,12 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 		zap.Strings("outputTypes", outputTypes),
 	)
 
-	completion := &interfaces.LLMCompletion{}
+	completion := &interfaces.LLMCompletion{
+		Usage: &interfaces.LLMUsage{
+			InputTokens:  response.Usage.InputTokens,
+			OutputTokens: response.Usage.OutputTokens,
+		},
+	}
 
 	for _, o := range response.Output {
 		switch o.Type {

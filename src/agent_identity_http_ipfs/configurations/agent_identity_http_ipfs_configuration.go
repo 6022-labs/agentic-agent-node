@@ -7,6 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_http_ipfs/clients"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_http_ipfs/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_http_ipfs/settings"
+	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.uber.org/dig"
 )
 
@@ -16,7 +17,11 @@ func AddAgentIdentityHttpIpfsConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(func() *http.Client {
-		return http.DefaultClient
+		return &http.Client{
+			Transport: common_metrics.NewHttpMetricsRoundTripper(
+				http.DefaultTransport,
+				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_ipfs"),
+			)}
 	}, dig.Name("ipfs-http-client")); err != nil {
 		panic(err)
 	}

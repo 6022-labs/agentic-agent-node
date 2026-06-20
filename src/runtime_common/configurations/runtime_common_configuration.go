@@ -1,6 +1,8 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/use_cases"
 	"go.uber.org/dig"
@@ -22,6 +24,13 @@ func AddRuntimeCommonConfiguration(container *dig.Container) {
 		if err := container.Provide(p); err != nil {
 			panic(err)
 		}
+	}
+
+	if err := container.Provide(
+		metrics.NewBlockchainRpcMetrics,
+		dig.As(new(metrics_interfaces.BlockchainRpcMetricsInterface)),
+	); err != nil {
+		panic(err)
 	}
 
 	if err := container.Provide(use_cases.NewGetBlockchainConfig); err != nil {

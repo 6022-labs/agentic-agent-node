@@ -75,7 +75,12 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 		zap.Strings("contentTypes", contentTypes),
 	)
 
-	completion := &interfaces.LLMCompletion{}
+	completion := &interfaces.LLMCompletion{
+		Usage: &interfaces.LLMUsage{
+			InputTokens:  response.Usage.InputTokens,
+			OutputTokens: response.Usage.OutputTokens,
+		},
+	}
 
 	for _, c := range response.Output.Message.Content {
 		switch {
