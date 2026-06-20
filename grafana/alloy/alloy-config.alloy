@@ -1,0 +1,62 @@
+otelcol.receiver.otlp "otlp" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.memory_limiter.memlimit.input]
+    logs    = [otelcol.processor.memory_limiter.memlimit.input]
+    traces  = [otelcol.processor.memory_limiter.memlimit.input]
+  }
+}
+
+otelcol.processor.memory_limiter "memlimit" {
+  check_interval = "5s"
+  limit_percentage       = 90
+  spike_limit_percentage = 25
+
+  output {
+    metrics = [otelcol.processor.batch.batchproc.input]
+    logs    = [otelcol.processor.batch.batchproc.input]
+    traces  = [otelcol.processor.batch.batchproc.input]
+  }
+}
+
+otelcol.exporter.debug "debug" {
+  verbosity = "basic"
+}
+
+// resource_to_telemetry_conversion promotes OTEL resource attributes
+// (service.name, service.instance.id, agent.node.id) to Prometheus labels so
+// dashboards can filter by service and by agent node.
+otelcol.exporter.prometheus "prom_export" {
+  resource_to_telemetry_conversion = true
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+otelcol.exporter.loki "loki" {
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = string.format("%s/loki/api/v1/push", env("LOKI_URL"))
+  }
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = string.format("%s/api/v1/push", env("MIMIR_URL"))
+  }
+}
+
+otelcol.processor.batch "batchproc" {
+  output {
+    traces  = [otelcol.exporter.debug.debug.input]
+    logs    = [otelcol.exporter.loki.loki.input, otelcol.exporter.debug.debug.input]
+    metrics = [otelcol.exporter.prometheus.prom_export.input, otelcol.exporter.debug.debug.input]
+  }
+}

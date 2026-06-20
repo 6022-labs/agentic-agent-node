@@ -4,6 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,15 +16,18 @@ const (
 type AuthController struct {
 	getAuthChallenge *use_cases.GetAuthChallenge
 	verifyAuth       *use_cases.VerifyAuth
+	authMetrics      metrics_interfaces.AuthMetricsInterface
 }
 
 func NewAuthController(
 	getAuthChallenge *use_cases.GetAuthChallenge,
 	verifyAuth *use_cases.VerifyAuth,
+	authMetrics metrics_interfaces.AuthMetricsInterface,
 ) *AuthController {
 	return &AuthController{
 		getAuthChallenge: getAuthChallenge,
 		verifyAuth:       verifyAuth,
+		authMetrics:      authMetrics,
 	}
 }
 
@@ -69,7 +73,9 @@ func (c *AuthController) Verify(ctx *fiber.Ctx) error {
 	}
 	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
 	if err != nil {
+		c.authMetrics.RecordAuthFailure(ctx.UserContext())
 		return mvc.WriteError(ctx, err)
 	}
+	c.authMetrics.RecordAuthSuccess(ctx.UserContext())
 	return ctx.JSON(resp)
 }

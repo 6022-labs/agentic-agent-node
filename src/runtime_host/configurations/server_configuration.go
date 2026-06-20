@@ -1,7 +1,8 @@
 package configurations
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
+	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
+	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	_ "github.com/6022-labs/agentic-agent-node/src/runtime_host/docs"
 	"github.com/gofiber/contrib/fiberzap/v2"
@@ -33,12 +34,15 @@ func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 type registerRoutesParams struct {
 	dig.In
 
-	App         *fiber.App
-	Logger      *zap.Logger
-	Controllers []mvc.ControllerInterface `group:"runtime_controllers"`
+	App            *fiber.App
+	Logger         *zap.Logger
+	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
+	Controllers    []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
+	p.App.Use(p.RequestMetrics.Handle)
+
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
 	}))

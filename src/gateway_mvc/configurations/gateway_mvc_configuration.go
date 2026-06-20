@@ -1,11 +1,16 @@
 package configurations
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
+	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
+	common_metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/common/metrics/interfaces"
+	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
+	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core"
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/identity"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/knowledge"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning"
 	reasoning_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
@@ -25,6 +30,29 @@ func AddGatewayMvcConfiguration(container *dig.Container) {
 
 func addCoreConfiguration(container *dig.Container) {
 	if err := container.Provide(core_middlewares.NewJwtAuthMiddleware); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(func() common_metrics_interfaces.ApiRequestMetricsInterface {
+		return common_metrics.NewApiRequestMetrics("agentic_gateway_api")
+	}); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(mvc_middlewares.NewApiRequestMetricsMiddleware); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewAuthMetrics,
+		dig.As(new(metrics_interfaces.AuthMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewPaymentMetrics,
+		dig.As(new(metrics_interfaces.PaymentMetricsInterface)),
+	); err != nil {
 		panic(err)
 	}
 
@@ -95,7 +123,7 @@ func provideController(container *dig.Container, ctor any) {
 	if err := container.Provide(
 		ctor,
 		dig.Group("gateway_controllers"),
-		dig.As(new(mvc.AuthAwareControllerInterface)),
+		dig.As(new(mvc_interfaces.AuthAwareControllerInterface)),
 	); err != nil {
 		panic(err)
 	}

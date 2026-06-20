@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
@@ -19,6 +20,7 @@ type SelfRegisterAgent struct {
 	mintPublisher                    identity_interfaces.MintPublisherInterface
 	ensPublisher                     identity_interfaces.EnsPublisherInterface
 	registrationReconciler           identity_interfaces.RegistrationReconcilerInterface
+	registrationMetrics              metrics_interfaces.RegistrationMetricsInterface
 }
 
 func NewSelfRegisterAgent(
@@ -27,6 +29,7 @@ func NewSelfRegisterAgent(
 	mintPublisher identity_interfaces.MintPublisherInterface,
 	ensPublisher identity_interfaces.EnsPublisherInterface,
 	registrationReconciler identity_interfaces.RegistrationReconcilerInterface,
+	registrationMetrics metrics_interfaces.RegistrationMetricsInterface,
 ) *SelfRegisterAgent {
 	return &SelfRegisterAgent{
 		agentRepository:                  agentRepository,
@@ -34,10 +37,23 @@ func NewSelfRegisterAgent(
 		mintPublisher:                    mintPublisher,
 		ensPublisher:                     ensPublisher,
 		registrationReconciler:           registrationReconciler,
+		registrationMetrics:              registrationMetrics,
 	}
 }
 
 func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.RegistrationStatusResponse, error) {
+	succeeded, pending := false, false
+	defer func() {
+		switch {
+		case pending:
+			u.registrationMetrics.RecordRegistrationPending(ctx)
+		case succeeded:
+			u.registrationMetrics.RecordRegistrationSucceeded(ctx)
+		default:
+			u.registrationMetrics.RecordRegistrationFailed(ctx)
+		}
+	}()
+
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, apperrors.NewInternalError("agent_lookup_failed", err.Error())
@@ -61,6 +77,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 			return nil, apperrors.NewInternalError("self_mint_failed", mintErr.Error())
 		}
 		if result.ProposalPending {
+			pending = true
 			resp := &responses.RegistrationStatusResponse{}
 			resp.FromModel(result.Agent, result.State)
 			return resp, nil
@@ -80,6 +97,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 		}
 	}
 
+	succeeded = true
 	resp := &responses.RegistrationStatusResponse{}
 	resp.FromModel(agent, state)
 	return resp, nil

@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -25,7 +26,11 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 
 	mockResponseDriver := interfaces_mocks.NewMockResponseDriverInterface(mockController)
 
-	sut := use_cases.NewCreateResponse(mockResponseDriver)
+	mockResponseMetrics := metrics_interfaces_mocks.NewMockResponseMetricsInterface(mockController)
+	mockResponseMetrics.EXPECT().RecordResponseSucceeded(gomock.Any()).AnyTimes()
+	mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
+
+	sut := use_cases.NewCreateResponse(mockResponseDriver, mockResponseMetrics)
 
 	return &WhenCreatingResponseTestingSuite{
 		sut:                sut,
@@ -36,7 +41,7 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 func userInputRequest(conversationId, content string) *requests.CreateResponseRequest {
 	return &requests.CreateResponseRequest{
 		PreviousResponseId: conversationId,
-		Input: []requests.InputMessage{{Role: "user", Content: content}},
+		Input:              []requests.InputMessage{{Role: "user", Content: content}},
 	}
 }
 
@@ -89,7 +94,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
 				PreviousResponseId: conversationId,
 				Instructions:       "be nice",
-				Input: []requests.InputMessage{{Role: "user", Content: "hello"}},
+				Input:              []requests.InputMessage{{Role: "user", Content: "hello"}},
 			})
 
 			assert.NoError(t, err)

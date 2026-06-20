@@ -43,11 +43,12 @@ func (m *MockConversationRepositoryInterface) EXPECT() *MockConversationReposito
 }
 
 // Ensure mocks base method.
-func (m *MockConversationRepositoryInterface) Ensure(ctx context.Context, conversation *models.Conversation) error {
+func (m *MockConversationRepositoryInterface) Ensure(ctx context.Context, conversation *models.Conversation) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ensure", ctx, conversation)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Ensure indicates an expected call of Ensure.

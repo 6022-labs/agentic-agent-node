@@ -9,8 +9,10 @@ import (
 	vault_services "github.com/6022-labs/agentic-agent-node/src/runtime_vault/services"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_vault_mocks/metrics_mocks/interfaces_mocks"
 	vault "github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type WhenDeletingKvV1SecretTestingSuite struct {
@@ -18,7 +20,7 @@ type WhenDeletingKvV1SecretTestingSuite struct {
 	sut       *vault_services.KvV1SecretStorage
 }
 
-func WhenDeletingKvV1SecretBeforeEach() *WhenDeletingKvV1SecretTestingSuite {
+func WhenDeletingKvV1SecretBeforeEach(t *testing.T) *WhenDeletingKvV1SecretTestingSuite {
 	cfg := container_builders.GetVaultContainerBuilder().Create()
 
 	vaultCfg := vault.DefaultConfig()
@@ -35,9 +37,12 @@ func WhenDeletingKvV1SecretBeforeEach() *WhenDeletingKvV1SecretTestingSuite {
 		KvV1MountPath: cfg.KvV1MountPath,
 	}
 
+	mockMetrics := metrics_interfaces_mocks.NewMockVaultMetricsInterface(gomock.NewController(t))
+	mockMetrics.EXPECT().RecordOperation(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
 	return &WhenDeletingKvV1SecretTestingSuite{
 		mountPath: cfg.KvV1MountPath,
-		sut:       vault_services.NewKvV1SecretStorage(client, settings),
+		sut:       vault_services.NewKvV1SecretStorage(client, settings, mockMetrics),
 	}
 }
 
@@ -53,7 +58,7 @@ func TestWhenDeletingKvV1Secret(t *testing.T) {
 
 		t.Run("Should remove it so Read returns ErrSecretNotFound", func(t *testing.T) {
 			t.Parallel()
-			suite := WhenDeletingKvV1SecretBeforeEach()
+			suite := WhenDeletingKvV1SecretBeforeEach(t)
 			defer WhenDeletingKvV1SecretAfterEach(suite)
 
 			ctx := context.Background()

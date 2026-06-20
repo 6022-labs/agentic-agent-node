@@ -1,0 +1,454 @@
+{
+  "title": "Agentic Agent Node \u2014 Agent Reasoning (GenAI)",
+  "schemaVersion": 39,
+  "version": 2,
+  "tags": [
+    "agentic",
+    "reasoning",
+    "genai"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(service_name)",
+          "refId": "service"
+        },
+        "definition": "label_values(service_name)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
+      {
+        "name": "node",
+        "label": "Node",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(agent_node_id)",
+          "refId": "node"
+        },
+        "definition": "label_values(agent_node_id)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "LLM requests/s",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m]))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "LLM error rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\", error_type=~\".+\"}[5m])) / clamp_min(sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m])), 1)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "LLM p95 latency",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m])))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Tokens/s",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM request rate by provider/model",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m]))",
+          "legendFormat": "{{gen_ai_provider_name}} {{gen_ai_request_model}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM error rate by provider",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\", error_type=~\".+\"}[5m]))",
+          "legendFormat": "{{gen_ai_provider_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM latency p95 / p99 by provider/model",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m])))",
+          "legendFormat": "p95 {{gen_ai_provider_name}} {{gen_ai_request_model}}"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.99, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", gen_ai_operation_name=\"chat\"}[5m])))",
+          "legendFormat": "p99 {{gen_ai_provider_name}} {{gen_ai_request_model}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Token usage rate (input/output)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "legendFormat": "{{gen_ai_token_type}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Inference loop p95 duration",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m])))",
+          "legendFormat": "{{reasoning_outcome}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Inference loop p95 iterations",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_iterations_bucket{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m])))",
+          "legendFormat": "{{reasoning_outcome}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tool-call rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(reasoning_tool_calls_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "legendFormat": "tool calls"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Max-iterations-exceeded rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(reasoning_loop_max_iterations_exceeded_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "legendFormat": "exceeded"
+        }
+      ]
+    }
+  ]
+}

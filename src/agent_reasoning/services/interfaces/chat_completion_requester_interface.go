@@ -34,6 +34,12 @@ type ChatCompletionMessage struct {
 type LLMCompletion struct {
 	Text      *string
 	ToolCalls []ToolCall
+	Usage     *LLMUsage
+}
+
+type LLMUsage struct {
+	InputTokens  int
+	OutputTokens int
 }
 
 // ToolCall — platform-agnostic tool-use request. Name uses the

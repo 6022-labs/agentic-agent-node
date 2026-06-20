@@ -11,7 +11,8 @@ import (
 // that ConversationMessage rows hang off of.
 type ConversationRepositoryInterface interface {
 	// Ensure creates the head for (AgentId, Id) if absent; no-op if it exists.
-	Ensure(ctx context.Context, conversation *models.Conversation) error
+	// Returns true when a new head was created.
+	Ensure(ctx context.Context, conversation *models.Conversation) (bool, error)
 	// GetById returns the conversation by its (globally unique) id, or (nil, nil)
 	// if absent. Ownership is the caller's to enforce via the row's AgentId.
 	GetById(ctx context.Context, id string) (*models.Conversation, error)

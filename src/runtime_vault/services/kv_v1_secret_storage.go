@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_vault/metrics/interfaces"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	vault "github.com/hashicorp/vault/api"
 )
@@ -12,13 +14,22 @@ import (
 type KvV1SecretStorage struct {
 	client   *vault.Client
 	settings *vault_settings.VaultSettings
+	metrics  metrics_interfaces.VaultMetricsInterface
 }
 
-func NewKvV1SecretStorage(client *vault.Client, settings *vault_settings.VaultSettings) *KvV1SecretStorage {
-	return &KvV1SecretStorage{client: client, settings: settings}
+func NewKvV1SecretStorage(client *vault.Client, settings *vault_settings.VaultSettings, metrics metrics_interfaces.VaultMetricsInterface) *KvV1SecretStorage {
+	return &KvV1SecretStorage{client: client, settings: settings, metrics: metrics}
 }
 
-func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[string]string) error {
+func (s *KvV1SecretStorage) recordOperation(ctx context.Context, operation string, start time.Time, err *error) {
+	// ErrSecretNotFound is an expected "miss", not an operational failure.
+	failed := err != nil && *err != nil && !errors.Is(*err, runtime_common_interfaces.ErrSecretNotFound)
+	s.metrics.RecordOperation(ctx, operation, s.settings.KvV1MountPath, time.Since(start), failed)
+}
+
+func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[string]string) (err error) {
+	defer s.recordOperation(ctx, "write", time.Now(), &err)
+
 	payload := make(map[string]any, len(data))
 	for k, v := range data {
 		payload[k] = v
@@ -26,7 +37,9 @@ func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[stri
 	return s.client.KVv1(s.settings.KvV1MountPath).Put(ctx, key, payload)
 }
 
-func (s *KvV1SecretStorage) Read(ctx context.Context, key string) (map[string]string, error) {
+func (s *KvV1SecretStorage) Read(ctx context.Context, key string) (result map[string]string, err error) {
+	defer s.recordOperation(ctx, "read", time.Now(), &err)
+
 	secret, err := s.client.KVv1(s.settings.KvV1MountPath).Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, vault.ErrSecretNotFound) {
@@ -51,6 +64,9 @@ func (s *KvV1SecretStorage) Read(ctx context.Context, key string) (map[string]st
 	return out, nil
 }
 
-func (s *KvV1SecretStorage) Delete(ctx context.Context, key string) error {
-	return s.client.KVv1(s.settings.KvV1MountPath).Delete(ctx, key)
+func (s *KvV1SecretStorage) Delete(ctx context.Context, key string) (err error) {
+	defer s.recordOperation(ctx, "delete", time.Now(), &err)
+
+	err = s.client.KVv1(s.settings.KvV1MountPath).Delete(ctx, key)
+	return err
 }

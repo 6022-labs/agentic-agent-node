@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -24,7 +25,12 @@ func WhenPublishingEnsRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingEnsR
 
 	mockEnsPublisher := identity_mocks.NewMockEnsPublisherInterface(mockController)
 
-	sut := use_cases.NewPublishEnsRuntimeRecords(mockEnsPublisher)
+	mockEnsPublicationMetrics := metrics_mocks.NewMockEnsPublicationMetricsInterface(mockController)
+	mockEnsPublicationMetrics.EXPECT().RecordEnsPublishedSucceeded(gomock.Any()).AnyTimes()
+	mockEnsPublicationMetrics.EXPECT().RecordEnsPublishedFailed(gomock.Any()).AnyTimes()
+	mockEnsPublicationMetrics.EXPECT().RecordEnsPublishedNotMinted(gomock.Any()).AnyTimes()
+
+	sut := use_cases.NewPublishEnsRuntimeRecords(mockEnsPublisher, mockEnsPublicationMetrics)
 
 	return &WhenPublishingEnsRuntimeRecordsTestingSuite{
 		sut:              sut,

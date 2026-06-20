@@ -73,8 +73,13 @@ func TestWhenEnsuringConversation(t *testing.T) {
 					agentId := uuid.New()
 					conversation := model_builders.NewConversationBuilder().WithId("conv-dup").WithAgentId(agentId).Build()
 
-					assert.NoError(t, suite.sut.Ensure(context.Background(), conversation))
-					assert.NoError(t, suite.sut.Ensure(context.Background(), conversation))
+					created, err := suite.sut.Ensure(context.Background(), conversation)
+					assert.NoError(t, err)
+					assert.True(t, created)
+
+					created, err = suite.sut.Ensure(context.Background(), conversation)
+					assert.NoError(t, err)
+					assert.False(t, created)
 
 					list, err := suite.sut.ListByAgentId(context.Background(), agentId)
 					assert.NoError(t, err)

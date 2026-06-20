@@ -102,7 +102,7 @@ func newMessage(conversationId, content string) models.ConversationMessage {
 // satisfying the conversation_messages.conversation_id FK.
 func ensureConversations(conversationRepository *repositories.ConversationRepository, conversationIds ...string) {
 	for _, id := range conversationIds {
-		if err := conversationRepository.Ensure(context.Background(), model_builders.NewConversationBuilder().WithId(id).Build()); err != nil {
+		if _, err := conversationRepository.Ensure(context.Background(), model_builders.NewConversationBuilder().WithId(id).Build()); err != nil {
 			panic(err)
 		}
 	}

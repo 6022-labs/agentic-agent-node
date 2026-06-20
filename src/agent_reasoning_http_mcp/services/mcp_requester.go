@@ -1,21 +1,26 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/metrics/interfaces"
 )
 
 type MCPRequester struct {
-	client clients.McpClientInterface
+	client  clients.McpClientInterface
+	metrics metrics_interfaces.McpMetricsInterface
 }
 
-func NewMCPRequester(client clients.McpClientInterface) *MCPRequester {
+func NewMCPRequester(client clients.McpClientInterface, metrics metrics_interfaces.McpMetricsInterface) *MCPRequester {
 	return &MCPRequester{
-		client: client,
+		client:  client,
+		metrics: metrics,
 	}
 }
 
@@ -24,13 +29,20 @@ func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*interf
 		return nil, fmt.Errorf("MCP connection is nil")
 	}
 
+	ctx := context.Background()
+	start := time.Now()
+
 	result, err := r.client.ListTools(mcpConnection.Url, mcpConnection.HeaderAuth)
+
 	if err != nil {
+		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
 		return nil, fmt.Errorf("failed to list MCP tools: %w", err)
 	}
 	if result.Error != nil {
+		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
 		return nil, fmt.Errorf("MCP list tools returned error: %s", result.Error.Message)
 	}
+	r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), false)
 
 	return result.Result.ToMcpTools(), nil
 }
@@ -49,13 +61,20 @@ func (r *MCPRequester) CallTool(
 
 	fixedInput := r.fixToolInputBySchema(tool, toolInput)
 
+	ctx := context.Background()
+	start := time.Now()
+
 	result, err := r.client.CallTool(mcpConnection.Url, tool.Name, fixedInput, mcpConnection.HeaderAuth)
+
 	if err != nil {
+		r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), true)
 		return nil, fmt.Errorf("failed to call MCP tool '%s': %w", tool.Name, err)
 	}
 	if result.Error != nil {
+		r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), true)
 		return nil, fmt.Errorf("MCP call tool '%s' returned error: %s", tool.Name, result.Error.Message)
 	}
+	r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), false)
 
 	var output map[string]any
 	if err := json.Unmarshal(result.Result, &output); err != nil {

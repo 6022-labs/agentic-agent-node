@@ -72,12 +72,15 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					agentA := uuid.New()
 					agentB := uuid.New()
-					assert.NoError(t, suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("a-1").WithAgentId(agentA).Build()))
-					assert.NoError(t, suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("a-2").WithAgentId(agentA).Build()))
-					assert.NoError(t, suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("b-1").WithAgentId(agentB).Build()))
+					_, ensureErr := suite.sut.Ensure(context.Background(),
+						model_builders.NewConversationBuilder().WithId("a-1").WithAgentId(agentA).Build())
+					assert.NoError(t, ensureErr)
+					_, ensureErr = suite.sut.Ensure(context.Background(),
+						model_builders.NewConversationBuilder().WithId("a-2").WithAgentId(agentA).Build())
+					assert.NoError(t, ensureErr)
+					_, ensureErr = suite.sut.Ensure(context.Background(),
+						model_builders.NewConversationBuilder().WithId("b-1").WithAgentId(agentB).Build())
+					assert.NoError(t, ensureErr)
 
 					list, err := suite.sut.ListByAgentId(context.Background(), agentA)
 					assert.NoError(t, err)

@@ -9,8 +9,10 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
+	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 const (
@@ -33,8 +35,11 @@ func WhenValidatingErc20BeforeEach(t *testing.T, methods map[string]erc20Method,
 		erc20TestChainIdStr: {ChainId: erc20TestChainIdStr, HttpUrl: server.URL},
 	}
 
+	mockMetrics := metrics_interfaces_mocks.NewMockBlockchainRpcMetricsInterface(gomock.NewController(t))
+	mockMetrics.EXPECT().RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
 	return &WhenValidatingErc20TestingSuite{
-		sut: services.NewErc20Validator(factory.NewEthClientFactory(&chains)),
+		sut: services.NewErc20Validator(factory.NewEthClientFactory(&chains, mockMetrics)),
 	}
 }
 

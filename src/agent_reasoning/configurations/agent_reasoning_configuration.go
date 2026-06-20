@@ -1,6 +1,8 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
@@ -10,6 +12,20 @@ import (
 
 func AddAgentReasoningConfiguration(container *dig.Container) {
 	if err := container.Provide(settings.NewInferenceLoopSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewReasoningMetrics,
+		dig.As(new(metrics_interfaces.ReasoningMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewResponseMetrics,
+		dig.As(new(metrics_interfaces.ResponseMetricsInterface)),
+	); err != nil {
 		panic(err)
 	}
 

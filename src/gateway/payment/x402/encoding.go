@@ -32,4 +32,3 @@ func DecodePaymentPayload(header string) (*PaymentPayload, error) {
 	}
 	return &payload, nil
 }
-

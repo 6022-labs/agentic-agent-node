@@ -5,6 +5,7 @@ import (
 	"time"
 
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
@@ -17,11 +18,15 @@ type CreateResponseInterface interface {
 }
 
 type CreateResponse struct {
-	responseDriver interfaces.ResponseDriverInterface
+	responseDriver  interfaces.ResponseDriverInterface
+	responseMetrics metrics_interfaces.ResponseMetricsInterface
 }
 
-func NewCreateResponse(responseDriver interfaces.ResponseDriverInterface) *CreateResponse {
-	return &CreateResponse{responseDriver: responseDriver}
+func NewCreateResponse(
+	responseDriver interfaces.ResponseDriverInterface,
+	responseMetrics metrics_interfaces.ResponseMetricsInterface,
+) *CreateResponse {
+	return &CreateResponse{responseDriver: responseDriver, responseMetrics: responseMetrics}
 }
 
 // Execute resolves the conversation key (minting one when absent), forwards the
@@ -55,9 +60,11 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 
 	persisted, err := u.responseDriver.Drive(ctx, conversationId, inputs)
 	if err != nil {
+		u.responseMetrics.RecordResponseFailed(ctx)
 		return nil, errors.NewInternalError("create_response_failed", err.Error())
 	}
 
+	u.responseMetrics.RecordResponseSucceeded(ctx)
 	return u.buildResponse(request, conversationId, persisted), nil
 }
 

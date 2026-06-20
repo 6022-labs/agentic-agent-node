@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
@@ -20,6 +21,7 @@ type BootstrapRunner struct {
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
 	agentChainRecoverer      identity_interfaces.AgentChainRecovererInterface
 	ensPublisher             identity_interfaces.EnsPublisherInterface
+	bootstrapMetrics         metrics_interfaces.BootstrapMetricsInterface
 }
 
 func NewBootstrapRunner(
@@ -28,6 +30,7 @@ func NewBootstrapRunner(
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	agentChainRecoverer identity_interfaces.AgentChainRecovererInterface,
 	ensPublisher identity_interfaces.EnsPublisherInterface,
+	bootstrapMetrics metrics_interfaces.BootstrapMetricsInterface,
 ) *BootstrapRunner {
 	return &BootstrapRunner{
 		logger:                   logger,
@@ -35,10 +38,19 @@ func NewBootstrapRunner(
 		walletCredentialsStorage: walletCredentialsStorage,
 		agentChainRecoverer:      agentChainRecoverer,
 		ensPublisher:             ensPublisher,
+		bootstrapMetrics:         bootstrapMetrics,
 	}
 }
 
-func (r *BootstrapRunner) Run(ctx context.Context) error {
+func (r *BootstrapRunner) Run(ctx context.Context) (err error) {
+	defer func() {
+		if err != nil {
+			r.bootstrapMetrics.RecordBootstrapFailed(ctx)
+		} else {
+			r.bootstrapMetrics.RecordBootstrapSucceeded(ctx)
+		}
+	}()
+
 	// The agent row must exist before any secret op: its id scopes every secret path.
 	agent, err := r.ensureAgent(ctx)
 	if err != nil {

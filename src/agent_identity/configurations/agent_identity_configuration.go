@@ -1,6 +1,8 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services/images"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
@@ -11,6 +13,43 @@ import (
 )
 
 func AddAgentIdentityConfiguration(container *dig.Container) {
+	// Metrics
+	if err := container.Provide(
+		metrics.NewMintMetrics,
+		dig.As(new(metrics_interfaces.MintMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewBootstrapMetrics,
+		dig.As(new(metrics_interfaces.BootstrapMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewRegistrationMetrics,
+		dig.As(new(metrics_interfaces.RegistrationMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewAuthorizationMetrics,
+		dig.As(new(metrics_interfaces.AuthorizationMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		metrics.NewEnsPublicationMetrics,
+		dig.As(new(metrics_interfaces.EnsPublicationMetricsInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	// Settings
 	if err := container.Provide(settings.NewAgentIdentitySettings); err != nil {
 		panic(err)
 	}
@@ -19,6 +58,7 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	// Services
 	if err := container.Provide(
 		images.NewDefaultImageGenerator,
 		dig.As(new(identity_interfaces.DefaultImageGeneratorInterface)),
@@ -105,6 +145,7 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	// Use Cases
 	useCaseProviders := []any{
 		use_cases.NewAuthorize,
 		use_cases.NewGetAgentIdentity,

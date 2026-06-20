@@ -15,9 +15,7 @@ type HostSettings struct {
 	ListenAddress  string `koanf:"listen_address"` // empty = all interfaces
 }
 
-// NewHostSettings loads a host's server settings from config. key and
-// defaultApiPort are host-specific (runtime_host:5400 / gateway_host:5000) and
-// supplied by the host's wiring, so this stays generic.
+// NewHostSettings loads a host's server settings; key and defaultApiPort are passed by the host so this stays generic.
 func NewHostSettings(logger *zap.Logger, k *koanf.Koanf, key string, defaultApiPort int) *HostSettings {
 	settings := HostSettings{
 		ApiPort:        defaultApiPort,

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models/enums"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/knowledge_mocks/services_mocks/interfaces_mocks"

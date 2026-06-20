@@ -77,7 +77,12 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	choice := response.Choices[0]
-	completion := &interfaces.LLMCompletion{}
+	completion := &interfaces.LLMCompletion{
+		Usage: &interfaces.LLMUsage{
+			InputTokens:  response.Usage.PromptTokens,
+			OutputTokens: response.Usage.CompletionTokens,
+		},
+	}
 
 	if choice.Message.Content != "" {
 		text := choice.Message.Content

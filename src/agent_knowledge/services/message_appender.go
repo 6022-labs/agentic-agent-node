@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -18,17 +19,20 @@ type MessageAppender struct {
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 	conversationRepository        repositories.ConversationRepositoryInterface
 	agentRepository               identity_repositories.AgentRepositoryInterface
+	knowledgeMetrics              metrics_interfaces.KnowledgeMetricsInterface
 }
 
 func NewMessageAppender(
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
 	conversationRepository repositories.ConversationRepositoryInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
 ) *MessageAppender {
 	return &MessageAppender{
 		conversationMessageRepository: conversationMessageRepository,
 		conversationRepository:        conversationRepository,
 		agentRepository:               agentRepository,
+		knowledgeMetrics:              knowledgeMetrics,
 	}
 }
 
@@ -45,11 +49,15 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 	if agent == nil {
 		return nil, errors.NewInternalError("append_failed", "agent identity is not initialized yet")
 	}
-	if err := s.conversationRepository.Ensure(ctx, &models.Conversation{
+	created, err := s.conversationRepository.Ensure(ctx, &models.Conversation{
 		Id:      conversationId,
 		AgentId: agent.Id,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
+	}
+	if created {
+		s.knowledgeMetrics.RecordConversationStarted(ctx)
 	}
 
 	prepared := make([]models.ConversationMessage, 0, len(messages))
@@ -86,5 +94,18 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 		return nil, nil
 	}
 
-	return s.conversationMessageRepository.AppendMessages(ctx, toInsert)
+	inserted, err := s.conversationMessageRepository.AppendMessages(ctx, toInsert)
+	if err != nil {
+		return nil, err
+	}
+
+	byRole := make(map[string]int64, len(inserted))
+	for _, msg := range inserted {
+		byRole[msg.Role]++
+	}
+	for role, count := range byRole {
+		s.knowledgeMetrics.RecordMessageAppended(ctx, role, count)
+	}
+
+	return inserted, nil
 }

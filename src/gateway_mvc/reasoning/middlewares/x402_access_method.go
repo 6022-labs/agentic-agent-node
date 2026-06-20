@@ -10,10 +10,11 @@ import (
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -42,6 +43,7 @@ type X402AccessMethod struct {
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface
 	x402PaymentVerifier      x402_interfaces.X402PaymentVerifierInterface
 	x402FacilitatorClient    x402_interfaces.X402FacilitatorClientInterface
+	paymentMetrics           metrics_interfaces.PaymentMetricsInterface
 }
 
 func NewX402AccessMethod(
@@ -49,12 +51,14 @@ func NewX402AccessMethod(
 	paymentFacilitatorClient gateway_interfaces.PaymentFacilitatorClientInterface,
 	x402PaymentVerifier x402_interfaces.X402PaymentVerifierInterface,
 	x402FacilitatorClient x402_interfaces.X402FacilitatorClientInterface,
+	paymentMetrics metrics_interfaces.PaymentMetricsInterface,
 ) *X402AccessMethod {
 	return &X402AccessMethod{
 		logger:                   logger,
 		paymentFacilitatorClient: paymentFacilitatorClient,
 		x402PaymentVerifier:      x402PaymentVerifier,
 		x402FacilitatorClient:    x402FacilitatorClient,
+		paymentMetrics:           paymentMetrics,
 	}
 }
 
@@ -149,6 +153,7 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 
 	settleResponse, err := m.x402FacilitatorClient.Settle(ctx.UserContext(), facilitator.BaseUrl, payload, requirements)
 	if err != nil || !settleResponse.Success {
+		m.paymentMetrics.RecordRejected(ctx.UserContext(), entitled.config.Network)
 		if err != nil {
 			m.logger.Error("x402 settlement failed", zap.Error(err))
 		} else {
@@ -158,6 +163,7 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 		ctx.Response().ResetBody()
 		return m.paymentRequired(ctx, x402Rules, facilitators, "settlement_failed")
 	}
+	m.paymentMetrics.RecordSettled(ctx.UserContext(), entitled.config.Network)
 
 	encoded, err := x402.EncodeBase64Json(settleResponse)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -34,12 +35,17 @@ func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSu
 	mockAgentChainRecoverer := interface_mocks.NewMockAgentChainRecovererInterface(mockController)
 	mockEnsPublisher := interface_mocks.NewMockEnsPublisherInterface(mockController)
 
+	mockBootstrapMetrics := metrics_mocks.NewMockBootstrapMetricsInterface(mockController)
+	mockBootstrapMetrics.EXPECT().RecordBootstrapSucceeded(gomock.Any()).AnyTimes()
+	mockBootstrapMetrics.EXPECT().RecordBootstrapFailed(gomock.Any()).AnyTimes()
+
 	sut := services.NewBootstrapRunner(
 		zap.NewNop(),
 		mockAgentRepository,
 		mockWalletCredentialsStorage,
 		mockAgentChainRecoverer,
 		mockEnsPublisher,
+		mockBootstrapMetrics,
 	)
 
 	return &WhenRunningBootstrapTestingSuite{
