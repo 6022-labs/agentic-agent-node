@@ -59,7 +59,6 @@ export default function CollectionField({
                       address ?? loaded.find((c) => c.name === name)?.address
                     if (resolved) {
                       form.setValue("collectionAddress", resolved, {
-                        shouldValidate: true,
                         shouldDirty: true,
                       })
                     }
