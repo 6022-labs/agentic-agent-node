@@ -60,27 +60,25 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a saved draft but no registration state yet", func(t *testing.T) {
+	t.Run("Given an agent row but no registration state", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
+			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 		}
 
-		t.Run("Should return the draft without panicking on the nil state", func(t *testing.T) {
+		t.Run("Should return a NotFound since no draft has been started", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.NotNil(t, resp)
-			assert.Empty(t, resp.MintStatus)
-			assert.Empty(t, resp.EnsStatus)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 

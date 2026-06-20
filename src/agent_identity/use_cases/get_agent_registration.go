@@ -35,6 +35,10 @@ func (u *GetAgentRegistration) Execute(ctx context.Context) (*responses.AgentReg
 	if err != nil {
 		return nil, errors.NewInternalError("state_lookup_failed", err.Error())
 	}
+	// No state row means only the empty bootstrap agent exists; a real draft or mint always seeds one.
+	if state == nil {
+		return nil, errors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")
+	}
 
 	resp := &responses.AgentRegistrationResponse{}
 	resp.FromModel(agent, state)

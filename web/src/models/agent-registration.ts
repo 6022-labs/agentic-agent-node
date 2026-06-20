@@ -21,6 +21,22 @@ export type AgentRegistration = {
   ensStatus: string
 }
 
+// A bootstrapped-but-empty agent carries no draft fields or status; a real draft
+// or mint always sets at least one. Decides card vs. guided-empty-state.
+export const hasStartedRegistration = (registration: AgentRegistration) =>
+  !!registration.mintStatus || !!registration.ensStatus || !!registration.name
+
+// Every field the mint needs is present. Gates advancing past the details step,
+// from both the form's "Continue" button and the card's "Continue setup".
+export const isDraftComplete = (registration: AgentRegistration | null) =>
+  !!registration &&
+  !!registration.chainId &&
+  !!registration.collectionAddress &&
+  !!registration.name &&
+  !!registration.role &&
+  !!registration.images &&
+  Object.keys(registration.images).length > 0
+
 export type SaveAgentRegistrationRequest = {
   chainId: string
   collectionAddress: string

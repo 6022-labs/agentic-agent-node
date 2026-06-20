@@ -3,7 +3,10 @@ import React from "react"
 import axios from "axios"
 
 import { useAuth } from "@/contexts/auth-context"
-import type { AgentRegistration } from "@/models/agent-registration"
+import {
+  hasStartedRegistration,
+  type AgentRegistration,
+} from "@/models/agent-registration"
 import { getAgentRegistration } from "@/queries/api/registration.queries"
 
 const DEFAULT_TITLE = "Agent Node Dapp"
@@ -42,7 +45,7 @@ export const AgentIdentityProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true)
     try {
       const { data } = await getAgentRegistration()
-      setRegistration(data)
+      setRegistration(hasStartedRegistration(data) ? data : null)
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         setRegistration(null)

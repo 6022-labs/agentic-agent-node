@@ -22,7 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { AgentRegistration } from "@/models/agent-registration"
+import {
+  isDraftComplete,
+  type AgentRegistration,
+} from "@/models/agent-registration"
 import { AGENT_ROLES } from "@/models/enums/agent-role"
 import { saveAgentRegistration } from "@/queries/api/registration.queries"
 import { getMintableChainIds } from "@/configs/app-config"
@@ -38,15 +41,6 @@ import AttributeFields from "./attribute-fields"
 
 const chainLabel = (chainId: string) =>
   findEvmNetwork(`eip155:${chainId}`)?.name ?? `Chain ${chainId}`
-
-const isDraftComplete = (draft: AgentRegistration | null) =>
-  !!draft &&
-  !!draft.chainId &&
-  !!draft.collectionAddress &&
-  !!draft.name &&
-  !!draft.role &&
-  !!draft.images &&
-  Object.keys(draft.images).length > 0
 
 type Props = {
   draft: AgentRegistration | null
