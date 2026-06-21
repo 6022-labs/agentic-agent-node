@@ -14,6 +14,7 @@ import (
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -86,6 +87,7 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(gethcommon.Address{}, uint64(0), nil)
 			suite.mockMintPublisher.EXPECT().SelfMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 				&identity_interfaces.MintResult{Agent: mintedAgent, State: mintedState}, nil)
 			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
@@ -118,6 +120,7 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(gethcommon.Address{}, uint64(0), nil)
 			suite.mockMintPublisher.EXPECT().SelfMint(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 				&identity_interfaces.MintResult{Agent: proposalAgent, State: submittedState, ProposalPending: true}, nil)
 		}
@@ -134,6 +137,43 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 			assert.Equal(t, string(identity_enums.TransactionStatusSubmitted), resp.MintStatus)
 			assert.NotNil(t, resp.ProposalId)
 			assert.Equal(t, uint64(9), *resp.ProposalId)
+		})
+	})
+
+	t.Run("Given a proposal was approved and the token is now minted on chain", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			collection := gethcommon.HexToAddress(common_tests.RandomEthAddress().Hex())
+			mintedAgent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).WithOwner(owner).Build()
+			mintedState := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+				Build()
+			registeredState := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(collection, uint64(7), nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(7), gomock.Nil()).Return(mintedAgent, mintedState, nil)
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), gomock.Any()).Return(registeredState, nil)
+		}
+
+		t.Run("Should reconcile the mint without re-minting and confirm ENS", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.MintStatus)
+			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.EnsStatus)
 		})
 	})
 

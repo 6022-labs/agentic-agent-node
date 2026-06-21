@@ -4,6 +4,7 @@ import (
 	"context"
 
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
@@ -70,20 +71,14 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 		return nil, apperrors.NewInternalError("state_lookup_failed", err.Error())
 	}
 
-	// Mint with the node wallet unless already minted.
-	if agent.CollectionTokenId == nil {
-		result, mintErr := u.mintPublisher.SelfMint(ctx, agent, state)
-		if mintErr != nil {
-			return nil, apperrors.NewInternalError("self_mint_failed", mintErr.Error())
-		}
-		if result.ProposalPending {
-			pending = true
-			resp := &responses.RegistrationStatusResponse{}
-			resp.FromModel(result.Agent, result.State)
-			return resp, nil
-		}
-		agent = result.Agent
-		state = result.State
+	agent, state, pending, err = u.ensureMinted(ctx, agent, state)
+	if err != nil {
+		return nil, err
+	}
+	if pending {
+		resp := &responses.RegistrationStatusResponse{}
+		resp.FromModel(agent, state)
+		return resp, nil
 	}
 
 	// ENS-register with the node wallet unless already provisioned.
@@ -101,4 +96,34 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 	resp := &responses.RegistrationStatusResponse{}
 	resp.FromModel(agent, state)
 	return resp, nil
+}
+
+// ensureMinted reconciles an already-minted token (e.g. an approved proposal) before self-minting so /self is resumable; the bool reports a pending proposal.
+func (u *SelfRegisterAgent) ensureMinted(
+	ctx context.Context,
+	agent *models.Agent,
+	state *models.AgentRegistrationState,
+) (*models.Agent, *models.AgentRegistrationState, bool, error) {
+	if agent.CollectionTokenId != nil {
+		return agent, state, false, nil
+	}
+
+	collection, tokenId, err := u.mintPublisher.ResolveMintedToken(ctx, agent)
+	if err != nil {
+		return nil, nil, false, apperrors.NewUnavailableError("chain_read_failed", err.Error())
+	}
+
+	if tokenId != 0 {
+		agent, state, err = u.registrationReconciler.ReconcileMint(ctx, agent, state, collection, tokenId, nil)
+		if err != nil {
+			return nil, nil, false, apperrors.NewInternalError("mint_reconcile_failed", err.Error())
+		}
+		return agent, state, false, nil
+	}
+
+	result, err := u.mintPublisher.SelfMint(ctx, agent, state)
+	if err != nil {
+		return nil, nil, false, apperrors.NewInternalError("self_mint_failed", err.Error())
+	}
+	return result.Agent, result.State, result.ProposalPending, nil
 }

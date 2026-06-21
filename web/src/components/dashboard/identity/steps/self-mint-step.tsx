@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import type { AgentRegistration } from "@/models/agent-registration"
 import { selfRegisterAgent } from "@/queries/api/registration.queries"
-import { sendNative } from "@/lib/native-transfer"
+import { ensureGas } from "@/lib/native-transfer"
 import { extractErrorMessage } from "@/lib/api-errors"
 
 type Props = {
@@ -37,9 +37,10 @@ export default function SelfMintStep({
 
     setBusy(true)
     try {
-      // Fund the node wallet, then let the node mint + ENS-register itself.
-      await sendNative(draft.walletAddress, amount, wallet)
-      toast.success("Gas sent to the agent wallet")
+      // Fund the node wallet only if short, then let it mint + ENS-register.
+      if (await ensureGas(draft.walletAddress, amount, wallet)) {
+        toast.success("Gas sent to the agent wallet")
+      }
       await selfRegisterAgent()
       toast.success("Agent self-registration submitted")
       onSubmitted()
