@@ -61,21 +61,35 @@ export default function IdentitySection() {
     setWizardOpen(true)
   }
 
+  // Reconcile from chain: pick up a mint (or moderator-approved proposal), then
+  // its ENS, off the fresh status rather than the stale draft.
+  const reconcileStatus = React.useCallback(async () => {
+    const { data: mint } = await checkAgentMint()
+    if (mint.mintStatus === "confirmed") {
+      await checkAgentEns()
+    }
+    await refresh()
+  }, [refresh])
+
   const refreshStatus = async () => {
     if (!draft) return
     setRefreshing(true)
     try {
-      await checkAgentMint()
-      if (draft.mintStatus === "confirmed") {
-        await checkAgentEns()
-      }
-      await refresh()
+      await reconcileStatus()
     } catch (error) {
       toast.error(extractErrorMessage(error, "Failed to refresh status"))
     } finally {
       setRefreshing(false)
     }
   }
+
+  const autoReconciledRef = React.useRef(false)
+  React.useEffect(() => {
+    if (autoReconciledRef.current) return
+    if (draft?.mintStatus !== "submitted") return
+    autoReconciledRef.current = true
+    reconcileStatus().catch(() => {})
+  }, [draft?.mintStatus, reconcileStatus])
 
   if (loading && !draft) {
     return (
@@ -254,6 +268,12 @@ export default function IdentitySection() {
                   </span>
                 ) : null}
               </div>
+              {draft.mintStatus === "submitted" && draft.proposalId != null ? (
+                <p className="text-sm text-muted-foreground">
+                  Awaiting a moderator's approval of the mint proposal — this
+                  can take a while. Check back later.
+                </p>
+              ) : null}
             </div>
 
             <dl className="divide-y rounded-lg border">

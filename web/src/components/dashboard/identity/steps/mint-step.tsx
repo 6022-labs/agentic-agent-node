@@ -2,6 +2,7 @@ import React from "react"
 import { toast } from "sonner"
 import {
   Coins,
+  Hourglass,
   Loader2,
   RefreshCw,
   TriangleAlert,
@@ -82,11 +83,20 @@ export default function MintStep({ draft, onAdvance }: Props) {
   }
 
   if (isMinting) {
+    const isProposalPending = draft.proposalId != null
     return (
       <div className="space-y-4">
         <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" />
-          <span>The mint transaction is being confirmed.</span>
+          {isProposalPending ? (
+            <Hourglass className="mt-0.5 size-4 shrink-0" />
+          ) : (
+            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" />
+          )}
+          <span>
+            {isProposalPending
+              ? "The mint is waiting for a moderator to approve the proposal. This can take a while — you can close this and come back later to check."
+              : "The mint transaction is being confirmed."}
+          </span>
         </div>
         <Button
           variant="outline"
@@ -95,7 +105,7 @@ export default function MintStep({ draft, onAdvance }: Props) {
           className="w-full"
         >
           {!checking ? <RefreshCw /> : null}
-          Refresh status
+          {isProposalPending ? "Check approval status" : "Refresh status"}
         </Button>
       </div>
     )
