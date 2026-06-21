@@ -117,17 +117,19 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return an empty completion and let the loop decide", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
-			assert.Nil(t, result)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "openai responses returned no actionable output")
-			assert.ErrorContains(t, err, "incomplete")
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Nil(t, result.Text)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
+			}
 		})
 	})
 
@@ -230,6 +232,58 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
 				assert.Equal(t, expectedContent, *result.Text)
+			}
+		})
+	})
+
+	t.Run("Given the provider executes an mcp_call server-side", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().Build()
+		toolArgs := map[string]any{"city": "paris"}
+		argsJson, _ := json.Marshal(toolArgs)
+		argsStr := string(argsJson)
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
+					name := "weather_get"
+					output := `{"temp":"20"}`
+					assistantRole := "assistant"
+					return &external_models.ExternalOpenAIResponsesStandardResponse{
+						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
+							{Type: "mcp_call", ID: "mcp_1", Name: &name, Arguments: &argsStr, Output: &output},
+							{
+								Type: "message",
+								Role: &assistantRole,
+								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
+									{Type: "output_text", Text: "it's 20"},
+								},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should capture it in ExecutedToolCalls with its result", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, []*models.MCPConnection{mcpConnection}, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+				assert.Equal(t, "mcp_1", result.ExecutedToolCalls[0].Id)
+				assert.Equal(t, "weather_get", result.ExecutedToolCalls[0].Name)
+				assert.Equal(t, toolArgs, result.ExecutedToolCalls[0].Arguments)
+				assert.Equal(t, `{"temp":"20"}`, result.ExecutedToolCalls[0].Output)
+				assert.False(t, result.ExecutedToolCalls[0].IsError)
+			}
+			if assert.NotNil(t, result.Text) {
+				assert.Equal(t, "it's 20", *result.Text)
 			}
 		})
 	})

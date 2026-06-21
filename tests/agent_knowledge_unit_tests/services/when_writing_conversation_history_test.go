@@ -12,6 +12,7 @@ import (
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -57,10 +58,10 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 				conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, msgs, 2) {
-						assert.Equal(t, "user", msgs[0].Role)
-						assert.Equal(t, "hi", msgs[0].Content)
+						assert.Equal(t, "user", msgs[0].Role.String())
+						assert.Equal(t, "hi", lo.FromPtr(msgs[0].Content))
 						assert.Equal(t, now, msgs[0].Timestamp)
-						assert.Equal(t, "assistant", msgs[1].Role)
+						assert.Equal(t, "assistant", msgs[1].Role.String())
 					}
 					return msgs, nil
 				})

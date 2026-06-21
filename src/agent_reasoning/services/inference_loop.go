@@ -62,27 +62,43 @@ func (l *InferenceLoop) Run(
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
 		}
 
-		assistantMessage := &interfaces.ChatCompletionMessage{
-			Role:      "assistant",
-			ToolCalls: completion.ToolCalls,
-		}
-		if completion.Text != nil {
-			assistantMessage.Content = runtime_utils.DemojizeContent(*completion.Text)
-		}
-		messages = append(messages, assistantMessage)
+		messages = append(
+			messages,
+			l.recordExecutedToolCalls(ctx, completion.ExecutedToolCalls)...,
+		)
 
-		if len(completion.ToolCalls) == 0 {
+		if completion.Text != nil || len(completion.ToolCalls) > 0 {
+			assistantMessage := &interfaces.ChatCompletionMessage{
+				Role:      "assistant",
+				ToolCalls: completion.ToolCalls,
+			}
+			if completion.Text != nil {
+				assistantMessage.Content = runtime_utils.DemojizeContent(*completion.Text)
+			}
+			messages = append(messages, assistantMessage)
+		}
+
+		if len(completion.ToolCalls) > 0 {
+			l.metrics.RecordToolCalls(ctx, int64(len(completion.ToolCalls)))
+			toolMessages, err := l.dispatchToolCalls(completion.ToolCalls, mcpConnections, toolsByConnectionId)
+			if err != nil {
+				return nil, err
+			}
+			messages = append(messages, toolMessages...)
+			continue
+		}
+
+		if completion.Text != nil {
 			l.metrics.RecordLoopCompleted(ctx, time.Since(start), int64(iteration+1))
 			return messages, nil
 		}
 
-		l.metrics.RecordToolCalls(ctx, int64(len(completion.ToolCalls)))
-
-		toolMessages, err := l.dispatchToolCalls(completion.ToolCalls, mcpConnections, toolsByConnectionId)
-		if err != nil {
-			return nil, err
+		// Provider ran tools server-side but hasn't answered — loop again for the text.
+		if len(completion.ExecutedToolCalls) > 0 {
+			continue
 		}
-		messages = append(messages, toolMessages...)
+
+		return nil, fmt.Errorf("%w at iteration %d", interfaces.ErrInferenceLoopNoActionableOutput, iteration)
 	}
 
 	l.metrics.RecordLoopExceeded(ctx, time.Since(start), int64(l.settings.MaxIterations))
@@ -102,6 +118,51 @@ func (l *InferenceLoop) listToolsByConnection(
 		toolsByConnectionId[conn.Id] = tools
 	}
 	return toolsByConnectionId, nil
+}
+
+// recordExecutedToolCalls mirrors provider-run MCP calls into the stream (assistant turn + a tool turn per result) so they persist without being re-dispatched.
+func (l *InferenceLoop) recordExecutedToolCalls(
+	ctx context.Context,
+	executed []interfaces.ExecutedToolCall,
+) []*interfaces.ChatCompletionMessage {
+	if len(executed) == 0 {
+		return nil
+	}
+
+	toolCalls := make([]interfaces.ToolCall, 0, len(executed))
+	for _, e := range executed {
+		toolCalls = append(
+			toolCalls,
+			interfaces.ToolCall{
+				Id:        e.Id,
+				Name:      e.Name,
+				Arguments: e.Arguments,
+			},
+		)
+	}
+
+	out := make([]*interfaces.ChatCompletionMessage, 0, len(executed)+1)
+	out = append(
+		out,
+		&interfaces.ChatCompletionMessage{
+			Role:      "assistant",
+			ToolCalls: toolCalls,
+		},
+	)
+	for _, e := range executed {
+		out = append(
+			out,
+			&interfaces.ChatCompletionMessage{
+				Role:       "tool",
+				ToolCallId: e.Id,
+				Content:    e.Output,
+			},
+		)
+	}
+
+	l.metrics.RecordToolCalls(ctx, int64(len(executed)))
+
+	return out
 }
 
 func (l *InferenceLoop) dispatchToolCalls(

@@ -1461,6 +1461,12 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                },
+                "toolCallId": {
+                    "type": "string"
+                },
+                "toolCalls": {
+                    "type": "string"
                 }
             }
         },

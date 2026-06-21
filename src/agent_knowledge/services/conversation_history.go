@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	"github.com/samber/lo"
 )
 
 // ConversationHistory implements ConversationHistoryInterface, mapping
@@ -60,16 +62,20 @@ func (h *ConversationHistory) Write(ctx context.Context, conversationId string, 
 
 func (h *ConversationHistory) toDTO(m models.ConversationMessage) interfaces.ConversationMessage {
 	return interfaces.ConversationMessage{
-		Role:      m.Role,
-		Content:   m.Content,
-		Timestamp: m.Timestamp,
+		Role:       m.Role.String(),
+		Content:    lo.FromPtr(m.Content),
+		ToolCalls:  lo.FromPtr(m.ToolCalls),
+		ToolCallId: lo.FromPtr(m.ToolCallId),
+		Timestamp:  m.Timestamp,
 	}
 }
 
 func (h *ConversationHistory) toModel(m interfaces.ConversationMessage) models.ConversationMessage {
 	return models.ConversationMessage{
-		Role:      m.Role,
-		Content:   m.Content,
-		Timestamp: m.Timestamp,
+		Role:       enums.ConversationMessageRole(m.Role),
+		Content:    lo.EmptyableToPtr(m.Content),
+		ToolCalls:  lo.EmptyableToPtr(m.ToolCalls),
+		ToolCallId: lo.EmptyableToPtr(m.ToolCallId),
+		Timestamp:  m.Timestamp,
 	}
 }

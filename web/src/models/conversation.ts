@@ -15,7 +15,9 @@ export type ConversationMessage = {
   id: string
   conversationId: string
   role: string
-  content: string
+  content?: string
+  toolCalls?: string
+  toolCallId?: string
   timestamp: string
 }
 

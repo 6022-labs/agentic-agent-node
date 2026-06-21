@@ -3,24 +3,25 @@ package models
 import (
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
 
-// ConversationMessage persists one turn. Agent scope is transitive via
-// Conversation (conversation_id FK), mirroring payment_rule -> payment_policy.
-// Dedup by Hash (SHA-512 of role/content/conversationId); caller must
-// demojize Content before write so reasoning + knowledge hash agree.
+// ConversationMessage persists one discussion turn — text, an assistant tool-call turn (ToolCalls), or a tool result (ToolCallId); dedup by Hash, Content demojized before write so reasoning + knowledge agree.
 type ConversationMessage struct {
-	Id             uuid.UUID    `gorm:"primaryKey;size:36"`
-	ConversationId string       `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
-	Conversation   Conversation `gorm:"foreignKey:ConversationId;references:Id;constraint:OnDelete:CASCADE"`
-	Role           string       `gorm:"not null;size:32"`
-	Content        string       `gorm:"not null;type:text"`
-	Hash           string       `gorm:"not null;size:128;uniqueIndex:uq_conversation_messages_hash"`
-	Timestamp      time.Time    `gorm:"not null"`
-	CreatedAt      time.Time    `gorm:"not null"`
+	Id             uuid.UUID                     `gorm:"primaryKey;size:36"`
+	ConversationId string                        `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
+	Conversation   Conversation                  `gorm:"foreignKey:ConversationId;references:Id;constraint:OnDelete:CASCADE"`
+	Role           enums.ConversationMessageRole `gorm:"not null;size:32"`
+	Content        *string                       `gorm:"type:text"`
+	ToolCalls      *string                       `gorm:"type:text"`
+	ToolCallId     *string                       `gorm:"size:128"`
+	Hash           string                        `gorm:"not null;size:128;uniqueIndex:uq_conversation_messages_hash"`
+	Timestamp      time.Time                     `gorm:"not null"`
+	CreatedAt      time.Time                     `gorm:"not null"`
 }
 
 func (ConversationMessage) TableName() string {
@@ -41,7 +42,7 @@ func (m *ConversationMessage) BeforeCreate(_ *gorm.DB) error {
 }
 
 func (m *ConversationMessage) ComputeHash() error {
-	hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, m.ConversationId)
+	hash, err := utils.ComputeConversationMessageHash(string(m.Role), lo.FromPtr(m.Content), lo.FromPtr(m.ToolCalls), lo.FromPtr(m.ToolCallId), m.ConversationId)
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -100,13 +101,13 @@ func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 					messages, err := suite.sut.ListByConversationId(context.Background(), "a")
 					assert.NoError(t, err)
 					assert.Len(t, messages, 2)
-					assert.Equal(t, "a-first", messages[0].Content)
-					assert.Equal(t, "a-second", messages[1].Content)
+					assert.Equal(t, "a-first", lo.FromPtr(messages[0].Content))
+					assert.Equal(t, "a-second", lo.FromPtr(messages[1].Content))
 
 					otherMessages, err := suite.sut.ListByConversationId(context.Background(), "b")
 					assert.NoError(t, err)
 					assert.Len(t, otherMessages, 1)
-					assert.Equal(t, "b-only", otherMessages[0].Content)
+					assert.Equal(t, "b-only", lo.FromPtr(otherMessages[0].Content))
 				})
 			})
 		})

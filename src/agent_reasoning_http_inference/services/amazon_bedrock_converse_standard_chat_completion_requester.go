@@ -103,7 +103,6 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 			zap.Int("contentItems", len(response.Output.Message.Content)),
 			zap.Strings("contentTypes", contentTypes),
 		)
-		return nil, fmt.Errorf("bedrock returned no actionable content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
 	}
 
 	return completion, nil

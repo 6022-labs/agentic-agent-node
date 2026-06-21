@@ -29,6 +29,8 @@ func (u *ListConversationMessages) Execute(ctx context.Context, conversationId s
 			ConversationId: m.ConversationId,
 			Role:           m.Role,
 			Content:        m.Content,
+			ToolCalls:      m.ToolCalls,
+			ToolCallId:     m.ToolCallId,
 			Timestamp:      m.Timestamp,
 		})
 	}

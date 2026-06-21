@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -64,7 +65,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			},
 		}
 		mapped := []models.ConversationMessage{
-			{Role: "user", Content: "hi", Timestamp: now},
+			{Role: "user", Content: lo.EmptyableToPtr("hi"), Timestamp: now},
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {

@@ -246,6 +246,10 @@ components:
           type: string
         timestamp:
           type: string
+        toolCallId:
+          type: string
+        toolCalls:
+          type: string
       type: object
     responses.ConversationRef:
       properties:
@@ -562,6 +566,12 @@ openapi: 3.1.0
 paths:
   /agent/collections:
     get:
+      parameters:
+      - in: query
+        name: chainId
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:

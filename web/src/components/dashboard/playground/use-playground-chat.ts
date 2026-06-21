@@ -52,14 +52,17 @@ export function usePlaygroundChat() {
     try {
       const { data } = await getConversationMessages(id)
       setConversationId(id)
+      // Skip tool results and content-less tool-call turns.
       setMessages(
-        data.messages.map((m) => ({
-          id: m.id,
-          author: m.role,
-          role: m.role as MessageRole,
-          content: m.content,
-          timestamp: m.timestamp,
-        }))
+        data.messages
+          .filter((m) => m.role !== "tool" && !!m.content)
+          .map((m) => ({
+            id: m.id,
+            author: m.role,
+            role: m.role as MessageRole,
+            content: m.content ?? "",
+            timestamp: m.timestamp,
+          }))
       )
     } catch (error) {
       toast.error(extractErrorMessage(error, "Failed to load conversation"))

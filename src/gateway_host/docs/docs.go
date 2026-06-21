@@ -29,6 +29,14 @@ const docTemplate = `{
                     "AgentCollections"
                 ],
                 "summary": "List agent collections",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "chainId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1407,6 +1415,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timestamp": {
+                    "type": "string"
+                },
+                "toolCallId": {
+                    "type": "string"
+                },
+                "toolCalls": {
                     "type": "string"
                 }
             }

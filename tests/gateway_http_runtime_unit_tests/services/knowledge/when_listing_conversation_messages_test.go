@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -56,7 +57,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) && assert.Len(t, payload.Messages, 1) {
 				assert.Equal(t, "m1", payload.Messages[0].Id)
-				assert.Equal(t, "hi", payload.Messages[0].Content)
+				assert.Equal(t, "hi", lo.FromPtr(payload.Messages[0].Content))
 			}
 		})
 	})

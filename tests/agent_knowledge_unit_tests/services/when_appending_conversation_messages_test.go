@@ -13,6 +13,7 @@ import (
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -131,7 +132,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, res, 2)
 			// First input had unicode emoji — content is demojized in the persisted row.
-			assert.Equal(t, "hi :fire:", res[0].Content)
+			assert.Equal(t, "hi :fire:", lo.FromPtr(res[0].Content))
 		})
 	})
 
@@ -139,7 +140,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		duplicateInput := model_builders.NewConversationMessageBuilder().WithConversationId(conversationId).WithRole("user").WithContent("dup").WithTimestamp(now).Build()
-		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role, duplicateInput.Content, conversationId)
+		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role.String(), lo.FromPtr(duplicateInput.Content), "", "", conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
@@ -152,7 +153,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				gomock.Any()).
 				DoAndReturn(func(_ context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
 					if assert.Len(t, messages, 1) {
-						assert.Equal(t, "fresh", messages[0].Content)
+						assert.Equal(t, "fresh", lo.FromPtr(messages[0].Content))
 					}
 					return messages, nil
 				})
@@ -180,7 +181,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		input := model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build()
 		input.ConversationId = conversationId
-		dupHash, _ := utils.ComputeConversationMessageHash(input.Role, input.Content, conversationId)
+		dupHash, _ := utils.ComputeConversationMessageHash(input.Role.String(), lo.FromPtr(input.Content), "", "", conversationId)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()

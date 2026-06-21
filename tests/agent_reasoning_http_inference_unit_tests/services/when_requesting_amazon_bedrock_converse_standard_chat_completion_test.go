@@ -117,17 +117,19 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 				}, nil)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return an empty completion and let the loop decide", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
-			assert.Nil(t, result)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "bedrock returned no actionable content")
-			assert.ErrorContains(t, err, stopReason)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Nil(t, result.Text)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
+			}
 		})
 	})
 

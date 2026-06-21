@@ -30,6 +30,7 @@ type ExternalAnthropicMessagesStandardMessageContent struct {
 	// bash_code_execution, text_editor_code_execution)
 	Content   any     `json:"content,omitempty"`
 	ToolUseId *string `json:"tool_use_id,omitempty"`
+	IsError   *bool   `json:"is_error,omitempty"`
 
 	// `mcp_tool_use` fields
 	ServerName *string `json:"server_name,omitempty"`

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -105,6 +106,7 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		},
 	}
 
+	executedByToolUseId := make(map[string]int)
 	for _, c := range response.Content {
 		switch c.Type {
 		case "text":
@@ -121,17 +123,40 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 				Name:      *c.Name,
 				Arguments: c.Input,
 			})
+		case "mcp_tool_use":
+			if c.Id == nil || c.Name == nil {
+				return nil, fmt.Errorf("anthropic mcp_tool_use missing id or name")
+			}
+			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
+				Id:        *c.Id,
+				Name:      *c.Name,
+				Arguments: c.Input,
+			})
+			executedByToolUseId[*c.Id] = len(completion.ExecutedToolCalls) - 1
+		case "mcp_tool_result":
+			if c.ToolUseId == nil {
+				return nil, fmt.Errorf("anthropic mcp_tool_result missing tool_use_id")
+			}
+			idx, ok := executedByToolUseId[*c.ToolUseId]
+			if !ok {
+				return nil, fmt.Errorf("anthropic mcp_tool_result references unknown tool_use_id %q", *c.ToolUseId)
+			}
+			output, err := json.Marshal(c.Content)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal anthropic mcp_tool_result content: %w", err)
+			}
+			completion.ExecutedToolCalls[idx].Output = string(output)
+			completion.ExecutedToolCalls[idx].IsError = lo.FromPtr(c.IsError)
 		}
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 {
+	if completion.Text == nil && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
 		r.logger.Warn(
 			"No text or tool_use content found in response",
 			zap.Stringp("stopReason", response.StopReason),
 			zap.Int("contentItems", len(response.Content)),
 			zap.Strings("contentTypes", contentTypes),
 		)
-		return nil, fmt.Errorf("anthropic returned no actionable content: stopReason=%q contentTypes=%v", lo.FromPtr(response.StopReason), contentTypes)
 	}
 
 	return completion, nil

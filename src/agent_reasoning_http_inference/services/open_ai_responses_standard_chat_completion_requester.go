@@ -110,17 +110,31 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 				Name:      *o.Name,
 				Arguments: args,
 			})
+		case "mcp_call":
+			if o.Name == nil {
+				return nil, fmt.Errorf("openai responses mcp_call missing name")
+			}
+			args, err := o.ParsedArguments()
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse openai responses mcp_call arguments: %w", err)
+			}
+			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
+				Id:        o.ID,
+				Name:      *o.Name,
+				Arguments: args,
+				Output:    lo.FromPtr(o.Output),
+				IsError:   o.Error != nil,
+			})
 		}
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 {
+	if completion.Text == nil && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
 		r.logger.Warn(
 			"No actionable output found in response",
 			zap.String("status", response.Status),
 			zap.Any("incompleteDetails", response.IncompleteDetails),
 			zap.Strings("outputTypes", outputTypes),
 		)
-		return nil, fmt.Errorf("openai responses returned no actionable output: status=%q outputTypes=%v", response.Status, outputTypes)
 	}
 
 	return completion, nil

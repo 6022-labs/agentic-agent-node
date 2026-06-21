@@ -46,6 +46,8 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 			ConversationId: message.ConversationId,
 			Role:           message.Role,
 			Content:        message.Content,
+			ToolCalls:      message.ToolCalls,
+			ToolCallId:     message.ToolCallId,
 			Timestamp:      message.Timestamp,
 		})
 	}

@@ -119,17 +119,19 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return an empty completion and let the loop decide", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
-			assert.Nil(t, result)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "anthropic returned no actionable content")
-			assert.ErrorContains(t, err, stopReason)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Nil(t, result.Text)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
+			}
 		})
 	})
 
@@ -226,6 +228,56 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
 				assert.Equal(t, expectedContent, *result.Text)
+			}
+		})
+	})
+
+	t.Run("Given the provider executes an mcp_tool_use server-side", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().Build()
+		mcpConnection.HeaderAuth = map[string]string{"Authorization": "Bearer token"}
+		toolArgs := map[string]any{"city": "paris"}
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
+					id := "mcptoolu_1"
+					name := "weather_get"
+					finalText := "it's 20"
+					isError := false
+					return &external_models.ExternalAnthropicMessagesStandardResponse{
+						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+							Role: "assistant",
+							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+								{Type: "mcp_tool_use", Id: &id, Name: &name, Input: toolArgs},
+								{Type: "mcp_tool_result", ToolUseId: &id, IsError: &isError, Content: []map[string]any{{"type": "text", "text": "20C"}}},
+								{Type: "text", Text: &finalText},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should pair use+result into ExecutedToolCalls", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, []*models.MCPConnection{mcpConnection}, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+				assert.Equal(t, "mcptoolu_1", result.ExecutedToolCalls[0].Id)
+				assert.Equal(t, "weather_get", result.ExecutedToolCalls[0].Name)
+				assert.Equal(t, toolArgs, result.ExecutedToolCalls[0].Arguments)
+				assert.Contains(t, result.ExecutedToolCalls[0].Output, "20C")
+				assert.False(t, result.ExecutedToolCalls[0].IsError)
+			}
+			if assert.NotNil(t, result.Text) {
+				assert.Equal(t, "it's 20", *result.Text)
 			}
 		})
 	})

@@ -115,6 +115,127 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
+	t.Run("Given history holds a tool-call turn and the loop emits new tool calls", func(t *testing.T) {
+		t.Parallel()
+
+		storedToolCalls := `[{"Id":"call-1","Name":"conn_tool","Arguments":{"city":"paris"}}]`
+		history := []knowledge_interfaces.ConversationMessage{
+			{Role: "assistant", ToolCalls: storedToolCalls},
+			{Role: "tool", Content: `{"temp":"20"}`, ToolCallId: "call-1"},
+		}
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// History is replayed full-fidelity: the assistant tool-call turn
+					// and its paired tool result are reconstructed.
+					if assert.Len(t, msgs, 3) {
+						assert.Equal(t, "assistant", msgs[0].Role)
+						if assert.Len(t, msgs[0].ToolCalls, 1) {
+							assert.Equal(t, "call-1", msgs[0].ToolCalls[0].Id)
+							assert.Equal(t, "conn_tool", msgs[0].ToolCalls[0].Name)
+							assert.Equal(t, "paris", msgs[0].ToolCalls[0].Arguments["city"])
+						}
+						assert.Equal(t, "tool", msgs[1].Role)
+						assert.Equal(t, "call-1", msgs[1].ToolCallId)
+						assert.Equal(t, "user", msgs[2].Role)
+					}
+					return append(msgs,
+						&interfaces.ChatCompletionMessage{Role: "assistant", ToolCalls: []interfaces.ToolCall{{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}}}},
+						&interfaces.ChatCompletionMessage{Role: "tool", ToolCallId: "call-2", Content: `{"temp":"15"}`},
+						&interfaces.ChatCompletionMessage{Role: "assistant", Content: "final answer"},
+					), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					// Persist the new input plus every assistant + tool turn the loop added.
+					if assert.Len(t, msgs, 4) {
+						assert.Equal(t, "user", msgs[0].Role)
+
+						assert.Equal(t, "assistant", msgs[1].Role)
+						assert.Contains(t, msgs[1].ToolCalls, "call-2")
+						assert.Empty(t, msgs[1].Content)
+
+						assert.Equal(t, "tool", msgs[2].Role)
+						assert.Equal(t, "call-2", msgs[2].ToolCallId)
+						assert.Equal(t, `{"temp":"15"}`, msgs[2].Content)
+
+						assert.Equal(t, "assistant", msgs[3].Role)
+						assert.Equal(t, "final answer", msgs[3].Content)
+
+						// Strictly increasing timestamps keep stream order (and tool pairing) on reload.
+						for i := 0; i < len(msgs)-1; i++ {
+							assert.True(t, msgs[i].Timestamp.Before(msgs[i+1].Timestamp))
+						}
+					}
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should replay tool history and persist the full new stream in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, "final answer", result.Content)
+			}
+		})
+	})
+
+	t.Run("Given a stored tool-call turn has a corrupted payload", func(t *testing.T) {
+		t.Parallel()
+
+		history := []knowledge_interfaces.ConversationMessage{
+			{Role: "assistant", ToolCalls: "}{ not json"},
+		}
+		finalText := "recovered"
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// The unreadable tool calls are dropped, not fatal — the turn is still replayed.
+					if assert.GreaterOrEqual(t, len(msgs), 1) {
+						assert.Empty(t, msgs[0].ToolCalls)
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: finalText}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should drop the bad tool calls and not fail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, finalText, result.Content)
+			}
+		})
+	})
+
 	t.Run("Given an input matches an already-stored message", func(t *testing.T) {
 		t.Parallel()
 
@@ -207,9 +328,9 @@ func TestWhenDrivingResponse(t *testing.T) {
 		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥"}
 
 		// Sanity: the hash of the demojized input matches the stored one.
-		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Content, conversationId)
+		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Content, stored.ToolCalls, stored.ToolCallId, conversationId)
 		demojized := utils.DemojizeContent(emojiInput.Content)
-		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, demojized, conversationId)
+		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, demojized, emojiInput.ToolCalls, emojiInput.ToolCallId, conversationId)
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {

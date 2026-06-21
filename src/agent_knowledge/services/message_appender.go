@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	"github.com/samber/lo"
 )
 
 // MessageAppender demojizes content, stamps conversationId, hashes, drops
@@ -64,7 +65,7 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 	hashes := make([]string, 0, len(messages))
 	for _, msg := range messages {
 		msg.ConversationId = conversationId
-		msg.Content = runtime_utils.DemojizeContent(msg.Content)
+		msg.Content = lo.EmptyableToPtr(runtime_utils.DemojizeContent(lo.FromPtr(msg.Content)))
 
 		if err := msg.ComputeHash(); err != nil {
 			return nil, err
@@ -101,7 +102,7 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 
 	byRole := make(map[string]int64, len(inserted))
 	for _, msg := range inserted {
-		byRole[msg.Role]++
+		byRole[msg.Role.String()]++
 	}
 	for role, count := range byRole {
 		s.knowledgeMetrics.RecordMessageAppended(ctx, role, count)

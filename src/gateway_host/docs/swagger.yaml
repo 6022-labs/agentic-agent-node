@@ -243,6 +243,10 @@ definitions:
         type: string
       timestamp:
         type: string
+      toolCallId:
+        type: string
+      toolCalls:
+        type: string
     type: object
   responses.ConversationRef:
     properties:
@@ -538,6 +542,11 @@ info:
 paths:
   /agent/collections:
     get:
+      parameters:
+      - in: query
+        name: chainId
+        required: true
+        type: string
       produces:
       - application/json
       responses:

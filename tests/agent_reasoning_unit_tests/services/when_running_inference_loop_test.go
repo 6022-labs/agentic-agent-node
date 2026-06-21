@@ -185,6 +185,113 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the LLM returns provider-executed tool calls with a final answer", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+		expectedFinal := "done"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					Text: &expectedFinal,
+					ExecutedToolCalls: []interfaces.ExecutedToolCall{
+						{Id: "mcp_1", Name: "weather_get", Arguments: map[string]any{"city": "paris"}, Output: `{"temp":"20"}`},
+					},
+				}, nil)
+		}
+
+		t.Run("Should record it as assistant+tool turns without dispatching", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			// mockMcpRequester.CallTool is never expected — a dispatch would fail the test.
+			out, err := suite.sut.Run(ctx, nil, messages)
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "assistant", out[1].Role)
+				if assert.Len(t, out[1].ToolCalls, 1) {
+					assert.Equal(t, "mcp_1", out[1].ToolCalls[0].Id)
+					assert.Equal(t, "weather_get", out[1].ToolCalls[0].Name)
+				}
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "mcp_1", out[2].ToolCallId)
+				assert.Equal(t, `{"temp":"20"}`, out[2].Content)
+				assert.Equal(t, "assistant", out[3].Role)
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
+		})
+	})
+
+	t.Run("Given the provider runs tools server-side but returns no text", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+		finalText := "done"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			first := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ExecutedToolCalls: []interfaces.ExecutedToolCall{
+						{Id: "mcp_1", Name: "weather_get", Output: `{"temp":"20"}`},
+					},
+				}, nil)
+
+			second := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &finalText}, nil)
+
+			gomock.InOrder(first, second)
+		}
+
+		t.Run("Should loop again and return the final text", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, nil, messages)
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "assistant", out[1].Role)
+				assert.Len(t, out[1].ToolCalls, 1)
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "assistant", out[3].Role)
+				assert.Equal(t, finalText, out[3].Content)
+			}
+		})
+	})
+
+	t.Run("Given the LLM returns nothing actionable", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{}, nil)
+		}
+
+		t.Run("Should fail with ErrInferenceLoopNoActionableOutput", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, nil, messages)
+
+			assert.Nil(t, out)
+			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopNoActionableOutput)
+		})
+	})
+
 	t.Run("Given listing tools fails for an MCP connection", func(t *testing.T) {
 		t.Parallel()
 

@@ -252,6 +252,10 @@ definitions:
         type: string
       timestamp:
         type: string
+      toolCallId:
+        type: string
+      toolCalls:
+        type: string
     type: object
   responses.ConversationRef:
     properties:

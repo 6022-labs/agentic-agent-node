@@ -22,6 +22,14 @@
                     "AgentCollections"
                 ],
                 "summary": "List agent collections",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "chainId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1400,6 +1408,12 @@
                     "type": "string"
                 },
                 "timestamp": {
+                    "type": "string"
+                },
+                "toolCallId": {
+                    "type": "string"
+                },
+                "toolCalls": {
                     "type": "string"
                 }
             }

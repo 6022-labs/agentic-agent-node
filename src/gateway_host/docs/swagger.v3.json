@@ -373,6 +373,12 @@
                     },
                     "timestamp": {
                         "type": "string"
+                    },
+                    "toolCallId": {
+                        "type": "string"
+                    },
+                    "toolCalls": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -848,6 +854,16 @@
     "paths": {
         "/agent/collections": {
             "get": {
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "chainId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {

@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -77,7 +78,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) && assert.Len(t, payload.Inserted, 1) {
 				assert.Equal(t, "m1", payload.Inserted[0].Id)
-				assert.Equal(t, "fake memory", payload.Inserted[0].Content)
+				assert.Equal(t, "fake memory", lo.FromPtr(payload.Inserted[0].Content))
 			}
 		})
 	})

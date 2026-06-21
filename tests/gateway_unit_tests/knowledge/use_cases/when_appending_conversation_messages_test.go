@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/knowledge_mocks/services_mocks/interfaces_mocks"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -71,7 +72,7 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 					assert.Equal(t, "fake memory", payload.Messages[0].Content)
 					return &models.ExternalAppendConversationMessagesResultPayload{
 						Inserted: []models.ExternalConversationMessage{
-							{Id: "m1", ConversationId: conversationId, Role: "user", Content: "fake memory", Timestamp: now},
+							{Id: "m1", ConversationId: conversationId, Role: "user", Content: lo.ToPtr("fake memory"), Timestamp: now},
 						},
 					}, nil
 				})
@@ -88,7 +89,7 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, resp.Inserted, 1)
 			assert.Equal(t, "m1", resp.Inserted[0].Id)
-			assert.Equal(t, "fake memory", resp.Inserted[0].Content)
+			assert.Equal(t, "fake memory", lo.FromPtr(resp.Inserted[0].Content))
 		})
 	})
 

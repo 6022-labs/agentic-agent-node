@@ -1,21 +1,4 @@
 -- +goose Up
--- create "agent_registration_states" table
-CREATE TABLE `agent_registration_states` (
-  `id` varchar(36) NOT NULL,
-  `agent_id` varchar(36) NOT NULL,
-  `mint_status` varchar(32) NOT NULL,
-  `mint_chain_id` bigint unsigned NULL,
-  `mint_tx_hash` varchar(66) NULL,
-  `minted_at` datetime(3) NULL,
-  `ens_registry_status` varchar(32) NOT NULL,
-  `ens_chain_id` bigint unsigned NULL,
-  `ens_tx_hash` varchar(66) NULL,
-  `ens_published_at` datetime(3) NULL,
-  `created_at` datetime(3) NOT NULL,
-  `updated_at` datetime(3) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `idx_agent_registration_states_agent_id` (`agent_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- create "agents" table
 CREATE TABLE `agents` (
   `id` varchar(36) NOT NULL,
@@ -35,7 +18,24 @@ CREATE TABLE `agents` (
   `updated_at` datetime(3) NOT NULL,
   `created_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+-- create "agent_registration_states" table
+CREATE TABLE `agent_registration_states` (
+  `id` varchar(36) NOT NULL,
+  `agent_id` varchar(36) NOT NULL,
+  `mint_status` varchar(32) NOT NULL,
+  `mint_chain_id` bigint unsigned NULL,
+  `mint_tx_hash` varchar(66) NULL,
+  `minted_at` datetime(3) NULL,
+  `ens_registry_status` varchar(32) NOT NULL,
+  `ens_chain_id` bigint unsigned NULL,
+  `ens_tx_hash` varchar(66) NULL,
+  `ens_published_at` datetime(3) NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `idx_agent_registration_states_agent_id` (`agent_id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "conversations" table
 CREATE TABLE `conversations` (
   `id` varchar(128) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE `conversations` (
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_conversations_agent_id` (`agent_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "llm_connections" table
 CREATE TABLE `llm_connections` (
   `id` varchar(36) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE `llm_connections` (
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `idx_llm_connections_agent_id` (`agent_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "mcp_connections" table
 CREATE TABLE `mcp_connections` (
   `id` varchar(36) NOT NULL,
@@ -69,21 +69,23 @@ CREATE TABLE `mcp_connections` (
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_mcp_connections_agent_id` (`agent_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "conversation_messages" table
 CREATE TABLE `conversation_messages` (
   `id` varchar(36) NOT NULL,
   `conversation_id` varchar(128) NOT NULL,
   `role` varchar(32) NOT NULL,
-  `content` text NOT NULL,
+  `content` text NULL,
+  `tool_calls` text NULL,
+  `tool_call_id` varchar(128) NULL,
   `hash` varchar(128) NOT NULL,
   `timestamp` datetime(3) NOT NULL,
   `created_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_conversation_messages_conversation_id` (`conversation_id`),
   UNIQUE INDEX `uq_conversation_messages_hash` (`hash`),
-  CONSTRAINT `fk_conversation_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_conversation_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "payment_policies" table
 CREATE TABLE `payment_policies` (
   `id` varchar(36) NOT NULL,
@@ -92,7 +94,7 @@ CREATE TABLE `payment_policies` (
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `idx_payment_policies_agent_id` (`agent_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "payment_rules" table
 CREATE TABLE `payment_rules` (
   `id` varchar(36) NOT NULL,
@@ -105,8 +107,8 @@ CREATE TABLE `payment_rules` (
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_payment_rules_policy_id` (`policy_id`),
-  CONSTRAINT `fk_payment_rules_policy` FOREIGN KEY (`policy_id`) REFERENCES `payment_policies` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_payment_rules_policy` FOREIGN KEY (`policy_id`) REFERENCES `payment_policies` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "payment_rule_x402_configs" table
 CREATE TABLE `payment_rule_x402_configs` (
   `payment_rule_id` varchar(36) NOT NULL,
@@ -118,8 +120,8 @@ CREATE TABLE `payment_rule_x402_configs` (
   `eip712_version` varchar(16) NULL,
   `address_patterns` longtext NOT NULL,
   PRIMARY KEY (`payment_rule_id`),
-  CONSTRAINT `fk_payment_rule_x402_configs_payment_rule` FOREIGN KEY (`payment_rule_id`) REFERENCES `payment_rules` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_payment_rule_x402_configs_payment_rule` FOREIGN KEY (`payment_rule_id`) REFERENCES `payment_rules` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 
 -- +goose Down
 -- reverse: create "payment_rule_x402_configs" table
@@ -136,7 +138,7 @@ DROP TABLE `mcp_connections`;
 DROP TABLE `llm_connections`;
 -- reverse: create "conversations" table
 DROP TABLE `conversations`;
--- reverse: create "agents" table
-DROP TABLE `agents`;
 -- reverse: create "agent_registration_states" table
 DROP TABLE `agent_registration_states`;
+-- reverse: create "agents" table
+DROP TABLE `agents`;

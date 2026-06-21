@@ -4,8 +4,10 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type ConversationMessageBuilder struct {
@@ -13,6 +15,8 @@ type ConversationMessageBuilder struct {
 	conversationId string
 	role           string
 	content        string
+	toolCalls      string
+	toolCallId     string
 	hash           string
 	timestamp      time.Time
 	createdAt      time.Time
@@ -48,6 +52,16 @@ func (b *ConversationMessageBuilder) WithContent(content string) *ConversationMe
 	return b
 }
 
+func (b *ConversationMessageBuilder) WithToolCalls(toolCalls string) *ConversationMessageBuilder {
+	b.toolCalls = toolCalls
+	return b
+}
+
+func (b *ConversationMessageBuilder) WithToolCallId(toolCallId string) *ConversationMessageBuilder {
+	b.toolCallId = toolCallId
+	return b
+}
+
 func (b *ConversationMessageBuilder) WithHash(hash string) *ConversationMessageBuilder {
 	b.hash = hash
 	return b
@@ -67,8 +81,10 @@ func (b *ConversationMessageBuilder) Build() models.ConversationMessage {
 	msg := models.ConversationMessage{
 		Id:             b.id,
 		ConversationId: b.conversationId,
-		Role:           b.role,
-		Content:        b.content,
+		Role:           enums.ConversationMessageRole(b.role),
+		Content:        lo.EmptyableToPtr(b.content),
+		ToolCalls:      lo.EmptyableToPtr(b.toolCalls),
+		ToolCallId:     lo.EmptyableToPtr(b.toolCallId),
 		Hash:           b.hash,
 		Timestamp:      b.timestamp,
 		CreatedAt:      b.createdAt,

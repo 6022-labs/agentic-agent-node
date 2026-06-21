@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -68,13 +69,7 @@ func (d *ResponseDriver) Drive(
 	combined = append(combined, history...)
 	combined = append(combined, newInputs...)
 
-	messages := make([]*interfaces.ChatCompletionMessage, 0, len(combined))
-	for _, m := range combined {
-		messages = append(messages, &interfaces.ChatCompletionMessage{
-			Role:    m.Role,
-			Content: m.Content,
-		})
-	}
+	messages := d.knowledgeMessagesToChatMessages(combined)
 
 	mcpConnections, err := d.loadMCPConnections(ctx)
 	if err != nil {
@@ -86,31 +81,47 @@ func (d *ResponseDriver) Drive(
 		return nil, fmt.Errorf("inference loop failed: %w", err)
 	}
 
-	finalAssistant := d.pickFinalAssistantMessage(finalStream[len(messages):])
+	added := finalStream[len(messages):]
+	finalAssistant := d.pickFinalAssistantMessage(added)
 
-	toPersist := make([]knowledge_interfaces.ConversationMessage, 0, len(newInputs)+1)
-	toPersist = append(toPersist, newInputs...)
-	if finalAssistant != nil {
-		toPersist = append(toPersist, *finalAssistant)
+	toPersist, err := d.assembleToPersist(newInputs, added)
+	if err != nil {
+		return nil, err
 	}
-
 	if len(toPersist) == 0 {
 		return nil, nil
 	}
 
-	persisted, err := d.conversationHistory.Write(ctx, conversationId, toPersist)
-	if err != nil {
+	if _, err := d.conversationHistory.Write(ctx, conversationId, toPersist); err != nil {
 		return nil, fmt.Errorf("failed to persist conversation: %w", err)
 	}
 
-	if finalAssistant == nil {
-		return nil, nil
-	}
-	if len(persisted) > 0 {
-		last := persisted[len(persisted)-1]
-		return &last, nil
-	}
 	return finalAssistant, nil
+}
+
+// assembleToPersist stamps strictly increasing timestamps so stored order — and tool-call ↔ result pairing — survives a timestamp-asc reload.
+func (d *ResponseDriver) assembleToPersist(
+	newInputs []knowledge_interfaces.ConversationMessage,
+	added []*interfaces.ChatCompletionMessage,
+) ([]knowledge_interfaces.ConversationMessage, error) {
+	base := time.Now()
+	out := make([]knowledge_interfaces.ConversationMessage, 0, len(newInputs)+len(added))
+	for _, m := range newInputs {
+		m.Timestamp = base.Add(time.Duration(len(out)) * time.Millisecond)
+		out = append(out, m)
+	}
+	for _, m := range added {
+		if m.Content == "" && len(m.ToolCalls) == 0 && m.ToolCallId == "" {
+			continue
+		}
+		km, err := d.chatMessageToKnowledgeMessage(m)
+		if err != nil {
+			return nil, err
+		}
+		km.Timestamp = base.Add(time.Duration(len(out)) * time.Millisecond)
+		out = append(out, km)
+	}
+	return out, nil
 }
 
 func (d *ResponseDriver) computeHashes(
@@ -119,7 +130,7 @@ func (d *ResponseDriver) computeHashes(
 ) (map[string]struct{}, error) {
 	out := make(map[string]struct{}, len(messages))
 	for _, m := range messages {
-		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, conversationId)
+		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, m.ToolCalls, m.ToolCallId, conversationId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash history message: %w", err)
 		}
@@ -140,7 +151,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 	for _, m := range inputs {
 		m.Content = utils.DemojizeContent(m.Content)
 
-		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, conversationId)
+		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, m.ToolCalls, m.ToolCallId, conversationId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to hash input message: %w", err)
 		}
@@ -183,6 +194,42 @@ func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPC
 		out = append(out, &c)
 	}
 	return out, nil
+}
+
+func (d *ResponseDriver) knowledgeMessagesToChatMessages(history []knowledge_interfaces.ConversationMessage) []*interfaces.ChatCompletionMessage {
+	out := make([]*interfaces.ChatCompletionMessage, 0, len(history))
+	for _, m := range history {
+		msg := &interfaces.ChatCompletionMessage{
+			Role:       m.Role,
+			Content:    m.Content,
+			ToolCallId: m.ToolCallId,
+		}
+		if m.ToolCalls != "" {
+			// Tolerate a corrupted or hand-edited row: drop the unreadable tool calls instead of failing the whole conversation.
+			if err := json.Unmarshal([]byte(m.ToolCalls), &msg.ToolCalls); err != nil {
+				d.logger.Warn("skipping unreadable stored tool calls", zap.String("role", m.Role), zap.Error(err))
+				msg.ToolCalls = nil
+			}
+		}
+		out = append(out, msg)
+	}
+	return out
+}
+
+func (d *ResponseDriver) chatMessageToKnowledgeMessage(m *interfaces.ChatCompletionMessage) (knowledge_interfaces.ConversationMessage, error) {
+	km := knowledge_interfaces.ConversationMessage{
+		Role:       m.Role,
+		Content:    m.Content,
+		ToolCallId: m.ToolCallId,
+	}
+	if len(m.ToolCalls) > 0 {
+		b, err := json.Marshal(m.ToolCalls)
+		if err != nil {
+			return knowledge_interfaces.ConversationMessage{}, fmt.Errorf("failed to marshal tool calls: %w", err)
+		}
+		km.ToolCalls = string(b)
+	}
+	return km, nil
 }
 
 func (d *ResponseDriver) pickFinalAssistantMessage(added []*interfaces.ChatCompletionMessage) *knowledge_interfaces.ConversationMessage {

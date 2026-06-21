@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/samber/lo"
 )
 
 type AppendConversationMessages struct {
@@ -26,8 +28,8 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 	domainMessages := make([]models.ConversationMessage, 0, len(req.Messages))
 	for _, m := range req.Messages {
 		domainMessages = append(domainMessages, models.ConversationMessage{
-			Role:      m.Role,
-			Content:   m.Content,
+			Role:      enums.ConversationMessageRole(m.Role),
+			Content:   lo.EmptyableToPtr(m.Content),
 			Timestamp: m.Timestamp,
 		})
 	}
@@ -37,19 +39,11 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 		return nil, errors.NewInternalError("append_failed", err.Error())
 	}
 
-	return &responses.AppendConversationMessagesResponse{Inserted: toWireMessages(inserted)}, nil
-}
-
-func toWireMessages(in []models.ConversationMessage) []responses.ConversationMessage {
-	out := make([]responses.ConversationMessage, 0, len(in))
-	for _, m := range in {
-		out = append(out, responses.ConversationMessage{
-			Id:             m.Id,
-			ConversationId: m.ConversationId,
-			Role:           m.Role,
-			Content:        m.Content,
-			Timestamp:      m.Timestamp,
-		})
+	out := make([]responses.ConversationMessage, 0, len(inserted))
+	for _, m := range inserted {
+		var wire responses.ConversationMessage
+		wire.FromModel(m)
+		out = append(out, wire)
 	}
-	return out
+	return &responses.AppendConversationMessagesResponse{Inserted: out}, nil
 }

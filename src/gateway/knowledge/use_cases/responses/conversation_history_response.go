@@ -17,7 +17,9 @@ type ConversationMessage struct {
 	Id             string    `json:"id"`
 	ConversationId string    `json:"conversationId"`
 	Role           string    `json:"role"`
-	Content        string    `json:"content"`
+	Content        *string   `json:"content,omitempty"`
+	ToolCalls      *string   `json:"toolCalls,omitempty"`
+	ToolCallId     *string   `json:"toolCallId,omitempty"`
 	Timestamp      time.Time `json:"timestamp"`
 }
 

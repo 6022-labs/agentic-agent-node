@@ -32,9 +32,10 @@ type ChatCompletionMessage struct {
 // LLMCompletion — platform-agnostic result of one round-trip. Text and
 // ToolCalls can both be non-empty when the LLM emits both.
 type LLMCompletion struct {
-	Text      *string
-	ToolCalls []ToolCall
-	Usage     *LLMUsage
+	Text              *string
+	ToolCalls         []ToolCall
+	ExecutedToolCalls []ExecutedToolCall
+	Usage             *LLMUsage
 }
 
 type LLMUsage struct {
@@ -48,4 +49,13 @@ type ToolCall struct {
 	Id        string
 	Name      string
 	Arguments map[string]any
+}
+
+// ExecutedToolCalls carry their own results — the provider ran them server-side, so the loop must not re-dispatch them.
+type ExecutedToolCall struct {
+	Id        string
+	Name      string
+	Arguments map[string]any
+	Output    string
+	IsError   bool
 }
