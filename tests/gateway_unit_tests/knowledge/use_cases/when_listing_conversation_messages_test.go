@@ -32,7 +32,7 @@ func WhenListingConversationMessagesBeforeEach(t *testing.T) *WhenListingConvers
 	}
 }
 
-func TestWhenListingConversationMessagesViaGateway(t *testing.T) {
+func TestWhenListingConversationMessages(t *testing.T) {
 	t.Parallel()
 
 	conversationId := "conv-1"

@@ -17,24 +17,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenAppendingConversationMessagesViaGatewayTestingSuite struct {
+type WhenAppendingConversationMessagesTestingSuite struct {
 	sut *use_cases.AppendConversationMessages
 
 	mockClient *interfaces_mocks.MockConversationHistoryClientInterface
 }
 
-func WhenAppendingConversationMessagesViaGatewayBeforeEach(t *testing.T) *WhenAppendingConversationMessagesViaGatewayTestingSuite {
+func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := interfaces_mocks.NewMockConversationHistoryClientInterface(mockController)
 
-	return &WhenAppendingConversationMessagesViaGatewayTestingSuite{
+	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:        use_cases.NewAppendConversationMessages(mockClient),
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
+func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Parallel()
 
 	conversationId := "conv-1"
@@ -52,7 +52,7 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAppendingConversationMessagesViaGatewayBeforeEach(t)
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
 
 			_, err := suite.sut.Execute(context.Background(), "conv-1", &requests.AppendConversationMessagesRequest{})
 
@@ -64,7 +64,7 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 	t.Run("Given the client accepts the messages", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAppendingConversationMessagesViaGatewayTestingSuite) {
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockClient.EXPECT().AppendMessages(gomock.Any(), conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, payload *models.ExternalAppendConversationMessagesPayload) (*models.ExternalAppendConversationMessagesResultPayload, error) {
 					assert.Len(t, payload.Messages, 1)
@@ -81,7 +81,7 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 		t.Run("Should translate the request and return the inserted messages", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAppendingConversationMessagesViaGatewayBeforeEach(t)
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), conversationId, request)
@@ -96,14 +96,14 @@ func TestWhenAppendingConversationMessagesViaGateway(t *testing.T) {
 	t.Run("Given the client fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAppendingConversationMessagesViaGatewayTestingSuite) {
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockClient.EXPECT().AppendMessages(gomock.Any(), conversationId, gomock.Any()).Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should return Unavailable carrying the message", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenAppendingConversationMessagesViaGatewayBeforeEach(t)
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), conversationId, request)
