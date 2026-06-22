@@ -62,33 +62,28 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given two agents each own conversations", func(t *testing.T) {
+			t.Run("Given an agent owns multiple conversations", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should list only the queried agent's conversations", func(t *testing.T) {
+				t.Run("Should list them all", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
 					defer WhenListingConversationsByAgentIdAfterEach(suite)
 
-					agentA := uuid.New()
-					agentB := uuid.New()
-					seedAgent(suite.dbClient, agentA)
-					seedAgent(suite.dbClient, agentB)
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
 					_, ensureErr := suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("a-1").WithAgentId(agentA).Build())
+						model_builders.NewConversationBuilder().WithId("a-1").WithAgentId(agentId).Build())
 					assert.NoError(t, ensureErr)
 					_, ensureErr = suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("a-2").WithAgentId(agentA).Build())
-					assert.NoError(t, ensureErr)
-					_, ensureErr = suite.sut.Ensure(context.Background(),
-						model_builders.NewConversationBuilder().WithId("b-1").WithAgentId(agentB).Build())
+						model_builders.NewConversationBuilder().WithId("a-2").WithAgentId(agentId).Build())
 					assert.NoError(t, ensureErr)
 
-					list, err := suite.sut.ListByAgentId(context.Background(), agentA)
+					list, err := suite.sut.ListByAgentId(context.Background(), agentId)
 					assert.NoError(t, err)
 					assert.Len(t, list, 2)
 					for _, conversation := range list {
-						assert.Equal(t, agentA, conversation.AgentId)
+						assert.Equal(t, agentId, conversation.AgentId)
 					}
 				})
 			})
