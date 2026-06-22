@@ -85,7 +85,10 @@ func TestWhenGettingPaymentPolicyByAgentId(t *testing.T) {
 					suite := WhenGettingPaymentPolicyByAgentIdBeforeEach(tc)
 					defer WhenGettingPaymentPolicyByAgentIdAfterEach(suite)
 
-					created, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().Build())
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					created, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build())
 					assert.NoError(t, err)
 
 					policy, err := suite.sut.GetByAgentId(context.Background(), created.AgentId)

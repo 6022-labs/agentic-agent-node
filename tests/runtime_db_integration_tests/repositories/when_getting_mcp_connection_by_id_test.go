@@ -83,7 +83,10 @@ func TestWhenGettingMCPConnectionById(t *testing.T) {
 					suite := WhenGettingMCPConnectionByIdBeforeEach(tc)
 					defer WhenGettingMCPConnectionByIdAfterEach(suite)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "github", "https://mcp.github.example", "Authorization"))
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)

@@ -84,10 +84,10 @@ func TestWhenListingMCPConnectionsByAgentId(t *testing.T) {
 					defer WhenListingMCPConnectionsByAgentIdAfterEach(suite)
 
 					agentId := uuid.New()
-					alpha := newMCPConnection("alpha", "https://a.example")
-					alpha.AgentId = agentId
-					beta := newMCPConnection("beta", "https://b.example")
-					beta.AgentId = agentId
+					seedAgent(suite.dbClient, agentId)
+
+					alpha := newMCPConnection(agentId, "alpha", "https://a.example")
+					beta := newMCPConnection(agentId, "beta", "https://b.example")
 
 					_, err := suite.sut.Create(context.Background(), alpha)
 					assert.NoError(t, err)

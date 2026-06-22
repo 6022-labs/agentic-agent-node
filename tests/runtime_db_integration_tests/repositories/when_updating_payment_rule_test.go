@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -44,8 +45,11 @@ func WhenUpdatingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenUpdatingPaym
 		panic(err)
 	}
 
+	agentId := uuid.New()
+	seedAgent(dbClient, agentId)
+
 	policy, err := repositories.NewPaymentPolicyRepository(dbClient).Create(
-		context.Background(), model_builders.NewPaymentPolicyBuilder().Build())
+		context.Background(), model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build())
 	if err != nil {
 		panic(err)
 	}

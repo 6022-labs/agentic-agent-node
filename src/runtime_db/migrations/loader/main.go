@@ -10,7 +10,6 @@ import (
 	agent_identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	agent_knowledge_models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	agent_payment_models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
-	agent_reasoning_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 )
 
 func main() {
@@ -18,16 +17,16 @@ func main() {
 	flag.Parse()
 
 	stmts, err := gormschema.New(*dialect).Load(
-		&agent_reasoning_models.MCPConnection{},
-		&agent_reasoning_models.LLMConnection{},
+		&mcpConnectionWithCrossDomainFK{},
+		&llmConnectionWithCrossDomainFK{},
 
-		&agent_knowledge_models.Conversation{},
+		&conversationWithCrossDomainFK{},
 		&agent_knowledge_models.ConversationMessage{},
 
 		&agent_identity_models.Agent{},
 		&agent_identity_models.AgentRegistrationState{},
 
-		&agent_payment_models.PaymentPolicy{},
+		&paymentPolicyWithCrossDomainFK{},
 		&agent_payment_models.PaymentRule{},
 		&agent_payment_models.PaymentRuleX402Config{},
 	)

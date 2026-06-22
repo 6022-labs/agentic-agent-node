@@ -85,7 +85,11 @@ func TestWhenGettingAgentRegistrationStateByAgentId(t *testing.T) {
 					suite := WhenGettingAgentRegistrationStateByAgentIdBeforeEach(tc)
 					defer WhenGettingAgentRegistrationStateByAgentIdAfterEach(suite)
 
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
+						WithAgentId(agentId).
 						WithMintStatus(identity_enums.TransactionStatusConfirmed).
 						WithMintChainId(80002).
 						WithMintTxHash("0xabc").

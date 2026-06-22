@@ -72,7 +72,10 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().Build())
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().WithAgentId(agentId).Build())
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -91,6 +94,8 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
 					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
 						WithAgentId(agentId).
 						WithMintStatus(identity_enums.TransactionStatusPending).

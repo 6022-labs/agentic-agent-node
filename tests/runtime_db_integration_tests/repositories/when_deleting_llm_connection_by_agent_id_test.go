@@ -85,6 +85,7 @@ func TestWhenDeletingLLMConnectionByAgentId(t *testing.T) {
 					defer WhenDeletingLLMConnectionByAgentIdAfterEach(suite)
 
 					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).

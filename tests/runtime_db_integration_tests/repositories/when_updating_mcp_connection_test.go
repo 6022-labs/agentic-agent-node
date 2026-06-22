@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -69,7 +70,10 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					suite := WhenUpdatingMCPConnectionBeforeEach(tc)
 					defer WhenUpdatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example", "X-Old"))
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "alpha", "https://a.example", "X-Old"))
 					assert.NoError(t, err)
 
 					inserted.Name = "alpha-renamed"

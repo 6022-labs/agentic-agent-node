@@ -13,6 +13,7 @@ import (
 type AgentRegistrationState struct {
 	Id      uuid.UUID `gorm:"primaryKey;size:36"`
 	AgentId uuid.UUID `gorm:"not null;size:36;uniqueIndex"`
+	Agent   Agent     `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`
 
 	MintStatus  enums.TransactionStatus `gorm:"not null;size:32"`
 	MintChainId *uint64

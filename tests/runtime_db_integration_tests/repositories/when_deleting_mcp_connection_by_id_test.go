@@ -82,7 +82,10 @@ func TestWhenDeletingMCPConnectionById(t *testing.T) {
 					suite := WhenDeletingMCPConnectionByIdBeforeEach(tc)
 					defer WhenDeletingMCPConnectionByIdAfterEach(suite)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("alpha", "https://a.example"))
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "alpha", "https://a.example"))
 					assert.NoError(t, err)
 
 					assert.NoError(t, suite.sut.DeleteById(context.Background(), inserted.AgentId, inserted.Id))

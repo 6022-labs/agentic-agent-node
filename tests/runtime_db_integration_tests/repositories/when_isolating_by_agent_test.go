@@ -75,6 +75,8 @@ func TestWhenIsolatingByAgent(t *testing.T) {
 
 					agentA := uuid.New()
 					agentB := uuid.New()
+					seedAgent(suite.dbClient, agentA)
+					seedAgent(suite.dbClient, agentB)
 
 					llmA, err := suite.llmConnectionRepository.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentA).

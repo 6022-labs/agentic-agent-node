@@ -71,6 +71,7 @@ func TestWhenEnsuringConversation(t *testing.T) {
 					defer WhenEnsuringConversationAfterEach(suite)
 
 					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
 					conversation := model_builders.NewConversationBuilder().WithId("conv-dup").WithAgentId(agentId).Build()
 
 					created, err := suite.sut.Ensure(context.Background(), conversation)

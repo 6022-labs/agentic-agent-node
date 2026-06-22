@@ -88,7 +88,7 @@ func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 					suite := WhenListingConversationMessagesByConversationIdBeforeEach(tc)
 					defer WhenListingConversationMessagesByConversationIdAfterEach(suite)
 
-					ensureConversations(suite.conversationRepository, "a", "b")
+					ensureConversations(suite.dbClient, suite.conversationRepository, "a", "b")
 					now := time.Now().UTC().Truncate(time.Microsecond)
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
 						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-second").WithTimestamp(now.Add(time.Second)).Build(),

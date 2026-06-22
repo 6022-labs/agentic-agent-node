@@ -84,7 +84,10 @@ func TestWhenDeletingPaymentPolicyByAgentId(t *testing.T) {
 					suite := WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc)
 					defer WhenDeletingPaymentPolicyByAgentIdAfterEach(suite)
 
-					policy, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().Build())
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					policy, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build())
 					assert.NoError(t, err)
 					_, err = suite.paymentRuleRepository.Create(context.Background(), model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build())
 					assert.NoError(t, err)

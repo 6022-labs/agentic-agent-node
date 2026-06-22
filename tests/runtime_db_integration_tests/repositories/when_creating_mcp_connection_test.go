@@ -56,8 +56,9 @@ func WhenCreatingMCPConnectionAfterEach(suite *WhenCreatingMCPConnectionTestingS
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func newMCPConnection(name, url string, headerKeys ...string) *models.MCPConnection {
+func newMCPConnection(agentId uuid.UUID, name, url string, headerKeys ...string) *models.MCPConnection {
 	return model_builders.NewMCPConnectionBuilder().
+		WithAgentId(agentId).
 		WithName(name).
 		WithUrl(url).
 		WithHeaderAuthKeys(headerKeys).
@@ -79,7 +80,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					suite := WhenCreatingMCPConnectionBeforeEach(tc)
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("github", "https://mcp.github.example", "Authorization"))
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "github", "https://mcp.github.example", "Authorization"))
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 					assert.Equal(t, "github", inserted.Name)
@@ -98,7 +102,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					suite := WhenCreatingMCPConnectionBeforeEach(tc)
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection("anon", "https://mcp.anon.example"))
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "anon", "https://mcp.anon.example"))
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)

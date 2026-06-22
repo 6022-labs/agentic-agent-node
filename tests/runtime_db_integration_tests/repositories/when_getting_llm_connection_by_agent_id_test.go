@@ -86,6 +86,7 @@ func TestWhenGettingLLMConnectionByAgentId(t *testing.T) {
 					defer WhenGettingLLMConnectionByAgentIdAfterEach(suite)
 
 					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).

@@ -72,6 +72,8 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					agentA := uuid.New()
 					agentB := uuid.New()
+					seedAgent(suite.dbClient, agentA)
+					seedAgent(suite.dbClient, agentB)
 					_, ensureErr := suite.sut.Ensure(context.Background(),
 						model_builders.NewConversationBuilder().WithId("a-1").WithAgentId(agentA).Build())
 					assert.NoError(t, ensureErr)
