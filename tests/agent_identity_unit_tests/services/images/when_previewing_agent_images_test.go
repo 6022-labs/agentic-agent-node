@@ -19,17 +19,17 @@ import (
 //
 //	go generate ./tests/agent_identity_unit_tests/services/images/
 //
-//go:generate sh -c "AGENT_IMAGE_PREVIEW_DIR=$(git rev-parse --show-toplevel)/tmp/agent-images go test -run TestPreviewAgentImages -count=1 -v ."
+//go:generate sh -c "AGENT_IMAGE_PREVIEW_DIR=$(git rev-parse --show-toplevel)/tmp/agent-images go test -run TestWhenPreviewingAgentImages -count=1 -v ."
 
-// TestPreviewAgentImages is a visual-inspection helper, not an assertion test.
+// TestWhenPreviewingAgentImages is a visual-inspection helper, not an assertion test.
 // It is skipped unless AGENT_IMAGE_PREVIEW_DIR is set — `go generate` (above)
 // sets it for you. You can also run it directly with the env var on the same
 // line:
 //
-//	AGENT_IMAGE_PREVIEW_DIR=/tmp/agent-images go test ./tests/agent_identity_unit_tests/services/images/ -run TestPreviewAgentImages -count=1 -v
+//	AGENT_IMAGE_PREVIEW_DIR=/tmp/agent-images go test ./tests/agent_identity_unit_tests/services/images/ -run TestWhenPreviewingAgentImages -count=1 -v
 //
 // It drops default.svg (open in a browser) + icon.png (the rasterized frame).
-func TestPreviewAgentImages(t *testing.T) {
+func TestWhenPreviewingAgentImages(t *testing.T) {
 	outDir := os.Getenv("AGENT_IMAGE_PREVIEW_DIR")
 	if outDir == "" {
 		t.Skip("set AGENT_IMAGE_PREVIEW_DIR to dump preview images for visual inspection")
