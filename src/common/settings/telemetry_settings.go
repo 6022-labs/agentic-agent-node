@@ -10,11 +10,10 @@ import (
 const TelemetrySettingsKey = "telemetry"
 
 type TelemetrySettings struct {
-	Enabled     bool   `koanf:"enabled"`
-	Endpoint    string `koanf:"endpoint"`
-	Insecure    bool   `koanf:"insecure"`
-	ServiceName string `koanf:"service_name"`
-	NodeId      string `koanf:"node_id"`
+	Enabled  bool   `koanf:"enabled"`
+	Endpoint string `koanf:"endpoint"`
+	Insecure bool   `koanf:"insecure"`
+	NodeId   string `koanf:"node_id"`
 }
 
 func NewTelemetrySettings(
@@ -29,10 +28,8 @@ func NewTelemetrySettings(
 	}
 
 	settings.Endpoint = strings.TrimSpace(settings.Endpoint)
-	settings.ServiceName = strings.TrimSpace(settings.ServiceName)
 	settings.NodeId = strings.TrimSpace(settings.NodeId)
 
-	// service_name is not required: each host supplies its own default in code (shared container/env).
 	if settings.Enabled {
 		if settings.Endpoint == "" {
 			logger.Fatal("telemetry.endpoint is required when telemetry.enabled is true")

@@ -33,7 +33,7 @@ func main() {
 	container := configurations.ConfigureDI(config)
 	host_configurations.ConfigureLogging(container)
 
-	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, "agentic-gateway")
+	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, configurations.AppName)
 	defer func() { _ = shutdownTelemetry(context.Background()) }()
 
 	configurations.ConfigureServer(container)

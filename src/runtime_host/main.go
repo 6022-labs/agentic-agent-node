@@ -31,7 +31,7 @@ func main() {
 	container := configurations.ConfigureDI(config)
 	host_configurations.ConfigureLogging(container)
 
-	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, "agentic-runtime")
+	shutdownTelemetry := host_configurations.ConfigureTelemetry(container, configurations.AppName)
 	defer func() { _ = shutdownTelemetry(context.Background()) }()
 
 	configurations.ConfigureServer(container)

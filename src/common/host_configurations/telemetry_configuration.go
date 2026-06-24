@@ -24,7 +24,7 @@ import (
 )
 
 // ConfigureTelemetry wires the global OTel SDK from settings and returns a shutdown func (noop when disabled).
-func ConfigureTelemetry(container *dig.Container, defaultServiceName string) func(context.Context) error {
+func ConfigureTelemetry(container *dig.Container, serviceName string) func(context.Context) error {
 	shutdown := func(ctx context.Context) error { return nil }
 
 	if err := container.Provide(settings.NewTelemetrySettings); err != nil {
@@ -35,11 +35,6 @@ func ConfigureTelemetry(container *dig.Container, defaultServiceName string) fun
 		if telemetrySettings == nil || !telemetrySettings.Enabled {
 			logger.Info("OpenTelemetry telemetry disabled")
 			return nil
-		}
-
-		serviceName := telemetrySettings.ServiceName
-		if serviceName == "" {
-			serviceName = defaultServiceName
 		}
 
 		ctx := context.Background()
@@ -132,7 +127,7 @@ func ConfigureTelemetry(container *dig.Container, defaultServiceName string) fun
 
 		logger.Info("OpenTelemetry telemetry enabled",
 			zap.String("endpoint", telemetrySettings.Endpoint),
-			zap.String("service", telemetrySettings.ServiceName),
+			zap.String("service", serviceName),
 			zap.String("creds", credMode),
 		)
 		return nil
