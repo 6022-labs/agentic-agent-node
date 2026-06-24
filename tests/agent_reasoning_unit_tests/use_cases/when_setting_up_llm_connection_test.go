@@ -46,7 +46,7 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 
 func generateValidSetupLLMConnectionRequest() *requests.SetupLLMConnectionRequest {
 	return &requests.SetupLLMConnectionRequest{
-		Platform: reasoning_enums.LLMConnectionPlatformOpenAI,
+		Platform: reasoning_enums.LLMConnectionPlatformOpenAi,
 		Model:    "gpt-4o",
 		ApiKey:   "sk-secret",
 	}
@@ -81,7 +81,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			gomock.InOrder(
 				suite.mockSecretStorage.EXPECT().Save(gomock.Any(), "sk-secret").Return(nil),
 				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
-					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, c.Platform)
+					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
 					assert.Equal(t, "gpt-4o", c.Model)
 					assert.Equal(t, reasoning_enums.LLMConnectionSetupStatusEstablished, c.SetupStatus)
 					return c, nil
@@ -99,7 +99,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			resp, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
-			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAI, resp.Platform)
+			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
 		})
 	})
 

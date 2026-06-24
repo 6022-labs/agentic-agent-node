@@ -13,7 +13,7 @@ func TestWhenValidatingSetupLLMConnectionRequest(t *testing.T) {
 
 	generateSetupLLMConnectionRequest := func() *requests.SetupLLMConnectionRequest {
 		return &requests.SetupLLMConnectionRequest{
-			Platform: reasoning_enums.LLMConnectionPlatformOpenAI,
+			Platform: reasoning_enums.LLMConnectionPlatformOpenAi,
 			Model:    "  gpt-4o  ",
 			ApiKey:   "  sk-secret  ",
 		}

@@ -36,7 +36,7 @@ func WhenSettingLlmConfigBeforeEach(t *testing.T) *WhenSettingLlmConfigTestingSu
 
 func generateValidSetLlmConfigRequest() *requests.SetLlmConfigRequest {
 	return &requests.SetLlmConfigRequest{
-		Provider: "open-ai",
+		Provider: "openai",
 		Model:    "gpt-4o",
 		ApiKey:   "sk-secret",
 		BaseUrl:  "https://api.openai.com/v1",
@@ -66,7 +66,7 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 
 		initSuite := func(suite *WhenSettingLlmConfigTestingSuite) {
 			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
-				assert.Equal(t, "open-ai", body.Platform)
+				assert.Equal(t, "openai", body.Platform)
 				assert.Equal(t, "gpt-4o", body.Model)
 				assert.Equal(t, "sk-secret", body.ApiKey)
 				assert.NotNil(t, body.BaseUrl)
@@ -85,7 +85,7 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 			resp, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
-			assert.Equal(t, "open-ai", resp.Provider)
+			assert.Equal(t, "openai", resp.Provider)
 		})
 	})
 

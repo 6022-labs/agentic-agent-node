@@ -45,7 +45,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalLLMConnectionPayload{
 				Id:          "abc",
-				Platform:    "open-ai",
+				Platform:    "openai",
 				Model:       "gpt-4o",
 				BaseUrl:     &baseUrl,
 				SetupStatus: "established",
@@ -64,7 +64,7 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "abc", resp.Id)
-			assert.Equal(t, "open-ai", resp.Provider)
+			assert.Equal(t, "openai", resp.Provider)
 			assert.Equal(t, "gpt-4o", resp.Model)
 			assert.Equal(t, baseUrl, resp.BaseUrl)
 			assert.Equal(t, "established", resp.SetupStatus)

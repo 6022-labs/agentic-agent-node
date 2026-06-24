@@ -2,24 +2,24 @@ basePath: /
 definitions:
   enums.LLMConnectionPlatform:
     enum:
-    - x
-    - mistral
-    - open-ai
-    - libert-ai
+    - x_ai
+    - mistral_ai
+    - openai
+    - libert_ai
     - ollama
     - deepseek
     - anthropic
-    - amazon-bedrock
+    - aws.bedrock
     type: string
     x-enum-varnames:
-    - LLMConnectionPlatformX
-    - LLMConnectionPlatformMistral
-    - LLMConnectionPlatformOpenAI
-    - LLMConnectionPlatformLibertAI
+    - LLMConnectionPlatformXAi
+    - LLMConnectionPlatformMistralAi
+    - LLMConnectionPlatformOpenAi
+    - LLMConnectionPlatformLibertAi
     - LLMConnectionPlatformOllama
     - LLMConnectionPlatformDeepseek
     - LLMConnectionPlatformAnthropic
-    - LLMConnectionPlatformAmazonBedrock
+    - LLMConnectionPlatformAwsBedrock
   enums.LLMConnectionSetupStatus:
     enum:
     - established

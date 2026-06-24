@@ -107,7 +107,7 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		return nil, err
 	}
 
-	provider := genAiProviderName(llmConnection.Platform)
+	provider := string(llmConnection.Platform)
 	model := llmConnection.Model
 
 	start := time.Now()
@@ -134,28 +134,6 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
-}
-
-// genAiProviderName maps the platform enum to gen_ai.provider.name well-known values (raw value when unmapped).
-func genAiProviderName(platform enums.LLMConnectionPlatform) string {
-	switch platform {
-	case enums.LLMConnectionPlatformOpenAI:
-		return "openai"
-	case enums.LLMConnectionPlatformAnthropic:
-		return "anthropic"
-	case enums.LLMConnectionPlatformAmazonBedrock:
-		return "aws.bedrock"
-	case enums.LLMConnectionPlatformMistral:
-		return "mistral_ai"
-	case enums.LLMConnectionPlatformX:
-		return "x_ai"
-	case enums.LLMConnectionPlatformDeepseek:
-		return "deepseek"
-	case enums.LLMConnectionPlatformOllama:
-		return "ollama"
-	default:
-		return string(platform)
-	}
 }
 
 func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, error) {
@@ -200,21 +178,21 @@ func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
 
 func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnectionPlatform) (settings.StandardSettingsInterface, error) {
 	switch platform {
-	case enums.LLMConnectionPlatformLibertAI:
+	case enums.LLMConnectionPlatformLibertAi:
 		return r.libertAiSettings, nil
-	case enums.LLMConnectionPlatformOpenAI:
+	case enums.LLMConnectionPlatformOpenAi:
 		return r.openAiSettings, nil
 	case enums.LLMConnectionPlatformOllama:
 		return r.ollamaSettings, nil
-	case enums.LLMConnectionPlatformMistral:
+	case enums.LLMConnectionPlatformMistralAi:
 		return r.mistralSettings, nil
 	case enums.LLMConnectionPlatformDeepseek:
 		return r.deepSeekSettings, nil
-	case enums.LLMConnectionPlatformX:
+	case enums.LLMConnectionPlatformXAi:
 		return r.xSettings, nil
 	case enums.LLMConnectionPlatformAnthropic:
 		return r.anthropicSettings, nil
-	case enums.LLMConnectionPlatformAmazonBedrock:
+	case enums.LLMConnectionPlatformAwsBedrock:
 		return r.amazonBedrockSettings, nil
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", platform)

@@ -48,7 +48,7 @@ export default function LlmConfigForm({ config, onFormComplete }: Props) {
   const provider = LLM_PROVIDERS.find((p) => p.value === selectedProvider)
   const isSelfHosted = provider?.kind === "self-hosted"
   const needsBaseUrl = isSelfHosted || !!provider?.requiresBaseUrl
-  const isBedrock = selectedProvider === "amazon-bedrock"
+  const isBedrock = selectedProvider === "aws.bedrock"
   const detectedRegion = isBedrock
     ? extractAmazonPlatformRegionFromUrl(form.watch("baseUrl") ?? "")
     : undefined

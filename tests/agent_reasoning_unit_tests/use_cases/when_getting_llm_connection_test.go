@@ -66,7 +66,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		stored := model_builders.NewLLMConnectionBuilder().
-			WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+			WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
 			WithModel("gpt-4o").
 			Build()
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {

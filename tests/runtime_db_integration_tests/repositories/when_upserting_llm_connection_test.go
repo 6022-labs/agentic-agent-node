@@ -76,7 +76,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					seedAgent(suite.dbClient, agentId)
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
-						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
 						WithModel("gpt-4o").
 						WithBaseUrl("https://api.openai.com/v1").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
@@ -103,7 +103,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					seedAgent(suite.dbClient, agentId)
 					first, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
-						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAI).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
 						WithModel("gpt-4o").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())

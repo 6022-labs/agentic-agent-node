@@ -19,14 +19,14 @@ import (
 
 // Defines values for EnumsLLMConnectionPlatform.
 const (
-	LLMConnectionPlatformAmazonBedrock EnumsLLMConnectionPlatform = "amazon-bedrock"
-	LLMConnectionPlatformAnthropic     EnumsLLMConnectionPlatform = "anthropic"
-	LLMConnectionPlatformDeepseek      EnumsLLMConnectionPlatform = "deepseek"
-	LLMConnectionPlatformLibertAI      EnumsLLMConnectionPlatform = "libert-ai"
-	LLMConnectionPlatformMistral       EnumsLLMConnectionPlatform = "mistral"
-	LLMConnectionPlatformOllama        EnumsLLMConnectionPlatform = "ollama"
-	LLMConnectionPlatformOpenAI        EnumsLLMConnectionPlatform = "open-ai"
-	LLMConnectionPlatformX             EnumsLLMConnectionPlatform = "x"
+	LLMConnectionPlatformAnthropic  EnumsLLMConnectionPlatform = "anthropic"
+	LLMConnectionPlatformAwsBedrock EnumsLLMConnectionPlatform = "aws.bedrock"
+	LLMConnectionPlatformDeepseek   EnumsLLMConnectionPlatform = "deepseek"
+	LLMConnectionPlatformLibertAi   EnumsLLMConnectionPlatform = "libert_ai"
+	LLMConnectionPlatformMistralAi  EnumsLLMConnectionPlatform = "mistral_ai"
+	LLMConnectionPlatformOllama     EnumsLLMConnectionPlatform = "ollama"
+	LLMConnectionPlatformOpenAi     EnumsLLMConnectionPlatform = "openai"
+	LLMConnectionPlatformXAi        EnumsLLMConnectionPlatform = "x_ai"
 )
 
 // Defines values for EnumsLLMConnectionSetupStatus.
@@ -193,6 +193,8 @@ type ResponsesConversationMessage struct {
 	Id             *string `json:"id,omitempty"`
 	Role           *string `json:"role,omitempty"`
 	Timestamp      *string `json:"timestamp,omitempty"`
+	ToolCallId     *string `json:"toolCallId,omitempty"`
+	ToolCalls      *string `json:"toolCalls,omitempty"`
 }
 
 // ResponsesConversationRef defines model for responses.ConversationRef.

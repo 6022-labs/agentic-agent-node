@@ -28,13 +28,13 @@ export type LlmProvider = {
 // Providers the runtime supports (mirrors the orchestrator platform list).
 export const LLM_PROVIDERS: LlmProvider[] = [
   { value: "anthropic", label: "Anthropic", kind: "cloud" },
-  { value: "open-ai", label: "OpenAI", kind: "cloud" },
-  { value: "mistral", label: "Mistral", kind: "cloud" },
+  { value: "openai", label: "OpenAI", kind: "cloud" },
+  { value: "mistral_ai", label: "Mistral", kind: "cloud" },
   { value: "deepseek", label: "Deepseek", kind: "cloud" },
-  { value: "libert-ai", label: "LibertAI", kind: "cloud" },
-  { value: "x", label: "X", kind: "cloud" },
+  { value: "libert_ai", label: "LibertAI", kind: "cloud" },
+  { value: "x_ai", label: "X", kind: "cloud" },
   {
-    value: "amazon-bedrock",
+    value: "aws.bedrock",
     label: "Amazon Bedrock",
     kind: "cloud",
     requiresBaseUrl: true,

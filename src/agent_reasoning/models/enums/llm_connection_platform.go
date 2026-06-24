@@ -5,27 +5,28 @@ import "strings"
 type LLMConnectionPlatform string
 type LLMConnectionPlatformList []LLMConnectionPlatform
 
+// Values are the OTel gen_ai.provider.name well-known names so they map 1:1 to traces/metrics.
 const (
-	LLMConnectionPlatformX             LLMConnectionPlatform = "x"
-	LLMConnectionPlatformMistral       LLMConnectionPlatform = "mistral"
-	LLMConnectionPlatformOpenAI        LLMConnectionPlatform = "open-ai"
-	LLMConnectionPlatformLibertAI      LLMConnectionPlatform = "libert-ai"
-	LLMConnectionPlatformOllama        LLMConnectionPlatform = "ollama"
-	LLMConnectionPlatformDeepseek      LLMConnectionPlatform = "deepseek"
-	LLMConnectionPlatformAnthropic     LLMConnectionPlatform = "anthropic"
-	LLMConnectionPlatformAmazonBedrock LLMConnectionPlatform = "amazon-bedrock"
+	LLMConnectionPlatformXAi        LLMConnectionPlatform = "x_ai"
+	LLMConnectionPlatformMistralAi  LLMConnectionPlatform = "mistral_ai"
+	LLMConnectionPlatformOpenAi     LLMConnectionPlatform = "openai"
+	LLMConnectionPlatformLibertAi   LLMConnectionPlatform = "libert_ai"
+	LLMConnectionPlatformOllama     LLMConnectionPlatform = "ollama"
+	LLMConnectionPlatformDeepseek   LLMConnectionPlatform = "deepseek"
+	LLMConnectionPlatformAnthropic  LLMConnectionPlatform = "anthropic"
+	LLMConnectionPlatformAwsBedrock LLMConnectionPlatform = "aws.bedrock"
 )
 
 func GetAllLLMConnectionPlatforms() LLMConnectionPlatformList {
 	return LLMConnectionPlatformList{
-		LLMConnectionPlatformX,
-		LLMConnectionPlatformMistral,
-		LLMConnectionPlatformOpenAI,
-		LLMConnectionPlatformLibertAI,
+		LLMConnectionPlatformXAi,
+		LLMConnectionPlatformMistralAi,
+		LLMConnectionPlatformOpenAi,
+		LLMConnectionPlatformLibertAi,
 		LLMConnectionPlatformOllama,
 		LLMConnectionPlatformDeepseek,
 		LLMConnectionPlatformAnthropic,
-		LLMConnectionPlatformAmazonBedrock,
+		LLMConnectionPlatformAwsBedrock,
 	}
 }
 
@@ -37,13 +38,13 @@ func GetAllLocalLLMConnectionPlatforms() LLMConnectionPlatformList {
 
 func GetAllCloudLLMConnectionPlatforms() LLMConnectionPlatformList {
 	return LLMConnectionPlatformList{
-		LLMConnectionPlatformX,
-		LLMConnectionPlatformMistral,
-		LLMConnectionPlatformOpenAI,
-		LLMConnectionPlatformLibertAI,
+		LLMConnectionPlatformXAi,
+		LLMConnectionPlatformMistralAi,
+		LLMConnectionPlatformOpenAi,
+		LLMConnectionPlatformLibertAi,
 		LLMConnectionPlatformDeepseek,
 		LLMConnectionPlatformAnthropic,
-		LLMConnectionPlatformAmazonBedrock,
+		LLMConnectionPlatformAwsBedrock,
 	}
 }
 

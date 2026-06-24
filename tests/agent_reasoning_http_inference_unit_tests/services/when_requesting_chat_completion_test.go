@@ -139,7 +139,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			suite := WhenRequestingChatCompletionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformLibertAI).
+				WithPlatform(enums.LLMConnectionPlatformLibertAi).
 				WithModel("gpt-4").
 				Build()
 			initSuite(suite, llmConnection)
@@ -177,7 +177,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			suite := WhenRequestingChatCompletionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOpenAI).
+				WithPlatform(enums.LLMConnectionPlatformOpenAi).
 				WithModel("gpt-4").
 				Build()
 			initSuite(suite, llmConnection)
@@ -250,7 +250,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			suite := WhenRequestingChatCompletionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformMistral).
+				WithPlatform(enums.LLMConnectionPlatformMistralAi).
 				WithModel("mistral-7b").
 				Build()
 			initSuite(suite, llmConnection)
@@ -324,7 +324,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			suite := WhenRequestingChatCompletionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformX).
+				WithPlatform(enums.LLMConnectionPlatformXAi).
 				WithModel("grok").
 				Build()
 			initSuite(suite, llmConnection)
@@ -398,7 +398,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			suite := WhenRequestingChatCompletionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformAmazonBedrock).
+				WithPlatform(enums.LLMConnectionPlatformAwsBedrock).
 				WithModel("anthropic.claude").
 				Build()
 			initSuite(suite, llmConnection)

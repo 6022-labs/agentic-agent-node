@@ -1085,24 +1085,24 @@ const docTemplate = `{
         "enums.LLMConnectionPlatform": {
             "type": "string",
             "enum": [
-                "x",
-                "mistral",
-                "open-ai",
-                "libert-ai",
+                "x_ai",
+                "mistral_ai",
+                "openai",
+                "libert_ai",
                 "ollama",
                 "deepseek",
                 "anthropic",
-                "amazon-bedrock"
+                "aws.bedrock"
             ],
             "x-enum-varnames": [
-                "LLMConnectionPlatformX",
-                "LLMConnectionPlatformMistral",
-                "LLMConnectionPlatformOpenAI",
-                "LLMConnectionPlatformLibertAI",
+                "LLMConnectionPlatformXAi",
+                "LLMConnectionPlatformMistralAi",
+                "LLMConnectionPlatformOpenAi",
+                "LLMConnectionPlatformLibertAi",
                 "LLMConnectionPlatformOllama",
                 "LLMConnectionPlatformDeepseek",
                 "LLMConnectionPlatformAnthropic",
-                "LLMConnectionPlatformAmazonBedrock"
+                "LLMConnectionPlatformAwsBedrock"
             ]
         },
         "enums.LLMConnectionSetupStatus": {
