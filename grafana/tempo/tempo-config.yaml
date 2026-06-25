@@ -29,6 +29,12 @@ metrics_generator:
     remote_write:
       - url: http://agent-node-mimir:9009/api/v1/push
         send_exemplars: true
+  processor:
+    # Promote these resource attributes to span-metric labels so dashboards can filter by them.
+    span_metrics:
+      dimensions:
+        - agent.node.id
+        - service.instance.id
 
 # Enables the generator processors per-tenant.
 overrides:
