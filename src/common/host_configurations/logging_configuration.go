@@ -3,9 +3,14 @@ package host_configurations
 import (
 	"os"
 
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	logglobal "go.opentelemetry.io/otel/log/global"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+const logBridgeScope = "github.com/6022-labs/agentic-agent-node"
 
 func ConfigureLogging(container *dig.Container) {
 	logLevel := os.Getenv("LOG_LEVEL")
@@ -33,6 +38,11 @@ func ConfigureLogging(container *dig.Container) {
 	if err != nil {
 		panic(err)
 	}
+
+	otelCore := otelzap.NewCore(logBridgeScope, otelzap.WithLoggerProvider(logglobal.GetLoggerProvider()))
+	logger = logger.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+		return zapcore.NewTee(core, otelCore)
+	}))
 
 	err = container.Provide(func() *zap.Logger {
 		return logger
