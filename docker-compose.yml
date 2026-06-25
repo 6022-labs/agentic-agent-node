@@ -120,7 +120,7 @@ services:
   # the agent.node.id / service.instance.id resource attribute distinguishes them.
   # ---------------------------------------------------------------------------
   agent-node-alloy:
-    image: "grafana/alloy:latest"
+    image: "grafana/alloy:v1.17.0"
     container_name: agent-node-alloy
     environment:
       - LOKI_URL=http://agent-node-loki:3100
@@ -137,7 +137,7 @@ services:
       agent-node-network:
 
   agent-node-mimir:
-    image: "grafana/mimir:latest"
+    image: "grafana/mimir:3.1.1"
     container_name: agent-node-mimir
     command: ["--config.file=/etc/mimir/mimir.yml", "--target=all"]
     volumes:
@@ -149,7 +149,7 @@ services:
       agent-node-network:
 
   agent-node-loki:
-    image: "grafana/loki:latest"
+    image: "grafana/loki:3.7.2"
     container_name: agent-node-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
@@ -161,7 +161,7 @@ services:
       agent-node-network:
 
   agent-node-tempo:
-    image: "grafana/tempo:latest"
+    image: "grafana/tempo:3.0.0"
     container_name: agent-node-tempo
     depends_on:
       - agent-node-mimir
@@ -175,7 +175,7 @@ services:
       agent-node-network:
 
   agent-node-grafana:
-    image: "grafana/grafana:12.3"
+    image: "grafana/grafana:12.3.7"
     container_name: agent-node-grafana
     depends_on:
       - agent-node-mimir
