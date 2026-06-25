@@ -10,8 +10,10 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -37,12 +39,27 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 	mockMetrics.EXPECT().RecordLoopExceeded(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockMetrics.EXPECT().RecordToolCalls(gomock.Any(), gomock.Any()).AnyTimes()
 
+	mockSpan := traces_interfaces_mocks.NewMockSpan(mockController)
+	mockSpan.EXPECT().Fail(gomock.Any()).AnyTimes()
+	mockSpan.EXPECT().End().AnyTimes()
+
+	mockReasoningTracer := traces_interfaces_mocks.NewMockReasoningTracerInterface(mockController)
+	mockReasoningTracer.EXPECT().StartListTools(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _ string) (context.Context, traces_interfaces.Span) {
+			return ctx, mockSpan
+		}).AnyTimes()
+	mockReasoningTracer.EXPECT().StartToolCall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _, _, _ string) (context.Context, traces_interfaces.Span) {
+			return ctx, mockSpan
+		}).AnyTimes()
+
 	sut := services.NewInferenceLoop(
 		zap.NewNop(),
 		mockLLMExecutor,
 		mockMcpRequester,
 		&settings.InferenceLoopSettings{MaxIterations: maxIterations},
 		mockMetrics,
+		mockReasoningTracer,
 	)
 
 	return &WhenRunningInferenceLoopTestingSuite{

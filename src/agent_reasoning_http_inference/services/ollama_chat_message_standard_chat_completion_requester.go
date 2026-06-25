@@ -75,6 +75,10 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 			InputTokens:  response.PromptEvalCount,
 			OutputTokens: response.EvalCount,
 		},
+		ResponseModel: response.Model,
+	}
+	if response.DoneReason != nil {
+		completion.FinishReasons = []string{*response.DoneReason}
 	}
 
 	if response.Message.Content != "" {

@@ -128,3 +128,6 @@ PLAN.md
 
 ### Agent image preview output (TestPreviewAgentImages) ###
 /tmp/
+
+# Personal Claude Code settings (not committed)
+.claude/settings.local.json

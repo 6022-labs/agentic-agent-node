@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -30,7 +32,17 @@ func WhenCreatingResponseBeforeEach(t *testing.T) *WhenCreatingResponseTestingSu
 	mockResponseMetrics.EXPECT().RecordResponseSucceeded(gomock.Any()).AnyTimes()
 	mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
 
-	sut := use_cases.NewCreateResponse(mockResponseDriver, mockResponseMetrics)
+	mockSpan := traces_interfaces_mocks.NewMockSpan(mockController)
+	mockSpan.EXPECT().Fail(gomock.Any()).AnyTimes()
+	mockSpan.EXPECT().End().AnyTimes()
+
+	mockReasoningTracer := traces_interfaces_mocks.NewMockReasoningTracerInterface(mockController)
+	mockReasoningTracer.EXPECT().StartInference(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _, _ string) (context.Context, traces_interfaces.Span) {
+			return ctx, mockSpan
+		}).AnyTimes()
+
+	sut := use_cases.NewCreateResponse(mockResponseDriver, mockResponseMetrics, mockReasoningTracer)
 
 	return &WhenCreatingResponseTestingSuite{
 		sut:                sut,
@@ -73,7 +85,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(ctx, conversationId, gomock.Any()).
+				Drive(gomock.Any(), conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, inputs []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
 					if assert.Len(t, inputs, 2) {
 						assert.Equal(t, "system", inputs[0].Role)
@@ -116,7 +128,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(ctx, gomock.Any(), gomock.Any()).
+				Drive(gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, conversationId string, _ []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
 					assert.NotEmpty(t, conversationId)
 					return &knowledge_interfaces.ConversationMessage{Role: "assistant", Content: "hi"}, nil
@@ -144,7 +156,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(ctx, conversationId, gomock.Any()).
+				Drive(gomock.Any(), conversationId, gomock.Any()).
 				Return(nil, nil)
 		}
 
@@ -167,7 +179,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(ctx, conversationId, gomock.Any()).
+				Drive(gomock.Any(), conversationId, gomock.Any()).
 				Return(nil, errors.New("driver broke"))
 		}
 

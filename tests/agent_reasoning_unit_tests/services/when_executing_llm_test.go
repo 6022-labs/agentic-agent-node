@@ -8,9 +8,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -32,10 +34,24 @@ func WhenExecutingLLMBeforeEach(t *testing.T) *WhenExecutingLLMTestingSuite {
 	mockChatCompletionRequester := interfaces_mocks.NewMockChatCompletionRequesterInterface(mockController)
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
+	mockChatCompletionSpan := traces_interfaces_mocks.NewMockChatCompletionSpan(mockController)
+	mockChatCompletionSpan.EXPECT().RecordUsage(gomock.Any(), gomock.Any()).AnyTimes()
+	mockChatCompletionSpan.EXPECT().RecordToolCall(gomock.Any(), gomock.Any()).AnyTimes()
+	mockChatCompletionSpan.EXPECT().RecordResponse(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockChatCompletionSpan.EXPECT().Fail(gomock.Any()).AnyTimes()
+	mockChatCompletionSpan.EXPECT().End().AnyTimes()
+
+	mockReasoningTracer := traces_interfaces_mocks.NewMockReasoningTracerInterface(mockController)
+	mockReasoningTracer.EXPECT().StartChatCompletion(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _, _ string) (context.Context, traces_interfaces.ChatCompletionSpan) {
+			return ctx, mockChatCompletionSpan
+		}).AnyTimes()
+
 	sut := services.NewLLMExecutor(
 		mockLLMConnectionRepository,
 		mockChatCompletionRequester,
 		mockAgentRepository,
+		mockReasoningTracer,
 	)
 
 	return &WhenExecutingLLMTestingSuite{
@@ -68,7 +84,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(ctx, llmConnection, gomock.Any(), gomock.Any(), messages).
+				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Text: &expectedText}, nil)
 		}
 
@@ -152,7 +168,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(ctx, llmConnection, mcpConnections, toolsByConn, messages).
+				ChatCompletion(gomock.Any(), llmConnection, mcpConnections, toolsByConn, messages).
 				Return(nil, errors.New("upstream broke"))
 		}
 

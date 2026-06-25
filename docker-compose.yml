@@ -115,8 +115,8 @@ services:
       wait"
 
   # ---------------------------------------------------------------------------
-  # Observability stack: Alloy (OTLP collector) -> Mimir (metrics) + Loki (logs),
-  # visualized in Grafana. Multiple agent nodes can point at one shared stack;
+  # Observability stack: Alloy (OTLP collector) -> Mimir (metrics) + Loki (logs)
+  # + Tempo (traces), visualized in Grafana. Multiple agent nodes can point at one shared stack;
   # the agent.node.id / service.instance.id resource attribute distinguishes them.
   # ---------------------------------------------------------------------------
   agent-node-alloy:
@@ -125,6 +125,7 @@ services:
     environment:
       - LOKI_URL=http://agent-node-loki:3100
       - MIMIR_URL=http://agent-node-mimir:9009
+      - TEMPO_OTLP_URL=http://agent-node-tempo:4318
     command:
       ["run", "--stability.level=experimental", "/etc/alloy/config.alloy"]
     volumes:
@@ -159,12 +160,27 @@ services:
     networks:
       agent-node-network:
 
+  agent-node-tempo:
+    image: "grafana/tempo:latest"
+    container_name: agent-node-tempo
+    depends_on:
+      - agent-node-mimir
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./grafana/tempo/tempo-config.yaml:/etc/tempo/tempo.yml
+      - agent-node-tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+    networks:
+      agent-node-network:
+
   agent-node-grafana:
     image: "grafana/grafana:12.3"
     container_name: agent-node-grafana
     depends_on:
       - agent-node-mimir
       - agent-node-loki
+      - agent-node-tempo
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
@@ -172,6 +188,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
       MIMIR_URL: "http://agent-node-mimir:9009"
       LOKI_URL: "http://agent-node-loki:3100"
+      TEMPO_URL: "http://agent-node-tempo:3200"
     ports:
       - "3000:3000"
     volumes:
@@ -189,3 +206,4 @@ volumes:
   agent-node-ipfs-data:
   agent-node-mimir-data:
   agent-node-loki-data:
+  agent-node-tempo-data:

@@ -7,6 +7,7 @@ import (
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -20,13 +21,19 @@ type CreateResponseInterface interface {
 type CreateResponse struct {
 	responseDriver  interfaces.ResponseDriverInterface
 	responseMetrics metrics_interfaces.ResponseMetricsInterface
+	reasoningTracer traces_interfaces.ReasoningTracerInterface
 }
 
 func NewCreateResponse(
 	responseDriver interfaces.ResponseDriverInterface,
 	responseMetrics metrics_interfaces.ResponseMetricsInterface,
+	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *CreateResponse {
-	return &CreateResponse{responseDriver: responseDriver, responseMetrics: responseMetrics}
+	return &CreateResponse{
+		responseDriver:  responseDriver,
+		responseMetrics: responseMetrics,
+		reasoningTracer: reasoningTracer,
+	}
 }
 
 // Execute resolves the conversation key (minting one when absent), forwards the
@@ -41,6 +48,9 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 	if conversationId == "" {
 		conversationId = uuid.NewString()
 	}
+
+	ctx, span := u.reasoningTracer.StartInference(ctx, conversationId, request.Model)
+	defer span.End()
 
 	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Input)+1)
 	if request.Instructions != "" {
@@ -60,6 +70,7 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 
 	persisted, err := u.responseDriver.Drive(ctx, conversationId, inputs)
 	if err != nil {
+		span.Fail(err)
 		u.responseMetrics.RecordResponseFailed(ctx)
 		return nil, errors.NewInternalError("create_response_failed", err.Error())
 	}

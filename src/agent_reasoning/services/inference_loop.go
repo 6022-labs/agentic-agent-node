@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
@@ -19,11 +20,12 @@ import (
 // InferenceLoop drives the LLM ↔ MCP exchange until the LLM stops emitting
 // tool calls or MaxIterations is hit.
 type InferenceLoop struct {
-	logger       *zap.Logger
-	llmExecutor  interfaces.LLMExecutorInterface
-	mcpRequester interfaces.McpRequesterInterface
-	settings     *settings.InferenceLoopSettings
-	metrics      metrics_interfaces.ReasoningMetricsInterface
+	logger          *zap.Logger
+	llmExecutor     interfaces.LLMExecutorInterface
+	mcpRequester    interfaces.McpRequesterInterface
+	settings        *settings.InferenceLoopSettings
+	metrics         metrics_interfaces.ReasoningMetricsInterface
+	reasoningTracer traces_interfaces.ReasoningTracerInterface
 }
 
 func NewInferenceLoop(
@@ -32,13 +34,15 @@ func NewInferenceLoop(
 	mcpRequester interfaces.McpRequesterInterface,
 	settings *settings.InferenceLoopSettings,
 	metrics metrics_interfaces.ReasoningMetricsInterface,
+	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *InferenceLoop {
 	return &InferenceLoop{
-		logger:       logger,
-		llmExecutor:  llmExecutor,
-		mcpRequester: mcpRequester,
-		settings:     settings,
-		metrics:      metrics,
+		logger:          logger,
+		llmExecutor:     llmExecutor,
+		mcpRequester:    mcpRequester,
+		settings:        settings,
+		metrics:         metrics,
+		reasoningTracer: reasoningTracer,
 	}
 }
 
@@ -51,7 +55,7 @@ func (l *InferenceLoop) Run(
 ) ([]*interfaces.ChatCompletionMessage, error) {
 	start := time.Now()
 
-	toolsByConnectionId, err := l.listToolsByConnection(mcpConnections)
+	toolsByConnectionId, err := l.listToolsByConnection(ctx, mcpConnections)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +84,7 @@ func (l *InferenceLoop) Run(
 
 		if len(completion.ToolCalls) > 0 {
 			l.metrics.RecordToolCalls(ctx, int64(len(completion.ToolCalls)))
-			toolMessages, err := l.dispatchToolCalls(completion.ToolCalls, mcpConnections, toolsByConnectionId)
+			toolMessages, err := l.dispatchToolCalls(ctx, completion.ToolCalls, mcpConnections, toolsByConnectionId)
 			if err != nil {
 				return nil, err
 			}
@@ -107,17 +111,30 @@ func (l *InferenceLoop) Run(
 }
 
 func (l *InferenceLoop) listToolsByConnection(
+	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
 ) (map[uuid.UUID][]*interfaces.McpTool, error) {
 	toolsByConnectionId := make(map[uuid.UUID][]*interfaces.McpTool, len(mcpConnections))
 	for _, conn := range mcpConnections {
-		tools, err := l.mcpRequester.ListTools(conn)
+		tools, err := l.listTools(ctx, conn)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
+			return nil, err
 		}
 		toolsByConnectionId[conn.Id] = tools
 	}
 	return toolsByConnectionId, nil
+}
+
+func (l *InferenceLoop) listTools(ctx context.Context, conn *models.MCPConnection) ([]*interfaces.McpTool, error) {
+	_, span := l.reasoningTracer.StartListTools(ctx, conn.Name)
+	defer span.End()
+
+	tools, err := l.mcpRequester.ListTools(conn)
+	if err != nil {
+		span.Fail(err)
+		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
+	}
+	return tools, nil
 }
 
 // recordExecutedToolCalls mirrors provider-run MCP calls into the stream (assistant turn + a tool turn per result) so they persist without being re-dispatched.
@@ -166,6 +183,7 @@ func (l *InferenceLoop) recordExecutedToolCalls(
 }
 
 func (l *InferenceLoop) dispatchToolCalls(
+	ctx context.Context,
 	toolCalls []interfaces.ToolCall,
 	mcpConnections []*models.MCPConnection,
 	toolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
@@ -183,22 +201,39 @@ func (l *InferenceLoop) dispatchToolCalls(
 			zap.String("mcpToolName", mcpTool.Name),
 		)
 
-		result, err := l.mcpRequester.CallTool(mcpConnection, mcpTool, tc.Arguments)
+		message, err := l.callTool(ctx, tc, mcpConnection, mcpTool)
 		if err != nil {
-			return nil, fmt.Errorf("failed to call mcp tool %q: %w", tc.Name, err)
+			return nil, err
 		}
-
-		resultBytes, err := json.Marshal(result)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal mcp tool result for %q: %w", tc.Name, err)
-		}
-
-		out = append(out, &interfaces.ChatCompletionMessage{
-			Role:       "tool",
-			ToolCallId: tc.Id,
-			Content:    string(resultBytes),
-		})
+		out = append(out, message)
 	}
 
 	return out, nil
+}
+
+func (l *InferenceLoop) callTool(
+	ctx context.Context,
+	tc interfaces.ToolCall,
+	mcpConnection *models.MCPConnection,
+	mcpTool *interfaces.McpTool,
+) (*interfaces.ChatCompletionMessage, error) {
+	_, span := l.reasoningTracer.StartToolCall(ctx, mcpTool.Name, tc.Id, mcpConnection.Name)
+	defer span.End()
+
+	result, err := l.mcpRequester.CallTool(mcpConnection, mcpTool, tc.Arguments)
+	if err != nil {
+		span.Fail(err)
+		return nil, fmt.Errorf("failed to call mcp tool %q: %w", tc.Name, err)
+	}
+
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal mcp tool result for %q: %w", tc.Name, err)
+	}
+
+	return &interfaces.ChatCompletionMessage{
+		Role:       "tool",
+		ToolCallId: tc.Id,
+		Content:    string(resultBytes),
+	}, nil
 }

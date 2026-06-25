@@ -86,6 +86,8 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 			InputTokens:  response.Usage.InputTokens,
 			OutputTokens: response.Usage.OutputTokens,
 		},
+		ResponseModel: response.Model,
+		ResponseId:    response.ID,
 	}
 
 	for _, o := range response.Output {

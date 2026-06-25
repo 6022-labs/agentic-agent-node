@@ -104,6 +104,11 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 			InputTokens:  response.Usage.InputTokens,
 			OutputTokens: response.Usage.OutputTokens,
 		},
+		ResponseModel: response.Model,
+		ResponseId:    response.ID,
+	}
+	if response.StopReason != nil {
+		completion.FinishReasons = []string{*response.StopReason}
 	}
 
 	executedByToolUseId := make(map[string]int)
