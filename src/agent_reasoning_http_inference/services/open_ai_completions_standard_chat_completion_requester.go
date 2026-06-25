@@ -82,6 +82,11 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 			InputTokens:  response.Usage.PromptTokens,
 			OutputTokens: response.Usage.CompletionTokens,
 		},
+		ResponseModel: response.Model,
+		ResponseId:    response.ID,
+	}
+	if choice.FinishReason != "" {
+		completion.FinishReasons = []string{choice.FinishReason}
 	}
 
 	if choice.Message.Content != "" {

@@ -41,6 +41,14 @@ otelcol.exporter.loki "loki" {
   forward_to = [loki.write.default.receiver]
 }
 
+// Traces ship to Tempo over OTLP/HTTP; retarget another backend (e.g. Langfuse,
+// which only accepts OTLP/HTTP) by swapping this endpoint — no agent code change.
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = env("TEMPO_OTLP_URL")
+  }
+}
+
 loki.write "default" {
   endpoint {
     url = string.format("%s/loki/api/v1/push", env("LOKI_URL"))
@@ -55,7 +63,7 @@ prometheus.remote_write "mimir" {
 
 otelcol.processor.batch "batchproc" {
   output {
-    traces  = [otelcol.exporter.debug.debug.input]
+    traces  = [otelcol.exporter.otlphttp.tempo.input, otelcol.exporter.debug.debug.input]
     logs    = [otelcol.exporter.loki.loki.input, otelcol.exporter.debug.debug.input]
     metrics = [otelcol.exporter.prometheus.prom_export.input, otelcol.exporter.debug.debug.input]
   }

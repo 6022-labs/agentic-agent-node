@@ -30,12 +30,16 @@ type ChatCompletionMessage struct {
 }
 
 // LLMCompletion — platform-agnostic result of one round-trip. Text and
-// ToolCalls can both be non-empty when the LLM emits both.
+// ToolCalls can both be non-empty when the LLM emits both. Response* fields
+// describe what the provider returned (model actually served, stop reasons, id).
 type LLMCompletion struct {
 	Text              *string
 	ToolCalls         []ToolCall
 	ExecutedToolCalls []ExecutedToolCall
 	Usage             *LLMUsage
+	ResponseModel     string
+	FinishReasons     []string
+	ResponseId        string
 }
 
 type LLMUsage struct {

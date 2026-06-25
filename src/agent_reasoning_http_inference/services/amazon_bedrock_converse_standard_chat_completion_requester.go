@@ -80,6 +80,11 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 			InputTokens:  response.Usage.InputTokens,
 			OutputTokens: response.Usage.OutputTokens,
 		},
+		// Converse doesn't echo the model; llmConnection.Model is what served the response.
+		ResponseModel: llmConnection.Model,
+	}
+	if response.StopReason != nil {
+		completion.FinishReasons = []string{*response.StopReason}
 	}
 
 	for _, c := range response.Output.Message.Content {

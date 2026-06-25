@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/google/uuid"
 )
 
@@ -17,17 +18,20 @@ type LLMExecutor struct {
 	llmConnectionRepository repositories.LLMConnectionRepositoryInterface
 	chatCompletionRequester interfaces.ChatCompletionRequesterInterface
 	agentRepository         identity_repositories.AgentRepositoryInterface
+	reasoningTracer         traces_interfaces.ReasoningTracerInterface
 }
 
 func NewLLMExecutor(
 	llmConnectionRepository repositories.LLMConnectionRepositoryInterface,
 	chatCompletionRequester interfaces.ChatCompletionRequesterInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *LLMExecutor {
 	return &LLMExecutor{
 		llmConnectionRepository: llmConnectionRepository,
 		chatCompletionRequester: chatCompletionRequester,
 		agentRepository:         agentRepository,
+		reasoningTracer:         reasoningTracer,
 	}
 }
 
@@ -52,11 +56,26 @@ func (e *LLMExecutor) Complete(
 		return nil, interfaces.ErrLLMConnectionNotConfigured
 	}
 
-	return e.chatCompletionRequester.ChatCompletion(
+	ctx, span := e.reasoningTracer.StartChatCompletion(ctx, string(llmConnection.Platform), llmConnection.Model)
+	defer span.End()
+
+	completion, err := e.chatCompletionRequester.ChatCompletion(
 		ctx,
 		llmConnection,
 		mcpConnections,
 		mcpToolsByConnectionId,
 		messages,
 	)
+	if err != nil {
+		span.Fail(err)
+		return nil, err
+	}
+	if completion.Usage != nil {
+		span.RecordUsage(completion.Usage.InputTokens, completion.Usage.OutputTokens)
+	}
+	span.RecordResponse(completion.ResponseModel, completion.FinishReasons, completion.ResponseId)
+	for _, executed := range completion.ExecutedToolCalls {
+		span.RecordToolCall(executed.Name, executed.Id)
+	}
+	return completion, nil
 }
