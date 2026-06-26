@@ -10,7 +10,9 @@ export const registrationDraftFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   role: z.enum(AGENT_ROLES, { message: "Select a role" }),
   // The base image file the node frames into the NFT set, uploaded as multipart.
-  image: z.instanceof(File, { message: "Please choose an image file" }),
+  // Optional on re-edit (omitting it keeps the stored image); the backend
+  // enforces it on first save.
+  image: z.instanceof(File, { message: "Please choose an image file" }).optional(),
   attributes: z
     .array(
       z.object({

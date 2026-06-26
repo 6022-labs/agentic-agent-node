@@ -151,6 +151,63 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		})
 	})
 
+	t.Run("Given an existing draft with images and no new image is uploaded", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should keep the stored images without regenerating them", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			kept := map[string]string{"default": "QmKept", "icon": "QmKeptIcon"}
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().WithImages(kept).Build(), nil)
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
+			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+					return s, nil
+				})
+
+			request := validSaveRequest(t)
+			request.Image = nil
+
+			resp, err := suite.sut.Execute(context.Background(), request)
+
+			// Image generation / IPFS upload mocks are intentionally absent: a
+			// call would fail the unexpected-invocation check.
+			assert.NoError(t, err)
+			assert.Equal(t, kept, resp.Images)
+		})
+	})
+
+	t.Run("Given no stored images and no new image is uploaded", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on image", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().WithImages(map[string]string{}).Build(), nil)
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: common_tests.RandomEthAddress().Hex()}, true, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+
+			request := validSaveRequest(t)
+			request.Image = nil
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "image", validationErr.Field)
+		})
+	})
+
 	t.Run("Given the collection is not governed by the manager", func(t *testing.T) {
 		t.Parallel()
 

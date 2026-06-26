@@ -28,7 +28,10 @@ export const saveAgentRegistration = async (
   if (request.attributes) {
     form.append("attributes", JSON.stringify(request.attributes))
   }
-  form.append("image", request.image)
+  // Omit on re-edit to keep the stored image; only sent when a new one is picked.
+  if (request.image) {
+    form.append("image", request.image)
+  }
   return await axios.post<AgentRegistration>("/agent/registration", form)
 }
 

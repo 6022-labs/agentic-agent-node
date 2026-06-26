@@ -43,8 +43,9 @@ export type SaveAgentRegistrationRequest = {
   name: string
   role: string
   cloneOf?: number | null
-  // Single base image file the node frames into the NFT image set.
-  image: File
+  // Single base image file the node frames into the NFT image set. Omitted on
+  // re-edit to keep the stored image.
+  image?: File
   attributes?: Record<string, string>
 }
 

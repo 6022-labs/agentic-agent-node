@@ -55,10 +55,7 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 	}
 	r.Role = role.String()
 
-	if r.Image == nil {
-		return errors.NewValidationError("image", "is required")
-	}
-	if r.Image.Size > maxImageBytes {
+	if r.Image != nil && r.Image.Size > maxImageBytes {
 		return errors.NewValidationError("image", "must be at most 5MB")
 	}
 

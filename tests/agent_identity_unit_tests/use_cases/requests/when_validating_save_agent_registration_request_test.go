@@ -125,13 +125,13 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 	t.Run("Given the image is missing", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should pass validation", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.Image = nil
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 

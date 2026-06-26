@@ -128,11 +128,10 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	agent.CollectionTokenId = existing.CollectionTokenId
 	agent.ProposalId = existing.ProposalId
 
-	images, err := u.buildImages(agent, common.HexToAddress(owner), cred.Address, req.Image)
+	agent.Images, err = u.resolveImages(agent, existing, common.HexToAddress(owner), cred.Address, req.Image)
 	if err != nil {
 		return nil, err
 	}
-	agent.Images = images
 
 	saved, err := u.agentRepository.Upsert(ctx, agent)
 	if err != nil {
@@ -157,6 +156,16 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	resp := &responses.AgentRegistrationResponse{}
 	resp.FromModel(saved, state)
 	return resp, nil
+}
+
+func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, creator common.Address, wallet string, baseImage *multipart.FileHeader) (map[string]string, error) {
+	if baseImage != nil {
+		return u.buildImages(agent, creator, wallet, baseImage)
+	}
+	if len(existing.Images) > 0 {
+		return existing.Images, nil
+	}
+	return nil, errors.NewValidationError("image", "is required")
 }
 
 // buildImages frames the uploaded base image, pins each rendered variant to

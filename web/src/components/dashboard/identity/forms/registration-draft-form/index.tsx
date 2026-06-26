@@ -1,6 +1,6 @@
 import React from "react"
 import { toast } from "sonner"
-import { useForm } from "react-hook-form"
+import { useForm, type DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight, Loader2 } from "lucide-react"
 
@@ -42,6 +42,23 @@ import AttributeFields from "./attribute-fields"
 const chainLabel = (chainId: string) =>
   findEvmNetwork(`eip155:${chainId}`)?.name ?? `Chain ${chainId}`
 
+const buildDefaults = (
+  draft: AgentRegistration | null,
+  fallbackChainId: string
+): DefaultValues<RegistrationDraftFormSchemaType> => ({
+  chainId: draft?.chainId ?? fallbackChainId,
+  collectionAddress: draft?.collectionAddress ?? "",
+  name: draft?.name ?? "",
+  role: AGENT_ROLES.find((role) => role === draft?.role),
+  // images.default holds the generated IPFS CID, not the base; leaving this
+  // empty on re-edit keeps the stored image.
+  image: undefined,
+  attributes: Object.entries(draft?.attributes ?? {}).map(([key, value]) => ({
+    key,
+    value,
+  })),
+})
+
 type Props = {
   draft: AgentRegistration | null
   onSaved: (registration: AgentRegistration) => void
@@ -59,18 +76,15 @@ export default function RegistrationDraftForm({
 
   const form = useForm<RegistrationDraftFormSchemaType>({
     resolver: zodResolver(registrationDraftFormSchema),
-    defaultValues: {
-      chainId: draft?.chainId ?? mintableChainIds[0] ?? "",
-      collectionAddress: draft?.collectionAddress ?? "",
-      name: draft?.name ?? "",
-      role: AGENT_ROLES.find((role) => role === draft?.role),
-      // images.default holds the generated IPFS CID, not the base; always re-pick.
-      image: undefined,
-      attributes: Object.entries(draft?.attributes ?? {}).map(
-        ([key, value]) => ({ key, value })
-      ),
-    },
+    defaultValues: buildDefaults(draft, mintableChainIds[0] ?? ""),
   })
+
+  // Re-sync when the loaded draft changes (re-edit), not on every render —
+  // defaultValues only seed the first mount.
+  React.useEffect(() => {
+    form.reset(buildDefaults(draft, mintableChainIds[0] ?? ""))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft])
 
   // Collections are per-chain: reload them (and clear the stale selection) when
   // the chosen chain changes.
@@ -210,6 +224,7 @@ export default function RegistrationDraftForm({
               </FormControl>
               <FormDescription>
                 Framed into the NFT artwork and pinned to IPFS on save.
+                {draft ? " Leave empty to keep the current image." : ""}
               </FormDescription>
               <FormMessage />
             </FormItem>
