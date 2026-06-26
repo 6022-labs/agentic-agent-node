@@ -42,7 +42,7 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "get_llm_connection_failed"
 // @Router /internal/config/llm [get]
 func (c *LLMConfigController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getLLMConnection.Execute(ctx.Context())
+	resp, err := c.getLLMConnection.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -64,7 +64,7 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.setupLLMConnection.Execute(ctx.Context(), body)
+	resp, err := c.setupLLMConnection.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -78,7 +78,7 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "delete_llm_connection_failed"
 // @Router /internal/config/llm [delete]
 func (c *LLMConfigController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deleteLLMConnection.Execute(ctx.Context()); err != nil {
+	if err := c.deleteLLMConnection.Execute(ctx.UserContext()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

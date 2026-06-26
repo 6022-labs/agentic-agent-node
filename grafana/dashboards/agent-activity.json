@@ -70,6 +70,31 @@
         "refresh": 2,
         "sort": 1,
         "hide": 0
+      },
+      {
+        "name": "ens",
+        "label": "ENS",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(agent_ens_domain)",
+          "refId": "ens"
+        },
+        "definition": "label_values(agent_ens_domain)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
       }
     ]
   },
@@ -108,7 +133,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(reasoning_response_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(reasoning_response_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -135,7 +160,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(reasoning_tool_calls_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum(rate(reasoning_tool_calls_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "tool calls"
         }
       ]
@@ -174,7 +199,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(identity_mint_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(identity_mint_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -201,7 +226,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(identity_registration_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(identity_registration_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -228,7 +253,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(identity_bootstrap_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(identity_bootstrap_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -255,7 +280,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(identity_ens_published_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(identity_ens_published_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -282,7 +307,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(identity_authorization_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(identity_authorization_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -321,7 +346,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(payment_settlement_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (outcome) (rate(payment_settlement_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{outcome}}"
         }
       ]
@@ -348,7 +373,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (network) (rate(payment_settlement_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (network) (rate(payment_settlement_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{network}}"
         }
       ]
@@ -387,7 +412,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(knowledge_conversation_started_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum(rate(knowledge_conversation_started_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "conversations"
         }
       ]
@@ -414,7 +439,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (role) (rate(knowledge_message_appended_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (role) (rate(knowledge_message_appended_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{role}}"
         }
       ]

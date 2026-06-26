@@ -39,7 +39,7 @@ func (c *PaymentPolicyController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Security BearerAuth
 // @Router /config/payment-policy [get]
 func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getPaymentPolicy.Execute(ctx.Context())
+	resp, err := c.getPaymentPolicy.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -55,7 +55,7 @@ func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/payment-policy [delete]
 func (c *PaymentPolicyController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deletePaymentPolicy.Execute(ctx.Context()); err != nil {
+	if err := c.deletePaymentPolicy.Execute(ctx.UserContext()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

@@ -33,6 +33,10 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(core_middlewares.NewAgentTelemetryContextMiddleware); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(func() common_metrics_interfaces.ApiRequestMetricsInterface {
 		return common_metrics.NewApiRequestMetrics("agentic_gateway_api")
 	}); err != nil {

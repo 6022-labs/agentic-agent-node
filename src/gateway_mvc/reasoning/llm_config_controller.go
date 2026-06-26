@@ -44,7 +44,7 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/llm [get]
 func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getLlmConfig.Execute(ctx.Context())
+	resp, err := c.getLlmConfig.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -67,7 +67,7 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.setLlmConfig.Execute(ctx.Context(), body)
+	resp, err := c.setLlmConfig.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -83,7 +83,7 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deleteLlmConfig.Execute(ctx.Context()); err != nil {
+	if err := c.deleteLlmConfig.Execute(ctx.UserContext()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

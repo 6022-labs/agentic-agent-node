@@ -49,7 +49,7 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Security BearerAuth
 // @Router /config/mcp-connections [get]
 func (c *McpConfigController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listMcpConnections.Execute(ctx.Context())
+	resp, err := c.listMcpConnections.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -72,7 +72,7 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.createMcpConnection.Execute(ctx.Context(), body)
+	resp, err := c.createMcpConnection.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -94,7 +94,7 @@ func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("id", "must be a valid uuid"))
 	}
-	if err := c.deleteMcpConnection.Execute(ctx.Context(), id); err != nil {
+	if err := c.deleteMcpConnection.Execute(ctx.UserContext(), id); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

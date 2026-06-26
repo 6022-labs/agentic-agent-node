@@ -54,7 +54,7 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "list_mcp_connections_failed"
 // @Router /internal/config/mcp [get]
 func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listMCPConnections.Execute(ctx.Context())
+	resp, err := c.listMCPConnections.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -76,7 +76,7 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.createMCPConnection.Execute(ctx.Context(), body)
+	resp, err := c.createMCPConnection.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -98,7 +98,7 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	resp, err := c.getMCPConnection.Execute(ctx.Context(), id)
+	resp, err := c.getMCPConnection.Execute(ctx.UserContext(), id)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -126,7 +126,7 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updateMCPConnection.Execute(ctx.Context(), id, body)
+	resp, err := c.updateMCPConnection.Execute(ctx.UserContext(), id, body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -146,7 +146,7 @@ func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	if err := c.deleteMCPConnection.Execute(ctx.Context(), id); err != nil {
+	if err := c.deleteMCPConnection.Execute(ctx.UserContext(), id); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

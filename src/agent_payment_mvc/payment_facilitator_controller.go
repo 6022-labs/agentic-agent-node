@@ -27,7 +27,7 @@ func (c *PaymentFacilitatorController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.PaymentFacilitatorsResponse
 // @Router /internal/config/payment-facilitators [get]
 func (c *PaymentFacilitatorController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getPaymentFacilitators.Execute(ctx.Context())
+	resp, err := c.getPaymentFacilitators.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

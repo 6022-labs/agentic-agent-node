@@ -46,7 +46,7 @@ func (c *PaymentRuleController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "list_payment_rules_failed"
 // @Router /internal/config/payment-policy/rules [get]
 func (c *PaymentRuleController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listPaymentRules.Execute(ctx.Context())
+	resp, err := c.listPaymentRules.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -68,7 +68,7 @@ func (c *PaymentRuleController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.createPaymentRule.Execute(ctx.Context(), body)
+	resp, err := c.createPaymentRule.Execute(ctx.UserContext(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -96,7 +96,7 @@ func (c *PaymentRuleController) Update(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updatePaymentRule.Execute(ctx.Context(), id, body)
+	resp, err := c.updatePaymentRule.Execute(ctx.UserContext(), id, body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -116,7 +116,7 @@ func (c *PaymentRuleController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_id", "message": err.Error()})
 	}
-	if err := c.deletePaymentRule.Execute(ctx.Context(), id); err != nil {
+	if err := c.deletePaymentRule.Execute(ctx.UserContext(), id); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

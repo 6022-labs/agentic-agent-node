@@ -39,6 +39,7 @@ type registerRoutesParams struct {
 
 	App            *fiber.App
 	Logger         *zap.Logger
+	AgentTelemetry *middlewares.AgentTelemetryContextMiddleware
 	JwtAuth        *middlewares.JwtAuthMiddleware
 	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
 	Controllers    []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
@@ -50,6 +51,7 @@ func registerRoutes(p registerRoutesParams) {
 		AllowHeaders: "*",
 	}))
 
+	p.App.Use(p.AgentTelemetry.Handle)
 	p.App.Use(p.RequestMetrics.Handle)
 
 	p.App.Use(fiberzap.New(fiberzap.Config{

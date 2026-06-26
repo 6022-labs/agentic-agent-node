@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/observability"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -89,6 +90,7 @@ func ConfigureTelemetry(container *dig.Container, serviceName string) func(conte
 		}
 
 		tp := sdktrace.NewTracerProvider(
+			sdktrace.WithSpanProcessor(observability.NewAgentIdentitySpanProcessor()),
 			sdktrace.WithBatcher(traceExporter),
 			sdktrace.WithResource(res),
 		)
@@ -104,7 +106,8 @@ func ConfigureTelemetry(container *dig.Container, serviceName string) func(conte
 		)
 
 		otel.SetTracerProvider(tp)
-		otel.SetMeterProvider(mp)
+		// Wrap the meter provider so sync measurements inherit the ctx agent identity.
+		otel.SetMeterProvider(observability.NewAgentIdentityMeterProvider(mp))
 		logglobal.SetLoggerProvider(lp)
 		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},

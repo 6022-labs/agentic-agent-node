@@ -34,6 +34,7 @@ metrics_generator:
     span_metrics:
       dimensions:
         - agent.node.id
+        - agent.ens.domain
         - service.instance.id
 
 # Enables the generator processors per-tenant.

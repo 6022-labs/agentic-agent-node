@@ -47,7 +47,7 @@ func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map "list_failed"
 // @Router /internal/conversations [get]
 func (c *ConversationMessagesController) ListConversations(ctx *fiber.Ctx) error {
-	resp, err := c.listConversations.Execute(ctx.Context())
+	resp, err := c.listConversations.Execute(ctx.UserContext())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -77,7 +77,7 @@ func (c *ConversationMessagesController) Append(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 
-	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
+	resp, err := c.appendConversationMessages.Execute(ctx.UserContext(), conversationId, body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -99,7 +99,7 @@ func (c *ConversationMessagesController) List(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
-	resp, err := c.listConversationMessages.Execute(ctx.Context(), conversationId)
+	resp, err := c.listConversationMessages.Execute(ctx.UserContext(), conversationId)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

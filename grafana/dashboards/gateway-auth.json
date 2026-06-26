@@ -71,6 +71,31 @@
         "refresh": 2,
         "sort": 1,
         "hide": 0
+      },
+      {
+        "name": "ens",
+        "label": "ENS",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(agent_ens_domain)",
+          "refId": "ens"
+        },
+        "definition": "label_values(agent_ens_domain)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
       }
     ]
   },
@@ -97,7 +122,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (service_name) (rate(gateway_auth_success_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (service_name) (rate(gateway_auth_success_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "success"
         }
       ]
@@ -124,7 +149,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (service_name) (rate(gateway_auth_failure_total{service_name=~\"$service\", agent_node_id=~\"$node\"}[5m]))",
+          "expr": "sum by (service_name) (rate(gateway_auth_failure_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "failure"
         }
       ]

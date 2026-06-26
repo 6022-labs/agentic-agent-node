@@ -1,6 +1,7 @@
 package configurations
 
 import (
+	identity_middlewares "github.com/6022-labs/agentic-agent-node/src/agent_identity_mvc/middlewares"
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
@@ -36,11 +37,13 @@ type registerRoutesParams struct {
 
 	App            *fiber.App
 	Logger         *zap.Logger
+	AgentTelemetry *identity_middlewares.AgentTelemetryContextMiddleware
 	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
 	Controllers    []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
+	p.App.Use(p.AgentTelemetry.Handle)
 	p.App.Use(p.RequestMetrics.Handle)
 
 	p.App.Use(fiberzap.New(fiberzap.Config{
