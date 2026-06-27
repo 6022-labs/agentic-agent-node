@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { normalizeEnsLabel } from "@/lib/ens-label"
 import { useAuth } from "@/contexts/auth-context"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import {
@@ -63,7 +64,13 @@ export default function CreateCollectionForm({ onFormComplete }: Props) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="my-agents" {...field} />
+                <Input
+                  placeholder="my-agents"
+                  {...field}
+                  onChange={(e) =>
+                    field.onChange(normalizeEnsLabel(e.target.value))
+                  }
+                />
               </FormControl>
               <FormDescription>
                 Also the collection's ENS label — lowercase, digits, hyphens.

@@ -20,7 +20,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 			ChainId:           "80002",
 			CollectionAddress: "  " + common_tests.RandomEthAddress().Hex() + "  ",
 			Owner:             common_tests.RandomEthAddress().Hex(),
-			Name:              "  Alice  ",
+			Name:              "my-agent",
 			Role:              identity_enums.AgentRoleExpert.String(),
 			AttributesRaw:     `{"specialty":"defi"}`,
 			Image:             newImageFileHeader(t, []byte("fake-image")),
@@ -37,7 +37,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 			err := req.ValidateAndSanitize()
 
 			assert.NoError(t, err)
-			assert.Equal(t, "Alice", req.Name)
+			assert.Equal(t, "my-agent", req.Name)
 			assert.NotContains(t, req.CollectionAddress, " ")
 			assert.Equal(t, map[string]string{"specialty": "defi"}, req.Attributes)
 		})
@@ -106,6 +106,21 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 			req.Name = "   "
 
 			assert.Error(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the name is not a valid ENS label", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			for _, name := range []string{"my_agent", "foo--bar", "-foo", "foo-"} {
+				req := generateSaveAgentRegistrationRequest(t)
+				req.Name = name
+
+				assert.Error(t, req.ValidateAndSanitize(), name)
+			}
 		})
 	})
 

@@ -3,6 +3,7 @@ package requests
 import (
 	"encoding/json"
 	"mime/multipart"
+	"regexp"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -10,6 +11,9 @@ import (
 )
 
 const maxImageBytes = 5 * 1024 * 1024
+
+// ensLabelCharsPattern mirrors ENSUtils.isValidENSName's character set; length and hyphen-position rules are checked alongside.
+var ensLabelCharsPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // SaveAgentRegistrationRequest is the multipart draft form. Owner is injected by
 // the gateway from the session; WalletAddress is never accepted (it's the
@@ -44,9 +48,12 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		return errors.NewValidationError("owner", "must be a 0x-prefixed 20-byte hex address")
 	}
 
-	r.Name = strings.TrimSpace(r.Name)
-	if len(r.Name) == 0 {
+	if len(strings.TrimSpace(r.Name)) == 0 {
 		return errors.NewValidationError("name", "must not be empty")
+	}
+	if len(r.Name) > 63 || r.Name[0] == '-' || r.Name[len(r.Name)-1] == '-' ||
+		strings.Contains(r.Name, "--") || !ensLabelCharsPattern.MatchString(r.Name) {
+		return errors.NewValidationError("name", "must be a valid ENS label: lowercase letters, digits and hyphens; no leading, trailing or repeated hyphens; 1-63 chars")
 	}
 
 	var role enums.AgentRole

@@ -31,6 +31,7 @@ import { saveAgentRegistration } from "@/queries/api/registration.queries"
 import { getMintableChainIds } from "@/configs/app-config"
 import { findEvmNetwork } from "@/models/networks"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
+import { normalizeEnsLabel } from "@/lib/ens-label"
 import {
   registrationDraftFormSchema,
   type RegistrationDraftFormSchemaType,
@@ -179,7 +180,13 @@ export default function RegistrationDraftForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="my-agent" {...field} />
+                <Input
+                  placeholder="my-agent"
+                  {...field}
+                  onChange={(e) =>
+                    field.onChange(normalizeEnsLabel(e.target.value))
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

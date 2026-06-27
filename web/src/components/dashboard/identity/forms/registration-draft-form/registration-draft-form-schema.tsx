@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { ensLabelSchema } from "@/lib/ens-label"
 import { AGENT_ROLES } from "@/models/enums/agent-role"
 
 export const registrationDraftFormSchema = z.object({
@@ -7,7 +8,7 @@ export const registrationDraftFormSchema = z.object({
   collectionAddress: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/, "Must be a 0x-prefixed address"),
-  name: z.string().min(1, "Name is required"),
+  name: ensLabelSchema,
   role: z.enum(AGENT_ROLES, { message: "Select a role" }),
   // The base image file the node frames into the NFT set, uploaded as multipart.
   // Optional on re-edit (omitting it keeps the stored image); the backend
