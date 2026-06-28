@@ -5,6 +5,7 @@ import (
 	core_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	core_settings "github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
 	core_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
+	identity_settings "github.com/6022-labs/agentic-agent-node/src/gateway/identity/settings"
 	identity_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	knowledge_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
@@ -26,6 +27,10 @@ func AddGatewayConfiguration(container *dig.Container) {
 
 func addCoreConfiguration(container *dig.Container) {
 	if err := container.Provide(core_settings.NewJwtSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(core_settings.NewGatewaySettings); err != nil {
 		panic(err)
 	}
 
@@ -61,6 +66,7 @@ func addCoreConfiguration(container *dig.Container) {
 		core_use_cases.NewGetAuthChallenge,
 		core_use_cases.NewVerifyAuth,
 		core_use_cases.NewGetBlockchainConfig,
+		core_use_cases.NewGetAgentCard,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {
@@ -70,6 +76,10 @@ func addCoreConfiguration(container *dig.Container) {
 }
 
 func addIdentityConfiguration(container *dig.Container) {
+	if err := container.Provide(identity_settings.NewAgentIdentitySettings); err != nil {
+		panic(err)
+	}
+
 	useCaseProviders := []any{
 		identity_use_cases.NewSaveAgentRegistration,
 		identity_use_cases.NewGetAgentRegistration,
@@ -141,6 +151,13 @@ func addReasoningConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		reasoning_use_cases.NewCreateResponse,
 		dig.As(new(reasoning_use_cases.CreateResponseInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		reasoning_use_cases.NewSendA2AMessage,
+		dig.As(new(reasoning_use_cases.SendA2AMessageInterface)),
 	); err != nil {
 		panic(err)
 	}

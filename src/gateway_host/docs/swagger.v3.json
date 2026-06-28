@@ -25,6 +25,17 @@
                 },
                 "type": "object"
             },
+            "errors.UnavailableError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "errors.ValidationError": {
                 "properties": {
                     "field": {
@@ -56,6 +67,73 @@
                     },
                     "price": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.A2AMessage": {
+                "properties": {
+                    "contextId": {
+                        "type": "string"
+                    },
+                    "messageId": {
+                        "type": "string"
+                    },
+                    "parts": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.A2APart"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.A2AMessageSendParams": {
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/requests.A2AMessage"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.A2AMethod": {
+                "enum": [
+                    "SendMessage"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "A2AMethodSendMessage"
+                ]
+            },
+            "requests.A2APart": {
+                "properties": {
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.A2ARequest": {
+                "properties": {
+                    "id": {
+                        "items": {
+                            "type": "integer"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "jsonrpc": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "$ref": "#/components/schemas/requests.A2AMethod"
+                    },
+                    "params": {
+                        "$ref": "#/components/schemas/requests.A2AMessageSendParams"
                     }
                 },
                 "type": "object"
@@ -226,6 +304,109 @@
                 },
                 "type": "object"
             },
+            "responses.A2AMessage": {
+                "properties": {
+                    "contextId": {
+                        "type": "string"
+                    },
+                    "messageId": {
+                        "type": "string"
+                    },
+                    "parts": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.A2APart"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.A2APart": {
+                "properties": {
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.A2AResponse": {
+                "properties": {
+                    "id": {
+                        "items": {
+                            "type": "integer"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "jsonrpc": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "$ref": "#/components/schemas/responses.SendMessageResult"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentCapabilities": {
+                "properties": {
+                    "pushNotifications": {
+                        "type": "boolean"
+                    },
+                    "streaming": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentCard": {
+                "properties": {
+                    "capabilities": {
+                        "$ref": "#/components/schemas/responses.AgentCapabilities"
+                    },
+                    "defaultInputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "defaultOutputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "skills": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.AgentSkill"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "supportedInterfaces": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.AgentInterface"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "responses.AgentCollectionResponse": {
                 "properties": {
                     "address": {
@@ -254,6 +435,20 @@
                         },
                         "type": "array",
                         "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentInterface": {
+                "properties": {
+                    "protocolBinding": {
+                        "type": "string"
+                    },
+                    "protocolVersion": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -307,6 +502,41 @@
                     },
                     "walletAddress": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentSkill": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "inputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "outputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "tags": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -746,6 +976,14 @@
                 },
                 "type": "object"
             },
+            "responses.SendMessageResult": {
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/responses.A2AMessage"
+                    }
+                },
+                "type": "object"
+            },
             "responses.Usage": {
                 "properties": {
                     "input_tokens": {
@@ -852,6 +1090,128 @@
         "url": ""
     },
     "paths": {
+        "/.well-known/agent-card.json": {
+            "get": {
+                "description": "A2A v1.0 discovery document (ProtoJSON), open/unauthenticated. supportedInterfaces advertises the SendMessage endpoint. Requires agent identity, so it errors until the node is registered.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentCard"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "Bad Gateway"
+                    }
+                },
+                "summary": "A2A agent card",
+                "tags": [
+                    "A2A"
+                ]
+            }
+        },
+        "/a2a": {
+            "post": {
+                "description": "JSON-RPC 2.0 \"SendMessage\" (A2A v1.0). Maps the message onto one inference turn and returns an immediate agent Message in result.message. x402-gated like /responses: send a PAYMENT-SIGNATURE header.",
+                "parameters": [
+                    {
+                        "description": "x402 v2 payment payload (base64 JSON)",
+                        "in": "header",
+                        "name": "PAYMENT-SIGNATURE",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.A2ARequest",
+                                        "summary": "request",
+                                        "description": "JSON-RPC SendMessage request"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "JSON-RPC SendMessage request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.A2AResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "402": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/x402.PaymentRequired"
+                                }
+                            }
+                        },
+                        "description": "Payment Required"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
+                    }
+                },
+                "summary": "A2A SendMessage (JSON-RPC)",
+                "tags": [
+                    "A2A"
+                ]
+            }
+        },
         "/agent/collections": {
             "get": {
                 "parameters": [

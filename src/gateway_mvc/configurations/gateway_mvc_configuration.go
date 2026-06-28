@@ -63,6 +63,7 @@ func addCoreConfiguration(container *dig.Container) {
 	provideController(container, core.NewHealthController)
 	provideController(container, core.NewAuthController)
 	provideController(container, core.NewConfigController)
+	provideController(container, core.NewWellKnownController)
 }
 
 func addIdentityConfiguration(container *dig.Container) {
@@ -121,6 +122,7 @@ func addReasoningConfiguration(container *dig.Container) {
 	provideController(container, reasoning.NewResponseController)
 	provideController(container, reasoning.NewLlmConfigController)
 	provideController(container, reasoning.NewMcpConfigController)
+	provideController(container, reasoning.NewA2AMessageController)
 }
 
 func provideController(container *dig.Container, ctor any) {
