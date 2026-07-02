@@ -10,8 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// GetAgentMintInfo assembles the mint() calldata + moderator state so the
-// connected wallet can submit the tx itself.
+// GetAgentMintInfo assembles the mint() calldata + moderator state so the connected wallet can submit the tx itself.
 type GetAgentMintInfo struct {
 	agentRepository          repositories.AgentRepositoryInterface
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface
@@ -56,7 +55,7 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 		To:                owner.Hex(),
 		Role:              agent.Role.String(),
 		Name:              agent.Name,
-		Wallets:           []string{agent.WalletAddress},
+		Addresses:         agent.Addresses,
 		Images:            responses.KeyValue{}.FromMap(agent.Images),
 		Attributes:        responses.KeyValue{}.FromMap(agent.Attributes),
 		CloneOf:           agent.CloneOf,

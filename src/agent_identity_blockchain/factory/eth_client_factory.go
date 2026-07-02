@@ -15,18 +15,18 @@ import (
 
 // EthClientFactory dials and caches one RPC client per chain for this adapter.
 type EthClientFactory struct {
-	chainsSettings *settings.ChainsSettings
+	evmChainsSettings *settings.EvmChainsSettings
 	rpcMetrics     metrics_interfaces.BlockchainRpcMetricsInterface
 	mu             sync.Mutex
 	clients        map[string]*ethclient.Client
 }
 
 func NewEthClientFactory(
-	chainsSettings *settings.ChainsSettings,
+	evmChainsSettings *settings.EvmChainsSettings,
 	rpcMetrics metrics_interfaces.BlockchainRpcMetricsInterface,
 ) *EthClientFactory {
 	return &EthClientFactory{
-		chainsSettings: chainsSettings,
+		evmChainsSettings: evmChainsSettings,
 		rpcMetrics:     rpcMetrics,
 		clients:        map[string]*ethclient.Client{},
 	}
@@ -40,7 +40,7 @@ func (f *EthClientFactory) For(chainId string) (*ethclient.Client, error) {
 	if client, ok := f.clients[chainId]; ok {
 		return client, nil
 	}
-	httpUrl, ok := f.chainsSettings.HttpUrlFor(chainId)
+	httpUrl, ok := f.evmChainsSettings.HttpUrlFor(chainId)
 	if !ok {
 		return nil, fmt.Errorf("no RPC configured for chain %s", chainId)
 	}

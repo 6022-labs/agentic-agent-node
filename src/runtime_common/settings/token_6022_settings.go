@@ -28,7 +28,7 @@ type token6022File struct {
 // creator's balance.
 type Token6022Settings map[string]common.Address
 
-func NewToken6022Settings(logger *zap.Logger, chainsSettings *ChainsSettings) *Token6022Settings {
+func NewToken6022Settings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *Token6022Settings {
 	var f token6022File
 	if err := json.Unmarshal(token6022Json, &f); err != nil {
 		logger.Fatal("failed to parse built-in token_6022.json", zap.Error(err))
@@ -38,7 +38,7 @@ func NewToken6022Settings(logger *zap.Logger, chainsSettings *ChainsSettings) *T
 	for _, t := range f.Tokens {
 		addr := strings.TrimSpace(t.Address)
 		chainId := strconv.FormatUint(t.ChainId, 10)
-		if len(addr) == 0 || !chainsSettings.Has(chainId) {
+		if len(addr) == 0 || !evmChainsSettings.Has(chainId) {
 			continue
 		}
 		settings[chainId] = common.HexToAddress(addr)

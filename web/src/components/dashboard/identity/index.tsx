@@ -290,14 +290,14 @@ export default function IdentitySection() {
                 label="Token id"
                 value={draft.tokenId != null ? `#${draft.tokenId}` : "—"}
               />
-              {draft.walletAddress ? (
+              {draft.addresses?.evm ? (
                 <Row
                   label="Agent wallet"
-                  value={draft.walletAddress}
+                  value={draft.addresses?.evm}
                   mono
                   href={getScannerAddressUrl(
                     draft.chainId,
-                    draft.walletAddress
+                    draft.addresses?.evm
                   )}
                 />
               ) : null}

@@ -19,16 +19,18 @@ type Agent struct {
 	CollectionAddress string  `gorm:"size:42" json:"collectionAddress"`
 	ProposalId        *uint64 `json:"proposalId"`
 
-	Name          string          `gorm:"not null;size:255" json:"name"`
-	CloneOf       *uint64         `json:"cloneOf"`
-	EnsDomain     string          `gorm:"not null;size:255" json:"ensDomain"`
-	Role          enums.AgentRole `gorm:"not null;size:32" json:"role"`
-	Creator       string          `gorm:"not null;size:42" json:"creator"`
-	WalletAddress string          `gorm:"not null;size:42" json:"walletAddress"`
-	Owner         *string         `gorm:"size:42" json:"owner"`
+	Name      string          `gorm:"not null;size:255" json:"name"`
+	CloneOf   *uint64         `json:"cloneOf"`
+	EnsDomain string          `gorm:"not null;size:255" json:"ensDomain"`
+	Role      enums.AgentRole `gorm:"not null;size:32" json:"role"`
+	Creator   string          `gorm:"not null;size:42" json:"creator"`
+	Owner     *string         `gorm:"size:42" json:"owner"`
 
 	Images     map[string]string `gorm:"serializer:json" json:"images"`
 	Attributes map[string]string `gorm:"serializer:json" json:"attributes"`
+
+	// Addresses are the agent's per-chain-family wallet addresses (keyed by AddressType), hydrated from agent_addresses on load, not a column.
+	Addresses map[enums.AddressType]string `gorm:"-" json:"addresses"`
 
 	UpdatedAt time.Time `gorm:"not null" json:"updatedAt"`
 	CreatedAt time.Time `gorm:"not null" json:"createdAt"`

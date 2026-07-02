@@ -28,7 +28,7 @@ type agentCollectionCreatorsFile struct {
 // chain present here is mintable.
 type AgentCollectionCreatorsSettings map[string]common.Address
 
-func NewAgentCollectionCreatorsSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentCollectionCreatorsSettings {
+func NewAgentCollectionCreatorsSettings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *AgentCollectionCreatorsSettings {
 	var f agentCollectionCreatorsFile
 	if err := json.Unmarshal(agentCollectionCreatorsJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collection_creators.json", zap.Error(err))
@@ -38,7 +38,7 @@ func NewAgentCollectionCreatorsSettings(logger *zap.Logger, chainsSettings *Chai
 	for _, c := range f.Creators {
 		addr := strings.TrimSpace(c.Address)
 		chainId := strconv.FormatUint(c.ChainId, 10)
-		if len(addr) == 0 || !chainsSettings.Has(chainId) {
+		if len(addr) == 0 || !evmChainsSettings.Has(chainId) {
 			continue
 		}
 		settings[chainId] = common.HexToAddress(addr)

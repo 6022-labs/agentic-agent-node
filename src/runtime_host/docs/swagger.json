@@ -1334,6 +1334,12 @@
         "responses.AgentRegistrationResponse": {
             "type": "object",
             "properties": {
+                "addresses": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "attributes": {
                     "type": "object",
                     "additionalProperties": {
@@ -1378,9 +1384,6 @@
                 },
                 "tokenId": {
                     "type": "integer"
-                },
-                "walletAddress": {
-                    "type": "string"
                 }
             }
         },
@@ -1673,6 +1676,12 @@
         "responses.MintInfoResponse": {
             "type": "object",
             "properties": {
+                "addresses": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "attributes": {
                     "type": "array",
                     "items": {
@@ -1705,12 +1714,6 @@
                 },
                 "to": {
                     "type": "string"
-                },
-                "wallets": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

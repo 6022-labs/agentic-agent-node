@@ -65,7 +65,7 @@ func (s *AgentChainRecoverer) Recover(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String())
+	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
 	if err != nil {
 		return false, err
 	}
@@ -78,7 +78,7 @@ func (s *AgentChainRecoverer) Recover(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	if err := s.recoverMintedAgent(ctx, agent, cred.Address, collection, tokenId, chainId); err != nil {
+	if err := s.recoverMintedAgent(ctx, agent, collection, tokenId, chainId); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -103,7 +103,6 @@ func (s *AgentChainRecoverer) findOnChain(wallet common.Address) (common.Address
 func (s *AgentChainRecoverer) recoverMintedAgent(
 	ctx context.Context,
 	agent *models.Agent,
-	walletAddress string,
 	collection common.Address,
 	tokenId uint64,
 	chainId string,
@@ -126,7 +125,6 @@ func (s *AgentChainRecoverer) recoverMintedAgent(
 	agent.CloneOf = info.CloneOf
 	agent.EnsDomain = s.ensDomainBuilder.Build(info.Name, collectionName, chainId)
 	agent.Role = role
-	agent.WalletAddress = walletAddress
 	agent.Images = info.Images
 	agent.Attributes = info.Attributes
 

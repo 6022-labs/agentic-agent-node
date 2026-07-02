@@ -300,6 +300,10 @@ components:
       type: object
     responses.AgentRegistrationResponse:
       properties:
+        addresses:
+          additionalProperties:
+            type: string
+          type: object
         attributes:
           additionalProperties:
             type: string
@@ -330,8 +334,6 @@ components:
           type: string
         tokenId:
           type: integer
-        walletAddress:
-          type: string
       type: object
     responses.AgentSkill:
       properties:
@@ -535,6 +537,10 @@ components:
       type: object
     responses.MintInfoResponse:
       properties:
+        addresses:
+          additionalProperties:
+            type: string
+          type: object
         attributes:
           items:
             $ref: '#/components/schemas/responses.KeyValue'
@@ -559,11 +565,6 @@ components:
           type: string
         to:
           type: string
-        wallets:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
       type: object
     responses.OutputContent:
       properties:

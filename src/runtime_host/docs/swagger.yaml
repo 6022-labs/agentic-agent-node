@@ -173,6 +173,10 @@ definitions:
     type: object
   responses.AgentRegistrationResponse:
     properties:
+      addresses:
+        additionalProperties:
+          type: string
+        type: object
       attributes:
         additionalProperties:
           type: string
@@ -203,8 +207,6 @@ definitions:
         type: string
       tokenId:
         type: integer
-      walletAddress:
-        type: string
     type: object
   responses.AppendConversationMessagesResponse:
     properties:
@@ -393,6 +395,10 @@ definitions:
     type: object
   responses.MintInfoResponse:
     properties:
+      addresses:
+        additionalProperties:
+          type: string
+        type: object
       attributes:
         items:
           $ref: '#/definitions/responses.KeyValue'
@@ -415,10 +421,6 @@ definitions:
         type: string
       to:
         type: string
-      wallets:
-        items:
-          type: string
-        type: array
     type: object
   responses.OutputContent:
     properties:

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
@@ -16,7 +18,8 @@ import (
 type WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite struct {
 	sut *identity_services.WalletCredentialsStorage
 
-	mockStorage *runtime_common_mocks.MockSecretStorageInterface
+	mockStorage   *runtime_common_mocks.MockSecretStorageInterface
+	mockGenerator *identity_mocks.MockAddressKeyGeneratorInterface
 }
 
 func WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite {
@@ -26,17 +29,24 @@ func WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t *testing.T) *When
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
 	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
+	mockGenerator := identity_mocks.NewMockAddressKeyGeneratorInterface(mockController)
+	mockGenerator.EXPECT().Type().Return(enums.AddressTypeEvm).AnyTimes()
 
 	return &WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite{
-		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
-		mockStorage: mockStorage,
+		sut: identity_services.NewWalletCredentialsStorage(identity_services.NewWalletCredentialsStorageParams{
+			Storage:               mockStorage,
+			AgentScopedKeyBuilder: mockAgentScopedKeyBuilder,
+			Generators:            []identity_interfaces.AddressKeyGeneratorInterface{mockGenerator},
+		}),
+		mockStorage:   mockStorage,
+		mockGenerator: mockGenerator,
 	}
 }
 
 func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
-	const scopedKey = "scope/wallet"
+	const scopedKey = "scope/wallet/evm"
 
 	t.Run("Given a wallet already exists", func(t *testing.T) {
 		t.Parallel()
@@ -48,13 +58,13 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 			}, nil)
 		}
 
-		t.Run("Should return it without writing", func(t *testing.T) {
+		t.Run("Should return it without generating or writing", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
+			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "0xaddr", cred.Address)
@@ -66,20 +76,43 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
-			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(nil)
+			suite.mockGenerator.EXPECT().Generate().Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).Times(1)
+			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, map[string]string{
+				"privateKey": "0xnewpk",
+				"address":    "0xnewaddr",
+			}).Return(nil)
 		}
 
-		t.Run("Should generate a new wallet and persist it", func(t *testing.T) {
+		t.Run("Should generate a new wallet via the matching generator and persist it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
+			cred, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.NoError(t, err)
-			assert.NotEmpty(t, cred.PrivateKeyHex)
-			assert.NotEmpty(t, cred.Address)
+			assert.Equal(t, "0xnewpk", cred.PrivateKeyHex)
+			assert.Equal(t, "0xnewaddr", cred.Address)
+		})
+	})
+
+	t.Run("Given no generator is registered for the address type", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
+			suite.mockStorage.EXPECT().Read(gomock.Any(), "scope/wallet/btc").Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+		}
+
+		t.Run("Should error without generating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeBtc)
+
+			assert.ErrorContains(t, err, "no key generator")
 		})
 	})
 
@@ -88,6 +121,7 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
 			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockGenerator.EXPECT().Generate().Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).Times(1)
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(errors.New("vault down"))
 		}
 
@@ -97,7 +131,7 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1")
+			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.ErrorContains(t, err, "vault down")
 		})

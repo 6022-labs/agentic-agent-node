@@ -8,14 +8,14 @@ type KeyValue struct {
 
 // MintInfoResponse is the gateway-shaped mint() calldata + moderator state.
 type MintInfoResponse struct {
-	CollectionAddress string     `json:"collectionAddress"`
-	To                string     `json:"to"`
-	Role              string     `json:"role"`
-	Name              string     `json:"name"`
-	Wallets           []string   `json:"wallets"`
-	Images            []KeyValue `json:"images"`
-	Attributes        []KeyValue `json:"attributes"`
-	CloneOf           *uint64    `json:"cloneOf"`
-	ModeratorCount    uint64     `json:"moderatorCount"`
-	OwnerIsModerator  bool       `json:"ownerIsModerator"`
+	CollectionAddress string            `json:"collectionAddress"`
+	To                string            `json:"to"`
+	Role              string            `json:"role"`
+	Name              string            `json:"name"`
+	Addresses         map[string]string `json:"addresses"`
+	Images            []KeyValue        `json:"images"`
+	Attributes        []KeyValue        `json:"attributes"`
+	CloneOf           *uint64           `json:"cloneOf"`
+	ModeratorCount    uint64            `json:"moderatorCount"`
+	OwnerIsModerator  bool              `json:"ownerIsModerator"`
 }

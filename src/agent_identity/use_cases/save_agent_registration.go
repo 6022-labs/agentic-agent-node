@@ -32,7 +32,7 @@ type SaveAgentRegistration struct {
 	ipfsFileStorage                  identity_interfaces.IPFSFileStorageInterface
 	token6022Requester               identity_interfaces.Token6022RequesterInterface
 	ensDomainBuilder                 identity_interfaces.EnsDomainBuilderInterface
-	chainsSettings                   *runtime_common_settings.ChainsSettings
+	evmChainsSettings                   *runtime_common_settings.EvmChainsSettings
 	agentCollectionCreatorsSettings  *runtime_common_settings.AgentCollectionCreatorsSettings
 }
 
@@ -46,7 +46,7 @@ func NewSaveAgentRegistration(
 	ipfsFileStorage identity_interfaces.IPFSFileStorageInterface,
 	token6022Requester identity_interfaces.Token6022RequesterInterface,
 	ensDomainBuilder identity_interfaces.EnsDomainBuilderInterface,
-	chainsSettings *runtime_common_settings.ChainsSettings,
+	evmChainsSettings *runtime_common_settings.EvmChainsSettings,
 	agentCollectionCreatorsSettings *runtime_common_settings.AgentCollectionCreatorsSettings,
 ) *SaveAgentRegistration {
 	return &SaveAgentRegistration{
@@ -59,7 +59,7 @@ func NewSaveAgentRegistration(
 		ipfsFileStorage:                  ipfsFileStorage,
 		token6022Requester:               token6022Requester,
 		ensDomainBuilder:                 ensDomainBuilder,
-		chainsSettings:                   chainsSettings,
+		evmChainsSettings:                   evmChainsSettings,
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 	}
 }
@@ -70,7 +70,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	}
 
 	// Identity-capable = reachable + a creator is deployed.
-	if !u.chainsSettings.Has(req.ChainId) {
+	if !u.evmChainsSettings.Has(req.ChainId) {
 		return nil, errors.NewValidationError("chainId", "node has no RPC for this chain")
 	}
 	if _, ok := u.agentCollectionCreatorsSettings.AddressFor(req.ChainId); !ok {
@@ -95,14 +95,6 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet")
 	}
 
-	cred, found, err := u.walletCredentialsStorage.GetForId(ctx, existing.Id.String())
-	if err != nil {
-		return nil, errors.NewInternalError("wallet_lookup_failed", err.Error())
-	}
-	if !found {
-		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet")
-	}
-
 	collectionName, err := u.agentCollectionRequester.CollectionName(req.ChainId, collection)
 	if err != nil {
 		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
@@ -120,7 +112,6 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		EnsDomain:         u.ensDomainBuilder.Build(req.Name, collectionName, req.ChainId),
 		Role:              role,
 		Creator:           owner,
-		WalletAddress:     cred.Address,
 		Owner:             &owner,
 		Attributes:        req.Attributes,
 	}
@@ -128,7 +119,7 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	agent.CollectionTokenId = existing.CollectionTokenId
 	agent.ProposalId = existing.ProposalId
 
-	agent.Images, err = u.resolveImages(agent, existing, common.HexToAddress(owner), cred.Address, req.Image)
+	agent.Images, err = u.resolveImages(agent, existing, common.HexToAddress(owner), req.Image)
 	if err != nil {
 		return nil, err
 	}
@@ -158,9 +149,9 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	return resp, nil
 }
 
-func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, creator common.Address, wallet string, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
 	if baseImage != nil {
-		return u.buildImages(agent, creator, wallet, baseImage)
+		return u.buildImages(agent, creator, baseImage)
 	}
 	if len(existing.Images) > 0 {
 		return existing.Images, nil
@@ -170,7 +161,14 @@ func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, cre
 
 // buildImages frames the uploaded base image, pins each rendered variant to
 // IPFS, and returns the CID per image key (what the mint stores on-chain).
-func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.Address, wallet string, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
+	wallets := []string{}
+	for _, addressType := range enums.GetAllAddressTypes() {
+		if address := agent.Addresses[addressType]; address != "" {
+			wallets = append(wallets, address)
+		}
+	}
+
 	baseBytes, err := readMultipartFile(baseImage)
 	if err != nil {
 		return nil, errors.NewValidationError("image", "could not read uploaded image: "+err.Error())
@@ -189,7 +187,7 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.
 		Creator:           creator.Hex(),
 		BaseImageBytes:    baseBytes,
 		BaseImageMimeType: mimeType,
-		Wallets:           []string{wallet},
+		Wallets:           wallets,
 		CreatedAt:         time.Now(),
 		Stars:             stars,
 	})
@@ -199,7 +197,7 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.
 
 	images := make(map[string]string, len(generated))
 	for key, bytes := range generated {
-		cid, err := u.ipfsFileStorage.UploadFile(bytes, wallet)
+		cid, err := u.ipfsFileStorage.UploadFile(bytes, agent.EnsDomain)
 		if err != nil {
 			return nil, errors.NewUnavailableError("image_upload_failed", err.Error())
 		}
@@ -213,7 +211,7 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.
 // (chains that fail to read are skipped).
 func (u *SaveAgentRegistration) computeStars(creator common.Address) (uint8, error) {
 	total := new(big.Int)
-	for _, chainId := range u.chainsSettings.ChainIds() {
+	for _, chainId := range u.evmChainsSettings.ChainIds() {
 		balance, err := u.token6022Requester.BalanceOf(chainId, creator)
 		if err != nil {
 			continue

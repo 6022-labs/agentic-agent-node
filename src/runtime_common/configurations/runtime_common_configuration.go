@@ -13,7 +13,8 @@ import (
 // blockchain adapter owns its own RPC clients.
 func AddRuntimeCommonConfiguration(container *dig.Container) {
 	settingsProviders := []any{
-		settings.NewChainsSettings,
+		settings.NewEvmChainsSettings,
+		settings.NewBtcChainsSettings,
 		settings.NewAgentCollectionsManagersSettings,
 		settings.NewAgentCollectionCreatorsSettings,
 		settings.NewToken6022Settings,

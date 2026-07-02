@@ -70,7 +70,7 @@ export default function EnsStep({ draft, onClose }: Props) {
 
     setBusy(true)
     try {
-      if (await ensureGas(draft.walletAddress, amount, wallet)) {
+      if (await ensureGas(draft.addresses?.evm, amount, wallet)) {
         toast.success("Gas sent to the agent wallet")
       }
       await selfRegisterAgent()

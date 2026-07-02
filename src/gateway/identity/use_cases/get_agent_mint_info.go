@@ -30,7 +30,7 @@ func (u *GetAgentMintInfo) toResponse(p *models.ExternalMintInfoPayload) *respon
 		To:                p.To,
 		Role:              p.Role,
 		Name:              p.Name,
-		Wallets:           p.Wallets,
+		Addresses:         p.Addresses,
 		Images:            u.toKeyValues(p.Images),
 		Attributes:        u.toKeyValues(p.Attributes),
 		CloneOf:           p.CloneOf,

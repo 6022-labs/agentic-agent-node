@@ -27,7 +27,7 @@ type agentEnsRegistriesFile struct {
 // chain id (inner join of the built-in registry and the configured chains).
 type AgentEnsRegistriesSettings map[string]common.Address
 
-func NewAgentEnsRegistriesSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentEnsRegistriesSettings {
+func NewAgentEnsRegistriesSettings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *AgentEnsRegistriesSettings {
 	var f agentEnsRegistriesFile
 	if err := json.Unmarshal(agentEnsRegistriesJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_ens_registries.json", zap.Error(err))
@@ -37,7 +37,7 @@ func NewAgentEnsRegistriesSettings(logger *zap.Logger, chainsSettings *ChainsSet
 	for _, w := range f.Registries {
 		addr := strings.TrimSpace(w.Address)
 		chainId := strconv.FormatUint(w.ChainId, 10)
-		if len(addr) == 0 || !chainsSettings.Has(chainId) {
+		if len(addr) == 0 || !evmChainsSettings.Has(chainId) {
 			continue
 		}
 		settings[chainId] = common.HexToAddress(addr)

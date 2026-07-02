@@ -49,7 +49,7 @@ func (s *MintPublisher) SelfMint(
 	agent *models.Agent,
 	state *models.AgentRegistrationState,
 ) (*identity_interfaces.MintResult, error) {
-	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String())
+	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
 	if err != nil {
 		return nil, fmt.Errorf("load node wallet: %w", err)
 	}
@@ -109,7 +109,7 @@ func (s *MintPublisher) createMint(
 }
 
 func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Agent) (common.Address, uint64, error) {
-	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String())
+	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
 	if err != nil {
 		return common.Address{}, 0, fmt.Errorf("load node wallet: %w", err)
 	}

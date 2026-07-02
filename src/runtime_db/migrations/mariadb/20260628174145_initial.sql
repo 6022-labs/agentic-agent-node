@@ -11,13 +11,21 @@ CREATE TABLE `agents` (
   `ens_domain` varchar(255) NOT NULL,
   `role` varchar(32) NOT NULL,
   `creator` varchar(42) NOT NULL,
-  `wallet_address` varchar(42) NOT NULL,
   `owner` varchar(42) NULL,
   `images` longtext NULL,
   `attributes` longtext NULL,
   `updated_at` datetime(3) NOT NULL,
   `created_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+-- create "agent_addresses" table
+CREATE TABLE `agent_addresses` (
+  `agent_id` varchar(36) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `address` varchar(90) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `created_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`agent_id`, `type`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "agent_registration_states" table
 CREATE TABLE `agent_registration_states` (
@@ -145,5 +153,7 @@ DROP TABLE `conversation_messages`;
 DROP TABLE `conversations`;
 -- reverse: create "agent_registration_states" table
 DROP TABLE `agent_registration_states`;
+-- reverse: create "agent_addresses" table
+DROP TABLE `agent_addresses`;
 -- reverse: create "agents" table
 DROP TABLE `agents`;

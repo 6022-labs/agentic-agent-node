@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,9 +43,9 @@ func (m *MockWalletCredentialsStorageInterface) EXPECT() *MockWalletCredentialsS
 }
 
 // GetForId mocks base method.
-func (m *MockWalletCredentialsStorageInterface) GetForId(ctx context.Context, agentId string) (*interfaces.WalletCredentials, bool, error) {
+func (m *MockWalletCredentialsStorageInterface) GetForId(ctx context.Context, agentId string, addressType enums.AddressType) (*interfaces.WalletCredentials, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetForId", ctx, agentId)
+	ret := m.ctrl.Call(m, "GetForId", ctx, agentId, addressType)
 	ret0, _ := ret[0].(*interfaces.WalletCredentials)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -52,36 +53,36 @@ func (m *MockWalletCredentialsStorageInterface) GetForId(ctx context.Context, ag
 }
 
 // GetForId indicates an expected call of GetForId.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetForId(ctx, agentId any) *gomock.Call {
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetForId(ctx, agentId, addressType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetForId), ctx, agentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetForId), ctx, agentId, addressType)
 }
 
 // GetOrGenerateForId mocks base method.
-func (m *MockWalletCredentialsStorageInterface) GetOrGenerateForId(ctx context.Context, agentId string) (*interfaces.WalletCredentials, error) {
+func (m *MockWalletCredentialsStorageInterface) GetOrGenerateForId(ctx context.Context, agentId string, addressType enums.AddressType) (*interfaces.WalletCredentials, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrGenerateForId", ctx, agentId)
+	ret := m.ctrl.Call(m, "GetOrGenerateForId", ctx, agentId, addressType)
 	ret0, _ := ret[0].(*interfaces.WalletCredentials)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrGenerateForId indicates an expected call of GetOrGenerateForId.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetOrGenerateForId(ctx, agentId any) *gomock.Call {
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) GetOrGenerateForId(ctx, agentId, addressType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrGenerateForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetOrGenerateForId), ctx, agentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrGenerateForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).GetOrGenerateForId), ctx, agentId, addressType)
 }
 
 // SaveForId mocks base method.
-func (m *MockWalletCredentialsStorageInterface) SaveForId(ctx context.Context, agentId string, cred *interfaces.WalletCredentials) error {
+func (m *MockWalletCredentialsStorageInterface) SaveForId(ctx context.Context, agentId string, addressType enums.AddressType, cred *interfaces.WalletCredentials) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveForId", ctx, agentId, cred)
+	ret := m.ctrl.Call(m, "SaveForId", ctx, agentId, addressType, cred)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveForId indicates an expected call of SaveForId.
-func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) SaveForId(ctx, agentId, cred any) *gomock.Call {
+func (mr *MockWalletCredentialsStorageInterfaceMockRecorder) SaveForId(ctx, agentId, addressType, cred any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).SaveForId), ctx, agentId, cred)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveForId", reflect.TypeOf((*MockWalletCredentialsStorageInterface)(nil).SaveForId), ctx, agentId, addressType, cred)
 }

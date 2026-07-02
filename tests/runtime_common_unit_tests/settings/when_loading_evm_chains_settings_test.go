@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestWhenLoadingChainsSettings(t *testing.T) {
+func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given configured chains", func(t *testing.T) {
@@ -18,7 +18,7 @@ func TestWhenLoadingChainsSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"blockchain.chains": map[string]any{
+			"blockchain.evm_chains": map[string]any{
 				"80002": map[string]any{"http_url": "https://rpc-amoy.polygon.technology"},
 				"84532": map[string]any{"http_url": "https://sepolia.base.org"},
 			},
@@ -27,7 +27,7 @@ func TestWhenLoadingChainsSettings(t *testing.T) {
 		t.Run("Should resolve http urls and list the chain ids in order", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewChainsSettings(zap.NewNop(), k)
+			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
 
 			assert.True(t, result.Has("80002"))
 			assert.True(t, result.Has("84532"))
@@ -50,7 +50,7 @@ func TestWhenLoadingChainsSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"blockchain.chains": map[string]any{
+			"blockchain.evm_chains": map[string]any{
 				"80002": map[string]any{"http_url": "https://rpc-amoy.polygon.technology"},
 			},
 		}, "."), nil)
@@ -58,7 +58,7 @@ func TestWhenLoadingChainsSettings(t *testing.T) {
 		t.Run("Should report it as not reachable", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewChainsSettings(zap.NewNop(), k)
+			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
 
 			httpUrl, ok := result.HttpUrlFor("1")
 			assert.False(t, ok)
