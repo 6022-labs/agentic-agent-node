@@ -99,6 +99,17 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	keyGenerators := []any{services.NewEvmKeyGenerator, services.NewBtcKeyGenerator}
+	for _, keyGenerator := range keyGenerators {
+		if err := container.Provide(
+			keyGenerator,
+			dig.Group("address_key_generators"),
+			dig.As(new(identity_interfaces.AddressKeyGeneratorInterface)),
+		); err != nil {
+			panic(err)
+		}
+	}
+
 	if err := container.Provide(
 		services.NewAgentChainRecoverer,
 		dig.As(new(identity_interfaces.AgentChainRecovererInterface)),

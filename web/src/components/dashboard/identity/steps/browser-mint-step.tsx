@@ -5,7 +5,10 @@ import { Hourglass, RefreshCw, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
-import type { AgentRegistration } from "@/models/agent-registration"
+import {
+  orderedAddresses,
+  type AgentRegistration,
+} from "@/models/agent-registration"
 import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
 import {
   checkAgentMint,
@@ -48,7 +51,7 @@ export default function BrowserMintStep({
         to: info.to,
         role: info.role,
         name: info.name,
-        wallets: info.wallets,
+        wallets: orderedAddresses(info.addresses),
         images: info.images,
         attributes: info.attributes,
         cloneOf: info.cloneOf,

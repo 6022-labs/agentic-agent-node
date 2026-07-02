@@ -16,7 +16,7 @@ const maxImageBytes = 5 * 1024 * 1024
 var ensLabelCharsPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // SaveAgentRegistrationRequest is the multipart draft form. Owner is injected by
-// the gateway from the session; WalletAddress is never accepted (it's the
+// the gateway from the session; Addresses are never accepted (it's the
 // node's). Image is the single base image the node frames into the NFT set;
 // Attributes arrives as a JSON object string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {

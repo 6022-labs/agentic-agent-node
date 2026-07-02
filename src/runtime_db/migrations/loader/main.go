@@ -25,6 +25,7 @@ func main() {
 
 		&agent_identity_models.Agent{},
 		&agent_identity_models.AgentRegistrationState{},
+		&agent_identity_models.AgentAddress{},
 
 		&paymentPolicyWithCrossDomainFK{},
 		&agent_payment_models.PaymentRule{},

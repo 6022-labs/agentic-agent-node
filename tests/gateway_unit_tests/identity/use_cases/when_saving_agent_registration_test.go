@@ -66,6 +66,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{
+				ChainId:           "80002",
 				CollectionAddress: "0x2222222222222222222222222222222222222222",
 				Name:              "Alice",
 				Role:              "assistant",
@@ -94,6 +95,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{
+				ChainId:           "80002",
 				CollectionAddress: "0x2222222222222222222222222222222222222222",
 				Name:              "Alice",
 				Role:              "assistant",

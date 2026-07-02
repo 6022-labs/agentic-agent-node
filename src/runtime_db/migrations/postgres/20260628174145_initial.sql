@@ -1,4 +1,13 @@
 -- +goose Up
+-- create "agent_addresses" table
+CREATE TABLE "public"."agent_addresses" (
+  "agent_id" character varying(36) NOT NULL,
+  "type" character varying(16) NOT NULL,
+  "address" character varying(90) NOT NULL,
+  "updated_at" timestamptz NOT NULL,
+  "created_at" timestamptz NOT NULL,
+  PRIMARY KEY ("agent_id", "type")
+);
 -- create "agents" table
 CREATE TABLE "public"."agents" (
   "id" character varying(36) NOT NULL,
@@ -11,7 +20,6 @@ CREATE TABLE "public"."agents" (
   "ens_domain" character varying(255) NOT NULL,
   "role" character varying(32) NOT NULL,
   "creator" character varying(42) NOT NULL,
-  "wallet_address" character varying(42) NOT NULL,
   "owner" character varying(42) NULL,
   "images" text NULL,
   "attributes" text NULL,
@@ -171,3 +179,5 @@ DROP INDEX "public"."idx_agent_registration_states_agent_id";
 DROP TABLE "public"."agent_registration_states";
 -- reverse: create "agents" table
 DROP TABLE "public"."agents";
+-- reverse: create "agent_addresses" table
+DROP TABLE "public"."agent_addresses";

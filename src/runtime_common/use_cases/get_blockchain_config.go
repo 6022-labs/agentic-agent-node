@@ -13,7 +13,7 @@ import (
 // GetBlockchainConfig assembles, per reachable chain, the contract addresses and
 // facilitator network the owner UI configures itself from.
 type GetBlockchainConfig struct {
-	chainsSettings                   *settings.ChainsSettings
+	evmChainsSettings                   *settings.EvmChainsSettings
 	agentCollectionsManagersSettings *settings.AgentCollectionsManagersSettings
 	agentCollectionCreatorsSettings  *settings.AgentCollectionCreatorsSettings
 	token6022Settings                *settings.Token6022Settings
@@ -22,7 +22,7 @@ type GetBlockchainConfig struct {
 }
 
 func NewGetBlockchainConfig(
-	chainsSettings *settings.ChainsSettings,
+	evmChainsSettings *settings.EvmChainsSettings,
 	agentCollectionsManagersSettings *settings.AgentCollectionsManagersSettings,
 	agentCollectionCreatorsSettings *settings.AgentCollectionCreatorsSettings,
 	token6022Settings *settings.Token6022Settings,
@@ -30,7 +30,7 @@ func NewGetBlockchainConfig(
 	paymentFacilitatorsSettings *settings.PaymentFacilitatorsSettings,
 ) *GetBlockchainConfig {
 	return &GetBlockchainConfig{
-		chainsSettings:                   chainsSettings,
+		evmChainsSettings:                   evmChainsSettings,
 		agentCollectionsManagersSettings: agentCollectionsManagersSettings,
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 		token6022Settings:                token6022Settings,
@@ -40,7 +40,7 @@ func NewGetBlockchainConfig(
 }
 
 func (u *GetBlockchainConfig) Execute(_ context.Context) (*responses.BlockchainConfigResponse, error) {
-	chainIds := u.chainsSettings.ChainIds()
+	chainIds := u.evmChainsSettings.ChainIds()
 	chains := make(map[string]responses.ChainConfig, len(chainIds))
 	for _, chainId := range chainIds {
 		creator, hasCreator := u.agentCollectionCreatorsSettings.AddressFor(chainId)

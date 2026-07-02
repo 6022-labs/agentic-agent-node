@@ -145,6 +145,7 @@ type ResponsesAgentCollectionsResponse struct {
 
 // ResponsesAgentRegistrationResponse defines model for responses.AgentRegistrationResponse.
 type ResponsesAgentRegistrationResponse struct {
+	Addresses         *map[string]string `json:"addresses,omitempty"`
 	Attributes        *map[string]string `json:"attributes,omitempty"`
 	ChainId           *string            `json:"chainId,omitempty"`
 	CloneOf           *int               `json:"cloneOf,omitempty"`
@@ -158,7 +159,6 @@ type ResponsesAgentRegistrationResponse struct {
 	ProposalId        *int               `json:"proposalId,omitempty"`
 	Role              *string            `json:"role,omitempty"`
 	TokenId           *int               `json:"tokenId,omitempty"`
-	WalletAddress     *string            `json:"walletAddress,omitempty"`
 }
 
 // ResponsesAppendConversationMessagesResponse defines model for responses.AppendConversationMessagesResponse.
@@ -288,6 +288,7 @@ type ResponsesMCPConnectionResponse struct {
 
 // ResponsesMintInfoResponse defines model for responses.MintInfoResponse.
 type ResponsesMintInfoResponse struct {
+	Addresses         *map[string]string   `json:"addresses,omitempty"`
 	Attributes        *[]ResponsesKeyValue `json:"attributes,omitempty"`
 	CloneOf           *int                 `json:"cloneOf,omitempty"`
 	CollectionAddress *string              `json:"collectionAddress,omitempty"`
@@ -297,7 +298,6 @@ type ResponsesMintInfoResponse struct {
 	OwnerIsModerator  *bool                `json:"ownerIsModerator,omitempty"`
 	Role              *string              `json:"role,omitempty"`
 	To                *string              `json:"to,omitempty"`
-	Wallets           *[]string            `json:"wallets,omitempty"`
 }
 
 // ResponsesOutputContent defines model for responses.OutputContent.

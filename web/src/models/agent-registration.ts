@@ -13,7 +13,8 @@ export type AgentRegistration = {
   role: string
   cloneOf: number | null
   owner: string
-  walletAddress: string
+  // Wallet addresses per chain family, keyed by AddressType ("evm", "btc").
+  addresses: Record<string, string>
   ensDomain: string
   images: Record<string, string>
   attributes: Record<string, string>
@@ -54,13 +55,26 @@ export type MintInfo = {
   to: string
   role: string
   name: string
-  wallets: string[]
+  // Wallet addresses per chain family, keyed by AddressType ("evm", "btc").
+  addresses: Record<string, string>
   images: KeyValue[]
   attributes: KeyValue[]
   cloneOf: number | null
   moderatorCount: number
   ownerIsModerator: boolean
 }
+
+// ADDRESS_TYPE_ORDER fixes the on-chain wallets[] order across address maps.
+export const ADDRESS_TYPE_ORDER = ["evm", "btc"] as const
+
+// orderedAddresses flattens an address map into the on-chain wallets[] order,
+// dropping any chain family the agent doesn't hold yet.
+export const orderedAddresses = (
+  addresses: Record<string, string>
+): string[] =>
+  ADDRESS_TYPE_ORDER.map((type) => addresses?.[type]).filter(
+    (address): address is string => !!address
+  )
 
 export type EnsInfo = {
   collectionAddress: string

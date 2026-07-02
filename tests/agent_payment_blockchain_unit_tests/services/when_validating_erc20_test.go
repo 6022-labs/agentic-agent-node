@@ -31,7 +31,7 @@ func WhenValidatingErc20BeforeEach(t *testing.T, methods map[string]erc20Method,
 	server := newErc20RpcServer(t, methods, hasCode)
 	t.Cleanup(server.Close)
 
-	chains := settings.ChainsSettings{
+	chains := settings.EvmChainsSettings{
 		erc20TestChainIdStr: {ChainId: erc20TestChainIdStr, HttpUrl: server.URL},
 	}
 

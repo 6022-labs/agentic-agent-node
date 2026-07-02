@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"gorm.io/gorm"
 )
@@ -18,15 +19,31 @@ func NewAgentRepository(client *runtime_db.DatabaseClient) *AgentRepository {
 }
 
 func (r *AgentRepository) Get(ctx context.Context) (*models.Agent, error) {
-	var entity models.Agent
-	err := r.client.GetDB().WithContext(ctx).First(&entity).Error
+	var agent models.Agent
+	err := r.client.GetDB().WithContext(ctx).First(&agent).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &entity, nil
+	if err := r.loadAddresses(ctx, &agent); err != nil {
+		return nil, err
+	}
+	return &agent, nil
+}
+
+// loadAddresses fills agent.Addresses from the agent_addresses rows.
+func (r *AgentRepository) loadAddresses(ctx context.Context, agent *models.Agent) error {
+	var rows []models.AgentAddress
+	if err := r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agent.Id).Find(&rows).Error; err != nil {
+		return err
+	}
+	agent.Addresses = make(map[enums.AddressType]string, len(rows))
+	for _, row := range rows {
+		agent.Addresses[row.Type] = row.Address
+	}
+	return nil
 }
 
 func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*models.Agent, error) {
@@ -50,7 +67,6 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 	existing.EnsDomain = agent.EnsDomain
 	existing.Role = agent.Role
 	existing.Creator = agent.Creator
-	existing.WalletAddress = agent.WalletAddress
 	existing.Owner = agent.Owner
 	existing.Images = agent.Images
 	existing.Attributes = agent.Attributes

@@ -28,7 +28,7 @@ type agentCollectionsManagersFile struct {
 // chain id (inner join of the built-in registry and the configured chains).
 type AgentCollectionsManagersSettings map[string]common.Address
 
-func NewAgentCollectionsManagersSettings(logger *zap.Logger, chainsSettings *ChainsSettings) *AgentCollectionsManagersSettings {
+func NewAgentCollectionsManagersSettings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *AgentCollectionsManagersSettings {
 	var f agentCollectionsManagersFile
 	if err := json.Unmarshal(agentCollectionsManagersJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collections_managers.json", zap.Error(err))
@@ -38,7 +38,7 @@ func NewAgentCollectionsManagersSettings(logger *zap.Logger, chainsSettings *Cha
 	for _, m := range f.Managers {
 		addr := strings.TrimSpace(m.Address)
 		chainId := strconv.FormatUint(m.ChainId, 10)
-		if len(addr) == 0 || !chainsSettings.Has(chainId) {
+		if len(addr) == 0 || !evmChainsSettings.Has(chainId) {
 			continue
 		}
 		settings[chainId] = common.HexToAddress(addr)

@@ -54,7 +54,7 @@ export default function MintStep({ draft, onAdvance }: Props) {
     if (!wallet || !user?.address || !draft.collectionAddress) return
     let active = true
     Promise.all([
-      canMintDirectly(draft.collectionAddress, draft.walletAddress, wallet),
+      canMintDirectly(draft.collectionAddress, draft.addresses?.evm, wallet),
       canMintDirectly(draft.collectionAddress, user.address, wallet),
     ])
       .then(([self, browser]) => {
@@ -67,7 +67,7 @@ export default function MintStep({ draft, onAdvance }: Props) {
     return () => {
       active = false
     }
-  }, [wallet, user?.address, draft.collectionAddress, draft.walletAddress])
+  }, [wallet, user?.address, draft.collectionAddress, draft.addresses?.evm])
 
   const handleCheckMint = async () => {
     setChecking(true)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
@@ -40,7 +41,11 @@ func (f *TransactorFactory) Create(ctx context.Context, chainId uint64) (*bind.T
 	if agent == nil {
 		return nil, fmt.Errorf("agent not bootstrapped")
 	}
-	cred, found, err := f.walletStorage.GetForId(ctx, agent.Id.String())
+	cred, found, err := f.walletStorage.GetForId(
+		ctx,
+		agent.Id.String(),
+		enums.AddressTypeEvm,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load wallet credentials: %w", err)
 	}

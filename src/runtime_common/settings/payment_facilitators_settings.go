@@ -26,11 +26,11 @@ type PaymentFacilitator struct {
 }
 
 // PaymentFacilitatorsSettings holds the operator-configured x402 facilitators
-// keyed by CAIP-2 network. Each must have a matching RPC in blockchain.chains,
+// keyed by CAIP-2 network. Each must have a matching RPC in blockchain.evm_chains,
 // else its assets can't be validated and it could never settle.
 type PaymentFacilitatorsSettings map[string]PaymentFacilitator
 
-func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, chainsSettings *ChainsSettings) *PaymentFacilitatorsSettings {
+func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, evmChainsSettings *EvmChainsSettings) *PaymentFacilitatorsSettings {
 	configByChainId := map[string]*PaymentFacilitator{}
 	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByChainId, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
@@ -47,14 +47,14 @@ func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, chainsSe
 			logger.Fatal("payment facilitator needs a chain id key and base_url", zap.String("chainId", chainIdKey))
 		}
 
-		// Config keys facilitators by bare chain id to mirror blockchain.chains;
+		// Config keys facilitators by bare chain id to mirror blockchain.evm_chains;
 		// the payment domain matches on CAIP-2, so the stored key is reconstructed.
 		chainId, err := strconv.ParseUint(chainIdKey, 10, 64)
 		if err != nil || chainId == 0 {
 			logger.Fatal("payment facilitator key must be a numeric chain id, e.g. 80002", zap.String("chainId", chainIdKey))
 		}
-		if !chainsSettings.Has(chainIdKey) {
-			logger.Fatal("payment facilitator has no matching RPC in blockchain.chains; add the chain or drop the facilitator",
+		if !evmChainsSettings.Has(chainIdKey) {
+			logger.Fatal("payment facilitator has no matching RPC in blockchain.evm_chains; add the chain or drop the facilitator",
 				zap.String("chainId", chainIdKey),
 			)
 		}

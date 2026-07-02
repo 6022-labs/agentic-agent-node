@@ -21,7 +21,7 @@ type AgentBuilder struct {
 	ensDomain         string
 	role              enums.AgentRole
 	creator           string
-	walletAddress     string
+	addresses         map[enums.AddressType]string
 	owner             *string
 	images            map[string]string
 	attributes        map[string]string
@@ -49,7 +49,7 @@ func NewAgentBuilder() *AgentBuilder {
 		ensDomain:         faker.Word() + ".agent.eth",
 		role:              role,
 		creator:           common_tests.RandomEthAddress().Hex(),
-		walletAddress:     common_tests.RandomEthAddress().Hex(),
+		addresses:         map[enums.AddressType]string{enums.AddressTypeEvm: common_tests.RandomEthAddress().Hex()},
 		owner:             &owner,
 		images:            map[string]string{"avatar": faker.URL()},
 		attributes:        map[string]string{"trait": faker.Word()},
@@ -114,8 +114,13 @@ func (b *AgentBuilder) WithCreator(creator string) *AgentBuilder {
 	return b
 }
 
-func (b *AgentBuilder) WithWalletAddress(walletAddress string) *AgentBuilder {
-	b.walletAddress = walletAddress
+func (b *AgentBuilder) WithAddress(addressType enums.AddressType, address string) *AgentBuilder {
+	b.addresses[addressType] = address
+	return b
+}
+
+func (b *AgentBuilder) WithAddresses(addresses map[enums.AddressType]string) *AgentBuilder {
+	b.addresses = addresses
 	return b
 }
 
@@ -156,10 +161,10 @@ func (b *AgentBuilder) Build() *models.Agent {
 		EnsDomain:         b.ensDomain,
 		Role:              b.role,
 		Creator:           b.creator,
-		WalletAddress:     b.walletAddress,
 		Owner:             b.owner,
 		Images:            b.images,
 		Attributes:        b.attributes,
+		Addresses:         b.addresses,
 		CreatedAt:         b.createdAt,
 		UpdatedAt:         b.updatedAt,
 	}

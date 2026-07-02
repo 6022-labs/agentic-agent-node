@@ -47,7 +47,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
-			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any()).
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: testPrivateKeyHex}, true, nil)
 		}
 
@@ -69,7 +69,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
-			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any()).Return(nil, false, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, false, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

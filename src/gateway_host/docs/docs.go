@@ -1581,6 +1581,12 @@ const docTemplate = `{
         "responses.AgentRegistrationResponse": {
             "type": "object",
             "properties": {
+                "addresses": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "attributes": {
                     "type": "object",
                     "additionalProperties": {
@@ -1625,9 +1631,6 @@ const docTemplate = `{
                 },
                 "tokenId": {
                     "type": "integer"
-                },
-                "walletAddress": {
-                    "type": "string"
                 }
             }
         },
@@ -1928,6 +1931,12 @@ const docTemplate = `{
         "responses.MintInfoResponse": {
             "type": "object",
             "properties": {
+                "addresses": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "attributes": {
                     "type": "array",
                     "items": {
@@ -1960,12 +1969,6 @@ const docTemplate = `{
                 },
                 "to": {
                     "type": "string"
-                },
-                "wallets": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

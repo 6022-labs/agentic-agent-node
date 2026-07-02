@@ -67,6 +67,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		repositories.NewAgentAddressRepository,
+		dig.As(new(identity_repositories.AgentAddressRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		repositories.NewPaymentPolicyRepository,
 		dig.As(new(payment_repositories.PaymentPolicyRepositoryInterface)),
 	); err != nil {

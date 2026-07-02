@@ -38,7 +38,7 @@ export default function SelfMintStep({
     setBusy(true)
     try {
       // Fund the node wallet only if short, then let it mint + ENS-register.
-      if (await ensureGas(draft.walletAddress, amount, wallet)) {
+      if (await ensureGas(draft.addresses?.evm, amount, wallet)) {
         toast.success("Gas sent to the agent wallet")
       }
       await selfRegisterAgent()
@@ -70,7 +70,7 @@ export default function SelfMintStep({
       <div className="grid gap-1.5">
         <Label>Agent wallet</Label>
         <p className="rounded-md bg-muted px-3 py-2 font-mono text-xs break-all">
-          {draft.walletAddress}
+          {draft.addresses?.evm}
         </p>
       </div>
       <div className="grid gap-1.5">

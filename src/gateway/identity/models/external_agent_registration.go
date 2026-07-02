@@ -32,7 +32,7 @@ type ExternalAgentRegistrationPayload struct {
 	Role              string            `json:"role"`
 	CloneOf           *uint64           `json:"cloneOf"`
 	Owner             string            `json:"owner"`
-	WalletAddress     string            `json:"walletAddress"`
+	Addresses         map[string]string `json:"addresses"`
 	EnsDomain         string            `json:"ensDomain"`
 	Images            map[string]string `json:"images"`
 	Attributes        map[string]string `json:"attributes"`
@@ -46,7 +46,7 @@ type ExternalMintInfoPayload struct {
 	To                string             `json:"to"`
 	Role              string             `json:"role"`
 	Name              string             `json:"name"`
-	Wallets           []string           `json:"wallets"`
+	Addresses         map[string]string  `json:"addresses"`
 	Images            []ExternalKeyValue `json:"images"`
 	Attributes        []ExternalKeyValue `json:"attributes"`
 	CloneOf           *uint64            `json:"cloneOf"`

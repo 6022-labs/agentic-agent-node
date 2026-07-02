@@ -1,0 +1,111 @@
+package repositories_test
+
+import (
+	"context"
+	"testing"
+
+	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+)
+
+type WhenUpsertingAgentAddressTestingSuite struct {
+	dbName                   string
+	dbClient                 *runtime_db.DatabaseClient
+	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
+	sut                      *repositories.AgentAddressRepository
+	agentId                  uuid.UUID
+}
+
+func WhenUpsertingAgentAddressBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentAddressTestingSuite {
+	databaseContainerBuilder := tc.clientBuilderFn()
+	dbName, connectionString := databaseContainerBuilder.Create()
+
+	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
+	if err != nil {
+		panic(err)
+	}
+
+	dbClient, err := runtime_db.NewDatabaseClient(
+		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
+		zap.NewNop(),
+	)
+	if err != nil {
+		panic(err)
+	}
+	if err := dbClient.Migrate(); err != nil {
+		panic(err)
+	}
+
+	agentId := uuid.New()
+	seedAgent(dbClient, agentId)
+
+	return &WhenUpsertingAgentAddressTestingSuite{
+		dbName:                   dbName,
+		dbClient:                 dbClient,
+		databaseContainerBuilder: databaseContainerBuilder,
+		sut:                      repositories.NewAgentAddressRepository(dbClient),
+		agentId:                  agentId,
+	}
+}
+
+func WhenUpsertingAgentAddressAfterEach(suite *WhenUpsertingAgentAddressTestingSuite) {
+	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
+}
+
+func agentAddress(agentId uuid.UUID, addressType identity_enums.AddressType, address string) *identity_models.AgentAddress {
+	return &identity_models.AgentAddress{AgentId: agentId, Type: addressType, Address: address}
+}
+
+func TestWhenUpsertingAgentAddress(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range repositoryTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Given no address of the type yet", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should upsert and read it back by agent id and type", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentAddressBeforeEach(tc)
+					defer WhenUpsertingAgentAddressAfterEach(suite)
+
+					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc")))
+
+					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeEvm)
+
+					assert.NoError(t, err)
+					assert.Equal(t, "0xabc", stored.Address)
+				})
+			})
+
+			t.Run("Given an existing address for the type", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should replace it on upsert", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentAddressBeforeEach(tc)
+					defer WhenUpsertingAgentAddressAfterEach(suite)
+
+					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qfirst")))
+					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qsecond")))
+
+					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeBtc)
+
+					assert.NoError(t, err)
+					assert.Equal(t, "bc1qsecond", stored.Address)
+				})
+			})
+		})
+	}
+}

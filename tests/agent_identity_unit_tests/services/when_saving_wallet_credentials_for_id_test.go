@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
@@ -25,9 +26,15 @@ func WhenSavingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenSavingWalletC
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
 	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
+	mockGenerator := identity_mocks.NewMockAddressKeyGeneratorInterface(mockController)
+	mockGenerator.EXPECT().Type().Return(enums.AddressTypeEvm).AnyTimes()
 
 	return &WhenSavingWalletCredentialsForIdTestingSuite{
-		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
+		sut: identity_services.NewWalletCredentialsStorage(identity_services.NewWalletCredentialsStorageParams{
+			Storage:               mockStorage,
+			AgentScopedKeyBuilder: mockAgentScopedKeyBuilder,
+			Generators:            []identity_interfaces.AddressKeyGeneratorInterface{mockGenerator},
+		}),
 		mockStorage: mockStorage,
 	}
 }
@@ -35,7 +42,7 @@ func WhenSavingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenSavingWalletC
 func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
-	const scopedKey = "scope/wallet"
+	const scopedKey = "scope/wallet/evm"
 
 	t.Run("Given valid credentials", func(t *testing.T) {
 		t.Parallel()
@@ -53,7 +60,7 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.SaveForId(context.Background(), "agent-1", &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"})
+			err := suite.sut.SaveForId(context.Background(), "agent-1", enums.AddressTypeEvm, &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"})
 
 			assert.NoError(t, err)
 		})
@@ -67,7 +74,7 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 
 			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 
-			err := suite.sut.SaveForId(context.Background(), "agent-1", &identity_interfaces.WalletCredentials{})
+			err := suite.sut.SaveForId(context.Background(), "agent-1", enums.AddressTypeEvm, &identity_interfaces.WalletCredentials{})
 
 			assert.Error(t, err)
 		})

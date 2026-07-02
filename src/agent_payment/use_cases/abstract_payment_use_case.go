@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -87,9 +88,10 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 // EIP-712 signing context — zero-price rules never settle on-chain. Returns
 // (nil, nil) when the agent has no addresses to scope to.
 func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent) (*models.PaymentRule, json.RawMessage) {
+	evmAddress := agent.Addresses[identity_enums.AddressTypeEvm]
 	patterns := []string{}
-	if len(agent.WalletAddress) != 0 {
-		patterns = append(patterns, strings.ToLower(agent.WalletAddress))
+	if len(evmAddress) != 0 {
+		patterns = append(patterns, strings.ToLower(evmAddress))
 	}
 	if agent.Owner != nil && len(*agent.Owner) != 0 {
 		patterns = append(patterns, strings.ToLower(*agent.Owner))
@@ -105,7 +107,7 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 	config := &models.PaymentRuleX402Config{
 		Network:             helpers.FormatCaip2(evmChainId),
 		Asset:               asset.Hex(),
-		PayTo:               agent.WalletAddress,
+		PayTo:               evmAddress,
 		AssetTransferMethod: enums.AssetTransferMethodEip3009,
 		Eip712Name:          &eip712Name,
 		Eip712Version:       &eip712Version,

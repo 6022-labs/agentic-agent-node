@@ -35,20 +35,20 @@ const (
 // table. The settlement timeout is network-level (facilitator config), not here.
 type X402PaymentMethodStrategy struct {
 	paymentFacilitatorsSettings     *runtime_common_settings.PaymentFacilitatorsSettings
-	chainsSettings                  *runtime_common_settings.ChainsSettings
+	evmChainsSettings               *runtime_common_settings.EvmChainsSettings
 	erc20Validator                  payment_interfaces.Erc20ValidatorInterface
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface
 }
 
 func NewX402PaymentMethodStrategy(
 	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
-	chainsSettings *runtime_common_settings.ChainsSettings,
+	evmChainsSettings *runtime_common_settings.EvmChainsSettings,
 	erc20Validator payment_interfaces.Erc20ValidatorInterface,
 	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface,
 ) *X402PaymentMethodStrategy {
 	return &X402PaymentMethodStrategy{
 		paymentFacilitatorsSettings:     paymentFacilitatorsSettings,
-		chainsSettings:                  chainsSettings,
+		evmChainsSettings:               evmChainsSettings,
 		erc20Validator:                  erc20Validator,
 		paymentRuleX402ConfigRepository: paymentRuleX402ConfigRepository,
 	}
@@ -75,7 +75,7 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 	}
 	chainId := strconv.FormatUint(parsedChainId, 10)
 	// Rules can only target a reachable chain (needed to validate the asset).
-	if !s.chainsSettings.Has(chainId) {
+	if !s.evmChainsSettings.Has(chainId) {
 		return errors.NewValidationError("config.network", "node has no RPC for this network")
 	}
 	if !common.IsHexAddress(config.Asset) {

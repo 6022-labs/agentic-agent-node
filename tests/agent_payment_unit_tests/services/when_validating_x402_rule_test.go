@@ -36,13 +36,13 @@ func validatingX402RuleSuite(t *testing.T, facilitators *runtime_common_settings
 
 	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
 	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
-	chainsSettings := &runtime_common_settings.ChainsSettings{
+	evmChainsSettings := &runtime_common_settings.EvmChainsSettings{
 		"80002": {ChainId: "80002", HttpUrl: "http://localhost:8545"},
 		"84532": {ChainId: "84532", HttpUrl: "http://localhost:8546"},
 	}
 
 	return &WhenValidatingX402RuleTestingSuite{
-		sut:                services.NewX402PaymentMethodStrategy(facilitators, chainsSettings, mockErc20Validator, mockConfigRepository),
+		sut:                services.NewX402PaymentMethodStrategy(facilitators, evmChainsSettings, mockErc20Validator, mockConfigRepository),
 		mockErc20Validator: mockErc20Validator,
 	}
 }

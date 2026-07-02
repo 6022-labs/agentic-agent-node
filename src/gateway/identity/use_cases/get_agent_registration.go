@@ -34,7 +34,7 @@ func (u *GetAgentRegistration) toResponse(p *models.ExternalAgentRegistrationPay
 		Role:              p.Role,
 		CloneOf:           p.CloneOf,
 		Owner:             p.Owner,
-		WalletAddress:     p.WalletAddress,
+		Addresses:         p.Addresses,
 		EnsDomain:         p.EnsDomain,
 		Images:            p.Images,
 		Attributes:        p.Attributes,

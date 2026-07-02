@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
@@ -25,9 +27,15 @@ func WhenGettingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingWalle
 	mockAgentScopedKeyBuilder := identity_mocks.NewMockAgentScopedKeyBuilderInterface(mockController)
 	mockAgentScopedKeyBuilder.EXPECT().ScopedKeyFor(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(agentId, key string) string { return "scope/" + key }).AnyTimes()
+	mockGenerator := identity_mocks.NewMockAddressKeyGeneratorInterface(mockController)
+	mockGenerator.EXPECT().Type().Return(enums.AddressTypeEvm).AnyTimes()
 
 	return &WhenGettingWalletCredentialsForIdTestingSuite{
-		sut:         identity_services.NewWalletCredentialsStorage(mockStorage, mockAgentScopedKeyBuilder),
+		sut: identity_services.NewWalletCredentialsStorage(identity_services.NewWalletCredentialsStorageParams{
+			Storage:               mockStorage,
+			AgentScopedKeyBuilder: mockAgentScopedKeyBuilder,
+			Generators:            []identity_interfaces.AddressKeyGeneratorInterface{mockGenerator},
+		}),
 		mockStorage: mockStorage,
 	}
 }
@@ -35,7 +43,7 @@ func WhenGettingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingWalle
 func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 	t.Parallel()
 
-	const scopedKey = "scope/wallet"
+	const scopedKey = "scope/wallet/evm"
 
 	t.Run("Given no wallet has been persisted", func(t *testing.T) {
 		t.Parallel()
@@ -50,7 +58,7 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1")
+			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.NoError(t, err)
 			assert.False(t, found)
@@ -74,7 +82,7 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1")
+			cred, found, err := suite.sut.GetForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.NoError(t, err)
 			assert.True(t, found)
@@ -98,7 +106,7 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			_, _, err := suite.sut.GetForId(context.Background(), "agent-1")
+			_, _, err := suite.sut.GetForId(context.Background(), "agent-1", enums.AddressTypeEvm)
 
 			assert.Error(t, err)
 		})

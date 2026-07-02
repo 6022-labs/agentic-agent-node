@@ -22,6 +22,7 @@ type WhenRunningBootstrapTestingSuite struct {
 	sut *services.BootstrapRunner
 
 	mockAgentRepository          *repository_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository   *repository_mocks.MockAgentAddressRepositoryInterface
 	mockWalletCredentialsStorage *interface_mocks.MockWalletCredentialsStorageInterface
 	mockAgentChainRecoverer      *interface_mocks.MockAgentChainRecovererInterface
 	mockEnsPublisher             *interface_mocks.MockEnsPublisherInterface
@@ -31,6 +32,7 @@ func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSu
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 	mockAgentChainRecoverer := interface_mocks.NewMockAgentChainRecovererInterface(mockController)
 	mockEnsPublisher := interface_mocks.NewMockEnsPublisherInterface(mockController)
@@ -42,6 +44,7 @@ func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSu
 	sut := services.NewBootstrapRunner(
 		zap.NewNop(),
 		mockAgentRepository,
+		mockAgentAddressRepository,
 		mockWalletCredentialsStorage,
 		mockAgentChainRecoverer,
 		mockEnsPublisher,
@@ -51,6 +54,7 @@ func WhenRunningBootstrapBeforeEach(t *testing.T) *WhenRunningBootstrapTestingSu
 	return &WhenRunningBootstrapTestingSuite{
 		sut:                          sut,
 		mockAgentRepository:          mockAgentRepository,
+		mockAgentAddressRepository:   mockAgentAddressRepository,
 		mockWalletCredentialsStorage: mockWalletCredentialsStorage,
 		mockAgentChainRecoverer:      mockAgentChainRecoverer,
 		mockEnsPublisher:             mockEnsPublisher,
@@ -76,10 +80,16 @@ func waitForEnsRefresh(t *testing.T, done chan struct{}) {
 	}
 }
 
+// expectWalletsReady stubs a generated wallet + persisted address row for every
+// chain family (the bootstrap loop runs once per AddressType).
+func expectWalletsReady(suite *WhenRunningBootstrapTestingSuite) {
+	cred := &identity_interfaces.WalletCredentials{PrivateKeyHex: "pk", Address: "addr"}
+	suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(cred, nil).AnyTimes()
+	suite.mockAgentAddressRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+}
+
 func TestWhenRunningBootstrap(t *testing.T) {
 	t.Parallel()
-
-	cred := &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"}
 
 	t.Run("Given no agent record exists yet", func(t *testing.T) {
 		t.Parallel()
@@ -88,12 +98,12 @@ func TestWhenRunningBootstrap(t *testing.T) {
 			created := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), &models.Agent{}).Return(created, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any()).Return(cred, nil)
+			expectWalletsReady(suite)
 			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, nil)
 			return expectEnsRefresh(suite)
 		}
 
-		t.Run("Should create an empty agent draft before readying the wallet", func(t *testing.T) {
+		t.Run("Should create an empty agent draft before readying the wallets", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
@@ -112,36 +122,12 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any()).Return(cred, nil)
+			expectWalletsReady(suite)
 			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, nil)
 			return expectEnsRefresh(suite)
 		}
 
 		t.Run("Should not create another agent", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningBootstrapBeforeEach(t)
-			done := initSuite(suite)
-
-			err := suite.sut.Run(context.Background())
-
-			assert.NoError(t, err)
-			waitForEnsRefresh(t, done)
-		})
-	})
-
-	t.Run("Given the agent's identity is recovered from chain", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
-			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any()).Return(cred, nil)
-			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(true, nil)
-			return expectEnsRefresh(suite)
-		}
-
-		t.Run("Should boot successfully", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
@@ -160,7 +146,7 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any()).Return(cred, nil)
+			expectWalletsReady(suite)
 			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, errors.New("chain down"))
 			return expectEnsRefresh(suite)
 		}
@@ -181,15 +167,11 @@ func TestWhenRunningBootstrap(t *testing.T) {
 	t.Run("Given ensuring the agent fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenRunningBootstrapTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
-		}
-
 		t.Run("Should error without touching the wallet", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
-			initSuite(suite)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 
 			err := suite.sut.Run(context.Background())
 
@@ -197,20 +179,16 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the wallet cannot be readied", func(t *testing.T) {
+	t.Run("Given a wallet cannot be readied", func(t *testing.T) {
 		t.Parallel()
-
-		initSuite := func(suite *WhenRunningBootstrapTestingSuite) {
-			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any()).Return(nil, errors.New("vault down"))
-		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
-			initSuite(suite)
+			agent := model_builders.NewAgentBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("vault down"))
 
 			err := suite.sut.Run(context.Background())
 

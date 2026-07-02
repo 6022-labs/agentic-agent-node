@@ -7,17 +7,18 @@ import (
 
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	"go.uber.org/zap"
 )
 
-// BootstrapRunner ensures the agent row exists (so secret paths can be scoped by
-// its id), loads or generates the wallet, then best-effort refreshes ENS records.
+// BootstrapRunner ensures the agent row exists, loads or generates a wallet per chain family, then best-effort refreshes ENS records.
 type BootstrapRunner struct {
 	logger                   *zap.Logger
 	agentRepository          repositories.AgentRepositoryInterface
+	agentAddressRepository   repositories.AgentAddressRepositoryInterface
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
 	agentChainRecoverer      identity_interfaces.AgentChainRecovererInterface
 	ensPublisher             identity_interfaces.EnsPublisherInterface
@@ -27,6 +28,7 @@ type BootstrapRunner struct {
 func NewBootstrapRunner(
 	logger *zap.Logger,
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	agentChainRecoverer identity_interfaces.AgentChainRecovererInterface,
 	ensPublisher identity_interfaces.EnsPublisherInterface,
@@ -35,6 +37,7 @@ func NewBootstrapRunner(
 	return &BootstrapRunner{
 		logger:                   logger,
 		agentRepository:          agentRepository,
+		agentAddressRepository:   agentAddressRepository,
 		walletCredentialsStorage: walletCredentialsStorage,
 		agentChainRecoverer:      agentChainRecoverer,
 		ensPublisher:             ensPublisher,
@@ -58,14 +61,22 @@ func (r *BootstrapRunner) Run(ctx context.Context) (err error) {
 		return err
 	}
 
-	cred, err := r.walletCredentialsStorage.GetOrGenerateForId(ctx, agent.Id.String())
-	if err != nil {
-		msg := fmt.Sprintf("wallet bootstrap failed: %v", err)
-		r.logger.Error(msg)
-		return err
+	for _, addressType := range enums.GetAllAddressTypes() {
+		cred, err := r.walletCredentialsStorage.GetOrGenerateForId(ctx, agent.Id.String(), addressType)
+		if err != nil {
+			r.logger.Error(fmt.Sprintf("%s wallet bootstrap failed: %v", addressType, err))
+			return err
+		}
+		if err := r.agentAddressRepository.Upsert(ctx, &models.AgentAddress{
+			AgentId: agent.Id,
+			Type:    addressType,
+			Address: cred.Address,
+		}); err != nil {
+			r.logger.Error(fmt.Sprintf("persist %s address failed: %v", addressType, err))
+			return err
+		}
+		r.logger.Info("wallet ready", zap.String("type", addressType.String()), zap.String("address", cred.Address))
 	}
-
-	r.logger.Info("wallet ready", zap.String("address", cred.Address))
 
 	// Best-effort: reconcile on-chain identity for our agent (e.g. minted by a browser wallet).
 	if recovered, err := r.agentChainRecoverer.Recover(ctx); err != nil {

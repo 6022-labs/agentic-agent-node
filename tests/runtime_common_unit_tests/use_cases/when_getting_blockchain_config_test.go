@@ -15,7 +15,7 @@ type WhenGettingBlockchainConfigTestingSuite struct {
 }
 
 func WhenGettingBlockchainConfigBeforeEach(_ *testing.T) *WhenGettingBlockchainConfigTestingSuite {
-	chains := settings.ChainsSettings{
+	chains := settings.EvmChainsSettings{
 		"80002": {ChainId: "80002", HttpUrl: "http://localhost:8545"},
 	}
 	managers := settings.AgentCollectionsManagersSettings{
