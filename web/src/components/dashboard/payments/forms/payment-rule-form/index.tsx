@@ -28,7 +28,7 @@ import {
 } from "@/models/payment-policy"
 import {
   getAppConfig,
-  getChainConfig,
+  getEvmChainConfig,
   getFacilitatorNetworks,
 } from "@/configs/app-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
@@ -75,14 +75,14 @@ export default function PaymentRuleForm({
   // Reachable chains as CAIP-2 networks (the x402 rule shape): free rules may
   // target any reachable chain, paid rules only facilitator networks.
   const reachableNetworks = React.useMemo(
-    () => Object.keys(getAppConfig().chains).map((id) => `eip155:${id}`),
+    () => Object.keys(getAppConfig().evmChains).map((id) => `eip155:${id}`),
     []
   )
   const defaultNewRuleNetwork =
     facilitatorNetworks[0] ?? reachableNetworks[0] ?? ""
   // Default the asset to the $6022 token on the default network's chain.
   const defaultToken =
-    getChainConfig(defaultNewRuleNetwork.replace("eip155:", ""))
+    getEvmChainConfig(defaultNewRuleNetwork.replace("eip155:", ""))
       ?.token6022Address ?? ""
 
   const form = useForm<PaymentRuleFormSchemaType>({

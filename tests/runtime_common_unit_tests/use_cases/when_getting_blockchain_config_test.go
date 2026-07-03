@@ -59,8 +59,8 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 			resp, err := suite.sut.Execute(context.Background())
 
 			assert.NoError(t, err)
-			if assert.Len(t, resp.Chains, 1) {
-				chain := resp.Chains["80002"]
+			if assert.Len(t, resp.EvmChains, 1) {
+				chain := resp.EvmChains["80002"]
 				assert.Equal(t, "0x2e0A2C00601F7DCa8B4b7ae05A5fd27bb46080d3", chain.CollectionsManagerAddress)
 				assert.Equal(t, "0x9D72199fC7C00416ceD5bC157Bdb2e3775511717", chain.CollectionCreatorAddress)
 				assert.Equal(t, "0xbB2CEbf252EaDdf1674Cc7C458FCf4877704820F", chain.Token6022Address)

@@ -28,9 +28,9 @@ func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.Blockchai
 }
 
 func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPayload) *responses.BlockchainConfigResponse {
-	chains := make(map[string]responses.ChainConfig, len(p.Chains))
-	for chainId, c := range p.Chains {
-		chains[chainId] = responses.ChainConfig{
+	evmChains := make(map[string]responses.EvmChainConfig, len(p.EvmChains))
+	for chainId, c := range p.EvmChains {
+		evmChains[chainId] = responses.EvmChainConfig{
 			CollectionsManagerAddress: c.CollectionsManagerAddress,
 			CollectionCreatorAddress:  c.CollectionCreatorAddress,
 			Token6022Address:          c.Token6022Address,
@@ -39,5 +39,5 @@ func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPaylo
 			FacilitatorNetwork:        c.FacilitatorNetwork,
 		}
 	}
-	return &responses.BlockchainConfigResponse{Chains: chains}
+	return &responses.BlockchainConfigResponse{EvmChains: evmChains}
 }

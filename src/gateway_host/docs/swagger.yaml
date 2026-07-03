@@ -355,25 +355,10 @@ definitions:
     type: object
   responses.BlockchainConfigResponse:
     properties:
-      chains:
+      evmChains:
         additionalProperties:
-          $ref: '#/definitions/responses.ChainConfig'
+          $ref: '#/definitions/responses.EvmChainConfig'
         type: object
-    type: object
-  responses.ChainConfig:
-    properties:
-      collectionCreatorAddress:
-        type: string
-      collectionsManagerAddress:
-        type: string
-      ensRegistryAddress:
-        type: string
-      facilitatorNetwork:
-        type: string
-      mintable:
-        type: boolean
-      token6022Address:
-        type: string
     type: object
   responses.ConversationMessage:
     properties:
@@ -418,6 +403,21 @@ definitions:
         type: array
       tokenId:
         type: integer
+    type: object
+  responses.EvmChainConfig:
+    properties:
+      collectionCreatorAddress:
+        type: string
+      collectionsManagerAddress:
+        type: string
+      ensRegistryAddress:
+        type: string
+      facilitatorNetwork:
+        type: string
+      mintable:
+        type: boolean
+      token6022Address:
+        type: string
     type: object
   responses.GetAuthChallengeResponse:
     properties:

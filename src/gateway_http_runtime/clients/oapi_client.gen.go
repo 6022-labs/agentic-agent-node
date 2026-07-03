@@ -173,17 +173,7 @@ type ResponsesAuthorizeResponse struct {
 
 // ResponsesBlockchainConfigResponse defines model for responses.BlockchainConfigResponse.
 type ResponsesBlockchainConfigResponse struct {
-	Chains *map[string]ResponsesChainConfig `json:"chains,omitempty"`
-}
-
-// ResponsesChainConfig defines model for responses.ChainConfig.
-type ResponsesChainConfig struct {
-	CollectionCreatorAddress  *string `json:"collectionCreatorAddress,omitempty"`
-	CollectionsManagerAddress *string `json:"collectionsManagerAddress,omitempty"`
-	EnsRegistryAddress        *string `json:"ensRegistryAddress,omitempty"`
-	FacilitatorNetwork        *string `json:"facilitatorNetwork,omitempty"`
-	Mintable                  *bool   `json:"mintable,omitempty"`
-	Token6022Address          *string `json:"token6022Address,omitempty"`
+	EvmChains *map[string]ResponsesEvmChainConfig `json:"evmChains,omitempty"`
 }
 
 // ResponsesConversationMessage defines model for responses.ConversationMessage.
@@ -230,6 +220,16 @@ type ResponsesEnsInfoResponse struct {
 	CollectionAddress *string              `json:"collectionAddress,omitempty"`
 	Records           *[]ResponsesKeyValue `json:"records,omitempty"`
 	TokenId           *int                 `json:"tokenId,omitempty"`
+}
+
+// ResponsesEvmChainConfig defines model for responses.EvmChainConfig.
+type ResponsesEvmChainConfig struct {
+	CollectionCreatorAddress  *string `json:"collectionCreatorAddress,omitempty"`
+	CollectionsManagerAddress *string `json:"collectionsManagerAddress,omitempty"`
+	EnsRegistryAddress        *string `json:"ensRegistryAddress,omitempty"`
+	FacilitatorNetwork        *string `json:"facilitatorNetwork,omitempty"`
+	Mintable                  *bool   `json:"mintable,omitempty"`
+	Token6022Address          *string `json:"token6022Address,omitempty"`
 }
 
 // ResponsesGetAgentIdentityResponse defines model for responses.GetAgentIdentityResponse.

@@ -28,7 +28,7 @@ function App() {
   React.useMemo(() => {
     // App renders under ConfigGate, so the runtime config is loaded by now.
     // AppKit is initialized with every chain the node serves.
-    const configured = Object.keys(getAppConfig().chains)
+    const configured = Object.keys(getAppConfig().evmChains)
       .map((id) => networkByChainId[Number(id)])
       .filter((n): n is AppKitNetwork => Boolean(n))
     const networks: [AppKitNetwork, ...AppKitNetwork[]] =

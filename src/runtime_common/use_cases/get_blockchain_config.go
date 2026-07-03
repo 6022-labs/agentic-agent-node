@@ -41,10 +41,10 @@ func NewGetBlockchainConfig(
 
 func (u *GetBlockchainConfig) Execute(_ context.Context) (*responses.BlockchainConfigResponse, error) {
 	chainIds := u.evmChainsSettings.ChainIds()
-	chains := make(map[string]responses.ChainConfig, len(chainIds))
+	evmChains := make(map[string]responses.EvmChainConfig, len(chainIds))
 	for _, chainId := range chainIds {
 		creator, hasCreator := u.agentCollectionCreatorsSettings.AddressFor(chainId)
-		chains[chainId] = responses.ChainConfig{
+		evmChains[chainId] = responses.EvmChainConfig{
 			CollectionsManagerAddress: hexOrEmpty(u.agentCollectionsManagersSettings.AddressFor(chainId)),
 			CollectionCreatorAddress:  hexOrEmpty(creator, hasCreator),
 			Token6022Address:          hexOrEmpty(u.token6022Settings.AddressFor(chainId)),
@@ -54,7 +54,7 @@ func (u *GetBlockchainConfig) Execute(_ context.Context) (*responses.BlockchainC
 		}
 	}
 
-	return &responses.BlockchainConfigResponse{Chains: chains}, nil
+	return &responses.BlockchainConfigResponse{EvmChains: evmChains}, nil
 }
 
 // facilitatorNetwork returns the chain's CAIP-2 network if a facilitator is

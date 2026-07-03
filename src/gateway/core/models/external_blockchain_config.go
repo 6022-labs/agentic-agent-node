@@ -1,7 +1,7 @@
 package models
 
-// ExternalChainConfig is one chain's config from the runtime.
-type ExternalChainConfig struct {
+// ExternalEvmChainConfig is one EVM chain's config from the runtime.
+type ExternalEvmChainConfig struct {
 	CollectionsManagerAddress string  `json:"collectionsManagerAddress"`
 	CollectionCreatorAddress  string  `json:"collectionCreatorAddress"`
 	Token6022Address          string  `json:"token6022Address"`
@@ -12,5 +12,5 @@ type ExternalChainConfig struct {
 
 // ExternalBlockchainConfigPayload mirrors the runtime blockchain config response.
 type ExternalBlockchainConfigPayload struct {
-	Chains map[string]ExternalChainConfig `json:"chains"`
+	EvmChains map[string]ExternalEvmChainConfig `json:"evmChains"`
 }

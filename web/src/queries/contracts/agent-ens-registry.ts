@@ -2,7 +2,7 @@ import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionABI } from "@/abi/agent-collection"
 import { AgentEnsRegistryABI } from "@/abi/agent-ens-registry"
-import { getChainConfigOrThrow } from "@/configs/app-config"
+import { getEvmChainConfigOrThrow } from "@/configs/app-config"
 import { resolveAgentNode } from "@/lib/ens-node"
 import type { EnsInfo, KeyValue } from "@/models/agent-registration"
 import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
@@ -34,7 +34,7 @@ export const initAgentTexts = async (
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
-    getChainConfigOrThrow(chainId).ensRegistryAddress,
+    getEvmChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     signer
   )
@@ -73,7 +73,7 @@ export const getEnsRecordsDrift = async (
 ): Promise<EnsRecordsState> => {
   const provider = new BrowserProvider(walletProvider)
   const registry = new ethers.Contract(
-    getChainConfigOrThrow(chainId).ensRegistryAddress,
+    getEvmChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     provider
   )
@@ -119,7 +119,7 @@ export const setAgentText = async (
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
-    getChainConfigOrThrow(chainId).ensRegistryAddress,
+    getEvmChainConfigOrThrow(chainId).ensRegistryAddress,
     AgentEnsRegistryABI,
     signer
   )

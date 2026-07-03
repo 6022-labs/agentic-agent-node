@@ -1416,34 +1416,11 @@ const docTemplate = `{
         "responses.BlockchainConfigResponse": {
             "type": "object",
             "properties": {
-                "chains": {
+                "evmChains": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/responses.ChainConfig"
+                        "$ref": "#/definitions/responses.EvmChainConfig"
                     }
-                }
-            }
-        },
-        "responses.ChainConfig": {
-            "type": "object",
-            "properties": {
-                "collectionCreatorAddress": {
-                    "type": "string"
-                },
-                "collectionsManagerAddress": {
-                    "type": "string"
-                },
-                "ensRegistryAddress": {
-                    "type": "string"
-                },
-                "facilitatorNetwork": {
-                    "type": "string"
-                },
-                "mintable": {
-                    "type": "boolean"
-                },
-                "token6022Address": {
-                    "type": "string"
                 }
             }
         },
@@ -1556,6 +1533,29 @@ const docTemplate = `{
                 },
                 "tokenId": {
                     "type": "integer"
+                }
+            }
+        },
+        "responses.EvmChainConfig": {
+            "type": "object",
+            "properties": {
+                "collectionCreatorAddress": {
+                    "type": "string"
+                },
+                "collectionsManagerAddress": {
+                    "type": "string"
+                },
+                "ensRegistryAddress": {
+                    "type": "string"
+                },
+                "facilitatorNetwork": {
+                    "type": "string"
+                },
+                "mintable": {
+                    "type": "boolean"
+                },
+                "token6022Address": {
+                    "type": "string"
                 }
             }
         },

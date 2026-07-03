@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import CreateCollectionDialog from "@/components/dashboard/identity/dialogs/create-collection-dialog"
 import type { AgentCollection } from "@/models/agent-collection"
-import { getChainConfig } from "@/configs/app-config"
+import { getEvmChainConfig } from "@/configs/app-config"
 import { truncateEthAddress } from "@/lib/utils"
 import type { RegistrationDraftFormSchemaType } from "./registration-draft-form-schema"
 
@@ -35,7 +35,7 @@ export default function CollectionField({
   collections,
   onReloadCollections,
 }: Props) {
-  const canCreate = Boolean(getChainConfig(chainId)?.collectionCreatorAddress)
+  const canCreate = Boolean(getEvmChainConfig(chainId)?.collectionCreatorAddress)
   return (
     <FormField
       control={form.control}

@@ -41,7 +41,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		facilitatorNetwork := "eip155:80002"
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalBlockchainConfigPayload{
-				Chains: map[string]models.ExternalChainConfig{
+				EvmChains: map[string]models.ExternalEvmChainConfig{
 					"80002": {
 						CollectionsManagerAddress: "0xmanager",
 						CollectionCreatorAddress:  "0xcreator",
@@ -63,8 +63,8 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 			resp, err := suite.sut.Execute(context.Background())
 
 			assert.NoError(t, err)
-			if assert.Len(t, resp.Chains, 1) {
-				chain := resp.Chains["80002"]
+			if assert.Len(t, resp.EvmChains, 1) {
+				chain := resp.EvmChains["80002"]
 				assert.Equal(t, "0xmanager", chain.CollectionsManagerAddress)
 				assert.Equal(t, "0xcreator", chain.CollectionCreatorAddress)
 				assert.Equal(t, "0xtoken", chain.Token6022Address)

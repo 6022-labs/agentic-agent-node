@@ -1,7 +1,7 @@
 import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionCreatorABI } from "@/abi/agent-collection-creator"
-import { getChainConfigOrThrow } from "@/configs/app-config"
+import { getEvmChainConfigOrThrow } from "@/configs/app-config"
 import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
 
 const collectionCreatedInterface = new ethers.Interface([
@@ -31,7 +31,7 @@ export const canCreateCollection = async (
 ): Promise<boolean> => {
   const provider = new BrowserProvider(walletProvider)
   const contract = new ethers.Contract(
-    getChainConfigOrThrow(chainId).collectionCreatorAddress,
+    getEvmChainConfigOrThrow(chainId).collectionCreatorAddress,
     AgentCollectionCreatorABI,
     provider
   )
@@ -50,7 +50,7 @@ export const createCollection = async (
   moderator: string,
   walletProvider: Eip1193Provider
 ): Promise<string | null> => {
-  const chainConfig = getChainConfigOrThrow(chainId)
+  const chainConfig = getEvmChainConfigOrThrow(chainId)
   const provider = new BrowserProvider(walletProvider)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(
