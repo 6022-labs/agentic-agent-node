@@ -5,6 +5,7 @@ go 1.26.2
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/btcsuite/btcd v0.24.2
+	github.com/btcsuite/btcd/btcec/v2 v2.3.5
 	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/ethereum/go-ethereum v1.16.5
 	github.com/go-faker/faker/v4 v4.7.0
@@ -21,6 +22,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.2
 	github.com/kyokomi/emoji/v2 v2.2.13
 	github.com/lib/pq v1.12.3
+	github.com/ncruces/go-sqlite3/gormlite v0.34.0
 	github.com/oapi-codegen/runtime v1.4.1
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/pressly/goose/v3 v3.27.1
@@ -75,7 +77,6 @@ require (
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.5 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -165,6 +166,9 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
+	github.com/ncruces/go-sqlite3 v0.34.0 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v2 v2.1.35300 // indirect
+	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect

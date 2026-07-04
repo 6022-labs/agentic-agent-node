@@ -14,7 +14,7 @@ if ! command -v atlas >/dev/null 2>&1; then
     exit 1
 fi
 
-for DB in mariadb mysql postgres; do
+for DB in mariadb mysql postgres sqlite; do
     DIR="$MIGRATIONS_ROOT/$DB"
     echo "Generating migration for $DB..."
     atlas migrate diff "$MIGRATION_NAME" --env gorm-"$DB"
@@ -24,7 +24,7 @@ done
 
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 
-for DB in mariadb mysql postgres sqlserver; do
+for DB in mariadb mysql postgres sqlite sqlserver; do
     DIR="$MIGRATIONS_ROOT/$DB"
 
     LATEST_FILE=$(ls -1t "$DIR"/*.sql 2>/dev/null | head -n 1)

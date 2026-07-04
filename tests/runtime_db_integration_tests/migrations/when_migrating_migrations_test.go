@@ -40,6 +40,13 @@ var WhenMigratingMigrationsTestCases = []*WhenMigratingMigrationsTestCase{
 			return container_builders.GetMariaDBContainerBuilder()
 		},
 	},
+	{
+		name:   "SQLite",
+		driver: enums.DatabaseDriverSqlite,
+		clientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
+			return container_builders.GetSqliteContainerBuilder()
+		},
+	},
 }
 
 type WhenMigratingMigrationsTestingSuite struct {

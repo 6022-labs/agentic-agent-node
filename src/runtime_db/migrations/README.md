@@ -2,6 +2,10 @@
 
 This directory contains the SQL migrations used by the agent-identity registry database (`registry_common_db` module). Migrations are managed using [Atlas](https://github.com/ariga/atlas) together with the [Goose](https://github.com/pressly/goose) formatter. The `atlas.hcl` file describes how the schema is loaded and where migrations are written.
 
+## Supported drivers
+
+Migrations are generated per driver into `postgres/`, `mysql/`, `mariadb/` and `sqlite/` (one atlas env each, e.g. `--env gorm-sqlite`).
+
 ## Creating a new migration
 
 1. Navigate to this folder:

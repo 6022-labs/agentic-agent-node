@@ -42,6 +42,8 @@ func (MCPConnectionHeaderAuthKeys) GormDBDataType(db *gorm.DB, _ *schema.Field) 
 		return "jsonb"
 	case "mysql":
 		return "json"
+	case "sqlite":
+		return "text"
 	default:
 		return ""
 	}
@@ -52,9 +54,14 @@ func (k *MCPConnectionHeaderAuthKeys) Scan(value any) error {
 		*k = MCPConnectionHeaderAuthKeys{}
 		return nil
 	}
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("MCPConnectionHeaderAuthKeys.Scan: expected []byte")
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string: // sqlite returns text columns as string
+		bytes = []byte(v)
+	default:
+		return errors.New("MCPConnectionHeaderAuthKeys.Scan: expected []byte or string")
 	}
 	var values []string
 	if err := json.Unmarshal(bytes, &values); err != nil {

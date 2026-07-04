@@ -7,6 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/utils"
+	"github.com/ncruces/go-sqlite3/gormlite"
 	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
@@ -42,6 +43,15 @@ func NewDatabaseClient(
 		return nil, fmt.Errorf("failed to open agent_knowledge database: %w", err)
 	}
 
+	if dbSettings.Driver == enums.DatabaseDriverSqlite {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get sql.DB: %w", err)
+		}
+		// SQLite has a single writer; more connections yield "database is locked".
+		sqlDB.SetMaxOpenConns(1)
+	}
+
 	return &DatabaseClient{
 		db:                 db,
 		driver:             dbSettings.Driver,
@@ -55,6 +65,8 @@ func dialectorFor(driver enums.DatabaseDriver, url string) (gorm.Dialector, erro
 		return postgres.Open(url), nil
 	case enums.DatabaseDriverMySQL, enums.DatabaseDriverMariaDB:
 		return mysql.Open(url), nil
+	case enums.DatabaseDriverSqlite:
+		return gormlite.Open(utils.ApplySqliteDsnDefaults(url)), nil
 	default:
 		return nil, fmt.Errorf("unsupported database driver: %s", driver)
 	}

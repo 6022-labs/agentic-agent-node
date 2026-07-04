@@ -28,6 +28,16 @@ data "external_schema" "gorm-mariadb" {
   ]
 }
 
+data "external_schema" "gorm-sqlite" {
+  program = [
+    "go",
+    "run",
+    "./loader",
+    "-dialect",
+    "sqlite",
+  ]
+}
+
 env "gorm-mysql" {
   src = data.external_schema.gorm-mysql.url
   dev = "docker://mysql/8/dev"
@@ -61,6 +71,20 @@ env "gorm-mariadb" {
   dev = "docker://maria/10.7/test"
   migration {
     dir = "file://mariadb"
+    format = goose
+  }
+  format {
+    migrate {
+      diff = "{{ sql . \"  \" }}"
+    }
+  }
+}
+
+env "gorm-sqlite" {
+  src = data.external_schema.gorm-sqlite.url
+  dev = "sqlite://file?mode=memory&_fk=1"
+  migration {
+    dir = "file://sqlite"
     format = goose
   }
   format {

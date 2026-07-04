@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
@@ -17,36 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
-
-type repositoryTestCase struct {
-	name            string
-	driver          enums.DatabaseDriver
-	clientBuilderFn func() container_builders.DatabaseContainerBuilderInterface
-}
-
-var repositoryTestCases = []*repositoryTestCase{
-	{
-		name:   "PostgreSQL",
-		driver: enums.DatabaseDriverPostgres,
-		clientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
-			return container_builders.GetPostgresContainerBuilder()
-		},
-	},
-	{
-		name:   "MySQL",
-		driver: enums.DatabaseDriverMySQL,
-		clientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
-			return container_builders.GetMySQLContainerBuilder()
-		},
-	},
-	{
-		name:   "MariaDB",
-		driver: enums.DatabaseDriverMariaDB,
-		clientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
-			return container_builders.GetMariaDBContainerBuilder()
-		},
-	},
-}
 
 type WhenAppendingConversationMessagesTestingSuite struct {
 	dbName                   string

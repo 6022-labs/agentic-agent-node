@@ -68,6 +68,23 @@ func TestWhenLoadingDatabaseSettings(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a sqlite configuration", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"runtime_database.driver": "sqlite",
+			"runtime_database.url":    "/data/agent.db",
+		}, "."), nil)
+
+		t.Run("Should accept the sqlite driver", func(t *testing.T) {
+			t.Parallel()
+
+			result := knowledge_settings.NewDatabaseSettings(zap.NewNop(), k)
+			assert.Equal(t, enums.DatabaseDriverSqlite, result.Driver)
+		})
+	})
+
 	t.Run("Given values have surrounding whitespace", func(t *testing.T) {
 		t.Parallel()
 

@@ -48,6 +48,7 @@ COPY --from=builder /runtime /usr/local/bin/runtime
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/postgres /migrations/postgres
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mysql    /migrations/mysql
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/mariadb  /migrations/mariadb
+COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/sqlite   /migrations/sqlite
 COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/src/runtime_host/images/nft_mark.png /images/nft_mark.png
 COPY --from=web-builder /web/dist /web
 COPY nginx.conf /etc/nginx/http.d/default.conf

@@ -9,6 +9,7 @@ const (
 	DatabaseDriverPostgres DatabaseDriver = "postgres"
 	DatabaseDriverMySQL    DatabaseDriver = "mysql"
 	DatabaseDriverMariaDB  DatabaseDriver = "mariadb"
+	DatabaseDriverSqlite   DatabaseDriver = "sqlite"
 )
 
 func GetAllDatabaseDrivers() DatabaseDriverList {
@@ -16,6 +17,7 @@ func GetAllDatabaseDrivers() DatabaseDriverList {
 		DatabaseDriverPostgres,
 		DatabaseDriverMySQL,
 		DatabaseDriverMariaDB,
+		DatabaseDriverSqlite,
 	}
 }
 
@@ -31,6 +33,8 @@ func (d DatabaseDriver) ToGooseDialect() string {
 		return "postgres"
 	case DatabaseDriverMySQL, DatabaseDriverMariaDB:
 		return "mysql"
+	case DatabaseDriverSqlite:
+		return "sqlite"
 	default:
 		return ""
 	}
