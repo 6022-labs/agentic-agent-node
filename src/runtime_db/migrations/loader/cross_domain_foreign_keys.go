@@ -24,6 +24,15 @@ func (model llmConnectionWithCrossDomainFK) TableName() string {
 	return model.LLMConnection.TableName()
 }
 
+type agentGuidanceWithCrossDomainFK struct {
+	agent_reasoning_models.AgentGuidance
+	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`
+}
+
+func (model agentGuidanceWithCrossDomainFK) TableName() string {
+	return model.AgentGuidance.TableName()
+}
+
 type mcpConnectionWithCrossDomainFK struct {
 	agent_reasoning_models.MCPConnection
 	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`

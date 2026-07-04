@@ -54,6 +54,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/agent/guidance": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get agent guidance",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentGuidanceResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "guidance_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Set agent guidance",
+                "parameters": [
+                    {
+                        "description": "Agent guidance",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SetAgentGuidanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentGuidanceResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "guidance_update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/agent/registration": {
             "get": {
                 "produces": [
@@ -274,6 +336,37 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/agent/soul": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Get agent soul",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentSoulResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "identity_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "soul_lookup_failed",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -1273,6 +1366,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SetAgentGuidanceRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SetupLLMConnectionRequest": {
             "type": "object",
             "properties": {
@@ -1338,6 +1439,14 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.AgentGuidanceResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.AgentRegistrationResponse": {
             "type": "object",
             "properties": {
@@ -1391,6 +1500,14 @@ const docTemplate = `{
                 },
                 "tokenId": {
                     "type": "integer"
+                }
+            }
+        },
+        "responses.AgentSoulResponse": {
+            "type": "object",
+            "properties": {
+                "soul": {
+                    "type": "string"
                 }
             }
         },

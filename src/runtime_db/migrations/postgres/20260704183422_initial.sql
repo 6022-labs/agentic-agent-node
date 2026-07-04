@@ -21,12 +21,25 @@ CREATE TABLE "public"."agents" (
   "role" character varying(32) NOT NULL,
   "creator" character varying(42) NOT NULL,
   "owner" character varying(42) NULL,
+  "soul" text NULL,
   "images" text NULL,
   "attributes" text NULL,
   "updated_at" timestamptz NOT NULL,
   "created_at" timestamptz NOT NULL,
   PRIMARY KEY ("id")
 );
+-- create "agent_guidances" table
+CREATE TABLE "public"."agent_guidances" (
+  "id" character varying(36) NOT NULL,
+  "agent_id" character varying(36) NOT NULL,
+  "content" text NULL,
+  "created_at" timestamptz NOT NULL,
+  "updated_at" timestamptz NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "fk_agent_guidances_agent" FOREIGN KEY ("agent_id") REFERENCES "public"."agents" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index "idx_agent_guidances_agent_id" to table: "agent_guidances"
+CREATE UNIQUE INDEX "idx_agent_guidances_agent_id" ON "public"."agent_guidances" ("agent_id");
 -- create "agent_registration_states" table
 CREATE TABLE "public"."agent_registration_states" (
   "id" character varying(36) NOT NULL,
@@ -177,6 +190,10 @@ DROP TABLE "public"."conversations";
 DROP INDEX "public"."idx_agent_registration_states_agent_id";
 -- reverse: create "agent_registration_states" table
 DROP TABLE "public"."agent_registration_states";
+-- reverse: create index "idx_agent_guidances_agent_id" to table: "agent_guidances"
+DROP INDEX "public"."idx_agent_guidances_agent_id";
+-- reverse: create "agent_guidances" table
+DROP TABLE "public"."agent_guidances";
 -- reverse: create "agents" table
 DROP TABLE "public"."agents";
 -- reverse: create "agent_addresses" table

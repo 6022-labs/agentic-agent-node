@@ -91,11 +91,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		req := &requests.AppendConversationMessagesRequest{
 			Messages: []requests.ConversationMessageInput{
-				{Timestamp: now},
+				{Role: "user", Timestamp: now},
 			},
 		}
 		mapped := []models.ConversationMessage{
-			{Timestamp: now},
+			{Role: "user", Timestamp: now},
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {

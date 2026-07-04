@@ -19,6 +19,7 @@ func main() {
 	stmts, err := gormschema.New(*dialect).Load(
 		&mcpConnectionWithCrossDomainFK{},
 		&llmConnectionWithCrossDomainFK{},
+		&agentGuidanceWithCrossDomainFK{},
 
 		&conversationWithCrossDomainFK{},
 		&agent_knowledge_models.ConversationMessage{},

@@ -55,6 +55,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		repositories.NewAgentGuidanceRepository,
+		dig.As(new(reasoning_repositories.AgentGuidanceRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		repositories.NewAgentRepository,
 		dig.As(new(identity_repositories.AgentRepositoryInterface)),
 	); err != nil {

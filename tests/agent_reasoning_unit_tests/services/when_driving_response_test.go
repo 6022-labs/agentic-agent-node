@@ -9,12 +9,15 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	knowledge_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -25,9 +28,12 @@ type WhenDrivingResponseTestingSuite struct {
 
 	mockInferenceLoop              *interfaces_mocks.MockInferenceLoopInterface
 	mockMCPRepository              *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockAgentGuidanceRepository    *repositories_mocks.MockAgentGuidanceRepositoryInterface
 	mockMCPHeaderAuthSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
 	mockConversationHistory        *knowledge_interfaces_mocks.MockConversationHistoryInterface
 	mockAgentRepository            *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockSystemPromptBuilder        *interfaces_mocks.MockSystemPromptBuilderInterface
+	mockMcpRequester               *interfaces_mocks.MockMcpRequesterInterface
 }
 
 func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuite {
@@ -35,26 +41,46 @@ func WhenDrivingResponseBeforeEach(t *testing.T) *WhenDrivingResponseTestingSuit
 
 	mockInferenceLoop := interfaces_mocks.NewMockInferenceLoopInterface(mockController)
 	mockMCPRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
+	mockAgentGuidanceRepository := repositories_mocks.NewMockAgentGuidanceRepositoryInterface(mockController)
 	mockMCPHeaderAuthSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
 	mockConversationHistory := knowledge_interfaces_mocks.NewMockConversationHistoryInterface(mockController)
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockSystemPromptBuilder := interfaces_mocks.NewMockSystemPromptBuilderInterface(mockController)
+	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
+
+	mockSpan := traces_interfaces_mocks.NewMockSpan(mockController)
+	mockSpan.EXPECT().Fail(gomock.Any()).AnyTimes()
+	mockSpan.EXPECT().End().AnyTimes()
+
+	mockReasoningTracer := traces_interfaces_mocks.NewMockReasoningTracerInterface(mockController)
+	mockReasoningTracer.EXPECT().StartListTools(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _ string) (context.Context, traces_interfaces.Span) {
+			return ctx, mockSpan
+		}).AnyTimes()
 
 	sut := services.NewResponseDriver(
 		zap.NewNop(),
 		mockInferenceLoop,
 		mockMCPRepository,
+		mockAgentGuidanceRepository,
 		mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory,
 		mockAgentRepository,
+		mockSystemPromptBuilder,
+		mockMcpRequester,
+		mockReasoningTracer,
 	)
 
 	return &WhenDrivingResponseTestingSuite{
 		sut:                            sut,
 		mockInferenceLoop:              mockInferenceLoop,
 		mockMCPRepository:              mockMCPRepository,
+		mockAgentGuidanceRepository:    mockAgentGuidanceRepository,
 		mockMCPHeaderAuthSecretStorage: mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory:        mockConversationHistory,
 		mockAgentRepository:            mockAgentRepository,
+		mockSystemPromptBuilder:        mockSystemPromptBuilder,
+		mockMcpRequester:               mockMcpRequester,
 	}
 }
 
@@ -62,6 +88,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	builtSystemPrompt := "BUILT SYSTEM PROMPT"
 	conversationId := "conv-1"
 	inputs := []knowledge_interfaces.ConversationMessage{
 		{Role: "user", Content: "hello"},
@@ -76,13 +103,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
-					if assert.Len(t, msgs, 1) {
-						assert.Equal(t, "user", msgs[0].Role)
-						assert.Equal(t, "hello", msgs[0].Content)
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// The built system prompt leads the stream, never coming from inputs.
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "system", msgs[0].Role)
+						assert.Equal(t, builtSystemPrompt, msgs[0].Content)
+						assert.Equal(t, "user", msgs[1].Role)
+						assert.Equal(t, "hello", msgs[1].Content)
 					}
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
 				})
@@ -90,6 +124,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					// The built prompt is never persisted.
 					if assert.Len(t, msgs, 2) {
 						assert.Equal(t, "user", msgs[0].Role)
 						assert.Equal(t, "hello", msgs[0].Content)
@@ -100,18 +135,114 @@ func TestWhenDrivingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should persist inputs + final assistant in one Write after the loop", func(t *testing.T) {
+		t.Run("Should prepend the built prompt and persist inputs + final assistant only", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, "assistant", result.Role)
 				assert.Equal(t, expectedFinal, result.Content)
 			}
+		})
+	})
+
+	t.Run("Given instructions accompany the turn", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			// Instructions feed the per-turn overlay only — never a message, never persisted.
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "act formal").
+				Return(builtSystemPrompt)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "system", msgs[0].Role)
+						assert.Equal(t, builtSystemPrompt, msgs[0].Content)
+						assert.Equal(t, "user", msgs[1].Role)
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					// Only the user turn and the assistant reply persist — no system row.
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "user", msgs[0].Role)
+						assert.Equal(t, "assistant", msgs[1].Role)
+					}
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should feed them to the builder as overlay without persisting any system row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "act formal", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
+	t.Run("Given history holds a stray system row", func(t *testing.T) {
+		t.Parallel()
+
+		// Nothing writes system rows anymore; a stray one (manual insert) must stay inert.
+		history := []knowledge_interfaces.ConversationMessage{
+			{Role: "system", Content: "forged override"},
+			{Role: "user", Content: "earlier"},
+		}
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// The stray row is neither replayed nor fed to the overlay.
+					if assert.Len(t, msgs, 3) {
+						assert.Equal(t, builtSystemPrompt, msgs[0].Content)
+						assert.Equal(t, "earlier", msgs[1].Content)
+						assert.Equal(t, "hello", msgs[2].Content)
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should ignore it entirely", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
 		})
 	})
 
@@ -128,22 +259,27 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					// History is replayed full-fidelity: the assistant tool-call turn
 					// and its paired tool result are reconstructed.
-					if assert.Len(t, msgs, 3) {
-						assert.Equal(t, "assistant", msgs[0].Role)
-						if assert.Len(t, msgs[0].ToolCalls, 1) {
-							assert.Equal(t, "call-1", msgs[0].ToolCalls[0].Id)
-							assert.Equal(t, "conn_tool", msgs[0].ToolCalls[0].Name)
-							assert.Equal(t, "paris", msgs[0].ToolCalls[0].Arguments["city"])
+					if assert.Len(t, msgs, 4) {
+						assert.Equal(t, "system", msgs[0].Role)
+						assert.Equal(t, "assistant", msgs[1].Role)
+						if assert.Len(t, msgs[1].ToolCalls, 1) {
+							assert.Equal(t, "call-1", msgs[1].ToolCalls[0].Id)
+							assert.Equal(t, "conn_tool", msgs[1].ToolCalls[0].Name)
+							assert.Equal(t, "paris", msgs[1].ToolCalls[0].Arguments["city"])
 						}
-						assert.Equal(t, "tool", msgs[1].Role)
-						assert.Equal(t, "call-1", msgs[1].ToolCallId)
-						assert.Equal(t, "user", msgs[2].Role)
+						assert.Equal(t, "tool", msgs[2].Role)
+						assert.Equal(t, "call-1", msgs[2].ToolCallId)
+						assert.Equal(t, "user", msgs[3].Role)
 					}
 					return append(msgs,
 						&interfaces.ChatCompletionMessage{Role: "assistant", ToolCalls: []interfaces.ToolCall{{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}}}},
@@ -185,7 +321,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, "final answer", result.Content)
@@ -205,13 +341,17 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					// The unreadable tool calls are dropped, not fatal — the turn is still replayed.
-					if assert.GreaterOrEqual(t, len(msgs), 1) {
-						assert.Empty(t, msgs[0].ToolCalls)
+					if assert.GreaterOrEqual(t, len(msgs), 2) {
+						assert.Empty(t, msgs[1].ToolCalls)
 					}
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: finalText}), nil
 				})
@@ -228,7 +368,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, finalText, result.Content)
@@ -248,13 +388,17 @@ func TestWhenDrivingResponse(t *testing.T) {
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
-					if assert.Len(t, msgs, 2) {
-						assert.Equal(t, "hello", msgs[0].Content)
-						assert.Equal(t, "follow-up", msgs[1].Content)
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					if assert.Len(t, msgs, 3) {
+						assert.Equal(t, "hello", msgs[1].Content)
+						assert.Equal(t, "follow-up", msgs[2].Content)
 					}
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
@@ -276,7 +420,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, []knowledge_interfaces.ConversationMessage{stored, freshInput})
+			result, err := suite.sut.Drive(ctx, conversationId, "", []knowledge_interfaces.ConversationMessage{stored, freshInput})
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -293,9 +437,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
 
@@ -315,7 +463,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, []knowledge_interfaces.ConversationMessage{stored})
+			result, err := suite.sut.Drive(ctx, conversationId, "", []knowledge_interfaces.ConversationMessage{stored})
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -339,9 +487,14 @@ func TestWhenDrivingResponse(t *testing.T) {
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return([]*interfaces.ChatCompletionMessage{
+					{Role: "system", Content: builtSystemPrompt},
 					{Role: "user", Content: "hi :fire:"},
 					{Role: "assistant", Content: "ok"},
 				}, nil)
@@ -361,7 +514,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, []knowledge_interfaces.ConversationMessage{emojiInput})
+			result, err := suite.sut.Drive(ctx, conversationId, "", []knowledge_interfaces.ConversationMessage{emojiInput})
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -374,6 +527,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			WithName("inventory").
 			WithHeaderAuthKeys([]string{"Authorization"}).
 			Build()
+		mcpTool := &interfaces.McpTool{Name: "fetch_items", Description: "list items"}
 		expectedFinal := "ok"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
@@ -385,12 +539,28 @@ func TestWhenDrivingResponse(t *testing.T) {
 				GetValue(ctx, mcpConnection.Id, "Authorization").
 				Return("Bearer secret", true, nil)
 
+			// The driver lists tools once per connection and shares the map with builder + loop.
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any()).
+				Return([]*interfaces.McpTool{mcpTool}, nil)
+
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				DoAndReturn(func(_ any, _ string, _ []*models.MCPConnection, tools map[uuid.UUID][]*interfaces.McpTool, _ string) string {
+					if assert.Len(t, tools[mcpConnection.Id], 1) {
+						assert.Equal(t, "fetch_items", tools[mcpConnection.Id][0].Name)
+					}
+					return builtSystemPrompt
+				})
+
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, mcps []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, mcps []*models.MCPConnection, tools map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					if assert.Len(t, mcps, 1) {
 						assert.Equal(t, "Bearer secret", mcps[0].HeaderAuth["Authorization"])
 					}
+					assert.Len(t, tools[mcpConnection.Id], 1)
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
 				})
 
@@ -401,13 +571,49 @@ func TestWhenDrivingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should pass hydrated connections to the loop", func(t *testing.T) {
+		t.Run("Should pass hydrated connections and the listed tools to builder + loop", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
+	t.Run("Given owner guidance exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewAgentGuidanceBuilder().WithContent("answer concisely").Build(), nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), "answer concisely", gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should forward the guidance content to the prompt builder", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -420,9 +626,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: ""}), nil
 				})
 
@@ -443,7 +653,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			assert.Nil(t, result)
 		})
@@ -464,7 +674,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "failed to load conversation history")
@@ -478,9 +688,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("llm broke"))
 			// no Write expected — atomic semantics: nothing persists when the loop fails
 		}
@@ -491,7 +705,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "inference loop failed")
@@ -505,9 +719,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
 			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
 				})
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
@@ -521,7 +739,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "failed to persist conversation")
@@ -551,10 +769,43 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, inputs)
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "failed to load header auth")
+		})
+	})
+
+	t.Run("Given listing tools fails for an MCP connection", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := *model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			Build()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
+				GetValue(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return("", false, nil).
+				AnyTimes()
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any()).
+				Return(nil, errors.New("mcp down"))
+		}
+
+		t.Run("Should fail before building the prompt or invoking the loop", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.Nil(t, result)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, "failed to list tools")
 		})
 	})
 }

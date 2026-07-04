@@ -19,6 +19,12 @@ type AppendConversationMessagesRequest struct {
 	Messages []AppendConversationMessageInput `json:"messages"`
 }
 
+// appendableMessageRoles excludes system: out-of-band injection must not forge overlay rows.
+var appendableMessageRoles = enums.MessageRoleList{
+	enums.MessageRoleUser,
+	enums.MessageRoleAssistant,
+}
+
 func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
 	if len(r.Messages) == 0 {
 		return errors.NewValidationError("messages", "must contain at least one message")
@@ -31,8 +37,8 @@ func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
 		if message.Timestamp.IsZero() {
 			return errors.NewValidationError("messages.timestamp", "cannot be empty, check message at index "+strconv.Itoa(index))
 		}
-		if !enums.GetAllMessageRoles().Contains(message.Role) {
-			return errors.NewValidationError("messages.role", "invalid role, must be one of: "+enums.GetAllMessageRoles().String()+", check message at index "+strconv.Itoa(index))
+		if !appendableMessageRoles.Contains(message.Role) {
+			return errors.NewValidationError("messages.role", "invalid role, must be one of: "+appendableMessageRoles.String()+", check message at index "+strconv.Itoa(index))
 		}
 	}
 

@@ -159,21 +159,33 @@ func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
 		return nil, fmt.Errorf("failed to get tokenizer: %w", err)
 	}
 
+	systemMessages := make([]*interfaces.ChatCompletionMessage, 0, 1)
+	rest := make([]*interfaces.ChatCompletionMessage, 0, len(messages))
+	for _, msg := range messages {
+		if msg.Role == "system" {
+			systemMessages = append(systemMessages, msg)
+		} else {
+			rest = append(rest, msg)
+		}
+	}
+
 	totalTokens := uint(0)
-	msgTokens := make([]uint, len(messages))
-	for i, msg := range messages {
-		tokens := tokenizer.Encode(msg.Content, nil, nil)
-		msgTokens[i] = uint(len(tokens))
-		totalTokens += uint(len(tokens))
+	for _, msg := range systemMessages {
+		totalTokens += uint(len(tokenizer.Encode(msg.Content, nil, nil)))
+	}
+	restTokens := make([]uint, len(rest))
+	for i, msg := range rest {
+		restTokens[i] = uint(len(tokenizer.Encode(msg.Content, nil, nil)))
+		totalTokens += restTokens[i]
 	}
 
 	startIdx := 0
-	for totalTokens > limit && startIdx < len(messages) {
-		totalTokens -= msgTokens[startIdx]
+	for totalTokens > limit && startIdx < len(rest) {
+		totalTokens -= restTokens[startIdx]
 		startIdx++
 	}
 
-	return messages[startIdx:], nil
+	return append(systemMessages, rest[startIdx:]...), nil
 }
 
 func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnectionPlatform) (settings.StandardSettingsInterface, error) {

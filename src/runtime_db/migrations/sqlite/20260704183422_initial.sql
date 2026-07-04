@@ -12,6 +12,7 @@ CREATE TABLE `agents` (
   `role` text NOT NULL,
   `creator` text NOT NULL,
   `owner` text NULL,
+  `soul` text NULL,
   `images` text NULL,
   `attributes` text NULL,
   `updated_at` datetime NOT NULL,
@@ -47,6 +48,18 @@ CREATE TABLE `llm_connections` (
 );
 -- create index "idx_llm_connections_agent_id" to table: "llm_connections"
 CREATE UNIQUE INDEX `idx_llm_connections_agent_id` ON `llm_connections` (`agent_id`);
+-- create "agent_guidances" table
+CREATE TABLE `agent_guidances` (
+  `id` text NULL,
+  `agent_id` text NOT NULL,
+  `content` text NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_agent_guidances_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- create index "idx_agent_guidances_agent_id" to table: "agent_guidances"
+CREATE UNIQUE INDEX `idx_agent_guidances_agent_id` ON `agent_guidances` (`agent_id`);
 -- create "conversations" table
 CREATE TABLE `conversations` (
   `id` text NULL,
@@ -171,6 +184,10 @@ DROP TABLE `conversation_messages`;
 DROP INDEX `idx_conversations_agent_id`;
 -- reverse: create "conversations" table
 DROP TABLE `conversations`;
+-- reverse: create index "idx_agent_guidances_agent_id" to table: "agent_guidances"
+DROP INDEX `idx_agent_guidances_agent_id`;
+-- reverse: create "agent_guidances" table
+DROP TABLE `agent_guidances`;
 -- reverse: create index "idx_llm_connections_agent_id" to table: "llm_connections"
 DROP INDEX `idx_llm_connections_agent_id`;
 -- reverse: create "llm_connections" table

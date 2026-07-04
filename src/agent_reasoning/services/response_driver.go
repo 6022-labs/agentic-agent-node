@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -22,32 +25,45 @@ type ResponseDriver struct {
 	logger                     *zap.Logger
 	inferenceLoop              interfaces.InferenceLoopInterface
 	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
+	agentGuidanceRepository    repositories.AgentGuidanceRepositoryInterface
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface
 	conversationHistory        knowledge_interfaces.ConversationHistoryInterface
 	agentRepository            identity_repositories.AgentRepositoryInterface
+	systemPromptBuilder        interfaces.SystemPromptBuilderInterface
+	mcpRequester               interfaces.McpRequesterInterface
+	reasoningTracer            traces_interfaces.ReasoningTracerInterface
 }
 
 func NewResponseDriver(
 	logger *zap.Logger,
 	inferenceLoop interfaces.InferenceLoopInterface,
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
+	agentGuidanceRepository repositories.AgentGuidanceRepositoryInterface,
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface,
 	conversationHistory knowledge_interfaces.ConversationHistoryInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	systemPromptBuilder interfaces.SystemPromptBuilderInterface,
+	mcpRequester interfaces.McpRequesterInterface,
+	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *ResponseDriver {
 	return &ResponseDriver{
 		logger:                     logger,
 		inferenceLoop:              inferenceLoop,
 		mcpConnectionRepository:    mcpConnectionRepository,
+		agentGuidanceRepository:    agentGuidanceRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		conversationHistory:        conversationHistory,
 		agentRepository:            agentRepository,
+		systemPromptBuilder:        systemPromptBuilder,
+		mcpRequester:               mcpRequester,
+		reasoningTracer:            reasoningTracer,
 	}
 }
 
 func (d *ResponseDriver) Drive(
 	ctx context.Context,
 	conversationId string,
+	instructions string,
 	inputs []knowledge_interfaces.ConversationMessage,
 ) (*knowledge_interfaces.ConversationMessage, error) {
 	history, err := d.conversationHistory.Read(ctx, conversationId)
@@ -71,12 +87,30 @@ func (d *ResponseDriver) Drive(
 
 	messages := d.knowledgeMessagesToChatMessages(combined)
 
-	mcpConnections, err := d.loadMCPConnections(ctx)
+	agent, err := d.loadAgent(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	finalStream, err := d.inferenceLoop.Run(ctx, mcpConnections, messages)
+	mcpConnections, err := d.loadMCPConnections(ctx, agent.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	toolsByConnectionId, err := d.listToolsByConnection(ctx, mcpConnections)
+	if err != nil {
+		return nil, err
+	}
+
+	guidance, err := d.loadGuidance(ctx, agent.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	systemPrompt := d.systemPromptBuilder.Build(agent, guidance, mcpConnections, toolsByConnectionId, instructions)
+	messages = append([]*interfaces.ChatCompletionMessage{{Role: "system", Content: systemPrompt}}, messages...)
+
+	finalStream, err := d.inferenceLoop.Run(ctx, mcpConnections, toolsByConnectionId, messages)
 	if err != nil {
 		return nil, fmt.Errorf("inference loop failed: %w", err)
 	}
@@ -165,7 +199,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 	return out, nil
 }
 
-func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPConnection, error) {
+func (d *ResponseDriver) loadAgent(ctx context.Context) (*identity_models.Agent, error) {
 	agent, err := d.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load agent identity: %w", err)
@@ -173,7 +207,49 @@ func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPC
 	if agent == nil {
 		return nil, fmt.Errorf("agent identity is not initialized yet")
 	}
-	raw, err := d.mcpConnectionRepository.ListByAgentId(ctx, agent.Id)
+	return agent, nil
+}
+
+func (d *ResponseDriver) loadGuidance(ctx context.Context, agentId uuid.UUID) (string, error) {
+	guidance, err := d.agentGuidanceRepository.GetByAgentId(ctx, agentId)
+	if err != nil {
+		return "", fmt.Errorf("failed to load agent guidance: %w", err)
+	}
+	if guidance == nil {
+		return "", nil
+	}
+	return guidance.Content, nil
+}
+
+func (d *ResponseDriver) listToolsByConnection(
+	ctx context.Context,
+	mcpConnections []*models.MCPConnection,
+) (map[uuid.UUID][]*interfaces.McpTool, error) {
+	toolsByConnectionId := make(map[uuid.UUID][]*interfaces.McpTool, len(mcpConnections))
+	for _, conn := range mcpConnections {
+		tools, err := d.listTools(ctx, conn)
+		if err != nil {
+			return nil, err
+		}
+		toolsByConnectionId[conn.Id] = tools
+	}
+	return toolsByConnectionId, nil
+}
+
+func (d *ResponseDriver) listTools(ctx context.Context, conn *models.MCPConnection) ([]*interfaces.McpTool, error) {
+	_, span := d.reasoningTracer.StartListTools(ctx, conn.Name)
+	defer span.End()
+
+	tools, err := d.mcpRequester.ListTools(conn)
+	if err != nil {
+		span.Fail(err)
+		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
+	}
+	return tools, nil
+}
+
+func (d *ResponseDriver) loadMCPConnections(ctx context.Context, agentId uuid.UUID) ([]*models.MCPConnection, error) {
+	raw, err := d.mcpConnectionRepository.ListByAgentId(ctx, agentId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mcp connections: %w", err)
 	}
@@ -199,6 +275,10 @@ func (d *ResponseDriver) loadMCPConnections(ctx context.Context) ([]*models.MCPC
 func (d *ResponseDriver) knowledgeMessagesToChatMessages(history []knowledge_interfaces.ConversationMessage) []*interfaces.ChatCompletionMessage {
 	out := make([]*interfaces.ChatCompletionMessage, 0, len(history))
 	for _, m := range history {
+		// System rows only feed the session-context overlay — the builder owns the system slot.
+		if m.Role == "system" {
+			continue
+		}
 		msg := &interfaces.ChatCompletionMessage{
 			Role:       m.Role,
 			Content:    m.Content,

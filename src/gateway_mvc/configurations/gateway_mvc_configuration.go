@@ -69,6 +69,7 @@ func addCoreConfiguration(container *dig.Container) {
 func addIdentityConfiguration(container *dig.Container) {
 	provideController(container, identity.NewAgentRegistrationController)
 	provideController(container, identity.NewAgentCollectionsController)
+	provideController(container, identity.NewAgentSoulController)
 }
 
 func addKnowledgeConfiguration(container *dig.Container) {
@@ -123,6 +124,7 @@ func addReasoningConfiguration(container *dig.Container) {
 	provideController(container, reasoning.NewLlmConfigController)
 	provideController(container, reasoning.NewMcpConfigController)
 	provideController(container, reasoning.NewA2AMessageController)
+	provideController(container, reasoning.NewAgentGuidanceController)
 }
 
 func provideController(container *dig.Container, ctor any) {

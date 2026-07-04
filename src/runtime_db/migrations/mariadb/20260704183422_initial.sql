@@ -12,6 +12,7 @@ CREATE TABLE `agents` (
   `role` varchar(32) NOT NULL,
   `creator` varchar(42) NOT NULL,
   `owner` varchar(42) NULL,
+  `soul` text NULL,
   `images` longtext NULL,
   `attributes` longtext NULL,
   `updated_at` datetime(3) NOT NULL,
@@ -26,6 +27,17 @@ CREATE TABLE `agent_addresses` (
   `updated_at` datetime(3) NOT NULL,
   `created_at` datetime(3) NOT NULL,
   PRIMARY KEY (`agent_id`, `type`)
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+-- create "agent_guidances" table
+CREATE TABLE `agent_guidances` (
+  `id` varchar(36) NOT NULL,
+  `agent_id` varchar(36) NOT NULL,
+  `content` text NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `idx_agent_guidances_agent_id` (`agent_id`),
+  CONSTRAINT `fk_agent_guidances_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON UPDATE RESTRICT ON DELETE CASCADE
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- create "agent_registration_states" table
 CREATE TABLE `agent_registration_states` (
@@ -153,6 +165,8 @@ DROP TABLE `conversation_messages`;
 DROP TABLE `conversations`;
 -- reverse: create "agent_registration_states" table
 DROP TABLE `agent_registration_states`;
+-- reverse: create "agent_guidances" table
+DROP TABLE `agent_guidances`;
 -- reverse: create "agent_addresses" table
 DROP TABLE `agent_addresses`;
 -- reverse: create "agents" table

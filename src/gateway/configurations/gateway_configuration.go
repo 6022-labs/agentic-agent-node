@@ -90,6 +90,7 @@ func addIdentityConfiguration(container *dig.Container) {
 		identity_use_cases.NewCheckAgentEns,
 		identity_use_cases.NewSelfRegisterAgent,
 		identity_use_cases.NewListAgentCollections,
+		identity_use_cases.NewGetAgentSoul,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {
@@ -139,6 +140,8 @@ func addReasoningConfiguration(container *dig.Container) {
 		reasoning_use_cases.NewGetLlmConfig,
 		reasoning_use_cases.NewSetLlmConfig,
 		reasoning_use_cases.NewDeleteLlmConfig,
+		reasoning_use_cases.NewGetAgentGuidance,
+		reasoning_use_cases.NewSetAgentGuidance,
 		reasoning_use_cases.NewListMcpConnections,
 		reasoning_use_cases.NewCreateMcpConnection,
 		reasoning_use_cases.NewDeleteMcpConnection,

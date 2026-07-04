@@ -78,4 +78,66 @@ func TestWhenReconcilingMint(t *testing.T) {
 			assert.NotNil(t, savedState.MintedAt)
 		})
 	})
+
+	initSoulSuite := func(suite *WhenReconcilingMintTestingSuite) {
+		suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: common_tests.RandomEthAddress()}, nil)
+		suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).Return(common_tests.RandomEthAddress(), nil)
+		suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
+		suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+				return s, nil
+			})
+	}
+
+	t.Run("Given the agent has no soul yet", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should compose the soul from the identity facts", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingMintBeforeEach(t)
+			initSoulSuite(suite)
+
+			agent := model_builders.NewAgentBuilder().
+				WithName("Alice").
+				WithEnsDomain("alice.agent.eth").
+				WithAttributes(map[string]string{"specialty": "defi"}).
+				Build()
+			savedAgent, _, err := suite.sut.ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
+
+			assert.NoError(t, err)
+			assert.Contains(t, savedAgent.Soul, "### Core identity")
+			assert.Contains(t, savedAgent.Soul, "I am Alice")
+			assert.Contains(t, savedAgent.Soul, "alice.agent.eth")
+			assert.Contains(t, savedAgent.Soul, "### Values")
+			assert.Contains(t, savedAgent.Soul, "### Traits")
+			assert.Contains(t, savedAgent.Soul, "- specialty: defi")
+			assert.Contains(t, savedAgent.Soul, "### Communication style")
+		})
+	})
+
+	t.Run("Given the agent already carries a soul", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should recompute it from the current facts", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingMintBeforeEach(t)
+			initSoulSuite(suite)
+
+			agent := model_builders.NewAgentBuilder().
+				WithName("Alice").
+				WithSoul("stale persona").
+				Build()
+
+			savedAgent, _, err := suite.
+				sut.
+				ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
+
+			assert.NoError(t, err)
+			assert.NotEqual(t, "stale persona", savedAgent.Soul)
+			assert.Contains(t, savedAgent.Soul, "I am Alice")
+		})
+	})
 }

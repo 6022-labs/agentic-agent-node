@@ -36,9 +36,7 @@ func NewCreateResponse(
 	}
 }
 
-// Execute resolves the conversation key (minting one when absent), forwards the
-// new turn to the inference loop — instructions ride along as a leading system
-// message — and builds the OpenAI Response.
+// Execute resolves the conversation key, drives the turn (instructions feed the per-turn overlay), builds the Response.
 func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
@@ -52,14 +50,7 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 	ctx, span := u.reasoningTracer.StartInference(ctx, conversationId, request.Model)
 	defer span.End()
 
-	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Input)+1)
-	if request.Instructions != "" {
-		inputs = append(inputs, knowledge_interfaces.ConversationMessage{
-			Role:      "system",
-			Content:   request.Instructions,
-			Timestamp: time.Now(),
-		})
-	}
+	inputs := make([]knowledge_interfaces.ConversationMessage, 0, len(request.Input))
 	for _, message := range request.Input {
 		inputs = append(inputs, knowledge_interfaces.ConversationMessage{
 			Role:      message.Role,
@@ -68,7 +59,7 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 		})
 	}
 
-	persisted, err := u.responseDriver.Drive(ctx, conversationId, inputs)
+	persisted, err := u.responseDriver.Drive(ctx, conversationId, request.Instructions, inputs)
 	if err != nil {
 		span.Fail(err)
 		u.responseMetrics.RecordResponseFailed(ctx)

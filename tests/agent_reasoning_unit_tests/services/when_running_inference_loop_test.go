@@ -44,10 +44,6 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 	mockSpan.EXPECT().End().AnyTimes()
 
 	mockReasoningTracer := traces_interfaces_mocks.NewMockReasoningTracerInterface(mockController)
-	mockReasoningTracer.EXPECT().StartListTools(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, _ string) (context.Context, traces_interfaces.Span) {
-			return ctx, mockSpan
-		}).AnyTimes()
 	mockReasoningTracer.EXPECT().StartToolCall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, _, _, _ string) (context.Context, traces_interfaces.Span) {
 			return ctx, mockSpan
@@ -92,7 +88,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 2) {
@@ -119,7 +115,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 2) {
@@ -146,11 +142,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		toolResult := map[string]any{"status": "ok"}
 		expectedFinal := "all done"
 
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{mcpTool}, nil)
+		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
 
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
 				CallTool(mcpConnection, mcpTool, toolArgs).
 				Return(toolResult, nil)
@@ -188,7 +182,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			initSuite(suite)
 
 			messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
-			out, err := suite.sut.Run(ctx, mcpConnections, messages)
+			out, err := suite.sut.Run(ctx, mcpConnections, toolsByConnectionId, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -226,7 +220,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			initSuite(suite)
 
 			// mockMcpRequester.CallTool is never expected — a dispatch would fail the test.
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -272,7 +266,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -302,35 +296,10 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.Nil(t, out)
 			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopNoActionableOutput)
-		})
-	})
-
-	t.Run("Given listing tools fails for an MCP connection", func(t *testing.T) {
-		t.Parallel()
-
-		mcpConnection := model_builders.NewMCPConnectionBuilder().Build()
-
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return(nil, errors.New("mcp down"))
-		}
-
-		t.Run("Should fail before the first LLM call", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
-			initSuite(suite)
-
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, nil)
-
-			assert.Nil(t, out)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "failed to list tools")
 		})
 	})
 
@@ -344,11 +313,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArgs := map[string]any{"query": "value"}
 
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{mcpTool}, nil)
+		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
 
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
 				CallTool(mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil).
@@ -370,7 +337,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 2)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, nil)
+			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
 
 			assert.Nil(t, out)
 			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopMaxIterationsExceeded)
@@ -385,11 +352,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			Build()
 		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
 
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{mcpTool}, nil)
+		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
 
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
@@ -405,7 +370,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, nil)
+			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
 
 			assert.Nil(t, out)
 			assert.Error(t, err)
@@ -430,7 +395,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, nil, messages)
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
 
 			assert.Nil(t, out)
 			assert.Error(t, err)
@@ -453,11 +418,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		thinkingText := "let me check"
 		expectedFinal := "all done"
 
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{mcpTool}, nil)
+		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
 
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
 				CallTool(mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil)
@@ -484,7 +447,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, mcpConnections, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(ctx, mcpConnections, toolsByConnectionId, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -513,11 +476,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArgs := map[string]any{"query": "value"}
 
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(mcpConnection).
-				Return([]*interfaces.McpTool{mcpTool}, nil)
+		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
 
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
@@ -537,7 +498,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, nil)
+			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
 
 			assert.Nil(t, out)
 			assert.Error(t, err)

@@ -17,7 +17,8 @@ import { formatRelativeTime } from "@/lib/format"
 import { newId } from "@/lib/utils"
 import { emptyMessage, type DraftMessage } from "./draft-message"
 
-const ROLES: ConversationMessageRole[] = ["user", "assistant", "system"]
+// "system" is deliberately absent: the system slot belongs to the built prompt.
+const ROLES: ConversationMessageRole[] = ["user", "assistant"]
 
 type Props = {
   conversationId: string

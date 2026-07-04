@@ -51,14 +51,10 @@ func NewInferenceLoop(
 func (l *InferenceLoop) Run(
 	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
+	toolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
 	messages []*interfaces.ChatCompletionMessage,
 ) ([]*interfaces.ChatCompletionMessage, error) {
 	start := time.Now()
-
-	toolsByConnectionId, err := l.listToolsByConnection(ctx, mcpConnections)
-	if err != nil {
-		return nil, err
-	}
 
 	for iteration := 0; iteration < l.settings.MaxIterations; iteration++ {
 		completion, err := l.llmExecutor.Complete(ctx, mcpConnections, toolsByConnectionId, messages)
@@ -108,33 +104,6 @@ func (l *InferenceLoop) Run(
 	l.metrics.RecordLoopExceeded(ctx, time.Since(start), int64(l.settings.MaxIterations))
 
 	return nil, fmt.Errorf("%w: %d", interfaces.ErrInferenceLoopMaxIterationsExceeded, l.settings.MaxIterations)
-}
-
-func (l *InferenceLoop) listToolsByConnection(
-	ctx context.Context,
-	mcpConnections []*models.MCPConnection,
-) (map[uuid.UUID][]*interfaces.McpTool, error) {
-	toolsByConnectionId := make(map[uuid.UUID][]*interfaces.McpTool, len(mcpConnections))
-	for _, conn := range mcpConnections {
-		tools, err := l.listTools(ctx, conn)
-		if err != nil {
-			return nil, err
-		}
-		toolsByConnectionId[conn.Id] = tools
-	}
-	return toolsByConnectionId, nil
-}
-
-func (l *InferenceLoop) listTools(ctx context.Context, conn *models.MCPConnection) ([]*interfaces.McpTool, error) {
-	_, span := l.reasoningTracer.StartListTools(ctx, conn.Name)
-	defer span.End()
-
-	tools, err := l.mcpRequester.ListTools(conn)
-	if err != nil {
-		span.Fail(err)
-		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
-	}
-	return tools, nil
 }
 
 // recordExecutedToolCalls mirrors provider-run MCP calls into the stream (assistant turn + a tool turn per result) so they persist without being re-dispatched.

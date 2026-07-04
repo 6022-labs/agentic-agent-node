@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/services_mocks"
 	reasoning_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -406,6 +407,56 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the conversation exceeds the token limit", func(t *testing.T) {
+		t.Parallel()
+
+		overLimitMessages := []*interfaces.ChatCompletionMessage{
+			{Role: "system", Content: "layered system prompt"},
+			{Role: "user", Content: "oldest turn that should be dropped first"},
+			{Role: "assistant", Content: "old answer"},
+			{Role: "user", Content: "newest turn"},
+		}
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection, captured *[]*interfaces.ChatCompletionMessage) {
+			suite.tokenSettings.MaxTokensPerRequest = 12
+			suite.libertAiSettings.BaseUrl = "http://libertai.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_, _ string, _ *models.LLMConnection, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+					*captured = msgs
+					return completion, nil
+				})
+		}
+
+		t.Run("Should trim oldest turns but always keep the system prompt", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformLibertAi).
+				WithModel("gpt-4").
+				Build()
+			var captured []*interfaces.ChatCompletionMessage
+			initSuite(suite, llmConnection, &captured)
+
+			_, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, overLimitMessages)
+
+			assert.NoError(t, err)
+			if assert.NotEmpty(t, captured) {
+				assert.Equal(t, "system", captured[0].Role)
+				assert.Equal(t, "layered system prompt", captured[0].Content)
+				for _, m := range captured {
+					assert.NotEqual(t, "oldest turn that should be dropped first", m.Content)
+				}
+				assert.Equal(t, "newest turn", captured[len(captured)-1].Content)
+			}
 		})
 	})
 

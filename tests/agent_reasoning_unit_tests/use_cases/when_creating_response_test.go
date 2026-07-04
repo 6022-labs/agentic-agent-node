@@ -85,19 +85,17 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(gomock.Any(), conversationId, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ string, inputs []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
-					if assert.Len(t, inputs, 2) {
-						assert.Equal(t, "system", inputs[0].Role)
-						assert.Equal(t, "be nice", inputs[0].Content)
-						assert.Equal(t, "user", inputs[1].Role)
-						assert.Equal(t, "hello", inputs[1].Content)
+				Drive(gomock.Any(), conversationId, "be nice", gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, _ string, inputs []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
+					if assert.Len(t, inputs, 1) {
+						assert.Equal(t, "user", inputs[0].Role)
+						assert.Equal(t, "hello", inputs[0].Content)
 					}
 					return &knowledge_interfaces.ConversationMessage{Role: "assistant", Content: expectedFinal}, nil
 				})
 		}
 
-		t.Run("Should prepend instructions and surface the assistant message as an OpenAI output item", func(t *testing.T) {
+		t.Run("Should forward instructions as the overlay and surface the assistant message as an OpenAI output item", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -128,8 +126,8 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, conversationId string, _ []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
+				Drive(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, conversationId string, _ string, _ []knowledge_interfaces.ConversationMessage) (*knowledge_interfaces.ConversationMessage, error) {
 					assert.NotEmpty(t, conversationId)
 					return &knowledge_interfaces.ConversationMessage{Role: "assistant", Content: "hi"}, nil
 				})
@@ -156,7 +154,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(gomock.Any(), conversationId, gomock.Any()).
+				Drive(gomock.Any(), conversationId, gomock.Any(), gomock.Any()).
 				Return(nil, nil)
 		}
 
@@ -179,7 +177,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockResponseDriver.EXPECT().
-				Drive(gomock.Any(), conversationId, gomock.Any()).
+				Drive(gomock.Any(), conversationId, gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("driver broke"))
 		}
 

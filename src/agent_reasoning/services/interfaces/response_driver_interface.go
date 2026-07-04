@@ -7,12 +7,12 @@ import (
 )
 
 type ResponseDriverInterface interface {
-	// Drive runs the inference loop and persists new inputs + final assistant
-	// after the loop. Returns the persisted assistant row, or nil if the loop
-	// produced no assistant text.
+	// Drive runs the inference loop under a freshly built prompt (instructions feed its
+	// per-turn overlay; neither persists), then persists new inputs + final assistant (nil if none).
 	Drive(
 		ctx context.Context,
 		conversationId string,
+		instructions string,
 		inputs []knowledge_interfaces.ConversationMessage,
 	) (*knowledge_interfaces.ConversationMessage, error)
 }

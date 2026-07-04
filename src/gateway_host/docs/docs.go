@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/.well-known/6022": {
             "get": {
-                "description": "6022 discovery document (identity + invocation), open/unauthenticated. Documents POST /responses, including the caller-supplied ` + "`" + `instructions` + "`" + ` system prompt. Requires agent identity, so it errors until the node is registered.",
+                "description": "6022 discovery document (identity + invocation), open/unauthenticated. Documents POST /responses, including the caller-supplied ` + "`" + `instructions` + "`" + ` per-request session overlay (bounded; it cannot override the agent's built-in system prompt and is not carried across turns). Requires agent identity, so it errors until the node is registered.",
                 "produces": [
                     "application/json"
                 ],
@@ -164,6 +164,78 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.AgentCollectionsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/guidance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Get agent guidance",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentGuidanceResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Set agent guidance",
+                "parameters": [
+                    {
+                        "description": "Agent guidance",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SetAgentGuidanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentGuidanceResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
                         }
                     }
                 }
@@ -397,6 +469,42 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/agent/soul": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Identity"
+                ],
+                "summary": "Get agent soul",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentSoulResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "identity_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -1433,6 +1541,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SetAgentGuidanceRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SetLlmConfigRequest": {
             "type": "object",
             "properties": {
@@ -1566,6 +1682,14 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.AgentGuidanceResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.AgentInterface": {
             "type": "object",
             "properties": {
@@ -1665,6 +1789,14 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "responses.AgentSoulResponse": {
+            "type": "object",
+            "properties": {
+                "soul": {
+                    "type": "string"
                 }
             }
         },

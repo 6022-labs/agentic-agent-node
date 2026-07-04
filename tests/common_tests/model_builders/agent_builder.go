@@ -23,6 +23,7 @@ type AgentBuilder struct {
 	creator           string
 	addresses         map[enums.AddressType]string
 	owner             *string
+	soul              string
 	images            map[string]string
 	attributes        map[string]string
 	createdAt         time.Time
@@ -124,6 +125,11 @@ func (b *AgentBuilder) WithAddresses(addresses map[enums.AddressType]string) *Ag
 	return b
 }
 
+func (b *AgentBuilder) WithSoul(soul string) *AgentBuilder {
+	b.soul = soul
+	return b
+}
+
 func (b *AgentBuilder) WithOwner(owner string) *AgentBuilder {
 	b.owner = &owner
 	return b
@@ -162,6 +168,7 @@ func (b *AgentBuilder) Build() *models.Agent {
 		Role:              b.role,
 		Creator:           b.creator,
 		Owner:             b.owner,
+		Soul:              b.soul,
 		Images:            b.images,
 		Attributes:        b.attributes,
 		Addresses:         b.addresses,

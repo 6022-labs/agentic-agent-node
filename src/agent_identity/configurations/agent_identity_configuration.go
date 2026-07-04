@@ -169,6 +169,7 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		use_cases.NewCheckAgentEns,
 		use_cases.NewSelfRegisterAgent,
 		use_cases.NewListAgentCollections,
+		use_cases.NewGetAgentSoul,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

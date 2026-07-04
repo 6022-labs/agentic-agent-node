@@ -7,6 +7,7 @@ import (
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
@@ -41,6 +42,13 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 || len(messages) == 0 {
 		return nil, nil
+	}
+
+	// The transcript never holds system rows.
+	for _, msg := range messages {
+		if msg.Role == enums.ConversationMessageRoleSystem {
+			return nil, errors.NewInternalError("append_failed", "system messages must never be persisted")
+		}
 	}
 
 	agent, err := s.agentRepository.Get(ctx)

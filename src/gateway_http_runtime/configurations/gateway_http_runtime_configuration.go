@@ -76,6 +76,12 @@ func addIdentityConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		identity_services.NewHttpAgentSoulClient,
+		dig.As(new(identity_interfaces.AgentSoulClientInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 func addKnowledgeConfiguration(container *dig.Container) {
@@ -124,6 +130,12 @@ func addReasoningConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		reasoning_services.NewHttpResponseClient,
 		dig.As(new(reasoning_interfaces.ResponseClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		reasoning_services.NewHttpAgentGuidanceClient,
+		dig.As(new(reasoning_interfaces.AgentGuidanceClientInterface)),
 	); err != nil {
 		panic(err)
 	}

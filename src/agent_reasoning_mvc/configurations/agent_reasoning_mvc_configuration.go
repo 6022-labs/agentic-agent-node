@@ -10,6 +10,7 @@ func AddAgentReasoningMvcConfiguration(container *dig.Container) {
 	provideController(container, agent_reasoning_mvc.NewLLMConfigController)
 	provideController(container, agent_reasoning_mvc.NewMCPConfigController)
 	provideController(container, agent_reasoning_mvc.NewResponseController)
+	provideController(container, agent_reasoning_mvc.NewAgentGuidanceController)
 }
 
 func provideController(container *dig.Container, ctor any) {

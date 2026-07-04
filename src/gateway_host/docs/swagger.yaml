@@ -173,6 +173,11 @@ definitions:
       price:
         type: string
     type: object
+  requests.SetAgentGuidanceRequest:
+    properties:
+      content:
+        type: string
+    type: object
   requests.SetLlmConfigRequest:
     properties:
       apiKey:
@@ -259,6 +264,11 @@ definitions:
           $ref: '#/definitions/responses.AgentCollectionResponse'
         type: array
     type: object
+  responses.AgentGuidanceResponse:
+    properties:
+      content:
+        type: string
+    type: object
   responses.AgentInterface:
     properties:
       protocolBinding:
@@ -325,6 +335,11 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  responses.AgentSoulResponse:
+    properties:
+      soul:
+        type: string
     type: object
   responses.AppendConversationMessagesResponse:
     properties:
@@ -716,8 +731,10 @@ paths:
   /.well-known/6022:
     get:
       description: 6022 discovery document (identity + invocation), open/unauthenticated.
-        Documents POST /responses, including the caller-supplied `instructions` system
-        prompt. Requires agent identity, so it errors until the node is registered.
+        Documents POST /responses, including the caller-supplied `instructions` per-request
+        session overlay (bounded; it cannot override the agent's built-in system prompt
+        and is not carried across turns). Requires agent identity, so it errors until
+        the node is registered.
       produces:
       - application/json
       responses:
@@ -818,6 +835,50 @@ paths:
       summary: List agent collections
       tags:
       - AgentCollections
+  /agent/guidance:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get agent guidance
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Agent guidance
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetAgentGuidanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Set agent guidance
+      tags:
+      - Config
   /agent/registration:
     get:
       produces:
@@ -962,6 +1023,28 @@ paths:
       summary: Self mint + ENS register
       tags:
       - AgentRegistration
+  /agent/soul:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentSoulResponse'
+        "404":
+          description: identity_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get agent soul
+      tags:
+      - Identity
   /auth/challenge:
     get:
       description: Returns a fresh nonce + expiry. The caller signs the nonce with

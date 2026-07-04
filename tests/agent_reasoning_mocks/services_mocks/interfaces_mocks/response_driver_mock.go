@@ -42,16 +42,16 @@ func (m *MockResponseDriverInterface) EXPECT() *MockResponseDriverInterfaceMockR
 }
 
 // Drive mocks base method.
-func (m *MockResponseDriverInterface) Drive(ctx context.Context, conversationId string, inputs []interfaces.ConversationMessage) (*interfaces.ConversationMessage, error) {
+func (m *MockResponseDriverInterface) Drive(ctx context.Context, conversationId, instructions string, inputs []interfaces.ConversationMessage) (*interfaces.ConversationMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Drive", ctx, conversationId, inputs)
+	ret := m.ctrl.Call(m, "Drive", ctx, conversationId, instructions, inputs)
 	ret0, _ := ret[0].(*interfaces.ConversationMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Drive indicates an expected call of Drive.
-func (mr *MockResponseDriverInterfaceMockRecorder) Drive(ctx, conversationId, inputs any) *gomock.Call {
+func (mr *MockResponseDriverInterfaceMockRecorder) Drive(ctx, conversationId, instructions, inputs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Drive", reflect.TypeOf((*MockResponseDriverInterface)(nil).Drive), ctx, conversationId, inputs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Drive", reflect.TypeOf((*MockResponseDriverInterface)(nil).Drive), ctx, conversationId, instructions, inputs)
 }

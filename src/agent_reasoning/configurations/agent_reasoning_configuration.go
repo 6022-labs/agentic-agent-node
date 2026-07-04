@@ -53,6 +53,13 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		services.NewSystemPromptBuilder,
+		dig.As(new(interfaces.SystemPromptBuilderInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewResponseDriver,
 		dig.As(new(interfaces.ResponseDriverInterface)),
 	); err != nil {
@@ -89,6 +96,8 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		use_cases.NewGetMCPConnection,
 		use_cases.NewUpdateMCPConnection,
 		use_cases.NewDeleteMCPConnection,
+		use_cases.NewGetAgentGuidance,
+		use_cases.NewSetAgentGuidance,
 	}
 	for _, p := range providers {
 		if err := container.Provide(p); err != nil {

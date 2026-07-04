@@ -26,6 +26,9 @@ type Agent struct {
 	Creator   string          `gorm:"not null;size:42" json:"creator"`
 	Owner     *string         `gorm:"size:42" json:"owner"`
 
+	// Soul is the persona layer of the system prompt, recomputed from on-chain facts at each mint reconcile.
+	Soul string `gorm:"type:text" json:"soul"`
+
 	Images     map[string]string `gorm:"serializer:json" json:"images"`
 	Attributes map[string]string `gorm:"serializer:json" json:"attributes"`
 

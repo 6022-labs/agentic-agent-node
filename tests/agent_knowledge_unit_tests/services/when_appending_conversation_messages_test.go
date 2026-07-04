@@ -95,6 +95,29 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a message carries the system role", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
+
+		t.Run("Should fail before resolving the agent or writing anything", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			message := model_builders.NewConversationMessageBuilder().
+				WithRole("system").
+				WithTimestamp(now).
+				Build()
+			res, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{message})
+
+			assert.Nil(t, res)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, "system messages must never be persisted")
+		})
+	})
+
 	t.Run("Given inputs whose hashes are all new", func(t *testing.T) {
 		t.Parallel()
 

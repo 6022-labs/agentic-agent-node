@@ -182,6 +182,26 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalAgentCollections(ctx, para
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollections", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentCollections), varargs...)
 }
 
+// GetInternalAgentGuidance mocks base method.
+func (m *MockClientInterface) GetInternalAgentGuidance(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentGuidance", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentGuidance indicates an expected call of GetInternalAgentGuidance.
+func (mr *MockClientInterfaceMockRecorder) GetInternalAgentGuidance(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentGuidance", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentGuidance), varargs...)
+}
+
 // GetInternalAgentRegistration mocks base method.
 func (m *MockClientInterface) GetInternalAgentRegistration(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -240,6 +260,26 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalAgentRegistrationMintInfo(
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentRegistrationMintInfo", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentRegistrationMintInfo), varargs...)
+}
+
+// GetInternalAgentSoul mocks base method.
+func (m *MockClientInterface) GetInternalAgentSoul(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentSoul", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentSoul indicates an expected call of GetInternalAgentSoul.
+func (mr *MockClientInterfaceMockRecorder) GetInternalAgentSoul(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentSoul", reflect.TypeOf((*MockClientInterface)(nil).GetInternalAgentSoul), varargs...)
 }
 
 // GetInternalConfigBlockchain mocks base method.
@@ -802,6 +842,46 @@ func (mr *MockClientInterfaceMockRecorder) PostInternalResponsesWithBody(ctx, co
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalResponsesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalResponsesWithBody), varargs...)
 }
 
+// PutInternalAgentGuidance mocks base method.
+func (m *MockClientInterface) PutInternalAgentGuidance(ctx context.Context, body clients.PutInternalAgentGuidanceJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalAgentGuidance", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalAgentGuidance indicates an expected call of PutInternalAgentGuidance.
+func (mr *MockClientInterfaceMockRecorder) PutInternalAgentGuidance(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalAgentGuidance", reflect.TypeOf((*MockClientInterface)(nil).PutInternalAgentGuidance), varargs...)
+}
+
+// PutInternalAgentGuidanceWithBody mocks base method.
+func (m *MockClientInterface) PutInternalAgentGuidanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalAgentGuidanceWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalAgentGuidanceWithBody indicates an expected call of PutInternalAgentGuidanceWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutInternalAgentGuidanceWithBody(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalAgentGuidanceWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalAgentGuidanceWithBody), varargs...)
+}
+
 // PutInternalConfigMcpId mocks base method.
 func (m *MockClientInterface) PutInternalConfigMcpId(ctx context.Context, id string, body clients.PutInternalConfigMcpIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1006,6 +1086,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentCollecti
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentCollectionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentCollectionsWithResponse), varargs...)
 }
 
+// GetInternalAgentGuidanceWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalAgentGuidanceWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentGuidanceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentGuidanceWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalAgentGuidanceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentGuidanceWithResponse indicates an expected call of GetInternalAgentGuidanceWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentGuidanceWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentGuidanceWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentGuidanceWithResponse), varargs...)
+}
+
 // GetInternalAgentRegistrationEnsInfoWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) GetInternalAgentRegistrationEnsInfoWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentRegistrationEnsInfoResponse, error) {
 	m.ctrl.T.Helper()
@@ -1064,6 +1164,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentRegistra
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentRegistrationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentRegistrationWithResponse), varargs...)
+}
+
+// GetInternalAgentSoulWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalAgentSoulWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalAgentSoulResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalAgentSoulWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalAgentSoulResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalAgentSoulWithResponse indicates an expected call of GetInternalAgentSoulWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalAgentSoulWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalAgentSoulWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalAgentSoulWithResponse), varargs...)
 }
 
 // GetInternalConfigBlockchainWithResponse mocks base method.
@@ -1624,6 +1744,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalResponsesWit
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalResponsesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalResponsesWithResponse), varargs...)
+}
+
+// PutInternalAgentGuidanceWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalAgentGuidanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalAgentGuidanceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalAgentGuidanceWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalAgentGuidanceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalAgentGuidanceWithBodyWithResponse indicates an expected call of PutInternalAgentGuidanceWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalAgentGuidanceWithBodyWithResponse(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalAgentGuidanceWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalAgentGuidanceWithBodyWithResponse), varargs...)
+}
+
+// PutInternalAgentGuidanceWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalAgentGuidanceWithResponse(ctx context.Context, body clients.PutInternalAgentGuidanceJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalAgentGuidanceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalAgentGuidanceWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalAgentGuidanceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalAgentGuidanceWithResponse indicates an expected call of PutInternalAgentGuidanceWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalAgentGuidanceWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalAgentGuidanceWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalAgentGuidanceWithResponse), varargs...)
 }
 
 // PutInternalConfigMcpIdWithBodyWithResponse mocks base method.

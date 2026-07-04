@@ -1,6 +1,7 @@
 package requests
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -46,6 +47,12 @@ func (r *CreateResponseRequest) ConversationKey() string {
 	return ""
 }
 
+// inputRoles excludes system (session context only enters via instructions) and tool (orphan rows break pairing).
+var inputRoles = []string{
+	"user",
+	"assistant",
+}
+
 func (r *CreateResponseRequest) ValidateAndSanitize() error {
 	if len(r.Input) == 0 {
 		return errors.NewValidationError("input", "cannot be empty")
@@ -53,6 +60,9 @@ func (r *CreateResponseRequest) ValidateAndSanitize() error {
 	for index := range r.Input {
 		if len(strings.TrimSpace(r.Input[index].Content)) == 0 {
 			return errors.NewValidationError("input", "message content cannot be empty, check input at index "+strconv.Itoa(index))
+		}
+		if !slices.Contains(inputRoles, r.Input[index].Role) {
+			return errors.NewValidationError("input", "invalid role, must be one of: "+strings.Join(inputRoles, ", ")+", check input at index "+strconv.Itoa(index))
 		}
 	}
 	return nil

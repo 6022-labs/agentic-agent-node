@@ -129,6 +129,11 @@ definitions:
       price:
         type: string
     type: object
+  requests.SetAgentGuidanceRequest:
+    properties:
+      content:
+        type: string
+    type: object
   requests.SetupLLMConnectionRequest:
     properties:
       apiKey:
@@ -171,6 +176,11 @@ definitions:
           $ref: '#/definitions/responses.AgentCollectionResponse'
         type: array
     type: object
+  responses.AgentGuidanceResponse:
+    properties:
+      content:
+        type: string
+    type: object
   responses.AgentRegistrationResponse:
     properties:
       addresses:
@@ -207,6 +217,11 @@ definitions:
         type: string
       tokenId:
         type: integer
+    type: object
+  responses.AgentSoulResponse:
+    properties:
+      soul:
+        type: string
     type: object
   responses.AppendConversationMessagesResponse:
     properties:
@@ -556,6 +571,46 @@ paths:
       summary: List agent collections
       tags:
       - Internal
+  /internal/agent/guidance:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "500":
+          description: guidance_lookup_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get agent guidance
+      tags:
+      - Internal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Agent guidance
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetAgentGuidanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "500":
+          description: guidance_update_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Set agent guidance
+      tags:
+      - Internal
   /internal/agent/registration:
     get:
       produces:
@@ -705,6 +760,26 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Self mint + ENS register
+      tags:
+      - Internal
+  /internal/agent/soul:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentSoulResponse'
+        "404":
+          description: identity_not_found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: soul_lookup_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get agent soul
       tags:
       - Internal
   /internal/authorize:

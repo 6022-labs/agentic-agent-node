@@ -194,6 +194,14 @@
                 },
                 "type": "object"
             },
+            "requests.SetAgentGuidanceRequest": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.SetupLLMConnectionRequest": {
                 "properties": {
                     "apiKey": {
@@ -260,6 +268,14 @@
                 },
                 "type": "object"
             },
+            "responses.AgentGuidanceResponse": {
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "responses.AgentRegistrationResponse": {
                 "properties": {
                     "addresses": {
@@ -312,6 +328,14 @@
                     },
                     "tokenId": {
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentSoulResponse": {
+                "properties": {
+                    "soul": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -878,6 +902,84 @@
                 ]
             }
         },
+        "/internal/agent/guidance": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentGuidanceResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "guidance_lookup_failed"
+                    }
+                },
+                "summary": "Get agent guidance",
+                "tags": [
+                    "Internal"
+                ]
+            },
+            "put": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SetAgentGuidanceRequest",
+                                        "summary": "request",
+                                        "description": "Agent guidance"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Agent guidance",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentGuidanceResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "guidance_update_failed"
+                    }
+                },
+                "summary": "Set agent guidance",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
         "/internal/agent/registration": {
             "get": {
                 "responses": {
@@ -1128,6 +1230,46 @@
                     }
                 },
                 "summary": "Self mint + ENS register",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/agent/soul": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentSoulResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "identity_not_found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "soul_lookup_failed"
+                    }
+                },
+                "summary": "Get agent soul",
                 "tags": [
                     "Internal"
                 ]

@@ -114,6 +114,11 @@ type RequestsSavePaymentRuleRequest struct {
 	Price  *string                 `json:"price,omitempty"`
 }
 
+// RequestsSetAgentGuidanceRequest defines model for requests.SetAgentGuidanceRequest.
+type RequestsSetAgentGuidanceRequest struct {
+	Content *string `json:"content,omitempty"`
+}
+
 // RequestsSetupLLMConnectionRequest defines model for requests.SetupLLMConnectionRequest.
 type RequestsSetupLLMConnectionRequest struct {
 	ApiKey   *string                     `json:"apiKey,omitempty"`
@@ -143,6 +148,11 @@ type ResponsesAgentCollectionsResponse struct {
 	Collections *[]ResponsesAgentCollectionResponse `json:"collections,omitempty"`
 }
 
+// ResponsesAgentGuidanceResponse defines model for responses.AgentGuidanceResponse.
+type ResponsesAgentGuidanceResponse struct {
+	Content *string `json:"content,omitempty"`
+}
+
 // ResponsesAgentRegistrationResponse defines model for responses.AgentRegistrationResponse.
 type ResponsesAgentRegistrationResponse struct {
 	Addresses         *map[string]string `json:"addresses,omitempty"`
@@ -159,6 +169,11 @@ type ResponsesAgentRegistrationResponse struct {
 	ProposalId        *int               `json:"proposalId,omitempty"`
 	Role              *string            `json:"role,omitempty"`
 	TokenId           *int               `json:"tokenId,omitempty"`
+}
+
+// ResponsesAgentSoulResponse defines model for responses.AgentSoulResponse.
+type ResponsesAgentSoulResponse struct {
+	Soul *string `json:"soul,omitempty"`
 }
 
 // ResponsesAppendConversationMessagesResponse defines model for responses.AppendConversationMessagesResponse.
@@ -376,6 +391,14 @@ type GetInternalAgentCollectionsParams struct {
 	ChainId string `form:"chainId" json:"chainId"`
 }
 
+// PutInternalAgentGuidanceJSONBody defines parameters for PutInternalAgentGuidance.
+type PutInternalAgentGuidanceJSONBody struct {
+	union json.RawMessage
+}
+
+// PutInternalAgentGuidanceJSONBody0 defines parameters for PutInternalAgentGuidance.
+type PutInternalAgentGuidanceJSONBody0 = map[string]interface{}
+
 // PostInternalAgentRegistrationFormdataBody defines parameters for PostInternalAgentRegistration.
 type PostInternalAgentRegistrationFormdataBody struct {
 	union json.RawMessage
@@ -468,6 +491,9 @@ type PostInternalResponsesJSONBody struct {
 
 // PostInternalResponsesJSONBody0 defines parameters for PostInternalResponses.
 type PostInternalResponsesJSONBody0 = map[string]interface{}
+
+// PutInternalAgentGuidanceJSONRequestBody defines body for PutInternalAgentGuidance for application/json ContentType.
+type PutInternalAgentGuidanceJSONRequestBody PutInternalAgentGuidanceJSONBody
 
 // PostInternalAgentRegistrationFormdataRequestBody defines body for PostInternalAgentRegistration for application/x-www-form-urlencoded ContentType.
 type PostInternalAgentRegistrationFormdataRequestBody PostInternalAgentRegistrationFormdataBody
@@ -575,6 +601,14 @@ type ClientInterface interface {
 	// GetInternalAgentCollections request
 	GetInternalAgentCollections(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetInternalAgentGuidance request
+	GetInternalAgentGuidance(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutInternalAgentGuidanceWithBody request with any body
+	PutInternalAgentGuidanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutInternalAgentGuidance(ctx context.Context, body PutInternalAgentGuidanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetInternalAgentRegistration request
 	GetInternalAgentRegistration(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -597,6 +631,9 @@ type ClientInterface interface {
 
 	// PostInternalAgentRegistrationSelf request
 	PostInternalAgentRegistrationSelf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInternalAgentSoul request
+	GetInternalAgentSoul(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostInternalAuthorizeWithBody request with any body
 	PostInternalAuthorizeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -696,6 +733,42 @@ func (c *Client) GetInternalAgentCollections(ctx context.Context, params *GetInt
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetInternalAgentGuidance(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalAgentGuidanceRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalAgentGuidanceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalAgentGuidanceRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalAgentGuidance(ctx context.Context, body PutInternalAgentGuidanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalAgentGuidanceRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetInternalAgentRegistration(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInternalAgentRegistrationRequest(c.Server)
 	if err != nil {
@@ -782,6 +855,18 @@ func (c *Client) PostInternalAgentRegistrationMintCheck(ctx context.Context, req
 
 func (c *Client) PostInternalAgentRegistrationSelf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInternalAgentRegistrationSelfRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInternalAgentSoul(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalAgentSoulRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,6 +1294,73 @@ func NewGetInternalAgentCollectionsRequest(server string, params *GetInternalAge
 	return req, nil
 }
 
+// NewGetInternalAgentGuidanceRequest generates requests for GetInternalAgentGuidance
+func NewGetInternalAgentGuidanceRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/agent/guidance")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutInternalAgentGuidanceRequest calls the generic PutInternalAgentGuidance builder with application/json body
+func NewPutInternalAgentGuidanceRequest(server string, body PutInternalAgentGuidanceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutInternalAgentGuidanceRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPutInternalAgentGuidanceRequestWithBody generates requests for PutInternalAgentGuidance with any type of body
+func NewPutInternalAgentGuidanceRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/agent/guidance")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetInternalAgentRegistrationRequest generates requests for GetInternalAgentRegistration
 func NewGetInternalAgentRegistrationRequest(server string) (*http.Request, error) {
 	var err error
@@ -1404,6 +1556,33 @@ func NewPostInternalAgentRegistrationSelfRequest(server string) (*http.Request, 
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetInternalAgentSoulRequest generates requests for GetInternalAgentSoul
+func NewGetInternalAgentSoulRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/agent/soul")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -2231,6 +2410,14 @@ type ClientWithResponsesInterface interface {
 	// GetInternalAgentCollectionsWithResponse request
 	GetInternalAgentCollectionsWithResponse(ctx context.Context, params *GetInternalAgentCollectionsParams, reqEditors ...RequestEditorFn) (*GetInternalAgentCollectionsResponse, error)
 
+	// GetInternalAgentGuidanceWithResponse request
+	GetInternalAgentGuidanceWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentGuidanceResponse, error)
+
+	// PutInternalAgentGuidanceWithBodyWithResponse request with any body
+	PutInternalAgentGuidanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalAgentGuidanceResponse, error)
+
+	PutInternalAgentGuidanceWithResponse(ctx context.Context, body PutInternalAgentGuidanceJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalAgentGuidanceResponse, error)
+
 	// GetInternalAgentRegistrationWithResponse request
 	GetInternalAgentRegistrationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationResponse, error)
 
@@ -2253,6 +2440,9 @@ type ClientWithResponsesInterface interface {
 
 	// PostInternalAgentRegistrationSelfWithResponse request
 	PostInternalAgentRegistrationSelfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostInternalAgentRegistrationSelfResponse, error)
+
+	// GetInternalAgentSoulWithResponse request
+	GetInternalAgentSoulWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentSoulResponse, error)
 
 	// PostInternalAuthorizeWithBodyWithResponse request with any body
 	PostInternalAuthorizeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalAuthorizeResponse, error)
@@ -2358,6 +2548,52 @@ func (r GetInternalAgentCollectionsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetInternalAgentCollectionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInternalAgentGuidanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAgentGuidanceResponse
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalAgentGuidanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalAgentGuidanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutInternalAgentGuidanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAgentGuidanceResponse
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PutInternalAgentGuidanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutInternalAgentGuidanceResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2519,6 +2755,30 @@ func (r PostInternalAgentRegistrationSelfResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostInternalAgentRegistrationSelfResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInternalAgentSoulResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAgentSoulResponse
+	JSON404      *FiberMap
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalAgentSoulResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalAgentSoulResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3074,6 +3334,32 @@ func (c *ClientWithResponses) GetInternalAgentCollectionsWithResponse(ctx contex
 	return ParseGetInternalAgentCollectionsResponse(rsp)
 }
 
+// GetInternalAgentGuidanceWithResponse request returning *GetInternalAgentGuidanceResponse
+func (c *ClientWithResponses) GetInternalAgentGuidanceWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentGuidanceResponse, error) {
+	rsp, err := c.GetInternalAgentGuidance(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalAgentGuidanceResponse(rsp)
+}
+
+// PutInternalAgentGuidanceWithBodyWithResponse request with arbitrary body returning *PutInternalAgentGuidanceResponse
+func (c *ClientWithResponses) PutInternalAgentGuidanceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalAgentGuidanceResponse, error) {
+	rsp, err := c.PutInternalAgentGuidanceWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalAgentGuidanceResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutInternalAgentGuidanceWithResponse(ctx context.Context, body PutInternalAgentGuidanceJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalAgentGuidanceResponse, error) {
+	rsp, err := c.PutInternalAgentGuidance(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalAgentGuidanceResponse(rsp)
+}
+
 // GetInternalAgentRegistrationWithResponse request returning *GetInternalAgentRegistrationResponse
 func (c *ClientWithResponses) GetInternalAgentRegistrationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentRegistrationResponse, error) {
 	rsp, err := c.GetInternalAgentRegistration(ctx, reqEditors...)
@@ -3143,6 +3429,15 @@ func (c *ClientWithResponses) PostInternalAgentRegistrationSelfWithResponse(ctx 
 		return nil, err
 	}
 	return ParsePostInternalAgentRegistrationSelfResponse(rsp)
+}
+
+// GetInternalAgentSoulWithResponse request returning *GetInternalAgentSoulResponse
+func (c *ClientWithResponses) GetInternalAgentSoulWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalAgentSoulResponse, error) {
+	rsp, err := c.GetInternalAgentSoul(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalAgentSoulResponse(rsp)
 }
 
 // PostInternalAuthorizeWithBodyWithResponse request with arbitrary body returning *PostInternalAuthorizeResponse
@@ -3456,6 +3751,72 @@ func ParseGetInternalAgentCollectionsResponse(rsp *http.Response) (*GetInternalA
 	return response, nil
 }
 
+// ParseGetInternalAgentGuidanceResponse parses an HTTP response from a GetInternalAgentGuidanceWithResponse call
+func ParseGetInternalAgentGuidanceResponse(rsp *http.Response) (*GetInternalAgentGuidanceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalAgentGuidanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAgentGuidanceResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutInternalAgentGuidanceResponse parses an HTTP response from a PutInternalAgentGuidanceWithResponse call
+func ParsePutInternalAgentGuidanceResponse(rsp *http.Response) (*PutInternalAgentGuidanceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutInternalAgentGuidanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAgentGuidanceResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetInternalAgentRegistrationResponse parses an HTTP response from a GetInternalAgentRegistrationWithResponse call
 func ParseGetInternalAgentRegistrationResponse(rsp *http.Response) (*GetInternalAgentRegistrationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3681,6 +4042,46 @@ func ParsePostInternalAgentRegistrationSelfResponse(rsp *http.Response) (*PostIn
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInternalAgentSoulResponse parses an HTTP response from a GetInternalAgentSoulWithResponse call
+func ParseGetInternalAgentSoulResponse(rsp *http.Response) (*GetInternalAgentSoulResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalAgentSoulResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAgentSoulResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
