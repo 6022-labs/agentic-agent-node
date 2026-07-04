@@ -14,30 +14,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type WhenBuildingAgentCardTestingSuite struct {
-	sut *use_cases.GetAgentCard
+type WhenBuildingWellKnownAgentCardTestingSuite struct {
+	sut *use_cases.GetWellKnownAgentCard
 
 	mockAgentRegistrationClient *identity_mocks.MockAgentRegistrationClientInterface
 }
 
-func WhenBuildingAgentCardBeforeEach(t *testing.T, runtimeUrl, publicPrefix string) *WhenBuildingAgentCardTestingSuite {
+func WhenBuildingWellKnownAgentCardBeforeEach(t *testing.T, runtimeUrl, publicPrefix string) *WhenBuildingWellKnownAgentCardTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRegistrationClient := identity_mocks.NewMockAgentRegistrationClientInterface(mockController)
 
-	sut := use_cases.NewGetAgentCard(
+	sut := use_cases.NewGetWellKnownAgentCard(
 		mockAgentRegistrationClient,
 		&identity_settings.AgentIdentitySettings{RuntimeUrl: runtimeUrl},
 		&core_settings.GatewaySettings{PublicPrefix: publicPrefix},
 	)
 
-	return &WhenBuildingAgentCardTestingSuite{
+	return &WhenBuildingWellKnownAgentCardTestingSuite{
 		sut:                         sut,
 		mockAgentRegistrationClient: mockAgentRegistrationClient,
 	}
 }
 
-func TestWhenBuildingAgentCard(t *testing.T) {
+func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -45,7 +45,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 	t.Run("Given identity resolves", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenBuildingAgentCardTestingSuite) {
+		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
@@ -54,7 +54,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 		t.Run("Should build the card from the agent name with url = runtime_url + public prefix + /a2a", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenBuildingAgentCardBeforeEach(t, "https://agent.example.com", "/api")
+			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
 			initSuite(suite)
 
 			card, err := suite.sut.Execute(ctx)
@@ -77,7 +77,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 	t.Run("Given the registration client fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenBuildingAgentCardTestingSuite) {
+		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
@@ -86,7 +86,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 		t.Run("Should propagate the error instead of serving a placeholder card", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenBuildingAgentCardBeforeEach(t, "https://agent.example.com", "/api")
+			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
 			initSuite(suite)
 
 			card, err := suite.sut.Execute(ctx)
@@ -100,7 +100,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 	t.Run("Given a custom public prefix", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenBuildingAgentCardTestingSuite) {
+		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
@@ -109,7 +109,7 @@ func TestWhenBuildingAgentCard(t *testing.T) {
 		t.Run("Should honor it (the gateway never hardcodes the reverse-proxy mount)", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenBuildingAgentCardBeforeEach(t, "https://agent.example.com", "/gw")
+			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/gw")
 			initSuite(suite)
 
 			card, err := suite.sut.Execute(ctx)

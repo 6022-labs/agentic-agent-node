@@ -232,33 +232,6 @@ definitions:
       streaming:
         type: boolean
     type: object
-  responses.AgentCard:
-    properties:
-      capabilities:
-        $ref: '#/definitions/responses.AgentCapabilities'
-      defaultInputModes:
-        items:
-          type: string
-        type: array
-      defaultOutputModes:
-        items:
-          type: string
-        type: array
-      description:
-        type: string
-      name:
-        type: string
-      skills:
-        items:
-          $ref: '#/definitions/responses.AgentSkill'
-        type: array
-      supportedInterfaces:
-        items:
-          $ref: '#/definitions/responses.AgentInterface'
-        type: array
-      version:
-        type: string
-    type: object
   responses.AgentCollectionResponse:
     properties:
       address:
@@ -641,6 +614,33 @@ definitions:
       token:
         type: string
     type: object
+  responses.WellKnownAgentCard:
+    properties:
+      capabilities:
+        $ref: '#/definitions/responses.AgentCapabilities'
+      defaultInputModes:
+        items:
+          type: string
+        type: array
+      defaultOutputModes:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      name:
+        type: string
+      skills:
+        items:
+          $ref: '#/definitions/responses.AgentSkill'
+        type: array
+      supportedInterfaces:
+        items:
+          $ref: '#/definitions/responses.AgentInterface'
+        type: array
+      version:
+        type: string
+    type: object
   x402.PaymentRequired:
     properties:
       accepts:
@@ -700,7 +700,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.AgentCard'
+            $ref: '#/definitions/responses.WellKnownAgentCard'
         "404":
           description: Not Found
           schema:

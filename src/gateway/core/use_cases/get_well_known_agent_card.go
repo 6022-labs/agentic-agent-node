@@ -18,18 +18,18 @@ const (
 	a2aMessageRoute    = "/a2a"
 )
 
-type GetAgentCard struct {
+type GetWellKnownAgentCard struct {
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface
 	agentIdentitySettings   *identity_settings.AgentIdentitySettings
 	gatewaySettings         *core_settings.GatewaySettings
 }
 
-func NewGetAgentCard(
+func NewGetWellKnownAgentCard(
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface,
 	agentIdentitySettings *identity_settings.AgentIdentitySettings,
 	gatewaySettings *core_settings.GatewaySettings,
-) *GetAgentCard {
-	return &GetAgentCard{
+) *GetWellKnownAgentCard {
+	return &GetWellKnownAgentCard{
 		agentRegistrationClient: agentRegistrationClient,
 		agentIdentitySettings:   agentIdentitySettings,
 		gatewaySettings:         gatewaySettings,
@@ -37,7 +37,7 @@ func NewGetAgentCard(
 }
 
 // Execute fetches the agent identity from the runtime; the card requires it, so a failure surfaces rather than a placeholder.
-func (u *GetAgentCard) Execute(ctx context.Context) (*responses.AgentCard, error) {
+func (u *GetWellKnownAgentCard) Execute(ctx context.Context) (*responses.WellKnownAgentCard, error) {
 	payload, err := u.agentRegistrationClient.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (u *GetAgentCard) Execute(ctx context.Context) (*responses.AgentCard, error
 
 	name := strings.TrimSpace(payload.Name)
 
-	return &responses.AgentCard{
+	return &responses.WellKnownAgentCard{
 		Name:        name,
 		Description: name + " — 6022 agent reachable over A2A",
 		SupportedInterfaces: []responses.AgentInterface{{

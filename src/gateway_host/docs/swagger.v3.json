@@ -362,51 +362,6 @@
                 },
                 "type": "object"
             },
-            "responses.AgentCard": {
-                "properties": {
-                    "capabilities": {
-                        "$ref": "#/components/schemas/responses.AgentCapabilities"
-                    },
-                    "defaultInputModes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "defaultOutputModes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "skills": {
-                        "items": {
-                            "$ref": "#/components/schemas/responses.AgentSkill"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "supportedInterfaces": {
-                        "items": {
-                            "$ref": "#/components/schemas/responses.AgentInterface"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "responses.AgentCollectionResponse": {
                 "properties": {
                     "address": {
@@ -1011,6 +966,51 @@
                 },
                 "type": "object"
             },
+            "responses.WellKnownAgentCard": {
+                "properties": {
+                    "capabilities": {
+                        "$ref": "#/components/schemas/responses.AgentCapabilities"
+                    },
+                    "defaultInputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "defaultOutputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "skills": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.AgentSkill"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "supportedInterfaces": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.AgentInterface"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "x402.PaymentRequired": {
                 "properties": {
                     "accepts": {
@@ -1100,7 +1100,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/responses.AgentCard"
+                                    "$ref": "#/components/schemas/responses.WellKnownAgentCard"
                                 }
                             }
                         },

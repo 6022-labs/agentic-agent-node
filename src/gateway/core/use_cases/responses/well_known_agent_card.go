@@ -1,7 +1,7 @@
 package responses
 
-// AgentCard is the A2A v1.0 discovery document (ProtoJSON shape).
-type AgentCard struct {
+// WellKnownAgentCard is the A2A v1.0 discovery document (ProtoJSON shape).
+type WellKnownAgentCard struct {
 	Name                string            `json:"name"`
 	Description         string            `json:"description"`
 	SupportedInterfaces []AgentInterface  `json:"supportedInterfaces"`

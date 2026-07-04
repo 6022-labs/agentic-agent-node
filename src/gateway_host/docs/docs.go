@@ -29,7 +29,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.AgentCard"
+                            "$ref": "#/definitions/responses.WellKnownAgentCard"
                         }
                     },
                     "404": {
@@ -1492,47 +1492,6 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.AgentCard": {
-            "type": "object",
-            "properties": {
-                "capabilities": {
-                    "$ref": "#/definitions/responses.AgentCapabilities"
-                },
-                "defaultInputModes": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "defaultOutputModes": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "skills": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/responses.AgentSkill"
-                    }
-                },
-                "supportedInterfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/responses.AgentInterface"
-                    }
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
         "responses.AgentCollectionResponse": {
             "type": "object",
             "properties": {
@@ -2117,6 +2076,47 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.WellKnownAgentCard": {
+            "type": "object",
+            "properties": {
+                "capabilities": {
+                    "$ref": "#/definitions/responses.AgentCapabilities"
+                },
+                "defaultInputModes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "defaultOutputModes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.AgentSkill"
+                    }
+                },
+                "supportedInterfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.AgentInterface"
+                    }
+                },
+                "version": {
                     "type": "string"
                 }
             }
