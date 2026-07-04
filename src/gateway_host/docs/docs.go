@@ -15,6 +15,38 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/.well-known/6022": {
+            "get": {
+                "description": "6022 discovery document (identity + invocation), open/unauthenticated. Documents POST /responses, including the caller-supplied ` + "`" + `instructions` + "`" + ` system prompt. Requires agent identity, so it errors until the node is registered.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "6022"
+                ],
+                "summary": "6022 agent card",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.WellKnownAgent6022"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
+                    }
+                }
+            }
+        },
         "/.well-known/agent-card.json": {
             "get": {
                 "description": "A2A v1.0 discovery document (ProtoJSON), open/unauthenticated. supportedInterfaces advertises the SendMessage endpoint. Requires agent identity, so it errors until the node is registered.",
@@ -1481,6 +1513,17 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.Agent6022Endpoints": {
+            "type": "object",
+            "properties": {
+                "chatCompletions": {
+                    "type": "string"
+                },
+                "responses": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.AgentCapabilities": {
             "type": "object",
             "properties": {
@@ -2076,6 +2119,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.WellKnownAgent6022": {
+            "type": "object",
+            "properties": {
+                "endpoints": {
+                    "$ref": "#/definitions/responses.Agent6022Endpoints"
+                },
+                "ensDomain": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "paymentMethods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "protocolVersion": {
                     "type": "string"
                 }
             }

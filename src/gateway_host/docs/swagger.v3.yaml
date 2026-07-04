@@ -230,6 +230,13 @@ components:
         result:
           $ref: '#/components/schemas/responses.SendMessageResult'
       type: object
+    responses.Agent6022Endpoints:
+      properties:
+        chatCompletions:
+          type: string
+        responses:
+          type: string
+      type: object
     responses.AgentCapabilities:
       properties:
         pushNotifications:
@@ -635,6 +642,24 @@ components:
         token:
           type: string
       type: object
+    responses.WellKnownAgent6022:
+      properties:
+        endpoints:
+          $ref: '#/components/schemas/responses.Agent6022Endpoints'
+        ensDomain:
+          type: string
+        name:
+          type: string
+        paymentMethods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        protocol:
+          type: string
+        protocolVersion:
+          type: string
+      type: object
     responses.WellKnownAgentCard:
       properties:
         capabilities:
@@ -723,6 +748,33 @@ info:
   version: "1.0"
 openapi: 3.1.0
 paths:
+  /.well-known/6022:
+    get:
+      description: 6022 discovery document (identity + invocation), open/unauthenticated.
+        Documents POST /responses, including the caller-supplied `instructions` system
+        prompt. Requires agent identity, so it errors until the node is registered.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.WellKnownAgent6022'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: Bad Gateway
+      summary: 6022 agent card
+      tags:
+      - "6022"
   /.well-known/agent-card.json:
     get:
       description: A2A v1.0 discovery document (ProtoJSON), open/unauthenticated.

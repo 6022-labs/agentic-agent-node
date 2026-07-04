@@ -225,6 +225,13 @@ definitions:
       result:
         $ref: '#/definitions/responses.SendMessageResult'
     type: object
+  responses.Agent6022Endpoints:
+    properties:
+      chatCompletions:
+        type: string
+      responses:
+        type: string
+    type: object
   responses.AgentCapabilities:
     properties:
       pushNotifications:
@@ -614,6 +621,23 @@ definitions:
       token:
         type: string
     type: object
+  responses.WellKnownAgent6022:
+    properties:
+      endpoints:
+        $ref: '#/definitions/responses.Agent6022Endpoints'
+      ensDomain:
+        type: string
+      name:
+        type: string
+      paymentMethods:
+        items:
+          type: string
+        type: array
+      protocol:
+        type: string
+      protocolVersion:
+        type: string
+    type: object
   responses.WellKnownAgentCard:
     properties:
       capabilities:
@@ -689,6 +713,29 @@ info:
   title: Agentic Agent Node — Gateway Host API
   version: "1.0"
 paths:
+  /.well-known/6022:
+    get:
+      description: 6022 discovery document (identity + invocation), open/unauthenticated.
+        Documents POST /responses, including the caller-supplied `instructions` system
+        prompt. Requires agent identity, so it errors until the node is registered.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.WellKnownAgent6022'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      summary: 6022 agent card
+      tags:
+      - "6022"
   /.well-known/agent-card.json:
     get:
       description: A2A v1.0 discovery document (ProtoJSON), open/unauthenticated.

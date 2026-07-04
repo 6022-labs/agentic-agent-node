@@ -67,6 +67,7 @@ func addCoreConfiguration(container *dig.Container) {
 		core_use_cases.NewVerifyAuth,
 		core_use_cases.NewGetBlockchainConfig,
 		core_use_cases.NewGetWellKnownAgentCard,
+		core_use_cases.NewGetWellKnownAgent6022,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {
