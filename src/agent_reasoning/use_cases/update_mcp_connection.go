@@ -2,7 +2,6 @@ package use_cases
 
 import (
 	"context"
-	"fmt"
 
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -59,25 +58,16 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 
-	newKeys := models.MCPConnectionHeaderAuthKeys{}
-	headerNames := make([]string, 0, len(request.HeaderAuth))
-	for k := range request.HeaderAuth {
-		headerNames = append(headerNames, k)
-	}
-	newKeys.FromArray(headerNames)
-
 	existing.Name = request.Name
 	existing.Url = request.Url
-	existing.HeaderAuthKeys = newKeys
+	existing.HeaderAuthKeys = u.headerAuthKeys(request)
 	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 
-	for k, v := range request.HeaderAuth {
-		if err := u.mcpHeaderAuthSecretStorage.SaveValue(ctx, updated.Id, k, v); err != nil {
-			return nil, errors.NewInternalError("update_failed", fmt.Sprintf("failed to save header %q: %s", k, err.Error()))
-		}
+	if err := u.saveHeaderValues(ctx, updated.Id, request.HeaderAuth); err != nil {
+		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 	updated.HeaderAuth = request.HeaderAuth
 	return responses.ToMCPConnectionResponse(updated), nil

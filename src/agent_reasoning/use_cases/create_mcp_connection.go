@@ -35,13 +35,6 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Sav
 		return nil, err
 	}
 
-	keys := models.MCPConnectionHeaderAuthKeys{}
-	headerNames := make([]string, 0, len(request.HeaderAuth))
-	for k := range request.HeaderAuth {
-		headerNames = append(headerNames, k)
-	}
-	keys.FromArray(headerNames)
-
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return nil, err
@@ -55,16 +48,14 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Sav
 		AgentId:        agent.Id,
 		Name:           request.Name,
 		Url:            request.Url,
-		HeaderAuthKeys: keys,
+		HeaderAuthKeys: u.headerAuthKeys(request),
 	})
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
 
-	for k, v := range request.HeaderAuth {
-		if err := u.mcpHeaderAuthSecretStorage.SaveValue(ctx, created.Id, k, v); err != nil {
-			return nil, errors.NewInternalError("create_failed", err.Error())
-		}
+	if err := u.saveHeaderValues(ctx, created.Id, request.HeaderAuth); err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
 	created.HeaderAuth = request.HeaderAuth
 	return responses.ToMCPConnectionResponse(created), nil
