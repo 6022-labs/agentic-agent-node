@@ -776,6 +776,65 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
+	t.Run("Given multiple MCP connections", func(t *testing.T) {
+		t.Parallel()
+
+		connA := *model_builders.NewMCPConnectionBuilder().WithName("alpha").Build()
+		connB := *model_builders.NewMCPConnectionBuilder().WithName("beta").Build()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{connA, connB}, nil)
+			suite.mockMCPHeaderAuthSecretStorage.EXPECT().GetValue(gomock.Any(), gomock.Any(), gomock.Any()).Return("", false, nil).AnyTimes()
+
+			// Fanned out per connection, resolved in any order.
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, conn *models.MCPConnection) ([]*models.Tool, error) {
+					return []*models.Tool{{Name: conn.Name + "_tool"}}, nil
+				}).Times(2)
+
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// Both servers' tools are collected into the map regardless of completion order.
+					names := map[string]bool{}
+					for _, tools := range mcpTools {
+						for _, tl := range tools {
+							names[tl.Name] = true
+						}
+					}
+					assert.Len(t, mcpTools, 2)
+					assert.True(t, names["alpha_tool"])
+					assert.True(t, names["beta_tool"])
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should discover every server concurrently and collect all tools", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
 	t.Run("Given reading history fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -902,6 +961,43 @@ func TestWhenDrivingResponse(t *testing.T) {
 			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.Nil(t, result)
 			assert.Error(t, err)
+			assert.ErrorContains(t, err, "failed to list tools")
+		})
+	})
+
+	t.Run("Given one of several MCP connections fails to list", func(t *testing.T) {
+		t.Parallel()
+
+		connA := *model_builders.NewMCPConnectionBuilder().WithName("alpha").Build()
+		connB := *model_builders.NewMCPConnectionBuilder().WithName("beta").Build()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{connA, connB}, nil)
+			suite.mockMCPHeaderAuthSecretStorage.EXPECT().GetValue(gomock.Any(), gomock.Any(), gomock.Any()).Return("", false, nil).AnyTimes()
+
+			// Both are attempted concurrently; beta fails, which fails the whole discovery.
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, conn *models.MCPConnection) ([]*models.Tool, error) {
+					if conn.Name == "beta" {
+						return nil, errors.New("mcp beta down")
+					}
+					return []*models.Tool{{Name: conn.Name + "_tool"}}, nil
+				}).Times(2)
+			// The builder and the loop are never reached once discovery fails.
+		}
+
+		t.Run("Should fail the whole request without building the prompt or invoking the loop", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.Nil(t, result)
 			assert.ErrorContains(t, err, "failed to list tools")
 		})
 	})

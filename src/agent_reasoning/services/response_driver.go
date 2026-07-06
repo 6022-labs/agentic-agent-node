@@ -16,6 +16,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 // ResponseDriver runs the inference loop over a conversation, dedups inputs
@@ -249,13 +250,26 @@ func (d *ResponseDriver) mcpConnectionsToTools(
 	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
 ) (map[*models.MCPConnection][]*models.Tool, error) {
+	perConnectionTools := make([][]*models.Tool, len(mcpConnections))
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	for i, conn := range mcpConnections {
+		group.Go(func() error {
+			tools, err := d.mcpConnectionToTools(groupCtx, conn)
+			if err != nil {
+				return err
+			}
+			perConnectionTools[i] = tools
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
 	mcpTools := make(map[*models.MCPConnection][]*models.Tool, len(mcpConnections))
-	for _, conn := range mcpConnections {
-		tools, err := d.mcpConnectionToTools(ctx, conn)
-		if err != nil {
-			return nil, err
-		}
-		mcpTools[conn] = tools
+	for i, conn := range mcpConnections {
+		mcpTools[conn] = perConnectionTools[i]
 	}
 	return mcpTools, nil
 }
