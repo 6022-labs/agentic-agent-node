@@ -216,7 +216,7 @@ func (l *InferenceLoop) callSelfTool(
 	toolCall interfaces.ToolCall,
 	selfToolName string,
 ) (*interfaces.ChatCompletionMessage, error) {
-	_, span := l.reasoningTracer.StartToolCall(ctx, selfToolName, toolCall.Id, utils.SelfToolNamespace)
+	ctx, span := l.reasoningTracer.StartToolCall(ctx, selfToolName, toolCall.Id, utils.SelfToolNamespace)
 	defer span.End()
 
 	result, err := l.selfToolRegistry.CallTool(ctx, selfToolName, toolCall.Arguments)
