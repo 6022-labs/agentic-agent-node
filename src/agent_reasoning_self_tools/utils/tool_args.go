@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -58,7 +59,14 @@ func scalarToString(value any) (string, bool) {
 	switch typedValue := value.(type) {
 	case string:
 		return typedValue, true
-	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, bool:
+	case json.Number:
+		return typedValue.String(), true
+	case float64:
+		// Plain decimal, never fmt.Sprint's exponent form (1e+06), which breaks big.Int/chain parsing downstream.
+		return strconv.FormatFloat(typedValue, 'f', -1, 64), true
+	case float32:
+		return strconv.FormatFloat(float64(typedValue), 'f', -1, 32), true
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, bool:
 		return fmt.Sprint(typedValue), true
 	default:
 		return "", false
