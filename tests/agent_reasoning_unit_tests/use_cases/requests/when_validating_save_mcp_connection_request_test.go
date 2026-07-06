@@ -1,6 +1,7 @@
 package requests_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
@@ -71,6 +72,64 @@ func TestWhenValidatingSaveMCPConnectionRequest(t *testing.T) {
 			req.Name = "my_tools"
 
 			assert.Error(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the name is too long", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveMCPConnectionRequest()
+			req.Name = strings.Repeat("a", requests.MaxMCPConnectionNameLength+1)
+
+			assert.Error(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the name starts with mcp", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error regardless of case", func(t *testing.T) {
+			t.Parallel()
+
+			for _, name := range []string{"mcptools", "MCP-tools", "Mcpthing"} {
+				req := generateSaveMCPConnectionRequest()
+				req.Name = name
+
+				assert.Error(t, req.ValidateAndSanitize())
+			}
+		})
+	})
+
+	t.Run("Given the name does not start with a letter", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			for _, name := range []string{"1tool", "-tool", "9"} {
+				req := generateSaveMCPConnectionRequest()
+				req.Name = name
+
+				assert.Error(t, req.ValidateAndSanitize())
+			}
+		})
+	})
+
+	t.Run("Given the name contains disallowed characters", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			for _, name := range []string{"my tools", "my.tools", "wéather"} {
+				req := generateSaveMCPConnectionRequest()
+				req.Name = name
+
+				assert.Error(t, req.ValidateAndSanitize())
+			}
 		})
 	})
 
