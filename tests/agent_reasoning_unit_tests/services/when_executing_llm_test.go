@@ -9,8 +9,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
-	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -21,17 +19,13 @@ import (
 type WhenExecutingLLMTestingSuite struct {
 	sut *services.LLMExecutor
 
-	mockLLMConnectionRepository *repositories_mocks.MockLLMConnectionRepositoryInterface
 	mockChatCompletionRequester *interfaces_mocks.MockChatCompletionRequesterInterface
-	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
 func WhenExecutingLLMBeforeEach(t *testing.T) *WhenExecutingLLMTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockLLMConnectionRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockChatCompletionRequester := interfaces_mocks.NewMockChatCompletionRequesterInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
 	mockChatCompletionSpan := traces_interfaces_mocks.NewMockChatCompletionSpan(mockController)
 	mockChatCompletionSpan.EXPECT().RecordUsage(gomock.Any(), gomock.Any()).AnyTimes()
@@ -47,17 +41,13 @@ func WhenExecutingLLMBeforeEach(t *testing.T) *WhenExecutingLLMTestingSuite {
 		}).AnyTimes()
 
 	sut := services.NewLLMExecutor(
-		mockLLMConnectionRepository,
 		mockChatCompletionRequester,
-		mockAgentRepository,
 		mockReasoningTracer,
 	)
 
 	return &WhenExecutingLLMTestingSuite{
 		sut:                         sut,
-		mockLLMConnectionRepository: mockLLMConnectionRepository,
 		mockChatCompletionRequester: mockChatCompletionRequester,
-		mockAgentRepository:         mockAgentRepository,
 	}
 }
 
@@ -70,18 +60,13 @@ func TestWhenExecutingLLM(t *testing.T) {
 		{Role: "user", Content: userText},
 	}
 
-	t.Run("Given the LLM connection is configured", func(t *testing.T) {
+	t.Run("Given a resolved LLM connection", func(t *testing.T) {
 		t.Parallel()
 
 		llmConnection := model_builders.NewLLMConnectionBuilder().Build()
 		expectedText := "hi there"
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(llmConnection, nil)
-
 			suite.mockChatCompletionRequester.EXPECT().
 				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Text: &expectedText}, nil)
@@ -93,59 +78,12 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Complete(ctx, nil, nil, messages)
+			result, err := suite.sut.Complete(ctx, llmConnection, nil, nil, messages)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
 				assert.Equal(t, expectedText, *result.Text)
 			}
-		})
-	})
-
-	t.Run("Given the LLM connection is not configured", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-		}
-
-		t.Run("Should return ErrLLMConnectionNotConfigured", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingLLMBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Complete(ctx, nil, nil, messages)
-
-			assert.Nil(t, result)
-			assert.ErrorIs(t, err, interfaces.ErrLLMConnectionNotConfigured)
-		})
-	})
-
-	t.Run("Given the repository fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should wrap the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingLLMBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Complete(ctx, nil, nil, messages)
-
-			assert.Nil(t, result)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "failed to load llm connection")
 		})
 	})
 
@@ -161,11 +99,6 @@ func TestWhenExecutingLLM(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(llmConnection, nil)
-
 			suite.mockChatCompletionRequester.EXPECT().
 				ChatCompletion(gomock.Any(), llmConnection, gomock.Nil(), mcpTools, messages).
 				Return(nil, errors.New("upstream broke"))
@@ -177,7 +110,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Complete(ctx, nil, mcpTools, messages)
+			result, err := suite.sut.Complete(ctx, llmConnection, nil, mcpTools, messages)
 
 			assert.Nil(t, result)
 			assert.Error(t, err)

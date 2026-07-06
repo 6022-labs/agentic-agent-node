@@ -13,6 +13,7 @@ var ErrLLMConnectionNotConfigured = errors.New("llm connection not configured")
 type LLMExecutorInterface interface {
 	Complete(
 		ctx context.Context,
+		llmConnection *models.LLMConnection,
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,

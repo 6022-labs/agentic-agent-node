@@ -18,6 +18,7 @@ type InferenceLoopInterface interface {
 	// the LLM stops emitting tool calls or MaxIterations is hit.
 	Run(
 		ctx context.Context,
+		llmConnection *models.LLMConnection,
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,

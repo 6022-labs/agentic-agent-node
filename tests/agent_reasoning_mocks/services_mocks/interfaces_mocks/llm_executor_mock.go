@@ -43,16 +43,16 @@ func (m *MockLLMExecutorInterface) EXPECT() *MockLLMExecutorInterfaceMockRecorde
 }
 
 // Complete mocks base method.
-func (m *MockLLMExecutorInterface) Complete(ctx context.Context, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+func (m *MockLLMExecutorInterface) Complete(ctx context.Context, llmConnection *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Complete", ctx, selfTools, mcpTools, messages)
+	ret := m.ctrl.Call(m, "Complete", ctx, llmConnection, selfTools, mcpTools, messages)
 	ret0, _ := ret[0].(*interfaces.LLMCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Complete indicates an expected call of Complete.
-func (mr *MockLLMExecutorInterfaceMockRecorder) Complete(ctx, selfTools, mcpTools, messages any) *gomock.Call {
+func (mr *MockLLMExecutorInterfaceMockRecorder) Complete(ctx, llmConnection, selfTools, mcpTools, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockLLMExecutorInterface)(nil).Complete), ctx, selfTools, mcpTools, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockLLMExecutorInterface)(nil).Complete), ctx, llmConnection, selfTools, mcpTools, messages)
 }

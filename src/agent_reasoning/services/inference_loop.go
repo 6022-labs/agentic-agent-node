@@ -52,6 +52,7 @@ func NewInferenceLoop(
 // during the loop.
 func (l *InferenceLoop) Run(
 	ctx context.Context,
+	llmConnection *models.LLMConnection,
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
@@ -59,7 +60,7 @@ func (l *InferenceLoop) Run(
 	start := time.Now()
 
 	for iteration := 0; iteration < l.inferenceLoopSettings.MaxIterations; iteration++ {
-		completion, err := l.llmExecutor.Complete(ctx, selfTools, mcpTools, messages)
+		completion, err := l.llmExecutor.Complete(ctx, llmConnection, selfTools, mcpTools, messages)
 		if err != nil {
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
 		}

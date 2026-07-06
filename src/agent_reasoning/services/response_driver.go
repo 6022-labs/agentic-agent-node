@@ -25,6 +25,7 @@ type ResponseDriver struct {
 	logger                     *zap.Logger
 	inferenceLoop              interfaces.InferenceLoopInterface
 	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
+	llmConnectionRepository    repositories.LLMConnectionRepositoryInterface
 	agentGuidanceRepository    repositories.AgentGuidanceRepositoryInterface
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface
 	conversationHistory        knowledge_interfaces.ConversationHistoryInterface
@@ -39,6 +40,7 @@ func NewResponseDriver(
 	logger *zap.Logger,
 	inferenceLoop interfaces.InferenceLoopInterface,
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
+	llmConnectionRepository repositories.LLMConnectionRepositoryInterface,
 	agentGuidanceRepository repositories.AgentGuidanceRepositoryInterface,
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface,
 	conversationHistory knowledge_interfaces.ConversationHistoryInterface,
@@ -52,6 +54,7 @@ func NewResponseDriver(
 		logger:                     logger,
 		inferenceLoop:              inferenceLoop,
 		mcpConnectionRepository:    mcpConnectionRepository,
+		llmConnectionRepository:    llmConnectionRepository,
 		agentGuidanceRepository:    agentGuidanceRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		conversationHistory:        conversationHistory,
@@ -95,6 +98,11 @@ func (d *ResponseDriver) Drive(
 		return nil, err
 	}
 
+	llmConnection, err := d.loadLLMConnection(ctx, agent.Id)
+	if err != nil {
+		return nil, err
+	}
+
 	mcpConnections, err := d.loadMCPConnections(ctx, agent.Id)
 	if err != nil {
 		return nil, err
@@ -115,7 +123,7 @@ func (d *ResponseDriver) Drive(
 	systemPrompt := d.systemPromptBuilder.Build(agent, guidance, selfTools, mcpTools, instructions)
 	messages = append([]*interfaces.ChatCompletionMessage{{Role: "system", Content: systemPrompt}}, messages...)
 
-	finalStream, err := d.inferenceLoop.Run(ctx, selfTools, mcpTools, messages)
+	finalStream, err := d.inferenceLoop.Run(ctx, llmConnection, selfTools, mcpTools, messages)
 	if err != nil {
 		return nil, fmt.Errorf("inference loop failed: %w", err)
 	}
@@ -213,6 +221,17 @@ func (d *ResponseDriver) loadAgent(ctx context.Context) (*identity_models.Agent,
 		return nil, fmt.Errorf("agent identity is not initialized yet")
 	}
 	return agent, nil
+}
+
+func (d *ResponseDriver) loadLLMConnection(ctx context.Context, agentId uuid.UUID) (*models.LLMConnection, error) {
+	llmConnection, err := d.llmConnectionRepository.GetByAgentId(ctx, agentId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load llm connection: %w", err)
+	}
+	if llmConnection == nil {
+		return nil, interfaces.ErrLLMConnectionNotConfigured
+	}
+	return llmConnection, nil
 }
 
 func (d *ResponseDriver) loadGuidance(ctx context.Context, agentId uuid.UUID) (string, error) {

@@ -43,16 +43,16 @@ func (m *MockInferenceLoopInterface) EXPECT() *MockInferenceLoopInterfaceMockRec
 }
 
 // Run mocks base method.
-func (m *MockInferenceLoopInterface) Run(ctx context.Context, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+func (m *MockInferenceLoopInterface) Run(ctx context.Context, llmConnection *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Run", ctx, selfTools, mcpTools, messages)
+	ret := m.ctrl.Call(m, "Run", ctx, llmConnection, selfTools, mcpTools, messages)
 	ret0, _ := ret[0].([]*interfaces.ChatCompletionMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Run indicates an expected call of Run.
-func (mr *MockInferenceLoopInterfaceMockRecorder) Run(ctx, selfTools, mcpTools, messages any) *gomock.Call {
+func (mr *MockInferenceLoopInterfaceMockRecorder) Run(ctx, llmConnection, selfTools, mcpTools, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockInferenceLoopInterface)(nil).Run), ctx, selfTools, mcpTools, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockInferenceLoopInterface)(nil).Run), ctx, llmConnection, selfTools, mcpTools, messages)
 }
