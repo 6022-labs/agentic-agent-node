@@ -10,6 +10,7 @@
 package clients_mocks
 
 import (
+	context "context"
 	json "encoding/json"
 	reflect "reflect"
 
@@ -42,31 +43,31 @@ func (m *MockMcpClientInterface) EXPECT() *MockMcpClientInterfaceMockRecorder {
 }
 
 // CallTool mocks base method.
-func (m *MockMcpClientInterface) CallTool(mcpServerUrl, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
+func (m *MockMcpClientInterface) CallTool(ctx context.Context, mcpServerUrl, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CallTool", mcpServerUrl, toolName, input, headers)
+	ret := m.ctrl.Call(m, "CallTool", ctx, mcpServerUrl, toolName, input, headers)
 	ret0, _ := ret[0].(*models.ExternalJsonRPCResponse[json.RawMessage])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CallTool indicates an expected call of CallTool.
-func (mr *MockMcpClientInterfaceMockRecorder) CallTool(mcpServerUrl, toolName, input, headers any) *gomock.Call {
+func (mr *MockMcpClientInterfaceMockRecorder) CallTool(ctx, mcpServerUrl, toolName, input, headers any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallTool", reflect.TypeOf((*MockMcpClientInterface)(nil).CallTool), mcpServerUrl, toolName, input, headers)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallTool", reflect.TypeOf((*MockMcpClientInterface)(nil).CallTool), ctx, mcpServerUrl, toolName, input, headers)
 }
 
 // ListTools mocks base method.
-func (m *MockMcpClientInterface) ListTools(mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
+func (m *MockMcpClientInterface) ListTools(ctx context.Context, mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTools", mcpServerUrl, headers)
+	ret := m.ctrl.Call(m, "ListTools", ctx, mcpServerUrl, headers)
 	ret0, _ := ret[0].(*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListTools indicates an expected call of ListTools.
-func (mr *MockMcpClientInterfaceMockRecorder) ListTools(mcpServerUrl, headers any) *gomock.Call {
+func (mr *MockMcpClientInterfaceMockRecorder) ListTools(ctx, mcpServerUrl, headers any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTools", reflect.TypeOf((*MockMcpClientInterface)(nil).ListTools), mcpServerUrl, headers)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTools", reflect.TypeOf((*MockMcpClientInterface)(nil).ListTools), ctx, mcpServerUrl, headers)
 }

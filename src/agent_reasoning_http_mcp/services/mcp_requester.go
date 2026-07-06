@@ -23,15 +23,14 @@ func NewMCPRequester(client clients.McpClientInterface, metrics metrics_interfac
 	}
 }
 
-func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
+func (r *MCPRequester) ListTools(ctx context.Context, mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
 	if mcpConnection == nil {
 		return nil, fmt.Errorf("MCP connection is nil")
 	}
 
-	ctx := context.Background()
 	start := time.Now()
 
-	result, err := r.client.ListTools(mcpConnection.Url, mcpConnection.HeaderAuth)
+	result, err := r.client.ListTools(ctx, mcpConnection.Url, mcpConnection.HeaderAuth)
 
 	if err != nil {
 		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
@@ -47,6 +46,7 @@ func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*models
 }
 
 func (r *MCPRequester) CallTool(
+	ctx context.Context,
 	mcpConnection *models.MCPConnection,
 	tool *models.Tool,
 	toolInput map[string]any,
@@ -60,10 +60,9 @@ func (r *MCPRequester) CallTool(
 
 	fixedInput := r.fixToolInputBySchema(tool, toolInput)
 
-	ctx := context.Background()
 	start := time.Now()
 
-	result, err := r.client.CallTool(mcpConnection.Url, tool.Name, fixedInput, mcpConnection.HeaderAuth)
+	result, err := r.client.CallTool(ctx, mcpConnection.Url, tool.Name, fixedInput, mcpConnection.HeaderAuth)
 
 	if err != nil {
 		r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), true)

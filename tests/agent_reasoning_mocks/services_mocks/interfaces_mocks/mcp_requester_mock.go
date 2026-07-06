@@ -10,6 +10,7 @@
 package interfaces_mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -41,31 +42,31 @@ func (m *MockMcpRequesterInterface) EXPECT() *MockMcpRequesterInterfaceMockRecor
 }
 
 // CallTool mocks base method.
-func (m *MockMcpRequesterInterface) CallTool(mcpConnection *models.MCPConnection, tool *models.Tool, toolInput map[string]any) (map[string]any, error) {
+func (m *MockMcpRequesterInterface) CallTool(ctx context.Context, mcpConnection *models.MCPConnection, tool *models.Tool, toolInput map[string]any) (map[string]any, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CallTool", mcpConnection, tool, toolInput)
+	ret := m.ctrl.Call(m, "CallTool", ctx, mcpConnection, tool, toolInput)
 	ret0, _ := ret[0].(map[string]any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CallTool indicates an expected call of CallTool.
-func (mr *MockMcpRequesterInterfaceMockRecorder) CallTool(mcpConnection, tool, toolInput any) *gomock.Call {
+func (mr *MockMcpRequesterInterfaceMockRecorder) CallTool(ctx, mcpConnection, tool, toolInput any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallTool", reflect.TypeOf((*MockMcpRequesterInterface)(nil).CallTool), mcpConnection, tool, toolInput)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallTool", reflect.TypeOf((*MockMcpRequesterInterface)(nil).CallTool), ctx, mcpConnection, tool, toolInput)
 }
 
 // ListTools mocks base method.
-func (m *MockMcpRequesterInterface) ListTools(mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
+func (m *MockMcpRequesterInterface) ListTools(ctx context.Context, mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTools", mcpConnection)
+	ret := m.ctrl.Call(m, "ListTools", ctx, mcpConnection)
 	ret0, _ := ret[0].([]*models.Tool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListTools indicates an expected call of ListTools.
-func (mr *MockMcpRequesterInterfaceMockRecorder) ListTools(mcpConnection any) *gomock.Call {
+func (mr *MockMcpRequesterInterfaceMockRecorder) ListTools(ctx, mcpConnection any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTools", reflect.TypeOf((*MockMcpRequesterInterface)(nil).ListTools), mcpConnection)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTools", reflect.TypeOf((*MockMcpRequesterInterface)(nil).ListTools), ctx, mcpConnection)
 }

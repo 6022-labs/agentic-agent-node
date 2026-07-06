@@ -1,6 +1,7 @@
 package clients_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -53,7 +54,7 @@ func TestWhenCallingMcpClient(t *testing.T) {
 			suite := WhenCallingMcpClientBeforeEach(t, handler)
 			defer WhenCallingMcpClientAfterEach(suite)
 
-			res, err := suite.sut.ListTools(suite.server.URL, map[string]string{"Authorization": "Bearer token"})
+			res, err := suite.sut.ListTools(context.Background(), suite.server.URL, map[string]string{"Authorization": "Bearer token"})
 
 			assert.NoError(t, err)
 			assert.Equal(t, "application/json", seenContentType)
@@ -82,7 +83,7 @@ func TestWhenCallingMcpClient(t *testing.T) {
 			suite := WhenCallingMcpClientBeforeEach(t, handler)
 			defer WhenCallingMcpClientAfterEach(suite)
 
-			res, err := suite.sut.CallTool(suite.server.URL, "echo", map[string]any{"value": "hi"}, nil)
+			res, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", map[string]any{"value": "hi"}, nil)
 
 			assert.NoError(t, err)
 			assert.Contains(t, string(seenBody), `"name":"echo"`)
@@ -104,8 +105,30 @@ func TestWhenCallingMcpClient(t *testing.T) {
 			suite := WhenCallingMcpClientBeforeEach(t, handler)
 			defer WhenCallingMcpClientAfterEach(suite)
 
-			_, err := suite.sut.ListTools(suite.server.URL, nil)
+			_, err := suite.sut.ListTools(context.Background(), suite.server.URL, nil)
 			assert.Error(t, err)
+		})
+	})
+
+	t.Run("Given the context is already cancelled", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"tools":[]}}`))
+		}
+
+		t.Run("Should abort the request instead of hitting the server", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingMcpClientBeforeEach(t, handler)
+			defer WhenCallingMcpClientAfterEach(suite)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+
+			_, err := suite.sut.ListTools(ctx, suite.server.URL, nil)
+			assert.ErrorIs(t, err, context.Canceled)
 		})
 	})
 }

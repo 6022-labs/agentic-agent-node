@@ -261,10 +261,10 @@ func (d *ResponseDriver) mcpConnectionsToTools(
 }
 
 func (d *ResponseDriver) mcpConnectionToTools(ctx context.Context, conn *models.MCPConnection) ([]*models.Tool, error) {
-	_, span := d.reasoningTracer.StartListTools(ctx, conn.Name)
+	ctx, span := d.reasoningTracer.StartListTools(ctx, conn.Name)
 	defer span.End()
 
-	tools, err := d.mcpRequester.ListTools(conn)
+	tools, err := d.mcpRequester.ListTools(ctx, conn)
 	if err != nil {
 		span.Fail(err)
 		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)

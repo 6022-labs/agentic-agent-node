@@ -150,7 +150,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArgs).
+				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(toolResult, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
@@ -314,7 +314,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(map[string]any{"name": "agent-x"}, nil)
 
 			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, gomock.Nil()).
+				CallTool(gomock.Any(), mcpConnection, mcpTool, gomock.Nil()).
 				Return(map[string]any{"status": "ok"}, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
@@ -367,7 +367,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArgs).
+				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
@@ -532,7 +532,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArgs).
+				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil).
 				AnyTimes()
 
@@ -659,7 +659,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			gomock.InOrder(firstCall, secondCall)
 
 			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArgs).
+				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(nil, errors.New("mcp blew up"))
 		}
 

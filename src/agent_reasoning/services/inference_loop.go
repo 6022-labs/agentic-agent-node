@@ -233,10 +233,10 @@ func (l *InferenceLoop) callMcpTool(
 	mcpConnection *models.MCPConnection,
 	mcpTool *models.Tool,
 ) (*interfaces.ChatCompletionMessage, error) {
-	_, span := l.reasoningTracer.StartToolCall(ctx, mcpTool.Name, toolCall.Id, mcpConnection.Name)
+	ctx, span := l.reasoningTracer.StartToolCall(ctx, mcpTool.Name, toolCall.Id, mcpConnection.Name)
 	defer span.End()
 
-	result, err := l.mcpRequester.CallTool(mcpConnection, mcpTool, toolCall.Arguments)
+	result, err := l.mcpRequester.CallTool(ctx, mcpConnection, mcpTool, toolCall.Arguments)
 	if err != nil {
 		span.Fail(err)
 		return nil, err

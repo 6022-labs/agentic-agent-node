@@ -560,7 +560,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 			// The driver lists tools once per connection and shares the map with builder + loop.
 			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any()).
+				ListTools(gomock.Any(), gomock.Any()).
 				Return([]*models.Tool{mcpTool}, nil)
 
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
@@ -889,7 +889,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 				Return("", false, nil).
 				AnyTimes()
 			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any()).
+				ListTools(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("mcp down"))
 		}
 
