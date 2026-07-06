@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"go.uber.org/zap"
 )
@@ -186,7 +188,7 @@ func (l *InferenceLoop) dispatchToolCall(
 	case utils.SelfToolNamespace:
 		selfToolName, err := utils.ExtractSelfToolNameFromFunctionName(toolCall.Name)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map tool call %q: %w", toolCall.Name, err)
+			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()))
 		}
 
 		l.logger.Debug("Calling self tool", zap.String("selfToolName", selfToolName))
@@ -196,7 +198,7 @@ func (l *InferenceLoop) dispatchToolCall(
 	case utils.McpToolNamespace:
 		mcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(toolCall.Name, mcpTools)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map tool call %q: %w", toolCall.Name, err)
+			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()))
 		}
 
 		l.logger.Debug("Calling MCP tool",
@@ -207,7 +209,7 @@ func (l *InferenceLoop) dispatchToolCall(
 		return l.callMcpTool(ctx, toolCall, mcpConnection, mcpTool)
 
 	default:
-		return nil, fmt.Errorf("failed to map tool call %q: unknown tool namespace %q", toolCall.Name, namespace)
+		return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: unknown tool namespace %q", toolCall.Name, namespace))
 	}
 }
 
@@ -257,14 +259,35 @@ func (l *InferenceLoop) toolResultMessage(toolCall interfaces.ToolCall, result m
 	}, nil
 }
 
-// errorPayload keeps a failed call recoverable: the model sees the structured error (json tags preserved) instead of an abort.
+// errorPayload sanitizes a failed tool call for the model: business-error messages pass through, but internal/unavailable/unknown errors surface only a safe code with a generic message so infra detail (DB, Vault, HTTP) never reaches the model or transcript.
 func (l *InferenceLoop) errorPayload(err error) map[string]any {
-	details := map[string]any{}
-	if encoded, marshalErr := json.Marshal(err); marshalErr == nil {
-		_ = json.Unmarshal(encoded, &details)
+	var validationErr *apperrors.ValidationError
+	if errors.As(err, &validationErr) {
+		return l.errObject(map[string]any{"field": validationErr.Field, "message": validationErr.Message})
 	}
-	if _, found := details["message"]; !found {
-		details["message"] = err.Error()
+	var notFoundErr *apperrors.NotFoundError
+	if errors.As(err, &notFoundErr) {
+		return l.errObject(map[string]any{"code": notFoundErr.Code, "message": notFoundErr.Message})
 	}
+	var conflictErr *apperrors.ConflictError
+	if errors.As(err, &conflictErr) {
+		return l.errObject(map[string]any{"code": conflictErr.Code, "message": conflictErr.Message})
+	}
+	var unauthorizedErr *apperrors.UnauthorizedError
+	if errors.As(err, &unauthorizedErr) {
+		return l.errObject(map[string]any{"code": unauthorizedErr.Code, "message": unauthorizedErr.Message})
+	}
+	var internalErr *apperrors.InternalError
+	if errors.As(err, &internalErr) {
+		return l.errObject(map[string]any{"code": internalErr.Code, "message": "the tool encountered an internal error"})
+	}
+	var unavailableErr *apperrors.UnavailableError
+	if errors.As(err, &unavailableErr) {
+		return l.errObject(map[string]any{"code": unavailableErr.Code, "message": "the tool is temporarily unavailable"})
+	}
+	return l.errObject(map[string]any{"message": "the tool call failed"})
+}
+
+func (*InferenceLoop) errObject(details map[string]any) map[string]any {
 	return map[string]any{"error": details}
 }

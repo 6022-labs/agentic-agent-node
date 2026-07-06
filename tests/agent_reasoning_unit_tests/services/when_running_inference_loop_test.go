@@ -292,6 +292,53 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the self tool call fails with an internal error", func(t *testing.T) {
+		t.Parallel()
+
+		selfTool := &models.Tool{Name: "list_mcp_connections"}
+		selfTools := []*models.Tool{selfTool}
+		expectedFinal := "noted"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockSelfToolRegistry.EXPECT().
+				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				Return(nil, apperrors.NewInternalError("mcp_lookup_failed", "dial tcp 10.0.0.5:5432: connection refused"))
+
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: "self_list_mcp_connections"},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should surface the code but hide the infra detail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Contains(t, out[2].Content, "mcp_lookup_failed")     // safe code passes through
+				assert.Contains(t, out[2].Content, "internal error")        // generic message
+				assert.NotContains(t, out[2].Content, "connection refused") // raw infra detail hidden
+				assert.NotContains(t, out[2].Content, "5432")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
+		})
+	})
+
 	t.Run("Given the LLM emits a self tool call and an MCP tool call in the same turn", func(t *testing.T) {
 		t.Parallel()
 
@@ -663,7 +710,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(nil, errors.New("mcp blew up"))
 		}
 
-		t.Run("Should feed the tool error back to the model and continue", func(t *testing.T) {
+		t.Run("Should feed a sanitized error back to the model and continue", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
@@ -674,7 +721,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
 				assert.Equal(t, "tool", out[2].Role)
-				assert.Contains(t, out[2].Content, "mcp blew up")
+				// The raw upstream error never reaches the model — only a generic message.
+				assert.NotContains(t, out[2].Content, "mcp blew up")
+				assert.Contains(t, out[2].Content, "the tool call failed")
 				assert.Equal(t, expectedFinal, out[3].Content)
 			}
 		})
