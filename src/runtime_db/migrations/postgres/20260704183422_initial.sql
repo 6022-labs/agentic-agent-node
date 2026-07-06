@@ -115,8 +115,8 @@ CREATE TABLE "public"."mcp_connections" (
   PRIMARY KEY ("id"),
   CONSTRAINT "fk_mcp_connections_agent" FOREIGN KEY ("agent_id") REFERENCES "public"."agents" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
--- create index "idx_mcp_connections_agent_id" to table: "mcp_connections"
-CREATE INDEX "idx_mcp_connections_agent_id" ON "public"."mcp_connections" ("agent_id");
+-- create index "uq_mcp_connections_agent_name" to table: "mcp_connections"
+CREATE UNIQUE INDEX "uq_mcp_connections_agent_name" ON "public"."mcp_connections" ("agent_id", "name");
 -- create "payment_policies" table
 CREATE TABLE "public"."payment_policies" (
   "id" character varying(36) NOT NULL,
@@ -168,8 +168,8 @@ DROP TABLE "public"."payment_rules";
 DROP INDEX "public"."idx_payment_policies_agent_id";
 -- reverse: create "payment_policies" table
 DROP TABLE "public"."payment_policies";
--- reverse: create index "idx_mcp_connections_agent_id" to table: "mcp_connections"
-DROP INDEX "public"."idx_mcp_connections_agent_id";
+-- reverse: create index "uq_mcp_connections_agent_name" to table: "mcp_connections"
+DROP INDEX "public"."uq_mcp_connections_agent_name";
 -- reverse: create "mcp_connections" table
 DROP TABLE "public"."mcp_connections";
 -- reverse: create index "idx_llm_connections_agent_id" to table: "llm_connections"

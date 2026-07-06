@@ -12,8 +12,8 @@ import (
 // load into HeaderAuth on read. Schema owned by runtime_db/migrations/.
 type MCPConnection struct {
 	Id             uuid.UUID                   `gorm:"primaryKey;size:36"`
-	AgentId        uuid.UUID                   `gorm:"not null;size:36;index"`
-	Name           string                      `gorm:"not null;size:128"`
+	AgentId        uuid.UUID                   `gorm:"not null;size:36;uniqueIndex:uq_mcp_connections_agent_name"`
+	Name           string                      `gorm:"not null;size:128;uniqueIndex:uq_mcp_connections_agent_name"`
 	Url            string                      `gorm:"not null;type:text"`
 	HeaderAuthKeys MCPConnectionHeaderAuthKeys `gorm:"not null"`
 	CreatedAt      time.Time                   `gorm:"not null"`

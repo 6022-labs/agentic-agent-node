@@ -107,7 +107,7 @@ CREATE TABLE `mcp_connections` (
   `created_at` datetime(3) NOT NULL,
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `idx_mcp_connections_agent_id` (`agent_id`),
+  UNIQUE INDEX `uq_mcp_connections_agent_name` (`agent_id`, `name`),
   CONSTRAINT `fk_mcp_connections_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- create "payment_policies" table

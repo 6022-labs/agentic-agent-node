@@ -114,6 +114,54 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					assert.Empty(t, got.HeaderAuthKeys)
 				})
 			})
+
+			t.Run("Given the agent already has a connection with that name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should reject the duplicate and keep the original row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingMCPConnectionBeforeEach(tc)
+					defer WhenCreatingMCPConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "github", "https://mcp.github.example"))
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Create(context.Background(), newMCPConnection(agentId, "github", "https://other.example"))
+					assert.Error(t, err)
+
+					var count int64
+					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					assert.Equal(t, int64(1), count)
+				})
+			})
+
+			t.Run("Given the same name under a different agent", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should allow it since uniqueness is scoped per agent", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingMCPConnectionBeforeEach(tc)
+					defer WhenCreatingMCPConnectionAfterEach(suite)
+
+					firstAgentId := uuid.New()
+					secondAgentId := uuid.New()
+					seedAgent(suite.dbClient, firstAgentId)
+					seedAgent(suite.dbClient, secondAgentId)
+
+					_, err := suite.sut.Create(context.Background(), newMCPConnection(firstAgentId, "github", "https://a.example"))
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Create(context.Background(), newMCPConnection(secondAgentId, "github", "https://b.example"))
+					assert.NoError(t, err)
+
+					var count int64
+					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					assert.Equal(t, int64(2), count)
+				})
+			})
 		})
 	}
 }

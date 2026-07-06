@@ -31,8 +31,8 @@ CREATE TABLE `mcp_connections` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_mcp_connections_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 );
--- create index "idx_mcp_connections_agent_id" to table: "mcp_connections"
-CREATE INDEX `idx_mcp_connections_agent_id` ON `mcp_connections` (`agent_id`);
+-- create index "uq_mcp_connections_agent_name" to table: "mcp_connections"
+CREATE UNIQUE INDEX `uq_mcp_connections_agent_name` ON `mcp_connections` (`agent_id`, `name`);
 -- create "llm_connections" table
 CREATE TABLE `llm_connections` (
   `id` text NULL,
@@ -192,8 +192,8 @@ DROP TABLE `agent_guidances`;
 DROP INDEX `idx_llm_connections_agent_id`;
 -- reverse: create "llm_connections" table
 DROP TABLE `llm_connections`;
--- reverse: create index "idx_mcp_connections_agent_id" to table: "mcp_connections"
-DROP INDEX `idx_mcp_connections_agent_id`;
+-- reverse: create index "uq_mcp_connections_agent_name" to table: "mcp_connections"
+DROP INDEX `uq_mcp_connections_agent_name`;
 -- reverse: create "mcp_connections" table
 DROP TABLE `mcp_connections`;
 -- reverse: create "agents" table
