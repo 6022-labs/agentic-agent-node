@@ -201,6 +201,43 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a self tool with no required fields", func(t *testing.T) {
+		t.Parallel()
+
+		selfTools := []*models.Tool{{Name: "get_identity", Description: "read own identity"}}
+
+		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
+			suite.mockOpenAICompletionsClient.
+				EXPECT().
+				ChatCompletion(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAICompletionsStandardRequest) (*external_models.ExternalOpenAICompletionsStandardResponse, error) {
+					if assert.Len(t, request.Tools, 1) {
+						assert.Equal(t, "self_get_identity", request.Tools[0].Function.Name)
+						// Must serialize required as [], not the invalid "required":null.
+						encoded, _ := json.Marshal(request.Tools[0].Function.Parameters)
+						assert.Contains(t, string(encoded), `"required":[]`)
+					}
+
+					return &external_models.ExternalOpenAICompletionsStandardResponse{
+						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
+							{Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{Role: "assistant", Content: expectedContent}},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should serialize required as an empty array", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, nil, messages)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
 	t.Run("Given the input stream replays an earlier tool turn", func(t *testing.T) {
 		t.Parallel()
 

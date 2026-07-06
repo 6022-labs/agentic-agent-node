@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -246,6 +247,9 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 					assert.Nil(t, request.McpServers)
 					if assert.Len(t, request.Tools, 1) {
 						assert.Equal(t, "self_get_identity", request.Tools[0].Name)
+						// A no-arg tool must serialize required as [], not the invalid "required":null.
+						encoded, _ := json.Marshal(request.Tools[0].InputSchema)
+						assert.Contains(t, string(encoded), `"required":[]`)
 					}
 
 					return &external_models.ExternalAnthropicMessagesStandardResponse{

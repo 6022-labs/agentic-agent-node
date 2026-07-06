@@ -60,6 +60,11 @@ func (r *ExternalOllamaChatMessageStandardRequest) AddSelfToolsAsFunctionCallToo
 }
 
 func (r *ExternalOllamaChatMessageStandardRequest) appendFunctionCallTool(name string, tool *models.Tool) {
+	required := tool.InputScheme.Required
+	if required == nil {
+		required = []string{}
+	}
+
 	r.Tools = append(r.Tools, ExternalOllamaChatMessageStandardRequestTool{
 		Type: "function",
 		Function: ExternalOllamaChatMessageStandardMessageToolCallFunction{
@@ -67,7 +72,7 @@ func (r *ExternalOllamaChatMessageStandardRequest) appendFunctionCallTool(name s
 			Description: &tool.Description,
 			Parameters: &ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments{
 				Type:       tool.InputScheme.Type,
-				Required:   tool.InputScheme.Required,
+				Required:   required,
 				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
 			},
 		},

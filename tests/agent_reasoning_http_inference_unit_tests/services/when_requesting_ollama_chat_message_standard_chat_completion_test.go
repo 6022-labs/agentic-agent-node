@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -119,6 +120,45 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "ollama returned empty content")
 			assert.ErrorContains(t, err, doneReason)
+		})
+	})
+
+	t.Run("Given a self tool with no required fields", func(t *testing.T) {
+		t.Parallel()
+
+		selfTools := []*models.Tool{{Name: "get_identity", Description: "read own identity"}}
+		expectedContent := "ok"
+
+		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
+			suite.mockOllamaClient.EXPECT().
+				ChatMessage(baseUrl, gomock.Any()).
+				DoAndReturn(func(_ string, request *external_models.ExternalOllamaChatMessageStandardRequest) (*external_models.ExternalOllamaChatMessageStandardResponse, error) {
+					if assert.Len(t, request.Tools, 1) {
+						assert.Equal(t, "self_get_identity", request.Tools[0].Function.Name)
+						// Must serialize required as [], not the invalid "required":null.
+						encoded, _ := json.Marshal(request.Tools[0].Function.Parameters)
+						assert.Contains(t, string(encoded), `"required":[]`)
+					}
+
+					return &external_models.ExternalOllamaChatMessageStandardResponse{
+						Model: llmConnection.Model,
+						Message: external_models.ExternalOllamaChatMessageStandardMessage{
+							Role:    "assistant",
+							Content: expectedContent,
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should serialize required as an empty array", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, selfTools, nil, messages)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
 		})
 	})
 

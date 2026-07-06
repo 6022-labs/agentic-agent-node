@@ -94,6 +94,11 @@ func (r *ExternalOpenAICompletionsStandardRequest) appendFunctionCallTool(name s
 	// But also not always all fields are required
 	strict := false
 
+	required := tool.InputScheme.Required
+	if required == nil {
+		required = []string{}
+	}
+
 	r.Tools = append(r.Tools, ExternalOpenAICompletionsStandardRequestTool{
 		Type: "function",
 		Function: ExternalOpenAICompletionsStandardRequestToolFunction{
@@ -102,7 +107,7 @@ func (r *ExternalOpenAICompletionsStandardRequest) appendFunctionCallTool(name s
 			Description: tool.Description,
 			Parameters: ExternalOpenAICompletionsStandardRequestToolFunctionParameters{
 				Type:                 tool.InputScheme.Type,
-				Required:             tool.InputScheme.Required,
+				Required:             required,
 				AdditionalProperties: tool.InputScheme.AdditionalProperties,
 
 				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),

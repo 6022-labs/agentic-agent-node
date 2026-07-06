@@ -115,12 +115,17 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddSelfToolsAsFunctionCallToo
 }
 
 func (r *ExternalAnthropicMessagesStandardRequest) appendFunctionCallTool(toolName string, tool *models.Tool) {
+	required := tool.InputScheme.Required
+	if required == nil {
+		required = []string{}
+	}
+
 	r.Tools = append(r.Tools, ExternalAnthropicMessagesStandardRequestTool{
 		Name:        toolName,
 		Description: tool.Description,
 		InputSchema: ExternalAnthropicMessagesStandardRequestToolInputSchema{
 			Type:     tool.InputScheme.Type,
-			Required: tool.InputScheme.Required,
+			Required: required,
 
 			Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
 		},
