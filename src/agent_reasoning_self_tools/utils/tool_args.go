@@ -42,12 +42,16 @@ func UuidArg(args map[string]any, key string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func RawJsonArg(args map[string]any, key string) (json.RawMessage, error) {
+func RawJsonObjectArg(args map[string]any, key string) (json.RawMessage, error) {
 	value, found := args[key]
 	if !found || value == nil {
 		return nil, fmt.Errorf("argument %q is required", key)
 	}
-	encoded, err := json.Marshal(value)
+	object, ok := value.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("argument %q must be a json object", key)
+	}
+	encoded, err := json.Marshal(object)
 	if err != nil {
 		return nil, fmt.Errorf("argument %q must be a json object: %w", key, err)
 	}

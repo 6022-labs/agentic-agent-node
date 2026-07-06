@@ -48,7 +48,7 @@ func savePaymentRuleRequestFromArgs(args map[string]any) (*payment_requests.Save
 	if err != nil {
 		return nil, err
 	}
-	config, err := utils.RawJsonArg(args, "config")
+	config, err := utils.RawJsonObjectArg(args, "config")
 	if err != nil {
 		return nil, err
 	}
