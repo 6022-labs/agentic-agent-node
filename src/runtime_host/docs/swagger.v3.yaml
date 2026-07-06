@@ -70,17 +70,6 @@ components:
         id:
           type: string
       type: object
-    requests.CreateMCPConnectionRequest:
-      properties:
-        headerAuth:
-          additionalProperties:
-            type: string
-          type: object
-        name:
-          type: string
-        url:
-          type: string
-      type: object
     requests.CreateResponseRequest:
       properties:
         conversation:
@@ -120,6 +109,17 @@ components:
         type:
           type: string
       type: object
+    requests.SaveMCPConnectionRequest:
+      properties:
+        headerAuth:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          type: string
+        url:
+          type: string
+      type: object
     requests.SavePaymentRuleRequest:
       properties:
         config:
@@ -146,17 +146,6 @@ components:
           type: string
         platform:
           $ref: '#/components/schemas/enums.LLMConnectionPlatform'
-      type: object
-    requests.UpdateMCPConnectionRequest:
-      properties:
-        headerAuth:
-          additionalProperties:
-            type: string
-          type: object
-        name:
-          type: string
-        url:
-          type: string
       type: object
     responses.AgentCollectionResponse:
       properties:
@@ -965,7 +954,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.CreateMCPConnectionRequest'
+              - $ref: '#/components/schemas/requests.SaveMCPConnectionRequest'
                 description: MCP connection
                 summary: request
         description: MCP connection
@@ -1069,7 +1058,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.UpdateMCPConnectionRequest'
+              - $ref: '#/components/schemas/requests.SaveMCPConnectionRequest'
                 description: MCP connection
                 summary: request
         description: MCP connection

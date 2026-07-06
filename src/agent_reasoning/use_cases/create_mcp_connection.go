@@ -10,12 +10,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/google/uuid"
 )
 
 type CreateMCPConnection struct {
-	*AbstractReasoningUseCase
-	repository    repositories.MCPConnectionRepositoryInterface
-	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
+	*AbstractUpsertMCPConnection
 }
 
 func NewCreateMCPConnection(
@@ -24,16 +23,14 @@ func NewCreateMCPConnection(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *CreateMCPConnection {
 	return &CreateMCPConnection{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
-		repository:               repository,
-		secretStorage:            secretStorage,
+		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(repository, secretStorage, agentRepository),
 	}
 }
 
 // Execute creates the row first to get a stable connectionId, then writes
 // every header value to Vault under that id. The persisted row only ever
 // stores the header *names*; values stay in Vault.
-func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.SaveMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -47,6 +44,10 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Cre
 
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := u.ensureNameAvailable(ctx, agent.Id, request.Name, uuid.Nil); err != nil {
 		return nil, err
 	}
 

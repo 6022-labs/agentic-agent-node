@@ -14,7 +14,6 @@ import (
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -43,16 +42,16 @@ func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) EXPECT()
 }
 
 // ChatCompletion mocks base method.
-func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) ChatCompletion(baseUrl, apiKey string, llmConnection *models.LLMConnection, mcpConnections []*models.MCPConnection, mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) ChatCompletion(baseUrl, apiKey string, llmConnection *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChatCompletion", baseUrl, apiKey, llmConnection, mcpConnections, mcpToolsByConnectionId, messages)
+	ret := m.ctrl.Call(m, "ChatCompletion", baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages)
 	ret0, _ := ret[0].(*interfaces.LLMCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ChatCompletion indicates an expected call of ChatCompletion.
-func (mr *MockOpenAICompletionsStandardChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(baseUrl, apiKey, llmConnection, mcpConnections, mcpToolsByConnectionId, messages any) *gomock.Call {
+func (mr *MockOpenAICompletionsStandardChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockOpenAICompletionsStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, apiKey, llmConnection, mcpConnections, mcpToolsByConnectionId, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockOpenAICompletionsStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages)
 }

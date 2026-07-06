@@ -1,0 +1,43 @@
+package tools
+
+import (
+	"context"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
+)
+
+// UpdatePaymentRuleTool exposes the UpdatePaymentRule use case as a built-in self tool.
+type UpdatePaymentRuleTool struct {
+	updatePaymentRuleExecutor tool_interfaces.UpdatePaymentRuleExecutorInterface
+}
+
+func NewUpdatePaymentRuleTool(updatePaymentRuleExecutor tool_interfaces.UpdatePaymentRuleExecutorInterface) *UpdatePaymentRuleTool {
+	return &UpdatePaymentRuleTool{updatePaymentRuleExecutor: updatePaymentRuleExecutor}
+}
+
+func (t *UpdatePaymentRuleTool) Definition() *models.Tool {
+	return &models.Tool{
+		Name:        "update_payment_rule",
+		Description: "Replace one of your pricing rules (identity and position preserved).",
+		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
+			"id":     utils.StringProperty("Id of the rule to update (see list_payment_rules)."),
+			"name":   utils.StringProperty("Rule name (1-64 characters)."),
+			"price":  utils.StringProperty("Non-negative integer price in the asset's atomic units (0 = free)."),
+			"method": utils.StringProperty("Payment method; defaults to x402."),
+			"config": utils.ObjectProperty("Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), payTo (address), assetTransferMethod, addressPatterns}."),
+		}, []string{"id", "name", "price", "config"}),
+	}
+}
+
+func (t *UpdatePaymentRuleTool) Execute(ctx context.Context, args map[string]any) (map[string]any, error) {
+	id, err := utils.UuidArg(args, "id")
+	if err != nil {
+		return nil, err
+	}
+	request, err := savePaymentRuleRequestFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+	return utils.ToToolResult(t.updatePaymentRuleExecutor.Execute(ctx, id, request))
+}

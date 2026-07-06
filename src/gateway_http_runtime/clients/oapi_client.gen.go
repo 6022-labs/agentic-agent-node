@@ -77,13 +77,6 @@ type RequestsConversationRef struct {
 	Id *string `json:"id,omitempty"`
 }
 
-// RequestsCreateMCPConnectionRequest defines model for requests.CreateMCPConnectionRequest.
-type RequestsCreateMCPConnectionRequest struct {
-	HeaderAuth *map[string]string `json:"headerAuth,omitempty"`
-	Name       *string            `json:"name,omitempty"`
-	Url        *string            `json:"url,omitempty"`
-}
-
 // RequestsCreateResponseRequest defines model for requests.CreateResponseRequest.
 type RequestsCreateResponseRequest struct {
 	Conversation       *RequestsConversationRef `json:"conversation,omitempty"`
@@ -106,6 +99,13 @@ type RequestsInputMessage struct {
 	Type    *string `json:"type,omitempty"`
 }
 
+// RequestsSaveMCPConnectionRequest defines model for requests.SaveMCPConnectionRequest.
+type RequestsSaveMCPConnectionRequest struct {
+	HeaderAuth *map[string]string `json:"headerAuth,omitempty"`
+	Name       *string            `json:"name,omitempty"`
+	Url        *string            `json:"url,omitempty"`
+}
+
 // RequestsSavePaymentRuleRequest defines model for requests.SavePaymentRuleRequest.
 type RequestsSavePaymentRuleRequest struct {
 	Config *map[string]interface{} `json:"config,omitempty"`
@@ -125,13 +125,6 @@ type RequestsSetupLLMConnectionRequest struct {
 	BaseUrl  *string                     `json:"baseUrl,omitempty"`
 	Model    *string                     `json:"model,omitempty"`
 	Platform *EnumsLLMConnectionPlatform `json:"platform,omitempty"`
-}
-
-// RequestsUpdateMCPConnectionRequest defines model for requests.UpdateMCPConnectionRequest.
-type RequestsUpdateMCPConnectionRequest struct {
-	HeaderAuth *map[string]string `json:"headerAuth,omitempty"`
-	Name       *string            `json:"name,omitempty"`
-	Url        *string            `json:"url,omitempty"`
 }
 
 // ResponsesAgentCollectionResponse defines model for responses.AgentCollectionResponse.

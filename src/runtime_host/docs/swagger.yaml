@@ -69,17 +69,6 @@ definitions:
       id:
         type: string
     type: object
-  requests.CreateMCPConnectionRequest:
-    properties:
-      headerAuth:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      url:
-        type: string
-    type: object
   requests.CreateResponseRequest:
     properties:
       conversation:
@@ -118,6 +107,17 @@ definitions:
       type:
         type: string
     type: object
+  requests.SaveMCPConnectionRequest:
+    properties:
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
+        type: string
+    type: object
   requests.SavePaymentRuleRequest:
     properties:
       config:
@@ -144,17 +144,6 @@ definitions:
         type: string
       platform:
         $ref: '#/definitions/enums.LLMConnectionPlatform'
-    type: object
-  requests.UpdateMCPConnectionRequest:
-    properties:
-      headerAuth:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      url:
-        type: string
     type: object
   responses.AgentCollectionResponse:
     properties:
@@ -909,7 +898,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.CreateMCPConnectionRequest'
+          $ref: '#/definitions/requests.SaveMCPConnectionRequest'
       produces:
       - application/json
       responses:
@@ -993,7 +982,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.UpdateMCPConnectionRequest'
+          $ref: '#/definitions/requests.SaveMCPConnectionRequest'
       produces:
       - application/json
       responses:

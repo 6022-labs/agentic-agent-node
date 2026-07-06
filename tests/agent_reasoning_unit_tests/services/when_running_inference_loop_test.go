@@ -11,11 +11,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	metrics_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -24,8 +24,9 @@ import (
 type WhenRunningInferenceLoopTestingSuite struct {
 	sut *services.InferenceLoop
 
-	mockLLMExecutor  *interfaces_mocks.MockLLMExecutorInterface
-	mockMcpRequester *interfaces_mocks.MockMcpRequesterInterface
+	mockLLMExecutor      *interfaces_mocks.MockLLMExecutorInterface
+	mockMcpRequester     *interfaces_mocks.MockMcpRequesterInterface
+	mockSelfToolRegistry *interfaces_mocks.MockSelfToolRegistryInterface
 }
 
 func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRunningInferenceLoopTestingSuite {
@@ -33,6 +34,7 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 
 	mockLLMExecutor := interfaces_mocks.NewMockLLMExecutorInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
+	mockSelfToolRegistry := interfaces_mocks.NewMockSelfToolRegistryInterface(mockController)
 
 	mockMetrics := metrics_interfaces_mocks.NewMockReasoningMetricsInterface(mockController)
 	mockMetrics.EXPECT().RecordLoopCompleted(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -53,15 +55,17 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 		zap.NewNop(),
 		mockLLMExecutor,
 		mockMcpRequester,
+		mockSelfToolRegistry,
 		&settings.InferenceLoopSettings{MaxIterations: maxIterations},
 		mockMetrics,
 		mockReasoningTracer,
 	)
 
 	return &WhenRunningInferenceLoopTestingSuite{
-		sut:              sut,
-		mockLLMExecutor:  mockLLMExecutor,
-		mockMcpRequester: mockMcpRequester,
+		sut:                  sut,
+		mockLLMExecutor:      mockLLMExecutor,
+		mockMcpRequester:     mockMcpRequester,
+		mockSelfToolRegistry: mockSelfToolRegistry,
 	}
 }
 
@@ -69,33 +73,6 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	t.Run("Given the LLM returns text containing unicode emoji", func(t *testing.T) {
-		t.Parallel()
-
-		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
-		emojiText := "🔄 status update"
-
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), messages).
-				Return(&interfaces.LLMCompletion{Text: &emojiText}, nil)
-		}
-
-		t.Run("Should demojize the assistant content", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
-			initSuite(suite)
-
-			out, err := suite.sut.Run(ctx, nil, nil, messages)
-
-			assert.NoError(t, err)
-			if assert.Len(t, out, 2) {
-				assert.Equal(t, ":arrows_counterclockwise: status update", out[1].Content)
-			}
-		})
-	})
 
 	t.Run("Given the LLM returns final text on the first turn", func(t *testing.T) {
 		t.Parallel()
@@ -105,7 +82,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), messages).
+				Complete(ctx, gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Text: &expectedText}, nil)
 		}
 
@@ -127,22 +104,48 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the LLM emits a tool call then a final answer", func(t *testing.T) {
+	t.Run("Given the LLM returns text containing unicode emoji", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
+		emojiText := "🔄 status update"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), gomock.Any(), messages).
+				Return(&interfaces.LLMCompletion{Text: &emojiText}, nil)
+		}
+
+		t.Run("Should demojize the assistant content", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, nil, nil, messages)
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 2) {
+				assert.Equal(t, ":arrows_counterclockwise: status update", out[1].Content)
+			}
+		})
+	})
+
+	t.Run("Given the LLM emits an MCP tool call then a final answer", func(t *testing.T) {
 		t.Parallel()
 
 		mcpConnection := model_builders.NewMCPConnectionBuilder().
 			WithName("inventory").
 			Build()
-		mcpConnections := []*models.MCPConnection{mcpConnection}
 
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
 
 		toolArgs := map[string]any{"query": "value"}
 		toolResult := map[string]any{"status": "ok"}
 		expectedFinal := "all done"
 
-		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
@@ -150,7 +153,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(toolResult, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, mcpConnections, gomock.Any(), gomock.Any()).
+				Complete(ctx, gomock.Any(), mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: functionName, Arguments: toolArgs},
@@ -158,8 +161,8 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, mcpConnections, gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ []*models.MCPConnection, _ map[uuid.UUID][]*interfaces.McpTool, msgs []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+				Complete(ctx, gomock.Any(), mcpTools, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 					if assert.GreaterOrEqual(t, len(msgs), 3) {
 						assistant := msgs[len(msgs)-2]
 						tool := msgs[len(msgs)-1]
@@ -182,7 +185,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			initSuite(suite)
 
 			messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
-			out, err := suite.sut.Run(ctx, mcpConnections, toolsByConnectionId, messages)
+			out, err := suite.sut.Run(ctx, nil, mcpTools, messages)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -196,6 +199,217 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the LLM emits a self tool call then a final answer", func(t *testing.T) {
+		t.Parallel()
+
+		selfTool := &models.Tool{Name: "get_identity"}
+		selfTools := []*models.Tool{selfTool}
+		toolResult := map[string]any{"name": "agent-x"}
+		expectedFinal := "done"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			// mockMcpRequester.CallTool is never expected — an MCP dispatch would fail the test.
+			suite.mockSelfToolRegistry.EXPECT().
+				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				Return(toolResult, nil)
+
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: "self_get_identity"},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should dispatch to the self tool registry instead of the MCP requester", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "call_1", out[2].ToolCallId)
+				assert.Contains(t, out[2].Content, "agent-x")
+			}
+		})
+	})
+
+	t.Run("Given the self tool call fails with a structured validation error", func(t *testing.T) {
+		t.Parallel()
+
+		selfTool := &models.Tool{Name: "set_guidance"}
+		selfTools := []*models.Tool{selfTool}
+		expectedFinal := "understood"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockSelfToolRegistry.EXPECT().
+				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				Return(nil, apperrors.NewValidationError("content", "cannot be empty"))
+
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: "self_set_guidance"},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should feed the structured error back as a tool message and continue", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				// The error payload keeps the typed field + message.
+				assert.Contains(t, out[2].Content, "\"field\":\"content\"")
+				assert.Contains(t, out[2].Content, "cannot be empty")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
+		})
+	})
+
+	t.Run("Given the LLM emits a self tool call and an MCP tool call in the same turn", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			Build()
+
+		selfTool := &models.Tool{Name: "get_identity"}
+		selfTools := []*models.Tool{selfTool}
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		expectedFinal := "done"
+
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnection: {mcpTool},
+		}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockSelfToolRegistry.EXPECT().
+				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				Return(map[string]any{"name": "agent-x"}, nil)
+
+			suite.mockMcpRequester.EXPECT().
+				CallTool(mcpConnection, mcpTool, gomock.Nil()).
+				Return(map[string]any{"status": "ok"}, nil)
+
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: "self_get_identity"},
+						{Id: "call_2", Name: fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, selfTools, mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should dispatch each call to its own path", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, selfTools, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 5) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "tool", out[3].Role)
+				assert.Equal(t, expectedFinal, out[4].Content)
+			}
+		})
+	})
+
+	t.Run("Given the LLM emits text and tool calls in the same turn", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			Build()
+
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
+		toolArgs := map[string]any{"query": "value"}
+		thinkingText := "let me check"
+		expectedFinal := "all done"
+
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockMcpRequester.EXPECT().
+				CallTool(mcpConnection, mcpTool, toolArgs).
+				Return(map[string]any{"status": "ok"}, nil)
+
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					Text: &thinkingText,
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: functionName, Arguments: toolArgs},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should keep both Content and ToolCalls on the assistant message and continue", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				thinking := out[1]
+				assert.Equal(t, "assistant", thinking.Role)
+				assert.Equal(t, thinkingText, thinking.Content)
+				assert.Len(t, thinking.ToolCalls, 1)
+
+				assert.Equal(t, "tool", out[2].Role)
+
+				final := out[3]
+				assert.Equal(t, "assistant", final.Role)
+				assert.Equal(t, expectedFinal, final.Content)
+				assert.Empty(t, final.ToolCalls)
+			}
+		})
+	})
+
 	t.Run("Given the LLM returns provider-executed tool calls with a final answer", func(t *testing.T) {
 		t.Parallel()
 
@@ -204,7 +418,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					Text: &expectedFinal,
 					ExecutedToolCalls: []interfaces.ExecutedToolCall{
@@ -246,7 +460,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			first := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ExecutedToolCalls: []interfaces.ExecutedToolCall{
 						{Id: "mcp_1", Name: "weather_get", Output: `{"temp":"20"}`},
@@ -254,7 +468,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			second := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Text: &finalText}, nil)
 
 			gomock.InOrder(first, second)
@@ -286,7 +500,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), gomock.Any()).
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{}, nil)
 		}
 
@@ -309,11 +523,11 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpConnection := model_builders.NewMCPConnectionBuilder().
 			WithName("inventory").
 			Build()
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArgs := map[string]any{"query": "value"}
 
-		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockMcpRequester.EXPECT().
@@ -337,7 +551,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 2)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
+			out, err := suite.sut.Run(ctx, nil, mcpTools, nil)
 
 			assert.Nil(t, out)
 			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopMaxIterationsExceeded)
@@ -350,31 +564,42 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpConnection := model_builders.NewMCPConnectionBuilder().
 			WithName("inventory").
 			Build()
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		expectedFinal := "recovered"
 
-		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockLLMExecutor.EXPECT().
+			firstCall := suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_x", Name: "ghost_tool", Arguments: nil},
 					},
 				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
 		}
 
-		t.Run("Should fail with a tool-mapping error", func(t *testing.T) {
+		t.Run("Should feed a tool-mapping error back to the model and continue", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
+			out, err := suite.sut.Run(ctx, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
 
-			assert.Nil(t, out)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "failed to map tool call")
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "call_x", out[2].ToolCallId)
+				assert.Contains(t, out[2].Content, "failed to map tool call")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
 		})
 	})
 
@@ -385,7 +610,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Nil(), gomock.Any(), messages).
+				Complete(ctx, gomock.Any(), gomock.Any(), messages).
 				Return(nil, errors.New("upstream broke"))
 		}
 
@@ -404,82 +629,21 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the LLM emits text and tool calls in the same turn", func(t *testing.T) {
-		t.Parallel()
-
-		mcpConnection := model_builders.NewMCPConnectionBuilder().
-			WithName("inventory").
-			Build()
-		mcpConnections := []*models.MCPConnection{mcpConnection}
-
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
-		toolArgs := map[string]any{"query": "value"}
-		thinkingText := "let me check"
-		expectedFinal := "all done"
-
-		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
-
-		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				CallTool(mcpConnection, mcpTool, toolArgs).
-				Return(map[string]any{"status": "ok"}, nil)
-
-			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, mcpConnections, gomock.Any(), gomock.Any()).
-				Return(&interfaces.LLMCompletion{
-					Text: &thinkingText,
-					ToolCalls: []interfaces.ToolCall{
-						{Id: "call_1", Name: functionName, Arguments: toolArgs},
-					},
-				}, nil)
-
-			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, mcpConnections, gomock.Any(), gomock.Any()).
-				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
-
-			gomock.InOrder(firstCall, secondCall)
-		}
-
-		t.Run("Should keep both Content and ToolCalls on the assistant message and continue", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
-			initSuite(suite)
-
-			out, err := suite.sut.Run(ctx, mcpConnections, toolsByConnectionId, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
-
-			assert.NoError(t, err)
-			if assert.Len(t, out, 4) {
-				thinking := out[1]
-				assert.Equal(t, "assistant", thinking.Role)
-				assert.Equal(t, thinkingText, thinking.Content)
-				assert.Len(t, thinking.ToolCalls, 1)
-
-				assert.Equal(t, "tool", out[2].Role)
-
-				final := out[3]
-				assert.Equal(t, "assistant", final.Role)
-				assert.Equal(t, expectedFinal, final.Content)
-				assert.Empty(t, final.ToolCalls)
-			}
-		})
-	})
-
 	t.Run("Given the MCP tool call fails", func(t *testing.T) {
 		t.Parallel()
 
 		mcpConnection := model_builders.NewMCPConnectionBuilder().
 			WithName("inventory").
 			Build()
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArgs := map[string]any{"query": "value"}
+		expectedFinal := "recovered"
 
-		toolsByConnectionId := map[uuid.UUID][]*interfaces.McpTool{mcpConnection.Id: {mcpTool}}
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
-			suite.mockLLMExecutor.EXPECT().
+			firstCall := suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
@@ -487,23 +651,31 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 					},
 				}, nil)
 
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Text: &expectedFinal}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+
 			suite.mockMcpRequester.EXPECT().
 				CallTool(mcpConnection, mcpTool, toolArgs).
 				Return(nil, errors.New("mcp blew up"))
 		}
 
-		t.Run("Should fail without re-calling the LLM", func(t *testing.T) {
+		t.Run("Should feed the tool error back to the model and continue", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, []*models.MCPConnection{mcpConnection}, toolsByConnectionId, nil)
+			out, err := suite.sut.Run(ctx, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
 
-			assert.Nil(t, out)
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "failed to call mcp tool")
-			assert.ErrorContains(t, err, "mcp blew up")
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Contains(t, out[2].Content, "mcp blew up")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
 		})
 	})
 }

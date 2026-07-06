@@ -1,19 +1,23 @@
 package models
 
-import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+import (
+	reasoning_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+)
 
 type ExternalToolInputSchemaProperty struct {
-	Type        string                           `json:"type"`
-	Items       *ExternalToolInputSchemaProperty `json:"items,omitempty"`
-	Description *string                          `json:"description,omitempty"`
+	Type                 string                           `json:"type"`
+	Items                *ExternalToolInputSchemaProperty `json:"items,omitempty"`
+	Description          *string                          `json:"description,omitempty"`
+	AdditionalProperties *bool                            `json:"additionalProperties,omitempty"`
 }
 
 type ExternalToolInputSchemaProperties map[string]ExternalToolInputSchemaProperty
 
-func NewExternalToolInputSchemaPropertyFromInternalModel(internalProperty interfaces.ToolInputSchemeProperty) ExternalToolInputSchemaProperty {
+func NewExternalToolInputSchemaPropertyFromInternalModel(internalProperty reasoning_models.ToolInputSchemeProperty) ExternalToolInputSchemaProperty {
 	this := ExternalToolInputSchemaProperty{
-		Type:        internalProperty.Type,
-		Description: internalProperty.Description,
+		Type:                 internalProperty.Type,
+		Description:          internalProperty.Description,
+		AdditionalProperties: internalProperty.AdditionalProperties,
 	}
 
 	if internalProperty.Items != nil {
@@ -24,7 +28,7 @@ func NewExternalToolInputSchemaPropertyFromInternalModel(internalProperty interf
 	return this
 }
 
-func NewExternalToolInputSchemaPropertiesFromInternalModels(internalProperties map[string]interfaces.ToolInputSchemeProperty) ExternalToolInputSchemaProperties {
+func NewExternalToolInputSchemaPropertiesFromInternalModels(internalProperties map[string]reasoning_models.ToolInputSchemeProperty) ExternalToolInputSchemaProperties {
 	externalProperties := make(ExternalToolInputSchemaProperties)
 
 	for key, internalProperty := range internalProperties {
@@ -34,10 +38,11 @@ func NewExternalToolInputSchemaPropertiesFromInternalModels(internalProperties m
 	return externalProperties
 }
 
-func (p *ExternalToolInputSchemaProperty) ToInternalModel() interfaces.ToolInputSchemeProperty {
-	internalModel := interfaces.ToolInputSchemeProperty{
-		Type:        p.Type,
-		Description: p.Description,
+func (p *ExternalToolInputSchemaProperty) ToInternalModel() reasoning_models.ToolInputSchemeProperty {
+	internalModel := reasoning_models.ToolInputSchemeProperty{
+		Type:                 p.Type,
+		Description:          p.Description,
+		AdditionalProperties: p.AdditionalProperties,
 	}
 
 	if p.Items != nil {
@@ -48,8 +53,8 @@ func (p *ExternalToolInputSchemaProperty) ToInternalModel() interfaces.ToolInput
 	return internalModel
 }
 
-func (p ExternalToolInputSchemaProperties) ToInternalModels() map[string]interfaces.ToolInputSchemeProperty {
-	internalProperties := make(map[string]interfaces.ToolInputSchemeProperty)
+func (p ExternalToolInputSchemaProperties) ToInternalModels() map[string]reasoning_models.ToolInputSchemeProperty {
+	internalProperties := make(map[string]reasoning_models.ToolInputSchemeProperty)
 
 	for key, externalProperty := range p {
 		internalProperties[key] = externalProperty.ToInternalModel()

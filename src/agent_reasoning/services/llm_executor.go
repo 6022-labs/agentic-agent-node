@@ -9,7 +9,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
-	"github.com/google/uuid"
 )
 
 // LLMExecutor runs one chat-completion round-trip. No looping — InferenceLoop
@@ -37,8 +36,8 @@ func NewLLMExecutor(
 
 func (e *LLMExecutor) Complete(
 	ctx context.Context,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	agent, err := e.agentRepository.Get(ctx)
@@ -62,8 +61,8 @@ func (e *LLMExecutor) Complete(
 	completion, err := e.chatCompletionRequester.ChatCompletion(
 		ctx,
 		llmConnection,
-		mcpConnections,
-		mcpToolsByConnectionId,
+		selfTools,
+		mcpTools,
 		messages,
 	)
 	if err != nil {

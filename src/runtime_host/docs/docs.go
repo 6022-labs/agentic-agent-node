@@ -572,7 +572,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.CreateMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
                         }
                     }
                 ],
@@ -668,7 +668,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.UpdateMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
                         }
                     }
                 ],
@@ -1274,23 +1274,6 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.CreateMCPConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "headerAuth": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
         "requests.CreateResponseRequest": {
             "type": "object",
             "properties": {
@@ -1349,6 +1332,23 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SaveMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SavePaymentRuleRequest": {
             "type": "object",
             "properties": {
@@ -1388,23 +1388,6 @@ const docTemplate = `{
                 },
                 "platform": {
                     "$ref": "#/definitions/enums.LLMConnectionPlatform"
-                }
-            }
-        },
-        "requests.UpdateMCPConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "headerAuth": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
                 }
             }
         },

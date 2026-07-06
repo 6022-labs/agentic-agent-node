@@ -15,7 +15,6 @@ import (
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,16 +43,16 @@ func (m *MockLLMExecutorInterface) EXPECT() *MockLLMExecutorInterfaceMockRecorde
 }
 
 // Complete mocks base method.
-func (m *MockLLMExecutorInterface) Complete(ctx context.Context, mcpConnections []*models.MCPConnection, mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+func (m *MockLLMExecutorInterface) Complete(ctx context.Context, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Complete", ctx, mcpConnections, mcpToolsByConnectionId, messages)
+	ret := m.ctrl.Call(m, "Complete", ctx, selfTools, mcpTools, messages)
 	ret0, _ := ret[0].(*interfaces.LLMCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Complete indicates an expected call of Complete.
-func (mr *MockLLMExecutorInterfaceMockRecorder) Complete(ctx, mcpConnections, mcpToolsByConnectionId, messages any) *gomock.Call {
+func (mr *MockLLMExecutorInterfaceMockRecorder) Complete(ctx, selfTools, mcpTools, messages any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockLLMExecutorInterface)(nil).Complete), ctx, mcpConnections, mcpToolsByConnectionId, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockLLMExecutorInterface)(nil).Complete), ctx, selfTools, mcpTools, messages)
 }

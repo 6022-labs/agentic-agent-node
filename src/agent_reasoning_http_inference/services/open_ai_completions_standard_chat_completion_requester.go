@@ -6,9 +6,9 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -16,8 +16,8 @@ type OpenAICompletionsStandardChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		baseUrl, apiKey string,
 		llmConnection *models.LLMConnection,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
 }
@@ -40,8 +40,8 @@ func NewOpenAICompletionsStandardChatCompletionRequester(
 func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	extMessages, err := r.buildRequestMessages(messages)
@@ -51,13 +51,15 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 
 	externalRequest := external_models.NewExternalOpenAICompletionsStandardRequest(llmConnection.Model, extMessages)
 
-	for _, mcpConnection := range mcpConnections {
-		tools := mcpToolsByConnectionId[mcpConnection.Id]
+	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
+		tools := mcpTools[mcpConnection]
 		if len(tools) == 0 {
 			continue
 		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
+
+	externalRequest.AddSelfToolsAsFunctionCallTools(selfTools)
 
 	r.logger.Debug("Request to Completions endpoint")
 

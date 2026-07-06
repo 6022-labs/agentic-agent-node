@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/google/uuid"
 )
 
 // ErrLLMConnectionNotConfigured — no LLM connection set up for this agent.
@@ -14,8 +13,8 @@ var ErrLLMConnectionNotConfigured = errors.New("llm connection not configured")
 type LLMExecutorInterface interface {
 	Complete(
 		ctx context.Context,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,
 	) (*LLMCompletion, error)
 }

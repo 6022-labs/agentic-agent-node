@@ -565,7 +565,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.CreateMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
                         }
                     }
                 ],
@@ -661,7 +661,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.UpdateMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
                         }
                     }
                 ],
@@ -1267,23 +1267,6 @@
                 }
             }
         },
-        "requests.CreateMCPConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "headerAuth": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
         "requests.CreateResponseRequest": {
             "type": "object",
             "properties": {
@@ -1342,6 +1325,23 @@
                 }
             }
         },
+        "requests.SaveMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SavePaymentRuleRequest": {
             "type": "object",
             "properties": {
@@ -1381,23 +1381,6 @@
                 },
                 "platform": {
                     "$ref": "#/definitions/enums.LLMConnectionPlatform"
-                }
-            }
-        },
-        "requests.UpdateMCPConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "headerAuth": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
                 }
             }
         },

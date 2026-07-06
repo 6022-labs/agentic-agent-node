@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/google/uuid"
 )
 
 // ChatCompletionRequesterInterface — single LLM round-trip. No tool-loop;
@@ -13,8 +12,8 @@ type ChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		ctx context.Context,
 		llmConnection *models.LLMConnection,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,
 	) (*LLMCompletion, error)
 }

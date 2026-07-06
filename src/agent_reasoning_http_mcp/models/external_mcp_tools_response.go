@@ -1,6 +1,8 @@
 package models
 
-import "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+import (
+	reasoning_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+)
 
 type ExternalMcpToolsResponse struct {
 	Tools []ExternalMcpToolsResponseTool `json:"tools"`
@@ -27,13 +29,13 @@ type ExternalMcpToolsResponseInputSchemaProperty struct {
 	Description *string                                      `json:"description,omitempty"`
 }
 
-func (e *ExternalMcpToolsResponse) ToMcpTools() []*interfaces.McpTool {
-	tools := make([]*interfaces.McpTool, len(e.Tools))
+func (e *ExternalMcpToolsResponse) ToFunctionTools() []*reasoning_models.Tool {
+	tools := make([]*reasoning_models.Tool, len(e.Tools))
 	for index, tool := range e.Tools {
-		tools[index] = &interfaces.McpTool{
+		tools[index] = &reasoning_models.Tool{
 			Name:        tool.Name,
 			Description: tool.Description,
-			InputScheme: interfaces.McpToolInputScheme{
+			InputScheme: reasoning_models.ToolInputScheme{
 				Type:                 tool.InputSchema.Type,
 				Required:             tool.InputSchema.Required,
 				AdditionalProperties: tool.InputSchema.AdditionalProperties,
@@ -43,7 +45,7 @@ func (e *ExternalMcpToolsResponse) ToMcpTools() []*interfaces.McpTool {
 
 		for propName, prop := range tool.InputSchema.Properties {
 			if tools[index].InputScheme.Properties == nil {
-				tools[index].InputScheme.Properties = make(map[string]interfaces.ToolInputSchemeProperty)
+				tools[index].InputScheme.Properties = make(map[string]reasoning_models.ToolInputSchemeProperty)
 			}
 
 			tools[index].InputScheme.Properties[propName] = prop.ToInternalModel()
@@ -53,8 +55,8 @@ func (e *ExternalMcpToolsResponse) ToMcpTools() []*interfaces.McpTool {
 	return tools
 }
 
-func (p ExternalMcpToolsResponseInputSchemaProperty) ToInternalModel() interfaces.ToolInputSchemeProperty {
-	this := interfaces.ToolInputSchemeProperty{
+func (p ExternalMcpToolsResponseInputSchemaProperty) ToInternalModel() reasoning_models.ToolInputSchemeProperty {
+	this := reasoning_models.ToolInputSchemeProperty{
 		Type:        p.Type,
 		Description: p.Description,
 	}

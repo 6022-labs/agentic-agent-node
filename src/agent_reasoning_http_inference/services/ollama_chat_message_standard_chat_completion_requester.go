@@ -5,9 +5,9 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -16,8 +16,8 @@ type OllamaChatMessageStandardChatCompletionRequesterInterface interface {
 	ChatCompletion(
 		baseUrl string,
 		llmConnection *models.LLMConnection,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
 }
@@ -40,8 +40,8 @@ func NewOllamaChatMessageStandardChatCompletionRequester(
 func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	baseUrl string,
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	extMessages, err := r.buildRequestMessages(messages)
@@ -51,13 +51,15 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 
 	externalRequest := external_models.NewExternalOllamaChatMessageStandardRequest(llmConnection.Model, extMessages)
 
-	for _, mcpConnection := range mcpConnections {
-		tools := mcpToolsByConnectionId[mcpConnection.Id]
+	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
+		tools := mcpTools[mcpConnection]
 		if len(tools) == 0 {
 			continue
 		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
+
+	externalRequest.AddSelfToolsAsFunctionCallTools(selfTools)
 
 	r.logger.Debug("Request to Chat Message endpoint")
 

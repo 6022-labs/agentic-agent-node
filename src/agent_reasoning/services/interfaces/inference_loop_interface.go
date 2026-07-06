@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/google/uuid"
 )
 
 // ErrInferenceLoopMaxIterationsExceeded — loop hit MaxIterations.
@@ -15,12 +14,12 @@ var ErrInferenceLoopMaxIterationsExceeded = errors.New("inner loop exceeded max 
 var ErrInferenceLoopNoActionableOutput = errors.New("inner loop received no actionable output")
 
 type InferenceLoopInterface interface {
-	// Run drives the LLM ↔ MCP exchange over pre-listed tools until the LLM
-	// stops emitting tool calls or MaxIterations is hit.
+	// Run drives the LLM ↔ tool exchange (MCP and built-in self tools) until
+	// the LLM stops emitting tool calls or MaxIterations is hit.
 	Run(
 		ctx context.Context,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,
 	) ([]*ChatCompletionMessage, error)
 }

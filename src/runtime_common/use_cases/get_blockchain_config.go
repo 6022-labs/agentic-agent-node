@@ -13,7 +13,7 @@ import (
 // GetBlockchainConfig assembles, per reachable chain, the contract addresses and
 // facilitator network the owner UI configures itself from.
 type GetBlockchainConfig struct {
-	evmChainsSettings                   *settings.EvmChainsSettings
+	evmChainsSettings                *settings.EvmChainsSettings
 	agentCollectionsManagersSettings *settings.AgentCollectionsManagersSettings
 	agentCollectionCreatorsSettings  *settings.AgentCollectionCreatorsSettings
 	token6022Settings                *settings.Token6022Settings
@@ -30,7 +30,7 @@ func NewGetBlockchainConfig(
 	paymentFacilitatorsSettings *settings.PaymentFacilitatorsSettings,
 ) *GetBlockchainConfig {
 	return &GetBlockchainConfig{
-		evmChainsSettings:                   evmChainsSettings,
+		evmChainsSettings:                evmChainsSettings,
 		agentCollectionsManagersSettings: agentCollectionsManagersSettings,
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 		token6022Settings:                token6022Settings,

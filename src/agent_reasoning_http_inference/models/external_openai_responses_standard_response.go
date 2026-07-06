@@ -40,8 +40,9 @@ type ExternalOpenAIResponsesStandardResponseOutput struct {
 	Content   []ExternalOpenAIResponsesStandardResponseOutputContent `json:"content,omitempty"`
 
 	// `mcp_call` fields — provider-side MCP execution result.
-	Output *string `json:"output,omitempty"`
-	Error  any     `json:"error,omitempty"`
+	Output      *string `json:"output,omitempty"`
+	Error       any     `json:"error,omitempty"`
+	ServerLabel *string `json:"server_label,omitempty"`
 }
 
 func (o *ExternalOpenAIResponsesStandardResponseOutput) ParsedArguments() (map[string]any, error) {

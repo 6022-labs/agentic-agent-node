@@ -7,9 +7,7 @@ import (
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -124,31 +122,6 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 		})
 	})
 
-	t.Run("Given MCP connections expose tools", func(t *testing.T) {
-		t.Parallel()
-
-		connectionB := model_builders.NewMCPConnectionBuilder().WithName("weather").Build()
-		connectionA := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()
-		tools := map[uuid.UUID][]*interfaces.McpTool{
-			connectionA.Id: {{Name: "fetch-items", Description: "list stock"}},
-			connectionB.Id: {{Name: "forecast", Description: "get weather"}, {Name: "current"}},
-		}
-		agent := model_builders.NewAgentBuilder().Build()
-
-		t.Run("Should render one sorted line per tool with the dispatch name", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingSystemPromptBeforeEach(t)
-			prompt := suite.sut.Build(agent, "", []*models.MCPConnection{connectionB, connectionA}, tools, "")
-
-			assert.Contains(t, prompt, "- inventory_fetch-items: list stock")
-			assert.Contains(t, prompt, "- weather_forecast: get weather")
-			assert.Contains(t, prompt, "- weather_current")
-			assert.Less(t, strings.Index(prompt, "inventory_fetch-items"), strings.Index(prompt, "weather_current"))
-			assert.NotContains(t, prompt, "(no tools configured)")
-		})
-	})
-
 	t.Run("Given owner guidance is set", func(t *testing.T) {
 		t.Parallel()
 
@@ -172,6 +145,53 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 			prompt := suite.sut.Build(agent, "  ", nil, nil, "")
 
 			assert.NotContains(t, prompt, "## Owner guidance")
+		})
+	})
+
+	t.Run("Given MCP tools are provided", func(t *testing.T) {
+		t.Parallel()
+
+		connectionB := model_builders.NewMCPConnectionBuilder().WithName("weather").Build()
+		connectionA := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			connectionA: {{Name: "fetch-items", Description: "list stock"}},
+			connectionB: {{Name: "forecast", Description: "get weather"}, {Name: "current"}},
+		}
+		agent := model_builders.NewAgentBuilder().Build()
+
+		t.Run("Should render one sorted line per tool with the dispatch name", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingSystemPromptBeforeEach(t)
+			prompt := suite.sut.Build(agent, "", nil, mcpTools, "")
+
+			assert.Contains(t, prompt, "- mcp_inventory_fetch-items: list stock")
+			assert.Contains(t, prompt, "- mcp_weather_forecast: get weather")
+			assert.Contains(t, prompt, "- mcp_weather_current")
+			assert.Less(t, strings.Index(prompt, "mcp_inventory_fetch-items"), strings.Index(prompt, "mcp_weather_current"))
+			assert.NotContains(t, prompt, "(no tools configured)")
+		})
+	})
+
+	t.Run("Given self tools are provided", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+		selfTools := []*models.Tool{
+			{Name: "set_guidance", Description: "edit own guidance"},
+			{Name: "get_identity", Description: "read own identity"},
+		}
+
+		t.Run("Should render them sorted under the self namespace", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingSystemPromptBeforeEach(t)
+			prompt := suite.sut.Build(agent, "", selfTools, nil, "")
+
+			assert.Contains(t, prompt, "- self_get_identity: read own identity")
+			assert.Contains(t, prompt, "- self_set_guidance: edit own guidance")
+			assert.Less(t, strings.Index(prompt, "self_get_identity"), strings.Index(prompt, "self_set_guidance"))
+			assert.NotContains(t, prompt, "(no tools configured)")
 		})
 	})
 

@@ -3,7 +3,6 @@ package interfaces
 import (
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/google/uuid"
 )
 
 type SystemPromptBuilderInterface interface {
@@ -12,8 +11,8 @@ type SystemPromptBuilderInterface interface {
 	Build(
 		agent *identity_models.Agent,
 		guidance string,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		sessionContext string,
 	) string
 }

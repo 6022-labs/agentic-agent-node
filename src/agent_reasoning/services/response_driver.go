@@ -31,6 +31,7 @@ type ResponseDriver struct {
 	agentRepository            identity_repositories.AgentRepositoryInterface
 	systemPromptBuilder        interfaces.SystemPromptBuilderInterface
 	mcpRequester               interfaces.McpRequesterInterface
+	selfToolRegistry           interfaces.SelfToolRegistryInterface
 	reasoningTracer            traces_interfaces.ReasoningTracerInterface
 }
 
@@ -44,6 +45,7 @@ func NewResponseDriver(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 	systemPromptBuilder interfaces.SystemPromptBuilderInterface,
 	mcpRequester interfaces.McpRequesterInterface,
+	selfToolRegistry interfaces.SelfToolRegistryInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *ResponseDriver {
 	return &ResponseDriver{
@@ -56,6 +58,7 @@ func NewResponseDriver(
 		agentRepository:            agentRepository,
 		systemPromptBuilder:        systemPromptBuilder,
 		mcpRequester:               mcpRequester,
+		selfToolRegistry:           selfToolRegistry,
 		reasoningTracer:            reasoningTracer,
 	}
 }
@@ -97,20 +100,22 @@ func (d *ResponseDriver) Drive(
 		return nil, err
 	}
 
-	toolsByConnectionId, err := d.listToolsByConnection(ctx, mcpConnections)
+	mcpTools, err := d.mcpConnectionsToTools(ctx, mcpConnections)
 	if err != nil {
 		return nil, err
 	}
+
+	selfTools := d.selfToolRegistry.ListTools()
 
 	guidance, err := d.loadGuidance(ctx, agent.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	systemPrompt := d.systemPromptBuilder.Build(agent, guidance, mcpConnections, toolsByConnectionId, instructions)
+	systemPrompt := d.systemPromptBuilder.Build(agent, guidance, selfTools, mcpTools, instructions)
 	messages = append([]*interfaces.ChatCompletionMessage{{Role: "system", Content: systemPrompt}}, messages...)
 
-	finalStream, err := d.inferenceLoop.Run(ctx, mcpConnections, toolsByConnectionId, messages)
+	finalStream, err := d.inferenceLoop.Run(ctx, selfTools, mcpTools, messages)
 	if err != nil {
 		return nil, fmt.Errorf("inference loop failed: %w", err)
 	}
@@ -221,22 +226,22 @@ func (d *ResponseDriver) loadGuidance(ctx context.Context, agentId uuid.UUID) (s
 	return guidance.Content, nil
 }
 
-func (d *ResponseDriver) listToolsByConnection(
+func (d *ResponseDriver) mcpConnectionsToTools(
 	ctx context.Context,
 	mcpConnections []*models.MCPConnection,
-) (map[uuid.UUID][]*interfaces.McpTool, error) {
-	toolsByConnectionId := make(map[uuid.UUID][]*interfaces.McpTool, len(mcpConnections))
+) (map[*models.MCPConnection][]*models.Tool, error) {
+	mcpTools := make(map[*models.MCPConnection][]*models.Tool, len(mcpConnections))
 	for _, conn := range mcpConnections {
-		tools, err := d.listTools(ctx, conn)
+		tools, err := d.mcpConnectionToTools(ctx, conn)
 		if err != nil {
 			return nil, err
 		}
-		toolsByConnectionId[conn.Id] = tools
+		mcpTools[conn] = tools
 	}
-	return toolsByConnectionId, nil
+	return mcpTools, nil
 }
 
-func (d *ResponseDriver) listTools(ctx context.Context, conn *models.MCPConnection) ([]*interfaces.McpTool, error) {
+func (d *ResponseDriver) mcpConnectionToTools(ctx context.Context, conn *models.MCPConnection) ([]*models.Tool, error) {
 	_, span := d.reasoningTracer.StartListTools(ctx, conn.Name)
 	defer span.End()
 

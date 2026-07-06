@@ -14,7 +14,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -157,8 +156,8 @@ func TestWhenExecutingLLM(t *testing.T) {
 		mcpConnections := []*models.MCPConnection{
 			model_builders.NewMCPConnectionBuilder().Build(),
 		}
-		toolsByConn := map[uuid.UUID][]*interfaces.McpTool{
-			mcpConnections[0].Id: {{Name: "fetch"}},
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnections[0]: {{Name: "fetch"}},
 		}
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
@@ -168,7 +167,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 				Return(llmConnection, nil)
 
 			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), llmConnection, mcpConnections, toolsByConn, messages).
+				ChatCompletion(gomock.Any(), llmConnection, gomock.Nil(), mcpTools, messages).
 				Return(nil, errors.New("upstream broke"))
 		}
 
@@ -178,7 +177,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 			suite := WhenExecutingLLMBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Complete(ctx, mcpConnections, toolsByConn, messages)
+			result, err := suite.sut.Complete(ctx, nil, mcpTools, messages)
 
 			assert.Nil(t, result)
 			assert.Error(t, err)

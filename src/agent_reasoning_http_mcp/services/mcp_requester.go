@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/metrics/interfaces"
 )
@@ -24,7 +23,7 @@ func NewMCPRequester(client clients.McpClientInterface, metrics metrics_interfac
 	}
 }
 
-func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*interfaces.McpTool, error) {
+func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
 	if mcpConnection == nil {
 		return nil, fmt.Errorf("MCP connection is nil")
 	}
@@ -44,12 +43,12 @@ func (r *MCPRequester) ListTools(mcpConnection *models.MCPConnection) ([]*interf
 	}
 	r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), false)
 
-	return result.Result.ToMcpTools(), nil
+	return result.Result.ToFunctionTools(), nil
 }
 
 func (r *MCPRequester) CallTool(
 	mcpConnection *models.MCPConnection,
-	tool *interfaces.McpTool,
+	tool *models.Tool,
 	toolInput map[string]any,
 ) (map[string]any, error) {
 	if mcpConnection == nil {
@@ -84,7 +83,7 @@ func (r *MCPRequester) CallTool(
 	return output, nil
 }
 
-func (r *MCPRequester) fixToolInputBySchema(tool *interfaces.McpTool, input map[string]any) map[string]any {
+func (r *MCPRequester) fixToolInputBySchema(tool *models.Tool, input map[string]any) map[string]any {
 	if input == nil {
 		return nil
 	}

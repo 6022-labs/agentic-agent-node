@@ -11,7 +11,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/clients_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -136,22 +135,22 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			WithName("inventory").
 			WithUrl("https://mcp.example.com").
 			Build()
-		mcpTool := &interfaces.McpTool{
+		mcpTool := &models.Tool{
 			Name:        "fetch_items",
 			Description: "Fetch items",
-			InputScheme: interfaces.McpToolInputScheme{
+			InputScheme: models.ToolInputScheme{
 				Type:                 "object",
-				Properties:           map[string]interfaces.ToolInputSchemeProperty{},
+				Properties:           map[string]models.ToolInputSchemeProperty{},
 				Required:             []string{},
 				AdditionalProperties: false,
 			},
 		}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArguments := map[string]any{"query": "value"}
 		toolArgumentsJson, _ := json.Marshal(toolArguments)
 
-		toolsByConn := map[uuid.UUID][]*interfaces.McpTool{
-			mcpConnection.Id: {mcpTool},
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnection: {mcpTool},
 		}
 
 		initSuite := func(suite *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite) {
@@ -190,7 +189,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, []*models.MCPConnection{mcpConnection}, toolsByConn, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {

@@ -32,7 +32,7 @@ type SaveAgentRegistration struct {
 	ipfsFileStorage                  identity_interfaces.IPFSFileStorageInterface
 	token6022Requester               identity_interfaces.Token6022RequesterInterface
 	ensDomainBuilder                 identity_interfaces.EnsDomainBuilderInterface
-	evmChainsSettings                   *runtime_common_settings.EvmChainsSettings
+	evmChainsSettings                *runtime_common_settings.EvmChainsSettings
 	agentCollectionCreatorsSettings  *runtime_common_settings.AgentCollectionCreatorsSettings
 }
 
@@ -59,7 +59,7 @@ func NewSaveAgentRegistration(
 		ipfsFileStorage:                  ipfsFileStorage,
 		token6022Requester:               token6022Requester,
 		ensDomainBuilder:                 ensDomainBuilder,
-		evmChainsSettings:                   evmChainsSettings,
+		evmChainsSettings:                evmChainsSettings,
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 	}
 }

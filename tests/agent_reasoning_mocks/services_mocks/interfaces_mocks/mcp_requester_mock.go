@@ -13,7 +13,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,7 +41,7 @@ func (m *MockMcpRequesterInterface) EXPECT() *MockMcpRequesterInterfaceMockRecor
 }
 
 // CallTool mocks base method.
-func (m *MockMcpRequesterInterface) CallTool(mcpConnection *models.MCPConnection, tool *interfaces.McpTool, toolInput map[string]any) (map[string]any, error) {
+func (m *MockMcpRequesterInterface) CallTool(mcpConnection *models.MCPConnection, tool *models.Tool, toolInput map[string]any) (map[string]any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CallTool", mcpConnection, tool, toolInput)
 	ret0, _ := ret[0].(map[string]any)
@@ -57,10 +56,10 @@ func (mr *MockMcpRequesterInterfaceMockRecorder) CallTool(mcpConnection, tool, t
 }
 
 // ListTools mocks base method.
-func (m *MockMcpRequesterInterface) ListTools(mcpConnection *models.MCPConnection) ([]*interfaces.McpTool, error) {
+func (m *MockMcpRequesterInterface) ListTools(mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListTools", mcpConnection)
-	ret0, _ := ret[0].([]*interfaces.McpTool)
+	ret0, _ := ret[0].([]*models.Tool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

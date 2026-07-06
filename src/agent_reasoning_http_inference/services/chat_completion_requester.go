@@ -11,7 +11,6 @@ import (
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
-	"github.com/google/uuid"
 	"github.com/pkoukk/tiktoken-go"
 	"go.uber.org/zap"
 )
@@ -88,8 +87,8 @@ func NewChatCompletionRequester(
 func (r *ChatCompletionRequester) ChatCompletion(
 	ctx context.Context,
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*reasoning_interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	trimmedMessages, err := r.trimMessagesToTokenLimit(messages, r.tokenSettings.MaxTokensPerRequest)
@@ -113,8 +112,8 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	start := time.Now()
 	completion, err := r.completeUsingAppropriateStandard(
 		llmConnection,
-		mcpConnections,
-		mcpToolsByConnectionId,
+		selfTools,
+		mcpTools,
 		trimmedMessages,
 		platformSettings,
 		apiKey,
@@ -213,8 +212,8 @@ func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnecti
 
 func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*reasoning_interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 	platformSettings settings.StandardSettingsInterface,
 	apiKey *string,
@@ -229,8 +228,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
-			mcpConnections,
-			mcpToolsByConnectionId,
+			selfTools,
+			mcpTools,
 			messages,
 		)
 
@@ -242,8 +241,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			platformSettings.GetBaseUrl(),
 			*apiKey,
 			llmConnection,
-			mcpConnections,
-			mcpToolsByConnectionId,
+			selfTools,
+			mcpTools,
 			messages,
 		)
 
@@ -254,8 +253,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 		return r.ollamaChatMessageStandardChatCompletionRequester.ChatCompletion(
 			*llmConnection.BaseUrl,
 			llmConnection,
-			mcpConnections,
-			mcpToolsByConnectionId,
+			selfTools,
+			mcpTools,
 			messages,
 		)
 
@@ -268,8 +267,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
-			mcpConnections,
-			mcpToolsByConnectionId,
+			selfTools,
+			mcpTools,
 			messages,
 		)
 
@@ -284,8 +283,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			*llmConnection.BaseUrl,
 			*apiKey,
 			llmConnection,
-			mcpConnections,
-			mcpToolsByConnectionId,
+			selfTools,
+			mcpTools,
 			messages,
 		)
 

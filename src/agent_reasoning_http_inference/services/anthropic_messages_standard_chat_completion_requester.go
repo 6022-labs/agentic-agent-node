@@ -7,8 +7,10 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	inference_utils "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
@@ -19,8 +21,8 @@ type AnthropicMessagesStandardChatCompletionRequesterInterface interface {
 		baseUrl, apiKey string,
 		hasDirectAccessToMcp bool,
 		llmConnection *models.LLMConnection,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
 }
@@ -44,8 +46,8 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	hasDirectAccessToMcp bool,
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	systems := r.buildSystems(messages)
@@ -61,9 +63,10 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	)
 
 	directMcps := make(map[uuid.UUID]bool)
+	sortedMcpConnections := utils.SortedMcpConnections(mcpTools)
 	if hasDirectAccessToMcp {
 		// Anthropic only supports MCP servers with no auth or with a single OAuth Bearer Authorization header.
-		for _, mcpConnection := range mcpConnections {
+		for _, mcpConnection := range sortedMcpConnections {
 			auth, ok := mcpConnection.HeaderAuth["Authorization"]
 			if len(mcpConnection.HeaderAuth) == 0 || (ok && len(mcpConnection.HeaderAuth) == 1 && strings.HasPrefix(auth, "Bearer ")) {
 				externalRequest.AddMcpServerFromMcpConnection(mcpConnection)
@@ -72,16 +75,18 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		}
 	}
 
-	for _, mcpConnection := range mcpConnections {
+	for _, mcpConnection := range sortedMcpConnections {
 		if directMcps[mcpConnection.Id] {
 			continue
 		}
-		tools := mcpToolsByConnectionId[mcpConnection.Id]
+		tools := mcpTools[mcpConnection]
 		if len(tools) == 0 {
 			continue
 		}
 		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
+
+	externalRequest.AddSelfToolsAsFunctionCallTools(selfTools)
 
 	r.logger.Debug("Request to Anthropic Messages endpoint")
 
@@ -133,8 +138,9 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 				return nil, fmt.Errorf("anthropic mcp_tool_use missing id or name")
 			}
 			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
-				Id:        *c.Id,
-				Name:      *c.Name,
+				Id: *c.Id,
+				// Align the provider-executed name with the local mcp_<conn>_<tool> convention when the server is one of ours.
+				Name:      inference_utils.ProviderExecutedToolFunctionName(mcpTools, lo.FromPtr(c.ServerName), *c.Name),
 				Arguments: c.Input,
 			})
 			executedByToolUseId[*c.Id] = len(completion.ExecutedToolCalls) - 1

@@ -8,9 +8,7 @@ import (
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
@@ -34,8 +32,8 @@ func NewSystemPromptBuilder() *SystemPromptBuilder {
 func (b *SystemPromptBuilder) Build(
 	agent *identity_models.Agent,
 	guidance string,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	sessionContext string,
 ) string {
 	sections := []string{
@@ -49,7 +47,7 @@ func (b *SystemPromptBuilder) Build(
 	if guidance = strings.TrimSpace(guidance); guidance != "" {
 		sections = append(sections, "## Owner guidance\n"+guidance)
 	}
-	sections = append(sections, b.toolsSection(mcpConnections, mcpToolsByConnectionId))
+	sections = append(sections, b.toolsSection(selfTools, mcpTools))
 	if overlay := b.sessionContextSection(sessionContext); overlay != "" {
 		sections = append(sections, overlay)
 	}
@@ -107,20 +105,21 @@ func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent) stri
 }
 
 func (b *SystemPromptBuilder) toolsSection(
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 ) string {
 	lines := []string{"## Available tools"}
 	// Extension point: the future skills index renders here alongside tools.
-	sortedConnections := make([]*models.MCPConnection, len(mcpConnections))
-	copy(sortedConnections, mcpConnections)
-	sort.Slice(sortedConnections, func(i, j int) bool { return sortedConnections[i].Name < sortedConnections[j].Name })
+	for _, tool := range utils.SortedToolsByName(selfTools) {
+		line := "- " + utils.SelfToolToFunctionName(tool)
+		if tool.Description != "" {
+			line += ": " + tool.Description
+		}
+		lines = append(lines, line)
+	}
 
-	for _, conn := range sortedConnections {
-		tools := make([]*interfaces.McpTool, len(mcpToolsByConnectionId[conn.Id]))
-		copy(tools, mcpToolsByConnectionId[conn.Id])
-		sort.Slice(tools, func(i, j int) bool { return tools[i].Name < tools[j].Name })
-		for _, tool := range tools {
+	for _, conn := range utils.SortedMcpConnections(mcpTools) {
+		for _, tool := range utils.SortedToolsByName(mcpTools[conn]) {
 			line := "- " + utils.McpToolToFunctionName(conn, tool)
 			if tool.Description != "" {
 				line += ": " + tool.Description

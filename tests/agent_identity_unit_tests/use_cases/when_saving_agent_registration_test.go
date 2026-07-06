@@ -28,7 +28,7 @@ type WhenSavingAgentRegistrationTestingSuite struct {
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockAgentCollectionsManagerRequester *interface_mocks.MockAgentCollectionsManagerRequesterInterface
 	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
-	mockWalletCredentialsStorage            *interface_mocks.MockWalletCredentialsStorageInterface
+	mockWalletCredentialsStorage         *interface_mocks.MockWalletCredentialsStorageInterface
 	mockGenerateAgentImages              *interface_mocks.MockGenerateAgentImagesInterface
 	mockIPFSFileStorage                  *interface_mocks.MockIPFSFileStorageInterface
 	mockToken6022Requester               *interface_mocks.MockToken6022RequesterInterface
@@ -68,7 +68,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockAgentCollectionsManagerRequester: mockAgentCollectionsManagerRequester,
 		mockAgentCollectionRequester:         mockAgentCollectionRequester,
-		mockWalletCredentialsStorage:            mockWalletCredentialsStorage,
+		mockWalletCredentialsStorage:         mockWalletCredentialsStorage,
 		mockGenerateAgentImages:              mockGenerateAgentImages,
 		mockIPFSFileStorage:                  mockIPFSFileStorage,
 		mockToken6022Requester:               mockToken6022Requester,

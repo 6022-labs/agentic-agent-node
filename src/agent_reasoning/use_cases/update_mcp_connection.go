@@ -15,9 +15,7 @@ import (
 )
 
 type UpdateMCPConnection struct {
-	*AbstractReasoningUseCase
-	repository    repositories.MCPConnectionRepositoryInterface
-	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
+	*AbstractUpsertMCPConnection
 }
 
 func NewUpdateMCPConnection(
@@ -26,16 +24,14 @@ func NewUpdateMCPConnection(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *UpdateMCPConnection {
 	return &UpdateMCPConnection{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
-		repository:               repository,
-		secretStorage:            secretStorage,
+		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(repository, secretStorage, agentRepository),
 	}
 }
 
 // Execute applies full-replacement semantics: name, url, and the entire
 // HeaderAuth map are overwritten. Header values absent from the new map are
 // removed from Vault.
-func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.UpdateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.SaveMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -51,6 +47,12 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 	}
 	if existing == nil {
 		return nil, errors.NewNotFoundError("mcp_connection_not_found", "")
+	}
+
+	if request.Name != existing.Name {
+		if err := u.ensureNameAvailable(ctx, agent.Id, request.Name, existing.Id); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := u.dropRemovedHeaders(ctx, existing, request.HeaderAuth); err != nil {

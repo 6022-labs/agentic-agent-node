@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
@@ -83,7 +82,7 @@ func (r *ExternalAmazonBedrockConverseStandardRequest) AddDefaultToolConfigIfNil
 
 func (r *ExternalAmazonBedrockConverseStandardRequest) AddMcpConnectionAsFunctionCallTools(
 	mcpConnection *models.MCPConnection,
-	relatedTools []*interfaces.McpTool,
+	relatedTools []*models.Tool,
 ) {
 	if len(relatedTools) == 0 {
 		return
@@ -92,28 +91,42 @@ func (r *ExternalAmazonBedrockConverseStandardRequest) AddMcpConnectionAsFunctio
 	r.AddDefaultToolConfigIfNil()
 
 	for _, mcpTool := range relatedTools {
-		toolName := utils.McpToolToFunctionName(mcpConnection, mcpTool)
-
-		functionTool := ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpec{
-			Name:        toolName,
-			Description: mcpTool.Description,
-			InputSchema: ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpecInputSchema{
-				Json: ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpecInputSchemaJson{
-					Type:                 mcpTool.InputScheme.Type,
-					Required:             mcpTool.InputScheme.Required,
-					AdditionalProperties: mcpTool.InputScheme.AdditionalProperties,
-
-					Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(mcpTool.InputScheme.Properties),
-				},
-			},
-		}
-
-		if functionTool.InputSchema.Json.Required == nil {
-			functionTool.InputSchema.Json.Required = []string{}
-		}
-
-		r.ToolConfig.Tools = append(r.ToolConfig.Tools, ExternalAmazonBedrockConverseStandardRequestToolConfigTool{
-			ToolSpec: functionTool,
-		})
+		r.appendFunctionCallTool(utils.McpToolToFunctionName(mcpConnection, mcpTool), mcpTool)
 	}
+}
+
+func (r *ExternalAmazonBedrockConverseStandardRequest) AddSelfToolsAsFunctionCallTools(selfTools []*models.Tool) {
+	if len(selfTools) == 0 {
+		return
+	}
+
+	r.AddDefaultToolConfigIfNil()
+
+	for _, selfTool := range selfTools {
+		r.appendFunctionCallTool(utils.SelfToolToFunctionName(selfTool), selfTool)
+	}
+}
+
+func (r *ExternalAmazonBedrockConverseStandardRequest) appendFunctionCallTool(toolName string, tool *models.Tool) {
+	functionTool := ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpec{
+		Name:        toolName,
+		Description: tool.Description,
+		InputSchema: ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpecInputSchema{
+			Json: ExternalAmazonBedrockConverseStandardRequestToolConfigToolToolSpecInputSchemaJson{
+				Type:                 tool.InputScheme.Type,
+				Required:             tool.InputScheme.Required,
+				AdditionalProperties: tool.InputScheme.AdditionalProperties,
+
+				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
+			},
+		},
+	}
+
+	if functionTool.InputSchema.Json.Required == nil {
+		functionTool.InputSchema.Json.Required = []string{}
+	}
+
+	r.ToolConfig.Tools = append(r.ToolConfig.Tools, ExternalAmazonBedrockConverseStandardRequestToolConfigTool{
+		ToolSpec: functionTool,
+	})
 }

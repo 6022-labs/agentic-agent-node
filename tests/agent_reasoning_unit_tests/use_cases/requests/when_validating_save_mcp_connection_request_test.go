@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
+func TestWhenValidatingSaveMCPConnectionRequest(t *testing.T) {
 	t.Parallel()
 
-	generateCreateMCPConnectionRequest := func() *requests.CreateMCPConnectionRequest {
-		return &requests.CreateMCPConnectionRequest{
+	generateSaveMCPConnectionRequest := func() *requests.SaveMCPConnectionRequest {
+		return &requests.SaveMCPConnectionRequest{
 			Name:       "  my-tools  ",
 			Url:        "  https://my.mcp.com/v1  ",
 			HeaderAuth: map[string]string{"Authorization": "Bearer secret"},
@@ -24,7 +24,7 @@ func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
 		t.Run("Should sanitize the fields", func(t *testing.T) {
 			t.Parallel()
 
-			req := generateCreateMCPConnectionRequest()
+			req := generateSaveMCPConnectionRequest()
 			err := req.ValidateAndSanitize()
 
 			assert.NoError(t, err)
@@ -39,8 +39,36 @@ func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
-			req := generateCreateMCPConnectionRequest()
+			req := generateSaveMCPConnectionRequest()
 			req.Name = "   "
+
+			assert.Error(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the name is the reserved self name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error regardless of case", func(t *testing.T) {
+			t.Parallel()
+
+			for _, name := range []string{"self", "Self", "SELF"} {
+				req := generateSaveMCPConnectionRequest()
+				req.Name = name
+
+				assert.Error(t, req.ValidateAndSanitize())
+			}
+		})
+	})
+
+	t.Run("Given the name contains an underscore", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveMCPConnectionRequest()
+			req.Name = "my_tools"
 
 			assert.Error(t, req.ValidateAndSanitize())
 		})
@@ -52,7 +80,7 @@ func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
-			req := generateCreateMCPConnectionRequest()
+			req := generateSaveMCPConnectionRequest()
 			req.Url = "   "
 
 			assert.Error(t, req.ValidateAndSanitize())
@@ -65,7 +93,7 @@ func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
-			req := generateCreateMCPConnectionRequest()
+			req := generateSaveMCPConnectionRequest()
 			req.HeaderAuth = map[string]string{"  ": "value"}
 
 			assert.Error(t, req.ValidateAndSanitize())
@@ -78,7 +106,7 @@ func TestWhenValidatingCreateMCPConnectionRequest(t *testing.T) {
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
-			req := generateCreateMCPConnectionRequest()
+			req := generateSaveMCPConnectionRequest()
 			req.HeaderAuth = map[string]string{"Authorization": "  "}
 
 			assert.Error(t, req.ValidateAndSanitize())

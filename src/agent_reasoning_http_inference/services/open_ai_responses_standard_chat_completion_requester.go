@@ -6,9 +6,10 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
-	"github.com/google/uuid"
+	inference_utils "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -18,8 +19,8 @@ type OpenAIResponsesStandardChatCompletionRequesterInterface interface {
 		baseUrl, apiKey string,
 		hasDirectAccessToMcp bool,
 		llmConnection *models.LLMConnection,
-		mcpConnections []*models.MCPConnection,
-		mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+		selfTools []*models.Tool,
+		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
 }
@@ -43,8 +44,8 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 	baseUrl, apiKey string,
 	hasDirectAccessToMcp bool,
 	llmConnection *models.LLMConnection,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
+	selfTools []*models.Tool,
+	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
 ) (*interfaces.LLMCompletion, error) {
 	inputs, err := r.buildRequestInputs(messages)
@@ -54,17 +55,21 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 
 	externalRequest := external_models.NewExternalOpenAIResponsesStandardRequest(llmConnection.Model, inputs, nil)
 
+	sortedMcpConnections := utils.SortedMcpConnections(mcpTools)
+
 	if hasDirectAccessToMcp {
-		externalRequest.AddMcpConnectionsAsMcpTools(mcpConnections)
+		externalRequest.AddMcpConnectionsAsMcpTools(sortedMcpConnections)
 	} else {
-		for _, mcpConnection := range mcpConnections {
-			tools := mcpToolsByConnectionId[mcpConnection.Id]
+		for _, mcpConnection := range sortedMcpConnections {
+			tools := mcpTools[mcpConnection]
 			if len(tools) == 0 {
 				continue
 			}
 			externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 		}
 	}
+
+	externalRequest.AddSelfToolsAsFunctionCallTools(selfTools)
 
 	r.logger.Debug("Request to Responses endpoint")
 
@@ -121,8 +126,9 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 				return nil, fmt.Errorf("failed to parse openai responses mcp_call arguments: %w", err)
 			}
 			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
-				Id:        o.ID,
-				Name:      *o.Name,
+				Id: o.ID,
+				// Align the provider-executed name with the local mcp_<conn>_<tool> convention when the server is one of ours.
+				Name:      inference_utils.ProviderExecutedToolFunctionName(mcpTools, lo.FromPtr(o.ServerLabel), *o.Name),
 				Arguments: args,
 				Output:    lo.FromPtr(o.Output),
 				IsError:   o.Error != nil,

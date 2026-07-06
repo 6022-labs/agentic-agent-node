@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
@@ -29,7 +28,10 @@ func NewExternalOllamaChatMessageStandardRequest(model string, messages []Extern
 	}
 }
 
-func (r *ExternalOllamaChatMessageStandardRequest) AddMcpConnectionAsFunctionCallTools(mcpConnection *models.MCPConnection, tools []*interfaces.McpTool) {
+func (r *ExternalOllamaChatMessageStandardRequest) AddMcpConnectionAsFunctionCallTools(
+	mcpConnection *models.MCPConnection,
+	tools []*models.Tool,
+) {
 	if len(tools) == 0 {
 		return
 	}
@@ -39,19 +41,35 @@ func (r *ExternalOllamaChatMessageStandardRequest) AddMcpConnectionAsFunctionCal
 	}
 
 	for _, tool := range tools {
-		name := utils.McpToolToFunctionName(mcpConnection, tool)
-
-		r.Tools = append(r.Tools, ExternalOllamaChatMessageStandardRequestTool{
-			Type: "function",
-			Function: ExternalOllamaChatMessageStandardMessageToolCallFunction{
-				Name:        name,
-				Description: &tool.Description,
-				Parameters: &ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments{
-					Type:       tool.InputScheme.Type,
-					Required:   tool.InputScheme.Required,
-					Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
-				},
-			},
-		})
+		r.appendFunctionCallTool(utils.McpToolToFunctionName(mcpConnection, tool), tool)
 	}
+}
+
+func (r *ExternalOllamaChatMessageStandardRequest) AddSelfToolsAsFunctionCallTools(selfTools []*models.Tool) {
+	if len(selfTools) == 0 {
+		return
+	}
+
+	if r.Tools == nil {
+		r.Tools = make([]ExternalOllamaChatMessageStandardRequestTool, 0)
+	}
+
+	for _, selfTool := range selfTools {
+		r.appendFunctionCallTool(utils.SelfToolToFunctionName(selfTool), selfTool)
+	}
+}
+
+func (r *ExternalOllamaChatMessageStandardRequest) appendFunctionCallTool(name string, tool *models.Tool) {
+	r.Tools = append(r.Tools, ExternalOllamaChatMessageStandardRequestTool{
+		Type: "function",
+		Function: ExternalOllamaChatMessageStandardMessageToolCallFunction{
+			Name:        name,
+			Description: &tool.Description,
+			Parameters: &ExternalOllamaChatMessageStandardMessageToolCallFunctionArguments{
+				Type:       tool.InputScheme.Type,
+				Required:   tool.InputScheme.Required,
+				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
+			},
+		},
+	})
 }

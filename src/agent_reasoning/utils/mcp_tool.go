@@ -2,45 +2,50 @@ package utils
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
-// We use the underscore as separator. MCP connection names cannot contain
-// underscores, so there is no ambiguity.
-const (
-	McpToolToFunctionNameTemplate  = "%s_%s"
-	McpToolToFunctionNameSeparator = "_"
-)
+// McpToolNamespace prefixes MCP tool function names so they can never collide with self tools.
+const McpToolNamespace = "mcp"
 
-func McpToolToFunctionName(mcpConnection *models.MCPConnection, mcpTool *interfaces.McpTool) string {
-	return fmt.Sprintf(McpToolToFunctionNameTemplate, mcpConnection.Name, mcpTool.Name)
+func McpToolToFunctionName(mcpConnection *models.MCPConnection, mcpTool *models.Tool) string {
+	return ToFunctionName(McpToolNamespace, ToFunctionName(mcpConnection.Name, mcpTool.Name))
+}
+
+// SortedMcpConnections returns the map's connections in stable name order for deterministic rendering.
+func SortedMcpConnections(mcpTools map[*models.MCPConnection][]*models.Tool) []*models.MCPConnection {
+	mcpConnections := lo.Keys(mcpTools)
+	sort.Slice(mcpConnections, func(i, j int) bool { return mcpConnections[i].Name < mcpConnections[j].Name })
+	return mcpConnections
 }
 
 func ExtractMcpInfoFromFunctionName(
 	functionName string,
-	mcpConnections []*models.MCPConnection,
-	mcpToolsByConnectionId map[uuid.UUID][]*interfaces.McpTool,
-) (*models.MCPConnection, *interfaces.McpTool, error) {
-	parts := strings.SplitN(functionName, McpToolToFunctionNameSeparator, 2)
+	mcpTools map[*models.MCPConnection][]*models.Tool,
+) (*models.MCPConnection, *models.Tool, error) {
+	namespaced, found := strings.CutPrefix(functionName, McpToolNamespace+FunctionNameSeparator)
+	if !found {
+		return nil, nil, fmt.Errorf("function name %q is outside the mcp namespace", functionName)
+	}
+	parts := strings.SplitN(namespaced, FunctionNameSeparator, 2)
 	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
 		return nil, nil, fmt.Errorf("invalid function name format: %q", functionName)
 	}
 	connName := parts[0]
 	toolName := parts[1]
 
-	mcpConnection, found := lo.Find(mcpConnections, func(mcpConnection *models.MCPConnection) bool {
+	mcpConnection, found := lo.Find(lo.Keys(mcpTools), func(mcpConnection *models.MCPConnection) bool {
 		return mcpConnection.Name == connName
 	})
 	if !found {
 		return nil, nil, fmt.Errorf("no MCP connection found for function name: %q", functionName)
 	}
 
-	mcpTool, found := lo.Find(mcpToolsByConnectionId[mcpConnection.Id], func(mcpTool *interfaces.McpTool) bool {
+	mcpTool, found := lo.Find(mcpTools[mcpConnection], func(mcpTool *models.Tool) bool {
 		return mcpTool.Name == toolName
 	})
 	if !found {

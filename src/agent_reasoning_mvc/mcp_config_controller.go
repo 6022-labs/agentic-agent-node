@@ -66,13 +66,13 @@ func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
 // @Tags Internal
 // @Accept json
 // @Produce json
-// @Param request body requests.CreateMCPConnectionRequest true "MCP connection"
+// @Param request body requests.SaveMCPConnectionRequest true "MCP connection"
 // @Success 201 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 500 {object} fiber.Map "create_mcp_connection_failed"
 // @Router /internal/config/mcp [post]
 func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
-	body := new(requests.CreateMCPConnectionRequest)
+	body := new(requests.SaveMCPConnectionRequest)
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
@@ -111,7 +111,7 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "connection id"
-// @Param request body requests.UpdateMCPConnectionRequest true "MCP connection"
+// @Param request body requests.SaveMCPConnectionRequest true "MCP connection"
 // @Success 200 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError
@@ -122,7 +122,7 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 	if idErr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
 	}
-	body := new(requests.UpdateMCPConnectionRequest)
+	body := new(requests.SaveMCPConnectionRequest)
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}

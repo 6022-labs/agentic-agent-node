@@ -55,7 +55,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+			_, err := suite.sut.Execute(context.Background(), &requests.SaveMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -68,6 +68,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		generatedId := uuid.New()
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "github", c.Name)
 				assert.Equal(t, "https://mcp.github.example", c.Url)
@@ -83,7 +84,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.CreateMCPConnectionRequest{
+			request := &requests.SaveMCPConnectionRequest{
 				Name:       "github",
 				Url:        "https://mcp.github.example",
 				HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
@@ -103,6 +104,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Empty(t, c.HeaderAuthKeys)
 				c.Id = uuid.New()
@@ -114,7 +116,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.CreateMCPConnectionRequest{Name: "anon", Url: "https://x.example"}
+			request := &requests.SaveMCPConnectionRequest{Name: "anon", Url: "https://x.example"}
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), request)
@@ -124,11 +126,34 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the name collides with an existing connection", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
+			existing := model_builders.NewMCPConnectionBuilder().WithName("github").Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*existing}, nil)
+		}
+
+		t.Run("Should return a conflict without creating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SaveMCPConnectionRequest{Name: "github", Url: "https://x.example"})
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+		})
+	})
+
 	t.Run("Given the repository create fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
@@ -136,7 +161,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.CreateMCPConnectionRequest{
+			request := &requests.SaveMCPConnectionRequest{
 				Name: "x", Url: "https://x.example",
 				HeaderAuth: map[string]string{"K": "V"},
 			}

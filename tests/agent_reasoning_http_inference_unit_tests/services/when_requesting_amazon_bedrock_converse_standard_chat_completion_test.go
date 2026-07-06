@@ -10,7 +10,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/services"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_http_inference_mocks/clients_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -140,12 +139,12 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			WithName("inventory").
 			WithUrl("https://mcp.example.com").
 			Build()
-		mcpTool := &interfaces.McpTool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("%s_%s", mcpConnection.Name, mcpTool.Name)
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
 		toolArgs := map[string]any{"query": "value"}
 
-		toolsByConn := map[uuid.UUID][]*interfaces.McpTool{
-			mcpConnection.Id: {mcpTool},
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnection: {mcpTool},
 		}
 
 		initSuite := func(suite *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite) {
@@ -182,7 +181,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, []*models.MCPConnection{mcpConnection}, toolsByConn, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
 				assert.Equal(t, "call_1", result.ToolCalls[0].Id)

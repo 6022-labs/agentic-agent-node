@@ -101,23 +101,6 @@
                 },
                 "type": "object"
             },
-            "requests.CreateMCPConnectionRequest": {
-                "properties": {
-                    "headerAuth": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "url": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "requests.CreateResponseRequest": {
                 "properties": {
                     "conversation": {
@@ -177,6 +160,23 @@
                 },
                 "type": "object"
             },
+            "requests.SaveMCPConnectionRequest": {
+                "properties": {
+                    "headerAuth": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.SavePaymentRuleRequest": {
                 "properties": {
                     "config": {
@@ -215,23 +215,6 @@
                     },
                     "platform": {
                         "$ref": "#/components/schemas/enums.LLMConnectionPlatform"
-                    }
-                },
-                "type": "object"
-            },
-            "requests.UpdateMCPConnectionRequest": {
-                "properties": {
-                    "headerAuth": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "url": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -1514,7 +1497,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.CreateMCPConnectionRequest",
+                                        "$ref": "#/components/schemas/requests.SaveMCPConnectionRequest",
                                         "summary": "request",
                                         "description": "MCP connection"
                                     }
@@ -1686,7 +1669,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.UpdateMCPConnectionRequest",
+                                        "$ref": "#/components/schemas/requests.SaveMCPConnectionRequest",
                                         "summary": "request",
                                         "description": "MCP connection"
                                     }

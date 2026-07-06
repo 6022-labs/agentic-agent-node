@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
@@ -86,7 +85,7 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddMcpServerFromMcpConnection
 
 func (r *ExternalAnthropicMessagesStandardRequest) AddMcpConnectionAsFunctionCallTools(
 	mcpConnection *models.MCPConnection,
-	relatedTools []*interfaces.McpTool,
+	relatedTools []*models.Tool,
 ) {
 	if len(relatedTools) == 0 {
 		return
@@ -97,17 +96,33 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddMcpConnectionAsFunctionCal
 	}
 
 	for _, mcpTool := range relatedTools {
-		toolName := utils.McpToolToFunctionName(mcpConnection, mcpTool)
-
-		r.Tools = append(r.Tools, ExternalAnthropicMessagesStandardRequestTool{
-			Name:        toolName,
-			Description: mcpTool.Description,
-			InputSchema: ExternalAnthropicMessagesStandardRequestToolInputSchema{
-				Type:     mcpTool.InputScheme.Type,
-				Required: mcpTool.InputScheme.Required,
-
-				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(mcpTool.InputScheme.Properties),
-			},
-		})
+		r.appendFunctionCallTool(utils.McpToolToFunctionName(mcpConnection, mcpTool), mcpTool)
 	}
+}
+
+func (r *ExternalAnthropicMessagesStandardRequest) AddSelfToolsAsFunctionCallTools(selfTools []*models.Tool) {
+	if len(selfTools) == 0 {
+		return
+	}
+
+	if r.Tools == nil {
+		r.Tools = make([]ExternalAnthropicMessagesStandardRequestTool, 0)
+	}
+
+	for _, selfTool := range selfTools {
+		r.appendFunctionCallTool(utils.SelfToolToFunctionName(selfTool), selfTool)
+	}
+}
+
+func (r *ExternalAnthropicMessagesStandardRequest) appendFunctionCallTool(toolName string, tool *models.Tool) {
+	r.Tools = append(r.Tools, ExternalAnthropicMessagesStandardRequestTool{
+		Name:        toolName,
+		Description: tool.Description,
+		InputSchema: ExternalAnthropicMessagesStandardRequestToolInputSchema{
+			Type:     tool.InputScheme.Type,
+			Required: tool.InputScheme.Required,
+
+			Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
+		},
+	})
 }

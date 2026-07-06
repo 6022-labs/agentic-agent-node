@@ -16,9 +16,9 @@ import (
 // EthClientFactory dials and caches one RPC client per chain for this adapter.
 type EthClientFactory struct {
 	evmChainsSettings *settings.EvmChainsSettings
-	rpcMetrics     metrics_interfaces.BlockchainRpcMetricsInterface
-	mu             sync.Mutex
-	clients        map[string]*ethclient.Client
+	rpcMetrics        metrics_interfaces.BlockchainRpcMetricsInterface
+	mu                sync.Mutex
+	clients           map[string]*ethclient.Client
 }
 
 func NewEthClientFactory(
@@ -27,8 +27,8 @@ func NewEthClientFactory(
 ) *EthClientFactory {
 	return &EthClientFactory{
 		evmChainsSettings: evmChainsSettings,
-		rpcMetrics:     rpcMetrics,
-		clients:        map[string]*ethclient.Client{},
+		rpcMetrics:        rpcMetrics,
+		clients:           map[string]*ethclient.Client{},
 	}
 }
 

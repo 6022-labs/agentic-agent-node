@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 )
 
@@ -106,7 +105,7 @@ func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionsAsMcpTools(
 
 func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionAsFunctionCallTools(
 	mcpConnection *models.MCPConnection,
-	relatedTools []*interfaces.McpTool,
+	relatedTools []*models.Tool,
 ) {
 	if len(relatedTools) == 0 {
 		return
@@ -117,29 +116,46 @@ func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionAsFunctionCallT
 	}
 
 	for _, mcpTool := range relatedTools {
-		// MCPs are not always as well defined, so we set strict to false by default
-		// But also not always all fields are required
-		strict := false
-		name := utils.McpToolToFunctionName(mcpConnection, mcpTool)
-
-		toolToAdd := ExternalOpenAIResponsesStandardRequestTool{
-			Type:        "function",
-			Name:        &name,
-			Strict:      &strict,
-			Description: &mcpTool.Description,
-			Parameters: &ExternalOpenAIResponsesStandardRequestToolFunctionParameters{
-				Type:                 mcpTool.InputScheme.Type,
-				Required:             mcpTool.InputScheme.Required,
-				AdditionalProperties: mcpTool.InputScheme.AdditionalProperties,
-
-				Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(mcpTool.InputScheme.Properties),
-			},
-		}
-
-		if toolToAdd.Parameters.Required == nil {
-			toolToAdd.Parameters.Required = make([]string, 0)
-		}
-
-		r.Tools = append(r.Tools, toolToAdd)
+		r.appendFunctionCallTool(utils.McpToolToFunctionName(mcpConnection, mcpTool), mcpTool)
 	}
+}
+
+func (r *ExternalOpenAIResponsesStandardRequest) AddSelfToolsAsFunctionCallTools(selfTools []*models.Tool) {
+	if len(selfTools) == 0 {
+		return
+	}
+
+	if r.Tools == nil {
+		r.Tools = make([]ExternalOpenAIResponsesStandardRequestTool, 0)
+	}
+
+	for _, selfTool := range selfTools {
+		r.appendFunctionCallTool(utils.SelfToolToFunctionName(selfTool), selfTool)
+	}
+}
+
+func (r *ExternalOpenAIResponsesStandardRequest) appendFunctionCallTool(name string, tool *models.Tool) {
+	// MCPs are not always as well defined, so we set strict to false by default
+	// But also not always all fields are required
+	strict := false
+
+	toolToAdd := ExternalOpenAIResponsesStandardRequestTool{
+		Type:        "function",
+		Name:        &name,
+		Strict:      &strict,
+		Description: &tool.Description,
+		Parameters: &ExternalOpenAIResponsesStandardRequestToolFunctionParameters{
+			Type:                 tool.InputScheme.Type,
+			Required:             tool.InputScheme.Required,
+			AdditionalProperties: tool.InputScheme.AdditionalProperties,
+
+			Properties: NewExternalToolInputSchemaPropertiesFromInternalModels(tool.InputScheme.Properties),
+		},
+	}
+
+	if toolToAdd.Parameters.Required == nil {
+		toolToAdd.Parameters.Required = make([]string, 0)
+	}
+
+	r.Tools = append(r.Tools, toolToAdd)
 }

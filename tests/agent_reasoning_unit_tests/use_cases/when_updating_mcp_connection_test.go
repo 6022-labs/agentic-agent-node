@@ -54,7 +54,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), uuid.New(), &requests.UpdateMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+			_, err := suite.sut.Execute(context.Background(), uuid.New(), &requests.SaveMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -76,7 +76,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{Name: "x", Url: "https://x"})
+			_, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{Name: "x", Url: "https://x"})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
@@ -97,6 +97,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*row}, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
 			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "new-name", c.Name)
@@ -114,7 +115,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), id, &requests.UpdateMCPConnectionRequest{
+			resp, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{
 				Name:       "new-name",
 				Url:        "https://new",
 				HeaderAuth: map[string]string{"Authorization": "Bearer new"},
@@ -122,6 +123,31 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, id, resp.Id)
+		})
+	})
+
+	t.Run("Given the new name collides with another connection", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
+			row := model_builders.NewMCPConnectionBuilder().WithId(id).WithName("old-name").Build()
+			other := model_builders.NewMCPConnectionBuilder().WithName("taken").Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*row, *other}, nil)
+		}
+
+		t.Run("Should return a conflict without updating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{Name: "taken", Url: "https://x"})
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
 		})
 	})
 }

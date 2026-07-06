@@ -14,6 +14,7 @@ import (
 	agent_reasoning_http_inference_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/configurations"
 	agent_reasoning_http_mcp_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/configurations"
 	agent_reasoning_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_mvc/configurations"
+	agent_reasoning_self_tools_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/configurations"
 	runtime_common_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_common/configurations"
 	runtime_common_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc/configurations"
 	runtime_db_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_db/configurations"
@@ -56,6 +57,7 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	runtime_common_mvc_configurations.AddRuntimeCommonMvcConfiguration(container)
 	agent_knowledge_mvc_configurations.AddAgentKnowledgeMvcConfiguration(container)
 	agent_reasoning_mvc_configurations.AddAgentReasoningMvcConfiguration(container)
+	agent_reasoning_self_tools_configurations.AddAgentReasoningSelfToolsConfiguration(container)
 
 	return container
 }
