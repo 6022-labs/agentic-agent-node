@@ -6,9 +6,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// ProviderExecutedToolFunctionName rebuilds the local mcp_<conn>_<tool> name for
-// a tool a provider ran itself, but only when the echoed server label matches a
-// known connection; otherwise it keeps the provider's raw name (no fabrication).
+// ProviderExecutedToolFunctionName rebuilds the local mcp_<conn>_<tool> name when the echoed server label matches a known connection, else keeps the provider's raw name.
 func ProviderExecutedToolFunctionName(mcpTools map[*models.MCPConnection][]*models.Tool, serverLabel, toolName string) string {
 	mcpConnection, found := lo.Find(lo.Keys(mcpTools), func(mcpConnection *models.MCPConnection) bool {
 		return mcpConnection.Name == serverLabel

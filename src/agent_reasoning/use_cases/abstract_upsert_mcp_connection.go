@@ -10,8 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// AbstractUpsertMCPConnection carries the persistence + secret storage that the
-// create and update MCP-connection use cases share.
+// AbstractUpsertMCPConnection holds the persistence and secret storage shared by the create and update MCP-connection use cases.
 type AbstractUpsertMCPConnection struct {
 	*AbstractReasoningUseCase
 	repository    repositories.MCPConnectionRepositoryInterface

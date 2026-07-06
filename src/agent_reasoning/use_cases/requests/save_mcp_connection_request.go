@@ -7,9 +7,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-// SaveMCPConnectionRequest carries an MCP connection's editable fields for
-// create and update. HeaderAuth, if present, is the complete new set — headers
-// absent from the map are dropped on Save.
+// SaveMCPConnectionRequest holds an MCP connection's editable fields; a present HeaderAuth fully replaces the stored set, so omitted headers are dropped on save.
 type SaveMCPConnectionRequest struct {
 	Name       string            `json:"name"`
 	Url        string            `json:"url"`
