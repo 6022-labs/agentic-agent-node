@@ -51,7 +51,7 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Sav
 		return nil, err
 	}
 
-	created, err := u.repository.Create(ctx, &models.MCPConnection{
+	created, err := u.mcpConnectionRepository.Create(ctx, &models.MCPConnection{
 		AgentId:        agent.Id,
 		Name:           request.Name,
 		Url:            request.Url,
@@ -62,7 +62,7 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Sav
 	}
 
 	for k, v := range request.HeaderAuth {
-		if err := u.secretStorage.SaveValue(ctx, created.Id, k, v); err != nil {
+		if err := u.mcpHeaderAuthSecretStorage.SaveValue(ctx, created.Id, k, v); err != nil {
 			return nil, errors.NewInternalError("create_failed", err.Error())
 		}
 	}

@@ -13,25 +13,25 @@ import (
 // AbstractUpsertMCPConnection holds the persistence and secret storage shared by the create and update MCP-connection use cases.
 type AbstractUpsertMCPConnection struct {
 	*AbstractReasoningUseCase
-	repository    repositories.MCPConnectionRepositoryInterface
-	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
+	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
+	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
 }
 
 func NewAbstractUpsertMCPConnection(
-	repository repositories.MCPConnectionRepositoryInterface,
-	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
+	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *AbstractUpsertMCPConnection {
 	return &AbstractUpsertMCPConnection{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
-		repository:               repository,
-		secretStorage:            secretStorage,
+		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentRepository),
+		mcpConnectionRepository:    mcpConnectionRepository,
+		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 	}
 }
 
 // ensureNameAvailable keeps function names unambiguous: a duplicate name would collide in the tool list and dispatch.
 func (u *AbstractUpsertMCPConnection) ensureNameAvailable(ctx context.Context, agentId uuid.UUID, name string, excludedId uuid.UUID) error {
-	existing, err := u.repository.ListByAgentId(ctx, agentId)
+	existing, err := u.mcpConnectionRepository.ListByAgentId(ctx, agentId)
 	if err != nil {
 		return errors.NewInternalError("mcp_connection_lookup_failed", err.Error())
 	}

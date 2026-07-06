@@ -41,7 +41,7 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 		return nil, err
 	}
 
-	existing, err := u.repository.GetById(ctx, agent.Id, id)
+	existing, err := u.mcpConnectionRepository.GetById(ctx, agent.Id, id)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
@@ -69,13 +69,13 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 	existing.Name = request.Name
 	existing.Url = request.Url
 	existing.HeaderAuthKeys = newKeys
-	updated, err := u.repository.Update(ctx, existing)
+	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 
 	for k, v := range request.HeaderAuth {
-		if err := u.secretStorage.SaveValue(ctx, updated.Id, k, v); err != nil {
+		if err := u.mcpHeaderAuthSecretStorage.SaveValue(ctx, updated.Id, k, v); err != nil {
 			return nil, errors.NewInternalError("update_failed", fmt.Sprintf("failed to save header %q: %s", k, err.Error()))
 		}
 	}
@@ -88,7 +88,7 @@ func (u *UpdateMCPConnection) dropRemovedHeaders(ctx context.Context, existing *
 		if _, kept := next[string(key)]; kept {
 			continue
 		}
-		if err := u.secretStorage.DeleteValue(ctx, existing.Id, string(key)); err != nil {
+		if err := u.mcpHeaderAuthSecretStorage.DeleteValue(ctx, existing.Id, string(key)); err != nil {
 			return err
 		}
 	}
