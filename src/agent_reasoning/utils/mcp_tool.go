@@ -23,6 +23,13 @@ func SortedMcpConnections(mcpTools map[*models.MCPConnection][]*models.Tool) []*
 	return mcpConnections
 }
 
+// FindMcpConnectionByName returns the connection with the given name, if present.
+func FindMcpConnectionByName(mcpTools map[*models.MCPConnection][]*models.Tool, name string) (*models.MCPConnection, bool) {
+	return lo.FindKeyBy(mcpTools, func(mcpConnection *models.MCPConnection, _ []*models.Tool) bool {
+		return mcpConnection.Name == name
+	})
+}
+
 func ExtractMcpInfoFromFunctionName(
 	functionName string,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
@@ -38,9 +45,7 @@ func ExtractMcpInfoFromFunctionName(
 	connName := parts[0]
 	toolName := parts[1]
 
-	mcpConnection, found := lo.Find(lo.Keys(mcpTools), func(mcpConnection *models.MCPConnection) bool {
-		return mcpConnection.Name == connName
-	})
+	mcpConnection, found := FindMcpConnectionByName(mcpTools, connName)
 	if !found {
 		return nil, nil, fmt.Errorf("no MCP connection found for function name: %q", functionName)
 	}
