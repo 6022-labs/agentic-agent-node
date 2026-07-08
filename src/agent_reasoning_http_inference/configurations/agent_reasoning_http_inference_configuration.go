@@ -1,7 +1,9 @@
 package configurations
 
 import (
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
@@ -161,9 +163,13 @@ func AddAgentReasoningHttpInferenceConfiguration(container *dig.Container) {
 
 	// Http clients — transport wrapped so raw calls also emit http.client.* metrics.
 	err = container.Provide(func() *http.Client {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.DialContext = (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}).DialContext
+		transport.TLSHandshakeTimeout = 10 * time.Second
+		transport.IdleConnTimeout = 90 * time.Second
 		return &http.Client{
 			Transport: common_metrics.NewHttpMetricsRoundTripper(
-				http.DefaultTransport,
+				transport,
 				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_inference"),
 			)}
 	}, dig.Name("llm-inference-http-client"))
