@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type ExternalOpenAIResponsesStandardResponse struct {
 	ID                 string                                           `json:"id"`
@@ -46,13 +49,12 @@ type ExternalOpenAIResponsesStandardResponseOutput struct {
 }
 
 func (o *ExternalOpenAIResponsesStandardResponseOutput) ParsedArguments() (map[string]any, error) {
-	if o.Arguments == nil {
+	if o.Arguments == nil || strings.TrimSpace(*o.Arguments) == "" {
 		return make(map[string]any), nil
 	}
 
 	var args map[string]any
-	err := json.Unmarshal([]byte(*o.Arguments), &args)
-	if err != nil {
+	if err := json.Unmarshal([]byte(*o.Arguments), &args); err != nil {
 		return nil, err
 	}
 	return args, nil

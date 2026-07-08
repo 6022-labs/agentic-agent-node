@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type ExternalOpenAICompletionsStandardToolCallFunction struct {
 	Name      string `json:"name"`
@@ -8,9 +11,12 @@ type ExternalOpenAICompletionsStandardToolCallFunction struct {
 }
 
 func (f *ExternalOpenAICompletionsStandardToolCallFunction) ParsedArguments() (map[string]any, error) {
+	if strings.TrimSpace(f.Arguments) == "" {
+		return map[string]any{}, nil
+	}
+
 	var args map[string]any
-	err := json.Unmarshal([]byte(f.Arguments), &args)
-	if err != nil {
+	if err := json.Unmarshal([]byte(f.Arguments), &args); err != nil {
 		return nil, err
 	}
 
