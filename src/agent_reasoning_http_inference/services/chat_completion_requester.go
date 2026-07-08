@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -39,6 +40,10 @@ type ChatCompletionRequester struct {
 	anthropicMessagesStandardChatCompletionRequester     AnthropicMessagesStandardChatCompletionRequesterInterface
 	openAICompletionsStandardChatCompletionRequester     OpenAICompletionsStandardChatCompletionRequesterInterface
 	amazonBedrockConverseStandardChatCompletionRequester AmazonBedrockConverseStandardChatCompletionRequesterInterface
+
+	tokenizerOnce sync.Once
+	tokenizer     *tiktoken.Tiktoken
+	tokenizerErr  error
 }
 
 func NewChatCompletionRequester(
@@ -146,6 +151,14 @@ func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, e
 	return &apiKey, nil
 }
 
+// trimTokenizer resolves the gpt-4 tokenizer once; it's an approximation for non-OpenAI models but cheap and consistent enough for trimming.
+func (r *ChatCompletionRequester) trimTokenizer() (*tiktoken.Tiktoken, error) {
+	r.tokenizerOnce.Do(func() {
+		r.tokenizer, r.tokenizerErr = tiktoken.EncodingForModel("gpt-4")
+	})
+	return r.tokenizer, r.tokenizerErr
+}
+
 // trimMessagesToTokenLimit drops the oldest non-system messages until under
 // limit; system messages stay at the head. Counts tokens with gpt-4's
 // tokenizer for all platforms — close enough for trim.
@@ -153,7 +166,7 @@ func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
 	messages []*interfaces.ChatCompletionMessage,
 	limit uint,
 ) ([]*interfaces.ChatCompletionMessage, error) {
-	tokenizer, err := tiktoken.EncodingForModel("gpt-4")
+	tokenizer, err := r.trimTokenizer()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tokenizer: %w", err)
 	}
