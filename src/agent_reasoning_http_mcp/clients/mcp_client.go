@@ -192,7 +192,9 @@ func decodeEventStream[T any](logger *zap.Logger, body io.Reader) (*models.Exter
 		}
 
 		payloadBuilder.Reset()
-		lastDecoded = &candidate
+		if candidate.ID != nil || lastDecoded == nil {
+			lastDecoded = &candidate
+		}
 	}
 
 	for {
