@@ -85,8 +85,8 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 		})
 	})

@@ -94,8 +94,8 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 			assert.Empty(t, result.ToolCalls)
 		})
@@ -197,7 +197,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 				assert.Equal(t, functionName, result.ToolCalls[0].Name)
 				assert.Equal(t, toolArguments, result.ToolCalls[0].Arguments)
 			}
-			assert.Nil(t, result.Text)
+			assert.Empty(t, result.Texts)
 		})
 	})
 
@@ -289,8 +289,8 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, replay)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 		})
 	})

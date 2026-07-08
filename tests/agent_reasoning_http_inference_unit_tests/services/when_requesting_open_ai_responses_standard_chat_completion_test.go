@@ -97,8 +97,46 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
+			}
+		})
+	})
+
+	t.Run("Given the message has multiple output_text content items", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
+					assistantRole := "assistant"
+					return &external_models.ExternalOpenAIResponsesStandardResponse{
+						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
+							{
+								Type: "message",
+								Role: &assistantRole,
+								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
+									{Type: "output_text", Text: "first"},
+									{Type: "output_text", Text: "second"},
+								},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should collect every text block in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{"first", "second"}, result.Texts)
 			}
 		})
 	})
@@ -125,7 +163,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
-				assert.Nil(t, result.Text)
+				assert.Empty(t, result.Texts)
 				assert.Empty(t, result.ToolCalls)
 				assert.Empty(t, result.ExecutedToolCalls)
 			}
@@ -229,8 +267,8 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 		})
 	})

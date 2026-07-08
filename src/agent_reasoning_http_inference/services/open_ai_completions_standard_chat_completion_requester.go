@@ -92,8 +92,7 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	if choice.Message.Content != "" {
-		text := choice.Message.Content
-		completion.Text = &text
+		completion.Texts = append(completion.Texts, choice.Message.Content)
 	}
 
 	for _, tc := range choice.Message.ToolCalls {

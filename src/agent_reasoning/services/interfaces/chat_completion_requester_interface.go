@@ -28,11 +28,11 @@ type ChatCompletionMessage struct {
 	ToolCallId string     `json:"tool_call_id,omitempty"`
 }
 
-// LLMCompletion — platform-agnostic result of one round-trip. Text and
-// ToolCalls can both be non-empty when the LLM emits both. Response* fields
-// describe what the provider returned (model actually served, stop reasons, id).
+// LLMCompletion — platform-agnostic result of one round-trip. Texts holds every
+// text block the provider emitted, in order (the loop selects the one to
+// surface); Response* fields describe what the provider returned.
 type LLMCompletion struct {
-	Text              *string
+	Texts             []string
 	ToolCalls         []ToolCall
 	ExecutedToolCalls []ExecutedToolCall
 	Usage             *LLMUsage

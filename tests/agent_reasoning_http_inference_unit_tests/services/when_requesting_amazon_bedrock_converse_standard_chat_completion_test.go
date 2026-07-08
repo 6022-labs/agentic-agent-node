@@ -90,8 +90,46 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
+			}
+		})
+	})
+
+	t.Run("Given the LLM returns multiple text blocks", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite) {
+			suite.mockAmazonBedrockConverseClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalAmazonBedrockConverseStandardRequest) (*external_models.ExternalAmazonBedrockConverseStandardResponse, error) {
+					first := "first"
+					second := "second"
+					return &external_models.ExternalAmazonBedrockConverseStandardResponse{
+						Output: external_models.ExternalAmazonBedrockConverseStandardResponseOutput{
+							Message: external_models.ExternalAmazonBedrockConverseStandardMessage{
+								Role: "assistant",
+								Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{
+									{Text: &first},
+									{Text: &second},
+								},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should collect every text block in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{"first", "second"}, result.Texts)
 			}
 		})
 	})
@@ -125,7 +163,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
-				assert.Nil(t, result.Text)
+				assert.Empty(t, result.Texts)
 				assert.Empty(t, result.ToolCalls)
 				assert.Empty(t, result.ExecutedToolCalls)
 			}

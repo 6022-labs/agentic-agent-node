@@ -94,10 +94,51 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 			assert.Empty(t, result.ToolCalls)
+		})
+	})
+
+	t.Run("Given the LLM emits text before and after a server-side tool call", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
+					first := "first"
+					second := "second"
+					id := "mcptoolu_1"
+					name := "get"
+					isError := false
+					return &external_models.ExternalAnthropicMessagesStandardResponse{
+						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+							Role: "assistant",
+							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+								{Type: "text", Text: &first},
+								{Type: "mcp_tool_use", Id: &id, Name: &name, Input: map[string]any{}},
+								{Type: "mcp_tool_result", ToolUseId: &id, IsError: &isError, Content: []map[string]any{{"type": "text", "text": "20C"}}},
+								{Type: "text", Text: &second},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should collect every text block in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{"first", "second"}, result.Texts)
+			}
 		})
 	})
 
@@ -128,7 +169,7 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
-				assert.Nil(t, result.Text)
+				assert.Empty(t, result.Texts)
 				assert.Empty(t, result.ToolCalls)
 				assert.Empty(t, result.ExecutedToolCalls)
 			}
@@ -226,8 +267,8 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedContent, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
 			}
 		})
 	})

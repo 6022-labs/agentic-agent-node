@@ -92,8 +92,7 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 	for _, c := range response.Output.Message.Content {
 		switch {
 		case c.Text != nil:
-			text := *c.Text
-			completion.Text = &text
+			completion.Texts = append(completion.Texts, *c.Text)
 		case c.ToolUse != nil:
 			completion.ToolCalls = append(completion.ToolCalls, interfaces.ToolCall{
 				Id:        c.ToolUse.ToolUseId,
@@ -103,7 +102,7 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 		}
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 {
+	if len(completion.Texts) == 0 && len(completion.ToolCalls) == 0 {
 		r.logger.Warn(
 			"No text or tool_use content found in response",
 			zap.Stringp("stopReason", response.StopReason),

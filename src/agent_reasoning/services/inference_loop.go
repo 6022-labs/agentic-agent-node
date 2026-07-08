@@ -72,13 +72,15 @@ func (l *InferenceLoop) Run(
 			l.recordExecutedToolCalls(ctx, completion.ExecutedToolCalls)...,
 		)
 
-		if completion.Text != nil || len(completion.ToolCalls) > 0 {
+		assistantText := l.selectAssistantText(completion.Texts)
+
+		if assistantText != nil || len(completion.ToolCalls) > 0 {
 			assistantMessage := &interfaces.ChatCompletionMessage{
 				Role:      "assistant",
 				ToolCalls: completion.ToolCalls,
 			}
-			if completion.Text != nil {
-				assistantMessage.Content = runtime_utils.DemojizeContent(*completion.Text)
+			if assistantText != nil {
+				assistantMessage.Content = runtime_utils.DemojizeContent(*assistantText)
 			}
 			messages = append(messages, assistantMessage)
 		}
@@ -93,7 +95,7 @@ func (l *InferenceLoop) Run(
 			continue
 		}
 
-		if completion.Text != nil {
+		if assistantText != nil {
 			l.reasoningMetrics.RecordLoopCompleted(ctx, time.Since(start), int64(iteration+1))
 			return messages, nil
 		}
@@ -109,6 +111,17 @@ func (l *InferenceLoop) Run(
 	l.reasoningMetrics.RecordLoopExceeded(ctx, time.Since(start), int64(l.inferenceLoopSettings.MaxIterations))
 
 	return nil, fmt.Errorf("%w: %d", interfaces.ErrInferenceLoopMaxIterationsExceeded, l.inferenceLoopSettings.MaxIterations)
+}
+
+// selectAssistantText returns the last non-empty text block (earlier blocks are pre-tool-call preamble), or nil.
+func (l *InferenceLoop) selectAssistantText(texts []string) *string {
+	for i := len(texts) - 1; i >= 0; i-- {
+		if texts[i] != "" {
+			t := texts[i]
+			return &t
+		}
+	}
+	return nil
 }
 
 // recordExecutedToolCalls mirrors provider-run MCP calls into the stream (assistant turn + a tool turn per result) so they persist without being re-dispatched.

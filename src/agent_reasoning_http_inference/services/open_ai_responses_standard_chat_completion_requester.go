@@ -100,8 +100,7 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 		case "message":
 			for _, c := range o.Content {
 				if c.Type == "output_text" || c.Type == "text" {
-					text := c.Text
-					completion.Text = &text
+					completion.Texts = append(completion.Texts, c.Text)
 				}
 			}
 		case "function_call":
@@ -136,7 +135,7 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 		}
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
+	if len(completion.Texts) == 0 && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
 		r.logger.Warn(
 			"No actionable output found in response",
 			zap.String("status", response.Status),

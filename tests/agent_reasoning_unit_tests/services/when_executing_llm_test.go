@@ -69,7 +69,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
 			suite.mockChatCompletionRequester.EXPECT().
 				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages).
-				Return(&interfaces.LLMCompletion{Text: &expectedText}, nil)
+				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
 		}
 
 		t.Run("Should delegate to the chat completion requester", func(t *testing.T) {
@@ -81,8 +81,8 @@ func TestWhenExecutingLLM(t *testing.T) {
 			result, err := suite.sut.Complete(ctx, llmConnection, nil, nil, messages)
 
 			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.NotNil(t, result.Text) {
-				assert.Equal(t, expectedText, *result.Text)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedText}, result.Texts)
 			}
 		})
 	})

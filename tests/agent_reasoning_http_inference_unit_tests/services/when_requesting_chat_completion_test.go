@@ -110,7 +110,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 
 	apiKey := "api-key"
 	completionText := "completion-result"
-	completion := &interfaces.LLMCompletion{Text: &completionText}
+	completion := &interfaces.LLMCompletion{Texts: []string{completionText}}
 	messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
 
 	t.Run("Given llm connection is LibertAI", func(t *testing.T) {

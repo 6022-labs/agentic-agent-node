@@ -84,8 +84,7 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	if response.Message.Content != "" {
-		text := response.Message.Content
-		completion.Text = &text
+		completion.Texts = append(completion.Texts, response.Message.Content)
 	}
 
 	for _, tc := range response.Message.ToolCalls {
@@ -101,7 +100,7 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 		})
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 {
+	if len(completion.Texts) == 0 && len(completion.ToolCalls) == 0 {
 		r.logger.Warn(
 			"Empty content in response message",
 			zap.Stringp("doneReason", response.DoneReason),

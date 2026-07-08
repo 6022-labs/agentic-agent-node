@@ -121,8 +121,7 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		switch c.Type {
 		case "text":
 			if c.Text != nil {
-				text := *c.Text
-				completion.Text = &text
+				completion.Texts = append(completion.Texts, *c.Text)
 			}
 		case "tool_use":
 			if c.Id == nil || c.Name == nil {
@@ -161,7 +160,7 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		}
 	}
 
-	if completion.Text == nil && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
+	if len(completion.Texts) == 0 && len(completion.ToolCalls) == 0 && len(completion.ExecutedToolCalls) == 0 {
 		r.logger.Warn(
 			"No text or tool_use content found in response",
 			zap.Stringp("stopReason", response.StopReason),
