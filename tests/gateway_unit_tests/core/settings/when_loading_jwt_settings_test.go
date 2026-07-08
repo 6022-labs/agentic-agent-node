@@ -19,7 +19,7 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"jwt.signing_key": "key-123",
+			"jwt.signing_key": "test-signing-key-at-least-32-characters",
 			"jwt.token_ttl":   900,
 			"jwt.nonce_ttl":   120,
 		}, "."), nil)
@@ -30,7 +30,7 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 			result := settings.NewJwtSettings(zap.NewNop(), k)
 
 			assert.NotNil(t, result)
-			assert.Equal(t, "key-123", result.SigningKey)
+			assert.Equal(t, "test-signing-key-at-least-32-characters", result.SigningKey)
 			assert.Equal(t, 900*time.Second, result.TokenTtl)
 			assert.Equal(t, 120*time.Second, result.NonceTtl)
 		})
@@ -41,7 +41,7 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"jwt.signing_key": "key-123",
+			"jwt.signing_key": "test-signing-key-at-least-32-characters",
 		}, "."), nil)
 
 		t.Run("Should default token_ttl to 1800 and nonce_ttl to 300", func(t *testing.T) {
@@ -59,14 +59,14 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"jwt.signing_key": "  trimmed  ",
+			"jwt.signing_key": "  test-signing-key-at-least-32-characters  ",
 		}, "."), nil)
 
 		t.Run("Should trim signing_key", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewJwtSettings(zap.NewNop(), k)
-			assert.Equal(t, "trimmed", result.SigningKey)
+			assert.Equal(t, "test-signing-key-at-least-32-characters", result.SigningKey)
 		})
 	})
 
@@ -75,7 +75,7 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"jwt.signing_key": "key",
+			"jwt.signing_key": "test-signing-key-at-least-32-characters",
 			"jwt.token_ttl":   0,
 			"jwt.nonce_ttl":   0,
 		}, "."), nil)

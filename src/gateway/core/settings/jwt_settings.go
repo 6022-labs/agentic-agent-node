@@ -10,6 +10,8 @@ import (
 
 const JwtSettingsKey = "jwt"
 
+const minSigningKeyLength = 32
+
 type JwtSettings struct {
 	SigningKey string
 	TokenTtl   time.Duration
@@ -33,8 +35,8 @@ func NewJwtSettings(logger *zap.Logger, k *koanf.Koanf) *JwtSettings {
 
 	raw.SigningKey = strings.TrimSpace(raw.SigningKey)
 
-	if len(raw.SigningKey) == 0 {
-		logger.Fatal("please set jwt.signing_key (or JWT__SIGNING_KEY env)")
+	if len(raw.SigningKey) < minSigningKeyLength {
+		logger.Fatal("jwt.signing_key must be at least 32 characters (or JWT__SIGNING_KEY env)")
 	}
 	if raw.TokenTtlSeconds <= 0 {
 		logger.Warn("invalid jwt.token_ttl value, defaulting to 1800")

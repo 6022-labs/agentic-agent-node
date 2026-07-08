@@ -13,7 +13,7 @@ services:
       - RUNTIME_CLIENT__BASE_URL=http://127.0.0.1:5400
       - IPFS__NODE_HTTP_URL=http://agent-node-ipfs:5001
       - IPFS__BEARER_TOKEN=
-      - JWT__SIGNING_KEY=dev-secret
+      - JWT__SIGNING_KEY=dev-only-insecure-signing-key-change-me
       - JWT__TOKEN_TTL=1800
       - JWT__NONCE_TTL=300
       - VAULT__ADDRESS=http://agent-node-vault:8200
