@@ -3,6 +3,7 @@ package services
 import (
 	"math/big"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
@@ -44,12 +45,12 @@ func (r *AgentCollectionRequester) CollectionName(chainId string, collectionAddr
 	return contract.Name(nil)
 }
 
-func (r *AgentCollectionRequester) WalletToTokenId(chainId string, collectionAddress common.Address, wallet common.Address) (uint64, error) {
+func (r *AgentCollectionRequester) AddressToTokenId(chainId string, collectionAddress common.Address, addressType enums.AddressType, value string) (uint64, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
 	}
-	id, err := contract.WalletToTokenId(nil, wallet)
+	id, err := contract.AddressToTokenId(nil, addressType.String(), value)
 	if err != nil {
 		return 0, err
 	}

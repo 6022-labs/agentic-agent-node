@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -21,14 +22,31 @@ func (MintKeyValue) FromMap(m map[string]string) []MintKeyValue {
 	return out
 }
 
-// MintParams is the mint() / createMintProposal() payload; Wallets includes the
-// node wallet.
+// MintAddress is one typed on-chain address entry ({addressType, value}).
+type MintAddress struct {
+	AddressType enums.AddressType
+	Value       string
+}
+
+// FromMap flattens per-type addresses in GetAllAddressTypes() order (evm first — ENS addr() reads the first evm entry).
+func (MintAddress) FromMap(m map[enums.AddressType]string) []MintAddress {
+	out := make([]MintAddress, 0, len(m))
+	for _, addressType := range enums.GetAllAddressTypes() {
+		if value, ok := m[addressType]; ok && value != "" {
+			out = append(out, MintAddress{AddressType: addressType, Value: value})
+		}
+	}
+	return out
+}
+
+// MintParams is the mint() / createMintProposal() payload; Addresses includes the
+// node wallet as its evm entry.
 type MintParams struct {
 	Collection common.Address
 	To         common.Address
 	Role       string
 	Name       string
-	Wallets    []common.Address
+	Addresses  []MintAddress
 	Images     []MintKeyValue
 	Attributes []MintKeyValue
 	CloneOf    *uint64

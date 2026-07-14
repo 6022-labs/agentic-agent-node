@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
@@ -71,7 +72,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(7), nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(7), nil)
 		}
 
 		t.Run("Should return that token without scanning the manager", func(t *testing.T) {
@@ -94,8 +95,8 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(gomock.Any(), gomock.Any()).Return(foundCollection, uint64(9), "", nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(foundCollection, uint64(9), "", nil)
 		}
 
 		t.Run("Should fall back to the manager's collection and token", func(t *testing.T) {
@@ -117,8 +118,8 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(gomock.Any(), gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
 		}
 
 		t.Run("Should report tokenId 0", func(t *testing.T) {

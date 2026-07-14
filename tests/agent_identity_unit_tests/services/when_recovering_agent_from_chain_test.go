@@ -117,7 +117,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(recoveryChainId, gomock.Any()).Return(collection, uint64(9), "alice", nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(collection, uint64(9), "alice", nil)
 			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
@@ -158,7 +158,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(recoveryChainId, gomock.Any()).Return(collection, uint64(9), "alice", nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(collection, uint64(9), "alice", nil)
 			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
@@ -185,7 +185,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(recoveryChainId, gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
 		}
 
 		t.Run("Should report nothing recovered without writing the agent", func(t *testing.T) {

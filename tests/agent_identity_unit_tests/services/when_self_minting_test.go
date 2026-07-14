@@ -81,7 +81,7 @@ func TestWhenSelfMinting(t *testing.T) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
 			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(5), nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).Return(uint64(5), nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(5), gomock.Any()).Return(mintedAgent, mintedState, nil)
 		}
 
@@ -100,6 +100,69 @@ func TestWhenSelfMinting(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the agent carries evm and btc addresses", func(t *testing.T) {
+		t.Parallel()
+
+		staleEvm := common_tests.RandomEthAddress().Hex()
+		btcAddress := "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+		agentWithAddresses := func() *models.Agent {
+			return model_builders.NewAgentBuilder().
+				WithoutCollectionTokenId().
+				WithOwner(owner).
+				WithAddress(identity_enums.AddressTypeEvm, staleEvm).
+				WithAddress(identity_enums.AddressTypeBtc, btcAddress).
+				Build()
+		}
+
+		initSuite := func(suite *WhenSelfMintingTestingSuite, captured *identity_interfaces.MintParams) {
+			mintedAgent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).WithOwner(owner).Build()
+			mintedState := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
+
+			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
+			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ string, params identity_interfaces.MintParams) (string, error) {
+					*captured = params
+					return "0xtx", nil
+				})
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).Return(uint64(5), nil)
+			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(5), gomock.Any()).Return(mintedAgent, mintedState, nil)
+		}
+
+		t.Run("Should send the evm node wallet first and the btc address along", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfMintingBeforeEach(t)
+			var captured identity_interfaces.MintParams
+			initSuite(suite, &captured)
+
+			_, err := suite.sut.SelfMint(context.Background(), agentWithAddresses(), nil)
+
+			assert.NoError(t, err)
+			assert.Equal(t, []identity_interfaces.MintAddress{
+				{AddressType: identity_enums.AddressTypeEvm, Value: nodeWallet},
+				{AddressType: identity_enums.AddressTypeBtc, Value: btcAddress},
+			}, captured.Addresses)
+		})
+
+		t.Run("Should use the Vault credential when agent_addresses disagrees", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfMintingBeforeEach(t)
+			var captured identity_interfaces.MintParams
+			initSuite(suite, &captured)
+
+			agent := agentWithAddresses()
+			_, err := suite.sut.SelfMint(context.Background(), agent, nil)
+
+			assert.NoError(t, err)
+			assert.Equal(t, nodeWallet, captured.Addresses[0].Value)
+			assert.NotEqual(t, staleEvm, captured.Addresses[0].Value)
+			assert.Equal(t, staleEvm, agent.Addresses[identity_enums.AddressTypeEvm])
+		})
+	})
+
 	t.Run("Given a moderated collection where the node is a moderator", func(t *testing.T) {
 		t.Parallel()
 
@@ -111,7 +174,7 @@ func TestWhenSelfMinting(t *testing.T) {
 			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(2), nil)
 			suite.mockAgentCollectionRequester.EXPECT().IsModerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(5), nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).Return(uint64(5), nil)
 			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(5), gomock.Any()).Return(mintedAgent, mintedState, nil)
 		}
 
@@ -167,7 +230,7 @@ func TestWhenSelfMinting(t *testing.T) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().ModeratorCount(gomock.Any(), gomock.Any()).Return(uint64(0), nil)
 			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).Return(uint64(0), nil)
 		}
 
 		t.Run("Should return an error without reconciling", func(t *testing.T) {

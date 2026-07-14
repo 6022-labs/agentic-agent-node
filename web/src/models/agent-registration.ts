@@ -64,17 +64,24 @@ export type MintInfo = {
   ownerIsModerator: boolean
 }
 
-// ADDRESS_TYPE_ORDER fixes the on-chain wallets[] order across address maps.
+// AgentAddress is one typed on-chain address entry ({addressType, value}).
+export type AgentAddress = {
+  addressType: string
+  value: string
+}
+
+// ADDRESS_TYPE_ORDER fixes the on-chain addresses[] order across address maps.
 export const ADDRESS_TYPE_ORDER = ["evm", "btc"] as const
 
-// orderedAddresses flattens an address map into the on-chain wallets[] order,
-// dropping any chain family the agent doesn't hold yet.
-export const orderedAddresses = (
+// orderedAgentAddresses flattens an address map into the on-chain addresses[]
+// order, dropping any chain family the agent doesn't hold yet.
+export const orderedAgentAddresses = (
   addresses: Record<string, string>
-): string[] =>
-  ADDRESS_TYPE_ORDER.map((type) => addresses?.[type]).filter(
-    (address): address is string => !!address
-  )
+): AgentAddress[] =>
+  ADDRESS_TYPE_ORDER.filter((type) => !!addresses?.[type]).map((type) => ({
+    addressType: type,
+    value: addresses[type],
+  }))
 
 export type EnsInfo = {
   collectionAddress: string
