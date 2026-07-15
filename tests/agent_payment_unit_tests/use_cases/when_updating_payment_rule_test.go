@@ -23,6 +23,7 @@ type WhenUpdatingPaymentRuleTestingSuite struct {
 	sut *use_cases.UpdatePaymentRule
 
 	mockAgentRepository         *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository  *identity_repositories_mocks.MockAgentAddressRepositoryInterface
 	mockPaymentPolicyRepository *payment_repositories_mocks.MockPaymentPolicyRepositoryInterface
 	mockPaymentRuleRepository   *payment_repositories_mocks.MockPaymentRuleRepositoryInterface
 	mockStrategy                *payment_interfaces_mocks.MockPaymentMethodStrategyInterface
@@ -32,6 +33,7 @@ func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTes
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := identity_repositories_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockPaymentPolicyRepository := payment_repositories_mocks.NewMockPaymentPolicyRepositoryInterface(mockController)
 	mockPaymentRuleRepository := payment_repositories_mocks.NewMockPaymentRuleRepositoryInterface(mockController)
 
@@ -41,9 +43,10 @@ func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTes
 	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenUpdatingPaymentRuleTestingSuite{
-		sut: use_cases.NewUpdatePaymentRule(mockAgentRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, token6022Settings),
+		sut: use_cases.NewUpdatePaymentRule(mockAgentRepository, mockAgentAddressRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, token6022Settings),
 
 		mockAgentRepository:         mockAgentRepository,
+		mockAgentAddressRepository:  mockAgentAddressRepository,
 		mockPaymentPolicyRepository: mockPaymentPolicyRepository,
 		mockPaymentRuleRepository:   mockPaymentRuleRepository,
 		mockStrategy:                mockStrategy,

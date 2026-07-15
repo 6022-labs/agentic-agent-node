@@ -105,28 +105,6 @@ func TestWhenGettingAgent(t *testing.T) {
 				})
 			})
 
-			t.Run("Given the agent has stored addresses", func(t *testing.T) {
-				t.Parallel()
-
-				t.Run("Should hydrate them onto the loaded agent", func(t *testing.T) {
-					t.Parallel()
-					suite := WhenGettingAgentBeforeEach(tc)
-					defer WhenGettingAgentAfterEach(suite)
-
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().Build())
-					assert.NoError(t, err)
-
-					addressRepository := repositories.NewAgentAddressRepository(suite.dbClient)
-					assert.NoError(t, addressRepository.Upsert(context.Background(), agentAddress(inserted.Id, identity_enums.AddressTypeEvm, "0xabc")))
-					assert.NoError(t, addressRepository.Upsert(context.Background(), agentAddress(inserted.Id, identity_enums.AddressTypeBtc, "bc1qxyz")))
-
-					got, err := suite.sut.Get(context.Background())
-
-					assert.NoError(t, err)
-					assert.Equal(t, "0xabc", got.Addresses[identity_enums.AddressTypeEvm])
-					assert.Equal(t, "bc1qxyz", got.Addresses[identity_enums.AddressTypeBtc])
-				})
-			})
 		})
 	}
 }

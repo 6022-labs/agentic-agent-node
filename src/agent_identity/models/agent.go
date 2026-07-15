@@ -32,9 +32,6 @@ type Agent struct {
 	Images     map[string]string `gorm:"serializer:json" json:"images"`
 	Attributes map[string]string `gorm:"serializer:json" json:"attributes"`
 
-	// Addresses are the agent's per-chain-family wallet addresses (keyed by AddressType), hydrated from agent_addresses on load, not a column.
-	Addresses map[enums.AddressType]string `gorm:"-" json:"addresses"`
-
 	UpdatedAt time.Time `gorm:"not null" json:"updatedAt"`
 	CreatedAt time.Time `gorm:"not null" json:"createdAt"`
 }

@@ -12,14 +12,20 @@ import (
 // form on retry after a failed mint or ENS registration.
 type GetAgentRegistration struct {
 	agentRepository                  repositories.AgentRepositoryInterface
+	agentAddressRepository           repositories.AgentAddressRepositoryInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 }
 
 func NewGetAgentRegistration(
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *GetAgentRegistration {
-	return &GetAgentRegistration{agentRepository: agentRepository, agentRegistrationStateRepository: agentRegistrationStateRepository}
+	return &GetAgentRegistration{
+		agentRepository:                  agentRepository,
+		agentAddressRepository:           agentAddressRepository,
+		agentRegistrationStateRepository: agentRegistrationStateRepository,
+	}
 }
 
 func (u *GetAgentRegistration) Execute(ctx context.Context) (*responses.AgentRegistrationResponse, error) {
@@ -40,7 +46,12 @@ func (u *GetAgentRegistration) Execute(ctx context.Context) (*responses.AgentReg
 		return nil, errors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")
 	}
 
+	addresses, err := u.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err.Error())
+	}
+
 	resp := &responses.AgentRegistrationResponse{}
-	resp.FromModel(agent, state)
+	resp.FromModel(agent, addresses, state)
 	return resp, nil
 }

@@ -20,6 +20,7 @@ type CreatePaymentRule struct {
 
 func NewCreatePaymentRule(
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
@@ -28,6 +29,7 @@ func NewCreatePaymentRule(
 	return &CreatePaymentRule{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
 			agentRepository,
+			agentAddressRepository,
 			paymentPolicyRepository,
 			paymentRuleRepository,
 			paymentMethodStrategies,

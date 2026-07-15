@@ -23,7 +23,7 @@ type AgentRegistrationResponse struct {
 	EnsStatus         string                       `json:"ensStatus"`
 }
 
-func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, state *models.AgentRegistrationState) {
+func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, addresses map[enums.AddressType]string, state *models.AgentRegistrationState) {
 	owner := ""
 	if agent.Owner != nil {
 		owner = *agent.Owner
@@ -36,7 +36,7 @@ func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, state *models
 	r.Role = agent.Role.String()
 	r.CloneOf = agent.CloneOf
 	r.Owner = owner
-	r.Addresses = agent.Addresses
+	r.Addresses = addresses
 	r.EnsDomain = agent.EnsDomain
 	r.Images = agent.Images
 	r.Attributes = agent.Attributes

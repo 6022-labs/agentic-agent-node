@@ -13,14 +13,20 @@ import (
 // GetAgentMintInfo assembles the mint() calldata + moderator state so the connected wallet can submit the tx itself.
 type GetAgentMintInfo struct {
 	agentRepository          repositories.AgentRepositoryInterface
+	agentAddressRepository   repositories.AgentAddressRepositoryInterface
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface
 }
 
 func NewGetAgentMintInfo(
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *GetAgentMintInfo {
-	return &GetAgentMintInfo{agentRepository: agentRepository, agentCollectionRequester: agentCollectionRequester}
+	return &GetAgentMintInfo{
+		agentRepository:          agentRepository,
+		agentAddressRepository:   agentAddressRepository,
+		agentCollectionRequester: agentCollectionRequester,
+	}
 }
 
 func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResponse, error) {
@@ -33,6 +39,11 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 	}
 	if agent.Owner == nil {
 		return nil, errors.NewConflictError("owner_missing", "agent draft has no owner")
+	}
+
+	addresses, err := u.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err.Error())
 	}
 
 	collection := common.HexToAddress(agent.CollectionAddress)
@@ -55,7 +66,7 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 		To:                owner.Hex(),
 		Role:              agent.Role.String(),
 		Name:              agent.Name,
-		Addresses:         agent.Addresses,
+		Addresses:         addresses,
 		Images:            responses.KeyValue{}.FromMap(agent.Images),
 		Attributes:        responses.KeyValue{}.FromMap(agent.Attributes),
 		CloneOf:           agent.CloneOf,

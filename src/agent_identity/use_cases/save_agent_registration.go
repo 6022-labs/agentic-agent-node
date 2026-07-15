@@ -24,6 +24,7 @@ import (
 // "default"/"icon" set, pins them to IPFS, and stores the resulting CIDs.
 type SaveAgentRegistration struct {
 	agentRepository                  repositories.AgentRepositoryInterface
+	agentAddressRepository           repositories.AgentAddressRepositoryInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	agentCollectionsManagerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface
 	agentCollectionRequester         identity_interfaces.AgentCollectionRequesterInterface
@@ -38,6 +39,7 @@ type SaveAgentRegistration struct {
 
 func NewSaveAgentRegistration(
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	agentCollectionsManagerRequester identity_interfaces.AgentCollectionsManagerRequesterInterface,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
@@ -51,6 +53,7 @@ func NewSaveAgentRegistration(
 ) *SaveAgentRegistration {
 	return &SaveAgentRegistration{
 		agentRepository:                  agentRepository,
+		agentAddressRepository:           agentAddressRepository,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		agentCollectionsManagerRequester: agentCollectionsManagerRequester,
 		agentCollectionRequester:         agentCollectionRequester,
@@ -119,7 +122,12 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	agent.CollectionTokenId = existing.CollectionTokenId
 	agent.ProposalId = existing.ProposalId
 
-	agent.Images, err = u.resolveImages(agent, existing, common.HexToAddress(owner), req.Image)
+	addresses, err := u.agentAddressRepository.GetAllByAgentId(ctx, existing.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err.Error())
+	}
+
+	agent.Images, err = u.resolveImages(agent, existing, addresses, common.HexToAddress(owner), req.Image)
 	if err != nil {
 		return nil, err
 	}
@@ -145,13 +153,13 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	}
 
 	resp := &responses.AgentRegistrationResponse{}
-	resp.FromModel(saved, state)
+	resp.FromModel(saved, addresses, state)
 	return resp, nil
 }
 
-func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, addresses map[enums.AddressType]string, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
 	if baseImage != nil {
-		return u.buildImages(agent, creator, baseImage)
+		return u.buildImages(agent, addresses, creator, baseImage)
 	}
 	if len(existing.Images) > 0 {
 		return existing.Images, nil
@@ -161,10 +169,10 @@ func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, cre
 
 // buildImages frames the uploaded base image, pins each rendered variant to
 // IPFS, and returns the CID per image key (what the mint stores on-chain).
-func (u *SaveAgentRegistration) buildImages(agent *models.Agent, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) buildImages(agent *models.Agent, addresses map[enums.AddressType]string, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
 	wallets := []string{}
 	for _, addressType := range enums.GetAllAddressTypes() {
-		if address := agent.Addresses[addressType]; address != "" {
+		if address := addresses[addressType]; address != "" {
 			wallets = append(wallets, address)
 		}
 	}

@@ -3,11 +3,11 @@ package use_cases
 import (
 	"context"
 
-	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
 
@@ -17,6 +17,7 @@ type GetPaymentPolicy struct {
 
 func NewGetPaymentPolicy(
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
@@ -25,6 +26,7 @@ func NewGetPaymentPolicy(
 	return &GetPaymentPolicy{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
 			agentRepository,
+			agentAddressRepository,
 			paymentPolicyRepository,
 			paymentRuleRepository,
 			paymentMethodStrategies,
@@ -38,5 +40,9 @@ func (u *GetPaymentPolicy) Execute(ctx context.Context) (*responses.PaymentPolic
 	if err != nil {
 		return nil, err
 	}
-	return responses.ToPaymentPolicyResponse(policy, agent.Addresses[identity_enums.AddressTypeEvm]), nil
+	evmAddress, err := u.evmAddress(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+	return responses.ToPaymentPolicyResponse(policy, evmAddress), nil
 }

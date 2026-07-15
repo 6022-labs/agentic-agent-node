@@ -19,6 +19,7 @@ type UpdatePaymentRule struct {
 
 func NewUpdatePaymentRule(
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
@@ -27,6 +28,7 @@ func NewUpdatePaymentRule(
 	return &UpdatePaymentRule{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
 			agentRepository,
+			agentAddressRepository,
 			paymentPolicyRepository,
 			paymentRuleRepository,
 			paymentMethodStrategies,

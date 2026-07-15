@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	models0 "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,15 +43,15 @@ func (m *MockSystemPromptBuilderInterface) EXPECT() *MockSystemPromptBuilderInte
 }
 
 // Build mocks base method.
-func (m *MockSystemPromptBuilderInterface) Build(agent *models.Agent, guidance string, selfTools []*models0.Tool, mcpTools map[*models0.MCPConnection][]*models0.Tool, sessionContext string) string {
+func (m *MockSystemPromptBuilderInterface) Build(agent *models.Agent, addresses map[enums.AddressType]string, guidance string, selfTools []*models0.Tool, mcpTools map[*models0.MCPConnection][]*models0.Tool, sessionContext string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Build", agent, guidance, selfTools, mcpTools, sessionContext)
+	ret := m.ctrl.Call(m, "Build", agent, addresses, guidance, selfTools, mcpTools, sessionContext)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // Build indicates an expected call of Build.
-func (mr *MockSystemPromptBuilderInterfaceMockRecorder) Build(agent, guidance, selfTools, mcpTools, sessionContext any) *gomock.Call {
+func (mr *MockSystemPromptBuilderInterfaceMockRecorder) Build(agent, addresses, guidance, selfTools, mcpTools, sessionContext any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockSystemPromptBuilderInterface)(nil).Build), agent, guidance, selfTools, mcpTools, sessionContext)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockSystemPromptBuilderInterface)(nil).Build), agent, addresses, guidance, selfTools, mcpTools, sessionContext)
 }

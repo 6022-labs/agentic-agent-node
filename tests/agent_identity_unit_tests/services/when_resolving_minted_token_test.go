@@ -24,6 +24,7 @@ type WhenResolvingMintedTokenTestingSuite struct {
 	mockAgentMinter                      *interface_mocks.MockAgentMinterInterface
 	mockWalletCredentialsStorage         *interface_mocks.MockWalletCredentialsStorageInterface
 	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository           *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockRegistrationReconciler           *interface_mocks.MockRegistrationReconcilerInterface
 }
@@ -36,6 +37,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 	mockAgentMinter := interface_mocks.NewMockAgentMinterInterface(mockController)
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
@@ -45,6 +47,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 		mockAgentMinter,
 		mockWalletCredentialsStorage,
 		mockAgentRepository,
+		mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler,
 	)
@@ -56,6 +59,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 		mockAgentMinter:                      mockAgentMinter,
 		mockWalletCredentialsStorage:         mockWalletCredentialsStorage,
 		mockAgentRepository:                  mockAgentRepository,
+		mockAgentAddressRepository:           mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler:           mockRegistrationReconciler,
 	}

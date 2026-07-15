@@ -29,6 +29,18 @@ func (r *AgentAddressRepository) Upsert(ctx context.Context, address *models.Age
 		Create(address).Error
 }
 
+func (r *AgentAddressRepository) GetAllByAgentId(ctx context.Context, agentId uuid.UUID) (map[enums.AddressType]string, error) {
+	var rows []models.AgentAddress
+	if err := r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	addresses := make(map[enums.AddressType]string, len(rows))
+	for _, row := range rows {
+		addresses[row.Type] = row.Address
+	}
+	return addresses, nil
+}
+
 func (r *AgentAddressRepository) GetByAgentIdAndType(ctx context.Context, agentId uuid.UUID, addressType enums.AddressType) (*models.AgentAddress, error) {
 	var entity models.AgentAddress
 	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ? AND type = ?", agentId, addressType).Error

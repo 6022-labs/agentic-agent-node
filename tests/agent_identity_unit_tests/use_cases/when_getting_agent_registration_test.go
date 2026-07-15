@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
@@ -16,6 +17,7 @@ type WhenGettingAgentRegistrationTestingSuite struct {
 	sut *use_cases.GetAgentRegistration
 
 	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository           *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 }
 
@@ -23,13 +25,15 @@ func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegis
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 
-	sut := use_cases.NewGetAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository)
+	sut := use_cases.NewGetAgentRegistration(mockAgentRepository, mockAgentAddressRepository, mockAgentRegistrationStateRepository)
 
 	return &WhenGettingAgentRegistrationTestingSuite{
 		sut:                                  sut,
 		mockAgentRepository:                  mockAgentRepository,
+		mockAgentAddressRepository:           mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 	}
 }
@@ -45,6 +49,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 			state := model_builders.NewAgentRegistrationStateBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
 		}
 
 		t.Run("Should return the stored draft and status", func(t *testing.T) {

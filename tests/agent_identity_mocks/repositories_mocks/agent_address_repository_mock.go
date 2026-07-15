@@ -43,6 +43,21 @@ func (m *MockAgentAddressRepositoryInterface) EXPECT() *MockAgentAddressReposito
 	return m.recorder
 }
 
+// GetAllByAgentId mocks base method.
+func (m *MockAgentAddressRepositoryInterface) GetAllByAgentId(ctx context.Context, agentId uuid.UUID) (map[enums.AddressType]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllByAgentId", ctx, agentId)
+	ret0, _ := ret[0].(map[enums.AddressType]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllByAgentId indicates an expected call of GetAllByAgentId.
+func (mr *MockAgentAddressRepositoryInterfaceMockRecorder) GetAllByAgentId(ctx, agentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllByAgentId", reflect.TypeOf((*MockAgentAddressRepositoryInterface)(nil).GetAllByAgentId), ctx, agentId)
+}
+
 // GetByAgentIdAndType mocks base method.
 func (m *MockAgentAddressRepositoryInterface) GetByAgentIdAndType(ctx context.Context, agentId uuid.UUID, addressType enums.AddressType) (*models.AgentAddress, error) {
 	m.ctrl.T.Helper()

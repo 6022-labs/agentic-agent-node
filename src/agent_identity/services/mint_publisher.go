@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"maps"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -21,6 +20,7 @@ type MintPublisher struct {
 	agentMinter                      identity_interfaces.AgentMinterInterface
 	walletCredentialsStorage         identity_interfaces.WalletCredentialsStorageInterface
 	agentRepository                  repositories.AgentRepositoryInterface
+	agentAddressRepository           repositories.AgentAddressRepositoryInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	registrationReconciler           identity_interfaces.RegistrationReconcilerInterface
 }
@@ -31,6 +31,7 @@ func NewMintPublisher(
 	agentMinter identity_interfaces.AgentMinterInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	registrationReconciler identity_interfaces.RegistrationReconcilerInterface,
 ) *MintPublisher {
@@ -40,6 +41,7 @@ func NewMintPublisher(
 		agentMinter:                      agentMinter,
 		walletCredentialsStorage:         walletCredentialsStorage,
 		agentRepository:                  agentRepository,
+		agentAddressRepository:           agentAddressRepository,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		registrationReconciler:           registrationReconciler,
 	}
@@ -65,9 +67,9 @@ func (s *MintPublisher) SelfMint(
 		return nil, err
 	}
 
-	addressesByType := maps.Clone(agent.Addresses)
-	if addressesByType == nil {
-		addressesByType = map[enums.AddressType]string{}
+	addressesByType, err := s.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, fmt.Errorf("load agent addresses: %w", err)
 	}
 	// The Vault credential is the wallet used for control and reconcile, whatever agent_addresses holds.
 	addressesByType[enums.AddressTypeEvm] = cred.Address
