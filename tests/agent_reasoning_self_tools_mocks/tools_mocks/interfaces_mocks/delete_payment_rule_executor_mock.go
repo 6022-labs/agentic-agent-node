@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	uuid "github.com/google/uuid"
+	requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,15 +42,15 @@ func (m *MockDeletePaymentRuleExecutorInterface) EXPECT() *MockDeletePaymentRule
 }
 
 // Execute mocks base method.
-func (m *MockDeletePaymentRuleExecutorInterface) Execute(ctx context.Context, id uuid.UUID) error {
+func (m *MockDeletePaymentRuleExecutorInterface) Execute(ctx context.Context, request *requests.DeletePaymentRuleRequest) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", ctx, id)
+	ret := m.ctrl.Call(m, "Execute", ctx, request)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockDeletePaymentRuleExecutorInterfaceMockRecorder) Execute(ctx, id any) *gomock.Call {
+func (mr *MockDeletePaymentRuleExecutorInterfaceMockRecorder) Execute(ctx, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockDeletePaymentRuleExecutorInterface)(nil).Execute), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockDeletePaymentRuleExecutorInterface)(nil).Execute), ctx, request)
 }

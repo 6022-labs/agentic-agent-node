@@ -6,6 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services/images"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // pngMagic is the 8-byte PNG signature.
@@ -21,7 +22,8 @@ func TestWhenGeneratingIconImage(t *testing.T) {
 			t.Parallel()
 
 			imageGenerationSettings := &settings.ImageGenerationSettings{ImageMarkPath: nil}
-			sut := images.NewIconImageGenerator(imageGenerationSettings)
+			sut, err := images.NewIconImageGenerator(imageGenerationSettings)
+			require.NoError(t, err)
 
 			result, err := sut.Generate(sampleImageParams(t))
 

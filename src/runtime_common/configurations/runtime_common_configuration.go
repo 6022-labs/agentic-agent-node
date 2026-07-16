@@ -3,6 +3,8 @@ package configurations
 import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/services"
+	services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/use_cases"
 	"go.uber.org/dig"
@@ -35,6 +37,13 @@ func AddRuntimeCommonConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(use_cases.NewGetBlockchainConfig); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewEmojiDecoder,
+		dig.As(new(services_interfaces.EmojiDecoderInterface)),
+	); err != nil {
 		panic(err)
 	}
 }

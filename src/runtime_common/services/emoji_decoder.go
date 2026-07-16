@@ -1,4 +1,4 @@
-package utils
+package services
 
 import (
 	"sort"
@@ -7,11 +7,21 @@ import (
 	"github.com/kyokomi/emoji/v2"
 )
 
-var demojizeReplacer = buildDemojizeReplacer()
+// EmojiDecoder maps emoji glyphs to shortcodes so messages round-trip through
+// Slack/broker.
+type EmojiDecoder struct {
+	replacer *strings.Replacer
+}
+
+func NewEmojiDecoder() *EmojiDecoder {
+	decoder := &EmojiDecoder{}
+	decoder.replacer = decoder.buildDemojizeReplacer()
+	return decoder
+}
 
 // buildDemojizeReplacer builds a Replacer from kyokomi's reverse codemap.
 // Sort by glyph length desc so ZWJ-joined sequences beat their sub-glyphs.
-func buildDemojizeReplacer() *strings.Replacer {
+func (d *EmojiDecoder) buildDemojizeReplacer() *strings.Replacer {
 	revMap := emoji.RevCodeMap()
 
 	type pair struct {
@@ -40,8 +50,6 @@ func buildDemojizeReplacer() *strings.Replacer {
 	return strings.NewReplacer(flat...)
 }
 
-// DemojizeContent maps emoji glyphs to shortcodes (e.g. "🔄" →
-// ":arrows_counterclockwise:") so messages round-trip through Slack/broker.
-func DemojizeContent(content string) string {
-	return demojizeReplacer.Replace(content)
+func (d *EmojiDecoder) DemojizeContent(content string) string {
+	return d.replacer.Replace(content)
 }

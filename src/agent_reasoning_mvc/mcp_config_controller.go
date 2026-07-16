@@ -3,10 +3,8 @@ package agent_reasoning_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 const (
@@ -94,11 +92,11 @@ func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "get_mcp_connection_failed"
 // @Router /internal/config/mcp/{id} [get]
 func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
-	id, idErr := parseConnectionId(ctx)
-	if idErr != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
+	request := new(requests.GetMCPConnectionRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	resp, err := c.getMCPConnection.Execute(ctx.UserContext(), id)
+	resp, err := c.getMCPConnection.Execute(ctx.UserContext(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -118,15 +116,14 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "update_mcp_connection_failed"
 // @Router /internal/config/mcp/{id} [put]
 func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
-	id, idErr := parseConnectionId(ctx)
-	if idErr != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
+	request := new(requests.UpdateMCPConnectionRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	body := new(requests.SaveMCPConnectionRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.BodyParser(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updateMCPConnection.Execute(ctx.UserContext(), id, body)
+	resp, err := c.updateMCPConnection.Execute(ctx.UserContext(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -142,20 +139,12 @@ func (c *MCPConfigController) Update(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "delete_mcp_connection_failed"
 // @Router /internal/config/mcp/{id} [delete]
 func (c *MCPConfigController) Delete(ctx *fiber.Ctx) error {
-	id, idErr := parseConnectionId(ctx)
-	if idErr != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(idErr)
+	request := new(requests.DeleteMCPConnectionRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := c.deleteMCPConnection.Execute(ctx.UserContext(), id); err != nil {
+	if err := c.deleteMCPConnection.Execute(ctx.UserContext(), request); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
-}
-
-func parseConnectionId(ctx *fiber.Ctx) (uuid.UUID, *errors.ValidationError) {
-	parsed, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return uuid.Nil, errors.NewValidationError("id", "must be a valid uuid")
-	}
-	return parsed, nil
 }

@@ -13,6 +13,7 @@ import (
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	runtime_services_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -24,6 +25,7 @@ type WhenAppendingConversationMessagesTestingSuite struct {
 	mockRepository             *knowledge_mocks.MockConversationMessageRepositoryInterface
 	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
 	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockEmojiDecoder           *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
 func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
@@ -37,13 +39,16 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 	mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any()).AnyTimes()
 	mockKnowledgeMetrics.EXPECT().RecordMessageAppended(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
-	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository, mockKnowledgeMetrics)
+	mockEmojiDecoder := runtime_services_mocks.NewMockEmojiDecoderInterface(mockController)
+
+	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository, mockKnowledgeMetrics, mockEmojiDecoder)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:                        sut,
 		mockRepository:             mockRepository,
 		mockConversationRepository: mockConversationRepository,
 		mockAgentRepository:        mockAgentRepository,
+		mockEmojiDecoder:           mockEmojiDecoder,
 	}
 }
 
@@ -124,6 +129,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent("hi 🔥").Return("hi :fire:")
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent("hello").Return("hello")
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{}, nil)
@@ -168,6 +176,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content }).Times(2)
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{dupHash}, nil)
@@ -209,6 +219,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return([]string{dupHash}, nil)
@@ -234,6 +246,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
+
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
 				Return(nil, errors.New("db blew"))
@@ -257,6 +271,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
+
+			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
 
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).

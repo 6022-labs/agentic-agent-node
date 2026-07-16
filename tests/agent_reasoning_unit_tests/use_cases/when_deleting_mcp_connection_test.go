@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
@@ -58,7 +59,7 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 			suite := WhenDeletingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			err := suite.sut.Execute(context.Background(), &requests.DeleteMCPConnectionRequest{Id: id})
 
 			assert.NoError(t, err)
 		})
@@ -86,7 +87,7 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 			suite := WhenDeletingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			err := suite.sut.Execute(context.Background(), &requests.DeleteMCPConnectionRequest{Id: id})
 
 			assert.NoError(t, err)
 		})

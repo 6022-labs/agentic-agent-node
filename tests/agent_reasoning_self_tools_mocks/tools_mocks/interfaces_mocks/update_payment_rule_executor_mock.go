@@ -15,7 +15,6 @@ import (
 
 	requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	responses "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
-	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,16 +43,16 @@ func (m *MockUpdatePaymentRuleExecutorInterface) EXPECT() *MockUpdatePaymentRule
 }
 
 // Execute mocks base method.
-func (m *MockUpdatePaymentRuleExecutorInterface) Execute(ctx context.Context, id uuid.UUID, request *requests.SavePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
+func (m *MockUpdatePaymentRuleExecutorInterface) Execute(ctx context.Context, request *requests.UpdatePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", ctx, id, request)
+	ret := m.ctrl.Call(m, "Execute", ctx, request)
 	ret0, _ := ret[0].(*responses.PaymentRuleResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockUpdatePaymentRuleExecutorInterfaceMockRecorder) Execute(ctx, id, request any) *gomock.Call {
+func (mr *MockUpdatePaymentRuleExecutorInterfaceMockRecorder) Execute(ctx, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockUpdatePaymentRuleExecutorInterface)(nil).Execute), ctx, id, request)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockUpdatePaymentRuleExecutorInterface)(nil).Execute), ctx, request)
 }

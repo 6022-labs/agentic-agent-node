@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
+	runtime_services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -35,6 +36,7 @@ type ResponseDriver struct {
 	mcpRequester               interfaces.McpRequesterInterface
 	selfToolRegistry           interfaces.SelfToolRegistryInterface
 	reasoningTracer            traces_interfaces.ReasoningTracerInterface
+	emojiDecoder               runtime_services_interfaces.EmojiDecoderInterface
 }
 
 func NewResponseDriver(
@@ -50,6 +52,7 @@ func NewResponseDriver(
 	mcpRequester interfaces.McpRequesterInterface,
 	selfToolRegistry interfaces.SelfToolRegistryInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
+	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
 ) *ResponseDriver {
 	return &ResponseDriver{
 		logger:                     logger,
@@ -64,6 +67,7 @@ func NewResponseDriver(
 		mcpRequester:               mcpRequester,
 		selfToolRegistry:           selfToolRegistry,
 		reasoningTracer:            reasoningTracer,
+		emojiDecoder:               emojiDecoder,
 	}
 }
 
@@ -197,7 +201,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 ) ([]knowledge_interfaces.ConversationMessage, error) {
 	out := make([]knowledge_interfaces.ConversationMessage, 0, len(inputs))
 	for _, m := range inputs {
-		m.Content = utils.DemojizeContent(m.Content)
+		m.Content = d.emojiDecoder.DemojizeContent(m.Content)
 
 		hash, err := utils.ComputeConversationMessageHash(m.Role, m.Content, m.ToolCalls, m.ToolCallId, conversationId)
 		if err != nil {

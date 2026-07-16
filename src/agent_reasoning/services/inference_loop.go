@@ -14,7 +14,7 @@ import (
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	runtime_services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +28,7 @@ type InferenceLoop struct {
 	inferenceLoopSettings *settings.InferenceLoopSettings
 	reasoningMetrics      metrics_interfaces.ReasoningMetricsInterface
 	reasoningTracer       traces_interfaces.ReasoningTracerInterface
+	emojiDecoder          runtime_services_interfaces.EmojiDecoderInterface
 }
 
 func NewInferenceLoop(
@@ -38,6 +39,7 @@ func NewInferenceLoop(
 	inferenceLoopSettings *settings.InferenceLoopSettings,
 	reasoningMetrics metrics_interfaces.ReasoningMetricsInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
+	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
 ) *InferenceLoop {
 	return &InferenceLoop{
 		logger:                logger,
@@ -47,6 +49,7 @@ func NewInferenceLoop(
 		inferenceLoopSettings: inferenceLoopSettings,
 		reasoningMetrics:      reasoningMetrics,
 		reasoningTracer:       reasoningTracer,
+		emojiDecoder:          emojiDecoder,
 	}
 }
 
@@ -80,7 +83,7 @@ func (l *InferenceLoop) Run(
 				ToolCalls: completion.ToolCalls,
 			}
 			if assistantText != nil {
-				assistantMessage.Content = runtime_utils.DemojizeContent(*assistantText)
+				assistantMessage.Content = l.emojiDecoder.DemojizeContent(*assistantText)
 			}
 			messages = append(messages, assistantMessage)
 		}

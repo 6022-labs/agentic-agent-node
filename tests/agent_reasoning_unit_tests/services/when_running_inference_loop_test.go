@@ -16,6 +16,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	runtime_services_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -27,6 +28,7 @@ type WhenRunningInferenceLoopTestingSuite struct {
 	mockLLMExecutor      *interfaces_mocks.MockLLMExecutorInterface
 	mockMcpRequester     *interfaces_mocks.MockMcpRequesterInterface
 	mockSelfToolRegistry *interfaces_mocks.MockSelfToolRegistryInterface
+	mockEmojiDecoder     *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
 func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRunningInferenceLoopTestingSuite {
@@ -35,6 +37,7 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 	mockLLMExecutor := interfaces_mocks.NewMockLLMExecutorInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
 	mockSelfToolRegistry := interfaces_mocks.NewMockSelfToolRegistryInterface(mockController)
+	mockEmojiDecoder := runtime_services_mocks.NewMockEmojiDecoderInterface(mockController)
 
 	mockMetrics := metrics_interfaces_mocks.NewMockReasoningMetricsInterface(mockController)
 	mockMetrics.EXPECT().RecordLoopCompleted(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -59,6 +62,7 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 		&settings.InferenceLoopSettings{MaxIterations: maxIterations},
 		mockMetrics,
 		mockReasoningTracer,
+		mockEmojiDecoder,
 	)
 
 	return &WhenRunningInferenceLoopTestingSuite{
@@ -66,7 +70,14 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 		mockLLMExecutor:      mockLLMExecutor,
 		mockMcpRequester:     mockMcpRequester,
 		mockSelfToolRegistry: mockSelfToolRegistry,
+		mockEmojiDecoder:     mockEmojiDecoder,
 	}
+}
+
+func (suite *WhenRunningInferenceLoopTestingSuite) expectDemojizePassthrough() {
+	suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).
+		DoAndReturn(func(content string) string { return content }).
+		AnyTimes()
 }
 
 func TestWhenRunningInferenceLoop(t *testing.T) {
@@ -82,6 +93,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		expectedText := "final answer"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
@@ -111,6 +123,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{"preamble", "answer"}}, nil)
@@ -139,6 +152,9 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		emojiText := "🔄 status update"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(emojiText).
+				Return(":arrows_counterclockwise: status update")
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{emojiText}}, nil)
@@ -176,6 +192,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockMcpRequester.EXPECT().
 				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(toolResult, nil)
@@ -236,6 +253,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		expectedFinal := "done"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			// mockMcpRequester.CallTool is never expected — an MCP dispatch would fail the test.
 			suite.mockSelfToolRegistry.EXPECT().
 				CallTool(ctx, selfTool.Name, gomock.Nil()).
@@ -281,6 +299,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		expectedFinal := "understood"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
 				CallTool(ctx, selfTool.Name, gomock.Nil()).
 				Return(nil, apperrors.NewValidationError("content", "cannot be empty"))
@@ -327,6 +346,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		expectedFinal := "noted"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
 				CallTool(ctx, selfTool.Name, gomock.Nil()).
 				Return(nil, apperrors.NewInternalError("mcp_lookup_failed", "dial tcp 10.0.0.5:5432: connection refused"))
@@ -383,6 +403,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
 				CallTool(ctx, selfTool.Name, gomock.Nil()).
 				Return(map[string]any{"name": "agent-x"}, nil)
@@ -440,6 +461,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockMcpRequester.EXPECT().
 				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil)
@@ -492,6 +514,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		expectedFinal := "done"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
@@ -534,6 +557,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		finalText := "done"
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			first := suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
@@ -574,6 +598,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{}, nil)
@@ -605,6 +630,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockMcpRequester.EXPECT().
 				CallTool(gomock.Any(), mcpConnection, mcpTool, toolArgs).
 				Return(map[string]any{"status": "ok"}, nil).
@@ -645,6 +671,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			firstCall := suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
@@ -684,6 +711,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(nil, errors.New("upstream broke"))
@@ -718,6 +746,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {mcpTool}}
 
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
 			firstCall := suite.mockLLMExecutor.EXPECT().
 				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{

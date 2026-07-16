@@ -6,8 +6,8 @@ import (
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/google/uuid"
 )
 
 type DeleteMCPConnection struct {
@@ -30,12 +30,12 @@ func NewDeleteMCPConnection(
 
 // Execute clears all header secrets from Vault first (the row knows their
 // keys), then drops the row itself. No-op if the id doesn't exist.
-func (u *DeleteMCPConnection) Execute(ctx context.Context, id uuid.UUID) error {
+func (u *DeleteMCPConnection) Execute(ctx context.Context, request *requests.DeleteMCPConnectionRequest) error {
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return err
 	}
-	existing, err := u.repository.GetById(ctx, agent.Id, id)
+	existing, err := u.repository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
 		return errors.NewInternalError("delete_failed", err.Error())
 	}

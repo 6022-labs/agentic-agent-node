@@ -5,7 +5,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 const InternalPaymentRulesEndpoint = "/internal/config/payment-policy/rules"
@@ -88,15 +87,14 @@ func (c *PaymentRuleController) Create(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "update_payment_rule_failed"
 // @Router /internal/config/payment-policy/rules/{id} [put]
 func (c *PaymentRuleController) Update(ctx *fiber.Ctx) error {
-	id, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_id", "message": err.Error()})
+	request := new(requests.UpdatePaymentRuleRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	body := new(requests.SavePaymentRuleRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.BodyParser(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updatePaymentRule.Execute(ctx.UserContext(), id, body)
+	resp, err := c.updatePaymentRule.Execute(ctx.UserContext(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -112,11 +110,11 @@ func (c *PaymentRuleController) Update(ctx *fiber.Ctx) error {
 // @Failure 500 {object} fiber.Map "delete_payment_rule_failed"
 // @Router /internal/config/payment-policy/rules/{id} [delete]
 func (c *PaymentRuleController) Delete(ctx *fiber.Ctx) error {
-	id, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_id", "message": err.Error()})
+	request := new(requests.DeletePaymentRuleRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := c.deletePaymentRule.Execute(ctx.UserContext(), id); err != nil {
+	if err := c.deletePaymentRule.Execute(ctx.UserContext(), request); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

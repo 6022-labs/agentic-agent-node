@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	reasoning_requests "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
@@ -31,7 +32,7 @@ func (t *DeleteMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 	if err != nil {
 		return nil, err
 	}
-	if err := t.deleteMCPConnectionExecutor.Execute(ctx, id); err != nil {
+	if err := t.deleteMCPConnectionExecutor.Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}); err != nil {
 		return nil, err
 	}
 	return utils.SuccessResult(), nil

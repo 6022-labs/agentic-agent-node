@@ -19,17 +19,17 @@ const (
 // gen_ai.conversation.id without threading it through every call.
 type conversationIdKey struct{}
 
-func conversationIdFromContext(ctx context.Context) string {
-	id, _ := ctx.Value(conversationIdKey{}).(string)
-	return id
-}
-
 func NewReasoningTracer() *ReasoningTracer {
 	return &ReasoningTracer{tracer: otel.Tracer(tracerName)}
 }
 
 type ReasoningTracer struct {
 	tracer trace.Tracer
+}
+
+func (t *ReasoningTracer) conversationIdFromContext(ctx context.Context) string {
+	id, _ := ctx.Value(conversationIdKey{}).(string)
+	return id
 }
 
 func (t *ReasoningTracer) StartInference(ctx context.Context, conversationId, requestModel string) (context.Context, interfaces.Span) {
@@ -54,7 +54,7 @@ func (t *ReasoningTracer) StartChatCompletion(ctx context.Context, provider, mod
 		attribute.String("gen_ai.provider.name", provider),
 		attribute.String("gen_ai.request.model", model),
 	)
-	if conversationId := conversationIdFromContext(ctx); conversationId != "" {
+	if conversationId := t.conversationIdFromContext(ctx); conversationId != "" {
 		span.SetAttributes(attribute.String("gen_ai.conversation.id", conversationId))
 	}
 	return ctx, &chatCompletionSpan{otelSpan{span: span}}
@@ -73,7 +73,7 @@ func (t *ReasoningTracer) StartToolCall(ctx context.Context, toolName, toolCallI
 	if serverName != "" {
 		span.SetAttributes(attribute.String("mcp.server.name", serverName))
 	}
-	if conversationId := conversationIdFromContext(ctx); conversationId != "" {
+	if conversationId := t.conversationIdFromContext(ctx); conversationId != "" {
 		span.SetAttributes(attribute.String("gen_ai.conversation.id", conversationId))
 	}
 	return ctx, &otelSpan{span: span}

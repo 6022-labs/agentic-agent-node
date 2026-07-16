@@ -3,15 +3,13 @@ package requests
 import (
 	"encoding/json"
 	"mime/multipart"
-	"regexp"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
 const maxImageBytes = 5 * 1024 * 1024
-
-var ethAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
 
 // SaveAgentRegistrationRequest is the multipart draft the connected wallet
 // submits. Owner is injected by the gateway, not accepted here. Image is the
@@ -36,7 +34,7 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 	}
 
 	r.CollectionAddress = strings.TrimSpace(r.CollectionAddress)
-	if !ethAddressPattern.MatchString(r.CollectionAddress) {
+	if !helpers.IsEthAddress(r.CollectionAddress) {
 		return errors.NewValidationError("collectionAddress", "must be a 0x-prefixed 20-byte hex address")
 	}
 

@@ -2,6 +2,8 @@ package tools
 
 import (
 	"context"
+
+	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
@@ -9,11 +11,15 @@ import (
 
 // UpdatePaymentRuleTool exposes the UpdatePaymentRule use case as a built-in self tool.
 type UpdatePaymentRuleTool struct {
+	*AbstractPaymentRuleTool
 	updatePaymentRuleExecutor tool_interfaces.UpdatePaymentRuleExecutorInterface
 }
 
 func NewUpdatePaymentRuleTool(updatePaymentRuleExecutor tool_interfaces.UpdatePaymentRuleExecutorInterface) *UpdatePaymentRuleTool {
-	return &UpdatePaymentRuleTool{updatePaymentRuleExecutor: updatePaymentRuleExecutor}
+	return &UpdatePaymentRuleTool{
+		AbstractPaymentRuleTool:   NewAbstractPaymentRuleTool(),
+		updatePaymentRuleExecutor: updatePaymentRuleExecutor,
+	}
 }
 
 func (t *UpdatePaymentRuleTool) Definition() *models.Tool {
@@ -35,9 +41,14 @@ func (t *UpdatePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 	if err != nil {
 		return nil, err
 	}
-	request, err := savePaymentRuleRequestFromArgs(args)
+	saveRequest, err := t.savePaymentRuleRequestFromArgs(args)
 	if err != nil {
 		return nil, err
 	}
-	return utils.ToToolResult(t.updatePaymentRuleExecutor.Execute(ctx, id, request))
+	request := &payment_requests.UpdatePaymentRuleRequest{
+		Id:                     id,
+		SavePaymentRuleRequest: *saveRequest,
+	}
+
+	return utils.ToToolResult(t.updatePaymentRuleExecutor.Execute(ctx, request))
 }

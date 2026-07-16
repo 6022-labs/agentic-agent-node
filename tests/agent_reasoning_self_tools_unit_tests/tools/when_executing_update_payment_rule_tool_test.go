@@ -55,8 +55,9 @@ func TestWhenExecutingUpdatePaymentRuleTool(t *testing.T) {
 
 			suite := WhenExecutingUpdatePaymentRuleToolBeforeEach(t)
 			suite.mockUpdatePaymentRuleExecutor.EXPECT().
-				Execute(ctx, id, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ uuid.UUID, request *payment_requests.SavePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(_ context.Context, request *payment_requests.UpdatePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
+					assert.Equal(t, id, request.Id)
 					assert.Equal(t, "premium", request.Name)
 					assert.Equal(t, "2000", request.Price)
 					assert.Equal(t, "x402", request.Method)
@@ -95,7 +96,7 @@ func TestWhenExecutingUpdatePaymentRuleTool(t *testing.T) {
 
 			suite := WhenExecutingUpdatePaymentRuleToolBeforeEach(t)
 			suite.mockUpdatePaymentRuleExecutor.EXPECT().
-				Execute(ctx, id, gomock.Any()).
+				Execute(ctx, gomock.Any()).
 				Return(nil, errors.New("rule not found"))
 
 			out, err := suite.sut.Execute(ctx, ruleArgs())

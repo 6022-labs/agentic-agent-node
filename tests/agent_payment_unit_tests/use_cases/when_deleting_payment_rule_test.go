@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -51,7 +52,7 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 			suite := WhenDeletingPaymentRuleBeforeEach(t)
 			id := initSuite(suite)
 
-			assert.NoError(t, suite.sut.Execute(context.Background(), *id))
+			assert.NoError(t, suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: *id}))
 		})
 	})
 
@@ -68,7 +69,7 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 			suite := WhenDeletingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), uuid.New())
+			err := suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: uuid.New()})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)

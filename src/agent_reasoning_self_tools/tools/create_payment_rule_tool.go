@@ -5,17 +5,20 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 
-	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 )
 
 // CreatePaymentRuleTool exposes the CreatePaymentRule use case as a built-in self tool.
 type CreatePaymentRuleTool struct {
+	*AbstractPaymentRuleTool
 	createPaymentRuleExecutor tool_interfaces.CreatePaymentRuleExecutorInterface
 }
 
 func NewCreatePaymentRuleTool(createPaymentRuleExecutor tool_interfaces.CreatePaymentRuleExecutorInterface) *CreatePaymentRuleTool {
-	return &CreatePaymentRuleTool{createPaymentRuleExecutor: createPaymentRuleExecutor}
+	return &CreatePaymentRuleTool{
+		AbstractPaymentRuleTool:   NewAbstractPaymentRuleTool(),
+		createPaymentRuleExecutor: createPaymentRuleExecutor,
+	}
 }
 
 func (t *CreatePaymentRuleTool) Definition() *models.Tool {
@@ -32,30 +35,9 @@ func (t *CreatePaymentRuleTool) Definition() *models.Tool {
 }
 
 func (t *CreatePaymentRuleTool) Execute(ctx context.Context, args map[string]any) (map[string]any, error) {
-	request, err := savePaymentRuleRequestFromArgs(args)
+	request, err := t.savePaymentRuleRequestFromArgs(args)
 	if err != nil {
 		return nil, err
 	}
 	return utils.ToToolResult(t.createPaymentRuleExecutor.Execute(ctx, request))
-}
-
-func savePaymentRuleRequestFromArgs(args map[string]any) (*payment_requests.SavePaymentRuleRequest, error) {
-	name, err := utils.StringArg(args, "name")
-	if err != nil {
-		return nil, err
-	}
-	price, err := utils.StringArg(args, "price")
-	if err != nil {
-		return nil, err
-	}
-	config, err := utils.RawJsonObjectArg(args, "config")
-	if err != nil {
-		return nil, err
-	}
-	return &payment_requests.SavePaymentRuleRequest{
-		Name:   name,
-		Price:  price,
-		Method: utils.OptionalStringArg(args, "method"),
-		Config: config,
-	}, nil
 }

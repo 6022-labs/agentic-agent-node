@@ -8,6 +8,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
 const maxImageBytes = 5 * 1024 * 1024
@@ -39,12 +40,12 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 	}
 
 	r.CollectionAddress = strings.TrimSpace(r.CollectionAddress)
-	if !ethAddressPattern.MatchString(r.CollectionAddress) {
+	if !helpers.IsEthAddress(r.CollectionAddress) {
 		return errors.NewValidationError("collectionAddress", "must be a 0x-prefixed 20-byte hex address")
 	}
 
 	r.Owner = strings.TrimSpace(r.Owner)
-	if !ethAddressPattern.MatchString(r.Owner) {
+	if !helpers.IsEthAddress(r.Owner) {
 		return errors.NewValidationError("owner", "must be a 0x-prefixed 20-byte hex address")
 	}
 

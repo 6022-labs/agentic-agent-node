@@ -92,11 +92,14 @@ func (c *PaymentRuleController) Create(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/payment-policy/rules/{id} [put]
 func (c *PaymentRuleController) Update(ctx *fiber.Ctx) error {
-	body := new(requests.SavePaymentRuleRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	request := new(requests.UpdatePaymentRuleRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+	}
+	if err := ctx.BodyParser(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updatePaymentRule.Execute(ctx.UserContext(), ctx.Params("id"), body)
+	resp, err := c.updatePaymentRule.Execute(ctx.UserContext(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -108,12 +111,17 @@ func (c *PaymentRuleController) Update(ctx *fiber.Ctx) error {
 // @Tags Config
 // @Param id path string true "rule id"
 // @Success 204 ""
+// @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-policy/rules/{id} [delete]
 func (c *PaymentRuleController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deletePaymentRule.Execute(ctx.UserContext(), ctx.Params("id")); err != nil {
+	request := new(requests.DeletePaymentRuleRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+	}
+	if err := c.deletePaymentRule.Execute(ctx.UserContext(), request); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

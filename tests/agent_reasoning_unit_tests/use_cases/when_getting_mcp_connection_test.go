@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
@@ -59,7 +60,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), id)
+			_, err := suite.sut.Execute(context.Background(), &requests.GetMCPConnectionRequest{Id: id})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
@@ -90,7 +91,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), id)
+			resp, err := suite.sut.Execute(context.Background(), &requests.GetMCPConnectionRequest{Id: id})
 
 			assert.NoError(t, err)
 			assert.Equal(t, id, resp.Id)
@@ -118,7 +119,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite := WhenGettingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), id)
+			resp, err := suite.sut.Execute(context.Background(), &requests.GetMCPConnectionRequest{Id: id})
 
 			assert.NoError(t, err)
 			assert.Equal(t, id, resp.Id)

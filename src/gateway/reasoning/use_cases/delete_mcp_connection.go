@@ -5,7 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
-	"github.com/google/uuid"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 )
 
 type DeleteMcpConnection struct {
@@ -16,8 +16,8 @@ func NewDeleteMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 	return &DeleteMcpConnection{client: client}
 }
 
-func (u *DeleteMcpConnection) Execute(ctx context.Context, id uuid.UUID) error {
-	if err := u.client.Delete(ctx, id); err != nil {
+func (u *DeleteMcpConnection) Execute(ctx context.Context, request *requests.DeleteMcpConnectionRequest) error {
+	if err := u.client.Delete(ctx, request.Id); err != nil {
 		return errors.NewUnavailableError("runtime_unavailable", err.Error())
 	}
 	return nil

@@ -1,12 +1,10 @@
 package reasoning
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 const (
@@ -90,11 +88,11 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /config/mcp-connections/{id} [delete]
 func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
-	id, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("id", "must be a valid uuid"))
+	request := new(requests.DeleteMcpConnectionRequest)
+	if err := ctx.ParamsParser(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := c.deleteMcpConnection.Execute(ctx.UserContext(), id); err != nil {
+	if err := c.deleteMcpConnection.Execute(ctx.UserContext(), request); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

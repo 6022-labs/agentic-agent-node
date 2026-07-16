@@ -6,9 +6,9 @@ import (
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/google/uuid"
 )
 
 type GetMCPConnection struct {
@@ -30,12 +30,12 @@ func NewGetMCPConnection(
 }
 
 // Execute returns the connection with HeaderAuth hydrated from Vault.
-func (u *GetMCPConnection) Execute(ctx context.Context, id uuid.UUID) (*responses.MCPConnectionResponse, error) {
+func (u *GetMCPConnection) Execute(ctx context.Context, request *requests.GetMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return nil, err
 	}
-	connection, err := u.repository.GetById(ctx, agent.Id, id)
+	connection, err := u.repository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("get_failed", err.Error())
 	}

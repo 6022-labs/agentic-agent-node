@@ -34,19 +34,23 @@ const (
 	iconInnerRadius = 16
 )
 
-// Bold so the icon's text matches the heavier weight the browser gives the SVG card.
-var goMonoFont, _ = opentype.Parse(gomonobold.TTF)
-
 type IconImageGenerator struct {
 	*AbstractImageGenerator
 	imageGenerationSettings *settings.ImageGenerationSettings
+	// goMonoFont is bold so the icon's text matches the heavier weight the browser gives the SVG card.
+	goMonoFont *opentype.Font
 }
 
-func NewIconImageGenerator(imageGenerationSettings *settings.ImageGenerationSettings) *IconImageGenerator {
+func NewIconImageGenerator(imageGenerationSettings *settings.ImageGenerationSettings) (*IconImageGenerator, error) {
+	goMonoFont, err := opentype.Parse(gomonobold.TTF)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse gomono font: %w", err)
+	}
 	return &IconImageGenerator{
 		AbstractImageGenerator:  NewAbstractImageGenerator(),
 		imageGenerationSettings: imageGenerationSettings,
-	}
+		goMonoFont:              goMonoFont,
+	}, nil
 }
 
 func (g *IconImageGenerator) Generate(params identity_interfaces.GenerateImageParams) ([]byte, error) {
@@ -82,7 +86,7 @@ func (g *IconImageGenerator) Generate(params identity_interfaces.GenerateImagePa
 
 func (g *IconImageGenerator) mustFace(points float64) font.Face {
 	// DPI 72 makes 1pt == 1px, matching the SVG font-size units.
-	face, err := opentype.NewFace(goMonoFont, &opentype.FaceOptions{Size: points, DPI: 72, Hinting: font.HintingFull})
+	face, err := opentype.NewFace(g.goMonoFont, &opentype.FaceOptions{Size: points, DPI: 72, Hinting: font.HintingFull})
 	if err != nil {
 		panic(fmt.Sprintf("failed to build gomono face: %v", err))
 	}

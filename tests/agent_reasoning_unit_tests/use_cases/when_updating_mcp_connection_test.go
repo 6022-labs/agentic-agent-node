@@ -54,7 +54,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), uuid.New(), &requests.SaveMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateMCPConnectionRequest{Id: uuid.New(), SaveMCPConnectionRequest: requests.SaveMCPConnectionRequest{Url: "https://my.mcp.com/v1"}})
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -76,7 +76,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{Name: "x", Url: "https://x"})
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateMCPConnectionRequest{Id: id, SaveMCPConnectionRequest: requests.SaveMCPConnectionRequest{Name: "x", Url: "https://x"}})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
@@ -115,11 +115,11 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{
+			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateMCPConnectionRequest{Id: id, SaveMCPConnectionRequest: requests.SaveMCPConnectionRequest{
 				Name:       "new-name",
 				Url:        "https://new",
 				HeaderAuth: map[string]string{"Authorization": "Bearer new"},
-			})
+			}})
 
 			assert.NoError(t, err)
 			assert.Equal(t, id, resp.Id)
@@ -144,7 +144,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), id, &requests.SaveMCPConnectionRequest{Name: "taken", Url: "https://x"})
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateMCPConnectionRequest{Id: id, SaveMCPConnectionRequest: requests.SaveMCPConnectionRequest{Name: "taken", Url: "https://x"}})
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)

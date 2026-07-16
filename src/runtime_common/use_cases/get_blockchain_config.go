@@ -45,10 +45,10 @@ func (u *GetBlockchainConfig) Execute(_ context.Context) (*responses.BlockchainC
 	for _, chainId := range chainIds {
 		creator, hasCreator := u.agentCollectionCreatorsSettings.AddressFor(chainId)
 		evmChains[chainId] = responses.EvmChainConfig{
-			CollectionsManagerAddress: hexOrEmpty(u.agentCollectionsManagersSettings.AddressFor(chainId)),
-			CollectionCreatorAddress:  hexOrEmpty(creator, hasCreator),
-			Token6022Address:          hexOrEmpty(u.token6022Settings.AddressFor(chainId)),
-			EnsRegistryAddress:        hexOrEmpty(u.agentEnsRegistriesSettings.AddressFor(chainId)),
+			CollectionsManagerAddress: u.hexOrEmpty(u.agentCollectionsManagersSettings.AddressFor(chainId)),
+			CollectionCreatorAddress:  u.hexOrEmpty(creator, hasCreator),
+			Token6022Address:          u.hexOrEmpty(u.token6022Settings.AddressFor(chainId)),
+			EnsRegistryAddress:        u.hexOrEmpty(u.agentEnsRegistriesSettings.AddressFor(chainId)),
 			Mintable:                  hasCreator,
 			FacilitatorNetwork:        u.facilitatorNetwork(chainId),
 		}
@@ -72,7 +72,7 @@ func (u *GetBlockchainConfig) facilitatorNetwork(chainId string) *string {
 }
 
 // hexOrEmpty renders an address as hex, or "" when it isn't configured.
-func hexOrEmpty(address common.Address, ok bool) string {
+func (u *GetBlockchainConfig) hexOrEmpty(address common.Address, ok bool) string {
 	if !ok {
 		return ""
 	}

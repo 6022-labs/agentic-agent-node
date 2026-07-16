@@ -11,7 +11,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
-	"github.com/google/uuid"
 )
 
 type UpdatePaymentRule struct {
@@ -38,7 +37,7 @@ func NewUpdatePaymentRule(
 
 // Execute replaces the rule's fields; identity, position and policy binding are
 // preserved.
-func (u *UpdatePaymentRule) Execute(ctx context.Context, id uuid.UUID, request *requests.SavePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
+func (u *UpdatePaymentRule) Execute(ctx context.Context, request *requests.UpdatePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -46,11 +45,11 @@ func (u *UpdatePaymentRule) Execute(ctx context.Context, id uuid.UUID, request *
 	if !ok {
 		return nil, errors.NewValidationError("method", "unsupported payment method")
 	}
-	if err := strategy.Validate(ctx, request); err != nil {
+	if err := strategy.Validate(ctx, &request.SavePaymentRuleRequest); err != nil {
 		return nil, err
 	}
 
-	rule, err := u.paymentRuleRepository.GetById(ctx, id)
+	rule, err := u.paymentRuleRepository.GetById(ctx, request.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}

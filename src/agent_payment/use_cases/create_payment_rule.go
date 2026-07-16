@@ -53,7 +53,7 @@ func (u *CreatePaymentRule) Execute(ctx context.Context, request *requests.SaveP
 		return nil, err
 	}
 
-	rule, err := u.paymentRuleRepository.Create(ctx, toPaymentRule(policy, request))
+	rule, err := u.paymentRuleRepository.Create(ctx, u.toPaymentRule(policy, request))
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
@@ -66,7 +66,7 @@ func (u *CreatePaymentRule) Execute(ctx context.Context, request *requests.SaveP
 	return responses.ToPaymentRuleResponse(rule, request.Config), nil
 }
 
-func toPaymentRule(policy *models.PaymentPolicy, request *requests.SavePaymentRuleRequest) *models.PaymentRule {
+func (u *CreatePaymentRule) toPaymentRule(policy *models.PaymentPolicy, request *requests.SavePaymentRuleRequest) *models.PaymentRule {
 	return &models.PaymentRule{
 		PolicyId: policy.Id,
 		Name:     request.Name,

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +49,7 @@ func TestWhenDeletingMcpConnection(t *testing.T) {
 			suite := WhenDeletingMcpConnectionBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), id)
+			err := suite.sut.Execute(context.Background(), &requests.DeleteMcpConnectionRequest{Id: id})
 
 			assert.NoError(t, err)
 		})

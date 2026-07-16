@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -32,11 +34,13 @@ func WhenDeletingPaymentRuleBeforeEach(t *testing.T) *WhenDeletingPaymentRuleTes
 func TestWhenDeletingPaymentRule(t *testing.T) {
 	t.Parallel()
 
+	ruleId := uuid.New()
+
 	t.Run("Given the rule is deleted", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().Delete(gomock.Any(), "rule-id").Return(nil).Times(1)
+			suite.mockPaymentRuleClient.EXPECT().Delete(gomock.Any(), ruleId.String()).Return(nil).Times(1)
 		}
 
 		t.Run("Should delete without error", func(t *testing.T) {
@@ -45,7 +49,7 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 			suite := WhenDeletingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			assert.NoError(t, suite.sut.Execute(context.Background(), "rule-id"))
+			assert.NoError(t, suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: ruleId}))
 		})
 	})
 
@@ -53,7 +57,7 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().Delete(gomock.Any(), "rule-id").Return(errors.New("runtime down")).Times(1)
+			suite.mockPaymentRuleClient.EXPECT().Delete(gomock.Any(), ruleId.String()).Return(errors.New("runtime down")).Times(1)
 		}
 
 		t.Run("Should pass the error through", func(t *testing.T) {
@@ -62,7 +66,7 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 			suite := WhenDeletingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			assert.Error(t, suite.sut.Execute(context.Background(), "rule-id"))
+			assert.Error(t, suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: ruleId}))
 		})
 	})
 }

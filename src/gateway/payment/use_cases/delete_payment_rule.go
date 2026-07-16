@@ -4,6 +4,7 @@ import (
 	"context"
 
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/requests"
 )
 
 type DeletePaymentRule struct {
@@ -14,6 +15,6 @@ func NewDeletePaymentRule(paymentRuleClient gateway_interfaces.PaymentRuleClient
 	return &DeletePaymentRule{paymentRuleClient: paymentRuleClient}
 }
 
-func (u *DeletePaymentRule) Execute(ctx context.Context, id string) error {
-	return u.paymentRuleClient.Delete(ctx, id)
+func (u *DeletePaymentRule) Execute(ctx context.Context, request *requests.DeletePaymentRuleRequest) error {
+	return u.paymentRuleClient.Delete(ctx, request.Id.String())
 }

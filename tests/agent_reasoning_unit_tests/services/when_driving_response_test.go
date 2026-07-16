@@ -17,6 +17,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	traces_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/traces_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	runtime_services_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -35,6 +36,7 @@ type WhenDrivingResponseTestingSuite struct {
 	mockSystemPromptBuilder        *interfaces_mocks.MockSystemPromptBuilderInterface
 	mockMcpRequester               *interfaces_mocks.MockMcpRequesterInterface
 	mockSelfToolRegistry           *interfaces_mocks.MockSelfToolRegistryInterface
+	mockEmojiDecoder               *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
 // WhenDrivingResponseBeforeEach registers selfTools as the registry content (none by default).
@@ -42,6 +44,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 	mockController := gomock.NewController(t)
 
 	mockInferenceLoop := interfaces_mocks.NewMockInferenceLoopInterface(mockController)
+	mockEmojiDecoder := runtime_services_mocks.NewMockEmojiDecoderInterface(mockController)
 	mockMCPRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockLLMConnectionRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockAgentGuidanceRepository := repositories_mocks.NewMockAgentGuidanceRepositoryInterface(mockController)
@@ -77,6 +80,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 		mockMcpRequester,
 		mockSelfToolRegistry,
 		mockReasoningTracer,
+		mockEmojiDecoder,
 	)
 
 	return &WhenDrivingResponseTestingSuite{
@@ -91,7 +95,14 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 		mockSystemPromptBuilder:        mockSystemPromptBuilder,
 		mockMcpRequester:               mockMcpRequester,
 		mockSelfToolRegistry:           mockSelfToolRegistry,
+		mockEmojiDecoder:               mockEmojiDecoder,
 	}
+}
+
+func (suite *WhenDrivingResponseTestingSuite) expectDemojizePassthrough() {
+	suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).
+		DoAndReturn(func(content string) string { return content }).
+		AnyTimes()
 }
 
 func TestWhenDrivingResponse(t *testing.T) {
@@ -110,6 +121,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "hi there"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -165,6 +177,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -220,6 +233,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -269,6 +283,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -352,6 +367,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		finalText := "recovered"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -398,6 +414,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		freshInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "follow-up"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
@@ -448,6 +465,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
@@ -494,11 +512,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		// Sanity: the hash of the demojized input matches the stored one.
 		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Content, stored.ToolCalls, stored.ToolCallId, conversationId)
-		demojized := utils.DemojizeContent(emojiInput.Content)
-		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, demojized, emojiInput.ToolCalls, emojiInput.ToolCallId, conversationId)
+		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, "hi :fire:", emojiInput.ToolCalls, emojiInput.ToolCallId, conversationId)
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(emojiInput.Content).
+				Return("hi :fire:")
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
@@ -549,6 +569,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "ok"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -614,6 +635,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		selfTool := &models.Tool{Name: "get_identity", Description: "read own identity"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -663,6 +685,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -702,6 +725,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -739,6 +763,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -783,6 +808,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		connB := *model_builders.NewMCPConnectionBuilder().WithName("beta").Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -839,6 +865,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return(nil, errors.New("db down"))
@@ -861,6 +888,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
@@ -882,6 +910,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
@@ -909,6 +938,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -939,6 +969,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -972,6 +1003,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		connB := *model_builders.NewMCPConnectionBuilder().WithName("beta").Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -1006,6 +1038,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
@@ -1038,6 +1071,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)

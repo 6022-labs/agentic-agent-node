@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
@@ -31,7 +32,7 @@ func (t *DeletePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 	if err != nil {
 		return nil, err
 	}
-	if err := t.deletePaymentRuleExecutor.Execute(ctx, id); err != nil {
+	if err := t.deletePaymentRuleExecutor.Execute(ctx, &payment_requests.DeletePaymentRuleRequest{Id: id}); err != nil {
 		return nil, err
 	}
 	return utils.SuccessResult(), nil

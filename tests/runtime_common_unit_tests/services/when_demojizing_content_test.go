@@ -1,9 +1,9 @@
-package utils_test
+package services_test
 
 import (
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 		t.Run("Should return the content unchanged", func(t *testing.T) {
 			t.Parallel()
 
-			result := utils.DemojizeContent("plain text without emoji")
+			result := services.NewEmojiDecoder().DemojizeContent("plain text without emoji")
 
 			assert.Equal(t, "plain text without emoji", result)
 		})
@@ -28,7 +28,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 		t.Run("Should return an empty string", func(t *testing.T) {
 			t.Parallel()
 
-			result := utils.DemojizeContent("")
+			result := services.NewEmojiDecoder().DemojizeContent("")
 
 			assert.Equal(t, "", result)
 		})
@@ -75,7 +75,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 			t.Run("Should decode "+tc.name, func(t *testing.T) {
 				t.Parallel()
 
-				result := utils.DemojizeContent(tc.input)
+				result := services.NewEmojiDecoder().DemojizeContent(tc.input)
 
 				assert.Equal(t, tc.expected, result)
 			})
@@ -88,7 +88,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 		t.Run("Should decode every occurrence", func(t *testing.T) {
 			t.Parallel()
 
-			result := utils.DemojizeContent("🔥🔥 deploy ✅")
+			result := services.NewEmojiDecoder().DemojizeContent("🔥🔥 deploy ✅")
 
 			assert.Equal(t, ":fire::fire: deploy :white_check_mark:", result)
 		})
@@ -102,7 +102,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 
 			input := "alarm :rotating_light: triggered"
 
-			result := utils.DemojizeContent(input)
+			result := services.NewEmojiDecoder().DemojizeContent(input)
 
 			assert.Equal(t, input, result)
 		})
@@ -114,8 +114,8 @@ func TestWhenDemojizingContent(t *testing.T) {
 		t.Run("Should be idempotent (decoding shortcodes is a no-op)", func(t *testing.T) {
 			t.Parallel()
 
-			once := utils.DemojizeContent("status 🔥 shipping")
-			twice := utils.DemojizeContent(once)
+			once := services.NewEmojiDecoder().DemojizeContent("status 🔥 shipping")
+			twice := services.NewEmojiDecoder().DemojizeContent(once)
 
 			assert.Equal(t, once, twice)
 		})
@@ -127,7 +127,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 		t.Run("Should leave the text untouched", func(t *testing.T) {
 			t.Parallel()
 
-			result := utils.DemojizeContent("regular ascii ~ stays")
+			result := services.NewEmojiDecoder().DemojizeContent("regular ascii ~ stays")
 
 			assert.Equal(t, "regular ascii ~ stays", result)
 		})

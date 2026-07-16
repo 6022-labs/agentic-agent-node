@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	reasoning_requests "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/tools_mocks/interfaces_mocks"
 	"github.com/google/uuid"
@@ -43,7 +44,7 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
-			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, id).Return(nil)
+			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).Return(nil)
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 
@@ -76,7 +77,7 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
-			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, id).Return(errors.New("not found"))
+			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).Return(errors.New("not found"))
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 

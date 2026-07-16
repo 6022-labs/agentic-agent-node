@@ -10,7 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_utils "github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
+	runtime_services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/samber/lo"
 )
 
@@ -22,6 +22,7 @@ type MessageAppender struct {
 	conversationRepository        repositories.ConversationRepositoryInterface
 	agentRepository               identity_repositories.AgentRepositoryInterface
 	knowledgeMetrics              metrics_interfaces.KnowledgeMetricsInterface
+	emojiDecoder                  runtime_services_interfaces.EmojiDecoderInterface
 }
 
 func NewMessageAppender(
@@ -29,12 +30,14 @@ func NewMessageAppender(
 	conversationRepository repositories.ConversationRepositoryInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
+	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
 ) *MessageAppender {
 	return &MessageAppender{
 		conversationMessageRepository: conversationMessageRepository,
 		conversationRepository:        conversationRepository,
 		agentRepository:               agentRepository,
 		knowledgeMetrics:              knowledgeMetrics,
+		emojiDecoder:                  emojiDecoder,
 	}
 }
 
@@ -73,7 +76,7 @@ func (s *MessageAppender) Append(ctx context.Context, conversationId string, mes
 	hashes := make([]string, 0, len(messages))
 	for _, msg := range messages {
 		msg.ConversationId = conversationId
-		msg.Content = lo.EmptyableToPtr(runtime_utils.DemojizeContent(lo.FromPtr(msg.Content)))
+		msg.Content = lo.EmptyableToPtr(s.emojiDecoder.DemojizeContent(lo.FromPtr(msg.Content)))
 
 		if err := msg.ComputeHash(); err != nil {
 			return nil, err

@@ -10,7 +10,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/google/uuid"
 )
 
 type UpdateMCPConnection struct {
@@ -30,7 +29,7 @@ func NewUpdateMCPConnection(
 // Execute applies full-replacement semantics: name, url, and the entire
 // HeaderAuth map are overwritten. Header values absent from the new map are
 // removed from Vault.
-func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request *requests.SaveMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *UpdateMCPConnection) Execute(ctx context.Context, request *requests.UpdateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 		return nil, err
 	}
 
-	existing, err := u.mcpConnectionRepository.GetById(ctx, agent.Id, id)
+	existing, err := u.mcpConnectionRepository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
@@ -60,7 +59,7 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, id uuid.UUID, request
 
 	existing.Name = request.Name
 	existing.Url = request.Url
-	existing.HeaderAuthKeys = u.headerAuthKeys(request)
+	existing.HeaderAuthKeys = u.headerAuthKeys(&request.SaveMCPConnectionRequest)
 	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())

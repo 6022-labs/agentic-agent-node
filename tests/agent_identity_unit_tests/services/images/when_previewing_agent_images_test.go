@@ -13,6 +13,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Render sample agent frames into <repo-root>/tmp/agent-images. Run with:
@@ -89,9 +90,11 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 
 	markPath := repoMarkPath()
 	imageGenerationSettings := &settings.ImageGenerationSettings{ImageMarkPath: &markPath}
+	iconImageGenerator, err := images.NewIconImageGenerator(imageGenerationSettings)
+	require.NoError(t, err)
 	generator := images.NewGenerateAgentImages(
 		images.NewDefaultImageGenerator(imageGenerationSettings),
-		images.NewIconImageGenerator(imageGenerationSettings),
+		iconImageGenerator,
 	)
 
 	// The default frame is SVG; the icon is a rasterized PNG.

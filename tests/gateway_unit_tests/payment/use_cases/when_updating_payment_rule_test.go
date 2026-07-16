@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -35,12 +36,14 @@ func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTes
 func TestWhenUpdatingPaymentRule(t *testing.T) {
 	t.Parallel()
 
+	ruleId := uuid.New()
+
 	t.Run("Given the runtime accepts the updated rule", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
 			suite.mockPaymentRuleClient.EXPECT().
-				Update(gomock.Any(), "rule-id", gomock.Any()).
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, id string, rule *models.ExternalPaymentRule) (*models.ExternalPaymentRule, error) {
 					assert.Equal(t, "Renamed", rule.Name)
 					rule.Id = id
@@ -55,14 +58,14 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			rule, err := suite.sut.Execute(context.Background(), "rule-id", &requests.SavePaymentRuleRequest{
+			rule, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId, SavePaymentRuleRequest: requests.SavePaymentRuleRequest{
 				Name:   "Renamed",
 				Method: "x402",
 				Config: json.RawMessage(`{"network":"eip155:80002"}`),
-			})
+			}})
 
 			assert.NoError(t, err)
-			assert.Equal(t, "rule-id", rule.Id)
+			assert.Equal(t, ruleId.String(), rule.Id)
 		})
 	})
 
@@ -71,7 +74,7 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
 			suite.mockPaymentRuleClient.EXPECT().
-				Update(gomock.Any(), "rule-id", gomock.Any()).
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
 				Return(nil, apperrors.NewNotFoundError("rule_not_found", "no such rule")).
 				Times(1)
 		}
@@ -82,7 +85,7 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			rule, err := suite.sut.Execute(context.Background(), "rule-id", &requests.SavePaymentRuleRequest{})
+			rule, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
 
 			assert.Nil(t, rule)
 			var notFoundErr *apperrors.NotFoundError
