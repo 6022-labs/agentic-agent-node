@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 )
 
 // MintPublisher mints the agent's NFT with the node wallet (the self path): it
@@ -62,7 +63,7 @@ func (s *MintPublisher) SelfMint(
 	nodeWallet := common.HexToAddress(cred.Address)
 	collection := common.HexToAddress(agent.CollectionAddress)
 
-	canMintDirectly, err := s.canMintDirectly(agent.ChainId, collection, nodeWallet)
+	canMintDirectly, err := s.canMintDirectly(lo.FromPtr(agent.ChainId), collection, nodeWallet)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +78,8 @@ func (s *MintPublisher) SelfMint(
 	params := identity_interfaces.MintParams{
 		Collection: collection,
 		To:         common.HexToAddress(*agent.Owner),
-		Role:       agent.Role.String(),
-		Name:       agent.Name,
+		Role:       lo.FromPtr(agent.Role).String(),
+		Name:       lo.FromPtr(agent.Name),
 		Addresses:  identity_interfaces.MintAddress{}.FromMap(addressesByType),
 		Images:     identity_interfaces.MintKeyValue{}.FromMap(agent.Images),
 		Attributes: identity_interfaces.MintKeyValue{}.FromMap(agent.Attributes),
@@ -99,11 +100,12 @@ func (s *MintPublisher) createMint(
 	nodeWallet common.Address,
 	params identity_interfaces.MintParams,
 ) (*identity_interfaces.MintResult, error) {
-	txHash, err := s.agentMinter.Mint(ctx, agent.ChainId, params)
+	chainId := lo.FromPtr(agent.ChainId)
+	txHash, err := s.agentMinter.Mint(ctx, chainId, params)
 	if err != nil {
 		return nil, fmt.Errorf("mint: %w", err)
 	}
-	tokenId, err := s.agentCollectionRequester.AddressToTokenId(agent.ChainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(chainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
 	if err != nil {
 		return nil, fmt.Errorf("read minted token: %w", err)
 	}
@@ -129,14 +131,15 @@ func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Ag
 	nodeWallet := common.HexToAddress(cred.Address)
 	collection := common.HexToAddress(agent.CollectionAddress)
 
-	tokenId, err := s.agentCollectionRequester.AddressToTokenId(agent.ChainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
+	chainId := lo.FromPtr(agent.ChainId)
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(chainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
 	if err != nil {
 		return common.Address{}, 0, fmt.Errorf("read minted token: %w", err)
 	}
 
 	// Fallback: the draft's collection may be wrong/empty; scan the manager.
 	if tokenId == 0 {
-		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByAddress(agent.ChainId, enums.AddressTypeEvm, nodeWallet.Hex())
+		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByAddress(chainId, enums.AddressTypeEvm, nodeWallet.Hex())
 		if findErr != nil {
 			return common.Address{}, 0, fmt.Errorf("scan collections: %w", findErr)
 		}
@@ -171,7 +174,7 @@ func (s *MintPublisher) createMintProposal(
 	state *models.AgentRegistrationState,
 	params identity_interfaces.MintParams,
 ) (*identity_interfaces.MintResult, error) {
-	txHash, proposalId, err := s.agentMinter.CreateMintProposal(ctx, agent.ChainId, params)
+	txHash, proposalId, err := s.agentMinter.CreateMintProposal(ctx, lo.FromPtr(agent.ChainId), params)
 	if err != nil {
 		return nil, fmt.Errorf("create mint proposal: %w", err)
 	}

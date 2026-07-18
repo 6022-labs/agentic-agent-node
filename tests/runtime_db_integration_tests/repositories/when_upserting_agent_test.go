@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -64,6 +65,29 @@ func TestWhenUpsertingAgent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			t.Run("Given an empty draft", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should insert with NULL identity columns", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					inserted, err := suite.sut.Upsert(context.Background(), &models.Agent{})
+
+					assert.NoError(t, err)
+					assert.NotEqual(t, uuid.Nil, inserted.Id)
+
+					reloaded, err := suite.sut.Get(context.Background())
+					assert.NoError(t, err)
+					assert.Nil(t, reloaded.ChainId)
+					assert.Nil(t, reloaded.Name)
+					assert.Nil(t, reloaded.EnsDomain)
+					assert.Nil(t, reloaded.Role)
+					assert.Nil(t, reloaded.Creator)
+				})
+			})
+
 			t.Run("Given no agent exists", func(t *testing.T) {
 				t.Parallel()
 
@@ -108,8 +132,8 @@ func TestWhenUpsertingAgent(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
-					assert.Equal(t, "Babbage", second.Name)
-					assert.Equal(t, identity_enums.AgentRoleFacilitator, second.Role)
+					assert.Equal(t, "Babbage", lo.FromPtr(second.Name))
+					assert.Equal(t, identity_enums.AgentRoleFacilitator, lo.FromPtr(second.Role))
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)

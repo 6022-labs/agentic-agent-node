@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/observability"
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/lo"
 )
 
 // AgentTelemetryContextMiddleware puts the agent identity on the ctx — the one place resolving "which agent" (swap for multi-agent). Runs first.
@@ -40,11 +41,11 @@ func (m *AgentTelemetryContextMiddleware) resolveAgentIdentity(reqCtx context.Co
 		return *cached, true
 	}
 	agent, err := m.agentRepository.Get(reqCtx)
-	if err != nil || agent == nil || strings.TrimSpace(agent.EnsDomain) == "" {
+	if err != nil || agent == nil || strings.TrimSpace(lo.FromPtr(agent.EnsDomain)) == "" {
 		return observability.AgentIdentity{}, false
 	}
 	identity := observability.AgentIdentity{
-		EnsDomain: agent.EnsDomain,
+		EnsDomain: lo.FromPtr(agent.EnsDomain),
 	}
 	m.cachedIdentity.Store(&identity)
 	return identity, true

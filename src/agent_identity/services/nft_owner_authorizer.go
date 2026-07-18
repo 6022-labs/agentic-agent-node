@@ -6,6 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 )
 
 type NftOwnerAuthorizer struct {
@@ -45,7 +46,7 @@ func (a *NftOwnerAuthorizer) IsAuthorized(ctx context.Context, address common.Ad
 		return true, nil
 	}
 
-	owner, err := a.collectionRequester.OwnerOf(agent.ChainId, common.HexToAddress(agent.CollectionAddress), *agent.CollectionTokenId)
+	owner, err := a.collectionRequester.OwnerOf(lo.FromPtr(agent.ChainId), common.HexToAddress(agent.CollectionAddress), *agent.CollectionTokenId)
 	if err != nil {
 		return false, err
 	}

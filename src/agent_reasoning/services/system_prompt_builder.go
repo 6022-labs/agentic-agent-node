@@ -42,8 +42,8 @@ func (b *SystemPromptBuilder) Build(
 		b.headerSection(agent),
 		b.identitySection(agent, addresses),
 	}
-	if agent != nil && agent.Soul != "" {
-		sections = append(sections, "## Soul\n"+agent.Soul)
+	if agent != nil && lo.FromPtr(agent.Soul) != "" {
+		sections = append(sections, "## Soul\n"+lo.FromPtr(agent.Soul))
 	}
 	sections = append(sections, coreBehaviorSection)
 	if guidance = strings.TrimSpace(guidance); guidance != "" {
@@ -59,10 +59,10 @@ func (b *SystemPromptBuilder) Build(
 }
 
 func (b *SystemPromptBuilder) headerSection(agent *identity_models.Agent) string {
-	if agent == nil || agent.Name == "" {
+	if agent == nil || lo.FromPtr(agent.Name) == "" {
 		return "# 6022 Agent"
 	}
-	return fmt.Sprintf("# %s — 6022 Agent", agent.Name)
+	return fmt.Sprintf("# %s — 6022 Agent", lo.FromPtr(agent.Name))
 }
 
 func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addresses map[identity_enums.AddressType]string) string {
@@ -76,10 +76,10 @@ func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addr
 			lines = append(lines, fmt.Sprintf("%s: %s", label, value))
 		}
 	}
-	appendLine("Name", agent.Name)
-	appendLine("ENS domain", agent.EnsDomain)
-	appendLine("Role", string(agent.Role))
-	appendLine("Chain", agent.ChainId)
+	appendLine("Name", lo.FromPtr(agent.Name))
+	appendLine("ENS domain", lo.FromPtr(agent.EnsDomain))
+	appendLine("Role", string(lo.FromPtr(agent.Role)))
+	appendLine("Chain", lo.FromPtr(agent.ChainId))
 	appendLine("Collection", agent.CollectionAddress)
 	if agent.CollectionTokenId != nil {
 		appendLine("Token id", fmt.Sprintf("%d", *agent.CollectionTokenId))
@@ -89,7 +89,7 @@ func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addr
 	if agent.Owner != nil {
 		appendLine("Owner", *agent.Owner)
 	}
-	appendLine("Creator", agent.Creator)
+	appendLine("Creator", lo.FromPtr(agent.Creator))
 
 	addressTypes := lo.Keys(addresses)
 	sort.Slice(addressTypes, func(i, j int) bool { return addressTypes[i] < addressTypes[j] })

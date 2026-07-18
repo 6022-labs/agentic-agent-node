@@ -16,6 +16,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 )
 
 // SaveAgentRegistration upserts the agent draft the connected wallet filled in,
@@ -108,13 +109,13 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	_ = role.Set(req.Role)
 
 	agent := &models.Agent{
-		ChainId:           req.ChainId,
+		ChainId:           lo.ToPtr(req.ChainId),
 		CollectionAddress: collection.Hex(),
-		Name:              req.Name,
+		Name:              lo.ToPtr(req.Name),
 		CloneOf:           req.CloneOf,
-		EnsDomain:         u.ensDomainBuilder.Build(req.Name, collectionName, req.ChainId),
-		Role:              role,
-		Creator:           owner,
+		EnsDomain:         lo.ToPtr(u.ensDomainBuilder.Build(req.Name, collectionName, req.ChainId)),
+		Role:              &role,
+		Creator:           &owner,
 		Owner:             &owner,
 		Attributes:        req.Attributes,
 	}
@@ -189,9 +190,9 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, addresses map[e
 	}
 
 	generated, err := u.generateAgentImages.Generate(identity_interfaces.GenerateImageParams{
-		Name:              agent.Name,
-		EnsDomain:         agent.EnsDomain,
-		Role:              agent.Role.String(),
+		Name:              lo.FromPtr(agent.Name),
+		EnsDomain:         lo.FromPtr(agent.EnsDomain),
+		Role:              lo.FromPtr(agent.Role).String(),
 		Creator:           creator.Hex(),
 		BaseImageBytes:    baseBytes,
 		BaseImageMimeType: mimeType,
@@ -205,7 +206,7 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, addresses map[e
 
 	images := make(map[string]string, len(generated))
 	for key, bytes := range generated {
-		cid, err := u.ipfsFileStorage.UploadFile(bytes, agent.EnsDomain)
+		cid, err := u.ipfsFileStorage.UploadFile(bytes, lo.FromPtr(agent.EnsDomain))
 		if err != nil {
 			return nil, errors.NewUnavailableError("image_upload_failed", err.Error())
 		}

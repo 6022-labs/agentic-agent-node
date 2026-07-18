@@ -10,6 +10,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -119,12 +120,12 @@ func (s *AgentChainRecoverer) recoverMintedAgent(
 	var role enums.AgentRole
 	_ = role.Set(info.Role)
 
-	agent.ChainId = chainId
+	agent.ChainId = lo.ToPtr(chainId)
 	agent.CollectionAddress = collection.Hex()
-	agent.Name = info.Name
+	agent.Name = lo.ToPtr(info.Name)
 	agent.CloneOf = info.CloneOf
-	agent.EnsDomain = s.ensDomainBuilder.Build(info.Name, collectionName, chainId)
-	agent.Role = role
+	agent.EnsDomain = lo.ToPtr(s.ensDomainBuilder.Build(info.Name, collectionName, chainId))
+	agent.Role = &role
 	agent.Images = info.Images
 	agent.Attributes = info.Attributes
 

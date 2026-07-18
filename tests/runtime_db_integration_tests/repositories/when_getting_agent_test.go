@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -97,9 +98,9 @@ func TestWhenGettingAgent(t *testing.T) {
 					got, err := suite.sut.Get(context.Background())
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
-					assert.Equal(t, "Ada", got.Name)
-					assert.Equal(t, identity_enums.AgentRoleExpert, got.Role)
-					assert.Equal(t, "ada.agent.eth", got.EnsDomain)
+					assert.Equal(t, "Ada", lo.FromPtr(got.Name))
+					assert.Equal(t, identity_enums.AgentRoleExpert, lo.FromPtr(got.Role))
+					assert.Equal(t, "ada.agent.eth", lo.FromPtr(got.EnsDomain))
 					assert.Equal(t, "https://example.com/a.png", got.Images["avatar"])
 					assert.Equal(t, "curious", got.Attributes["trait"])
 				})

@@ -6,6 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/samber/lo"
 )
 
 type GetAgentIdentity struct {
@@ -40,6 +41,6 @@ func (u *GetAgentIdentity) Execute(ctx context.Context) (*responses.GetAgentIden
 	return &responses.GetAgentIdentityResponse{
 		CollectionAddress: agent.CollectionAddress,
 		TokenId:           *agent.CollectionTokenId,
-		Name:              agent.Name,
+		Name:              lo.FromPtr(agent.Name),
 	}, nil
 }

@@ -9,6 +9,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -58,29 +59,31 @@ func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
 
 	collection := common.HexToAddress(agent.CollectionAddress)
 	tokenId := new(big.Int).SetUint64(*agent.CollectionTokenId)
+	chainId := lo.FromPtr(agent.ChainId)
+	name := lo.FromPtr(agent.Name)
 
-	provisioned, err := s.ensRegistrar.Provisioned(ctx, agent.ChainId, collection, agent.Name)
+	provisioned, err := s.ensRegistrar.Provisioned(ctx, chainId, collection, name)
 	if err != nil {
 		return err
 	}
 
 	if !provisioned {
-		return s.ensRegistrar.InitRecords(ctx, agent.ChainId, collection, tokenId, s.runtimeRecordsProvider.RuntimeRecords())
+		return s.ensRegistrar.InitRecords(ctx, chainId, collection, tokenId, s.runtimeRecordsProvider.RuntimeRecords())
 	}
 
 	for _, record := range s.runtimeRecordsProvider.RuntimeRecords() {
-		current, err := s.ensRegistrar.Text(ctx, agent.ChainId, collection, agent.Name, record.Key)
+		current, err := s.ensRegistrar.Text(ctx, chainId, collection, name, record.Key)
 		if err != nil {
 			return err
 		}
 		if current == record.Value {
 			continue
 		}
-		if err := s.ensRegistrar.SetRecord(ctx, agent.ChainId, collection, tokenId, record.Key, record.Value); err != nil {
+		if err := s.ensRegistrar.SetRecord(ctx, chainId, collection, tokenId, record.Key, record.Value); err != nil {
 			return err
 		}
 		s.logger.Info("agent ENS text record refreshed",
-			zap.String("name", agent.Name),
+			zap.String("name", name),
 			zap.String("key", record.Key),
 			zap.String("previous", current),
 			zap.String("value", record.Value),
@@ -97,5 +100,5 @@ func (s *EnsPublisher) IsProvisioned(ctx context.Context) (bool, error) {
 	if agent == nil || agent.CollectionTokenId == nil {
 		return false, common_interfaces.ErrIdentityNotFound
 	}
-	return s.ensRegistrar.Provisioned(ctx, agent.ChainId, common.HexToAddress(agent.CollectionAddress), agent.Name)
+	return s.ensRegistrar.Provisioned(ctx, lo.FromPtr(agent.ChainId), common.HexToAddress(agent.CollectionAddress), lo.FromPtr(agent.Name))
 }

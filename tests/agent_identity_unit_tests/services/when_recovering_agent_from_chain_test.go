@@ -15,6 +15,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -142,11 +143,11 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			assert.True(t, recovered)
 
 			assert.Equal(t, agentId, capturedAgent.Id)
-			assert.Equal(t, recoveryChainId, capturedAgent.ChainId)
+			assert.Equal(t, recoveryChainId, lo.FromPtr(capturedAgent.ChainId))
 			assert.Equal(t, collection.Hex(), capturedAgent.CollectionAddress)
-			assert.Equal(t, "alice", capturedAgent.Name)
-			assert.Equal(t, enums.AgentRoleExpert, capturedAgent.Role)
-			assert.Equal(t, "alice.mycollection.80002.6022.eth", capturedAgent.EnsDomain)
+			assert.Equal(t, "alice", lo.FromPtr(capturedAgent.Name))
+			assert.Equal(t, enums.AgentRoleExpert, lo.FromPtr(capturedAgent.Role))
+			assert.Equal(t, "alice.mycollection.80002.6022.eth", lo.FromPtr(capturedAgent.EnsDomain))
 			assert.Equal(t, onChainInfo.Images, capturedAgent.Images)
 			assert.Equal(t, onChainInfo.Attributes, capturedAgent.Attributes)
 		})

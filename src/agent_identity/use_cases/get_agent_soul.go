@@ -6,6 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/samber/lo"
 )
 
 type GetAgentSoul struct {
@@ -24,5 +25,5 @@ func (u *GetAgentSoul) Execute(ctx context.Context) (*responses.AgentSoulRespons
 	if agent == nil {
 		return nil, errors.NewNotFoundError("identity_not_found", "agent identity not found")
 	}
-	return &responses.AgentSoulResponse{Soul: agent.Soul}, nil
+	return &responses.AgentSoulResponse{Soul: lo.FromPtr(agent.Soul)}, nil
 }

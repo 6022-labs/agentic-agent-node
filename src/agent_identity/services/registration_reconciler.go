@@ -43,11 +43,11 @@ func (s *RegistrationReconciler) ReconcileMint(
 	tokenId uint64,
 	mintTxHash *string,
 ) (*models.Agent, *models.AgentRegistrationState, error) {
-	info, err := s.agentCollectionRequester.InformationOf(agent.ChainId, collection, tokenId)
+	info, err := s.agentCollectionRequester.InformationOf(lo.FromPtr(agent.ChainId), collection, tokenId)
 	if err != nil {
 		return nil, nil, err
 	}
-	owner, err := s.agentCollectionRequester.OwnerOf(agent.ChainId, collection, tokenId)
+	owner, err := s.agentCollectionRequester.OwnerOf(lo.FromPtr(agent.ChainId), collection, tokenId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,9 +55,9 @@ func (s *RegistrationReconciler) ReconcileMint(
 	ownerHex := owner.Hex()
 	agent.CollectionAddress = collection.Hex()
 	agent.CollectionTokenId = &tokenId
-	agent.Creator = info.Creator.Hex()
+	agent.Creator = lo.ToPtr(info.Creator.Hex())
 	agent.Owner = &ownerHex
-	agent.Soul = s.composeSoul(agent)
+	agent.Soul = lo.ToPtr(s.composeSoul(agent))
 	savedAgent, err := s.agentRepository.Upsert(ctx, agent)
 	if err != nil {
 		return nil, nil, err
@@ -90,13 +90,13 @@ var roleSoulLines = map[enums.AgentRole]string{
 func (s *RegistrationReconciler) composeSoul(agent *models.Agent) string {
 	identity := []string{
 		"### Core identity",
-		fmt.Sprintf("I am %s, a sovereign agent of the 6022 swarm, role %q.", agent.Name, string(agent.Role)),
+		fmt.Sprintf("I am %s, a sovereign agent of the 6022 swarm, role %q.", lo.FromPtr(agent.Name), string(lo.FromPtr(agent.Role))),
 	}
-	if roleLine, ok := roleSoulLines[agent.Role]; ok {
+	if roleLine, ok := roleSoulLines[lo.FromPtr(agent.Role)]; ok {
 		identity = append(identity, roleLine)
 	}
-	if agent.EnsDomain != "" {
-		identity = append(identity, fmt.Sprintf("The swarm knows me by my ENS name %s; my identity NFT is my birth certificate.", agent.EnsDomain))
+	if lo.FromPtr(agent.EnsDomain) != "" {
+		identity = append(identity, fmt.Sprintf("The swarm knows me by my ENS name %s; my identity NFT is my birth certificate.", lo.FromPtr(agent.EnsDomain)))
 	}
 
 	values := []string{

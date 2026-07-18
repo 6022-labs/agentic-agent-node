@@ -12,6 +12,7 @@ import (
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -73,7 +74,7 @@ func TestWhenReconcilingMint(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, savedAgent.CollectionTokenId)
 			assert.Equal(t, uint64(5), *savedAgent.CollectionTokenId)
-			assert.Equal(t, creator.Hex(), savedAgent.Creator)
+			assert.Equal(t, creator.Hex(), lo.FromPtr(savedAgent.Creator))
 			assert.Equal(t, identity_enums.TransactionStatusConfirmed, savedState.MintStatus)
 			assert.NotNil(t, savedState.MintedAt)
 		})
@@ -107,13 +108,13 @@ func TestWhenReconcilingMint(t *testing.T) {
 			savedAgent, _, err := suite.sut.ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
 
 			assert.NoError(t, err)
-			assert.Contains(t, savedAgent.Soul, "### Core identity")
-			assert.Contains(t, savedAgent.Soul, "I am Alice")
-			assert.Contains(t, savedAgent.Soul, "alice.agent.eth")
-			assert.Contains(t, savedAgent.Soul, "### Values")
-			assert.Contains(t, savedAgent.Soul, "### Traits")
-			assert.Contains(t, savedAgent.Soul, "- specialty: defi")
-			assert.Contains(t, savedAgent.Soul, "### Communication style")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "### Core identity")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "I am Alice")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "alice.agent.eth")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "### Values")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "### Traits")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "- specialty: defi")
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "### Communication style")
 		})
 	})
 
@@ -136,8 +137,8 @@ func TestWhenReconcilingMint(t *testing.T) {
 				ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
 
 			assert.NoError(t, err)
-			assert.NotEqual(t, "stale persona", savedAgent.Soul)
-			assert.Contains(t, savedAgent.Soul, "I am Alice")
+			assert.NotEqual(t, "stale persona", lo.FromPtr(savedAgent.Soul))
+			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "I am Alice")
 		})
 	})
 }

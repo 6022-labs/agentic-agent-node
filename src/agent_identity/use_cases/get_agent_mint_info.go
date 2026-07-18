@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 )
 
 // GetAgentMintInfo assembles the mint() calldata + moderator state so the connected wallet can submit the tx itself.
@@ -48,14 +49,15 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 
 	collection := common.HexToAddress(agent.CollectionAddress)
 	owner := common.HexToAddress(*agent.Owner)
+	chainId := lo.FromPtr(agent.ChainId)
 
-	moderatorCount, err := u.agentCollectionRequester.ModeratorCount(agent.ChainId, collection)
+	moderatorCount, err := u.agentCollectionRequester.ModeratorCount(chainId, collection)
 	if err != nil {
 		return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
 	}
 	ownerIsModerator := false
 	if moderatorCount > 0 {
-		ownerIsModerator, err = u.agentCollectionRequester.IsModerator(agent.ChainId, collection, owner)
+		ownerIsModerator, err = u.agentCollectionRequester.IsModerator(chainId, collection, owner)
 		if err != nil {
 			return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
 		}
@@ -64,8 +66,8 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 	return &responses.MintInfoResponse{
 		CollectionAddress: collection.Hex(),
 		To:                owner.Hex(),
-		Role:              agent.Role.String(),
-		Name:              agent.Name,
+		Role:              lo.FromPtr(agent.Role).String(),
+		Name:              lo.FromPtr(agent.Name),
 		Addresses:         addresses,
 		Images:            responses.KeyValue{}.FromMap(agent.Images),
 		Attributes:        responses.KeyValue{}.FromMap(agent.Attributes),

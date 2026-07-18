@@ -18,6 +18,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 // AbstractPaymentUseCase carries the repositories every payment use case
@@ -108,9 +109,9 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 	}
 	eip712Name := services.DefaultEip712Name
 	eip712Version := services.DefaultEip712Version
-	asset, _ := u.token6022Settings.AddressFor(agent.ChainId)
+	asset, _ := u.token6022Settings.AddressFor(lo.FromPtr(agent.ChainId))
 	// x402 networks are CAIP-2; the agent stores a plain chain id.
-	evmChainId, _ := strconv.ParseUint(agent.ChainId, 10, 64)
+	evmChainId, _ := strconv.ParseUint(lo.FromPtr(agent.ChainId), 10, 64)
 	config := &models.PaymentRuleX402Config{
 		Network:             helpers.FormatCaip2(evmChainId),
 		Asset:               asset.Hex(),

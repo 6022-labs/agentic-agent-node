@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type AgentBuilder struct {
@@ -146,17 +147,17 @@ func (b *AgentBuilder) WithUpdatedAt(updatedAt time.Time) *AgentBuilder {
 func (b *AgentBuilder) Build() *models.Agent {
 	return &models.Agent{
 		Id:                b.id,
-		ChainId:           b.chainId,
+		ChainId:           lo.ToPtr(b.chainId),
 		CollectionTokenId: b.collectionTokenId,
 		CollectionAddress: b.collectionAddress,
 		ProposalId:        b.proposalId,
-		Name:              b.name,
+		Name:              lo.ToPtr(b.name),
 		CloneOf:           b.cloneOf,
-		EnsDomain:         b.ensDomain,
-		Role:              b.role,
-		Creator:           b.creator,
+		EnsDomain:         lo.ToPtr(b.ensDomain),
+		Role:              lo.ToPtr(b.role),
+		Creator:           lo.ToPtr(b.creator),
 		Owner:             b.owner,
-		Soul:              b.soul,
+		Soul:              lo.ToPtr(b.soul),
 		Images:            b.images,
 		Attributes:        b.attributes,
 		CreatedAt:         b.createdAt,
