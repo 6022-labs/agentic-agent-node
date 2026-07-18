@@ -199,8 +199,6 @@ components:
       properties:
         address:
           type: string
-        nonce:
-          type: string
         signature:
           type: string
       type: object
@@ -429,7 +427,7 @@ components:
       properties:
         expiresAt:
           type: string
-        nonce:
+        message:
           type: string
       type: object
     responses.GetHealthResponse:
@@ -1111,8 +1109,22 @@ paths:
       - Identity
   /auth/challenge:
     get:
-      description: Returns a fresh nonce + expiry. The caller signs the nonce with
-        their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.
+      description: Returns a fresh SIWE (EIP-4361) message + expiry for the given
+        address. The caller signs the message verbatim (EIP-191 personal_sign) and
+        posts the result to /auth/verify.
+      parameters:
+      - description: wallet address the message is issued for
+        in: query
+        name: address
+        required: true
+        schema:
+          type: string
+      - description: chain id of the connected wallet
+        in: query
+        name: chainId
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -1120,6 +1132,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.GetAuthChallengeResponse'
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
         "500":
           content:
             application/json:
@@ -1131,8 +1149,9 @@ paths:
       - Auth
   /auth/verify:
     post:
-      description: Verifies the EIP-191 signature, checks the recovered address against
-        the NFT owner via the worker, and issues a HS256 JWT.
+      description: Rebuilds the EIP-4361 message for the nonce, verifies the EIP-191
+        signature, checks the recovered address against the NFT owner via the worker,
+        and issues a HS256 JWT.
       requestBody:
         content:
           application/json:
@@ -1140,9 +1159,9 @@ paths:
               oneOf:
               - type: object
               - $ref: '#/components/schemas/requests.VerifyAuthRequest'
-                description: Address + signature + nonce
+                description: Address + signature
                 summary: request
-        description: Address + signature + nonce
+        description: Address + signature
         required: true
       responses:
         "200":
@@ -1162,7 +1181,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/fiber.Map'
-          description: nonce_not_found | signature_mismatch | not_authorized
+          description: challenge_not_found | signature_mismatch | not_authorized
         "502":
           content:
             application/json:

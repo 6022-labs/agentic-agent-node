@@ -9,6 +9,7 @@ import (
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
@@ -21,29 +22,32 @@ import (
 type WhenVerifyingAuthTestingSuite struct {
 	sut *use_cases.VerifyAuth
 
-	mockNonceStore        *gateway_mocks.MockNonceStoreInterface
-	mockSignatureVerifier *gateway_mocks.MockSignatureVerifierInterface
-	mockAuthorizer        *common_mocks.MockAuthorizerInterface
-	mockJwtIssuer         *gateway_mocks.MockJwtIssuerInterface
+	mockNonceStore         *gateway_mocks.MockNonceStoreInterface
+	mockSiweMessageBuilder *gateway_mocks.MockSiweMessageBuilderInterface
+	mockSignatureVerifier  *gateway_mocks.MockSignatureVerifierInterface
+	mockAuthorizer         *common_mocks.MockAuthorizerInterface
+	mockJwtIssuer          *gateway_mocks.MockJwtIssuerInterface
 }
 
 func WhenVerifyingAuthBeforeEach(t *testing.T) *WhenVerifyingAuthTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockNonceStore := gateway_mocks.NewMockNonceStoreInterface(mockController)
+	mockSiweMessageBuilder := gateway_mocks.NewMockSiweMessageBuilderInterface(mockController)
 	mockSignatureVerifier := gateway_mocks.NewMockSignatureVerifierInterface(mockController)
 	mockAuthorizer := common_mocks.NewMockAuthorizerInterface(mockController)
 	mockJwtIssuer := gateway_mocks.NewMockJwtIssuerInterface(mockController)
 
-	sut := use_cases.NewVerifyAuth(mockNonceStore, mockSignatureVerifier, mockAuthorizer, mockJwtIssuer)
+	sut := use_cases.NewVerifyAuth(mockNonceStore, mockSiweMessageBuilder, mockSignatureVerifier, mockAuthorizer, mockJwtIssuer)
 
 	return &WhenVerifyingAuthTestingSuite{
 		sut: sut,
 
-		mockNonceStore:        mockNonceStore,
-		mockSignatureVerifier: mockSignatureVerifier,
-		mockAuthorizer:        mockAuthorizer,
-		mockJwtIssuer:         mockJwtIssuer,
+		mockNonceStore:         mockNonceStore,
+		mockSiweMessageBuilder: mockSiweMessageBuilder,
+		mockSignatureVerifier:  mockSignatureVerifier,
+		mockAuthorizer:         mockAuthorizer,
+		mockJwtIssuer:          mockJwtIssuer,
 	}
 }
 
@@ -53,7 +57,6 @@ func generateValidVerifyAuthRequest(address common.Address) *requests.VerifyAuth
 	return &requests.VerifyAuthRequest{
 		Address:   address.Hex(),
 		Signature: testSignature,
-		Nonce:     "nonce-xyz",
 	}
 }
 
@@ -61,6 +64,18 @@ func TestWhenVerifyingAuth(t *testing.T) {
 	t.Parallel()
 
 	address := common.HexToAddress("0x3333333333333333333333333333333333333333")
+	entry := &gateway_interfaces.ChallengeEntry{
+		Nonce:     "nonce-xyz",
+		ChainId:   80002,
+		IssuedAt:  time.Now(),
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+	siweMessage := "example.com wants you to sign in with your Ethereum account: ..."
+	expectSiweMessage := func(suite *WhenVerifyingAuthTestingSuite) {
+		suite.mockSiweMessageBuilder.EXPECT().
+			Build(address, uint64(80002), "nonce-xyz", entry.IssuedAt, entry.ExpiresAt).
+			Return(siweMessage)
+	}
 
 	t.Run("Given a request that fails validation", func(t *testing.T) {
 		t.Parallel()
@@ -77,14 +92,14 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the nonce is missing or expired", func(t *testing.T) {
+	t.Run("Given the challenge is missing or expired", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(false)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(nil)
 		}
 
-		t.Run("Should return Unauthorized with nonce_not_found", func(t *testing.T) {
+		t.Run("Should return Unauthorized with challenge_not_found", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
@@ -95,7 +110,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 			var unauthorizedErr *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedErr)
-			assert.Equal(t, "nonce_not_found", unauthorizedErr.Code)
+			assert.Equal(t, "challenge_not_found", unauthorizedErr.Code)
 		})
 	})
 
@@ -103,8 +118,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(common.HexToAddress("0xdeadbeef"), nil)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
 		t.Run("Should return Unauthorized with signature_mismatch", func(t *testing.T) {
@@ -126,8 +142,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(common.Address{}, errors.New("malformed"))
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(common.Address{}, errors.New("malformed"))
 		}
 
 		t.Run("Should return InternalError", func(t *testing.T) {
@@ -149,8 +166,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, nil)
 		}
 
@@ -173,8 +191,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, common_interfaces.ErrIdentityNotFound)
 		}
 
@@ -197,8 +216,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
 		}
 
@@ -222,8 +242,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 		expectedExp := time.Now().Add(30 * time.Minute)
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume("nonce-xyz").Return(true)
-			suite.mockSignatureVerifier.EXPECT().Recover("nonce-xyz", testSignature).Return(address, nil)
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
 		}

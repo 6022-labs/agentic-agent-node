@@ -5,65 +5,68 @@ import (
 	"encoding/hex"
 	"sync"
 	"time"
+
+	"github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-const nonceByteLength = 16
-
-type nonceEntry struct {
-	expiresAt time.Time
-}
+const nonceByteLength = 32
 
 type NonceStore struct {
 	ttl time.Duration
 	now func() time.Time
 
 	mu      sync.Mutex
-	entries map[string]nonceEntry
+	entries map[common.Address]interfaces.ChallengeEntry
 }
 
 func NewNonceStore(ttl time.Duration) *NonceStore {
 	return &NonceStore{
 		ttl:     ttl,
 		now:     time.Now,
-		entries: make(map[string]nonceEntry),
+		entries: make(map[common.Address]interfaces.ChallengeEntry),
 	}
 }
 
-func (s *NonceStore) Generate() (string, time.Time, error) {
+func (s *NonceStore) Generate(address common.Address, chainId uint64) (*interfaces.ChallengeEntry, error) {
 	bytes := make([]byte, nonceByteLength)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", time.Time{}, err
+		return nil, err
 	}
-	nonce := hex.EncodeToString(bytes)
-	expiresAt := s.now().Add(s.ttl)
+	now := s.now()
+	entry := interfaces.ChallengeEntry{
+		Nonce:     hex.EncodeToString(bytes),
+		ChainId:   chainId,
+		IssuedAt:  now,
+		ExpiresAt: now.Add(s.ttl),
+	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.purgeExpiredLocked()
-	s.entries[nonce] = nonceEntry{expiresAt: expiresAt}
-	return nonce, expiresAt, nil
+	s.entries[address] = entry
+	return &entry, nil
 }
 
-// Consume removes the nonce on success. Returns false if missing or expired.
-func (s *NonceStore) Consume(nonce string) bool {
+func (s *NonceStore) Consume(address common.Address) *interfaces.ChallengeEntry {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	entry, ok := s.entries[nonce]
+	entry, ok := s.entries[address]
 	if !ok {
-		return false
+		return nil
 	}
-	delete(s.entries, nonce)
-	if s.now().After(entry.expiresAt) {
-		return false
+	delete(s.entries, address)
+	if s.now().After(entry.ExpiresAt) {
+		return nil
 	}
-	return true
+	return &entry
 }
 
 func (s *NonceStore) purgeExpiredLocked() {
 	now := s.now()
 	for k, v := range s.entries {
-		if now.After(v.expiresAt) {
+		if now.After(v.ExpiresAt) {
 			delete(s.entries, k)
 		}
 	}

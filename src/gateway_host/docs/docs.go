@@ -514,7 +514,7 @@ const docTemplate = `{
         },
         "/auth/challenge": {
             "get": {
-                "description": "Returns a fresh nonce + expiry. The caller signs the nonce with their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.",
+                "description": "Returns a fresh SIWE (EIP-4361) message + expiry for the given address. The caller signs the message verbatim (EIP-191 personal_sign) and posts the result to /auth/verify.",
                 "produces": [
                     "application/json"
                 ],
@@ -522,11 +522,33 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Auth challenge",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "wallet address the message is issued for",
+                        "name": "address",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "chain id of the connected wallet",
+                        "name": "chainId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.GetAuthChallengeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
                     "500": {
@@ -540,7 +562,7 @@ const docTemplate = `{
         },
         "/auth/verify": {
             "post": {
-                "description": "Verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.",
+                "description": "Rebuilds the EIP-4361 message for the nonce, verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -553,7 +575,7 @@ const docTemplate = `{
                 "summary": "Auth verify",
                 "parameters": [
                     {
-                        "description": "Address + signature + nonce",
+                        "description": "Address + signature",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -576,7 +598,7 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "nonce_not_found | signature_mismatch | not_authorized",
+                        "description": "challenge_not_found | signature_mismatch | not_authorized",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -1576,9 +1598,6 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "nonce": {
-                    "type": "string"
-                },
                 "signature": {
                     "type": "string"
                 }
@@ -1919,7 +1938,7 @@ const docTemplate = `{
                 "expiresAt": {
                     "type": "string"
                 },
-                "nonce": {
+                "message": {
                     "type": "string"
                 }
             }

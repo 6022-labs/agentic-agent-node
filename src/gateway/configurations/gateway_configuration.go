@@ -34,6 +34,10 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(core_settings.NewSiweSettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(
 		newNonceStore,
 		dig.As(new(core_interfaces.NonceStoreInterface)),
@@ -58,6 +62,13 @@ func addCoreConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		core_services.NewJwtValidator,
 		dig.As(new(core_interfaces.JwtValidatorInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		core_services.NewSiweMessageBuilder,
+		dig.As(new(core_interfaces.SiweMessageBuilderInterface)),
 	); err != nil {
 		panic(err)
 	}

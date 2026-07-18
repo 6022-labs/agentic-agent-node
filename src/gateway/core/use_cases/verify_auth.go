@@ -15,29 +15,32 @@ import (
 // Sentinel errors let tests assert on the domain reason; transport adapters
 // only care about the outcome (Unauthorized, Unavailable, ...).
 var (
-	ErrNonceNotFound        = errors.New("nonce not found or expired")
+	ErrChallengeNotFound    = errors.New("challenge not found or expired")
 	ErrSignatureMismatch    = errors.New("signature does not match address")
 	ErrAddressNotAuthorized = errors.New("address is not authorized")
 )
 
 type VerifyAuth struct {
-	nonceStore        gateway_interfaces.NonceStoreInterface
-	signatureVerifier gateway_interfaces.SignatureVerifierInterface
-	authorizer        common_interfaces.AuthorizerInterface
-	jwtIssuer         gateway_interfaces.JwtIssuerInterface
+	nonceStore         gateway_interfaces.NonceStoreInterface
+	siweMessageBuilder gateway_interfaces.SiweMessageBuilderInterface
+	signatureVerifier  gateway_interfaces.SignatureVerifierInterface
+	authorizer         common_interfaces.AuthorizerInterface
+	jwtIssuer          gateway_interfaces.JwtIssuerInterface
 }
 
 func NewVerifyAuth(
 	nonceStore gateway_interfaces.NonceStoreInterface,
+	siweMessageBuilder gateway_interfaces.SiweMessageBuilderInterface,
 	signatureVerifier gateway_interfaces.SignatureVerifierInterface,
 	authorizer common_interfaces.AuthorizerInterface,
 	jwtIssuer gateway_interfaces.JwtIssuerInterface,
 ) *VerifyAuth {
 	return &VerifyAuth{
-		nonceStore:        nonceStore,
-		signatureVerifier: signatureVerifier,
-		authorizer:        authorizer,
-		jwtIssuer:         jwtIssuer,
+		nonceStore:         nonceStore,
+		siweMessageBuilder: siweMessageBuilder,
+		signatureVerifier:  signatureVerifier,
+		authorizer:         authorizer,
+		jwtIssuer:          jwtIssuer,
 	}
 }
 
@@ -46,15 +49,17 @@ func (u *VerifyAuth) Execute(ctx context.Context, req *requests.VerifyAuthReques
 		return nil, err
 	}
 
-	if !u.nonceStore.Consume(req.Nonce) {
-		return nil, apperrors.NewUnauthorizedError("nonce_not_found", ErrNonceNotFound.Error())
+	claimed := common.HexToAddress(req.Address)
+	entry := u.nonceStore.Consume(claimed)
+	if entry == nil {
+		return nil, apperrors.NewUnauthorizedError("challenge_not_found", ErrChallengeNotFound.Error())
 	}
 
-	recovered, err := u.signatureVerifier.Recover(req.Nonce, req.Signature)
+	message := u.siweMessageBuilder.Build(claimed, entry.ChainId, entry.Nonce, entry.IssuedAt, entry.ExpiresAt)
+	recovered, err := u.signatureVerifier.Recover(message, req.Signature)
 	if err != nil {
 		return nil, apperrors.NewInternalError("verify_failed", err.Error())
 	}
-	claimed := common.HexToAddress(req.Address)
 	if recovered != claimed {
 		return nil, apperrors.NewUnauthorizedError("signature_mismatch", ErrSignatureMismatch.Error())
 	}
@@ -74,5 +79,8 @@ func (u *VerifyAuth) Execute(ctx context.Context, req *requests.VerifyAuthReques
 	if err != nil {
 		return nil, apperrors.NewInternalError("verify_failed", err.Error())
 	}
-	return &responses.VerifyAuthResponse{Token: token, ExpiresAt: expiresAt}, nil
+	return &responses.VerifyAuthResponse{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}, nil
 }

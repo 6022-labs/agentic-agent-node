@@ -196,8 +196,6 @@ definitions:
     properties:
       address:
         type: string
-      nonce:
-        type: string
       signature:
         type: string
     type: object
@@ -418,7 +416,7 @@ definitions:
     properties:
       expiresAt:
         type: string
-      nonce:
+      message:
         type: string
     type: object
   responses.GetHealthResponse:
@@ -1047,8 +1045,20 @@ paths:
       - Identity
   /auth/challenge:
     get:
-      description: Returns a fresh nonce + expiry. The caller signs the nonce with
-        their wallet (EIP-191 personal_sign) and posts the result to /auth/verify.
+      description: Returns a fresh SIWE (EIP-4361) message + expiry for the given
+        address. The caller signs the message verbatim (EIP-191 personal_sign) and
+        posts the result to /auth/verify.
+      parameters:
+      - description: wallet address the message is issued for
+        in: query
+        name: address
+        required: true
+        type: string
+      - description: chain id of the connected wallet
+        in: query
+        name: chainId
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -1056,6 +1066,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.GetAuthChallengeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
         "500":
           description: Internal Server Error
           schema:
@@ -1067,10 +1081,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Verifies the EIP-191 signature, checks the recovered address against
-        the NFT owner via the worker, and issues a HS256 JWT.
+      description: Rebuilds the EIP-4361 message for the nonce, verifies the EIP-191
+        signature, checks the recovered address against the NFT owner via the worker,
+        and issues a HS256 JWT.
       parameters:
-      - description: Address + signature + nonce
+      - description: Address + signature
         in: body
         name: request
         required: true
@@ -1088,7 +1103,7 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: nonce_not_found | signature_mismatch | not_authorized
+          description: challenge_not_found | signature_mismatch | not_authorized
           schema:
             $ref: '#/definitions/fiber.Map'
         "502":
