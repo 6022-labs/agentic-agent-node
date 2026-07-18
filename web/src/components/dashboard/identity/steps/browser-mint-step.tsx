@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import {
-  orderedAddresses,
+  orderedAgentAddresses,
   type AgentRegistration,
 } from "@/models/agent-registration"
 import { TRANSACTION_STATUS } from "@/models/enums/transaction-status"
@@ -51,7 +51,7 @@ export default function BrowserMintStep({
         to: info.to,
         role: info.role,
         name: info.name,
-        wallets: orderedAddresses(info.addresses),
+        addresses: orderedAgentAddresses(info.addresses),
         images: info.images,
         attributes: info.attributes,
         cloneOf: info.cloneOf,

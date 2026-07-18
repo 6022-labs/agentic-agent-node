@@ -25,6 +25,7 @@ type WhenSavingAgentRegistrationTestingSuite struct {
 	sut *use_cases.SaveAgentRegistration
 
 	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository           *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockAgentCollectionsManagerRequester *interface_mocks.MockAgentCollectionsManagerRequesterInterface
 	mockAgentCollectionRequester         *interface_mocks.MockAgentCollectionRequesterInterface
@@ -38,6 +39,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
@@ -60,11 +62,12 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		"80002": common_tests.RandomEthAddress(),
 	}
 
-	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, identity_services.NewEnsDomainBuilder(agentIdentitySettings), evmChainsSettings, agentCollectionCreatorsSettings)
+	sut := use_cases.NewSaveAgentRegistration(mockAgentRepository, mockAgentAddressRepository, mockAgentRegistrationStateRepository, mockAgentCollectionsManagerRequester, mockAgentCollectionRequester, mockWalletCredentialsStorage, mockGenerateAgentImages, mockIPFSFileStorage, mockToken6022Requester, identity_services.NewEnsDomainBuilder(agentIdentitySettings), evmChainsSettings, agentCollectionCreatorsSettings)
 
 	return &WhenSavingAgentRegistrationTestingSuite{
 		sut:                                  sut,
 		mockAgentRepository:                  mockAgentRepository,
+		mockAgentAddressRepository:           mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockAgentCollectionsManagerRequester: mockAgentCollectionsManagerRequester,
 		mockAgentCollectionRequester:         mockAgentCollectionRequester,
@@ -114,6 +117,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
 			suite.mockToken6022Requester.EXPECT().BalanceOf("80002", gomock.Any()).Return(big.NewInt(1_000_000), nil)
 			// $6022 balance is summed across every reachable chain; a chain the
@@ -160,6 +164,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			kept := map[string]string{"default": "QmKept", "icon": "QmKeptIcon"}
 			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().WithImages(kept).Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
@@ -191,6 +196,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 			suite.mockAgentCollectionsManagerRequester.EXPECT().IsKnownCollection("80002", gomock.Any()).Return(true, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().WithImages(map[string]string{}).Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
 			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
 
 			request := validSaveRequest(t)

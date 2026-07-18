@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
@@ -23,6 +24,7 @@ type WhenResolvingMintedTokenTestingSuite struct {
 	mockAgentMinter                      *interface_mocks.MockAgentMinterInterface
 	mockWalletCredentialsStorage         *interface_mocks.MockWalletCredentialsStorageInterface
 	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository           *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockRegistrationReconciler           *interface_mocks.MockRegistrationReconcilerInterface
 }
@@ -35,6 +37,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 	mockAgentMinter := interface_mocks.NewMockAgentMinterInterface(mockController)
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
@@ -44,6 +47,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 		mockAgentMinter,
 		mockWalletCredentialsStorage,
 		mockAgentRepository,
+		mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler,
 	)
@@ -55,6 +59,7 @@ func WhenResolvingMintedTokenBeforeEach(t *testing.T) *WhenResolvingMintedTokenT
 		mockAgentMinter:                      mockAgentMinter,
 		mockWalletCredentialsStorage:         mockWalletCredentialsStorage,
 		mockAgentRepository:                  mockAgentRepository,
+		mockAgentAddressRepository:           mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler:           mockRegistrationReconciler,
 	}
@@ -71,7 +76,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(7), nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(7), nil)
 		}
 
 		t.Run("Should return that token without scanning the manager", func(t *testing.T) {
@@ -94,8 +99,8 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(gomock.Any(), gomock.Any()).Return(foundCollection, uint64(9), "", nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(foundCollection, uint64(9), "", nil)
 		}
 
 		t.Run("Should fall back to the manager's collection and token", func(t *testing.T) {
@@ -117,8 +122,8 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
 			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentCollectionRequester.EXPECT().WalletToTokenId(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(0), nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByWallet(gomock.Any(), gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
+			suite.mockAgentCollectionRequester.EXPECT().AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(uint64(0), nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
 		}
 
 		t.Run("Should report tokenId 0", func(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	common "github.com/ethereum/go-ethereum/common"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,10 +42,10 @@ func (m *MockAgentCollectionsManagerRequesterInterface) EXPECT() *MockAgentColle
 	return m.recorder
 }
 
-// FindAgentByWallet mocks base method.
-func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(chainId string, wallet common.Address) (common.Address, uint64, string, error) {
+// FindAgentByAddress mocks base method.
+func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByAddress(chainId string, addressType enums.AddressType, value string) (common.Address, uint64, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAgentByWallet", chainId, wallet)
+	ret := m.ctrl.Call(m, "FindAgentByAddress", chainId, addressType, value)
 	ret0, _ := ret[0].(common.Address)
 	ret1, _ := ret[1].(uint64)
 	ret2, _ := ret[2].(string)
@@ -52,10 +53,10 @@ func (m *MockAgentCollectionsManagerRequesterInterface) FindAgentByWallet(chainI
 	return ret0, ret1, ret2, ret3
 }
 
-// FindAgentByWallet indicates an expected call of FindAgentByWallet.
-func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentByWallet(chainId, wallet any) *gomock.Call {
+// FindAgentByAddress indicates an expected call of FindAgentByAddress.
+func (mr *MockAgentCollectionsManagerRequesterInterfaceMockRecorder) FindAgentByAddress(chainId, addressType, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByWallet", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByWallet), chainId, wallet)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAgentByAddress", reflect.TypeOf((*MockAgentCollectionsManagerRequesterInterface)(nil).FindAgentByAddress), chainId, addressType, value)
 }
 
 // IsKnownCollection mocks base method.

@@ -15,4 +15,6 @@ type AgentAddressRepositoryInterface interface {
 	Upsert(ctx context.Context, address *models.AgentAddress) error
 	// GetByAgentIdAndType returns the address, or (nil, nil) if none exists.
 	GetByAgentIdAndType(ctx context.Context, agentId uuid.UUID, addressType enums.AddressType) (*models.AgentAddress, error)
+	// GetAllByAgentId returns the agent's addresses keyed by type.
+	GetAllByAgentId(ctx context.Context, agentId uuid.UUID) (map[enums.AddressType]string, error)
 }

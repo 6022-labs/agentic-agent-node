@@ -7,6 +7,7 @@ import (
 	"time"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/samber/lo"
@@ -31,6 +32,7 @@ func NewSystemPromptBuilder() *SystemPromptBuilder {
 
 func (b *SystemPromptBuilder) Build(
 	agent *identity_models.Agent,
+	addresses map[identity_enums.AddressType]string,
 	guidance string,
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
@@ -38,7 +40,7 @@ func (b *SystemPromptBuilder) Build(
 ) string {
 	sections := []string{
 		b.headerSection(agent),
-		b.identitySection(agent),
+		b.identitySection(agent, addresses),
 	}
 	if agent != nil && agent.Soul != "" {
 		sections = append(sections, "## Soul\n"+agent.Soul)
@@ -63,7 +65,7 @@ func (b *SystemPromptBuilder) headerSection(agent *identity_models.Agent) string
 	return fmt.Sprintf("# %s — 6022 Agent", agent.Name)
 }
 
-func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent) string {
+func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addresses map[identity_enums.AddressType]string) string {
 	lines := []string{"## Identity (on-chain, authoritative)"}
 	if agent == nil {
 		return lines[0] + "\nThis agent's on-chain identity has not been initialized yet."
@@ -89,10 +91,10 @@ func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent) stri
 	}
 	appendLine("Creator", agent.Creator)
 
-	addressTypes := lo.Keys(agent.Addresses)
+	addressTypes := lo.Keys(addresses)
 	sort.Slice(addressTypes, func(i, j int) bool { return addressTypes[i] < addressTypes[j] })
 	for _, addressType := range addressTypes {
-		appendLine(fmt.Sprintf("Wallet address (%s)", addressType), agent.Addresses[addressType])
+		appendLine(fmt.Sprintf("Wallet address (%s)", addressType), addresses[addressType])
 	}
 
 	attributeKeys := lo.Keys(agent.Attributes)

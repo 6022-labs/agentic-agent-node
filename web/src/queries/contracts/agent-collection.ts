@@ -1,7 +1,7 @@
 import { BrowserProvider, ethers, type Eip1193Provider } from "ethers"
 
 import { AgentCollectionABI } from "@/abi/agent-collection"
-import type { KeyValue } from "@/models/agent-registration"
+import type { AgentAddress, KeyValue } from "@/models/agent-registration"
 import { getScaledTxGasOverrides } from "@/lib/tx-gas-overrides"
 
 // The agent-node AgentCollectionV1.mint has NO signer/nonce/signature — it is the
@@ -10,6 +10,9 @@ const toCloneOfStruct = (cloneOf: number | null) =>
   cloneOf == null
     ? { isSet: false, value: 0n }
     : { isSet: true, value: BigInt(cloneOf) }
+
+const toAddressTuples = (addresses: AgentAddress[]) =>
+  addresses.map(({ addressType, value }) => ({ addressType, value }))
 
 const toTuples = (pairs: KeyValue[]) =>
   pairs.map((p) => ({ key: p.key, value: p.value }))
@@ -50,7 +53,7 @@ export type MintParams = {
   to: string
   role: string
   name: string
-  wallets: string[]
+  addresses: AgentAddress[]
   images: KeyValue[]
   attributes: KeyValue[]
   cloneOf: number | null
@@ -88,7 +91,7 @@ export const mint = async (
       params.to,
       params.role,
       params.name,
-      params.wallets,
+      toAddressTuples(params.addresses),
       toTuples(params.images),
       toTuples(params.attributes),
       toCloneOfStruct(params.cloneOf),
@@ -116,7 +119,7 @@ export const createMintProposal = async (
       params.to,
       params.role,
       params.name,
-      params.wallets,
+      toAddressTuples(params.addresses),
       toTuples(params.images),
       toTuples(params.attributes),
       toCloneOfStruct(params.cloneOf),

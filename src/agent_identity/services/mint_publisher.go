@@ -20,6 +20,7 @@ type MintPublisher struct {
 	agentMinter                      identity_interfaces.AgentMinterInterface
 	walletCredentialsStorage         identity_interfaces.WalletCredentialsStorageInterface
 	agentRepository                  repositories.AgentRepositoryInterface
+	agentAddressRepository           repositories.AgentAddressRepositoryInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	registrationReconciler           identity_interfaces.RegistrationReconcilerInterface
 }
@@ -30,6 +31,7 @@ func NewMintPublisher(
 	agentMinter identity_interfaces.AgentMinterInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	agentRepository repositories.AgentRepositoryInterface,
+	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	registrationReconciler identity_interfaces.RegistrationReconcilerInterface,
 ) *MintPublisher {
@@ -39,6 +41,7 @@ func NewMintPublisher(
 		agentMinter:                      agentMinter,
 		walletCredentialsStorage:         walletCredentialsStorage,
 		agentRepository:                  agentRepository,
+		agentAddressRepository:           agentAddressRepository,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		registrationReconciler:           registrationReconciler,
 	}
@@ -64,12 +67,19 @@ func (s *MintPublisher) SelfMint(
 		return nil, err
 	}
 
+	addressesByType, err := s.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, fmt.Errorf("load agent addresses: %w", err)
+	}
+	// The Vault credential is the wallet used for control and reconcile, whatever agent_addresses holds.
+	addressesByType[enums.AddressTypeEvm] = cred.Address
+
 	params := identity_interfaces.MintParams{
 		Collection: collection,
 		To:         common.HexToAddress(*agent.Owner),
 		Role:       agent.Role.String(),
 		Name:       agent.Name,
-		Wallets:    []common.Address{nodeWallet},
+		Addresses:  identity_interfaces.MintAddress{}.FromMap(addressesByType),
 		Images:     identity_interfaces.MintKeyValue{}.FromMap(agent.Images),
 		Attributes: identity_interfaces.MintKeyValue{}.FromMap(agent.Attributes),
 		CloneOf:    agent.CloneOf,
@@ -93,7 +103,7 @@ func (s *MintPublisher) createMint(
 	if err != nil {
 		return nil, fmt.Errorf("mint: %w", err)
 	}
-	tokenId, err := s.agentCollectionRequester.WalletToTokenId(agent.ChainId, collection, nodeWallet)
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(agent.ChainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
 	if err != nil {
 		return nil, fmt.Errorf("read minted token: %w", err)
 	}
@@ -119,14 +129,14 @@ func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Ag
 	nodeWallet := common.HexToAddress(cred.Address)
 	collection := common.HexToAddress(agent.CollectionAddress)
 
-	tokenId, err := s.agentCollectionRequester.WalletToTokenId(agent.ChainId, collection, nodeWallet)
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(agent.ChainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
 	if err != nil {
 		return common.Address{}, 0, fmt.Errorf("read minted token: %w", err)
 	}
 
 	// Fallback: the draft's collection may be wrong/empty; scan the manager.
 	if tokenId == 0 {
-		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByWallet(agent.ChainId, nodeWallet)
+		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByAddress(agent.ChainId, enums.AddressTypeEvm, nodeWallet.Hex())
 		if findErr != nil {
 			return common.Address{}, 0, fmt.Errorf("scan collections: %w", findErr)
 		}

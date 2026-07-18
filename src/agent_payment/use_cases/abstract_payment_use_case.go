@@ -17,12 +17,14 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
+	"github.com/google/uuid"
 )
 
 // AbstractPaymentUseCase carries the repositories every payment use case
 // needs and the shared policy-materialization behavior.
 type AbstractPaymentUseCase struct {
 	agentRepository         identity_repositories.AgentRepositoryInterface
+	agentAddressRepository  identity_repositories.AgentAddressRepositoryInterface
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface
 	paymentRuleRepository   repositories.PaymentRuleRepositoryInterface
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface
@@ -31,6 +33,7 @@ type AbstractPaymentUseCase struct {
 
 func NewAbstractPaymentUseCase(
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
 	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
@@ -38,6 +41,7 @@ func NewAbstractPaymentUseCase(
 ) *AbstractPaymentUseCase {
 	return &AbstractPaymentUseCase{
 		agentRepository:         agentRepository,
+		agentAddressRepository:  agentAddressRepository,
 		paymentPolicyRepository: paymentPolicyRepository,
 		paymentRuleRepository:   paymentRuleRepository,
 		paymentMethodStrategies: paymentMethodStrategies,
@@ -68,7 +72,11 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 	}
-	if rule, config := u.defaultRule(policy, agent); rule != nil {
+	evmAddress, err := u.evmAddress(ctx, agent.Id)
+	if err != nil {
+		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+	if rule, config := u.defaultRule(policy, agent, evmAddress); rule != nil {
 		created, err := u.paymentRuleRepository.Create(ctx, rule)
 		if err != nil {
 			return nil, nil, errors.NewInternalError("policy_failed", err.Error())
@@ -87,8 +95,7 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 // with the config JSON the x402 strategy persists. The $6022 token is only the
 // EIP-712 signing context — zero-price rules never settle on-chain. Returns
 // (nil, nil) when the agent has no addresses to scope to.
-func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent) (*models.PaymentRule, json.RawMessage) {
-	evmAddress := agent.Addresses[identity_enums.AddressTypeEvm]
+func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent, evmAddress string) (*models.PaymentRule, json.RawMessage) {
 	patterns := []string{}
 	if len(evmAddress) != 0 {
 		patterns = append(patterns, strings.ToLower(evmAddress))
@@ -123,4 +130,16 @@ func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent
 		Price:    "0",
 		Method:   enums.PaymentMethodX402,
 	}, rawConfig
+}
+
+// evmAddress returns the agent's stored evm address, or "" when none exists.
+func (u *AbstractPaymentUseCase) evmAddress(ctx context.Context, agentId uuid.UUID) (string, error) {
+	address, err := u.agentAddressRepository.GetByAgentIdAndType(ctx, agentId, identity_enums.AddressTypeEvm)
+	if err != nil {
+		return "", err
+	}
+	if address == nil {
+		return "", nil
+	}
+	return address.Address, nil
 }

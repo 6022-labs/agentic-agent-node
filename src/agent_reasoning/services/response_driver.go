@@ -32,6 +32,7 @@ type ResponseDriver struct {
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface
 	conversationHistory        knowledge_interfaces.ConversationHistoryInterface
 	agentRepository            identity_repositories.AgentRepositoryInterface
+	agentAddressRepository     identity_repositories.AgentAddressRepositoryInterface
 	systemPromptBuilder        interfaces.SystemPromptBuilderInterface
 	mcpRequester               interfaces.McpRequesterInterface
 	selfToolRegistry           interfaces.SelfToolRegistryInterface
@@ -48,6 +49,7 @@ func NewResponseDriver(
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface,
 	conversationHistory knowledge_interfaces.ConversationHistoryInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	systemPromptBuilder interfaces.SystemPromptBuilderInterface,
 	mcpRequester interfaces.McpRequesterInterface,
 	selfToolRegistry interfaces.SelfToolRegistryInterface,
@@ -63,6 +65,7 @@ func NewResponseDriver(
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		conversationHistory:        conversationHistory,
 		agentRepository:            agentRepository,
+		agentAddressRepository:     agentAddressRepository,
 		systemPromptBuilder:        systemPromptBuilder,
 		mcpRequester:               mcpRequester,
 		selfToolRegistry:           selfToolRegistry,
@@ -125,7 +128,19 @@ func (d *ResponseDriver) Drive(
 		return nil, err
 	}
 
-	systemPrompt := d.systemPromptBuilder.Build(agent, guidance, selfTools, mcpTools, instructions)
+	addresses, err := d.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load agent addresses: %w", err)
+	}
+
+	systemPrompt := d.systemPromptBuilder.Build(
+		agent,
+		addresses,
+		guidance,
+		selfTools,
+		mcpTools,
+		instructions,
+	)
 	messages = append([]*interfaces.ChatCompletionMessage{{Role: "system", Content: systemPrompt}}, messages...)
 
 	finalStream, err := d.inferenceLoop.Run(ctx, llmConnection, selfTools, mcpTools, messages)

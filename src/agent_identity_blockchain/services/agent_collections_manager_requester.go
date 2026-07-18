@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
@@ -12,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// Collections scanned per findAgentByWallet call, to keep each RPC under the node limit.
-const findAgentByWalletPageSize = 50
+// Collections scanned per findAgentByAddress call, to keep each RPC under the node limit.
+const findAgentByAddressPageSize = 50
 
 // Collections fetched per listCollections call, to keep each RPC under the node limit.
 const listCollectionsPageSize = 50
@@ -54,16 +55,16 @@ func (r *AgentCollectionsManagerRequester) IsKnownCollection(chainId string, col
 	return contract.IsKnownCollection(nil, collection)
 }
 
-// FindAgentByWallet returns the agent NFT a wallet controls, or a zero address if none. The manager scans collections on-chain, paginated by the cursor.
-func (r *AgentCollectionsManagerRequester) FindAgentByWallet(chainId string, wallet common.Address) (common.Address, uint64, string, error) {
+// FindAgentByAddress returns the agent NFT a typed address belongs to, or a zero address if none. The manager scans collections on-chain, paginated by the cursor.
+func (r *AgentCollectionsManagerRequester) FindAgentByAddress(chainId string, addressType enums.AddressType, value string) (common.Address, uint64, string, error) {
 	contract, err := r.manager(chainId)
 	if err != nil {
 		return common.Address{}, 0, "", err
 	}
 
-	limit := new(big.Int).SetUint64(findAgentByWalletPageSize)
+	limit := new(big.Int).SetUint64(findAgentByAddressPageSize)
 	for offset := big.NewInt(0); ; {
-		res, err := contract.FindAgentByWallet(nil, wallet, offset, limit)
+		res, err := contract.FindAgentByAddress(nil, addressType.String(), value, offset, limit)
 		if err != nil {
 			return common.Address{}, 0, "", err
 		}
