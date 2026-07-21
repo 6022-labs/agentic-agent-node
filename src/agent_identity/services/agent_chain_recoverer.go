@@ -117,15 +117,11 @@ func (s *AgentChainRecoverer) recoverMintedAgent(
 		return fmt.Errorf("read collection name: %w", err)
 	}
 
-	var role enums.AgentRole
-	_ = role.Set(info.Role)
-
 	agent.ChainId = lo.ToPtr(chainId)
 	agent.CollectionAddress = collection.Hex()
 	agent.Name = lo.ToPtr(info.Name)
 	agent.CloneOf = info.CloneOf
 	agent.EnsDomain = lo.ToPtr(s.ensDomainBuilder.Build(info.Name, collectionName, chainId))
-	agent.Role = &role
 	agent.Images = info.Images
 	agent.Attributes = info.Attributes
 

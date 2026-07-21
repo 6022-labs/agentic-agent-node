@@ -105,8 +105,6 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	}
 
 	owner := req.Owner
-	var role enums.AgentRole
-	_ = role.Set(req.Role)
 
 	agent := &models.Agent{
 		ChainId:           lo.ToPtr(req.ChainId),
@@ -114,7 +112,6 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 		Name:              lo.ToPtr(req.Name),
 		CloneOf:           req.CloneOf,
 		EnsDomain:         lo.ToPtr(u.ensDomainBuilder.Build(req.Name, collectionName, req.ChainId)),
-		Role:              &role,
 		Creator:           &owner,
 		Owner:             &owner,
 		Attributes:        req.Attributes,
@@ -192,7 +189,7 @@ func (u *SaveAgentRegistration) buildImages(agent *models.Agent, addresses map[e
 	generated, err := u.generateAgentImages.Generate(identity_interfaces.GenerateImageParams{
 		Name:              lo.FromPtr(agent.Name),
 		EnsDomain:         lo.FromPtr(agent.EnsDomain),
-		Role:              lo.FromPtr(agent.Role).String(),
+		Role:              agent.Attributes["role"],
 		Creator:           creator.Hex(),
 		BaseImageBytes:    baseBytes,
 		BaseImageMimeType: mimeType,

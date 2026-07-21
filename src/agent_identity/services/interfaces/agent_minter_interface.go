@@ -44,7 +44,6 @@ func (MintAddress) FromMap(m map[enums.AddressType]string) []MintAddress {
 type MintParams struct {
 	Collection common.Address
 	To         common.Address
-	Role       string
 	Name       string
 	Addresses  []MintAddress
 	Images     []MintKeyValue

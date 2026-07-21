@@ -78,7 +78,6 @@ func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addr
 	}
 	appendLine("Name", lo.FromPtr(agent.Name))
 	appendLine("ENS domain", lo.FromPtr(agent.EnsDomain))
-	appendLine("Role", string(lo.FromPtr(agent.Role)))
 	appendLine("Chain", lo.FromPtr(agent.ChainId))
 	appendLine("Collection", agent.CollectionAddress)
 	if agent.CollectionTokenId != nil {

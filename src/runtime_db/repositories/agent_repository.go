@@ -48,7 +48,6 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 	existing.Name = agent.Name
 	existing.CloneOf = agent.CloneOf
 	existing.EnsDomain = agent.EnsDomain
-	existing.Role = agent.Role
 	existing.Creator = agent.Creator
 	existing.Owner = agent.Owner
 	existing.Images = agent.Images

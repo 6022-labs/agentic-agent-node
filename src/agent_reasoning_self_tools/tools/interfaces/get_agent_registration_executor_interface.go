@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+
 	identity_responses "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 )
 

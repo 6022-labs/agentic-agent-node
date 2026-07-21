@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
-	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
@@ -83,7 +82,6 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					assert.Nil(t, reloaded.ChainId)
 					assert.Nil(t, reloaded.Name)
 					assert.Nil(t, reloaded.EnsDomain)
-					assert.Nil(t, reloaded.Role)
 					assert.Nil(t, reloaded.Creator)
 				})
 			})
@@ -98,7 +96,7 @@ func TestWhenUpsertingAgent(t *testing.T) {
 
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
-						WithRole(identity_enums.AgentRoleExpert).
+						WithAttributes(map[string]string{"role": "expert"}).
 						Build())
 
 					assert.NoError(t, err)
@@ -120,20 +118,20 @@ func TestWhenUpsertingAgent(t *testing.T) {
 
 					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
-						WithRole(identity_enums.AgentRoleExpert).
+						WithAttributes(map[string]string{"role": "expert"}).
 						Build())
 
 					assert.NoError(t, err)
 
 					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Babbage").
-						WithRole(identity_enums.AgentRoleFacilitator).
+						WithAttributes(map[string]string{"role": "facilitator"}).
 						Build())
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
 					assert.Equal(t, "Babbage", lo.FromPtr(second.Name))
-					assert.Equal(t, identity_enums.AgentRoleFacilitator, lo.FromPtr(second.Role))
+					assert.Equal(t, "facilitator", second.Attributes["role"])
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)

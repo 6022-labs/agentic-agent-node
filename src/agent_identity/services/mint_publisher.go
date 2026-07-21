@@ -78,7 +78,6 @@ func (s *MintPublisher) SelfMint(
 	params := identity_interfaces.MintParams{
 		Collection: collection,
 		To:         common.HexToAddress(*agent.Owner),
-		Role:       lo.FromPtr(agent.Role).String(),
 		Name:       lo.FromPtr(agent.Name),
 		Addresses:  identity_interfaces.MintAddress{}.FromMap(addressesByType),
 		Images:     identity_interfaces.MintKeyValue{}.FromMap(agent.Images),

@@ -67,7 +67,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 				CollectionAddress: "0xabc",
 				Owner:             "0xowner",
 				Name:              "bob",
-				Role:              "agent",
+				Attributes:        map[string]string{"role": "agent"},
 				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
 			})
 
@@ -98,7 +98,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 				CollectionAddress: "0xabc",
 				Owner:             "0xowner",
 				Name:              "bob",
-				Role:              "agent",
+				Attributes:        map[string]string{"role": "agent"},
 				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
 			})
 

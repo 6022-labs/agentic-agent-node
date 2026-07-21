@@ -8,7 +8,6 @@ type AgentRegistrationResponse struct {
 	TokenId           *uint64           `json:"tokenId"`
 	ProposalId        *uint64           `json:"proposalId"`
 	Name              string            `json:"name"`
-	Role              string            `json:"role"`
 	CloneOf           *uint64           `json:"cloneOf"`
 	Owner             string            `json:"owner"`
 	Addresses         map[string]string `json:"addresses"`

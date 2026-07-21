@@ -69,7 +69,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 				ChainId:           "80002",
 				CollectionAddress: "0x2222222222222222222222222222222222222222",
 				Name:              "Alice",
-				Role:              "assistant",
+				AttributesRaw:     `{"role":"assistant"}`,
 				Image:             &multipart.FileHeader{Filename: "avatar.png", Size: 128},
 			}, owner)
 
@@ -98,7 +98,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 				ChainId:           "80002",
 				CollectionAddress: "0x2222222222222222222222222222222222222222",
 				Name:              "Alice",
-				Role:              "assistant",
+				AttributesRaw:     `{"role":"assistant"}`,
 				Image:             &multipart.FileHeader{Filename: "avatar.png", Size: 128},
 			}, owner)
 

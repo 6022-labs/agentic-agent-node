@@ -50,7 +50,7 @@ const buildDefaults = (
   chainId: draft?.chainId ?? fallbackChainId,
   collectionAddress: draft?.collectionAddress ?? "",
   name: draft?.name ?? "",
-  role: AGENT_ROLES.find((role) => role === draft?.role),
+  role: AGENT_ROLES.find((role) => role === draft?.attributes?.["role"]),
   // images.default holds the generated IPFS CID, not the base; leaving this
   // empty on re-edit keeps the stored image.
   image: undefined,

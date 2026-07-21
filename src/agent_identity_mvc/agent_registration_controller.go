@@ -67,9 +67,8 @@ func (c *AgentRegistrationController) RegisterRoutes(app fiber.Router) {
 // @Param collectionAddress formData string true "Collection address"
 // @Param owner formData string true "Owner address"
 // @Param name formData string true "Agent name"
-// @Param role formData string true "Agent role"
 // @Param cloneOf formData int false "Token id this agent clones"
-// @Param attributes formData string false "Attributes as a JSON object string"
+// @Param attributes formData string true "Attributes as a JSON object string; must include the required attributes"
 // @Param image formData file true "Base image to frame"
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 400 {object} errors.ValidationError

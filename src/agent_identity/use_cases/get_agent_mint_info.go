@@ -66,7 +66,6 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 	return &responses.MintInfoResponse{
 		CollectionAddress: collection.Hex(),
 		To:                owner.Hex(),
-		Role:              lo.FromPtr(agent.Role).String(),
 		Name:              lo.FromPtr(agent.Name),
 		Addresses:         addresses,
 		Images:            responses.KeyValue{}.FromMap(agent.Images),

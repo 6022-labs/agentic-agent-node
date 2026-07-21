@@ -28,10 +28,9 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().
 			WithName("Alice").
 			WithEnsDomain("alice.agent.eth").
-			WithRole(identity_enums.GetAllAgentRoles()[0]).
 			WithCollectionTokenId(42).
 			WithOwner("0xOwner").
-			WithAttributes(map[string]string{"specialty": "defi"}).
+			WithAttributes(map[string]string{"role": "clone", "specialty": "defi"}).
 			Build()
 		addresses := map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xEvmAddress"}
 

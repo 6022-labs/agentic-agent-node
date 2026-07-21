@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -19,12 +18,11 @@ type Agent struct {
 	CollectionAddress string  `gorm:"size:42" json:"collectionAddress"`
 	ProposalId        *uint64 `json:"proposalId"`
 
-	Name      *string          `gorm:"size:255" json:"name"`
-	CloneOf   *uint64          `json:"cloneOf"`
-	EnsDomain *string          `gorm:"size:255" json:"ensDomain"`
-	Role      *enums.AgentRole `gorm:"size:32" json:"role"`
-	Creator   *string          `gorm:"size:42" json:"creator"`
-	Owner     *string          `gorm:"size:42" json:"owner"`
+	Name      *string `gorm:"size:255" json:"name"`
+	CloneOf   *uint64 `json:"cloneOf"`
+	EnsDomain *string `gorm:"size:255" json:"ensDomain"`
+	Creator   *string `gorm:"size:42" json:"creator"`
+	Owner     *string `gorm:"size:42" json:"owner"`
 
 	// Soul is the persona layer of the system prompt, recomputed from on-chain facts at each mint reconcile.
 	Soul *string `gorm:"type:text" json:"soul"`

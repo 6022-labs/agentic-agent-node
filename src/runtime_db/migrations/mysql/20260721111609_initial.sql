@@ -18,7 +18,6 @@ CREATE TABLE `agents` (
   `name` varchar(255) NULL,
   `clone_of` bigint unsigned NULL,
   `ens_domain` varchar(255) NULL,
-  `role` varchar(32) NULL,
   `creator` varchar(42) NULL,
   `owner` varchar(42) NULL,
   `soul` text NULL,

@@ -49,7 +49,6 @@ export default function BrowserMintStep({
       const params = {
         collectionAddress: info.collectionAddress,
         to: info.to,
-        role: info.role,
         name: info.name,
         addresses: orderedAgentAddresses(info.addresses),
         images: info.images,

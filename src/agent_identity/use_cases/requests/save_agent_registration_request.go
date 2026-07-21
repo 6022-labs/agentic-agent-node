@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
@@ -25,7 +24,6 @@ type SaveAgentRegistrationRequest struct {
 	CollectionAddress string                `form:"collectionAddress"`
 	Owner             string                `form:"owner"`
 	Name              string                `form:"name"`
-	Role              string                `form:"role"`
 	CloneOf           *uint64               `form:"cloneOf"`
 	AttributesRaw     string                `form:"attributes"`
 	Image             *multipart.FileHeader `form:"image"`
@@ -57,22 +55,19 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		return errors.NewValidationError("name", "must be a valid ENS label: lowercase letters, digits and hyphens; no leading, trailing or repeated hyphens; 1-63 chars")
 	}
 
-	var role enums.AgentRole
-	if err := role.Set(r.Role); err != nil {
-		return errors.NewValidationError("role", "must be one of: "+enums.GetAllAgentRoles().String())
-	}
-	r.Role = role.String()
-
 	if r.Image != nil && r.Image.Size > maxImageBytes {
 		return errors.NewValidationError("image", "must be at most 5MB")
 	}
 
-	if strings.TrimSpace(r.AttributesRaw) == "" {
-		r.Attributes = map[string]string{}
-		return nil
+	r.Attributes = map[string]string{}
+	if strings.TrimSpace(r.AttributesRaw) != "" {
+		if err := json.Unmarshal([]byte(r.AttributesRaw), &r.Attributes); err != nil {
+			return errors.NewValidationError("attributes", "must be a JSON object of string values")
+		}
 	}
-	if err := json.Unmarshal([]byte(r.AttributesRaw), &r.Attributes); err != nil {
-		return errors.NewValidationError("attributes", "must be a JSON object of string values")
+	// The contract rejects mints missing a required attribute.
+	if strings.TrimSpace(r.Attributes["role"]) == "" {
+		return errors.NewValidationError("attributes", `must include a non-empty "role"`)
 	}
 
 	return nil

@@ -1,8 +1,9 @@
 package agent_knowledge_mvc
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"strings"
+
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"

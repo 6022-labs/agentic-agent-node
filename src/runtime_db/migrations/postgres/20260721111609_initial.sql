@@ -18,7 +18,6 @@ CREATE TABLE "public"."agents" (
   "name" character varying(255) NULL,
   "clone_of" bigint NULL,
   "ens_domain" character varying(255) NULL,
-  "role" character varying(32) NULL,
   "creator" character varying(42) NULL,
   "owner" character varying(42) NULL,
   "soul" text NULL,

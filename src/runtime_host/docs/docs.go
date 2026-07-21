@@ -175,13 +175,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Agent role",
-                        "name": "role",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "integer",
                         "description": "Token id this agent clones",
                         "name": "cloneOf",
@@ -189,9 +182,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Attributes as a JSON object string",
+                        "description": "Attributes as a JSON object string; must include the required attributes",
                         "name": "attributes",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "file",
@@ -1478,9 +1472,6 @@ const docTemplate = `{
                 "proposalId": {
                     "type": "integer"
                 },
-                "role": {
-                    "type": "string"
-                },
                 "tokenId": {
                     "type": "integer"
                 }
@@ -1815,9 +1806,6 @@ const docTemplate = `{
                 },
                 "ownerIsModerator": {
                     "type": "boolean"
-                },
-                "role": {
-                    "type": "string"
                 },
                 "to": {
                     "type": "string"

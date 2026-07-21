@@ -9,7 +9,6 @@ import (
 // reconciles into its local agent row after a mint completes.
 type OnChainAgentInfo struct {
 	Name       string
-	Role       string
 	Creator    common.Address
 	CloneOf    *uint64
 	Images     map[string]string

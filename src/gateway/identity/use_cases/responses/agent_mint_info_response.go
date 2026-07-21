@@ -10,7 +10,6 @@ type KeyValue struct {
 type MintInfoResponse struct {
 	CollectionAddress string            `json:"collectionAddress"`
 	To                string            `json:"to"`
-	Role              string            `json:"role"`
 	Name              string            `json:"name"`
 	Addresses         map[string]string `json:"addresses"`
 	Images            []KeyValue        `json:"images"`

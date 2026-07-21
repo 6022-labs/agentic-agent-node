@@ -19,7 +19,6 @@ type SaveAgentRegistrationRequest struct {
 	ChainId           string                `form:"chainId"`
 	CollectionAddress string                `form:"collectionAddress"`
 	Name              string                `form:"name"`
-	Role              string                `form:"role"`
 	CloneOf           *uint64               `form:"cloneOf"`
 	AttributesRaw     string                `form:"attributes"`
 	Image             *multipart.FileHeader `form:"image"`
@@ -43,11 +42,6 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		return errors.NewValidationError("name", "cannot be empty")
 	}
 
-	r.Role = strings.TrimSpace(r.Role)
-	if len(r.Role) == 0 {
-		return errors.NewValidationError("role", "cannot be empty")
-	}
-
 	if r.Image == nil {
 		return errors.NewValidationError("image", "is required")
 	}
@@ -59,6 +53,10 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		if err := json.Unmarshal([]byte(r.AttributesRaw), &r.Attributes); err != nil {
 			return errors.NewValidationError("attributes", "must be a JSON object of string values")
 		}
+	}
+	// The contract rejects mints missing a required attribute.
+	if strings.TrimSpace(r.Attributes["role"]) == "" {
+		return errors.NewValidationError("attributes", `must include a non-empty "role"`)
 	}
 
 	return nil

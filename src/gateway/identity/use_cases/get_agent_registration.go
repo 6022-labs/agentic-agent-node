@@ -31,7 +31,6 @@ func (u *GetAgentRegistration) toResponse(p *models.ExternalAgentRegistrationPay
 		TokenId:           p.TokenId,
 		ProposalId:        p.ProposalId,
 		Name:              p.Name,
-		Role:              p.Role,
 		CloneOf:           p.CloneOf,
 		Owner:             p.Owner,
 		Addresses:         p.Addresses,

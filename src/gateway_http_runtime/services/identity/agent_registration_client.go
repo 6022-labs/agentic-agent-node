@@ -57,7 +57,6 @@ func (c *HttpAgentRegistrationClient) writeSaveFields(writer *multipart.Writer, 
 		"collectionAddress": body.CollectionAddress,
 		"owner":             body.Owner,
 		"name":              body.Name,
-		"role":              body.Role,
 	}
 	if body.CloneOf != nil {
 		fields["cloneOf"] = strconv.FormatUint(*body.CloneOf, 10)

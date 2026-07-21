@@ -21,13 +21,14 @@ export const saveAgentRegistration = async (
   form.append("chainId", request.chainId)
   form.append("collectionAddress", request.collectionAddress)
   form.append("name", request.name)
-  form.append("role", request.role)
   if (request.cloneOf != null) {
     form.append("cloneOf", String(request.cloneOf))
   }
-  if (request.attributes) {
-    form.append("attributes", JSON.stringify(request.attributes))
-  }
+  // Required attributes travel inside the attributes JSON.
+  form.append(
+    "attributes",
+    JSON.stringify({ ...request.attributes, role: request.role })
+  )
   // Omit on re-edit to keep the stored image; only sent when a new one is picked.
   if (request.image) {
     form.append("image", request.image)

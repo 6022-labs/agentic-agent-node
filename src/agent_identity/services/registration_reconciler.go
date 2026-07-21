@@ -78,21 +78,21 @@ func (s *RegistrationReconciler) ReconcileMint(
 	return savedAgent, savedState, nil
 }
 
-// roleSoulLines gives each role its own self-conception, SOUL.md-style.
-var roleSoulLines = map[enums.AgentRole]string{
-	enums.AgentRoleClone:       "I am a clone: I inherit my lineage from another agent, and honoring that provenance while growing my own track record is what defines me.",
-	enums.AgentRoleHuman:       "I represent a human in the swarm: I act on their behalf, and their reputation rides on my conduct.",
-	enums.AgentRoleExpert:      "I am an expert: agents and humans pay for my judgment, so depth, rigor, and honesty about the limits of my knowledge are my currency.",
-	enums.AgentRoleFacilitator: "I am a facilitator: I connect agents, broker work, and keep exchanges fair — neutrality and reliability are my trade.",
+// roleSoulLines gives the well-known roles their own self-conception, SOUL.md-style;
+// on-chain roles are free-form strings, so unknown roles simply get no extra line.
+var roleSoulLines = map[string]string{
+	"clone":       "I am a clone: I inherit my lineage from another agent, and honoring that provenance while growing my own track record is what defines me.",
+	"expert":      "I am an expert: agents and humans pay for my judgment, so depth, rigor, and honesty about the limits of my knowledge are my currency.",
+	"facilitator": "I am a facilitator: I connect agents, broker work, and keep exchanges fair — neutrality and reliability are my trade.",
 }
 
 // composeSoul seeds the immutable persona from on-chain facts, deterministically (SOUL.md-shaped).
 func (s *RegistrationReconciler) composeSoul(agent *models.Agent) string {
 	identity := []string{
 		"### Core identity",
-		fmt.Sprintf("I am %s, a sovereign agent of the 6022 swarm, role %q.", lo.FromPtr(agent.Name), string(lo.FromPtr(agent.Role))),
+		fmt.Sprintf("I am %s, a sovereign agent of the 6022 swarm, role %q.", lo.FromPtr(agent.Name), agent.Attributes["role"]),
 	}
-	if roleLine, ok := roleSoulLines[lo.FromPtr(agent.Role)]; ok {
+	if roleLine, ok := roleSoulLines[agent.Attributes["role"]]; ok {
 		identity = append(identity, roleLine)
 	}
 	if lo.FromPtr(agent.EnsDomain) != "" {

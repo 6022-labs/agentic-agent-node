@@ -2,8 +2,9 @@ package use_cases_test
 
 import (
 	"context"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"testing"
+
+	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"

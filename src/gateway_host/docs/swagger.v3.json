@@ -479,9 +479,6 @@
                     "proposalId": {
                         "type": "integer"
                     },
-                    "role": {
-                        "type": "string"
-                    },
                     "tokenId": {
                         "type": "integer"
                     }
@@ -836,9 +833,6 @@
                     },
                     "ownerIsModerator": {
                         "type": "boolean"
-                    },
-                    "role": {
-                        "type": "string"
                     },
                     "to": {
                         "type": "string"
@@ -1486,10 +1480,6 @@
                                         "type": "string"
                                     },
                                     {
-                                        "title": "role",
-                                        "type": "string"
-                                    },
-                                    {
                                         "title": "cloneOf",
                                         "type": "integer"
                                     },
@@ -1510,7 +1500,7 @@
                             }
                         }
                     },
-                    "description": "Collection address | Agent name | Agent role | Token id this agent clones | Attributes as a JSON object string | Base image to frame",
+                    "description": "Collection address | Agent name | Token id this agent clones | Attributes as a JSON object string; must include the required attributes | Base image to frame",
                     "required": true
                 },
                 "responses": {
@@ -2327,6 +2317,16 @@
                 ],
                 "responses": {
                     "204": {},
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
                     "404": {
                         "content": {
                             "application/json": {

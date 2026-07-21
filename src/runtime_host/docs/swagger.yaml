@@ -202,8 +202,6 @@ definitions:
         type: string
       proposalId:
         type: integer
-      role:
-        type: string
       tokenId:
         type: integer
     type: object
@@ -421,8 +419,6 @@ definitions:
         type: string
       ownerIsModerator:
         type: boolean
-      role:
-        type: string
       to:
         type: string
     type: object
@@ -637,18 +633,15 @@ paths:
         name: name
         required: true
         type: string
-      - description: Agent role
-        in: formData
-        name: role
-        required: true
-        type: string
       - description: Token id this agent clones
         in: formData
         name: cloneOf
         type: integer
-      - description: Attributes as a JSON object string
+      - description: Attributes as a JSON object string; must include the required
+          attributes
         in: formData
         name: attributes
+        required: true
         type: string
       - description: Base image to frame
         in: formData

@@ -16,7 +16,6 @@ type ExternalSaveAgentRegistrationPayload struct {
 	CollectionAddress string
 	Owner             string
 	Name              string
-	Role              string
 	CloneOf           *uint64
 	Image             *multipart.FileHeader
 	Attributes        map[string]string
@@ -29,7 +28,6 @@ type ExternalAgentRegistrationPayload struct {
 	TokenId           *uint64           `json:"tokenId"`
 	ProposalId        *uint64           `json:"proposalId"`
 	Name              string            `json:"name"`
-	Role              string            `json:"role"`
 	CloneOf           *uint64           `json:"cloneOf"`
 	Owner             string            `json:"owner"`
 	Addresses         map[string]string `json:"addresses"`
@@ -44,7 +42,6 @@ type ExternalAgentRegistrationPayload struct {
 type ExternalMintInfoPayload struct {
 	CollectionAddress string             `json:"collectionAddress"`
 	To                string             `json:"to"`
-	Role              string             `json:"role"`
 	Name              string             `json:"name"`
 	Addresses         map[string]string  `json:"addresses"`
 	Images            []ExternalKeyValue `json:"images"`

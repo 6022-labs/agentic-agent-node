@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
@@ -87,7 +86,7 @@ func TestWhenGettingAgent(t *testing.T) {
 
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
-						WithRole(identity_enums.AgentRoleExpert).
+						WithAttributes(map[string]string{"role": "expert"}).
 						WithEnsDomain("ada.agent.eth").
 						WithImages(map[string]string{"avatar": "https://example.com/a.png"}).
 						WithAttributes(map[string]string{"trait": "curious"}).
@@ -99,7 +98,7 @@ func TestWhenGettingAgent(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, "Ada", lo.FromPtr(got.Name))
-					assert.Equal(t, identity_enums.AgentRoleExpert, lo.FromPtr(got.Role))
+					assert.Equal(t, "expert", got.Attributes["role"])
 					assert.Equal(t, "ada.agent.eth", lo.FromPtr(got.EnsDomain))
 					assert.Equal(t, "https://example.com/a.png", got.Images["avatar"])
 					assert.Equal(t, "curious", got.Attributes["trait"])

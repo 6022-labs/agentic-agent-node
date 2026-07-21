@@ -28,7 +28,6 @@ func (u *GetAgentMintInfo) toResponse(p *models.ExternalMintInfoPayload) *respon
 	return &responses.MintInfoResponse{
 		CollectionAddress: p.CollectionAddress,
 		To:                p.To,
-		Role:              p.Role,
 		Name:              p.Name,
 		Addresses:         p.Addresses,
 		Images:            u.toKeyValues(p.Images),

@@ -160,7 +160,6 @@ type ResponsesAgentRegistrationResponse struct {
 	Name              *string            `json:"name,omitempty"`
 	Owner             *string            `json:"owner,omitempty"`
 	ProposalId        *int               `json:"proposalId,omitempty"`
-	Role              *string            `json:"role,omitempty"`
 	TokenId           *int               `json:"tokenId,omitempty"`
 }
 
@@ -304,7 +303,6 @@ type ResponsesMintInfoResponse struct {
 	ModeratorCount    *int                 `json:"moderatorCount,omitempty"`
 	Name              *string              `json:"name,omitempty"`
 	OwnerIsModerator  *bool                `json:"ownerIsModerator,omitempty"`
-	Role              *string              `json:"role,omitempty"`
 	To                *string              `json:"to,omitempty"`
 }
 
@@ -410,16 +408,13 @@ type PostInternalAgentRegistrationFormdataBody1 = string
 type PostInternalAgentRegistrationFormdataBody2 = string
 
 // PostInternalAgentRegistrationFormdataBody3 defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationFormdataBody3 = string
+type PostInternalAgentRegistrationFormdataBody3 = int
 
 // PostInternalAgentRegistrationFormdataBody4 defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationFormdataBody4 = int
+type PostInternalAgentRegistrationFormdataBody4 = string
 
 // PostInternalAgentRegistrationFormdataBody5 defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationFormdataBody5 = string
-
-// PostInternalAgentRegistrationFormdataBody6 defines parameters for PostInternalAgentRegistration.
-type PostInternalAgentRegistrationFormdataBody6 = openapi_types.File
+type PostInternalAgentRegistrationFormdataBody5 = openapi_types.File
 
 // PostInternalAuthorizeJSONBody defines parameters for PostInternalAuthorize.
 type PostInternalAuthorizeJSONBody struct {

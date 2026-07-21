@@ -13,7 +13,6 @@ type AgentRegistrationResponse struct {
 	TokenId           *uint64                      `json:"tokenId"`
 	ProposalId        *uint64                      `json:"proposalId"`
 	Name              string                       `json:"name"`
-	Role              string                       `json:"role"`
 	CloneOf           *uint64                      `json:"cloneOf"`
 	Owner             string                       `json:"owner"`
 	Addresses         map[enums.AddressType]string `json:"addresses"`
@@ -34,7 +33,6 @@ func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, addresses map
 	r.TokenId = agent.CollectionTokenId
 	r.ProposalId = agent.ProposalId
 	r.Name = lo.FromPtr(agent.Name)
-	r.Role = lo.FromPtr(agent.Role).String()
 	r.CloneOf = agent.CloneOf
 	r.Owner = owner
 	r.Addresses = addresses

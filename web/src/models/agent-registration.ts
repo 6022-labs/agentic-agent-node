@@ -10,7 +10,6 @@ export type AgentRegistration = {
   tokenId: number | null
   proposalId: number | null
   name: string
-  role: string
   cloneOf: number | null
   owner: string
   // Wallet addresses per chain family, keyed by AddressType ("evm", "btc").
@@ -34,7 +33,7 @@ export const isDraftComplete = (registration: AgentRegistration | null) =>
   !!registration.chainId &&
   !!registration.collectionAddress &&
   !!registration.name &&
-  !!registration.role &&
+  !!registration.attributes?.["role"] &&
   !!registration.images &&
   Object.keys(registration.images).length > 0
 
@@ -53,7 +52,6 @@ export type SaveAgentRegistrationRequest = {
 export type MintInfo = {
   collectionAddress: string
   to: string
-  role: string
   name: string
   // Wallet addresses per chain family, keyed by AddressType ("evm", "btc").
   addresses: Record<string, string>

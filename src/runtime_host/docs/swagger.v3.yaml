@@ -205,8 +205,6 @@ components:
           type: string
         proposalId:
           type: integer
-        role:
-          type: string
         tokenId:
           type: integer
       type: object
@@ -434,8 +432,6 @@ components:
           type: string
         ownerIsModerator:
           type: boolean
-        role:
-          type: string
         to:
           type: string
       type: object
@@ -662,8 +658,6 @@ paths:
                 type: string
               - title: name
                 type: string
-              - title: role
-                type: string
               - title: cloneOf
                 type: integer
               - title: attributes
@@ -673,9 +667,9 @@ paths:
           multipart/form-data:
             schema:
               type: object
-        description: Collection address | Owner address | Agent name | Agent role
-          | Token id this agent clones | Attributes as a JSON object string | Base
-          image to frame
+        description: Collection address | Owner address | Agent name | Token id this
+          agent clones | Attributes as a JSON object string; must include the required
+          attributes | Base image to frame
         required: true
       responses:
         "200":

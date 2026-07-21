@@ -21,7 +21,6 @@ func (KeyValue) FromMap(m map[string]string) []KeyValue {
 type MintInfoResponse struct {
 	CollectionAddress string                       `json:"collectionAddress"`
 	To                string                       `json:"to"`
-	Role              string                       `json:"role"`
 	Name              string                       `json:"name"`
 	Addresses         map[enums.AddressType]string `json:"addresses"`
 	Images            []KeyValue                   `json:"images"`

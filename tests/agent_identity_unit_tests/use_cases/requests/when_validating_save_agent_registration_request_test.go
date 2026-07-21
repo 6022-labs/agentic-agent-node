@@ -6,7 +6,6 @@ import (
 	"net/textproto"
 	"testing"
 
-	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	common_tests "github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +20,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 			CollectionAddress: "  " + common_tests.RandomEthAddress().Hex() + "  ",
 			Owner:             common_tests.RandomEthAddress().Hex(),
 			Name:              "my-agent",
-			Role:              identity_enums.AgentRoleExpert.String(),
-			AttributesRaw:     `{"specialty":"defi"}`,
+			AttributesRaw:     `{"role":"expert","specialty":"defi"}`,
 			Image:             newImageFileHeader(t, []byte("fake-image")),
 		}
 	}
@@ -39,21 +37,20 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "my-agent", req.Name)
 			assert.NotContains(t, req.CollectionAddress, " ")
-			assert.Equal(t, map[string]string{"specialty": "defi"}, req.Attributes)
+			assert.Equal(t, map[string]string{"role": "expert", "specialty": "defi"}, req.Attributes)
 		})
 	})
 
 	t.Run("Given the attributes are absent", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should default to an empty attribute map", func(t *testing.T) {
+		t.Run("Should return a validation error for the missing role", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.AttributesRaw = "   "
 
-			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, map[string]string{}, req.Attributes)
+			assert.Error(t, req.ValidateAndSanitize())
 		})
 	})
 
@@ -124,14 +121,40 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the role is unknown", func(t *testing.T) {
+	t.Run("Given a free-form role attribute", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.AttributesRaw = `{"role":"wizard"}`
+
+			assert.NoError(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the attributes carry no role", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
-			req.Role = "wizard"
+			req.AttributesRaw = `{"specialty":"defi"}`
+
+			assert.Error(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given the role attribute is empty", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.AttributesRaw = `{"role":"  "}`
 
 			assert.Error(t, req.ValidateAndSanitize())
 		})

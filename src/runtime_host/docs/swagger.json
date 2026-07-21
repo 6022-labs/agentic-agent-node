@@ -168,13 +168,6 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Agent role",
-                        "name": "role",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "integer",
                         "description": "Token id this agent clones",
                         "name": "cloneOf",
@@ -182,9 +175,10 @@
                     },
                     {
                         "type": "string",
-                        "description": "Attributes as a JSON object string",
+                        "description": "Attributes as a JSON object string; must include the required attributes",
                         "name": "attributes",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "file",
@@ -1471,9 +1465,6 @@
                 "proposalId": {
                     "type": "integer"
                 },
-                "role": {
-                    "type": "string"
-                },
                 "tokenId": {
                     "type": "integer"
                 }
@@ -1808,9 +1799,6 @@
                 },
                 "ownerIsModerator": {
                     "type": "boolean"
-                },
-                "role": {
-                    "type": "string"
                 },
                 "to": {
                     "type": "string"

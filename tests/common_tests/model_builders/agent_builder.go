@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
@@ -20,7 +19,6 @@ type AgentBuilder struct {
 	name              string
 	cloneOf           *uint64
 	ensDomain         string
-	role              enums.AgentRole
 	creator           string
 	owner             *string
 	soul              string
@@ -34,10 +32,6 @@ func NewAgentBuilder() *AgentBuilder {
 	collectionTokenId := uint64(1)
 	owner := common_tests.RandomEthAddress().Hex()
 
-	roles := enums.GetAllAgentRoles()
-	roleIndex, _ := faker.RandomInt(0, len(roles)-1, 1)
-	role := roles[roleIndex[0]]
-
 	createdAt, _ := time.Parse(time.RFC3339, faker.Date())
 	updatedAt, _ := time.Parse(time.RFC3339, faker.Date())
 
@@ -48,11 +42,10 @@ func NewAgentBuilder() *AgentBuilder {
 		collectionAddress: common_tests.RandomEthAddress().Hex(),
 		name:              faker.Name(),
 		ensDomain:         faker.Word() + ".agent.eth",
-		role:              role,
 		creator:           common_tests.RandomEthAddress().Hex(),
 		owner:             &owner,
 		images:            map[string]string{"avatar": faker.URL()},
-		attributes:        map[string]string{"trait": faker.Word()},
+		attributes:        map[string]string{"role": "facilitator", "trait": faker.Word()},
 		createdAt:         createdAt,
 		updatedAt:         updatedAt,
 	}
@@ -104,11 +97,6 @@ func (b *AgentBuilder) WithEnsDomain(ensDomain string) *AgentBuilder {
 	return b
 }
 
-func (b *AgentBuilder) WithRole(role enums.AgentRole) *AgentBuilder {
-	b.role = role
-	return b
-}
-
 func (b *AgentBuilder) WithCreator(creator string) *AgentBuilder {
 	b.creator = creator
 	return b
@@ -154,7 +142,6 @@ func (b *AgentBuilder) Build() *models.Agent {
 		Name:              lo.ToPtr(b.name),
 		CloneOf:           b.cloneOf,
 		EnsDomain:         lo.ToPtr(b.ensDomain),
-		Role:              lo.ToPtr(b.role),
 		Creator:           lo.ToPtr(b.creator),
 		Owner:             b.owner,
 		Soul:              lo.ToPtr(b.soul),

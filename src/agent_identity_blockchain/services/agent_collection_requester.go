@@ -84,9 +84,9 @@ func (r *AgentCollectionRequester) InformationOf(chainId string, collectionAddre
 		v := info.CloneOf.Value.Uint64()
 		cloneOf = &v
 	}
+
 	return identity_interfaces.OnChainAgentInfo{
 		Name:       info.Name,
-		Role:       info.Role,
 		Creator:    info.Creator,
 		CloneOf:    cloneOf,
 		Images:     helper.KeyValuesToMap(info.Images),

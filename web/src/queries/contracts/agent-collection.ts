@@ -51,7 +51,6 @@ const logAndRethrow = (error: unknown) => {
 export type MintParams = {
   collectionAddress: string
   to: string
-  role: string
   name: string
   addresses: AgentAddress[]
   images: KeyValue[]
@@ -89,7 +88,6 @@ export const mint = async (
   try {
     const tx = await contract.mint(
       params.to,
-      params.role,
       params.name,
       toAddressTuples(params.addresses),
       toTuples(params.images),
@@ -117,7 +115,6 @@ export const createMintProposal = async (
   try {
     const tx = await contract.createMintProposal(
       params.to,
-      params.role,
       params.name,
       toAddressTuples(params.addresses),
       toTuples(params.images),

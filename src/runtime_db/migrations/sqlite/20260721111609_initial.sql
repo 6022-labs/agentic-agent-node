@@ -9,7 +9,6 @@ CREATE TABLE `agents` (
   `name` text NULL,
   `clone_of` integer NULL,
   `ens_domain` text NULL,
-  `role` text NULL,
   `creator` text NULL,
   `owner` text NULL,
   `soul` text NULL,

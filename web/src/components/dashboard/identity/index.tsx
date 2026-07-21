@@ -234,9 +234,9 @@ export default function IdentitySection() {
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   {draft.name}
                 </h2>
-                {draft.role ? (
+                {draft.attributes?.["role"] ? (
                   <Badge variant="secondary" className="capitalize">
-                    {draft.role}
+                    {draft.attributes["role"]}
                   </Badge>
                 ) : null}
               </div>

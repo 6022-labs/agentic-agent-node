@@ -83,10 +83,9 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 	onChainInfo := identity_interfaces.OnChainAgentInfo{
 		Name:       "alice",
-		Role:       enums.AgentRoleExpert.String(),
 		Creator:    creator,
 		Images:     map[string]string{"default": "cid-default"},
-		Attributes: map[string]string{"trait": "value"},
+		Attributes: map[string]string{"role": "expert", "trait": "value"},
 	}
 
 	t.Run("Given no agent exists in the DB", func(t *testing.T) {
@@ -146,7 +145,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			assert.Equal(t, recoveryChainId, lo.FromPtr(capturedAgent.ChainId))
 			assert.Equal(t, collection.Hex(), capturedAgent.CollectionAddress)
 			assert.Equal(t, "alice", lo.FromPtr(capturedAgent.Name))
-			assert.Equal(t, enums.AgentRoleExpert, lo.FromPtr(capturedAgent.Role))
+			assert.Equal(t, "expert", capturedAgent.Attributes["role"])
 			assert.Equal(t, "alice.mycollection.80002.6022.eth", lo.FromPtr(capturedAgent.EnsDomain))
 			assert.Equal(t, onChainInfo.Images, capturedAgent.Images)
 			assert.Equal(t, onChainInfo.Attributes, capturedAgent.Attributes)

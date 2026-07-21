@@ -84,9 +84,8 @@ func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 		CollectionAddress: common_tests.RandomEthAddress().Hex(),
 		Owner:             common_tests.RandomEthAddress().Hex(),
 		Name:              "alice",
-		Role:              identity_enums.AgentRoleExpert.String(),
 		Image:             newMultipartFileHeader(t, []byte("fake-image"), "image/png"),
-		Attributes:        map[string]string{},
+		AttributesRaw:     `{"role":"expert"}`,
 	}
 }
 
