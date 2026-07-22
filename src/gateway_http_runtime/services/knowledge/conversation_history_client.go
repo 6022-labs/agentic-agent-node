@@ -49,11 +49,11 @@ func (c *HttpConversationHistoryClient) AppendMessages(ctx context.Context, conv
 	}
 	resp, err := c.client.PostInternalConversationsConversationIdMessagesWithBodyWithResponse(ctx, conversationId, helpers.JsonContentType, bytes.NewReader(encoded))
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAppendConversationMessagesResultPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }

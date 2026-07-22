@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
@@ -36,7 +35,7 @@ func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId
 
 	result, err := u.client.AppendMessages(ctx, conversationId, payload)
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 
 	inserted := make([]responses.ConversationMessage, 0, len(result.Inserted))

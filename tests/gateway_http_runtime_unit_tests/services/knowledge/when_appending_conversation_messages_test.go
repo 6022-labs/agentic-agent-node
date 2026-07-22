@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
@@ -80,6 +81,30 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				assert.Equal(t, "m1", payload.Inserted[0].Id)
 				assert.Equal(t, "fake memory", lo.FromPtr(payload.Inserted[0].Content))
 			}
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+				Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+			}, nil)
+		}
+
+		t.Run("Should map the 409 to a ConflictError keeping the code", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 

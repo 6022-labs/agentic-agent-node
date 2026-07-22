@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -117,10 +116,10 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().AppendMessages(gomock.Any(), conversationId, gomock.Any()).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().AppendMessages(gomock.Any(), conversationId, gomock.Any()).Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should return Unavailable carrying the message", func(t *testing.T) {
+		t.Run("Should propagate the client error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -131,6 +130,27 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().AppendMessages(gomock.Any(), conversationId, gomock.Any()).Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
+		}
+
+		t.Run("Should propagate the conflict untouched", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), conversationId, request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 }

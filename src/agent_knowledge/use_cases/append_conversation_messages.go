@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
@@ -14,15 +15,31 @@ import (
 
 type AppendConversationMessages struct {
 	messageAppender interfaces.MessageAppenderInterface
+	agentRepository identity_repositories.AgentRepositoryInterface
 }
 
-func NewAppendConversationMessages(messageAppender interfaces.MessageAppenderInterface) *AppendConversationMessages {
-	return &AppendConversationMessages{messageAppender: messageAppender}
+func NewAppendConversationMessages(
+	messageAppender interfaces.MessageAppenderInterface,
+	agentRepository identity_repositories.AgentRepositoryInterface,
+) *AppendConversationMessages {
+	return &AppendConversationMessages{messageAppender: messageAppender, agentRepository: agentRepository}
 }
 
 func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
+	}
+
+	agent, err := u.agentRepository.Get(ctx)
+	if err != nil {
+		return nil, errors.NewInternalError("append_failed", err.Error())
+	}
+	if agent == nil {
+		return nil, errors.NewInternalError("append_failed", "agent identity is not initialized yet")
+	}
+	// Seeding memory is refused until mint, like the payment policy.
+	if agent.CollectionTokenId == nil {
+		return nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
 	}
 
 	domainMessages := make([]models.ConversationMessage, 0, len(req.Messages))
