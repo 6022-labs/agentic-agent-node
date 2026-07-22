@@ -71,6 +71,11 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 
 	policy, err = u.paymentPolicyRepository.Create(ctx, &models.PaymentPolicy{AgentId: agent.Id})
 	if err != nil {
+		// A concurrent first request may have won the insert race; re-read before failing.
+		existing, getErr := u.paymentPolicyRepository.GetByAgentId(ctx, agent.Id)
+		if getErr == nil && existing != nil {
+			return existing, agent, nil
+		}
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 	}
 	evmAddress, err := u.evmAddress(ctx, agent.Id)

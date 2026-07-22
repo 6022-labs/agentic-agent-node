@@ -139,6 +139,36 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the policy creation races with a concurrent request", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) *models.PaymentPolicy {
+			agent := model_builders.NewAgentBuilder().Build()
+			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).Return(&identity_models.AgentAddress{Address: "0x2f0DDd93040C19863527b0553fECeB696862EA7D"}, nil).AnyTimes()
+			gomock.InOrder(
+				suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1),
+				suite.mockPaymentPolicyRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1),
+				suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1),
+			)
+			return policy
+		}
+
+		t.Run("Should return the concurrently created policy without seeding rules", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			policy := initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, policy.Id, result.Id)
+		})
+	})
+
 	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
 		t.Parallel()
 

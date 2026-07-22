@@ -73,10 +73,9 @@ export default function PaymentPolicySection() {
   const load = React.useCallback(async () => {
     setLoading(true)
     try {
-      const [policyResponse, rulesResponse] = await Promise.all([
-        getPaymentPolicy(),
-        listPaymentRules(),
-      ])
+      // Sequential on purpose: both calls lazily materialize the policy server-side.
+      const policyResponse = await getPaymentPolicy()
+      const rulesResponse = await listPaymentRules()
       setPolicy(policyResponse.data)
       setRules(rulesResponse.rules)
     } catch (error) {
