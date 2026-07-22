@@ -212,6 +212,8 @@ export default function PaymentPolicySection() {
     (rule) => isPublic(rule) && rule.price !== "0"
   )
 
+  const notMinted = !identityLoading && !isMinted
+
   return (
     <Card>
       <CardHeader>
@@ -230,7 +232,7 @@ export default function PaymentPolicySection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!identityLoading && !isMinted ? (
+        {notMinted ? (
           <NotMintedState description="The payment policy is created once the agent's on-chain identity is minted." />
         ) : loading || !policy ? (
           <div className="space-y-2">
@@ -348,19 +350,21 @@ export default function PaymentPolicySection() {
           </>
         )}
       </CardContent>
-      <CardFooter>
-        <ConfirmDialog
-          title="Reset the payment policy?"
-          description="The policy goes back to the default: a single free rule for the agent wallet and owner."
-          confirmLabel="Reset"
-          onConfirm={onReset}
-        >
-          <Button type="button" variant="destructive" size="sm">
-            <Trash2 />
-            Reset
-          </Button>
-        </ConfirmDialog>
-      </CardFooter>
+      {notMinted ? null : (
+        <CardFooter>
+          <ConfirmDialog
+            title="Reset the payment policy?"
+            description="The policy goes back to the default: a single free rule for the agent wallet and owner."
+            confirmLabel="Reset"
+            onConfirm={onReset}
+          >
+            <Button type="button" variant="destructive" size="sm">
+              <Trash2 />
+              Reset
+            </Button>
+          </ConfirmDialog>
+        </CardFooter>
+      )}
     </Card>
   )
 }
