@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
+	"github.com/samber/lo"
 )
 
 type ExternalOpenAIResponsesStandardRequest struct {
@@ -37,10 +38,6 @@ const (
 	ExternalOpenAIResponsesStandardToolRequireApprovalNever  ExternalOpenAIResponsesStandardToolRequireApproval = "never"
 	ExternalOpenAIResponsesStandardToolRequireApprovalAlways ExternalOpenAIResponsesStandardToolRequireApproval = "always"
 )
-
-func (e ExternalOpenAIResponsesStandardToolRequireApproval) ToPointer() *ExternalOpenAIResponsesStandardToolRequireApproval {
-	return &e
-}
 
 type ExternalOpenAIResponsesStandardRequestTool struct {
 	// Common fields
@@ -98,7 +95,7 @@ func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionsAsMcpTools(
 			Headers:     &conn.HeaderAuth,
 
 			ServerUrl:       &conn.Url,
-			RequireApproval: ExternalOpenAIResponsesStandardToolRequireApprovalNever.ToPointer(),
+			RequireApproval: lo.ToPtr(ExternalOpenAIResponsesStandardToolRequireApprovalNever),
 		})
 	}
 }

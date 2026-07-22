@@ -8,6 +8,7 @@ import (
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/responses"
+	"github.com/samber/lo"
 )
 
 type SetLlmConfig struct {
@@ -26,21 +27,13 @@ func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConf
 	payload, err := u.client.Setup(ctx, &models.ExternalSetupLLMConnectionPayload{
 		Platform: request.Provider,
 		Model:    request.Model,
-		BaseUrl:  u.toBaseUrlPtr(request.BaseUrl),
+		BaseUrl:  lo.EmptyableToPtr(strings.TrimSpace(request.BaseUrl)),
 		ApiKey:   request.ApiKey,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return u.toResponse(payload), nil
-}
-
-func (u *SetLlmConfig) toBaseUrlPtr(s string) *string {
-	trimmed := strings.TrimSpace(s)
-	if len(trimmed) == 0 {
-		return nil
-	}
-	return &trimmed
 }
 
 func (u *SetLlmConfig) toResponse(p *models.ExternalLLMConnectionPayload) *responses.GetLlmConfigResponse {
