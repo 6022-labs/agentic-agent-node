@@ -59,8 +59,15 @@ function Button({
       disabled={loading || disabled}
       {...props}
     >
-      {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-      {children}
+      {/* Slot requires a single child; `{false}` from a skipped loader counts. */}
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+          {children}
+        </>
+      )}
     </Comp>
   )
 }
