@@ -35,11 +35,12 @@ export const AgentIdentityProvider: React.FC<{ children: React.ReactNode }> = ({
   const { jwt } = useAuth()
   const [registration, setRegistration] =
     React.useState<AgentRegistration | null>(null)
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(!!jwt)
 
   const refresh = React.useCallback(async () => {
     if (!jwt) {
       setRegistration(null)
+      setLoading(false)
       return
     }
     setLoading(true)
