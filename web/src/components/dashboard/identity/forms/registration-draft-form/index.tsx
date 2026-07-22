@@ -50,14 +50,20 @@ const buildDefaults = (
   chainId: draft?.chainId ?? fallbackChainId,
   collectionAddress: draft?.collectionAddress ?? "",
   name: draft?.name ?? "",
-  role: AGENT_ROLES.find((role) => role === draft?.attributes?.["role"]),
   // images.default holds the generated IPFS CID, not the base; leaving this
   // empty on re-edit keeps the stored image.
   image: undefined,
-  attributes: Object.entries(draft?.attributes ?? {}).map(([key, value]) => ({
-    key,
-    value,
-  })),
+  // Row 0 is the pinned mandatory "role" attribute.
+  attributes: [
+    {
+      key: "role",
+      value:
+        AGENT_ROLES.find((role) => role === draft?.attributes?.["role"]) ?? "",
+    },
+    ...Object.entries(draft?.attributes ?? {})
+      .filter(([key]) => key !== "role")
+      .map(([key, value]) => ({ key, value })),
+  ],
 })
 
 type Props = {
@@ -99,7 +105,6 @@ export default function RegistrationDraftForm({
         chainId: values.chainId,
         collectionAddress: values.collectionAddress,
         name: values.name,
-        role: values.role,
         image: values.image,
         attributes: Object.fromEntries(
           values.attributes.map((attribute) => [
@@ -188,30 +193,6 @@ export default function RegistrationDraftForm({
                   }
                 />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {AGENT_ROLES.map((role) => (
-                    <SelectItem key={role} value={role} className="capitalize">
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}

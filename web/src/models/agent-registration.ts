@@ -41,12 +41,12 @@ export type SaveAgentRegistrationRequest = {
   chainId: string
   collectionAddress: string
   name: string
-  role: string
   cloneOf?: number | null
   // Single base image file the node frames into the NFT image set. Omitted on
   // re-edit to keep the stored image.
   image?: File
-  attributes?: Record<string, string>
+  // Must include the mandatory "role" key.
+  attributes: Record<string, string>
 }
 
 export type MintInfo = {
