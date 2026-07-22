@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
+import { toast } from "sonner"
 import { useLocation, useNavigate } from "react-router-dom"
 
 // The gateway JWT carries { sub, iat, nbf, exp }. There is no chain claim — the
@@ -68,6 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null)
   }, [])
 
+  const expireSession = React.useCallback(() => {
+    signOut()
+    toast.info("Session expired. Please sign in again.")
+  }, [signOut])
+
   React.useEffect(() => {
     clearExpirationTimeout()
 
@@ -87,13 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const expiresAtMs = decoded.exp * 1000
 
     if (expiresAtMs <= now) {
-      signOut()
+      expireSession()
       return undefined
     }
 
-    expirationTimeout.current = window.setTimeout(signOut, expiresAtMs - now)
+    expirationTimeout.current = window.setTimeout(
+      expireSession,
+      expiresAtMs - now
+    )
     return () => clearExpirationTimeout()
-  }, [jwt, signOut])
+  }, [jwt, expireSession])
 
   React.useEffect(() => {
     const isLoginRoute = location.pathname === "/login"
