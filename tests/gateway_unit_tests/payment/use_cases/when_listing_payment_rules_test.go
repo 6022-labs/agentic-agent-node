@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -65,7 +64,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(gomock.Any()).
-				Return(nil, errors.New("connection refused")).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "connection refused")).
 				Times(1)
 		}
 
@@ -80,6 +79,31 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			assert.Nil(t, result)
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+
+	t.Run("Given the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet")).
+				Times(1)
+		}
+
+		t.Run("Should pass the conflict through", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 }

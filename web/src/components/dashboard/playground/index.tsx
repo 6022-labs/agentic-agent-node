@@ -23,7 +23,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import ChatTranscript from "@/components/dashboard/playground/chat-transcript"
+import NotMintedState from "@/components/dashboard/not-minted-state"
 import { usePlaygroundChat } from "@/components/dashboard/playground/use-playground-chat"
 import { formatRelativeTime } from "@/lib/format"
 import type { ConversationSummary } from "@/models/conversation"
@@ -35,6 +37,7 @@ const conversationLabel = (conversation: ConversationSummary) => {
 }
 
 export default function PlaygroundSection() {
+  const { loading: identityLoading, isMinted } = useAgentIdentity()
   const [prompt, setPrompt] = React.useState("You are a helpful assistant.")
   const [draft, setDraft] = React.useState("")
   const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -73,6 +76,23 @@ export default function PlaygroundSection() {
   )
     ? conversationId
     : undefined
+
+  // Pre-mint /responses is refused (402), so the chat interface is pointless.
+  if (!identityLoading && !isMinted) {
+    return (
+      <Card className="flex min-h-0 flex-1 flex-col">
+        <CardHeader>
+          <CardTitle>Playground</CardTitle>
+          <CardDescription>
+            Talk to the agent through the gateway's reasoning loop.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotMintedState description="Mint the agent's on-chain identity to start chatting." />
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="flex min-h-0 flex-1 flex-col">

@@ -21,11 +21,11 @@ func NewHttpPaymentRuleClient(client clients.ClientWithResponsesInterface) *Http
 func (c *HttpPaymentRuleClient) List(ctx context.Context) ([]models.ExternalPaymentRule, error) {
 	resp, err := c.client.GetInternalConfigPaymentPolicyRulesWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListPaymentRulesPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return payload.Rules, nil
 }

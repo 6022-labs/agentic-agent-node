@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/payment"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
@@ -53,6 +54,31 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "a", payload.Id)
 			assert.Equal(t, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", payload.AgentWalletAddress)
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
+			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+				Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+			}, nil)
+		}
+
+		t.Run("Should return a conflict error carrying the runtime code", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			payload, err := suite.sut.Get(context.Background())
+
+			assert.Nil(t, payload)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 

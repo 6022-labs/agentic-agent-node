@@ -57,6 +57,29 @@ func WhenListingPaymentRulesBeforeEach(t *testing.T) *WhenListingPaymentRulesTes
 func TestWhenListingPaymentRules(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the agent is not minted yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+		}
+
+		t.Run("Should return a conflict without touching the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
+
 	t.Run("Given a policy with rules exists", func(t *testing.T) {
 		t.Parallel()
 

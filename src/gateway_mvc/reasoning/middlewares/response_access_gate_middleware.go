@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"errors"
 	"slices"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -40,7 +41,12 @@ func NewResponseAccessGateMiddleware(params NewResponseAccessGateMiddlewareParam
 func (m *ResponseAccessGateMiddleware) Handle(ctx *fiber.Ctx) error {
 	rules, err := m.paymentRuleClient.List(ctx.UserContext())
 	if err != nil {
-		return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_rules_unavailable", err.Error()))
+		// Pre-mint the runtime refuses to materialize rules; run the chain ruleless (x402 advertises a 402).
+		var conflictErr *apperrors.ConflictError
+		if !errors.As(err, &conflictErr) {
+			return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_rules_unavailable", err.Error()))
+		}
+		rules = nil
 	}
 
 	for _, link := range m.chain {

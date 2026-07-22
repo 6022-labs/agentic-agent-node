@@ -66,12 +66,13 @@ func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKno
 	}, nil
 }
 
-// listPaymentMethods derives the distinct configured rule methods; a missing policy means no payment, not an error.
+// listPaymentMethods derives the distinct configured rule methods; a missing or not-yet-minted policy means no payment, not an error.
 func (u *GetWellKnownAgent6022) listPaymentMethods(ctx context.Context) ([]string, error) {
 	rules, err := u.paymentRuleClient.List(ctx)
 	if err != nil {
 		var notFoundErr *apperrors.NotFoundError
-		if errors.As(err, &notFoundErr) {
+		var conflictErr *apperrors.ConflictError
+		if errors.As(err, &notFoundErr) || errors.As(err, &conflictErr) {
 			return nil, nil
 		}
 		return nil, err

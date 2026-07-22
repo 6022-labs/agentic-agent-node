@@ -1,4 +1,5 @@
 import React from "react"
+import axios from "axios"
 import { toast } from "sonner"
 import { AlertTriangle, Coins, Globe, Trash2 } from "lucide-react"
 
@@ -21,8 +22,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
+import NotMintedState from "@/components/dashboard/not-minted-state"
 import PaymentRuleDialog from "@/components/dashboard/payments/dialogs/payment-rule-dialog"
 import type { PaymentRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-rule-form/payment-rule-form-schema"
 import {
@@ -64,7 +67,14 @@ const FORM_FIELDS: Array<keyof PaymentRuleFormSchemaType> = [
   "addresses",
 ]
 
+const isNotMintedError = (error: unknown) =>
+  axios.isAxiosError(error) &&
+  error.response?.status === 409 &&
+  (error.response.data as { code?: string } | undefined)?.code ===
+    "agent_not_minted"
+
 export default function PaymentPolicySection() {
+  const { loading: identityLoading, isMinted } = useAgentIdentity()
   const [policy, setPolicy] = React.useState<PaymentPolicy | null>(null)
   const [rules, setRules] = React.useState<PaymentRule[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -79,15 +89,18 @@ export default function PaymentPolicySection() {
       setPolicy(policyResponse.data)
       setRules(rulesResponse.rules)
     } catch (error) {
-      toast.error(extractErrorMessage(error, "Failed to load payment policy"))
+      // Pre-mint the runtime refuses the policy; the not-minted state already covers it.
+      if (!isNotMintedError(error)) {
+        toast.error(extractErrorMessage(error, "Failed to load payment policy"))
+      }
     } finally {
       setLoading(false)
     }
   }, [])
 
   React.useEffect(() => {
-    void load()
-  }, [load])
+    if (isMinted) void load()
+  }, [load, isMinted])
 
   const reloadRules = async () => {
     const { rules } = await listPaymentRules()
@@ -217,7 +230,9 @@ export default function PaymentPolicySection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {loading || !policy ? (
+        {!identityLoading && !isMinted ? (
+          <NotMintedState description="The payment policy is created once the agent's on-chain identity is minted." />
+        ) : loading || !policy ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-10 w-full" />

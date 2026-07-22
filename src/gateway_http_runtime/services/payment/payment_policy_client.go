@@ -19,11 +19,11 @@ func NewHttpPaymentPolicyClient(client clients.ClientWithResponsesInterface) *Ht
 func (c *HttpPaymentPolicyClient) Get(ctx context.Context) (*models.ExternalPaymentPolicyPayload, error) {
 	resp, err := c.client.GetInternalConfigPaymentPolicyWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentPolicyPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
@@ -71,6 +72,24 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
 			assert.Contains(t, accessChainBody(t, resp), "payment_rules_unavailable")
+		})
+	})
+
+	t.Run("Given the runtime refuses the rules because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should run the chain with no rules", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningAccessChainBeforeEach(t)
+			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet")).Times(1)
+			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
+			suite.linkA.EXPECT().TryHandle(gomock.Any(), gomock.Len(0)).Return(true, nil).Times(1)
+
+			resp, err := suite.build(suite.linkA).Test(x402GateRequest(""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 		})
 	})
 

@@ -136,6 +136,31 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the agent is not minted yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
+		}
+
+		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			assert.Empty(t, document.PaymentMethods)
+		})
+	})
+
 	t.Run("Given the payment rule client fails", func(t *testing.T) {
 		t.Parallel()
 

@@ -60,6 +60,10 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 	if agent == nil {
 		return nil, nil, errors.NewInternalError("policy_failed", "agent identity is not initialized yet")
 	}
+	// Do not create default payment policy if agent is not minted
+	if agent.CollectionTokenId == nil {
+		return nil, nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
+	}
 
 	policy, err := u.paymentPolicyRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {

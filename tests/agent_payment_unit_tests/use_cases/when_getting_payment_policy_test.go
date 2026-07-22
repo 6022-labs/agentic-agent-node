@@ -59,6 +59,50 @@ func WhenGettingPaymentPolicyBeforeEach(t *testing.T) *WhenGettingPaymentPolicyT
 func TestWhenGettingPaymentPolicy(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
+		}
+
+		t.Run("Should return an internal error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given the agent is not minted yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+		}
+
+		t.Run("Should return a conflict without touching the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
+
 	t.Run("Given a policy exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -166,27 +210,6 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, policy.Id, result.Id)
-		})
-	})
-
-	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
-		}
-
-		t.Run("Should return an internal error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingPaymentPolicyBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Execute(context.Background())
-
-			assert.Nil(t, result)
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
 		})
 	})
 }

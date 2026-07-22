@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/payment"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
@@ -56,6 +57,31 @@ func TestWhenListingPaymentRules(t *testing.T) {
 				assert.Equal(t, "x402", rules[0].Method)
 				assert.JSONEq(t, `{"network":"eip155:80002","addressPatterns":[".*"]}`, string(rules[0].Config))
 			}
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+				Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+			}, nil)
+		}
+
+		t.Run("Should return a conflict error carrying the runtime code", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			rules, err := suite.sut.List(context.Background())
+
+			assert.Nil(t, rules)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 
