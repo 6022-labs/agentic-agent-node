@@ -50,7 +50,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 		{
 			name:      "baseline",
 			agentName: "avogadro",
-			ensDomain: "avogadro.agent.protocol6022.eth",
+			ensDomain: "avogadro.agent.6022.eth",
 			wallets:   []string{"0xf5cfC4723d64C0B53b3aF49C3a184f16E7cACA40"},
 			stars:     7,
 		},
@@ -58,7 +58,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 			// A real fetched image rather than the synthetic gradient.
 			name:         "real-image",
 			agentName:    "avogadro",
-			ensDomain:    "avogadro.agent.protocol6022.eth",
+			ensDomain:    "avogadro.agent.6022.eth",
 			wallets:      []string{"0xf5cfC4723d64C0B53b3aF49C3a184f16E7cACA40"},
 			stars:        6,
 			baseImageURL: "https://ipfs.io/ipfs/bafybeia25xzo4k4nipuw6cyml4f4x3b3h6lneyvch6a4b3rl2q7e6hpgra",
@@ -68,7 +68,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 			// labels from static text to the scrolling carousel.
 			name:      "long-name-and-ens",
 			agentName: "avogadro-the-incredibly-verbose-research-agent",
-			ensDomain: "avogadro-the-incredibly-verbose-research-agent.sub.agent.protocol6022.eth",
+			ensDomain: "avogadro-the-incredibly-verbose-research-agent.sub.agent.6022.eth",
 			wallets:   []string{"0xf5cfC4723d64C0B53b3aF49C3a184f16E7cACA40"},
 			stars:     5,
 		},
@@ -77,7 +77,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 			// frame; the icon shows only the first.
 			name:      "multi-wallet",
 			agentName: "avogadro",
-			ensDomain: "avogadro.agent.protocol6022.eth",
+			ensDomain: "avogadro.agent.6022.eth",
 			wallets: []string{
 				"0xf5cfC4723d64C0B53b3aF49C3a184f16E7cACA40",
 				"0x1111111111111111111111111111111111111111",
