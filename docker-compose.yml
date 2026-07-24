@@ -24,7 +24,6 @@ services:
       - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
       - AGENT_IDENTITY__RUNTIME_URL=http://localhost:5500
-      - AGENT_RUNTIME_DEV_MODE=true
       - TELEMETRY__ENABLED=true
       - TELEMETRY__ENDPOINT=agent-node-alloy:4317
       - TELEMETRY__INSECURE=true
