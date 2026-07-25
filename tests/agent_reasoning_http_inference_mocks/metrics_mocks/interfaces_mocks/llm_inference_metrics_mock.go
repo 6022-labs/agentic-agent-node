@@ -53,6 +53,18 @@ func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordOperationDuration(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordOperationDuration", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordOperationDuration), ctx, provider, model, duration, errorType)
 }
 
+// RecordProbe mocks base method.
+func (m *MockLlmInferenceMetricsInterface) RecordProbe(ctx context.Context, provider, model string, duration time.Duration, failed bool) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordProbe", ctx, provider, model, duration, failed)
+}
+
+// RecordProbe indicates an expected call of RecordProbe.
+func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordProbe(ctx, provider, model, duration, failed any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordProbe", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordProbe), ctx, provider, model, duration, failed)
+}
+
 // RecordTokenUsage mocks base method.
 func (m *MockLlmInferenceMetricsInterface) RecordTokenUsage(ctx context.Context, provider, model, tokenType string, tokens int64) {
 	m.ctrl.T.Helper()

@@ -15,25 +15,36 @@ import (
 
 type SetupLLMConnection struct {
 	*AbstractReasoningUseCase
-	repository    repositories.LLMConnectionRepositoryInterface
-	secretStorage reasoning_interfaces.LLMSecretStorageInterface
+	repository             repositories.LLMConnectionRepositoryInterface
+	secretStorage          reasoning_interfaces.LLMSecretStorageInterface
+	llmConnectionValidator reasoning_interfaces.LLMConnectionValidatorInterface
 }
 
 func NewSetupLLMConnection(
 	repository repositories.LLMConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.LLMSecretStorageInterface,
+	llmConnectionValidator reasoning_interfaces.LLMConnectionValidatorInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *SetupLLMConnection {
 	return &SetupLLMConnection{
 		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
 		repository:               repository,
 		secretStorage:            secretStorage,
+		llmConnectionValidator:   llmConnectionValidator,
 	}
 }
 
-// Execute resolves the api key before upserting, so the row never points at a missing secret.
+// Execute probes before touching Vault, and resolves the api key before upserting, so the row never points at a missing secret.
 func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.SetupLLMConnectionRequest) (*responses.LLMConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
+	if err := u.llmConnectionValidator.Validate(ctx, &models.LLMConnection{
+		Platform: request.Platform,
+		Model:    request.Model,
+		BaseUrl:  request.BaseUrl,
+	}, request.ApiKey); err != nil {
 		return nil, err
 	}
 

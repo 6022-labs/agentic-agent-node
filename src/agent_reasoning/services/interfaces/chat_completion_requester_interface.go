@@ -16,6 +16,10 @@ type ChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,
 	) (*LLMCompletion, error)
+
+	// ProbeConnection performs a minimal completion to verify credentials, model
+	// and reachability; empty apiKey falls back to the stored Vault key.
+	ProbeConnection(ctx context.Context, llmConnection *models.LLMConnection, apiKey string) error
 }
 
 // ChatCompletionMessage — one turn passed to the LLM. Roles: system, user,

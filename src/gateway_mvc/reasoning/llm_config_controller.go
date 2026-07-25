@@ -7,23 +7,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const LlmConfigEndpoint = "/config/llm"
+const (
+	LlmConfigEndpoint         = "/config/llm"
+	LlmConfigValidateEndpoint = "/config/llm/validate"
+)
 
 type LlmConfigController struct {
-	getLlmConfig    *use_cases.GetLlmConfig
-	setLlmConfig    *use_cases.SetLlmConfig
-	deleteLlmConfig *use_cases.DeleteLlmConfig
+	getLlmConfig      *use_cases.GetLlmConfig
+	setLlmConfig      *use_cases.SetLlmConfig
+	deleteLlmConfig   *use_cases.DeleteLlmConfig
+	validateLlmConfig *use_cases.ValidateLlmConfig
 }
 
 func NewLlmConfigController(
 	getLlmConfig *use_cases.GetLlmConfig,
 	setLlmConfig *use_cases.SetLlmConfig,
 	deleteLlmConfig *use_cases.DeleteLlmConfig,
+	validateLlmConfig *use_cases.ValidateLlmConfig,
 ) *LlmConfigController {
 	return &LlmConfigController{
-		getLlmConfig:    getLlmConfig,
-		setLlmConfig:    setLlmConfig,
-		deleteLlmConfig: deleteLlmConfig,
+		getLlmConfig:      getLlmConfig,
+		setLlmConfig:      setLlmConfig,
+		deleteLlmConfig:   deleteLlmConfig,
+		validateLlmConfig: validateLlmConfig,
 	}
 }
 
@@ -33,6 +39,29 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 	app.Get(LlmConfigEndpoint, c.Get)
 	app.Post(LlmConfigEndpoint, c.Set)
 	app.Delete(LlmConfigEndpoint, c.Delete)
+	app.Post(LlmConfigValidateEndpoint, c.Validate)
+}
+
+// Validate checks the LLM provider configuration without saving it.
+// @Summary Validate LLM config
+// @Tags Config
+// @Accept json
+// @Produce json
+// @Param request body requests.SetLlmConfigRequest true "LLM config"
+// @Success 204 ""
+// @Failure 400 {object} errors.ValidationError
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Security BearerAuth
+// @Router /config/llm/validate [post]
+func (c *LlmConfigController) Validate(ctx *fiber.Ctx) error {
+	body := new(requests.SetLlmConfigRequest)
+	if err := ctx.BodyParser(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	if err := c.validateLlmConfig.Execute(ctx.UserContext(), body); err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 // Get returns the LLM provider configuration.

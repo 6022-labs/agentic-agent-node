@@ -20,6 +20,8 @@ type OllamaChatMessageStandardChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
+
+	Probe(baseUrl string, llmConnection *models.LLMConnection) error
 }
 
 type OllamaChatMessageStandardChatCompletionRequester struct {
@@ -109,6 +111,19 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *OllamaChatMessageStandardChatCompletionRequester) Probe(baseUrl string, llmConnection *models.LLMConnection) error {
+	stream := false
+	request := &external_models.ExternalOllamaChatMessageStandardRequest{
+		Model:    llmConnection.Model,
+		Stream:   &stream,
+		Messages: []external_models.ExternalOllamaChatMessageStandardMessage{{Role: "user", Content: probeMessage}},
+		Options:  &external_models.ExternalOllamaChatMessageStandardRequestOptions{NumPredict: lo.ToPtr(probeMaxTokens)},
+	}
+
+	_, err := r.ollamaChatMessageClient.ChatMessage(baseUrl, request)
+	return err
 }
 
 func (r *OllamaChatMessageStandardChatCompletionRequester) buildRequestMessages(

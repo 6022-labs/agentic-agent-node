@@ -16,6 +16,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// Probe request shape: 16 is the smallest cap OpenAI Responses accepts.
+const (
+	probeMessage   = "ping"
+	probeMaxTokens = 16
+)
+
 // ChatCompletionRequester picks the per-platform requester by
 // LLMConnection.Platform, fetches the api key from Vault, trims messages to the
 // token budget, and delegates. Does NOT loop on tool calls — that's inference_loop.
@@ -138,6 +144,70 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *ChatCompletionRequester) ProbeConnection(ctx context.Context, llmConnection *models.LLMConnection, apiKey string) error {
+	platformSettings, err := r.getPlatformSettings(llmConnection.Platform)
+	if err != nil {
+		return err
+	}
+
+	key := &apiKey
+	if apiKey == "" {
+		key, err = r.resolveApiKey(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	start := time.Now()
+	err = r.probeUsingAppropriateStandard(llmConnection, platformSettings, key)
+	r.metrics.RecordProbe(ctx, string(llmConnection.Platform), llmConnection.Model, time.Since(start), err != nil)
+	return err
+}
+
+func (r *ChatCompletionRequester) probeUsingAppropriateStandard(
+	llmConnection *models.LLMConnection,
+	platformSettings settings.StandardSettingsInterface,
+	apiKey *string,
+) error {
+	switch platformSettings.PlatformAPI() {
+	case settings.PlatformAPIOpenAIResponsesStandard:
+		if apiKey == nil {
+			return fmt.Errorf("api key is required for OpenAI Responses Standard")
+		}
+		return r.openAIResponsesStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+
+	case settings.PlatformAPIOpenAICompletionsStandard:
+		if apiKey == nil {
+			return fmt.Errorf("api key is required for OpenAI Completions Standard")
+		}
+		return r.openAICompletionsStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+
+	case settings.PlatformAPIOllamaChatMessageStandard:
+		if llmConnection.BaseUrl == nil {
+			return fmt.Errorf("base URL is required for Ollama Chat Message Standard")
+		}
+		return r.ollamaChatMessageStandardChatCompletionRequester.Probe(*llmConnection.BaseUrl, llmConnection)
+
+	case settings.PlatformAPIAnthropicMessagesStandard:
+		if apiKey == nil {
+			return fmt.Errorf("api key is required for Anthropic Messages Standard")
+		}
+		return r.anthropicMessagesStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+
+	case settings.PlatformAPIAmazonBedrockConverseStandard:
+		if apiKey == nil {
+			return fmt.Errorf("api key is required for Amazon Bedrock Converse Standard")
+		}
+		if llmConnection.BaseUrl == nil {
+			return fmt.Errorf("base URL is required for Amazon Bedrock Converse Standard")
+		}
+		return r.amazonBedrockConverseStandardChatCompletionRequester.Probe(*llmConnection.BaseUrl, *apiKey, llmConnection)
+
+	default:
+		return fmt.Errorf("unsupported platform API: %s", platformSettings.PlatformAPI())
+	}
 }
 
 func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, error) {

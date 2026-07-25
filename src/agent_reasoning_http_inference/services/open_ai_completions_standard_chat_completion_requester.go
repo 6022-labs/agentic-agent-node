@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +21,8 @@ type OpenAICompletionsStandardChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
+
+	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
 }
 
 type OpenAICompletionsStandardChatCompletionRequester struct {
@@ -108,6 +111,18 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *OpenAICompletionsStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+	content := probeMessage
+	request := &external_models.ExternalOpenAICompletionsStandardRequest{
+		Model:     llmConnection.Model,
+		Messages:  []external_models.ExternalOpenAICompletionsStandardRequestMessage{{Role: "user", Content: &content}},
+		MaxTokens: lo.ToPtr(probeMaxTokens),
+	}
+
+	_, err := r.openAICompletionsClient.ChatCompletion(baseUrl, apiKey, request)
+	return err
 }
 
 func (r *OpenAICompletionsStandardChatCompletionRequester) buildRequestMessages(

@@ -1,7 +1,7 @@
 import React from "react"
 import axios from "axios"
 import { toast } from "sonner"
-import { Loader2, Trash2 } from "lucide-react"
+import { Loader2, PlugZap, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,7 +15,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
-import LlmConfigForm from "@/components/dashboard/llm/forms/llm-config-form"
+import LlmConfigForm, {
+  LLM_CONFIG_FORM_ID,
+} from "@/components/dashboard/llm/forms/llm-config-form"
 import type { LlmConfigFormSchemaType } from "@/components/dashboard/llm/forms/llm-config-form/llm-config-form-schema"
 import type { LlmConfig } from "@/models/llm-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
@@ -23,6 +25,7 @@ import {
   deleteLlmConfig,
   getLlmConfig,
   setLlmConfig,
+  validateLlmConfig,
 } from "@/queries/api/llm.queries"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 
@@ -30,9 +33,24 @@ export default function LlmConfigSection() {
   const [config, setConfig] = React.useState<LlmConfig | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [saving, setSaving] = React.useState(false)
+  const [testing, setTesting] = React.useState(false)
+
+  // Saving is only allowed once the connection answered a test probe.
+  const [tested, setTested] = React.useState(false)
+  const [values, setValues] = React.useState<LlmConfigFormSchemaType | null>(
+    null
+  )
 
   // Bumped on delete to remount the form with empty fields.
   const [formEpoch, setFormEpoch] = React.useState(0)
+
+  const onValueChange = React.useCallback(
+    (next: LlmConfigFormSchemaType) => {
+      setValues(next)
+      setTested(false)
+    },
+    []
+  )
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -78,6 +96,31 @@ export default function LlmConfigSection() {
       return {}
     } finally {
       setSaving(false)
+    }
+  }
+
+  const onTestConnection = async () => {
+    if (!values) return
+
+    setTesting(true)
+    try {
+      await validateLlmConfig({
+        provider: values.provider,
+        model: values.model,
+        apiKey: values.apiKey ?? "",
+        baseUrl: values.baseUrl || undefined,
+      })
+      setTested(true)
+      toast.success("Connection established")
+    } catch (error) {
+      const validation =
+        extractValidationError<keyof LlmConfigFormSchemaType>(error)
+      toast.error(
+        validation?.message ??
+          extractErrorMessage(error, "Failed to reach the provider")
+      )
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -129,6 +172,7 @@ export default function LlmConfigSection() {
             key={formEpoch}
             config={config}
             onFormComplete={onFormComplete}
+            onValueChange={onValueChange}
           />
         )}
       </CardContent>
@@ -148,14 +192,27 @@ export default function LlmConfigSection() {
         ) : (
           <span />
         )}
-        <Button
-          type="submit"
-          form="llm-config-form"
-          disabled={saving || loading}
-        >
-          {saving ? <Loader2 className="animate-spin" /> : null}
-          Save
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            loading={testing}
+            disabled={saving || loading || !values?.provider || !values?.model}
+            onClick={() => void onTestConnection()}
+          >
+            {testing ? null : <PlugZap />}
+            Test connection
+          </Button>
+          <Button
+            type="submit"
+            form={LLM_CONFIG_FORM_ID}
+            disabled={saving || testing || loading || !tested}
+            title={tested ? undefined : "Test the connection first"}
+          >
+            {saving ? <Loader2 className="animate-spin" /> : null}
+            Save
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )

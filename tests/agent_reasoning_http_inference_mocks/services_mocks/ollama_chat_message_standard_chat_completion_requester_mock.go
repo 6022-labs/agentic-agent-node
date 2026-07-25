@@ -55,3 +55,17 @@ func (mr *MockOllamaChatMessageStandardChatCompletionRequesterInterfaceMockRecor
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockOllamaChatMessageStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, llmConnection, selfTools, mcpTools, messages)
 }
+
+// Probe mocks base method.
+func (m *MockOllamaChatMessageStandardChatCompletionRequesterInterface) Probe(baseUrl string, llmConnection *models.LLMConnection) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Probe", baseUrl, llmConnection)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Probe indicates an expected call of Probe.
+func (mr *MockOllamaChatMessageStandardChatCompletionRequesterInterfaceMockRecorder) Probe(baseUrl, llmConnection any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Probe", reflect.TypeOf((*MockOllamaChatMessageStandardChatCompletionRequesterInterface)(nil).Probe), baseUrl, llmConnection)
+}

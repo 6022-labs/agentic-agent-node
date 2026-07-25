@@ -25,6 +25,8 @@ type AnthropicMessagesStandardChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
+
+	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
 }
 
 type AnthropicMessagesStandardChatCompletionRequester struct {
@@ -170,6 +172,21 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *AnthropicMessagesStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+	text := probeMessage
+	request := &external_models.ExternalAnthropicMessagesStandardRequest{
+		Model:     llmConnection.Model,
+		MaxTokens: uint(probeMaxTokens),
+		Messages: []external_models.ExternalAnthropicMessagesStandardMessage{{
+			Role:    "user",
+			Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{{Type: "text", Text: &text}},
+		}},
+	}
+
+	_, err := r.anthropicMessagesClient.Messages(baseUrl, apiKey, request)
+	return err
 }
 
 func (r *AnthropicMessagesStandardChatCompletionRequester) buildSystems(

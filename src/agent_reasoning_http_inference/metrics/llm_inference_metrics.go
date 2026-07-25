@@ -67,6 +67,19 @@ func (m *LlmInferenceMetrics) RecordOperationDuration(ctx context.Context, provi
 	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
 }
 
+// RecordProbe records a connection-validation probe on the operation duration histogram.
+func (m *LlmInferenceMetrics) RecordProbe(ctx context.Context, provider, model string, duration time.Duration, failed bool) {
+	attrs := []attribute.KeyValue{
+		attribute.String("gen_ai.provider.name", provider),
+		attribute.String("gen_ai.request.model", model),
+		attribute.String("gen_ai.operation.name", "probe"),
+	}
+	if failed {
+		attrs = append(attrs, attribute.String("error.type", "_OTHER"))
+	}
+	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
+}
+
 // RecordTokenUsage records token usage for a chat-completion call. tokenType is
 // the gen_ai.token.type value ("input" / "output").
 func (m *LlmInferenceMetrics) RecordTokenUsage(ctx context.Context, provider, model, tokenType string, tokens int64) {

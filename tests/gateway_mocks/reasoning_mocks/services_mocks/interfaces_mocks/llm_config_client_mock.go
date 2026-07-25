@@ -84,3 +84,17 @@ func (mr *MockLLMConfigClientInterfaceMockRecorder) Setup(ctx, body any) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Setup", reflect.TypeOf((*MockLLMConfigClientInterface)(nil).Setup), ctx, body)
 }
+
+// Validate mocks base method.
+func (m *MockLLMConfigClientInterface) Validate(ctx context.Context, body *models.ExternalSetupLLMConnectionPayload) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validate", ctx, body)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Validate indicates an expected call of Validate.
+func (mr *MockLLMConfigClientInterfaceMockRecorder) Validate(ctx, body any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockLLMConfigClientInterface)(nil).Validate), ctx, body)
+}

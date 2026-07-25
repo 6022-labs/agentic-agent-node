@@ -47,6 +47,21 @@ func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *models.ExternalSe
 	return &payload, nil
 }
 
+func (c *HttpLLMConfigClient) Validate(ctx context.Context, body *models.ExternalSetupLLMConnectionPayload) error {
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	resp, err := c.client.PostInternalConfigLlmValidateWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	if err != nil {
+		return helpers.MapRuntimeError(err)
+	}
+	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
+		return helpers.MapRuntimeError(err)
+	}
+	return nil
+}
+
 func (c *HttpLLMConfigClient) Delete(ctx context.Context) error {
 	resp, err := c.client.DeleteInternalConfigLlmWithResponse(ctx)
 	if err != nil {

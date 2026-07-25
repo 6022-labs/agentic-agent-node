@@ -1181,6 +1181,35 @@ paths:
       summary: Set LLM config
       tags:
       - Config
+  /config/llm/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: LLM config
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetLlmConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Validate LLM config
+      tags:
+      - Config
   /config/mcp-connections:
     get:
       produces:

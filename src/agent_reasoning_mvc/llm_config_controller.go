@@ -7,23 +7,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const InternalLLMConfigEndpoint = "/internal/config/llm"
+const (
+	InternalLLMConfigEndpoint         = "/internal/config/llm"
+	InternalLLMConfigValidateEndpoint = "/internal/config/llm/validate"
+)
 
 type LLMConfigController struct {
-	getLLMConnection    *use_cases.GetLLMConnection
-	setupLLMConnection  *use_cases.SetupLLMConnection
-	deleteLLMConnection *use_cases.DeleteLLMConnection
+	getLLMConnection      *use_cases.GetLLMConnection
+	setupLLMConnection    *use_cases.SetupLLMConnection
+	deleteLLMConnection   *use_cases.DeleteLLMConnection
+	validateLLMConnection *use_cases.ValidateLLMConnection
 }
 
 func NewLLMConfigController(
 	getLLMConnection *use_cases.GetLLMConnection,
 	setupLLMConnection *use_cases.SetupLLMConnection,
 	deleteLLMConnection *use_cases.DeleteLLMConnection,
+	validateLLMConnection *use_cases.ValidateLLMConnection,
 ) *LLMConfigController {
 	return &LLMConfigController{
-		getLLMConnection:    getLLMConnection,
-		setupLLMConnection:  setupLLMConnection,
-		deleteLLMConnection: deleteLLMConnection,
+		getLLMConnection:      getLLMConnection,
+		setupLLMConnection:    setupLLMConnection,
+		deleteLLMConnection:   deleteLLMConnection,
+		validateLLMConnection: validateLLMConnection,
 	}
 }
 
@@ -31,6 +37,7 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 	app.Get(InternalLLMConfigEndpoint, c.Get)
 	app.Post(InternalLLMConfigEndpoint, c.Setup)
 	app.Delete(InternalLLMConfigEndpoint, c.Delete)
+	app.Post(InternalLLMConfigValidateEndpoint, c.Validate)
 }
 
 // Get returns the agent's single LLM connection.
@@ -69,6 +76,26 @@ func (c *LLMConfigController) Setup(ctx *fiber.Ctx) error {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.JSON(resp)
+}
+
+// Validate probes the candidate LLM connection without persisting it.
+// @Summary Internal validate LLM connection
+// @Tags Internal
+// @Accept json
+// @Param request body requests.SetupLLMConnectionRequest true "LLM connection"
+// @Success 204
+// @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} fiber.Map "validate_llm_connection_failed"
+// @Router /internal/config/llm/validate [post]
+func (c *LLMConfigController) Validate(ctx *fiber.Ctx) error {
+	body := new(requests.SetupLLMConnectionRequest)
+	if err := ctx.BodyParser(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	if err := c.validateLLMConnection.Execute(ctx.UserContext(), body); err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 // Delete removes the agent's LLM connection.

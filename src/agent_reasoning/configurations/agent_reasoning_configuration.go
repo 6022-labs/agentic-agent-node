@@ -94,10 +94,18 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewLLMConnectionValidator,
+		dig.As(new(interfaces.LLMConnectionValidatorInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	providers := []any{
 		use_cases.NewSetupLLMConnection,
 		use_cases.NewGetLLMConnection,
 		use_cases.NewDeleteLLMConnection,
+		use_cases.NewValidateLLMConnection,
 		use_cases.NewCreateMCPConnection,
 		use_cases.NewListMCPConnections,
 		use_cases.NewGetMCPConnection,

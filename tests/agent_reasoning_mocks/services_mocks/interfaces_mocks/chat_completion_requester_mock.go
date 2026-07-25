@@ -56,3 +56,17 @@ func (mr *MockChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(ctx, 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockChatCompletionRequesterInterface)(nil).ChatCompletion), ctx, llmConnection, selfTools, mcpTools, messages)
 }
+
+// ProbeConnection mocks base method.
+func (m *MockChatCompletionRequesterInterface) ProbeConnection(ctx context.Context, llmConnection *models.LLMConnection, apiKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProbeConnection", ctx, llmConnection, apiKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProbeConnection indicates an expected call of ProbeConnection.
+func (mr *MockChatCompletionRequesterInterfaceMockRecorder) ProbeConnection(ctx, llmConnection, apiKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProbeConnection", reflect.TypeOf((*MockChatCompletionRequesterInterface)(nil).ProbeConnection), ctx, llmConnection, apiKey)
+}

@@ -6,11 +6,16 @@ import (
 )
 
 type ExternalOllamaChatMessageStandardRequest struct {
-	Model    string                                         `json:"model"`
-	Messages []ExternalOllamaChatMessageStandardMessage     `json:"messages"`
-	Tools    []ExternalOllamaChatMessageStandardRequestTool `json:"tools,omitempty"`
-	Think    *bool                                          `json:"think,omitempty"`
-	Stream   *bool                                          `json:"stream,omitempty"`
+	Model    string                                          `json:"model"`
+	Messages []ExternalOllamaChatMessageStandardMessage      `json:"messages"`
+	Tools    []ExternalOllamaChatMessageStandardRequestTool  `json:"tools,omitempty"`
+	Think    *bool                                           `json:"think,omitempty"`
+	Stream   *bool                                           `json:"stream,omitempty"`
+	Options  *ExternalOllamaChatMessageStandardRequestOptions `json:"options,omitempty"`
+}
+
+type ExternalOllamaChatMessageStandardRequestOptions struct {
+	NumPredict *int `json:"num_predict,omitempty"`
 }
 
 type ExternalOllamaChatMessageStandardRequestTool struct {

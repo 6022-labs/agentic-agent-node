@@ -55,3 +55,17 @@ func (mr *MockAmazonBedrockConverseStandardChatCompletionRequesterInterfaceMockR
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockAmazonBedrockConverseStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages)
 }
+
+// Probe mocks base method.
+func (m *MockAmazonBedrockConverseStandardChatCompletionRequesterInterface) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Probe", baseUrl, apiKey, llmConnection)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Probe indicates an expected call of Probe.
+func (mr *MockAmazonBedrockConverseStandardChatCompletionRequesterInterfaceMockRecorder) Probe(baseUrl, apiKey, llmConnection any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Probe", reflect.TypeOf((*MockAmazonBedrockConverseStandardChatCompletionRequesterInterface)(nil).Probe), baseUrl, apiKey, llmConnection)
+}

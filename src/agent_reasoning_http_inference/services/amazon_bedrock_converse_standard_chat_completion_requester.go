@@ -20,6 +20,8 @@ type AmazonBedrockConverseStandardChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
+
+	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
 }
 
 type AmazonBedrockConverseStandardChatCompletionRequester struct {
@@ -112,6 +114,22 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *AmazonBedrockConverseStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+	text := probeMessage
+	request := &external_models.ExternalAmazonBedrockConverseStandardRequest{
+		ModelId: llmConnection.Model,
+		System:  []external_models.ExternalAmazonBedrockConverseStandardRequestSystem{},
+		Messages: []external_models.ExternalAmazonBedrockConverseStandardMessage{{
+			Role:    "user",
+			Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{{Text: &text}},
+		}},
+		InferenceConfig: &external_models.ExternalAmazonBedrockConverseStandardRequestInferenceConfig{MaxTokens: probeMaxTokens},
+	}
+
+	_, err := r.amazonBedrockConverseClient.Messages(baseUrl, apiKey, request)
+	return err
 }
 
 func (r *AmazonBedrockConverseStandardChatCompletionRequester) buildSystems(

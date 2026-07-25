@@ -151,6 +151,7 @@ func addReasoningConfiguration(container *dig.Container) {
 		reasoning_use_cases.NewGetLlmConfig,
 		reasoning_use_cases.NewSetLlmConfig,
 		reasoning_use_cases.NewDeleteLlmConfig,
+		reasoning_use_cases.NewValidateLlmConfig,
 		reasoning_use_cases.NewGetAgentGuidance,
 		reasoning_use_cases.NewSetAgentGuidance,
 		reasoning_use_cases.NewListMcpConnections,

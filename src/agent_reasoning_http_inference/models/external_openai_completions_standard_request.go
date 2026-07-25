@@ -6,9 +6,10 @@ import (
 )
 
 type ExternalOpenAICompletionsStandardRequest struct {
-	Model    string                                            `json:"model"`
-	Messages []ExternalOpenAICompletionsStandardRequestMessage `json:"messages"`
-	Tools    []ExternalOpenAICompletionsStandardRequestTool    `json:"tools,omitempty"`
+	Model     string                                            `json:"model"`
+	Messages  []ExternalOpenAICompletionsStandardRequestMessage `json:"messages"`
+	Tools     []ExternalOpenAICompletionsStandardRequestTool    `json:"tools,omitempty"`
+	MaxTokens *int                                              `json:"max_tokens,omitempty"`
 }
 
 type ExternalOpenAICompletionsStandardRequestMessage struct {

@@ -866,6 +866,31 @@ paths:
       summary: Internal setup LLM connection
       tags:
       - Internal
+  /internal/config/llm/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: LLM connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SetupLLMConnectionRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: validate_llm_connection_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal validate LLM connection
+      tags:
+      - Internal
   /internal/config/mcp:
     get:
       produces:

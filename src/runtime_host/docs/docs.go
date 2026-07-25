@@ -524,6 +524,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/config/llm/validate": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal validate LLM connection",
+                "parameters": [
+                    {
+                        "description": "LLM connection",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SetupLLMConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "validate_llm_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/config/mcp": {
             "get": {
                 "produces": [

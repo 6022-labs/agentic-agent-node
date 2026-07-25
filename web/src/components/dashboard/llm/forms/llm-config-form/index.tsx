@@ -1,3 +1,4 @@
+import React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
@@ -26,14 +27,22 @@ import {
   type LlmConfigFormSchemaType,
 } from "./llm-config-form-schema"
 
+// The Save button lives in the card footer and submits by this id.
+export const LLM_CONFIG_FORM_ID = "llm-config-form"
+
 type Props = {
   config: LlmConfig | null
   onFormComplete: (
     values: LlmConfigFormSchemaType
   ) => Promise<FormCompletionResult<keyof LlmConfigFormSchemaType, boolean>>
+  onValueChange: (values: LlmConfigFormSchemaType) => void
 }
 
-export default function LlmConfigForm({ config, onFormComplete }: Props) {
+export default function LlmConfigForm({
+  config,
+  onFormComplete,
+  onValueChange,
+}: Props) {
   const form = useForm<LlmConfigFormSchemaType>({
     resolver: zodResolver(llmConfigFormSchema),
     defaultValues: {
@@ -53,6 +62,13 @@ export default function LlmConfigForm({ config, onFormComplete }: Props) {
     ? extractAmazonPlatformRegionFromUrl(form.watch("baseUrl") ?? "")
     : undefined
 
+  React.useEffect(() => {
+    onValueChange(form.getValues())
+
+    const subscription = form.watch(() => onValueChange(form.getValues()))
+    return () => subscription.unsubscribe()
+  }, [form, onValueChange])
+
   const onSubmit = async (values: LlmConfigFormSchemaType) => {
     const { error, result: saved } = await onFormComplete(values)
 
@@ -68,7 +84,7 @@ export default function LlmConfigForm({ config, onFormComplete }: Props) {
   return (
     <Form {...form}>
       <form
-        id="llm-config-form"
+        id={LLM_CONFIG_FORM_ID}
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >

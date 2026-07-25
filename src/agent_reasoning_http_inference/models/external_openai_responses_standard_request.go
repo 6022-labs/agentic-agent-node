@@ -11,6 +11,7 @@ type ExternalOpenAIResponsesStandardRequest struct {
 	Input              []ExternalOpenAIResponsesStandardRequestInput `json:"input"`
 	Tools              []ExternalOpenAIResponsesStandardRequestTool  `json:"tools"`
 	ToolChoice         string                                        `json:"tool_choice,omitempty"`
+	MaxOutputTokens    *int                                          `json:"max_output_tokens,omitempty"`
 	PreviousResponseID *string                                       `json:"previous_response_id,omitempty"`
 }
 

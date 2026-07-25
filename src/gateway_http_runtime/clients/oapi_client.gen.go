@@ -432,6 +432,14 @@ type PostInternalConfigLlmJSONBody struct {
 // PostInternalConfigLlmJSONBody0 defines parameters for PostInternalConfigLlm.
 type PostInternalConfigLlmJSONBody0 = map[string]interface{}
 
+// PostInternalConfigLlmValidateJSONBody defines parameters for PostInternalConfigLlmValidate.
+type PostInternalConfigLlmValidateJSONBody struct {
+	union json.RawMessage
+}
+
+// PostInternalConfigLlmValidateJSONBody0 defines parameters for PostInternalConfigLlmValidate.
+type PostInternalConfigLlmValidateJSONBody0 = map[string]interface{}
+
 // PostInternalConfigMcpJSONBody defines parameters for PostInternalConfigMcp.
 type PostInternalConfigMcpJSONBody struct {
 	union json.RawMessage
@@ -494,6 +502,9 @@ type PostInternalAuthorizeJSONRequestBody PostInternalAuthorizeJSONBody
 
 // PostInternalConfigLlmJSONRequestBody defines body for PostInternalConfigLlm for application/json ContentType.
 type PostInternalConfigLlmJSONRequestBody PostInternalConfigLlmJSONBody
+
+// PostInternalConfigLlmValidateJSONRequestBody defines body for PostInternalConfigLlmValidate for application/json ContentType.
+type PostInternalConfigLlmValidateJSONRequestBody PostInternalConfigLlmValidateJSONBody
 
 // PostInternalConfigMcpJSONRequestBody defines body for PostInternalConfigMcp for application/json ContentType.
 type PostInternalConfigMcpJSONRequestBody PostInternalConfigMcpJSONBody
@@ -641,6 +652,11 @@ type ClientInterface interface {
 	PostInternalConfigLlmWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostInternalConfigLlm(ctx context.Context, body PostInternalConfigLlmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInternalConfigLlmValidateWithBody request with any body
+	PostInternalConfigLlmValidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInternalConfigLlmValidate(ctx context.Context, body PostInternalConfigLlmValidateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConfigMcp request
 	GetInternalConfigMcp(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -939,6 +955,30 @@ func (c *Client) PostInternalConfigLlmWithBody(ctx context.Context, contentType 
 
 func (c *Client) PostInternalConfigLlm(ctx context.Context, body PostInternalConfigLlmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInternalConfigLlmRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConfigLlmValidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigLlmValidateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConfigLlmValidate(ctx context.Context, body PostInternalConfigLlmValidateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigLlmValidateRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,6 +1779,46 @@ func NewPostInternalConfigLlmRequestWithBody(server string, contentType string, 
 	return req, nil
 }
 
+// NewPostInternalConfigLlmValidateRequest calls the generic PostInternalConfigLlmValidate builder with application/json body
+func NewPostInternalConfigLlmValidateRequest(server string, body PostInternalConfigLlmValidateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInternalConfigLlmValidateRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostInternalConfigLlmValidateRequestWithBody generates requests for PostInternalConfigLlmValidate with any type of body
+func NewPostInternalConfigLlmValidateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/llm/validate")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetInternalConfigMcpRequest generates requests for GetInternalConfigMcp
 func NewGetInternalConfigMcpRequest(server string) (*http.Request, error) {
 	var err error
@@ -2451,6 +2531,11 @@ type ClientWithResponsesInterface interface {
 
 	PostInternalConfigLlmWithResponse(ctx context.Context, body PostInternalConfigLlmJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigLlmResponse, error)
 
+	// PostInternalConfigLlmValidateWithBodyWithResponse request with any body
+	PostInternalConfigLlmValidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigLlmValidateResponse, error)
+
+	PostInternalConfigLlmValidateWithResponse(ctx context.Context, body PostInternalConfigLlmValidateJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigLlmValidateResponse, error)
+
 	// GetInternalConfigMcpWithResponse request
 	GetInternalConfigMcpWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigMcpResponse, error)
 
@@ -2883,6 +2968,29 @@ func (r PostInternalConfigLlmResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostInternalConfigLlmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostInternalConfigLlmValidateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorsValidationError
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInternalConfigLlmValidateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInternalConfigLlmValidateResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3487,6 +3595,23 @@ func (c *ClientWithResponses) PostInternalConfigLlmWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParsePostInternalConfigLlmResponse(rsp)
+}
+
+// PostInternalConfigLlmValidateWithBodyWithResponse request with arbitrary body returning *PostInternalConfigLlmValidateResponse
+func (c *ClientWithResponses) PostInternalConfigLlmValidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigLlmValidateResponse, error) {
+	rsp, err := c.PostInternalConfigLlmValidateWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConfigLlmValidateResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostInternalConfigLlmValidateWithResponse(ctx context.Context, body PostInternalConfigLlmValidateJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigLlmValidateResponse, error) {
+	rsp, err := c.PostInternalConfigLlmValidate(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConfigLlmValidateResponse(rsp)
 }
 
 // GetInternalConfigMcpWithResponse request returning *GetInternalConfigMcpResponse
@@ -4229,6 +4354,39 @@ func ParsePostInternalConfigLlmResponse(rsp *http.Response) (*PostInternalConfig
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInternalConfigLlmValidateResponse parses an HTTP response from a PostInternalConfigLlmValidateWithResponse call
+func ParsePostInternalConfigLlmValidateResponse(rsp *http.Response) (*PostInternalConfigLlmValidateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInternalConfigLlmValidateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest ErrorsValidationError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

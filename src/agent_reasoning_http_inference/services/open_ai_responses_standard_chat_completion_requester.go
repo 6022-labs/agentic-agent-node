@@ -23,6 +23,8 @@ type OpenAIResponsesStandardChatCompletionRequesterInterface interface {
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
 	) (*interfaces.LLMCompletion, error)
+
+	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
 }
 
 type OpenAIResponsesStandardChatCompletionRequester struct {
@@ -145,6 +147,20 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+func (r *OpenAIResponsesStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+	role := "user"
+	content := probeMessage
+	request := &external_models.ExternalOpenAIResponsesStandardRequest{
+		Model:           llmConnection.Model,
+		Input:           []external_models.ExternalOpenAIResponsesStandardRequestInput{{Type: "message", Role: &role, Content: &content}},
+		Tools:           []external_models.ExternalOpenAIResponsesStandardRequestTool{},
+		MaxOutputTokens: lo.ToPtr(probeMaxTokens),
+	}
+
+	_, err := r.openAIResponsesClient.Responses(baseUrl, apiKey, request)
+	return err
 }
 
 // buildRequestInputs flattens domain messages into the OpenAI Responses input
