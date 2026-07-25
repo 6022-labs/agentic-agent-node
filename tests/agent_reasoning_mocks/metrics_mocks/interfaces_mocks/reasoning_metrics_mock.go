@@ -41,6 +41,18 @@ func (m *MockReasoningMetricsInterface) EXPECT() *MockReasoningMetricsInterfaceM
 	return m.recorder
 }
 
+// RecordLoopAborted mocks base method.
+func (m *MockReasoningMetricsInterface) RecordLoopAborted(ctx context.Context, reason string, duration time.Duration, iterations int64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordLoopAborted", ctx, reason, duration, iterations)
+}
+
+// RecordLoopAborted indicates an expected call of RecordLoopAborted.
+func (mr *MockReasoningMetricsInterfaceMockRecorder) RecordLoopAborted(ctx, reason, duration, iterations any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordLoopAborted", reflect.TypeOf((*MockReasoningMetricsInterface)(nil).RecordLoopAborted), ctx, reason, duration, iterations)
+}
+
 // RecordLoopCompleted mocks base method.
 func (m *MockReasoningMetricsInterface) RecordLoopCompleted(ctx context.Context, duration time.Duration, iterations int64) {
 	m.ctrl.T.Helper()

@@ -19,7 +19,7 @@ import (
 )
 
 // InferenceLoop drives the LLM ↔ MCP exchange until the LLM stops emitting
-// tool calls or MaxIterations is hit.
+// tool calls or a safety ceiling (iterations, wall-clock, tokens) is hit.
 type InferenceLoop struct {
 	logger                *zap.Logger
 	llmExecutor           interfaces.LLMExecutorInterface
@@ -64,10 +64,32 @@ func (l *InferenceLoop) Run(
 ) ([]*interfaces.ChatCompletionMessage, error) {
 	start := time.Now()
 
+	ctx, cancel := context.WithTimeout(
+		ctx,
+		time.Duration(l.inferenceLoopSettings.MaxDurationSeconds)*time.Second,
+	)
+	defer cancel()
+
+	totalTokens := 0
+
 	for iteration := 0; iteration < l.inferenceLoopSettings.MaxIterations; iteration++ {
+		// Checked before the next round-trip, not after, so a final answer that lands on the budget edge is never discarded.
+		if totalTokens > l.inferenceLoopSettings.MaxTotalTokens {
+			l.reasoningMetrics.RecordLoopAborted(ctx, "token_budget_exceeded", time.Since(start), int64(iteration))
+			return nil, fmt.Errorf("%w: %d tokens used", interfaces.ErrInferenceLoopTokenBudgetExceeded, totalTokens)
+		}
+
 		completion, err := l.llmExecutor.Complete(ctx, llmConnection, selfTools, mcpTools, messages)
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				l.reasoningMetrics.RecordLoopAborted(ctx, "deadline_exceeded", time.Since(start), int64(iteration))
+				return nil, fmt.Errorf("%w after %s", interfaces.ErrInferenceLoopDeadlineExceeded, time.Since(start).Round(time.Millisecond))
+			}
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
+		}
+
+		if completion.Usage != nil {
+			totalTokens += completion.Usage.InputTokens + completion.Usage.OutputTokens
 		}
 
 		messages = append(

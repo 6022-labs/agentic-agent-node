@@ -32,6 +32,16 @@ type WhenRunningInferenceLoopTestingSuite struct {
 }
 
 func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRunningInferenceLoopTestingSuite {
+	return WhenRunningInferenceLoopWithSettingsBeforeEach(
+		t,
+		&settings.InferenceLoopSettings{
+			MaxIterations:      maxIterations,
+			MaxDurationSeconds: 300,
+			MaxTotalTokens:     1_000_000,
+		})
+}
+
+func WhenRunningInferenceLoopWithSettingsBeforeEach(t *testing.T, inferenceLoopSettings *settings.InferenceLoopSettings) *WhenRunningInferenceLoopTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockLLMExecutor := interfaces_mocks.NewMockLLMExecutorInterface(mockController)
@@ -42,6 +52,7 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 	mockMetrics := metrics_interfaces_mocks.NewMockReasoningMetricsInterface(mockController)
 	mockMetrics.EXPECT().RecordLoopCompleted(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockMetrics.EXPECT().RecordLoopExceeded(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().RecordLoopAborted(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockMetrics.EXPECT().RecordToolCalls(gomock.Any(), gomock.Any()).AnyTimes()
 
 	mockSpan := traces_interfaces_mocks.NewMockSpan(mockController)
@@ -59,7 +70,7 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 		mockLLMExecutor,
 		mockMcpRequester,
 		mockSelfToolRegistry,
-		&settings.InferenceLoopSettings{MaxIterations: maxIterations},
+		inferenceLoopSettings,
 		mockMetrics,
 		mockReasoningTracer,
 		mockEmojiDecoder,
@@ -95,7 +106,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
 		}
 
@@ -125,7 +136,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{"preamble", "answer"}}, nil)
 		}
 
@@ -156,7 +167,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				DemojizeContent(emojiText).
 				Return(":arrows_counterclockwise: status update")
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(&interfaces.LLMCompletion{Texts: []string{emojiText}}, nil)
 		}
 
@@ -198,7 +209,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(toolResult, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: functionName, Arguments: toolArgs},
@@ -206,7 +217,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
 					if assert.GreaterOrEqual(t, len(msgs), 3) {
 						assistant := msgs[len(msgs)-2]
@@ -256,11 +267,11 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite.expectDemojizePassthrough()
 			// mockMcpRequester.CallTool is never expected — an MCP dispatch would fail the test.
 			suite.mockSelfToolRegistry.EXPECT().
-				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				CallTool(gomock.Any(), selfTool.Name, gomock.Nil()).
 				Return(toolResult, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: "self_get_identity"},
@@ -268,7 +279,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -301,11 +312,11 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
-				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				CallTool(gomock.Any(), selfTool.Name, gomock.Nil()).
 				Return(nil, apperrors.NewValidationError("content", "cannot be empty"))
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: "self_set_guidance"},
@@ -313,7 +324,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -348,11 +359,11 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
-				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				CallTool(gomock.Any(), selfTool.Name, gomock.Nil()).
 				Return(nil, apperrors.NewInternalError("mcp_lookup_failed", "dial tcp 10.0.0.5:5432: connection refused"))
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: "self_list_mcp_connections"},
@@ -360,7 +371,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -405,7 +416,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
-				CallTool(ctx, selfTool.Name, gomock.Nil()).
+				CallTool(gomock.Any(), selfTool.Name, gomock.Nil()).
 				Return(map[string]any{"name": "agent-x"}, nil)
 
 			suite.mockMcpRequester.EXPECT().
@@ -413,7 +424,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(map[string]any{"status": "ok"}, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: "self_get_identity"},
@@ -422,7 +433,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), selfTools, mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), selfTools, mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -467,7 +478,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(map[string]any{"status": "ok"}, nil)
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					Texts: []string{thinkingText},
 					ToolCalls: []interfaces.ToolCall{
@@ -476,7 +487,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -516,7 +527,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					Texts: []string{expectedFinal},
 					ExecutedToolCalls: []interfaces.ExecutedToolCall{
@@ -559,7 +570,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			first := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ExecutedToolCalls: []interfaces.ExecutedToolCall{
 						{Id: "mcp_1", Name: "weather_get", Output: `{"temp":"20"}`},
@@ -567,7 +578,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			second := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{finalText}}, nil)
 
 			gomock.InOrder(first, second)
@@ -600,7 +611,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{}, nil)
 		}
 
@@ -637,7 +648,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				AnyTimes()
 
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: functionName, Arguments: toolArgs},
@@ -673,7 +684,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_x", Name: "ghost_tool", Arguments: nil},
@@ -681,7 +692,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -713,7 +724,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), messages).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), messages).
 				Return(nil, errors.New("upstream broke"))
 		}
 
@@ -748,7 +759,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
 			suite.expectDemojizePassthrough()
 			firstCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{
 					ToolCalls: []interfaces.ToolCall{
 						{Id: "call_1", Name: functionName, Arguments: toolArgs},
@@ -756,7 +767,7 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				}, nil)
 
 			secondCall := suite.mockLLMExecutor.EXPECT().
-				Complete(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
 
 			gomock.InOrder(firstCall, secondCall)
@@ -781,6 +792,123 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				assert.NotContains(t, out[2].Content, "mcp blew up")
 				assert.Contains(t, out[2].Content, "the tool call failed")
 				assert.Equal(t, expectedFinal, out[3].Content)
+			}
+		})
+	})
+
+	t.Run("Given the loop runs with a wall-clock ceiling", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+
+		t.Run("Should hand the executor a deadline-bounded context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			suite.expectDemojizePassthrough()
+
+			var hasDeadline bool
+			suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(callCtx context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, _ []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+					_, hasDeadline = callCtx.Deadline()
+					return &interfaces.LLMCompletion{Texts: []string{"done"}}, nil
+				})
+
+			_, err := suite.sut.Run(ctx, llmConnection, nil, nil, messages)
+
+			assert.NoError(t, err)
+			assert.True(t, hasDeadline)
+		})
+	})
+
+	t.Run("Given cumulative token usage exceeds the budget between iterations", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			// Provider-executed tool calls with no text force a second iteration without dispatching anything.
+			suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ExecutedToolCalls: []interfaces.ExecutedToolCall{{Id: "call_1", Name: "search", Output: "{}"}},
+					Usage:             &interfaces.LLMUsage{InputTokens: 80, OutputTokens: 30},
+				}, nil)
+		}
+
+		t.Run("Should abort with the token budget sentinel before the next round-trip", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopWithSettingsBeforeEach(t, &settings.InferenceLoopSettings{
+				MaxIterations:      5,
+				MaxDurationSeconds: 300,
+				MaxTotalTokens:     100,
+			})
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, nil, nil, messages)
+
+			assert.Nil(t, out)
+			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopTokenBudgetExceeded)
+		})
+	})
+
+	t.Run("Given the executor fails because the wall-clock deadline expired", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, fmt.Errorf("llm call failed: %w", context.DeadlineExceeded))
+		}
+
+		t.Run("Should surface the deadline sentinel instead of a generic executor error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, nil, nil, messages)
+
+			assert.Nil(t, out)
+			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopDeadlineExceeded)
+		})
+	})
+
+	t.Run("Given the final answer lands past the budget on the same turn", func(t *testing.T) {
+		t.Parallel()
+
+		messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}}
+		expectedText := "final answer"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
+			suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					Texts: []string{expectedText},
+					Usage: &interfaces.LLMUsage{InputTokens: 900, OutputTokens: 200},
+				}, nil)
+		}
+
+		t.Run("Should return the answer instead of discarding it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopWithSettingsBeforeEach(t, &settings.InferenceLoopSettings{
+				MaxIterations:      5,
+				MaxDurationSeconds: 300,
+				MaxTotalTokens:     100,
+			})
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, nil, nil, messages)
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 2) {
+				assert.Equal(t, expectedText, out[1].Content)
 			}
 		})
 	})

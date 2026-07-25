@@ -18,6 +18,7 @@ type ReasoningMetrics struct {
 	loopIterationsHistogram metric.Int64Histogram
 	toolCallCounter         metric.Int64Counter
 	maxIterationsCounter    metric.Int64Counter
+	abortedCounter          metric.Int64Counter
 }
 
 func NewReasoningMetrics() *ReasoningMetrics {
@@ -58,11 +59,20 @@ func NewReasoningMetrics() *ReasoningMetrics {
 		maxIterationsCounter, _ = noopMeter.Int64Counter("reasoning.loop.max_iterations_exceeded")
 	}
 
+	abortedCounter, err := meter.Int64Counter(
+		"reasoning.loop.aborted",
+		metric.WithDescription("Number of inference loop runs aborted by a non-iteration safety ceiling"),
+	)
+	if err != nil {
+		abortedCounter, _ = noopMeter.Int64Counter("reasoning.loop.aborted")
+	}
+
 	return &ReasoningMetrics{
 		loopDurationHistogram:   loopDurationHistogram,
 		loopIterationsHistogram: loopIterationsHistogram,
 		toolCallCounter:         toolCallCounter,
 		maxIterationsCounter:    maxIterationsCounter,
+		abortedCounter:          abortedCounter,
 	}
 }
 
@@ -81,6 +91,11 @@ func (m *ReasoningMetrics) RecordLoopCompleted(ctx context.Context, duration tim
 func (m *ReasoningMetrics) RecordLoopExceeded(ctx context.Context, duration time.Duration, iterations int64) {
 	m.recordLoop(ctx, "max_iterations_exceeded", duration, iterations)
 	m.maxIterationsCounter.Add(ctx, 1)
+}
+
+func (m *ReasoningMetrics) RecordLoopAborted(ctx context.Context, reason string, duration time.Duration, iterations int64) {
+	m.recordLoop(ctx, reason, duration, iterations)
+	m.abortedCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("reasoning.abort_reason", reason)))
 }
 
 func (m *ReasoningMetrics) RecordToolCalls(ctx context.Context, count int64) {

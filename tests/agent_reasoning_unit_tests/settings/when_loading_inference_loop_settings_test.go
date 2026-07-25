@@ -13,20 +13,24 @@ import (
 func TestWhenLoadingInferenceLoopSettings(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a configured max iterations", func(t *testing.T) {
+	t.Run("Given configured ceilings", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"inference_loop.max_iterations": 25,
+			"inference_loop.max_iterations":       25,
+			"inference_loop.max_duration_seconds": 120,
+			"inference_loop.max_total_tokens":     42000,
 		}, "."), nil)
 
-		t.Run("Should load it", func(t *testing.T) {
+		t.Run("Should load them", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewInferenceLoopSettings(zap.NewNop(), k)
 
 			assert.Equal(t, 25, result.MaxIterations)
+			assert.Equal(t, 120, result.MaxDurationSeconds)
+			assert.Equal(t, 42000, result.MaxTotalTokens)
 		})
 	})
 
@@ -35,29 +39,35 @@ func TestWhenLoadingInferenceLoopSettings(t *testing.T) {
 
 		k := koanf.New(".")
 
-		t.Run("Should fall back to the default", func(t *testing.T) {
+		t.Run("Should fall back to the defaults", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewInferenceLoopSettings(zap.NewNop(), k)
 
 			assert.Equal(t, 10, result.MaxIterations)
+			assert.Equal(t, 300, result.MaxDurationSeconds)
+			assert.Equal(t, 500_000, result.MaxTotalTokens)
 		})
 	})
 
-	t.Run("Given a non-positive max iterations", func(t *testing.T) {
+	t.Run("Given non-positive ceilings", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"inference_loop.max_iterations": -1,
+			"inference_loop.max_iterations":       -1,
+			"inference_loop.max_duration_seconds": 0,
+			"inference_loop.max_total_tokens":     -5,
 		}, "."), nil)
 
-		t.Run("Should fall back to the default", func(t *testing.T) {
+		t.Run("Should fall back to the defaults", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewInferenceLoopSettings(zap.NewNop(), k)
 
 			assert.Equal(t, 10, result.MaxIterations)
+			assert.Equal(t, 300, result.MaxDurationSeconds)
+			assert.Equal(t, 500_000, result.MaxTotalTokens)
 		})
 	})
 }
