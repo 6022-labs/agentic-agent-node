@@ -1,10 +1,7 @@
 import React from "react"
-import { toast } from "sonner"
 import { useForm, type DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowRight, Loader2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -22,21 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  isDraftComplete,
-  type AgentRegistration,
-} from "@/models/agent-registration"
+import type { AgentRegistration } from "@/models/agent-registration"
+import type { AgentCollection } from "@/models/agent-collection"
 import { AGENT_ROLES } from "@/models/enums/agent-role"
-import { saveAgentRegistration } from "@/queries/api/registration.queries"
 import { getMintableChainIds } from "@/configs/app-config"
 import { findEvmNetwork } from "@/models/networks"
-import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
+import type { FormCompletionResult } from "@/models/api/validation-error"
 import { normalizeEnsLabel } from "@/lib/ens-label"
 import {
   registrationDraftFormSchema,
   type RegistrationDraftFormSchemaType,
 } from "./registration-draft-form-schema"
-import { useAgentCollections } from "./use-agent-collections"
 import CollectionField from "./collection-field"
 import AttributeFields from "./attribute-fields"
 
@@ -66,19 +59,26 @@ const buildDefaults = (
   ],
 })
 
+// The Save button lives in the wizard footer and submits by this id.
+export const REGISTRATION_DRAFT_FORM_ID = "registration-draft-form"
+
 type Props = {
   draft: AgentRegistration | null
-  onSaved: (registration: AgentRegistration) => void
-  // Advance to the mint step; enabled once a draft has been saved.
-  onContinue?: () => void
+  collections: AgentCollection[] | null
+  onReloadCollections: () => Promise<AgentCollection[]>
+  onValueChange: (values: RegistrationDraftFormSchemaType) => void
+  onFormComplete: (
+    values: RegistrationDraftFormSchemaType
+  ) => Promise<FormCompletionResult<keyof RegistrationDraftFormSchemaType>>
 }
 
 export default function RegistrationDraftForm({
   draft,
-  onSaved,
-  onContinue,
+  collections,
+  onReloadCollections,
+  onValueChange,
+  onFormComplete,
 }: Props) {
-  const [saving, setSaving] = React.useState(false)
   const mintableChainIds = React.useMemo(() => getMintableChainIds(), [])
 
   const form = useForm<RegistrationDraftFormSchemaType>({
@@ -93,50 +93,31 @@ export default function RegistrationDraftForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft])
 
-  // Collections are per-chain: reload them (and clear the stale selection) when
-  // the chosen chain changes.
+  // Collections are per-chain, so the wizard reloads them from the emitted values.
   const selectedChainId = form.watch("chainId")
-  const { collections, loadCollections } = useAgentCollections(selectedChainId)
+
+  React.useEffect(() => {
+    onValueChange(form.getValues())
+
+    const subscription = form.watch(() => onValueChange(form.getValues()))
+    return () => subscription.unsubscribe()
+  }, [form, onValueChange])
 
   const onSubmit = async (values: RegistrationDraftFormSchemaType) => {
-    setSaving(true)
-    try {
-      const { data } = await saveAgentRegistration({
-        chainId: values.chainId,
-        collectionAddress: values.collectionAddress,
-        name: values.name,
-        image: values.image,
-        attributes: Object.fromEntries(
-          values.attributes.map((attribute) => [
-            attribute.key.trim(),
-            attribute.value,
-          ])
-        ),
-      })
-      toast.success("Draft saved")
-      onSaved(data)
-    } catch (error) {
-      const validation =
-        extractValidationError<keyof RegistrationDraftFormSchemaType>(error)
-      if (validation && validation.field in form.getValues()) {
-        form.setError(
-          validation.field as keyof RegistrationDraftFormSchemaType,
-          {
-            type: "server",
-            message: validation.message,
-          }
-        )
-        return
-      }
-      toast.error(extractErrorMessage(error, "Failed to save draft"))
-    } finally {
-      setSaving(false)
+    const { error } = await onFormComplete(values)
+
+    if (error) {
+      form.setError(error.field, { type: "server", message: error.message })
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        id={REGISTRATION_DRAFT_FORM_ID}
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="chainId"
@@ -176,7 +157,7 @@ export default function RegistrationDraftForm({
           form={form}
           chainId={selectedChainId}
           collections={collections}
-          onReloadCollections={loadCollections}
+          onReloadCollections={onReloadCollections}
         />
         <FormField
           control={form.control}
@@ -219,26 +200,6 @@ export default function RegistrationDraftForm({
           )}
         />
         <AttributeFields form={form} />
-        <div className="flex justify-end gap-2">
-          <Button
-            type="submit"
-            variant={onContinue && draft ? "outline" : "default"}
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="animate-spin" /> : null}
-            {draft ? "Update draft" : "Save draft"}
-          </Button>
-          {onContinue ? (
-            <Button
-              type="button"
-              onClick={onContinue}
-              disabled={!isDraftComplete(draft) || saving}
-            >
-              Continue
-              <ArrowRight />
-            </Button>
-          ) : null}
-        </div>
       </form>
     </Form>
   )

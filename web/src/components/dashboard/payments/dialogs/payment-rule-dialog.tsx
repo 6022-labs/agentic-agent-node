@@ -15,6 +15,7 @@ import PaymentRuleForm from "@/components/dashboard/payments/forms/payment-rule-
 import type { PaymentRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-rule-form/payment-rule-form-schema"
 import type { PaymentRule } from "@/models/payment-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
+import { useErc20Lookup } from "@/components/dashboard/payments/use-erc20-lookup"
 
 type Props = {
   agentWalletAddress: string
@@ -37,7 +38,12 @@ export default function PaymentRuleDialog({
 }: Props) {
   const [open, setOpen] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
+  const [values, setValues] = React.useState<PaymentRuleFormSchemaType | null>(
+    null
+  )
   const editing = initialRule !== undefined
+
+  const tokenLookup = useErc20Lookup(values?.network, values?.asset)
 
   const onFormComplete = async (
     values: PaymentRuleFormSchemaType
@@ -87,6 +93,8 @@ export default function PaymentRuleDialog({
             agentWalletAddress={agentWalletAddress}
             initialRule={initialRule}
             preservedPatternCount={preservedPatternCount}
+            tokenLookup={tokenLookup}
+            onValueChange={setValues}
             onFormComplete={onFormComplete}
           />
         ) : null}

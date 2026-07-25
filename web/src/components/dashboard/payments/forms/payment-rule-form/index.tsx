@@ -32,7 +32,7 @@ import {
   getFacilitatorNetworks,
 } from "@/configs/app-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
-import { fetchErc20Info, isLookupSupported, type Erc20Info } from "@/lib/erc20"
+import type { Erc20Lookup } from "@/lib/erc20"
 import {
   formatAtomicAmount,
   formatNetwork,
@@ -45,13 +45,6 @@ import {
   type PaymentRuleFormSchemaType,
 } from "./payment-rule-form-schema"
 
-const evmAddress = /^0x[0-9a-fA-F]{40}$/
-const caip2Network = /^eip155:\d+$/
-
-type TokenLookup =
-  | { status: "idle" | "loading" | "not-found" | "unsupported" }
-  | { status: "found"; info: Erc20Info }
-
 type Props = {
   // Pre-fills new rules as paying to the agent's own wallet.
   agentWalletAddress: string
@@ -60,6 +53,9 @@ type Props = {
   // Non-address regex patterns of the edited rule (kept verbatim by the
   // caller on save); surfaced so the operator knows they exist.
   preservedPatternCount?: number
+  // Token metadata for the entered network + asset, resolved by the caller.
+  tokenLookup: Erc20Lookup
+  onValueChange: (values: PaymentRuleFormSchemaType) => void
   onFormComplete: (
     values: PaymentRuleFormSchemaType
   ) => Promise<FormCompletionResult<keyof PaymentRuleFormSchemaType>>
@@ -69,6 +65,8 @@ export default function PaymentRuleForm({
   agentWalletAddress,
   initialRule,
   preservedPatternCount = 0,
+  tokenLookup,
+  onValueChange,
   onFormComplete,
 }: Props) {
   const facilitatorNetworks = getFacilitatorNetworks()
@@ -121,14 +119,14 @@ export default function PaymentRuleForm({
   })
   const allowEveryone = form.watch("allowEveryone")
 
-  // Live ERC-20 lookup while the operator types — informative only; the
-  // runtime re-validates the contract on save with the node's own RPC.
-  const [tokenLookup, setTokenLookup] = React.useState<TokenLookup>({
-    status: "idle",
-  })
-  const network = form.watch("network")
-  const asset = form.watch("asset")
   const price = form.watch("price")
+
+  React.useEffect(() => {
+    onValueChange(form.getValues())
+
+    const subscription = form.watch(() => onValueChange(form.getValues()))
+    return () => subscription.unsubscribe()
+  }, [form, onValueChange])
 
   // Paid rules can only target a configured-facilitator network; free rules
   // never settle, so they offer every reachable chain. The edited rule's
@@ -139,30 +137,6 @@ export default function PaymentRuleForm({
     if (initialRule) ids.add(initialRule.network)
     return [...ids]
   }, [price, initialRule, facilitatorNetworks, reachableNetworks])
-
-  React.useEffect(() => {
-    if (!evmAddress.test(asset) || !caip2Network.test(network)) {
-      setTokenLookup({ status: "idle" })
-      return
-    }
-    if (!isLookupSupported(network)) {
-      setTokenLookup({ status: "unsupported" })
-      return
-    }
-
-    setTokenLookup({ status: "loading" })
-    let stale = false
-    const timer = setTimeout(async () => {
-      const info = await fetchErc20Info(network, asset)
-      if (stale) return
-      setTokenLookup(info ? { status: "found", info } : { status: "not-found" })
-    }, 400)
-
-    return () => {
-      stale = true
-      clearTimeout(timer)
-    }
-  }, [network, asset])
 
   const tokenInfo = tokenLookup.status === "found" ? tokenLookup.info : null
 
