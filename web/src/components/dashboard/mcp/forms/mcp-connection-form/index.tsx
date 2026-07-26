@@ -14,10 +14,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
 import type { McpConnection, McpServerTool } from "@/models/mcp-connection"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { matchesToolPatterns } from "@/lib/tool-patterns"
+import AllowedToolsField from "./allowed-tools-field"
 import {
   mcpConnectionFormSchema,
   type McpConnectionFormSchemaType,
@@ -187,54 +187,12 @@ export default function McpConnectionForm({
           control={form.control}
           name="allowedTools"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Allowed tools</FormLabel>
-              {loadingTools ? (
-                <div className="space-y-2">
-                  {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-5 w-full" />
-                  ))}
-                </div>
-              ) : tools === null ? (
-                <FormDescription>
-                  Load the server's tools to choose which ones the agent may
-                  call.
-                </FormDescription>
-              ) : tools.length === 0 ? (
-                <FormDescription>This server exposes no tool.</FormDescription>
-              ) : (
-                <div className="space-y-2">
-                  {tools.map((tool) => (
-                    <label
-                      key={tool.name}
-                      className="flex items-start gap-2 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 size-4 accent-primary"
-                        checked={field.value.includes(tool.name)}
-                        onChange={(event) =>
-                          field.onChange(
-                            event.target.checked
-                              ? [...field.value, tool.name]
-                              : field.value.filter((name) => name !== tool.name)
-                          )
-                        }
-                      />
-                      <span>
-                        <span className="font-mono text-xs">{tool.name}</span>
-                        {tool.description ? (
-                          <span className="block text-xs text-muted-foreground">
-                            {tool.description}
-                          </span>
-                        ) : null}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              <FormMessage />
-            </FormItem>
+            <AllowedToolsField
+              tools={tools}
+              loading={loadingTools}
+              selected={field.value}
+              onSelectedChange={field.onChange}
+            />
           )}
         />
       </form>
