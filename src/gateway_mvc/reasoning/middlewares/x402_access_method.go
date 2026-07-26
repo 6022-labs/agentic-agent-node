@@ -292,6 +292,11 @@ func (m *X402AccessMethod) matchesAddressPatterns(patterns []string, payer commo
 	for _, pattern := range patterns {
 		re, err := regexp.Compile("^(?:" + pattern + ")$")
 		if err != nil {
+			m.logger.Warn("ignoring uncompilable address pattern",
+				zap.String("pattern", pattern),
+				zap.Error(err),
+			)
+
 			continue
 		}
 		if re.MatchString(payerHex) {
