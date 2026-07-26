@@ -43,7 +43,7 @@ func (m *MockCreateMCPConnectionExecutorInterface) EXPECT() *MockCreateMCPConnec
 }
 
 // Execute mocks base method.
-func (m *MockCreateMCPConnectionExecutorInterface) Execute(ctx context.Context, request *requests.SaveMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (m *MockCreateMCPConnectionExecutorInterface) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", ctx, request)
 	ret0, _ := ret[0].(*responses.MCPConnectionResponse)

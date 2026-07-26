@@ -155,7 +155,9 @@ func addReasoningConfiguration(container *dig.Container) {
 		reasoning_use_cases.NewGetAgentGuidance,
 		reasoning_use_cases.NewSetAgentGuidance,
 		reasoning_use_cases.NewListMcpConnections,
+		reasoning_use_cases.NewDiscoverMcpServerTools,
 		reasoning_use_cases.NewCreateMcpConnection,
+		reasoning_use_cases.NewUpdateMcpConnection,
 		reasoning_use_cases.NewDeleteMcpConnection,
 	}
 	for _, p := range useCaseProviders {

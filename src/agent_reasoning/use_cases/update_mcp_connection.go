@@ -19,16 +19,21 @@ type UpdateMCPConnection struct {
 func NewUpdateMCPConnection(
 	repository repositories.MCPConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	mcpRequester reasoning_interfaces.McpRequesterInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *UpdateMCPConnection {
 	return &UpdateMCPConnection{
-		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(repository, secretStorage, agentRepository),
+		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(
+			repository,
+			secretStorage,
+			mcpRequester,
+			agentRepository,
+		),
 	}
 }
 
 // Execute applies full-replacement semantics: name, url, and the entire
-// HeaderAuth map are overwritten. Header values absent from the new map are
-// removed from Vault.
+// HeaderAuth map are overwritten, and dropped headers leave Vault.
 func (u *UpdateMCPConnection) Execute(ctx context.Context, request *requests.UpdateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
@@ -53,23 +58,57 @@ func (u *UpdateMCPConnection) Execute(ctx context.Context, request *requests.Upd
 		}
 	}
 
+	headers, err := u.resolveHeaderValues(ctx, existing, request.HeaderAuth)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.probeListTools(ctx, request.Name, request.Url, headers); err != nil {
+		return nil, err
+	}
+
 	if err := u.dropRemovedHeaders(ctx, existing, request.HeaderAuth); err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 
 	existing.Name = request.Name
 	existing.Url = request.Url
-	existing.HeaderAuthKeys = u.headerAuthKeys(&request.SaveMCPConnectionRequest)
+	existing.AllowedToolPatterns = request.AllowedToolPatterns
+	existing.HeaderAuthKeys = u.headerAuthKeys(&request.CreateMCPConnectionRequest)
 	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 
-	if err := u.saveHeaderValues(ctx, updated.Id, request.HeaderAuth); err != nil {
+	if err := u.saveHeaderValues(ctx, updated.Id, headers); err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
-	updated.HeaderAuth = request.HeaderAuth
+	updated.HeaderAuth = headers
 	return responses.ToMCPConnectionResponse(updated), nil
+}
+
+// resolveHeaderValues fills blank values from Vault: the console never holds them, so blank means "unchanged".
+func (u *UpdateMCPConnection) resolveHeaderValues(
+	ctx context.Context,
+	existing *models.MCPConnection,
+	requested map[string]string,
+) (map[string]string, error) {
+	resolved := make(map[string]string, len(requested))
+	for key, value := range requested {
+		if value != "" {
+			resolved[key] = value
+			continue
+		}
+		stored, found, err := u.mcpHeaderAuthSecretStorage.GetValue(ctx, existing.Id, key)
+		if err != nil {
+			return nil, errors.NewInternalError("update_failed", err.Error())
+		}
+		if !found {
+			return nil, errors.NewValidationError("headerAuth", "value for "+key+" cannot be empty")
+		}
+		resolved[key] = stored
+	}
+	return resolved, nil
 }
 
 func (u *UpdateMCPConnection) dropRemovedHeaders(ctx context.Context, existing *models.MCPConnection, next map[string]string) error {

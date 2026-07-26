@@ -112,10 +112,14 @@ definitions:
     type: object
   requests.CreateMcpConnectionRequest:
     properties:
-      authHeaderName:
-        type: string
-      authHeaderValue:
-        type: string
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
       name:
         type: string
       url:
@@ -147,6 +151,17 @@ definitions:
         type: number
       top_p:
         type: number
+    type: object
+  requests.DiscoverMcpServerToolsRequest:
+    properties:
+      connectionId:
+        type: string
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      url:
+        type: string
     type: object
   requests.InputMessage:
     properties:
@@ -190,6 +205,21 @@ definitions:
       model:
         type: string
       provider:
+        type: string
+    type: object
+  requests.UpdateMcpConnectionRequest:
+    properties:
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
         type: string
     type: object
   requests.VerifyAuthRequest:
@@ -491,6 +521,10 @@ definitions:
     type: object
   responses.McpConnectionResponse:
     properties:
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
       createdAt:
         type: string
       headerAuthKeys:
@@ -505,6 +539,20 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  responses.McpServerToolResponse:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  responses.McpServerToolsResponse:
+    properties:
+      tools:
+        items:
+          $ref: '#/definitions/responses.McpServerToolResponse'
+        type: array
     type: object
   responses.MintInfoResponse:
     properties:
@@ -1282,6 +1330,80 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete MCP connection
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: MCP connection id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: MCP connection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateMcpConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.McpConnectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update MCP connection
+      tags:
+      - Config
+  /config/mcp-connections/tools:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: MCP server
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.DiscoverMcpServerToolsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.McpServerToolsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Discover MCP server tools
       tags:
       - Config
   /config/payment-policy:

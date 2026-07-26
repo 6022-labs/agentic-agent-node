@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -14,6 +15,33 @@ const McpToolNamespace = "mcp"
 
 func McpToolToFunctionName(mcpConnection *models.MCPConnection, mcpTool *models.Tool) string {
 	return ToFunctionName(McpToolNamespace, ToFunctionName(mcpConnection.Name, mcpTool.Name))
+}
+
+// FilterToolsByPatterns keeps tools whose name full-matches a pattern; no patterns allows all, invalid ones never match.
+func FilterToolsByPatterns(tools []*models.Tool, patterns []string) []*models.Tool {
+	if len(patterns) == 0 {
+		return tools
+	}
+
+	compiled := make([]*regexp.Regexp, 0, len(patterns))
+	for _, pattern := range patterns {
+		re, err := regexp.Compile("^(?:" + pattern + ")$")
+		if err != nil {
+			continue
+		}
+		compiled = append(compiled, re)
+	}
+
+	allowed := make([]*models.Tool, 0, len(tools))
+	for _, tool := range tools {
+		for _, re := range compiled {
+			if re.MatchString(tool.Name) {
+				allowed = append(allowed, tool)
+				break
+			}
+		}
+	}
+	return allowed
 }
 
 // SortedMcpConnections returns the map's connections in stable name order for deterministic rendering.

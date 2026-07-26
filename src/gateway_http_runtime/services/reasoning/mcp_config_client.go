@@ -39,10 +39,26 @@ func (c *HttpMCPConfigClient) Create(ctx context.Context, body *models.ExternalC
 	}
 	resp, err := c.client.PostInternalConfigMcpWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
+	}
+	return &payload, nil
+}
+
+func (c *HttpMCPConfigClient) DiscoverTools(ctx context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.client.PostInternalConfigMcpToolsWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	if err != nil {
+		return nil, helpers.MapRuntimeError(err)
+	}
+	var payload models.ExternalMCPServerToolsPayload
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil
@@ -67,10 +83,10 @@ func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *mo
 	}
 	resp, err := c.client.PutInternalConfigMcpIdWithBodyWithResponse(ctx, id.String(), helpers.JsonContentType, bytes.NewReader(encoded))
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
 		return nil, err
 	}
 	return &payload, nil

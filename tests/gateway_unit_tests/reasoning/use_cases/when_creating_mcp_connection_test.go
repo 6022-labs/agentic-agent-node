@@ -36,10 +36,10 @@ func WhenCreatingMcpConnectionBeforeEach(t *testing.T) *WhenCreatingMcpConnectio
 
 func generateValidGatewayCreateMcpConnectionRequest() *requests.CreateMcpConnectionRequest {
 	return &requests.CreateMcpConnectionRequest{
-		Name:            "github",
-		Url:             "https://mcp.github.example",
-		AuthHeaderName:  "Authorization",
-		AuthHeaderValue: "Bearer abc",
+		Name:                "github",
+		Url:                 "https://mcp.github.example",
+		AllowedToolPatterns: []string{"search_issues"},
+		HeaderAuth:          map[string]string{"Authorization": "Bearer abc"},
 	}
 }
 
@@ -61,29 +61,30 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a request with one auth header", func(t *testing.T) {
+	t.Run("Given a request with two auth headers", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
 			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
 				assert.Equal(t, "github", body.Name)
 				assert.Equal(t, "https://mcp.github.example", body.Url)
-				assert.Equal(t, map[string]string{"Authorization": "Bearer abc"}, body.HeaderAuth)
-				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization"}}, nil
+				assert.Equal(t, map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"}, body.HeaderAuth)
+				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization", "X-Api-Key"}}, nil
 			})
 		}
 
-		t.Run("Should return Created packing the header into a single-entry HeaderAuth map", func(t *testing.T) {
+		t.Run("Should forward every header and return Created", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMcpConnectionBeforeEach(t)
 			request := generateValidGatewayCreateMcpConnectionRequest()
+			request.HeaderAuth["X-Api-Key"] = "k"
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
-			assert.Equal(t, []string{"Authorization"}, resp.HeaderAuthKeys)
+			assert.Equal(t, []string{"Authorization", "X-Api-Key"}, resp.HeaderAuthKeys)
 		})
 	})
 
@@ -102,8 +103,7 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 
 			suite := WhenCreatingMcpConnectionBeforeEach(t)
 			request := generateValidGatewayCreateMcpConnectionRequest()
-			request.AuthHeaderName = ""
-			request.AuthHeaderValue = ""
+			request.HeaderAuth = nil
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)

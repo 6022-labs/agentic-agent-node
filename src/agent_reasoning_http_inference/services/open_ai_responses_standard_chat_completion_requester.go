@@ -57,18 +57,16 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 
 	externalRequest := external_models.NewExternalOpenAIResponsesStandardRequest(llmConnection.Model, inputs, nil)
 
-	sortedMcpConnections := utils.SortedMcpConnections(mcpTools)
-
-	if hasDirectAccessToMcp {
-		externalRequest.AddMcpConnectionsAsMcpTools(sortedMcpConnections)
-	} else {
-		for _, mcpConnection := range sortedMcpConnections {
-			tools := mcpTools[mcpConnection]
-			if len(tools) == 0 {
-				continue
-			}
-			externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
+	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
+		tools := mcpTools[mcpConnection]
+		if hasDirectAccessToMcp {
+			externalRequest.AddMcpConnectionAsMcpTool(mcpConnection, inference_utils.ToolNames(tools))
+			continue
 		}
+		if len(tools) == 0 {
+			continue
+		}
+		externalRequest.AddMcpConnectionAsFunctionCallTools(mcpConnection, tools)
 	}
 
 	externalRequest.AddSelfToolsAsFunctionCallTools(selfTools)

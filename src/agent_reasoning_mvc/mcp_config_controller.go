@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	InternalMCPConfigEndpoint     = "/internal/config/mcp"
-	InternalMCPConfigByIdEndpoint = "/internal/config/mcp/:id"
+	InternalMCPConfigEndpoint      = "/internal/config/mcp"
+	InternalMCPConfigToolsEndpoint = "/internal/config/mcp/tools"
+	InternalMCPConfigByIdEndpoint  = "/internal/config/mcp/:id"
 )
 
 type MCPConfigController struct {
@@ -18,6 +19,7 @@ type MCPConfigController struct {
 	createMCPConnection *use_cases.CreateMCPConnection
 	updateMCPConnection *use_cases.UpdateMCPConnection
 	deleteMCPConnection *use_cases.DeleteMCPConnection
+	listMCPServerTools  *use_cases.DiscoverMCPServerTools
 }
 
 func NewMCPConfigController(
@@ -26,6 +28,7 @@ func NewMCPConfigController(
 	createMCPConnection *use_cases.CreateMCPConnection,
 	updateMCPConnection *use_cases.UpdateMCPConnection,
 	deleteMCPConnection *use_cases.DeleteMCPConnection,
+	listMCPServerTools *use_cases.DiscoverMCPServerTools,
 ) *MCPConfigController {
 	return &MCPConfigController{
 		listMCPConnections:  listMCPConnections,
@@ -33,15 +36,41 @@ func NewMCPConfigController(
 		createMCPConnection: createMCPConnection,
 		updateMCPConnection: updateMCPConnection,
 		deleteMCPConnection: deleteMCPConnection,
+		listMCPServerTools:  listMCPServerTools,
 	}
 }
 
 func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 	app.Get(InternalMCPConfigEndpoint, c.List)
 	app.Post(InternalMCPConfigEndpoint, c.Create)
+	// Registered before the :id routes so "tools" is never parsed as a connection id.
+	app.Post(InternalMCPConfigToolsEndpoint, c.DiscoverTools)
 	app.Get(InternalMCPConfigByIdEndpoint, c.GetById)
 	app.Put(InternalMCPConfigByIdEndpoint, c.Update)
 	app.Delete(InternalMCPConfigByIdEndpoint, c.Delete)
+}
+
+// DiscoverTools asks an MCP server which tools it exposes.
+// @Summary Internal discover MCP server tools
+// @Tags Internal
+// @Accept json
+// @Produce json
+// @Param request body requests.DiscoverMCPServerToolsRequest true "MCP server"
+// @Success 200 {object} responses.MCPServerToolsResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 404 {object} errors.NotFoundError
+// @Failure 500 {object} fiber.Map "list_mcp_server_tools_failed"
+// @Router /internal/config/mcp/tools [post]
+func (c *MCPConfigController) DiscoverTools(ctx *fiber.Ctx) error {
+	body := new(requests.DiscoverMCPServerToolsRequest)
+	if err := ctx.BodyParser(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	resp, err := c.listMCPServerTools.Execute(ctx.UserContext(), body)
+	if err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.JSON(resp)
 }
 
 // List returns all of the agent's MCP connections.
@@ -64,13 +93,13 @@ func (c *MCPConfigController) List(ctx *fiber.Ctx) error {
 // @Tags Internal
 // @Accept json
 // @Produce json
-// @Param request body requests.SaveMCPConnectionRequest true "MCP connection"
+// @Param request body requests.CreateMCPConnectionRequest true "MCP connection"
 // @Success 201 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 500 {object} fiber.Map "create_mcp_connection_failed"
 // @Router /internal/config/mcp [post]
 func (c *MCPConfigController) Create(ctx *fiber.Ctx) error {
-	body := new(requests.SaveMCPConnectionRequest)
+	body := new(requests.CreateMCPConnectionRequest)
 	if err := ctx.BodyParser(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
@@ -109,7 +138,7 @@ func (c *MCPConfigController) GetById(ctx *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "connection id"
-// @Param request body requests.SaveMCPConnectionRequest true "MCP connection"
+// @Param request body requests.UpdateMCPConnectionRequest true "MCP connection"
 // @Success 200 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError

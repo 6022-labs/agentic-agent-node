@@ -71,6 +71,21 @@ func (mr *MockMCPConfigClientInterfaceMockRecorder) Delete(ctx, id any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMCPConfigClientInterface)(nil).Delete), ctx, id)
 }
 
+// DiscoverTools mocks base method.
+func (m *MockMCPConfigClientInterface) DiscoverTools(ctx context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DiscoverTools", ctx, body)
+	ret0, _ := ret[0].(*models.ExternalMCPServerToolsPayload)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DiscoverTools indicates an expected call of DiscoverTools.
+func (mr *MockMCPConfigClientInterfaceMockRecorder) DiscoverTools(ctx, body any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiscoverTools", reflect.TypeOf((*MockMCPConfigClientInterface)(nil).DiscoverTools), ctx, body)
+}
+
 // GetById mocks base method.
 func (m *MockMCPConfigClientInterface) GetById(ctx context.Context, id uuid.UUID) (*models.ExternalMCPConnectionPayload, error) {
 	m.ctrl.T.Helper()

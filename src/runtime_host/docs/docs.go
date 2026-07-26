@@ -605,7 +605,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.CreateMCPConnectionRequest"
                         }
                     }
                 ],
@@ -624,6 +624,57 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "create_mcp_connection_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/mcp/tools": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal discover MCP server tools",
+                "parameters": [
+                    {
+                        "description": "MCP server",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.DiscoverMCPServerToolsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.MCPServerToolsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "list_mcp_server_tools_failed",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -701,7 +752,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SaveMCPConnectionRequest"
+                            "$ref": "#/definitions/requests.UpdateMCPConnectionRequest"
                         }
                     }
                 ],
@@ -1307,6 +1358,29 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.CreateMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "allowedToolPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.CreateResponseRequest": {
             "type": "object",
             "properties": {
@@ -1351,6 +1425,23 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.DiscoverMCPServerToolsRequest": {
+            "type": "object",
+            "properties": {
+                "connectionId": {
+                    "type": "string"
+                },
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.InputMessage": {
             "type": "object",
             "properties": {
@@ -1361,23 +1452,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "requests.SaveMCPConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "headerAuth": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
                     "type": "string"
                 }
             }
@@ -1421,6 +1495,29 @@ const docTemplate = `{
                 },
                 "platform": {
                     "$ref": "#/definitions/enums.LLMConnectionPlatform"
+                }
+            }
+        },
+        "requests.UpdateMCPConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "allowedToolPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "headerAuth": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
@@ -1787,6 +1884,12 @@ const docTemplate = `{
         "responses.MCPConnectionResponse": {
             "type": "object",
             "properties": {
+                "allowedToolPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "createdAt": {
                     "type": "string"
                 },
@@ -1807,6 +1910,28 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.MCPServerToolResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.MCPServerToolsResponse": {
+            "type": "object",
+            "properties": {
+                "tools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.MCPServerToolResponse"
+                    }
                 }
             }
         },

@@ -41,8 +41,8 @@ func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *models.ExternalSe
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalLLMConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -56,10 +56,7 @@ func (c *HttpLLMConfigClient) Validate(ctx context.Context, body *models.Externa
 	if err != nil {
 		return helpers.MapRuntimeError(err)
 	}
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
-		return helpers.MapRuntimeError(err)
-	}
-	return nil
+	return helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
 }
 
 func (c *HttpLLMConfigClient) Delete(ctx context.Context) error {

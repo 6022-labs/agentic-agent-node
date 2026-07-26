@@ -54,6 +54,16 @@ func DecodeRuntimeResponse(httpResponse *http.Response, body []byte, out any, no
 	return json.Unmarshal(body, out)
 }
 
+// DecodeAndMapRuntimeResponse decodes then maps in one step, leaving notFoundErr
+// intact — callers match on that sentinel, and MapRuntimeError would collapse it to 502.
+func DecodeAndMapRuntimeResponse(httpResponse *http.Response, body []byte, out any, notFoundErr error) error {
+	err := DecodeRuntimeResponse(httpResponse, body, out, notFoundErr)
+	if err == nil || errors.Is(err, notFoundErr) {
+		return err
+	}
+	return MapRuntimeError(err)
+}
+
 // MapRuntimeError maps the runtime's HTTP-status error to a domain error,
 // preserving 400/404/409 and collapsing the rest to 502.
 func MapRuntimeError(err error) error {

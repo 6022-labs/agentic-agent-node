@@ -54,6 +54,7 @@ type ExternalOpenAIResponsesStandardRequestTool struct {
 	Headers         *map[string]string                                  `json:"headers,omitempty"`
 	ServerUrl       *string                                             `json:"server_url,omitempty"`
 	ServerLabel     *string                                             `json:"server_label,omitempty"`
+	AllowedTools    []string                                            `json:"allowed_tools,omitempty"`
 	RequireApproval *ExternalOpenAIResponsesStandardToolRequireApproval `json:"require_approval,omitempty"`
 }
 
@@ -77,28 +78,30 @@ func NewExternalOpenAIResponsesStandardRequest(
 	}
 }
 
-func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionsAsMcpTools(
-	mcpConnections []*models.MCPConnection,
+// AddMcpConnectionAsMcpTool hands the whole server to the provider; a restricted connection carries allowed_tools.
+func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionAsMcpTool(
+	mcpConnection *models.MCPConnection,
+	allowedToolNames []string,
 ) {
-	if len(mcpConnections) == 0 {
-		return
-	}
-
 	if r.Tools == nil {
 		r.Tools = make([]ExternalOpenAIResponsesStandardRequestTool, 0)
 	}
 
-	for _, conn := range mcpConnections {
-		r.Tools = append(r.Tools, ExternalOpenAIResponsesStandardRequestTool{
-			Type: "mcp",
+	tool := ExternalOpenAIResponsesStandardRequestTool{
+		Type: "mcp",
 
-			ServerLabel: &conn.Name,
-			Headers:     &conn.HeaderAuth,
+		ServerLabel: &mcpConnection.Name,
+		Headers:     &mcpConnection.HeaderAuth,
 
-			ServerUrl:       &conn.Url,
-			RequireApproval: lo.ToPtr(ExternalOpenAIResponsesStandardToolRequireApprovalNever),
-		})
+		ServerUrl:       &mcpConnection.Url,
+		RequireApproval: lo.ToPtr(ExternalOpenAIResponsesStandardToolRequireApprovalNever),
 	}
+
+	if len(mcpConnection.AllowedToolPatterns) > 0 {
+		tool.AllowedTools = allowedToolNames
+	}
+
+	r.Tools = append(r.Tools, tool)
 }
 
 func (r *ExternalOpenAIResponsesStandardRequest) AddMcpConnectionAsFunctionCallTools(

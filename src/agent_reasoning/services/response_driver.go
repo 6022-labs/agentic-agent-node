@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
+	reasoning_utils "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	runtime_services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	"github.com/google/uuid"
@@ -302,7 +303,7 @@ func (d *ResponseDriver) mcpConnectionToTools(ctx context.Context, conn *models.
 		span.Fail(err)
 		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
 	}
-	return tools, nil
+	return reasoning_utils.FilterToolsByPatterns(tools, conn.AllowedToolPatterns), nil
 }
 
 func (d *ResponseDriver) loadMCPConnections(ctx context.Context, agentId uuid.UUID) ([]*models.MCPConnection, error) {

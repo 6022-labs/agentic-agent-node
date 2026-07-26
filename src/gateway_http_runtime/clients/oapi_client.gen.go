@@ -77,6 +77,14 @@ type RequestsConversationRef struct {
 	Id *string `json:"id,omitempty"`
 }
 
+// RequestsCreateMCPConnectionRequest defines model for requests.CreateMCPConnectionRequest.
+type RequestsCreateMCPConnectionRequest struct {
+	AllowedToolPatterns *[]string          `json:"allowedToolPatterns,omitempty"`
+	HeaderAuth          *map[string]string `json:"headerAuth,omitempty"`
+	Name                *string            `json:"name,omitempty"`
+	Url                 *string            `json:"url,omitempty"`
+}
+
 // RequestsCreateResponseRequest defines model for requests.CreateResponseRequest.
 type RequestsCreateResponseRequest struct {
 	Conversation       *RequestsConversationRef `json:"conversation,omitempty"`
@@ -92,18 +100,18 @@ type RequestsCreateResponseRequest struct {
 	TopP               *float32                 `json:"top_p,omitempty"`
 }
 
+// RequestsDiscoverMCPServerToolsRequest defines model for requests.DiscoverMCPServerToolsRequest.
+type RequestsDiscoverMCPServerToolsRequest struct {
+	ConnectionId *string            `json:"connectionId,omitempty"`
+	HeaderAuth   *map[string]string `json:"headerAuth,omitempty"`
+	Url          *string            `json:"url,omitempty"`
+}
+
 // RequestsInputMessage defines model for requests.InputMessage.
 type RequestsInputMessage struct {
 	Content *string `json:"content,omitempty"`
 	Role    *string `json:"role,omitempty"`
 	Type    *string `json:"type,omitempty"`
-}
-
-// RequestsSaveMCPConnectionRequest defines model for requests.SaveMCPConnectionRequest.
-type RequestsSaveMCPConnectionRequest struct {
-	HeaderAuth *map[string]string `json:"headerAuth,omitempty"`
-	Name       *string            `json:"name,omitempty"`
-	Url        *string            `json:"url,omitempty"`
 }
 
 // RequestsSavePaymentRuleRequest defines model for requests.SavePaymentRuleRequest.
@@ -125,6 +133,14 @@ type RequestsSetupLLMConnectionRequest struct {
 	BaseUrl  *string                     `json:"baseUrl,omitempty"`
 	Model    *string                     `json:"model,omitempty"`
 	Platform *EnumsLLMConnectionPlatform `json:"platform,omitempty"`
+}
+
+// RequestsUpdateMCPConnectionRequest defines model for requests.UpdateMCPConnectionRequest.
+type RequestsUpdateMCPConnectionRequest struct {
+	AllowedToolPatterns *[]string          `json:"allowedToolPatterns,omitempty"`
+	HeaderAuth          *map[string]string `json:"headerAuth,omitempty"`
+	Name                *string            `json:"name,omitempty"`
+	Url                 *string            `json:"url,omitempty"`
 }
 
 // ResponsesAgentCollectionResponse defines model for responses.AgentCollectionResponse.
@@ -285,12 +301,24 @@ type ResponsesMCPConnectionListResponse struct {
 
 // ResponsesMCPConnectionResponse defines model for responses.MCPConnectionResponse.
 type ResponsesMCPConnectionResponse struct {
-	CreatedAt      *string   `json:"createdAt,omitempty"`
-	HeaderAuthKeys *[]string `json:"headerAuthKeys,omitempty"`
-	Id             *string   `json:"id,omitempty"`
-	Name           *string   `json:"name,omitempty"`
-	UpdatedAt      *string   `json:"updatedAt,omitempty"`
-	Url            *string   `json:"url,omitempty"`
+	AllowedToolPatterns *[]string `json:"allowedToolPatterns,omitempty"`
+	CreatedAt           *string   `json:"createdAt,omitempty"`
+	HeaderAuthKeys      *[]string `json:"headerAuthKeys,omitempty"`
+	Id                  *string   `json:"id,omitempty"`
+	Name                *string   `json:"name,omitempty"`
+	UpdatedAt           *string   `json:"updatedAt,omitempty"`
+	Url                 *string   `json:"url,omitempty"`
+}
+
+// ResponsesMCPServerToolResponse defines model for responses.MCPServerToolResponse.
+type ResponsesMCPServerToolResponse struct {
+	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty"`
+}
+
+// ResponsesMCPServerToolsResponse defines model for responses.MCPServerToolsResponse.
+type ResponsesMCPServerToolsResponse struct {
+	Tools *[]ResponsesMCPServerToolResponse `json:"tools,omitempty"`
 }
 
 // ResponsesMintInfoResponse defines model for responses.MintInfoResponse.
@@ -448,6 +476,14 @@ type PostInternalConfigMcpJSONBody struct {
 // PostInternalConfigMcpJSONBody0 defines parameters for PostInternalConfigMcp.
 type PostInternalConfigMcpJSONBody0 = map[string]interface{}
 
+// PostInternalConfigMcpToolsJSONBody defines parameters for PostInternalConfigMcpTools.
+type PostInternalConfigMcpToolsJSONBody struct {
+	union json.RawMessage
+}
+
+// PostInternalConfigMcpToolsJSONBody0 defines parameters for PostInternalConfigMcpTools.
+type PostInternalConfigMcpToolsJSONBody0 = map[string]interface{}
+
 // PutInternalConfigMcpIdJSONBody defines parameters for PutInternalConfigMcpId.
 type PutInternalConfigMcpIdJSONBody struct {
 	union json.RawMessage
@@ -508,6 +544,9 @@ type PostInternalConfigLlmValidateJSONRequestBody PostInternalConfigLlmValidateJ
 
 // PostInternalConfigMcpJSONRequestBody defines body for PostInternalConfigMcp for application/json ContentType.
 type PostInternalConfigMcpJSONRequestBody PostInternalConfigMcpJSONBody
+
+// PostInternalConfigMcpToolsJSONRequestBody defines body for PostInternalConfigMcpTools for application/json ContentType.
+type PostInternalConfigMcpToolsJSONRequestBody PostInternalConfigMcpToolsJSONBody
 
 // PutInternalConfigMcpIdJSONRequestBody defines body for PutInternalConfigMcpId for application/json ContentType.
 type PutInternalConfigMcpIdJSONRequestBody PutInternalConfigMcpIdJSONBody
@@ -665,6 +704,11 @@ type ClientInterface interface {
 	PostInternalConfigMcpWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostInternalConfigMcp(ctx context.Context, body PostInternalConfigMcpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInternalConfigMcpToolsWithBody request with any body
+	PostInternalConfigMcpToolsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInternalConfigMcpTools(ctx context.Context, body PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteInternalConfigMcpId request
 	DeleteInternalConfigMcpId(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1015,6 +1059,30 @@ func (c *Client) PostInternalConfigMcpWithBody(ctx context.Context, contentType 
 
 func (c *Client) PostInternalConfigMcp(ctx context.Context, body PostInternalConfigMcpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInternalConfigMcpRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConfigMcpToolsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigMcpToolsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConfigMcpTools(ctx context.Context, body PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigMcpToolsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1886,6 +1954,46 @@ func NewPostInternalConfigMcpRequestWithBody(server string, contentType string, 
 	return req, nil
 }
 
+// NewPostInternalConfigMcpToolsRequest calls the generic PostInternalConfigMcpTools builder with application/json body
+func NewPostInternalConfigMcpToolsRequest(server string, body PostInternalConfigMcpToolsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInternalConfigMcpToolsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostInternalConfigMcpToolsRequestWithBody generates requests for PostInternalConfigMcpTools with any type of body
+func NewPostInternalConfigMcpToolsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/mcp/tools")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewDeleteInternalConfigMcpIdRequest generates requests for DeleteInternalConfigMcpId
 func NewDeleteInternalConfigMcpIdRequest(server string, id string) (*http.Request, error) {
 	var err error
@@ -2544,6 +2652,11 @@ type ClientWithResponsesInterface interface {
 
 	PostInternalConfigMcpWithResponse(ctx context.Context, body PostInternalConfigMcpJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigMcpResponse, error)
 
+	// PostInternalConfigMcpToolsWithBodyWithResponse request with any body
+	PostInternalConfigMcpToolsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigMcpToolsResponse, error)
+
+	PostInternalConfigMcpToolsWithResponse(ctx context.Context, body PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigMcpToolsResponse, error)
+
 	// DeleteInternalConfigMcpIdWithResponse request
 	DeleteInternalConfigMcpIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteInternalConfigMcpIdResponse, error)
 
@@ -3038,6 +3151,31 @@ func (r PostInternalConfigMcpResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostInternalConfigMcpResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostInternalConfigMcpToolsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesMCPServerToolsResponse
+	JSON400      *ErrorsValidationError
+	JSON404      *ErrorsNotFoundError
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInternalConfigMcpToolsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInternalConfigMcpToolsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3638,6 +3776,23 @@ func (c *ClientWithResponses) PostInternalConfigMcpWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParsePostInternalConfigMcpResponse(rsp)
+}
+
+// PostInternalConfigMcpToolsWithBodyWithResponse request with arbitrary body returning *PostInternalConfigMcpToolsResponse
+func (c *ClientWithResponses) PostInternalConfigMcpToolsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigMcpToolsResponse, error) {
+	rsp, err := c.PostInternalConfigMcpToolsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConfigMcpToolsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostInternalConfigMcpToolsWithResponse(ctx context.Context, body PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigMcpToolsResponse, error) {
+	rsp, err := c.PostInternalConfigMcpTools(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConfigMcpToolsResponse(rsp)
 }
 
 // DeleteInternalConfigMcpIdWithResponse request returning *DeleteInternalConfigMcpIdResponse
@@ -4466,6 +4621,53 @@ func ParsePostInternalConfigMcpResponse(rsp *http.Response) (*PostInternalConfig
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInternalConfigMcpToolsResponse parses an HTTP response from a PostInternalConfigMcpToolsWithResponse call
+func ParsePostInternalConfigMcpToolsResponse(rsp *http.Response) (*PostInternalConfigMcpToolsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInternalConfigMcpToolsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesMCPServerToolsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorsNotFoundError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest FiberMap

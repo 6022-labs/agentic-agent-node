@@ -20,17 +20,23 @@ type CreateMCPConnection struct {
 func NewCreateMCPConnection(
 	repository repositories.MCPConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	mcpRequester reasoning_interfaces.McpRequesterInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *CreateMCPConnection {
 	return &CreateMCPConnection{
-		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(repository, secretStorage, agentRepository),
+		AbstractUpsertMCPConnection: NewAbstractUpsertMCPConnection(
+			repository,
+			secretStorage,
+			mcpRequester,
+			agentRepository,
+		),
 	}
 }
 
 // Execute creates the row first to get a stable connectionId, then writes
 // every header value to Vault under that id. The persisted row only ever
 // stores the header *names*; values stay in Vault.
-func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.SaveMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -44,11 +50,16 @@ func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.Sav
 		return nil, err
 	}
 
+	if err := u.probeListTools(ctx, request.Name, request.Url, request.HeaderAuth); err != nil {
+		return nil, err
+	}
+
 	created, err := u.mcpConnectionRepository.Create(ctx, &models.MCPConnection{
-		AgentId:        agent.Id,
-		Name:           request.Name,
-		Url:            request.Url,
-		HeaderAuthKeys: u.headerAuthKeys(request),
+		AgentId:             agent.Id,
+		Name:                request.Name,
+		Url:                 request.Url,
+		AllowedToolPatterns: request.AllowedToolPatterns,
+		HeaderAuthKeys:      u.headerAuthKeys(request),
 	})
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())

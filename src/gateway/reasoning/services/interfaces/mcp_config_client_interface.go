@@ -19,4 +19,5 @@ type MCPConfigClientInterface interface {
 	GetById(ctx context.Context, id uuid.UUID) (*models.ExternalMCPConnectionPayload, error)
 	Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	DiscoverTools(ctx context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error)
 }

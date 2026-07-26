@@ -15,14 +15,19 @@ const MaxMCPConnectionNameLength = 15
 // A name must start with a letter, then letters/digits/hyphens only — no underscores (our separator) or characters the provider function-name regex would reject.
 var mcpConnectionNamePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9-]*$`)
 
-// SaveMCPConnectionRequest holds an MCP connection's editable fields; a present HeaderAuth fully replaces the stored set, so omitted headers are dropped on save.
-type SaveMCPConnectionRequest struct {
-	Name       string            `json:"name"`
-	Url        string            `json:"url"`
-	HeaderAuth map[string]string `json:"headerAuth,omitempty"`
+// CreateMCPConnectionRequest holds an MCP connection's editable fields; a present HeaderAuth fully replaces the stored set, so omitted headers are dropped on save.
+type CreateMCPConnectionRequest struct {
+	Name                string            `json:"name"`
+	Url                 string            `json:"url"`
+	AllowedToolPatterns []string          `json:"allowedToolPatterns"`
+	HeaderAuth          map[string]string `json:"headerAuth,omitempty"`
 }
 
-func (r *SaveMCPConnectionRequest) ValidateAndSanitize() error {
+func (r *CreateMCPConnectionRequest) ValidateAndSanitize() error {
+	return r.validateAndSanitize(false)
+}
+
+func (r *CreateMCPConnectionRequest) validateAndSanitize(allowEmptyHeaderValues bool) error {
 	r.Name = strings.TrimSpace(r.Name)
 	r.Url = strings.TrimSpace(r.Url)
 
@@ -44,11 +49,24 @@ func (r *SaveMCPConnectionRequest) ValidateAndSanitize() error {
 	if len(r.Url) == 0 {
 		return errors.NewValidationError("url", "cannot be empty")
 	}
+	if len(r.AllowedToolPatterns) == 0 {
+		return errors.NewValidationError("allowedToolPatterns", "at least one pattern is required (\".*\" allows every tool)")
+	}
+	for i, pattern := range r.AllowedToolPatterns {
+		trimmed := strings.TrimSpace(pattern)
+		if len(trimmed) == 0 {
+			return errors.NewValidationError("allowedToolPatterns", "patterns cannot be empty")
+		}
+		if _, err := regexp.Compile(trimmed); err != nil {
+			return errors.NewValidationError("allowedToolPatterns", "must be valid regexes matched against the tool name")
+		}
+		r.AllowedToolPatterns[i] = trimmed
+	}
 	for k, v := range r.HeaderAuth {
 		if len(strings.TrimSpace(k)) == 0 {
 			return errors.NewValidationError("headerAuth", "header name cannot be empty")
 		}
-		if len(strings.TrimSpace(v)) == 0 {
+		if !allowEmptyHeaderValues && len(strings.TrimSpace(v)) == 0 {
 			return errors.NewValidationError("headerAuth", "value for "+k+" cannot be empty")
 		}
 	}

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
-import AddMcpConnectionDialog from "@/components/dashboard/mcp/dialogs/add-mcp-connection-dialog"
+import McpConnectionDialog from "@/components/dashboard/mcp/dialogs/mcp-connection-dialog"
 import type { McpConnection } from "@/models/mcp-connection"
 import {
   deleteMcpConnection,
@@ -70,7 +70,7 @@ export default function McpConfigSection() {
               External tool servers the agent can call during reasoning.
             </CardDescription>
           </div>
-          <AddMcpConnectionDialog onCreated={load} />
+          <McpConnectionDialog onSaved={load} />
         </div>
       </CardHeader>
       <CardContent>
@@ -92,8 +92,9 @@ export default function McpConfigSection() {
               <TableRow>
                 <TableHead>Connection</TableHead>
                 <TableHead>Server URL</TableHead>
+                <TableHead>Tools</TableHead>
                 <TableHead>Auth</TableHead>
-                <TableHead className="w-20" />
+                <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,6 +112,15 @@ export default function McpConfigSection() {
                     </span>
                   </TableCell>
                   <TableCell>
+                    {connection.allowedToolPatterns?.length ? (
+                      <Badge variant="secondary">
+                        {connection.allowedToolPatterns.length} allowed
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">all</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {connection.headerAuthKeys?.length ? (
                       <Badge variant="secondary">auth</Badge>
                     ) : (
@@ -118,6 +128,10 @@ export default function McpConfigSection() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
+                    <McpConnectionDialog
+                      connection={connection}
+                      onSaved={load}
+                    />
                     <ConfirmDialog
                       title="Remove MCP connection?"
                       description={`The agent will no longer be able to call tools from "${connection.name}".`}

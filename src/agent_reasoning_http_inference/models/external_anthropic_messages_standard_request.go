@@ -35,10 +35,15 @@ type ExternalAnthropicMessagesStandardRequestSystem struct {
 }
 
 type ExternalAnthropicMessagesStandardRequestMCPServer struct {
-	Type               string  `json:"type"`
-	Url                string  `json:"url"`
-	Name               string  `json:"name"`
-	AuthorizationToken *string `json:"authorization_token,omitempty"`
+	Type               string                                                              `json:"type"`
+	Url                string                                                              `json:"url"`
+	Name               string                                                              `json:"name"`
+	AuthorizationToken *string                                                             `json:"authorization_token,omitempty"`
+	ToolConfiguration  *ExternalAnthropicMessagesStandardRequestMCPServerToolConfiguration `json:"tool_configuration,omitempty"`
+}
+
+type ExternalAnthropicMessagesStandardRequestMCPServerToolConfiguration struct {
+	AllowedTools []string `json:"allowed_tools,omitempty"`
 }
 
 func NewExternalAnthropicMessagesStandardRequest(
@@ -54,17 +59,12 @@ func NewExternalAnthropicMessagesStandardRequest(
 	}
 }
 
-func (r *ExternalAnthropicMessagesStandardRequest) AddMcpServerFromMcpConnection(
+// AddMcpConnectionAsMcpServer hands the whole server to the provider; a restricted connection carries allowed_tools.
+func (r *ExternalAnthropicMessagesStandardRequest) AddMcpConnectionAsMcpServer(
 	mcpConnection *models.MCPConnection,
+	allowedToolNames []string,
 ) {
-	var authToken string
-	if mcpConnection != nil {
-		if v, ok := mcpConnection.HeaderAuth["Authorization"]; ok {
-			authToken = v
-		}
-	}
-
-	authToken, _ = strings.CutPrefix(authToken, "Bearer ")
+	authToken, _ := strings.CutPrefix(mcpConnection.HeaderAuth["Authorization"], "Bearer ")
 
 	if r.McpServers == nil {
 		r.McpServers = make([]ExternalAnthropicMessagesStandardRequestMCPServer, 0)
@@ -78,6 +78,12 @@ func (r *ExternalAnthropicMessagesStandardRequest) AddMcpServerFromMcpConnection
 
 	if len(strings.TrimSpace(authToken)) != 0 {
 		newMcpServer.AuthorizationToken = &authToken
+	}
+
+	if len(mcpConnection.AllowedToolPatterns) > 0 {
+		newMcpServer.ToolConfiguration = &ExternalAnthropicMessagesStandardRequestMCPServerToolConfiguration{
+			AllowedTools: allowedToolNames,
+		}
 	}
 
 	r.McpServers = append(r.McpServers, newMcpServer)

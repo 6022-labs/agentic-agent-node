@@ -11,12 +11,13 @@ import (
 // HeaderAuthKeys lists the header *names* the connection authenticates with;
 // the values stay in Vault and never appear in any API response.
 type MCPConnectionResponse struct {
-	Id             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	Url            string    `json:"url"`
-	HeaderAuthKeys []string  `json:"headerAuthKeys"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	Id                  uuid.UUID `json:"id"`
+	Name                string    `json:"name"`
+	Url                 string    `json:"url"`
+	AllowedToolPatterns []string  `json:"allowedToolPatterns"`
+	HeaderAuthKeys      []string  `json:"headerAuthKeys"`
+	CreatedAt           time.Time `json:"createdAt"`
+	UpdatedAt           time.Time `json:"updatedAt"`
 }
 
 type MCPConnectionListResponse struct {
@@ -31,13 +32,18 @@ func ToMCPConnectionResponse(c *models.MCPConnection) *MCPConnectionResponse {
 	for _, k := range c.HeaderAuthKeys {
 		keys = append(keys, string(k))
 	}
+	patterns := c.AllowedToolPatterns
+	if patterns == nil {
+		patterns = []string{}
+	}
 	return &MCPConnectionResponse{
-		Id:             c.Id,
-		Name:           c.Name,
-		Url:            c.Url,
-		HeaderAuthKeys: keys,
-		CreatedAt:      c.CreatedAt,
-		UpdatedAt:      c.UpdatedAt,
+		Id:                  c.Id,
+		Name:                c.Name,
+		Url:                 c.Url,
+		AllowedToolPatterns: patterns,
+		HeaderAuthKeys:      keys,
+		CreatedAt:           c.CreatedAt,
+		UpdatedAt:           c.UpdatedAt,
 	}
 }
 

@@ -18,18 +18,30 @@ type AbstractUpsertMCPConnection struct {
 	*AbstractReasoningUseCase
 	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
 	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
+	mcpRequester               reasoning_interfaces.McpRequesterInterface
 }
 
 func NewAbstractUpsertMCPConnection(
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
 	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
+	mcpRequester reasoning_interfaces.McpRequesterInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *AbstractUpsertMCPConnection {
 	return &AbstractUpsertMCPConnection{
 		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentRepository),
 		mcpConnectionRepository:    mcpConnectionRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
+		mcpRequester:               mcpRequester,
 	}
+}
+
+// probeListTools rejects a save whose server cannot list its tools.
+func (u *AbstractUpsertMCPConnection) probeListTools(ctx context.Context, name, url string, headers map[string]string) error {
+	_, err := u.mcpRequester.ListTools(ctx, &models.MCPConnection{Name: name, Url: url, HeaderAuth: headers})
+	if err != nil {
+		return errors.NewValidationError("url", "failed to list tools: "+err.Error())
+	}
+	return nil
 }
 
 // ensureNameAvailable keeps function names unambiguous: a duplicate name would collide in the tool list and dispatch.
@@ -47,7 +59,7 @@ func (u *AbstractUpsertMCPConnection) ensureNameAvailable(ctx context.Context, a
 }
 
 // headerAuthKeys derives the persisted header-name set from the request; values stay in Vault.
-func (u *AbstractUpsertMCPConnection) headerAuthKeys(request *requests.SaveMCPConnectionRequest) models.MCPConnectionHeaderAuthKeys {
+func (u *AbstractUpsertMCPConnection) headerAuthKeys(request *requests.CreateMCPConnectionRequest) models.MCPConnectionHeaderAuthKeys {
 	names := make([]string, 0, len(request.HeaderAuth))
 	for k := range request.HeaderAuth {
 		names = append(names, k)

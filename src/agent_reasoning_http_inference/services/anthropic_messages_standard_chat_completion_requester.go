@@ -11,7 +11,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/models"
 	inference_utils "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/utils"
-	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -64,24 +63,12 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		systems,
 	)
 
-	directMcps := make(map[uuid.UUID]bool)
-	sortedMcpConnections := utils.SortedMcpConnections(mcpTools)
-	if hasDirectAccessToMcp {
-		// Anthropic only supports MCP servers with no auth or with a single OAuth Bearer Authorization header.
-		for _, mcpConnection := range sortedMcpConnections {
-			auth, ok := mcpConnection.HeaderAuth["Authorization"]
-			if len(mcpConnection.HeaderAuth) == 0 || (ok && len(mcpConnection.HeaderAuth) == 1 && strings.HasPrefix(auth, "Bearer ")) {
-				externalRequest.AddMcpServerFromMcpConnection(mcpConnection)
-				directMcps[mcpConnection.Id] = true
-			}
-		}
-	}
-
-	for _, mcpConnection := range sortedMcpConnections {
-		if directMcps[mcpConnection.Id] {
+	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
+		tools := mcpTools[mcpConnection]
+		if hasDirectAccessToMcp && r.supportsDirectMcp(mcpConnection) {
+			externalRequest.AddMcpConnectionAsMcpServer(mcpConnection, inference_utils.ToolNames(tools))
 			continue
 		}
-		tools := mcpTools[mcpConnection]
 		if len(tools) == 0 {
 			continue
 		}
@@ -172,6 +159,15 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	return completion, nil
+}
+
+// supportsDirectMcp holds for servers with no auth, or a single OAuth Bearer Authorization header — all Anthropic accepts.
+func (r *AnthropicMessagesStandardChatCompletionRequester) supportsDirectMcp(mcpConnection *models.MCPConnection) bool {
+	if len(mcpConnection.HeaderAuth) == 0 {
+		return true
+	}
+	auth, ok := mcpConnection.HeaderAuth["Authorization"]
+	return ok && len(mcpConnection.HeaderAuth) == 1 && strings.HasPrefix(auth, "Bearer ")
 }
 
 func (r *AnthropicMessagesStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {

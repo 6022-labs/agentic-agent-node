@@ -23,6 +23,7 @@ type WhenCreatingMCPConnectionTestingSuite struct {
 
 	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
 	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockMcpRequester    *interfaces_mocks.MockMcpRequesterInterface
 	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
 }
 
@@ -31,16 +32,26 @@ func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectio
 
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
+	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage, mockAgentRepository)
+	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage, mockMcpRequester, mockAgentRepository)
 
 	return &WhenCreatingMCPConnectionTestingSuite{
 		sut: sut,
 
 		mockRepository:      mockRepository,
 		mockSecretStorage:   mockSecretStorage,
+		mockMcpRequester:    mockMcpRequester,
 		mockAgentRepository: mockAgentRepository,
+	}
+}
+
+func generateValidCreateMCPConnectionRequest() *requests.CreateMCPConnectionRequest {
+	return &requests.CreateMCPConnectionRequest{
+		Name:                "github",
+		Url:                 "https://mcp.github.example",
+		AllowedToolPatterns: []string{"search_issues"},
 	}
 }
 
@@ -55,10 +66,32 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.SaveMCPConnectionRequest{Url: "https://my.mcp.com/v1"})
+			request := generateValidCreateMCPConnectionRequest()
+			request.Name = ""
+
+			_, err := suite.sut.Execute(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given no allowed tool pattern", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingMCPConnectionBeforeEach(t)
+
+			request := generateValidCreateMCPConnectionRequest()
+			request.AllowedToolPatterns = nil
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "allowedToolPatterns", validationErr.Field)
 		})
 	})
 
@@ -69,9 +102,15 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) ([]*models.Tool, error) {
+				assert.Equal(t, "https://mcp.github.example", c.Url)
+				assert.Equal(t, map[string]string{"Authorization": "Bearer abc"}, c.HeaderAuth)
+				return []*models.Tool{{Name: "search_issues"}}, nil
+			})
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Equal(t, "github", c.Name)
 				assert.Equal(t, "https://mcp.github.example", c.Url)
+				assert.Equal(t, []string{"search_issues"}, c.AllowedToolPatterns)
 				assert.Len(t, c.HeaderAuthKeys, 1)
 				assert.Equal(t, "Authorization", string(c.HeaderAuthKeys[0]))
 				c.Id = generatedId
@@ -80,15 +119,12 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), generatedId, "Authorization", "Bearer abc").Return(nil)
 		}
 
-		t.Run("Should persist the row and the header value under the generated id, returning Created", func(t *testing.T) {
+		t.Run("Should probe the server, persist the row and the header value under the generated id", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.SaveMCPConnectionRequest{
-				Name:       "github",
-				Url:        "https://mcp.github.example",
-				HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
-			}
+			request := generateValidCreateMCPConnectionRequest()
+			request.HeaderAuth = map[string]string{"Authorization": "Bearer abc"}
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), request)
@@ -96,6 +132,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, generatedId, resp.Id)
 			assert.ElementsMatch(t, []string{"Authorization"}, resp.HeaderAuthKeys)
+			assert.Equal(t, []string{"search_issues"}, resp.AllowedToolPatterns)
 		})
 	})
 
@@ -105,6 +142,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).Return([]*models.Tool{{Name: "search_issues"}}, nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
 				assert.Empty(t, c.HeaderAuthKeys)
 				c.Id = uuid.New()
@@ -116,13 +154,38 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.SaveMCPConnectionRequest{Name: "anon", Url: "https://x.example"}
+			request := generateValidCreateMCPConnectionRequest()
+			request.Name = "anon"
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, resp)
+		})
+	})
+
+	t.Run("Given the server cannot list its tools", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should reject the save with a validation error before creating the row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidCreateMCPConnectionRequest())
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "url", validationErr.Field)
+			assert.Contains(t, validationErr.Message, "connection refused")
 		})
 	})
 
@@ -135,13 +198,13 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*existing}, nil)
 		}
 
-		t.Run("Should return a conflict without creating", func(t *testing.T) {
+		t.Run("Should return a conflict without probing or creating", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.SaveMCPConnectionRequest{Name: "github", Url: "https://x.example"})
+			_, err := suite.sut.Execute(context.Background(), generateValidCreateMCPConnectionRequest())
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
@@ -154,6 +217,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).Return([]*models.Tool{{Name: "search_issues"}}, nil)
 			suite.mockRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
@@ -161,10 +225,8 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMCPConnectionBeforeEach(t)
-			request := &requests.SaveMCPConnectionRequest{
-				Name: "x", Url: "https://x.example",
-				HeaderAuth: map[string]string{"K": "V"},
-			}
+			request := generateValidCreateMCPConnectionRequest()
+			request.HeaderAuth = map[string]string{"K": "V"}
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)

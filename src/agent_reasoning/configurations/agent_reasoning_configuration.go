@@ -106,6 +106,7 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		use_cases.NewGetLLMConnection,
 		use_cases.NewDeleteLLMConnection,
 		use_cases.NewValidateLLMConnection,
+		use_cases.NewDiscoverMCPServerTools,
 		use_cases.NewCreateMCPConnection,
 		use_cases.NewListMCPConnections,
 		use_cases.NewGetMCPConnection,

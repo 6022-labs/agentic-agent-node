@@ -69,6 +69,21 @@ definitions:
       id:
         type: string
     type: object
+  requests.CreateMCPConnectionRequest:
+    properties:
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
+        type: string
+    type: object
   requests.CreateResponseRequest:
     properties:
       conversation:
@@ -98,6 +113,17 @@ definitions:
       top_p:
         type: number
     type: object
+  requests.DiscoverMCPServerToolsRequest:
+    properties:
+      connectionId:
+        type: string
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      url:
+        type: string
+    type: object
   requests.InputMessage:
     properties:
       content:
@@ -105,17 +131,6 @@ definitions:
       role:
         type: string
       type:
-        type: string
-    type: object
-  requests.SaveMCPConnectionRequest:
-    properties:
-      headerAuth:
-        additionalProperties:
-          type: string
-        type: object
-      name:
-        type: string
-      url:
         type: string
     type: object
   requests.SavePaymentRuleRequest:
@@ -144,6 +159,21 @@ definitions:
         type: string
       platform:
         $ref: '#/definitions/enums.LLMConnectionPlatform'
+    type: object
+  requests.UpdateMCPConnectionRequest:
+    properties:
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
+      headerAuth:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      url:
+        type: string
     type: object
   responses.AgentCollectionResponse:
     properties:
@@ -380,6 +410,10 @@ definitions:
     type: object
   responses.MCPConnectionResponse:
     properties:
+      allowedToolPatterns:
+        items:
+          type: string
+        type: array
       createdAt:
         type: string
       headerAuthKeys:
@@ -394,6 +428,20 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  responses.MCPServerToolResponse:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  responses.MCPServerToolsResponse:
+    properties:
+      tools:
+        items:
+          $ref: '#/definitions/responses.MCPServerToolResponse'
+        type: array
     type: object
   responses.MintInfoResponse:
     properties:
@@ -916,7 +964,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SaveMCPConnectionRequest'
+          $ref: '#/definitions/requests.CreateMCPConnectionRequest'
       produces:
       - application/json
       responses:
@@ -1000,7 +1048,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SaveMCPConnectionRequest'
+          $ref: '#/definitions/requests.UpdateMCPConnectionRequest'
       produces:
       - application/json
       responses:
@@ -1021,6 +1069,39 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal update MCP connection
+      tags:
+      - Internal
+  /internal/config/mcp/tools:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: MCP server
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.DiscoverMCPServerToolsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.MCPServerToolsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: list_mcp_server_tools_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal discover MCP server tools
       tags:
       - Internal
   /internal/config/payment-facilitators:

@@ -101,6 +101,30 @@
                 },
                 "type": "object"
             },
+            "requests.CreateMCPConnectionRequest": {
+                "properties": {
+                    "allowedToolPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "headerAuth": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.CreateResponseRequest": {
                 "properties": {
                     "conversation": {
@@ -146,6 +170,23 @@
                 },
                 "type": "object"
             },
+            "requests.DiscoverMCPServerToolsRequest": {
+                "properties": {
+                    "connectionId": {
+                        "type": "string"
+                    },
+                    "headerAuth": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.InputMessage": {
                 "properties": {
                     "content": {
@@ -155,23 +196,6 @@
                         "type": "string"
                     },
                     "type": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "requests.SaveMCPConnectionRequest": {
-                "properties": {
-                    "headerAuth": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "url": {
                         "type": "string"
                     }
                 },
@@ -215,6 +239,30 @@
                     },
                     "platform": {
                         "$ref": "#/components/schemas/enums.LLMConnectionPlatform"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.UpdateMCPConnectionRequest": {
+                "properties": {
+                    "allowedToolPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "headerAuth": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -589,6 +637,13 @@
             },
             "responses.MCPConnectionResponse": {
                 "properties": {
+                    "allowedToolPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
                     "createdAt": {
                         "type": "string"
                     },
@@ -610,6 +665,29 @@
                     },
                     "url": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.MCPServerToolResponse": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.MCPServerToolsResponse": {
+                "properties": {
+                    "tools": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.MCPServerToolResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -1540,7 +1618,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.SaveMCPConnectionRequest",
+                                        "$ref": "#/components/schemas/requests.CreateMCPConnectionRequest",
                                         "summary": "request",
                                         "description": "MCP connection"
                                     }
@@ -1584,6 +1662,76 @@
                     }
                 },
                 "summary": "Internal create MCP connection",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/config/mcp/tools": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.DiscoverMCPServerToolsRequest",
+                                        "summary": "request",
+                                        "description": "MCP server"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "MCP server",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.MCPServerToolsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "list_mcp_server_tools_failed"
+                    }
+                },
+                "summary": "Internal discover MCP server tools",
                 "tags": [
                     "Internal"
                 ]
@@ -1712,7 +1860,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.SaveMCPConnectionRequest",
+                                        "$ref": "#/components/schemas/requests.UpdateMCPConnectionRequest",
                                         "summary": "request",
                                         "description": "MCP connection"
                                     }

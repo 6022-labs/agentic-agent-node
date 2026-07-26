@@ -722,6 +722,46 @@ func (mr *MockClientInterfaceMockRecorder) PostInternalConfigMcp(ctx, body any, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigMcp", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigMcp), varargs...)
 }
 
+// PostInternalConfigMcpTools mocks base method.
+func (m *MockClientInterface) PostInternalConfigMcpTools(ctx context.Context, body clients.PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigMcpTools", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigMcpTools indicates an expected call of PostInternalConfigMcpTools.
+func (mr *MockClientInterfaceMockRecorder) PostInternalConfigMcpTools(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigMcpTools", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigMcpTools), varargs...)
+}
+
+// PostInternalConfigMcpToolsWithBody mocks base method.
+func (m *MockClientInterface) PostInternalConfigMcpToolsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigMcpToolsWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigMcpToolsWithBody indicates an expected call of PostInternalConfigMcpToolsWithBody.
+func (mr *MockClientInterfaceMockRecorder) PostInternalConfigMcpToolsWithBody(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigMcpToolsWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigMcpToolsWithBody), varargs...)
+}
+
 // PostInternalConfigMcpWithBody mocks base method.
 func (m *MockClientInterface) PostInternalConfigMcpWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1644,6 +1684,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigLlmWit
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigLlmWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigLlmWithResponse), varargs...)
+}
+
+// PostInternalConfigMcpToolsWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalConfigMcpToolsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpToolsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigMcpToolsWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalConfigMcpToolsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigMcpToolsWithBodyWithResponse indicates an expected call of PostInternalConfigMcpToolsWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigMcpToolsWithBodyWithResponse(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigMcpToolsWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigMcpToolsWithBodyWithResponse), varargs...)
+}
+
+// PostInternalConfigMcpToolsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalConfigMcpToolsWithResponse(ctx context.Context, body clients.PostInternalConfigMcpToolsJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpToolsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigMcpToolsWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalConfigMcpToolsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigMcpToolsWithResponse indicates an expected call of PostInternalConfigMcpToolsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigMcpToolsWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigMcpToolsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigMcpToolsWithResponse), varargs...)
 }
 
 // PostInternalConfigMcpWithBodyWithResponse mocks base method.

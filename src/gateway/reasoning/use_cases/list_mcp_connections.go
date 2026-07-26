@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/responses"
 )
@@ -24,18 +23,7 @@ func (u *ListMcpConnections) Execute(ctx context.Context) (*responses.ListMcpCon
 	}
 	out := make([]responses.McpConnectionResponse, 0, len(payload.Connections))
 	for i := range payload.Connections {
-		out = append(out, *u.toResponse(&payload.Connections[i]))
+		out = append(out, *responses.ToMcpConnectionResponse(&payload.Connections[i]))
 	}
 	return &responses.ListMcpConnectionsResponse{Connections: out}, nil
-}
-
-func (u *ListMcpConnections) toResponse(p *models.ExternalMCPConnectionPayload) *responses.McpConnectionResponse {
-	return &responses.McpConnectionResponse{
-		Id:             p.Id,
-		Name:           p.Name,
-		Url:            p.Url,
-		HeaderAuthKeys: p.HeaderAuthKeys,
-		CreatedAt:      p.CreatedAt,
-		UpdatedAt:      p.UpdatedAt,
-	}
 }
