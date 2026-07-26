@@ -303,7 +303,15 @@ func (d *ResponseDriver) mcpConnectionToTools(ctx context.Context, conn *models.
 		span.Fail(err)
 		return nil, fmt.Errorf("failed to list tools for mcp connection %q: %w", conn.Name, err)
 	}
-	return reasoning_utils.FilterToolsByPatterns(tools, conn.AllowedToolPatterns), nil
+	allowedTools, invalidPatterns := reasoning_utils.FilterToolsByPatterns(tools, conn.AllowedToolPatterns)
+	if len(invalidPatterns) > 0 {
+		d.logger.Warn("ignoring uncompilable allowed-tool patterns",
+			zap.String("mcpConnection", conn.Name),
+			zap.Strings("patterns", invalidPatterns),
+		)
+	}
+
+	return allowedTools, nil
 }
 
 func (d *ResponseDriver) loadMCPConnections(ctx context.Context, agentId uuid.UUID) ([]*models.MCPConnection, error) {

@@ -17,16 +17,20 @@ func McpToolToFunctionName(mcpConnection *models.MCPConnection, mcpTool *models.
 	return ToFunctionName(McpToolNamespace, ToFunctionName(mcpConnection.Name, mcpTool.Name))
 }
 
-// FilterToolsByPatterns keeps tools whose name full-matches a pattern; no patterns allows all, invalid ones never match.
-func FilterToolsByPatterns(tools []*models.Tool, patterns []string) []*models.Tool {
+// FilterToolsByPatterns keeps tools whose name full-matches a pattern; no patterns
+// allows all. Uncompilable patterns never match and come back so callers can log them.
+func FilterToolsByPatterns(tools []*models.Tool, patterns []string) ([]*models.Tool, []string) {
 	if len(patterns) == 0 {
-		return tools
+		return tools, nil
 	}
+
+	invalidPatterns := []string{}
 
 	compiled := make([]*regexp.Regexp, 0, len(patterns))
 	for _, pattern := range patterns {
 		re, err := regexp.Compile("^(?:" + pattern + ")$")
 		if err != nil {
+			invalidPatterns = append(invalidPatterns, pattern)
 			continue
 		}
 		compiled = append(compiled, re)
@@ -41,7 +45,7 @@ func FilterToolsByPatterns(tools []*models.Tool, patterns []string) []*models.To
 			}
 		}
 	}
-	return allowed
+	return allowed, invalidPatterns
 }
 
 // SortedMcpConnections returns the map's connections in stable name order for deterministic rendering.
