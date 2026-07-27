@@ -166,7 +166,7 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit MCP connection" : "Add MCP connection"}
