@@ -234,14 +234,11 @@ export default function McpConnectionForm({
                 form.formState.errors.headerAuth.message}
             </p>
           ) : null}
-          <FormDescription>
-            A bearer token is sent as{" "}
-            <code>{BEARER_HEADER_NAME}: Bearer &lt;token&gt;</code> — paste the
-            token alone. Values are stored in the node vault and never returned.
-            {connection
-              ? " Leave a value blank to keep the stored one; remove the row to delete the header."
-              : " Leave the list empty for an unauthenticated server."}
-          </FormDescription>
+          {connection ? (
+            <FormDescription>
+              Leave a value blank to keep the stored one.
+            </FormDescription>
+          ) : null}
         </FormItem>
         <FormField
           control={form.control}

@@ -27,9 +27,7 @@ export default function AllowedToolsField({
       {loading ? (
         <Skeleton className="h-9 w-full" />
       ) : tools === null ? (
-        <FormDescription>
-          Load the server's tools to choose which ones the agent may call.
-        </FormDescription>
+        <FormDescription>Load the server's tools first.</FormDescription>
       ) : tools.length === 0 ? (
         <FormDescription>This server exposes no tool.</FormDescription>
       ) : (
