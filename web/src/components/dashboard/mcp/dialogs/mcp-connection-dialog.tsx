@@ -15,7 +15,12 @@ import {
 import McpConnectionForm, {
   MCP_CONNECTION_FORM_ID,
 } from "@/components/dashboard/mcp/forms/mcp-connection-form"
-import type { McpConnectionFormSchemaType } from "@/components/dashboard/mcp/forms/mcp-connection-form/mcp-connection-form-schema"
+import {
+  BEARER_PREFIX,
+  headerAuthName,
+  type McpConnectionFormSchemaType,
+  type McpHeaderAuthType,
+} from "@/components/dashboard/mcp/forms/mcp-connection-form/mcp-connection-form-schema"
 import type { McpConnection, McpServerTool } from "@/models/mcp-connection"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import {
@@ -26,12 +31,20 @@ import {
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 import { toolNamePattern } from "@/lib/tool-patterns"
 
-type HeaderRow = { name: string; value: string }
+type HeaderRow = { type: McpHeaderAuthType; name: string; value: string }
 
-// toHeaderAuthMap keeps blank values: the runtime reads them as "use the stored value".
+// toHeaderAuthMap keeps blank values: the runtime reads them as "use the stored value",
+// so a blank bearer row must never become the bare prefix.
 const toHeaderAuthMap = (rows: HeaderRow[] | undefined) => {
   if (!rows?.length) return undefined
-  return Object.fromEntries(rows.map((row) => [row.name.trim(), row.value]))
+  return Object.fromEntries(
+    rows.map((row) => [
+      headerAuthName(row),
+      row.type === "bearer" && row.value
+        ? `${BEARER_PREFIX}${row.value.trim()}`
+        : row.value,
+    ])
+  )
 }
 
 type Props = {

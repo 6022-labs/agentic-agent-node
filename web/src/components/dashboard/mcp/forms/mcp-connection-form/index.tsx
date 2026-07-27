@@ -14,11 +14,21 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { McpConnection, McpServerTool } from "@/models/mcp-connection"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { matchesToolPatterns } from "@/lib/tool-patterns"
 import AllowedToolsField from "./allowed-tools-field"
 import {
+  BEARER_HEADER_NAME,
+  MCP_HEADER_AUTH_TYPES,
+  MCP_HEADER_AUTH_TYPE_LABELS,
   mcpConnectionFormSchema,
   type McpConnectionFormSchemaType,
 } from "./mcp-connection-form-schema"
@@ -53,6 +63,7 @@ export default function McpConnectionForm({
       allowedTools: [],
       // A stored header keeps its name; its value stays in the vault, so the input starts blank.
       headerAuth: (connection?.headerAuthKeys ?? []).map((name) => ({
+        type: name === BEARER_HEADER_NAME ? ("bearer" as const) : ("custom" as const),
         name,
         value: "",
       })),
@@ -60,6 +71,7 @@ export default function McpConnectionForm({
   })
 
   const headerRows = useFieldArray({ control: form.control, name: "headerAuth" })
+  const headerTypes = form.watch("headerAuth").map((row) => row.type)
 
   React.useEffect(() => {
     onValueChange(form.getValues())
@@ -130,16 +142,48 @@ export default function McpConnectionForm({
             <div key={row.id} className="flex items-start gap-2">
               <FormField
                 control={form.control}
-                name={`headerAuth.${index}.name`}
+                name={`headerAuth.${index}.type`}
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormControl>
-                      <Input placeholder="Authorization" {...field} />
-                    </FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={(next) => {
+                        field.onChange(next)
+                        form.setValue(`headerAuth.${index}.name`, "")
+                        form.setValue(`headerAuth.${index}.value`, "")
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {MCP_HEADER_AUTH_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {MCP_HEADER_AUTH_TYPE_LABELS[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {headerTypes[index] === "custom" ? (
+                <FormField
+                  control={form.control}
+                  name={`headerAuth.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="X-Api-Key" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
               <FormField
                 control={form.control}
                 name={`headerAuth.${index}.value`}
@@ -148,7 +192,13 @@ export default function McpConnectionForm({
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder={connection ? "•••••• (unchanged)" : "Bearer …"}
+                        placeholder={
+                          connection
+                            ? "•••••• (unchanged)"
+                            : headerTypes[index] === "bearer"
+                              ? "sk-…"
+                              : "Header value"
+                        }
                         {...field}
                       />
                     </FormControl>
@@ -171,13 +221,24 @@ export default function McpConnectionForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => headerRows.append({ name: "", value: "" })}
+            onClick={() =>
+              headerRows.append({ type: "bearer", name: "", value: "" })
+            }
           >
             <Plus />
             Add header
           </Button>
+          {form.formState.errors.headerAuth?.root?.message ||
+          form.formState.errors.headerAuth?.message ? (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.headerAuth.root?.message ??
+                form.formState.errors.headerAuth.message}
+            </p>
+          ) : null}
           <FormDescription>
-            Values are stored in the node vault and never returned.
+            A bearer token is sent as{" "}
+            <code>{BEARER_HEADER_NAME}: Bearer &lt;token&gt;</code> — paste the
+            token alone. Values are stored in the node vault and never returned.
             {connection
               ? " Leave a value blank to keep the stored one; remove the row to delete the header."
               : " Leave the list empty for an unauthenticated server."}
