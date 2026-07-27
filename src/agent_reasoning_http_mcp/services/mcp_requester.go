@@ -3,10 +3,13 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/metrics/interfaces"
 )
@@ -34,6 +37,12 @@ func (r *MCPRequester) ListTools(ctx context.Context, mcpConnection *models.MCPC
 
 	if err != nil {
 		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
+		// The console tells a refused credential apart from a broken server, so the status has to survive the port.
+		var statusErr *clients.McpStatusError
+		if errors.As(err, &statusErr) &&
+			(statusErr.StatusCode == http.StatusUnauthorized || statusErr.StatusCode == http.StatusForbidden) {
+			return nil, fmt.Errorf("%w: %w", reasoning_interfaces.ErrMCPUnauthorized, err)
+		}
 		return nil, fmt.Errorf("failed to list MCP tools: %w", err)
 	}
 	if result.Error != nil {

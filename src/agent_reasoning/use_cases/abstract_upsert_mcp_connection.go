@@ -13,12 +13,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// AbstractUpsertMCPConnection holds the persistence and secret storage shared by the create and update MCP-connection use cases.
+// AbstractUpsertMCPConnection holds the behavior shared by the create and update MCP-connection use cases.
 type AbstractUpsertMCPConnection struct {
-	*AbstractReasoningUseCase
-	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
-	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
-	mcpRequester               reasoning_interfaces.McpRequesterInterface
+	*AbstractMCPConnectionUseCase
 }
 
 func NewAbstractUpsertMCPConnection(
@@ -28,20 +25,19 @@ func NewAbstractUpsertMCPConnection(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *AbstractUpsertMCPConnection {
 	return &AbstractUpsertMCPConnection{
-		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentRepository),
-		mcpConnectionRepository:    mcpConnectionRepository,
-		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
-		mcpRequester:               mcpRequester,
+		AbstractMCPConnectionUseCase: NewAbstractMCPConnectionUseCase(
+			mcpConnectionRepository,
+			mcpHeaderAuthSecretStorage,
+			mcpRequester,
+			agentRepository,
+		),
 	}
 }
 
 // probeListTools rejects a save whose server cannot list its tools.
 func (u *AbstractUpsertMCPConnection) probeListTools(ctx context.Context, name, url string, headers map[string]string) error {
-	_, err := u.mcpRequester.ListTools(ctx, &models.MCPConnection{Name: name, Url: url, HeaderAuth: headers})
-	if err != nil {
-		return errors.NewValidationError("url", "failed to list tools: "+err.Error())
-	}
-	return nil
+	_, err := u.listTools(ctx, &models.MCPConnection{Name: name, Url: url, HeaderAuth: headers})
+	return err
 }
 
 // ensureNameAvailable keeps function names unambiguous: a duplicate name would collide in the tool list and dispatch.

@@ -3,9 +3,11 @@ package use_cases_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
@@ -178,6 +180,32 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Contains(t, validationErr.Message, "connection refused")
+		})
+	})
+
+	t.Run("Given the server refuses the credentials", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, fmt.Errorf("failed to list MCP tools: %w", reasoning_interfaces.ErrMCPUnauthorized))
+		}
+
+		t.Run("Should blame the headers instead of leaking the status code", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
+				Url:        lo.ToPtr("https://mcp.github.example"),
+				HeaderAuth: map[string]string{"Authorization": "Bearer wrong"},
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "headerAuth", validationErr.Field)
+			assert.Equal(t, "the server rejected these credentials — check the API key", validationErr.Message)
 		})
 	})
 

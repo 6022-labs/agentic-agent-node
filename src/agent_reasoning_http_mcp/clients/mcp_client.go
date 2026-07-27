@@ -21,6 +21,16 @@ const (
 	callToolMethod  = "tools/call"
 )
 
+// McpStatusError carries a non-2xx MCP response so the requester can read the status instead of a message.
+type McpStatusError struct {
+	Method     string
+	StatusCode int
+}
+
+func (e *McpStatusError) Error() string {
+	return fmt.Sprintf("unexpected MCP %s status code: %d", e.Method, e.StatusCode)
+}
+
 type McpClientInterface interface {
 	ListTools(ctx context.Context, mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error)
 	CallTool(ctx context.Context, mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error)
@@ -85,7 +95,7 @@ func (c *McpClient) ListTools(ctx context.Context, mcpServerUrl string, headers 
 			zap.ByteString("response_body", respBody),
 		)
 
-		return nil, fmt.Errorf("unexpected MCP list tools status code: %d", resp.StatusCode)
+		return nil, &McpStatusError{Method: listToolsMethod, StatusCode: resp.StatusCode}
 	}
 
 	rpcResponse, err := decodeRPCResponse[models.ExternalMcpToolsResponse](c.logger, resp)
@@ -137,7 +147,7 @@ func (c *McpClient) CallTool(ctx context.Context, mcpServerUrl string, toolName 
 			zap.ByteString("response_body", respBody),
 		)
 
-		return nil, fmt.Errorf("unexpected MCP call tool status code: %d", resp.StatusCode)
+		return nil, &McpStatusError{Method: callToolMethod, StatusCode: resp.StatusCode}
 	}
 
 	rpcResponse, err := decodeRPCResponse[json.RawMessage](c.logger, resp)

@@ -17,10 +17,7 @@ import (
 const candidateConnectionName = "candidate"
 
 type DiscoverMCPServerTools struct {
-	*AbstractReasoningUseCase
-	mcpConnectionRepository    repositories.MCPConnectionRepositoryInterface
-	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface
-	mcpRequester               reasoning_interfaces.McpRequesterInterface
+	*AbstractMCPConnectionUseCase
 }
 
 func NewDiscoverMCPServerTools(
@@ -30,10 +27,12 @@ func NewDiscoverMCPServerTools(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *DiscoverMCPServerTools {
 	return &DiscoverMCPServerTools{
-		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentRepository),
-		mcpConnectionRepository:    mcpConnectionRepository,
-		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
-		mcpRequester:               mcpRequester,
+		AbstractMCPConnectionUseCase: NewAbstractMCPConnectionUseCase(
+			mcpConnectionRepository,
+			mcpHeaderAuthSecretStorage,
+			mcpRequester,
+			agentRepository,
+		),
 	}
 }
 
@@ -48,9 +47,9 @@ func (u *DiscoverMCPServerTools) Execute(ctx context.Context, request *requests.
 		return nil, err
 	}
 
-	tools, err := u.mcpRequester.ListTools(ctx, target)
+	tools, err := u.listTools(ctx, target)
 	if err != nil {
-		return nil, errors.NewValidationError("url", "failed to list tools: "+err.Error())
+		return nil, err
 	}
 
 	return responses.ToMCPServerToolsResponse(tools), nil

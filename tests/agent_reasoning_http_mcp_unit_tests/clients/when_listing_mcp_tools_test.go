@@ -83,6 +83,27 @@ func TestWhenListingMcpTools(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the MCP server refuses the auth headers", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+
+		t.Run("Should return the status so the requester can map it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingMcpToolsBeforeEach(t, handler)
+			defer WhenListingMcpToolsAfterEach(suite)
+
+			_, err := suite.sut.ListTools(context.Background(), suite.server.URL, map[string]string{"Authorization": "Bearer wrong"})
+
+			var statusErr *clients.McpStatusError
+			assert.ErrorAs(t, err, &statusErr)
+			assert.Equal(t, http.StatusUnauthorized, statusErr.StatusCode)
+		})
+	})
+
 	t.Run("Given the context is already cancelled", func(t *testing.T) {
 		t.Parallel()
 
