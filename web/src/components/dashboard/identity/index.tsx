@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import EmptyState from "@/components/dashboard/empty-state"
 import EnsDriftAlert from "./ens-drift-alert"
 import IdentityWizard from "@/components/dashboard/identity/identity-wizard"
+import TransferIdentityDialog from "@/components/dashboard/identity/dialogs/transfer-identity-dialog"
 import {
   computeWizardStep,
   type WizardStepNumber,
@@ -169,15 +170,24 @@ export default function IdentitySection() {
                 : "Finish the setup to mint the agent and register its ENS."}
             </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refreshStatus}
-            disabled={refreshing}
-          >
-            <RefreshCw className={refreshing ? "animate-spin" : ""} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-1">
+            {isMinted && draft.tokenId != null ? (
+              <TransferIdentityDialog
+                collectionAddress={draft.collectionAddress}
+                collectionTokenId={String(draft.tokenId)}
+                agentName={draft.ensDomain || draft.name}
+              />
+            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshStatus}
+              disabled={refreshing}
+            >
+              <RefreshCw className={refreshing ? "animate-spin" : ""} />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">

@@ -102,6 +102,32 @@ export const mint = async (
   }
 }
 
+// Hands the identity NFT to another owner. The connected wallet is the current
+// owner — console sign-in is gated on ownerOf, so the caller loses access.
+export const transferFrom = async (
+  collectionAddress: string,
+  tokenId: string,
+  to: string,
+  walletProvider: Eip1193Provider
+) => {
+  const { contract, signer } = await getContract(
+    collectionAddress,
+    walletProvider
+  )
+  try {
+    const tx = await contract.transferFrom(
+      await signer.getAddress(),
+      to,
+      tokenId,
+      await getScaledTxGasOverrides(signer)
+    )
+    await tx.wait()
+    return tx
+  } catch (error) {
+    return logAndRethrow(error)
+  }
+}
+
 // Proposal mint — used when the collection has moderators and the owner is not
 // one (a moderator must approve via mintFromProposal afterwards).
 export const createMintProposal = async (
