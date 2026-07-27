@@ -191,7 +191,6 @@ export default function McpConnectionForm({
                   <FormItem className="flex-1">
                     <FormControl>
                       <Input
-                        type="password"
                         placeholder={
                           connection
                             ? "•••••• (unchanged)"
