@@ -13,5 +13,6 @@ func TestMain(m *testing.M) {
 	GetMySQLContainerBuilder().stop()
 	GetMariaDBContainerBuilder().stop()
 	GetVaultContainerBuilder().stop()
+	GetAnvilContainerBuilder().stop()
 	os.Exit(code)
 }
