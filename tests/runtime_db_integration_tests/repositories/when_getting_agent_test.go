@@ -86,10 +86,9 @@ func TestWhenGettingAgent(t *testing.T) {
 
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
 						WithName("Ada").
-						WithAttributes(map[string]string{"role": "expert"}).
+						WithAttributes(map[string]string{"role": "expert", "trait": "curious"}).
 						WithEnsDomain("ada.agent.eth").
 						WithImages(map[string]string{"avatar": "https://example.com/a.png"}).
-						WithAttributes(map[string]string{"trait": "curious"}).
 						Build())
 
 					assert.NoError(t, err)
