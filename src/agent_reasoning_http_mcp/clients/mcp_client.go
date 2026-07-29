@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	listToolsMethod = "tools/list"
-	callToolMethod  = "tools/call"
+	MethodListTools = "tools/list"
+	MethodCallTool  = "tools/call"
 )
 
 // McpStatusError carries a non-2xx MCP response so the requester can read the status instead of a message.
@@ -61,7 +61,7 @@ func (c *McpClient) ListTools(ctx context.Context, mcpServerUrl string, headers 
 	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,
-		Method:  listToolsMethod,
+		Method:  MethodListTools,
 		Params:  map[string]any{},
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *McpClient) ListTools(ctx context.Context, mcpServerUrl string, headers 
 			zap.ByteString("response_body", respBody),
 		)
 
-		return nil, &McpStatusError{Method: listToolsMethod, StatusCode: resp.StatusCode}
+		return nil, &McpStatusError{Method: MethodListTools, StatusCode: resp.StatusCode}
 	}
 
 	rpcResponse, err := decodeRPCResponse[models.ExternalMcpToolsResponse](c.logger, resp)
@@ -110,7 +110,7 @@ func (c *McpClient) CallTool(ctx context.Context, mcpServerUrl string, toolName 
 	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,
-		Method:  callToolMethod,
+		Method:  MethodCallTool,
 		Params: map[string]any{
 			"name":      toolName,
 			"arguments": input,
@@ -147,7 +147,7 @@ func (c *McpClient) CallTool(ctx context.Context, mcpServerUrl string, toolName 
 			zap.ByteString("response_body", respBody),
 		)
 
-		return nil, &McpStatusError{Method: callToolMethod, StatusCode: resp.StatusCode}
+		return nil, &McpStatusError{Method: MethodCallTool, StatusCode: resp.StatusCode}
 	}
 
 	rpcResponse, err := decodeRPCResponse[json.RawMessage](c.logger, resp)

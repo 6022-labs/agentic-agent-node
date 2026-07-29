@@ -50,9 +50,11 @@ func TestWhenListingMcpToolsThroughTheRequester(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMcpToolsThroughTheRequesterTestingSuite) {
+			unauthorized := &clients.McpStatusError{Method: "tools/list", StatusCode: http.StatusUnauthorized}
 			suite.mockMcpClient.EXPECT().ListTools(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, &clients.McpStatusError{Method: "tools/list", StatusCode: http.StatusUnauthorized})
-			suite.mockMcpMetrics.EXPECT().RecordListTools(gomock.Any(), "github", gomock.Any(), true)
+				Return(nil, unauthorized)
+			suite.mockMcpMetrics.EXPECT().
+				RecordListTools(gomock.Any(), suite.testMcpConnection, gomock.Any(), unauthorized, nil)
 		}
 
 		t.Run("Should surface the unauthorized sentinel", func(t *testing.T) {
@@ -71,9 +73,11 @@ func TestWhenListingMcpToolsThroughTheRequester(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMcpToolsThroughTheRequesterTestingSuite) {
+			serverError := &clients.McpStatusError{Method: "tools/list", StatusCode: http.StatusInternalServerError}
 			suite.mockMcpClient.EXPECT().ListTools(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, &clients.McpStatusError{Method: "tools/list", StatusCode: http.StatusInternalServerError})
-			suite.mockMcpMetrics.EXPECT().RecordListTools(gomock.Any(), "github", gomock.Any(), true)
+				Return(nil, serverError)
+			suite.mockMcpMetrics.EXPECT().
+				RecordListTools(gomock.Any(), suite.testMcpConnection, gomock.Any(), serverError, nil)
 		}
 
 		t.Run("Should not blame the credentials", func(t *testing.T) {
@@ -97,9 +101,11 @@ func TestWhenListingMcpToolsThroughTheRequester(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMcpToolsThroughTheRequesterTestingSuite) {
+			transportError := errors.New("connection refused")
 			suite.mockMcpClient.EXPECT().ListTools(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
-			suite.mockMcpMetrics.EXPECT().RecordListTools(gomock.Any(), "github", gomock.Any(), true)
+				Return(nil, transportError)
+			suite.mockMcpMetrics.EXPECT().
+				RecordListTools(gomock.Any(), suite.testMcpConnection, gomock.Any(), transportError, nil)
 		}
 
 		t.Run("Should pass the reason through untouched", func(t *testing.T) {

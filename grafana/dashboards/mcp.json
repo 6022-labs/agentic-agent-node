@@ -121,8 +121,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (mcp_server, mcp_tool_name) (rate(mcp_tool_call_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{mcp_server}} {{mcp_tool_name}}"
+          "expr": "sum by (reasoning_mcp_connection, gen_ai_tool_name) (rate(mcp_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/call\"}[5m]))",
+          "legendFormat": "{{reasoning_mcp_connection}} / {{gen_ai_tool_name}}"
         }
       ]
     },
@@ -148,8 +148,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (mcp_server) (rate(mcp_tool_call_errors_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{mcp_server}}"
+          "expr": "sum by (reasoning_mcp_connection, error_type) (rate(mcp_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/call\", error_type=~\".+\"}[5m]))",
+          "legendFormat": "{{reasoning_mcp_connection}} / {{error_type}}"
         }
       ]
     },
@@ -175,8 +175,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, mcp_server, mcp_tool_name) (rate(mcp_tool_call_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
-          "legendFormat": "{{mcp_server}} {{mcp_tool_name}}"
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_mcp_connection, gen_ai_tool_name) (rate(mcp_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/call\"}[5m])))",
+          "legendFormat": "{{reasoning_mcp_connection}} / {{gen_ai_tool_name}}"
         }
       ]
     },
@@ -202,8 +202,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, mcp_server) (rate(mcp_list_tools_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
-          "legendFormat": "{{mcp_server}}"
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_mcp_connection) (rate(mcp_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/list\"}[5m])))",
+          "legendFormat": "{{reasoning_mcp_connection}}"
         }
       ]
     },
@@ -229,8 +229,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (mcp_server) (rate(mcp_list_tools_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{mcp_server}}"
+          "expr": "sum by (reasoning_mcp_connection) (rate(mcp_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/list\"}[5m]))",
+          "legendFormat": "{{reasoning_mcp_connection}}"
         }
       ]
     },
@@ -256,8 +256,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (mcp_server) (rate(mcp_list_tools_errors_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{mcp_server}}"
+          "expr": "sum by (reasoning_mcp_connection, error_type) (rate(mcp_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", mcp_method_name=\"tools/list\", error_type=~\".+\"}[5m]))",
+          "legendFormat": "{{reasoning_mcp_connection}} / {{error_type}}"
         }
       ]
     }

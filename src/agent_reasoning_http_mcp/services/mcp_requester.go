@@ -12,6 +12,7 @@ import (
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/metrics/interfaces"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/models"
 )
 
 type MCPRequester struct {
@@ -36,7 +37,7 @@ func (r *MCPRequester) ListTools(ctx context.Context, mcpConnection *models.MCPC
 	result, err := r.client.ListTools(ctx, mcpConnection.Url, mcpConnection.HeaderAuth)
 
 	if err != nil {
-		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
+		r.metrics.RecordListTools(ctx, mcpConnection, time.Since(start), err, nil)
 		// The console tells a refused credential apart from a broken server, so the status has to survive the port.
 		var statusErr *clients.McpStatusError
 		if errors.As(err, &statusErr) &&
@@ -46,10 +47,10 @@ func (r *MCPRequester) ListTools(ctx context.Context, mcpConnection *models.MCPC
 		return nil, fmt.Errorf("failed to list MCP tools: %w", err)
 	}
 	if result.Error != nil {
-		r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), true)
+		r.metrics.RecordListTools(ctx, mcpConnection, time.Since(start), nil, result.Error)
 		return nil, fmt.Errorf("MCP list tools returned error: %s", result.Error.Message)
 	}
-	r.metrics.RecordListTools(ctx, mcpConnection.Name, time.Since(start), false)
+	r.metrics.RecordListTools(ctx, mcpConnection, time.Since(start), nil, nil)
 
 	return result.Result.ToFunctionTools(), nil
 }
@@ -74,18 +75,26 @@ func (r *MCPRequester) CallTool(
 	result, err := r.client.CallTool(ctx, mcpConnection.Url, tool.Name, fixedInput, mcpConnection.HeaderAuth)
 
 	if err != nil {
-		r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), true)
+		r.metrics.RecordToolCall(ctx, mcpConnection, tool.Name, time.Since(start), err, nil, false)
 		return nil, fmt.Errorf("failed to call MCP tool '%s': %w", tool.Name, err)
 	}
 	if result.Error != nil {
-		r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), true)
+		r.metrics.RecordToolCall(ctx, mcpConnection, tool.Name, time.Since(start), nil, result.Error, false)
 		return nil, fmt.Errorf("MCP call tool '%s' returned error: %s", tool.Name, result.Error.Message)
 	}
-	r.metrics.RecordToolCall(ctx, mcpConnection.Name, tool.Name, time.Since(start), false)
-
+	// Decoded twice: the port hands the whole payload to the model, while only the flag drives the metric.
 	var output map[string]any
-	if err := json.Unmarshal(result.Result, &output); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal MCP tool '%s' output: %w", tool.Name, err)
+	var toolResult external_models.ExternalMcpToolCallResult
+
+	decodeErr := json.Unmarshal(result.Result, &output)
+	if decodeErr == nil {
+		decodeErr = json.Unmarshal(result.Result, &toolResult)
+	}
+
+	r.metrics.RecordToolCall(ctx, mcpConnection, tool.Name, time.Since(start), decodeErr, nil, toolResult.IsError)
+
+	if decodeErr != nil {
+		return nil, fmt.Errorf("failed to unmarshal MCP tool '%s' output: %w", tool.Name, decodeErr)
 	}
 
 	return output, nil

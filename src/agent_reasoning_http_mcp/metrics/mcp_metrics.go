@@ -2,8 +2,13 @@ package metrics
 
 import (
 	"context"
+	"errors"
+	"strconv"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/clients"
+	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/models"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -13,79 +18,110 @@ import (
 
 const meterName = "agentic_runtime_http_mcp"
 
-// Call volume comes from the duration histograms' own count, so there are no separate request counters.
+// Advisory bucket boundaries from the OTel MCP metrics semantic conventions.
+var mcpDurationBuckets = []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120, 300}
+
 type McpMetrics struct {
-	toolCallDuration      metric.Float64Histogram
-	toolCallErrorCounter  metric.Int64Counter
-	listToolsDuration     metric.Float64Histogram
-	listToolsErrorCounter metric.Int64Counter
+	operationDuration metric.Float64Histogram
 }
 
 func NewMcpMetrics() *McpMetrics {
 	noopMeter := noop.NewMeterProvider().Meter(meterName)
 	meter := otel.GetMeterProvider().Meter(meterName)
 
-	toolCallDuration, err := meter.Float64Histogram(
-		"mcp.tool.call.duration",
+	operationDuration, err := meter.Float64Histogram(
+		"mcp.client.operation.duration",
 		metric.WithUnit("s"),
-		metric.WithExplicitBucketBoundaries(common_metrics.LatencySecondsBuckets...),
-		metric.WithDescription("Duration of MCP tool calls"),
+		metric.WithExplicitBucketBoundaries(mcpDurationBuckets...),
+		metric.WithDescription("Duration of an MCP request, from send until the response is received"),
 	)
 	if err != nil {
-		toolCallDuration, _ = noopMeter.Float64Histogram("mcp.tool.call.duration")
+		operationDuration, _ = noopMeter.Float64Histogram("mcp.client.operation.duration")
 	}
 
-	toolCallErrorCounter, err := meter.Int64Counter(
-		"mcp.tool.call.errors",
-		metric.WithDescription("Total number of MCP tool call errors"),
-	)
-	if err != nil {
-		toolCallErrorCounter, _ = noopMeter.Int64Counter("mcp.tool.call.errors")
-	}
-
-	listToolsDuration, err := meter.Float64Histogram(
-		"mcp.list_tools.duration",
-		metric.WithUnit("s"),
-		metric.WithExplicitBucketBoundaries(common_metrics.LatencySecondsBuckets...),
-		metric.WithDescription("Duration of MCP list-tools requests"),
-	)
-	if err != nil {
-		listToolsDuration, _ = noopMeter.Float64Histogram("mcp.list_tools.duration")
-	}
-
-	listToolsErrorCounter, err := meter.Int64Counter(
-		"mcp.list_tools.errors",
-		metric.WithDescription("Total number of MCP list-tools errors"),
-	)
-	if err != nil {
-		listToolsErrorCounter, _ = noopMeter.Int64Counter("mcp.list_tools.errors")
-	}
-
-	return &McpMetrics{
-		toolCallDuration:      toolCallDuration,
-		toolCallErrorCounter:  toolCallErrorCounter,
-		listToolsDuration:     listToolsDuration,
-		listToolsErrorCounter: listToolsErrorCounter,
-	}
+	return &McpMetrics{operationDuration: operationDuration}
 }
 
-// RecordToolCall records one MCP tool call: duration, and (when failed) an error.
-func (m *McpMetrics) RecordToolCall(ctx context.Context, server, tool string, duration time.Duration, failed bool) {
-	attrs := metric.WithAttributes(
-		attribute.String("mcp.server", server),
-		attribute.String("mcp.tool.name", tool),
+func (m *McpMetrics) RecordToolCall(
+	ctx context.Context,
+	mcpConnection *models.MCPConnection,
+	toolName string,
+	duration time.Duration,
+	err error,
+	rpcError *external_models.ExternalJsonRPCError,
+	toolReportedError bool,
+) {
+	attrs := m.baseAttributes(clients.MethodCallTool, mcpConnection)
+	attrs = append(attrs,
+		attribute.String("gen_ai.tool.name", toolName),
+		attribute.String("gen_ai.operation.name", "execute_tool"),
 	)
-	m.toolCallDuration.Record(ctx, duration.Seconds(), attrs)
-	if failed {
-		m.toolCallErrorCounter.Add(ctx, 1, attrs)
+
+	// A tool that reports its own failure completes the json-rpc call.
+	if err == nil && rpcError == nil && toolReportedError {
+		attrs = append(attrs, attribute.String("error.type", "tool_error"))
+		m.operationDuration.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
+		return
 	}
+
+	m.record(ctx, attrs, duration, err, rpcError)
 }
 
-// RecordListTools records one MCP list-tools request: duration, and (when failed) an error.
-func (m *McpMetrics) RecordListTools(ctx context.Context, server string, duration time.Duration, failed bool) {
-	attrs := metric.WithAttributes(attribute.String("mcp.server", server))
-	m.listToolsDuration.Record(ctx, duration.Seconds(), attrs)
-	if failed {
-		m.listToolsErrorCounter.Add(ctx, 1, attrs)
+func (m *McpMetrics) RecordListTools(
+	ctx context.Context,
+	mcpConnection *models.MCPConnection,
+	duration time.Duration,
+	err error,
+	rpcError *external_models.ExternalJsonRPCError,
+) {
+	m.record(ctx, m.baseAttributes(clients.MethodListTools, mcpConnection), duration, err, rpcError)
+}
+
+func (m *McpMetrics) record(
+	ctx context.Context,
+	attrs []attribute.KeyValue,
+	duration time.Duration,
+	err error,
+	rpcError *external_models.ExternalJsonRPCError,
+) {
+	attrs = append(attrs, m.failureAttributes(err, rpcError)...)
+	m.operationDuration.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
+}
+
+func (m *McpMetrics) baseAttributes(method string, mcpConnection *models.MCPConnection) []attribute.KeyValue {
+	attrs := []attribute.KeyValue{
+		attribute.String("mcp.method.name", method),
+		attribute.String("network.transport", "tcp"),
+		attribute.String("network.protocol.name", "http"),
 	}
+	if mcpConnection == nil {
+		return attrs
+	}
+	attrs = append(attrs, attribute.String("reasoning.mcp_connection", mcpConnection.Name))
+	return append(attrs, common_metrics.ServerAttributes(mcpConnection.Url)...)
+}
+
+// failureAttributes stays empty on success: semconv forbids error.type on a completed operation.
+func (m *McpMetrics) failureAttributes(
+	err error,
+	rpcError *external_models.ExternalJsonRPCError,
+) []attribute.KeyValue {
+	if err == nil && rpcError == nil {
+		return nil
+	}
+
+	if rpcError != nil {
+		code := strconv.Itoa(rpcError.Code)
+
+		return []attribute.KeyValue{
+			attribute.String("error.type", code),
+			attribute.String("rpc.response.status_code", code),
+		}
+	}
+
+	var statusErr *clients.McpStatusError
+	if errors.As(err, &statusErr) {
+		return []attribute.KeyValue{attribute.String("error.type", strconv.Itoa(statusErr.StatusCode))}
+	}
+	return []attribute.KeyValue{attribute.String("error.type", "_OTHER")}
 }

@@ -14,6 +14,8 @@ import (
 	reflect "reflect"
 	time "time"
 
+	models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
+	models0 "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,25 +44,25 @@ func (m *MockMcpMetricsInterface) EXPECT() *MockMcpMetricsInterfaceMockRecorder 
 }
 
 // RecordListTools mocks base method.
-func (m *MockMcpMetricsInterface) RecordListTools(ctx context.Context, server string, duration time.Duration, failed bool) {
+func (m *MockMcpMetricsInterface) RecordListTools(ctx context.Context, mcpConnection *models.MCPConnection, duration time.Duration, err error, rpcError *models0.ExternalJsonRPCError) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordListTools", ctx, server, duration, failed)
+	m.ctrl.Call(m, "RecordListTools", ctx, mcpConnection, duration, err, rpcError)
 }
 
 // RecordListTools indicates an expected call of RecordListTools.
-func (mr *MockMcpMetricsInterfaceMockRecorder) RecordListTools(ctx, server, duration, failed any) *gomock.Call {
+func (mr *MockMcpMetricsInterfaceMockRecorder) RecordListTools(ctx, mcpConnection, duration, err, rpcError any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordListTools", reflect.TypeOf((*MockMcpMetricsInterface)(nil).RecordListTools), ctx, server, duration, failed)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordListTools", reflect.TypeOf((*MockMcpMetricsInterface)(nil).RecordListTools), ctx, mcpConnection, duration, err, rpcError)
 }
 
 // RecordToolCall mocks base method.
-func (m *MockMcpMetricsInterface) RecordToolCall(ctx context.Context, server, tool string, duration time.Duration, failed bool) {
+func (m *MockMcpMetricsInterface) RecordToolCall(ctx context.Context, mcpConnection *models.MCPConnection, toolName string, duration time.Duration, err error, rpcError *models0.ExternalJsonRPCError, toolReportedError bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordToolCall", ctx, server, tool, duration, failed)
+	m.ctrl.Call(m, "RecordToolCall", ctx, mcpConnection, toolName, duration, err, rpcError, toolReportedError)
 }
 
 // RecordToolCall indicates an expected call of RecordToolCall.
-func (mr *MockMcpMetricsInterfaceMockRecorder) RecordToolCall(ctx, server, tool, duration, failed any) *gomock.Call {
+func (mr *MockMcpMetricsInterfaceMockRecorder) RecordToolCall(ctx, mcpConnection, toolName, duration, err, rpcError, toolReportedError any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordToolCall", reflect.TypeOf((*MockMcpMetricsInterface)(nil).RecordToolCall), ctx, server, tool, duration, failed)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordToolCall", reflect.TypeOf((*MockMcpMetricsInterface)(nil).RecordToolCall), ctx, mcpConnection, toolName, duration, err, rpcError, toolReportedError)
 }
