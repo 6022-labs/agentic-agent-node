@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 	time "time"
 
+	interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,37 +43,37 @@ func (m *MockLlmInferenceMetricsInterface) EXPECT() *MockLlmInferenceMetricsInte
 }
 
 // RecordOperationDuration mocks base method.
-func (m *MockLlmInferenceMetricsInterface) RecordOperationDuration(ctx context.Context, provider, model string, duration time.Duration, errorType string) {
+func (m *MockLlmInferenceMetricsInterface) RecordOperationDuration(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, errorType string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordOperationDuration", ctx, provider, model, duration, errorType)
+	m.ctrl.Call(m, "RecordOperationDuration", ctx, call, duration, errorType)
 }
 
 // RecordOperationDuration indicates an expected call of RecordOperationDuration.
-func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordOperationDuration(ctx, provider, model, duration, errorType any) *gomock.Call {
+func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordOperationDuration(ctx, call, duration, errorType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordOperationDuration", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordOperationDuration), ctx, provider, model, duration, errorType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordOperationDuration", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordOperationDuration), ctx, call, duration, errorType)
 }
 
 // RecordProbe mocks base method.
-func (m *MockLlmInferenceMetricsInterface) RecordProbe(ctx context.Context, provider, model string, duration time.Duration, failed bool) {
+func (m *MockLlmInferenceMetricsInterface) RecordProbe(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, failed bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordProbe", ctx, provider, model, duration, failed)
+	m.ctrl.Call(m, "RecordProbe", ctx, call, duration, failed)
 }
 
 // RecordProbe indicates an expected call of RecordProbe.
-func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordProbe(ctx, provider, model, duration, failed any) *gomock.Call {
+func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordProbe(ctx, call, duration, failed any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordProbe", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordProbe), ctx, provider, model, duration, failed)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordProbe", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordProbe), ctx, call, duration, failed)
 }
 
 // RecordTokenUsage mocks base method.
-func (m *MockLlmInferenceMetricsInterface) RecordTokenUsage(ctx context.Context, provider, model, tokenType string, tokens int64) {
+func (m *MockLlmInferenceMetricsInterface) RecordTokenUsage(ctx context.Context, call interfaces.CompletionCall, tokenType string, tokens int64) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordTokenUsage", ctx, provider, model, tokenType, tokens)
+	m.ctrl.Call(m, "RecordTokenUsage", ctx, call, tokenType, tokens)
 }
 
 // RecordTokenUsage indicates an expected call of RecordTokenUsage.
-func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordTokenUsage(ctx, provider, model, tokenType, tokens any) *gomock.Call {
+func (mr *MockLlmInferenceMetricsInterfaceMockRecorder) RecordTokenUsage(ctx, call, tokenType, tokens any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordTokenUsage", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordTokenUsage), ctx, provider, model, tokenType, tokens)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordTokenUsage", reflect.TypeOf((*MockLlmInferenceMetricsInterface)(nil).RecordTokenUsage), ctx, call, tokenType, tokens)
 }

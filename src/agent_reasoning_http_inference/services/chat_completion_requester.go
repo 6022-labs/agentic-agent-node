@@ -117,8 +117,10 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		return nil, err
 	}
 
-	provider := string(llmConnection.Platform)
-	model := llmConnection.Model
+	call := metrics_interfaces.CompletionCall{
+		Provider:     string(llmConnection.Platform),
+		RequestModel: llmConnection.Model,
+	}
 
 	start := time.Now()
 	completion, err := r.completeUsingAppropriateStandard(
@@ -129,18 +131,24 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		platformSettings,
 		apiKey,
 	)
+	duration := time.Since(start)
 
 	// Per GenAI semconv, request volume and error rate come from the duration
 	// histogram's count + the error.type attribute (no separate counters).
 	if err != nil {
-		r.metrics.RecordOperationDuration(ctx, provider, model, time.Since(start), "_OTHER")
+		r.metrics.RecordOperationDuration(ctx, call, duration, "_OTHER")
 		return nil, err
 	}
-	r.metrics.RecordOperationDuration(ctx, provider, model, time.Since(start), "")
+
+	// Providers may answer from a different model than requested (routing, aliases, fallbacks).
+	if completion != nil {
+		call.ResponseModel = completion.ResponseModel
+	}
+	r.metrics.RecordOperationDuration(ctx, call, duration, "")
 
 	if completion != nil && completion.Usage != nil {
-		r.metrics.RecordTokenUsage(ctx, provider, model, "input", int64(completion.Usage.InputTokens))
-		r.metrics.RecordTokenUsage(ctx, provider, model, "output", int64(completion.Usage.OutputTokens))
+		r.metrics.RecordTokenUsage(ctx, call, "input", int64(completion.Usage.InputTokens))
+		r.metrics.RecordTokenUsage(ctx, call, "output", int64(completion.Usage.OutputTokens))
 	}
 
 	return completion, nil
@@ -162,7 +170,19 @@ func (r *ChatCompletionRequester) ProbeConnection(ctx context.Context, llmConnec
 
 	start := time.Now()
 	err = r.probeUsingAppropriateStandard(llmConnection, platformSettings, key)
-	r.metrics.RecordProbe(ctx, string(llmConnection.Platform), llmConnection.Model, time.Since(start), err != nil)
+
+	call := metrics_interfaces.CompletionCall{
+		Provider:     string(llmConnection.Platform),
+		RequestModel: llmConnection.Model,
+	}
+	duration := time.Since(start)
+	r.metrics.RecordProbe(
+		ctx,
+		call,
+		duration,
+		err != nil,
+	)
+
 	return err
 }
 

@@ -47,7 +47,7 @@ func WhenProbingLLMConnectionBeforeEach(t *testing.T) *WhenProbingLLMConnectionT
 	mockAmazonBedrockConverseStandardChatCompletionRequester := services_mocks.NewMockAmazonBedrockConverseStandardChatCompletionRequesterInterface(mockController)
 
 	mockMetrics := metrics_interfaces_mocks.NewMockLlmInferenceMetricsInterface(mockController)
-	mockMetrics.EXPECT().RecordProbe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().RecordProbe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	xSettings := &settings.XSettings{}
 	openAiSettings := &settings.OpenAISettings{}
