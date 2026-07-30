@@ -75,7 +75,7 @@ func (c *OpenAIResponsesStandardClient) Responses(baseUrl, apiKey string, reques
 			zap.ByteString("response_body", respBody),
 		)
 
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, &LlmStatusError{StatusCode: resp.StatusCode}
 	}
 
 	var response models.ExternalOpenAIResponsesStandardResponse

@@ -117,13 +117,20 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		return nil, err
 	}
 
+	baseUrl, err := r.resolveBaseUrl(llmConnection, platformSettings)
+	if err != nil {
+		return nil, err
+	}
+
 	call := metrics_interfaces.CompletionCall{
 		Provider:     string(llmConnection.Platform),
 		RequestModel: llmConnection.Model,
+		ServerUrl:    baseUrl,
 	}
 
 	start := time.Now()
 	completion, err := r.completeUsingAppropriateStandard(
+		baseUrl,
 		llmConnection,
 		selfTools,
 		mcpTools,
@@ -136,7 +143,7 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	// Per GenAI semconv, request volume and error rate come from the duration
 	// histogram's count + the error.type attribute (no separate counters).
 	if err != nil {
-		r.metrics.RecordOperationDuration(ctx, call, duration, "_OTHER")
+		r.metrics.RecordOperationDuration(ctx, call, duration, err)
 		return nil, err
 	}
 
@@ -144,11 +151,10 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	if completion != nil {
 		call.ResponseModel = completion.ResponseModel
 	}
-	r.metrics.RecordOperationDuration(ctx, call, duration, "")
+	r.metrics.RecordOperationDuration(ctx, call, duration, nil)
 
 	if completion != nil && completion.Usage != nil {
-		r.metrics.RecordTokenUsage(ctx, call, "input", int64(completion.Usage.InputTokens))
-		r.metrics.RecordTokenUsage(ctx, call, "output", int64(completion.Usage.OutputTokens))
+		r.metrics.RecordTokenUsage(ctx, call, int64(completion.Usage.InputTokens), int64(completion.Usage.OutputTokens))
 	}
 
 	return completion, nil
@@ -168,25 +174,40 @@ func (r *ChatCompletionRequester) ProbeConnection(ctx context.Context, llmConnec
 		}
 	}
 
+	baseUrl, err := r.resolveBaseUrl(llmConnection, platformSettings)
+	if err != nil {
+		return err
+	}
+
 	start := time.Now()
-	err = r.probeUsingAppropriateStandard(llmConnection, platformSettings, key)
+	err = r.probeUsingAppropriateStandard(baseUrl, llmConnection, platformSettings, key)
 
 	call := metrics_interfaces.CompletionCall{
 		Provider:     string(llmConnection.Platform),
 		RequestModel: llmConnection.Model,
+		ServerUrl:    baseUrl,
 	}
-	duration := time.Since(start)
-	r.metrics.RecordProbe(
-		ctx,
-		call,
-		duration,
-		err != nil,
-	)
+	r.metrics.RecordProbe(ctx, call, time.Since(start), err)
 
 	return err
 }
 
+// A platform leaving GetBaseUrl empty is self-hosted: its url lives on the connection instead.
+func (r *ChatCompletionRequester) resolveBaseUrl(
+	llmConnection *models.LLMConnection,
+	platformSettings settings.StandardSettingsInterface,
+) (string, error) {
+	if baseUrl := platformSettings.GetBaseUrl(); baseUrl != "" {
+		return baseUrl, nil
+	}
+	if llmConnection.BaseUrl == nil {
+		return "", fmt.Errorf("base URL is required for %s", platformSettings.PlatformAPI())
+	}
+	return *llmConnection.BaseUrl, nil
+}
+
 func (r *ChatCompletionRequester) probeUsingAppropriateStandard(
+	baseUrl string,
 	llmConnection *models.LLMConnection,
 	platformSettings settings.StandardSettingsInterface,
 	apiKey *string,
@@ -196,34 +217,28 @@ func (r *ChatCompletionRequester) probeUsingAppropriateStandard(
 		if apiKey == nil {
 			return fmt.Errorf("api key is required for OpenAI Responses Standard")
 		}
-		return r.openAIResponsesStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+		return r.openAIResponsesStandardChatCompletionRequester.Probe(baseUrl, *apiKey, llmConnection)
 
 	case settings.PlatformAPIOpenAICompletionsStandard:
 		if apiKey == nil {
 			return fmt.Errorf("api key is required for OpenAI Completions Standard")
 		}
-		return r.openAICompletionsStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+		return r.openAICompletionsStandardChatCompletionRequester.Probe(baseUrl, *apiKey, llmConnection)
 
 	case settings.PlatformAPIOllamaChatMessageStandard:
-		if llmConnection.BaseUrl == nil {
-			return fmt.Errorf("base URL is required for Ollama Chat Message Standard")
-		}
-		return r.ollamaChatMessageStandardChatCompletionRequester.Probe(*llmConnection.BaseUrl, llmConnection)
+		return r.ollamaChatMessageStandardChatCompletionRequester.Probe(baseUrl, llmConnection)
 
 	case settings.PlatformAPIAnthropicMessagesStandard:
 		if apiKey == nil {
 			return fmt.Errorf("api key is required for Anthropic Messages Standard")
 		}
-		return r.anthropicMessagesStandardChatCompletionRequester.Probe(platformSettings.GetBaseUrl(), *apiKey, llmConnection)
+		return r.anthropicMessagesStandardChatCompletionRequester.Probe(baseUrl, *apiKey, llmConnection)
 
 	case settings.PlatformAPIAmazonBedrockConverseStandard:
 		if apiKey == nil {
 			return fmt.Errorf("api key is required for Amazon Bedrock Converse Standard")
 		}
-		if llmConnection.BaseUrl == nil {
-			return fmt.Errorf("base URL is required for Amazon Bedrock Converse Standard")
-		}
-		return r.amazonBedrockConverseStandardChatCompletionRequester.Probe(*llmConnection.BaseUrl, *apiKey, llmConnection)
+		return r.amazonBedrockConverseStandardChatCompletionRequester.Probe(baseUrl, *apiKey, llmConnection)
 
 	default:
 		return fmt.Errorf("unsupported platform API: %s", platformSettings.PlatformAPI())
@@ -314,6 +329,7 @@ func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnecti
 }
 
 func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
+	baseUrl string,
 	llmConnection *models.LLMConnection,
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
@@ -327,7 +343,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			return nil, fmt.Errorf("api key is required for OpenAI Responses Standard")
 		}
 		return r.openAIResponsesStandardChatCompletionRequester.ChatCompletion(
-			platformSettings.GetBaseUrl(),
+			baseUrl,
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
@@ -341,7 +357,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			return nil, fmt.Errorf("api key is required for OpenAI Completions Standard")
 		}
 		return r.openAICompletionsStandardChatCompletionRequester.ChatCompletion(
-			platformSettings.GetBaseUrl(),
+			baseUrl,
 			*apiKey,
 			llmConnection,
 			selfTools,
@@ -350,11 +366,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 		)
 
 	case settings.PlatformAPIOllamaChatMessageStandard:
-		if llmConnection.BaseUrl == nil {
-			return nil, fmt.Errorf("base URL is required for Ollama Chat Message Standard")
-		}
 		return r.ollamaChatMessageStandardChatCompletionRequester.ChatCompletion(
-			*llmConnection.BaseUrl,
+			baseUrl,
 			llmConnection,
 			selfTools,
 			mcpTools,
@@ -366,7 +379,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			return nil, fmt.Errorf("api key is required for Anthropic Messages Standard")
 		}
 		return r.anthropicMessagesStandardChatCompletionRequester.ChatCompletion(
-			platformSettings.GetBaseUrl(),
+			baseUrl,
 			*apiKey,
 			platformSettings.HasDirectAccessToMcp(),
 			llmConnection,
@@ -379,11 +392,8 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 		if apiKey == nil {
 			return nil, fmt.Errorf("api key is required for Amazon Bedrock Converse Standard")
 		}
-		if llmConnection.BaseUrl == nil {
-			return nil, fmt.Errorf("base URL is required for Amazon Bedrock Converse Standard")
-		}
 		return r.amazonBedrockConverseStandardChatCompletionRequester.ChatCompletion(
-			*llmConnection.BaseUrl,
+			baseUrl,
 			*apiKey,
 			llmConnection,
 			selfTools,

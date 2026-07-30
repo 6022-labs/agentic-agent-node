@@ -76,7 +76,7 @@ func (c *AnthropicMessagesStandardClient) Messages(baseUrl, apiKey string, reque
 			zap.Int("status_code", resp.StatusCode),
 			zap.ByteString("response_body", respBody),
 		)
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, &LlmStatusError{StatusCode: resp.StatusCode}
 	}
 
 	var response models.ExternalAnthropicMessagesStandardResponse

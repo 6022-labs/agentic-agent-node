@@ -2,10 +2,15 @@ package metrics
 
 import (
 	"context"
+	"errors"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/clients"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/metrics/interfaces"
+	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -19,8 +24,7 @@ const callKindKey = "reasoning.call_kind"
 
 // Advisory bucket boundaries from the OTel GenAI metrics semantic conventions.
 var (
-	genAiDurationBuckets = []float64{0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12, 10.24, 20.48, 40.96, 81.92}
-	genAiTokenBuckets    = []float64{1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864}
+	genAiTokenBuckets = []float64{1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864}
 )
 
 type LlmInferenceMetrics struct {
@@ -35,7 +39,7 @@ func NewLlmInferenceMetrics() *LlmInferenceMetrics {
 	durationHistogram, err := meter.Float64Histogram(
 		"gen_ai.client.operation.duration",
 		metric.WithUnit("s"),
-		metric.WithExplicitBucketBoundaries(genAiDurationBuckets...),
+		metric.WithExplicitBucketBoundaries(common_metrics.GenAiDurationSecondsBuckets...),
 		metric.WithDescription("Duration of LLM chat-completion calls"),
 	)
 	if err != nil {
@@ -58,30 +62,39 @@ func NewLlmInferenceMetrics() *LlmInferenceMetrics {
 	}
 }
 
-// RecordOperationDuration records a chat-completion call. errorType is the
-// gen_ai error.type attribute value, or "" when the call succeeded.
-func (m *LlmInferenceMetrics) RecordOperationDuration(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, errorType string) {
+func (m *LlmInferenceMetrics) RecordOperationDuration(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, err error) {
 	attrs := append(m.callAttributes(call), attribute.String(callKindKey, "inference"))
-	if errorType != "" {
-		attrs = append(attrs, attribute.String("error.type", errorType))
-	}
+	attrs = append(attrs, m.failureAttributes(err)...)
 	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
 }
 
-// RecordProbe records a connection-validation probe on the operation duration histogram.
-func (m *LlmInferenceMetrics) RecordProbe(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, failed bool) {
+func (m *LlmInferenceMetrics) RecordProbe(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, err error) {
 	attrs := append(m.callAttributes(call), attribute.String(callKindKey, "probe"))
-	if failed {
-		attrs = append(attrs, attribute.String("error.type", "_OTHER"))
-	}
+	attrs = append(attrs, m.failureAttributes(err)...)
 	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
 }
 
-// RecordTokenUsage records token usage for a chat-completion call. tokenType is
-// the gen_ai.token.type value ("input" / "output").
-func (m *LlmInferenceMetrics) RecordTokenUsage(ctx context.Context, call interfaces.CompletionCall, tokenType string, tokens int64) {
+func (m *LlmInferenceMetrics) RecordTokenUsage(ctx context.Context, call interfaces.CompletionCall, inputTokens, outputTokens int64) {
+	m.recordTokens(ctx, call, "input", inputTokens)
+	m.recordTokens(ctx, call, "output", outputTokens)
+}
+
+func (m *LlmInferenceMetrics) recordTokens(ctx context.Context, call interfaces.CompletionCall, tokenType string, tokens int64) {
 	attrs := append(m.callAttributes(call), attribute.String("gen_ai.token.type", tokenType))
 	m.tokenUsageHistogram.Record(ctx, tokens, metric.WithAttributes(attrs...))
+}
+
+// failureAttributes stays empty on success: semconv forbids error.type on a completed operation.
+func (m *LlmInferenceMetrics) failureAttributes(err error) []attribute.KeyValue {
+	if err == nil {
+		return nil
+	}
+
+	var statusErr *clients.LlmStatusError
+	if errors.As(err, &statusErr) {
+		return []attribute.KeyValue{attribute.String("error.type", strconv.Itoa(statusErr.StatusCode))}
+	}
+	return []attribute.KeyValue{attribute.String("error.type", "_OTHER")}
 }
 
 // callAttributes builds a fresh slice every call; a shared one would let concurrent records clobber each other.
@@ -95,5 +108,5 @@ func (m *LlmInferenceMetrics) callAttributes(call interfaces.CompletionCall) []a
 	if len(strings.TrimSpace(call.ResponseModel)) != 0 {
 		attrs = append(attrs, attribute.String("gen_ai.response.model", call.ResponseModel))
 	}
-	return attrs
+	return append(attrs, common_metrics.ServerAttributes(call.ServerUrl)...)
 }

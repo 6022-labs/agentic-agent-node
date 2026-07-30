@@ -74,7 +74,7 @@ func (c *OpenAICompletionsStandardClient) ChatCompletion(baseUrl, apiKey string,
 			zap.Int("status_code", resp.StatusCode),
 			zap.ByteString("response_body", respBody),
 		)
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, &LlmStatusError{StatusCode: resp.StatusCode}
 	}
 
 	var response models.ExternalOpenAICompletionsStandardResponse
