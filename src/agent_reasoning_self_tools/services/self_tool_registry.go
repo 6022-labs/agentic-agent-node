@@ -3,26 +3,30 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
+	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/metrics/interfaces"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
 
 // SelfToolRegistry aggregates the built-in self tools contributed to the dig group.
 type SelfToolRegistry struct {
-	logger      *zap.Logger
-	toolsByName map[string]interfaces.SelfToolInterface
-	definitions []*models.Tool
+	logger          *zap.Logger
+	selfToolMetrics metrics_interfaces.SelfToolMetricsInterface
+	toolsByName     map[string]interfaces.SelfToolInterface
+	definitions     []*models.Tool
 }
 
 type NewSelfToolRegistryParams struct {
 	dig.In
 
-	Logger    *zap.Logger
-	SelfTools []interfaces.SelfToolInterface `group:"self_tools"`
+	Logger          *zap.Logger
+	SelfToolMetrics metrics_interfaces.SelfToolMetricsInterface
+	SelfTools       []interfaces.SelfToolInterface `group:"self_tools"`
 }
 
 func NewSelfToolRegistry(params NewSelfToolRegistryParams) *SelfToolRegistry {
@@ -40,9 +44,10 @@ func NewSelfToolRegistry(params NewSelfToolRegistryParams) *SelfToolRegistry {
 	}
 
 	return &SelfToolRegistry{
-		logger:      params.Logger,
-		toolsByName: toolsByName,
-		definitions: utils.SortedToolsByName(definitions),
+		logger:          params.Logger,
+		selfToolMetrics: params.SelfToolMetrics,
+		toolsByName:     toolsByName,
+		definitions:     utils.SortedToolsByName(definitions),
 	}
 }
 
@@ -56,5 +61,9 @@ func (r *SelfToolRegistry) CallTool(ctx context.Context, toolName string, args m
 		return nil, fmt.Errorf("unknown self tool: %q", toolName)
 	}
 
-	return tool.Execute(ctx, args)
+	start := time.Now()
+	result, err := tool.Execute(ctx, args)
+	r.selfToolMetrics.RecordToolCall(ctx, toolName, time.Since(start), err)
+
+	return result, err
 }

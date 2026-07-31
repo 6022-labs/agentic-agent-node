@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -26,9 +27,13 @@ func WhenCallingSelfToolBeforeEach(t *testing.T) *WhenCallingSelfToolTestingSuit
 	mockSelfTool := interfaces_mocks.NewMockSelfToolInterface(mockController)
 	mockSelfTool.EXPECT().Definition().Return(&models.Tool{Name: "get_registration", Description: "read own registration"}).AnyTimes()
 
+	mockSelfToolMetrics := metrics_mocks.NewMockSelfToolMetricsInterface(mockController)
+	mockSelfToolMetrics.EXPECT().RecordToolCall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
 	sut := services.NewSelfToolRegistry(services.NewSelfToolRegistryParams{
-		Logger:    zap.NewNop(),
-		SelfTools: []interfaces.SelfToolInterface{mockSelfTool},
+		Logger:          zap.NewNop(),
+		SelfToolMetrics: mockSelfToolMetrics,
+		SelfTools:       []interfaces.SelfToolInterface{mockSelfTool},
 	})
 
 	return &WhenCallingSelfToolTestingSuite{

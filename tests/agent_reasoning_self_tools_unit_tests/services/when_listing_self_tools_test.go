@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
+	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -26,9 +27,13 @@ func WhenListingSelfToolsBeforeEach(t *testing.T, toolNames ...string) *WhenList
 		selfTools = append(selfTools, mockSelfTool)
 	}
 
+	mockSelfToolMetrics := metrics_mocks.NewMockSelfToolMetricsInterface(mockController)
+	mockSelfToolMetrics.EXPECT().RecordToolCall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
 	sut := services.NewSelfToolRegistry(services.NewSelfToolRegistryParams{
-		Logger:    zap.NewNop(),
-		SelfTools: selfTools,
+		Logger:          zap.NewNop(),
+		SelfToolMetrics: mockSelfToolMetrics,
+		SelfTools:       selfTools,
 	})
 
 	return &WhenListingSelfToolsTestingSuite{sut: sut}

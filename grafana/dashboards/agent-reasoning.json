@@ -497,13 +497,148 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", reasoning_call_kind=\"probe\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}} total"
         },
         {
           "refId": "B",
-          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", reasoning_call_kind=\"probe\", error_type=~\".+\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\", error_type=~\".+\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}} failed"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Self tool call rate by tool",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "{{gen_ai_tool_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Self tool error rate by type",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name, error_type) (rate(gen_ai_execute_tool_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", error_type=~\".+\"}[5m]))",
+          "legendFormat": "{{gen_ai_tool_name}} / {{error_type}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Self tool p95 duration by tool",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "legendFormat": "{{gen_ai_tool_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Loop aborted rate by reason",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (reasoning_abort_reason) (rate(reasoning_loop_aborted_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "{{reasoning_abort_reason}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM rate by response model (routing drift)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_request_model, gen_ai_response_model) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
+          "legendFormat": "{{gen_ai_request_model}} -> {{gen_ai_response_model}}"
         }
       ]
     }
