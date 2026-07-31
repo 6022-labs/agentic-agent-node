@@ -5,6 +5,7 @@ import (
 	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	reasoning_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	common_use_cases "github.com/6022-labs/agentic-agent-node/src/runtime_common/use_cases"
@@ -12,6 +13,13 @@ import (
 )
 
 func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
+	if err := container.Provide(
+		services.NewSelfToolRegistry,
+		dig.As(new(reasoning_interfaces.SelfToolRegistryInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	provideExecutors(container)
 
 	provideSelfTool(container, tools.NewGetAgentRegistrationTool)

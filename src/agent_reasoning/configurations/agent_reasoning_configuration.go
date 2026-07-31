@@ -18,13 +18,6 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
-		services.NewSelfToolRegistry,
-		dig.As(new(interfaces.SelfToolRegistryInterface)),
-	); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(
 		metrics.NewReasoningMetrics,
 		dig.As(new(metrics_interfaces.ReasoningMetricsInterface)),
 	); err != nil {

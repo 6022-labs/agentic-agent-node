@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
-	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
