@@ -85,6 +85,7 @@ func (l *InferenceLoop) Run(
 				l.reasoningMetrics.RecordLoopAborted(ctx, "deadline_exceeded", time.Since(start), int64(iteration))
 				return nil, fmt.Errorf("%w after %s", interfaces.ErrInferenceLoopDeadlineExceeded, time.Since(start).Round(time.Millisecond))
 			}
+			l.reasoningMetrics.RecordLoopAborted(ctx, "llm_failed", time.Since(start), int64(iteration))
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
 		}
 
@@ -130,6 +131,7 @@ func (l *InferenceLoop) Run(
 			continue
 		}
 
+		l.reasoningMetrics.RecordLoopAborted(ctx, "no_actionable_output", time.Since(start), int64(iteration))
 		return nil, fmt.Errorf("%w at iteration %d", interfaces.ErrInferenceLoopNoActionableOutput, iteration)
 	}
 

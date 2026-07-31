@@ -37,6 +37,8 @@ func NewReasoningMetrics() *ReasoningMetrics {
 
 	loopIterationsHistogram, err := meter.Int64Histogram(
 		"reasoning.loop.iterations",
+		metric.WithUnit("{iteration}"),
+		metric.WithExplicitBucketBoundaries(common_metrics.LoopIterationsBuckets...),
 		metric.WithDescription("Number of LLM<->MCP iterations per inference loop run"),
 	)
 	if err != nil {
@@ -45,7 +47,8 @@ func NewReasoningMetrics() *ReasoningMetrics {
 
 	toolCallCounter, err := meter.Int64Counter(
 		"reasoning.tool_calls",
-		metric.WithDescription("Number of MCP tool calls dispatched during inference loops"),
+		metric.WithUnit("{tool_call}"),
+		metric.WithDescription("Number of tool calls dispatched during inference loops, self and MCP alike"),
 	)
 	if err != nil {
 		toolCallCounter, _ = noopMeter.Int64Counter("reasoning.tool_calls")
@@ -53,6 +56,7 @@ func NewReasoningMetrics() *ReasoningMetrics {
 
 	maxIterationsCounter, err := meter.Int64Counter(
 		"reasoning.loop.max_iterations_exceeded",
+		metric.WithUnit("{run}"),
 		metric.WithDescription("Number of inference loop runs that hit the iteration ceiling"),
 	)
 	if err != nil {
@@ -61,6 +65,7 @@ func NewReasoningMetrics() *ReasoningMetrics {
 
 	abortedCounter, err := meter.Int64Counter(
 		"reasoning.loop.aborted",
+		metric.WithUnit("{run}"),
 		metric.WithDescription("Number of inference loop runs aborted by a non-iteration safety ceiling"),
 	)
 	if err != nil {

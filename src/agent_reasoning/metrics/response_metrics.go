@@ -16,6 +16,7 @@ type ResponseMetrics struct {
 func NewResponseMetrics() *ResponseMetrics {
 	counter, err := otel.GetMeterProvider().Meter(reasoningMeterName).Int64Counter(
 		"reasoning.response",
+		metric.WithUnit("{response}"),
 		metric.WithDescription("Number of agent responses generated"),
 	)
 	if err != nil {
