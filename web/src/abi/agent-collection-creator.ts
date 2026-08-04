@@ -1,168 +1,97 @@
+// Auto-extracted from agentic-smart-contracts artifacts. Do not edit by hand.
 export const AgentCollectionCreatorABI = [
   {
     inputs: [
       {
         internalType: "address",
         name: "initialCollectionsManager",
-        type: "address",
+        type: "address"
       },
       {
         internalType: "address",
         name: "initialCollectionsDescriptor",
-        type: "address",
+        type: "address"
       },
       {
         internalType: "address",
         name: "initialCollectionImplementation",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "initialCollateralController6022",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     stateMutability: "nonpayable",
-    type: "constructor",
+    type: "constructor"
   },
   {
     inputs: [],
     name: "AccessControlBadConfirmation",
-    type: "error",
+    type: "error"
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "account",
-        type: "address",
+        type: "address"
       },
       {
         internalType: "bytes32",
         name: "neededRole",
-        type: "bytes32",
-      },
+        type: "bytes32"
+      }
     ],
     name: "AccessControlUnauthorizedAccount",
-    type: "error",
+    type: "error"
   },
   {
     inputs: [],
     name: "FailedDeployment",
-    type: "error",
+    type: "error"
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "balance",
-        type: "uint256",
+        type: "uint256"
       },
       {
         internalType: "uint256",
         name: "needed",
-        type: "uint256",
-      },
+        type: "uint256"
+      }
     ],
     name: "InsufficientBalance",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "InsufficientBalanceInAuthorizedTokens",
-    type: "error",
+    type: "error"
   },
   {
     inputs: [
       {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
+        internalType: "string",
+        name: "parameter",
+        type: "string"
+      }
     ],
-    name: "TokenAlreadyAuthorized",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "TokenNotAuthorized",
-    type: "error",
+    name: "ZeroAddress",
+    type: "error"
   },
   {
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "AuthorizedTokenAdded",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "AuthorizedTokenRemoved",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
+        indexed: true,
         internalType: "address",
         name: "oldDescriptor",
-        type: "address",
+        type: "address"
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
         name: "newDescriptor",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "DefaultCollectionsDescriptorUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "oldMinimumBalance",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "newMinimumBalance",
-        type: "uint256",
-      },
-    ],
-    name: "MinimumTokenBalanceForCreationUpdated",
-    type: "event",
+    type: "event"
   },
   {
     anonymous: false,
@@ -171,23 +100,23 @@ export const AgentCollectionCreatorABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "previousAdminRole",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "newAdminRole",
-        type: "bytes32",
-      },
+        type: "bytes32"
+      }
     ],
     name: "RoleAdminChanged",
-    type: "event",
+    type: "event"
   },
   {
     anonymous: false,
@@ -196,23 +125,23 @@ export const AgentCollectionCreatorABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address",
+        type: "address"
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "RoleGranted",
-    type: "event",
+    type: "event"
   },
   {
     anonymous: false,
@@ -221,23 +150,23 @@ export const AgentCollectionCreatorABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address",
+        type: "address"
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "RoleRevoked",
-    type: "event",
+    type: "event"
   },
   {
     inputs: [],
@@ -246,80 +175,11 @@ export const AgentCollectionCreatorABI = [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32",
-      },
+        type: "bytes32"
+      }
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "minimumBalance",
-        type: "uint256",
-      },
-    ],
-    name: "addAuthorizedTokenForCreation",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "authorizedTokensForCreation",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "canCreateCollection",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "collateralController6022",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [],
@@ -328,11 +188,11 @@ export const AgentCollectionCreatorABI = [
       {
         internalType: "address",
         name: "",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [],
@@ -341,11 +201,11 @@ export const AgentCollectionCreatorABI = [
       {
         internalType: "address",
         name: "",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [],
@@ -354,285 +214,178 @@ export const AgentCollectionCreatorABI = [
       {
         internalType: "address",
         name: "",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "name",
-        type: "string",
+        type: "string"
       },
       {
         internalType: "string",
         name: "symbol",
-        type: "string",
+        type: "string"
       },
       {
         internalType: "string",
         name: "description",
-        type: "string",
+        type: "string"
       },
       {
         internalType: "address",
         name: "admin",
-        type: "address",
+        type: "address"
       },
       {
         internalType: "address",
         name: "moderator",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "createCollection",
     outputs: [
       {
         internalType: "address",
         name: "collectionAddress",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     stateMutability: "nonpayable",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
-      },
+        type: "bytes32"
+      }
     ],
     name: "getRoleAdmin",
     outputs: [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32",
-      },
+        type: "bytes32"
+      }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         internalType: "address",
         name: "account",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "grantRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "hasMinimumCollateralLockedForCreation",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "hasMinimumTokenBalanceForCreation",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         internalType: "address",
         name: "account",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "hasRole",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool",
-      },
+        type: "bool"
+      }
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    name: "isAuthorizedTokenForCreation",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    name: "minimumTokenBalanceForCreation",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "removeAuthorizedTokenForCreation",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         internalType: "address",
         name: "callerConfirmation",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "renounceRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32",
+        type: "bytes32"
       },
       {
         internalType: "address",
         name: "account",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "revokeRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "bytes4",
         name: "interfaceId",
-        type: "bytes4",
-      },
+        type: "bytes4"
+      }
     ],
     name: "supportsInterface",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool",
-      },
+        type: "bool"
+      }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "newDescriptor",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "updateCollectionsDescriptor",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "newMinimum",
-        type: "uint256",
-      },
-    ],
-    name: "updateMinimumTokenBalanceForCreation",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-]
+    type: "function"
+  }
+] as const

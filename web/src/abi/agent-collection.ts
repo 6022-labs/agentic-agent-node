@@ -510,6 +510,25 @@ export const AgentCollectionABI = [
         internalType: "string",
         name: "key",
         type: "string"
+      }
+    ],
+    name: "AgentImageRemoved",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256"
+      },
+      {
+        indexed: true,
+        internalType: "string",
+        name: "key",
+        type: "string"
       },
       {
         indexed: false,
@@ -581,13 +600,13 @@ export const AgentCollectionABI = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
         name: "oldCollectionsDescriptor",
         type: "address"
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
         name: "newCollectionsDescriptor",
         type: "address"
@@ -1208,7 +1227,7 @@ export const AgentCollectionABI = [
       },
       {
         internalType: "string",
-        name: "name",
+        name: "agentName",
         type: "string"
       },
       {
@@ -1555,12 +1574,12 @@ export const AgentCollectionABI = [
     inputs: [
       {
         internalType: "string",
-        name: "name",
+        name: "name_",
         type: "string"
       },
       {
         internalType: "string",
-        name: "symbol",
+        name: "symbol_",
         type: "string"
       },
       {
@@ -1641,7 +1660,7 @@ export const AgentCollectionABI = [
       },
       {
         internalType: "string",
-        name: "name",
+        name: "agentName",
         type: "string"
       },
       {
@@ -1902,7 +1921,7 @@ export const AgentCollectionABI = [
     inputs: [
       {
         internalType: "string",
-        name: "name",
+        name: "agentName",
         type: "string"
       }
     ],
