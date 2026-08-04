@@ -26,6 +26,20 @@ func StringProperty(description string) models.ToolInputSchemeProperty {
 	}
 }
 
+func IntegerProperty(description string) models.ToolInputSchemeProperty {
+	return models.ToolInputSchemeProperty{
+		Type:        "integer",
+		Description: &description,
+	}
+}
+
+func BooleanProperty(description string) models.ToolInputSchemeProperty {
+	return models.ToolInputSchemeProperty{
+		Type:        "boolean",
+		Description: &description,
+	}
+}
+
 func ObjectProperty(description string) models.ToolInputSchemeProperty {
 	additionalProperties := true
 	return models.ToolInputSchemeProperty{

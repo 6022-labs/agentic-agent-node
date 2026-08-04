@@ -14,6 +14,7 @@ import (
 	agent_reasoning_http_inference_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/configurations"
 	agent_reasoning_http_mcp_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/configurations"
 	agent_reasoning_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_mvc/configurations"
+	agent_reasoning_os_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_os/configurations"
 	agent_reasoning_self_tools_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/configurations"
 	runtime_common_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_common/configurations"
 	runtime_common_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc/configurations"
@@ -46,6 +47,7 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	agent_identity_http_ipfs_configurations.AddAgentIdentityHttpIpfsConfiguration(container)
 	agent_reasoning_http_inference_configurations.AddAgentReasoningHttpInferenceConfiguration(container)
 	agent_reasoning_http_mcp_configurations.AddAgentReasoningHttpMcpConfiguration(container)
+	agent_reasoning_os_configurations.AddAgentReasoningOsConfiguration(container)
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
 	runtime_db_configurations.AddRuntimeDbConfiguration(container)
 	agent_knowledge_configurations.AddAgentKnowledgeConfiguration(container)

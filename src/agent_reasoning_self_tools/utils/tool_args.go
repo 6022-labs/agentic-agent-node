@@ -3,9 +3,11 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 // StringArg requires the key to be present; an empty string is a valid value (e.g. clearing guidance).
@@ -28,6 +30,35 @@ func OptionalStringArg(args map[string]any, key string) string {
 	}
 	text, _ := scalarToString(value)
 	return text
+}
+
+// OptionalIntArg returns nil when the key is absent or unparseable, so an explicit 0 stays distinguishable.
+func OptionalIntArg(args map[string]any, key string) *int {
+	text := OptionalStringArg(args, key)
+	if text == "" {
+		return nil
+	}
+	value, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return nil
+	}
+	// Converting an out-of-range float is implementation-defined, so it is clamped rather than converted.
+	if value > math.MaxInt32 {
+		return lo.ToPtr(math.MaxInt32)
+	}
+	if value < math.MinInt32 {
+		return lo.ToPtr(math.MinInt32)
+	}
+	return lo.ToPtr(int(value))
+}
+
+// OptionalBoolArg returns nil when the key is absent or unparseable, so an explicit false stays distinguishable.
+func OptionalBoolArg(args map[string]any, key string) *bool {
+	value, err := strconv.ParseBool(OptionalStringArg(args, key))
+	if err != nil {
+		return nil
+	}
+	return &value
 }
 
 func UuidArg(args map[string]any, key string) (uuid.UUID, error) {

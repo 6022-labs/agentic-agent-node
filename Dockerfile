@@ -41,7 +41,15 @@ FROM alpine:3.20 AS final
 # cleanly. ca-certificates lets outbound TLS calls work (Vault, RPC,
 # proxy.golang.org during dev). nginx is the single public listener: web
 # console at /, gateway proxied behind /api, /.well-known reserved.
-RUN apk add --no-cache tini ca-certificates nginx
+# bash backs the run_command self tool — models write bashisms busybox sh chokes on.
+RUN apk add --no-cache tini ca-certificates nginx bash
+
+# Commands drop to this unprivileged account, so the agent cannot signal the
+# runtime, the gateway or nginx — nor read root-owned /proc/*/environ.
+RUN adduser -D -H -u 10001 agent \
+ && mkdir -p /workspace \
+ && chown agent:agent /workspace
+ENV OS__COMMAND_USER=agent
 
 COPY --from=builder /gateway /usr/local/bin/gateway
 COPY --from=builder /runtime /usr/local/bin/runtime

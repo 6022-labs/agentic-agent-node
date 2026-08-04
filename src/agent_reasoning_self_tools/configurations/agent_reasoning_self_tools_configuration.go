@@ -5,6 +5,7 @@ import (
 	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	reasoning_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
+	os_services "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_os/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/metrics"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/services"
@@ -48,6 +49,10 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewDeletePaymentPolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
+	provideSelfTool(container, tools.NewRunCommandTool)
+	provideSelfTool(container, tools.NewListProcessesTool)
+	provideSelfTool(container, tools.NewReadProcessOutputTool)
+	provideSelfTool(container, tools.NewKillProcessTool)
 }
 
 func provideSelfTool(container *dig.Container, ctor any) {
@@ -60,12 +65,13 @@ func provideSelfTool(container *dig.Container, ctor any) {
 	}
 }
 
-// provideExecutors binds each concrete use case to the narrow port its tool depends on.
+// provideExecutors binds each concrete use case or service to the narrow port its tool depends on.
 func provideExecutors(container *dig.Container) {
 	provideIdentityExecutors(container)
 	provideReasoningExecutors(container)
 	providePaymentExecutors(container)
 	provideCommonExecutors(container)
+	provideOsExecutors(container)
 }
 
 func provideIdentityExecutors(container *dig.Container) {
@@ -146,6 +152,21 @@ func provideCommonExecutors(container *dig.Container) {
 	}
 
 	provideExecutor(container, asGetBlockchainConfig)
+}
+
+// provideOsExecutors binds the one command executor service to the four narrow ports its tools depend on.
+func provideOsExecutors(container *dig.Container) {
+	asRunCommand := func(s *os_services.CommandExecutor) tool_interfaces.RunCommandExecutorInterface { return s }
+	asListProcesses := func(s *os_services.CommandExecutor) tool_interfaces.ListProcessesExecutorInterface { return s }
+	asReadProcessOutput := func(s *os_services.CommandExecutor) tool_interfaces.ReadProcessOutputExecutorInterface {
+		return s
+	}
+	asKillProcess := func(s *os_services.CommandExecutor) tool_interfaces.KillProcessExecutorInterface { return s }
+
+	provideExecutor(container, asRunCommand)
+	provideExecutor(container, asListProcesses)
+	provideExecutor(container, asReadProcessOutput)
+	provideExecutor(container, asKillProcess)
 }
 
 func provideExecutor(container *dig.Container, binder any) {

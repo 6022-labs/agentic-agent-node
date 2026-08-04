@@ -641,6 +641,38 @@
           "legendFormat": "{{gen_ai_request_model}} -> {{gen_ai_response_model}}"
         }
       ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Background command rate (started / killed)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(reasoning_command_background_started_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "started"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(reasoning_command_killed_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "killed"
+        }
+      ]
     }
   ]
 }
