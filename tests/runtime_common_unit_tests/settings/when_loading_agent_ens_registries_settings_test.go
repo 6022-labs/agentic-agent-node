@@ -30,11 +30,11 @@ func TestWhenLoadingAgentEnsRegistriesSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a configured chain whose built-in registry entry is empty", func(t *testing.T) {
+	t.Run("Given a configured chain absent from the built-in registry", func(t *testing.T) {
 		t.Parallel()
 
 		chains := settings.EvmChainsSettings{
-			"137": {ChainId: "137", HttpUrl: "http://polygon"},
+			"999": {ChainId: "999", HttpUrl: "http://unknown"},
 		}
 
 		t.Run("Should skip it", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestWhenLoadingAgentEnsRegistriesSettings(t *testing.T) {
 
 			result := settings.NewAgentEnsRegistriesSettings(zap.NewNop(), &chains)
 
-			_, ok := result.AddressFor("137")
+			_, ok := result.AddressFor("999")
 			assert.False(t, ok)
 		})
 	})
