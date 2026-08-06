@@ -160,6 +160,11 @@ definitions:
       platform:
         $ref: '#/definitions/enums.LLMConnectionPlatform'
     type: object
+  requests.SignAgentCardRequest:
+    properties:
+      card:
+        type: object
+    type: object
   requests.UpdateMCPConnectionRequest:
     properties:
       allowedToolPatterns:
@@ -173,6 +178,13 @@ definitions:
       name:
         type: string
       url:
+        type: string
+    type: object
+  responses.AgentCardSignatureResponse:
+    properties:
+      protected:
+        type: string
+      signature:
         type: string
     type: object
   responses.AgentCollectionResponse:
@@ -1343,6 +1355,37 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal identity lookup
+      tags:
+      - Internal
+  /internal/identity/card-signature:
+    post:
+      consumes:
+      - application/json
+      description: Returns an A2A detached JWS (ES256K) over the JCS-canonicalized
+        card. The card must not carry a `signatures` member.
+      parameters:
+      - description: Agent card to sign
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SignAgentCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AgentCardSignatureResponse'
+        "400":
+          description: card
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: agent_card_signing_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Sign an agent card
       tags:
       - Internal
   /internal/identity/ens/publish:

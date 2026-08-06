@@ -1880,6 +1880,17 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.AgentCardSignature": {
+            "type": "object",
+            "properties": {
+                "protected": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.AgentCollectionResponse": {
             "type": "object",
             "properties": {
@@ -2529,6 +2540,13 @@ const docTemplate = `{
                 },
                 "protocolVersion": {
                     "type": "string"
+                },
+                "signatures": {
+                    "description": "Signatures must stay empty while the card is being signed — the spec excludes this member from the signed content.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.AgentCardSignature"
+                    }
                 }
             }
         },
@@ -2555,6 +2573,13 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "signatures": {
+                    "description": "Signatures must stay empty while the card is being signed — the spec excludes this member from the signed content.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.AgentCardSignature"
+                    }
                 },
                 "skills": {
                     "type": "array",

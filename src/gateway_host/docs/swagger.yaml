@@ -272,6 +272,13 @@ definitions:
       streaming:
         type: boolean
     type: object
+  responses.AgentCardSignature:
+    properties:
+      protected:
+        type: string
+      signature:
+        type: string
+    type: object
   responses.AgentCollectionResponse:
     properties:
       address:
@@ -694,6 +701,12 @@ definitions:
         type: string
       protocolVersion:
         type: string
+      signatures:
+        description: Signatures must stay empty while the card is being signed — the
+          spec excludes this member from the signed content.
+        items:
+          $ref: '#/definitions/responses.AgentCardSignature'
+        type: array
     type: object
   responses.WellKnownAgentCard:
     properties:
@@ -711,6 +724,12 @@ definitions:
         type: string
       name:
         type: string
+      signatures:
+        description: Signatures must stay empty while the card is being signed — the
+          spec excludes this member from the signed content.
+        items:
+          $ref: '#/definitions/responses.AgentCardSignature'
+        type: array
       skills:
         items:
           $ref: '#/definitions/responses.AgentSkill'

@@ -862,6 +862,46 @@ func (mr *MockClientInterfaceMockRecorder) PostInternalConversationsConversation
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConversationsConversationIdMessagesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConversationsConversationIdMessagesWithBody), varargs...)
 }
 
+// PostInternalIdentityCardSignature mocks base method.
+func (m *MockClientInterface) PostInternalIdentityCardSignature(ctx context.Context, body clients.PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalIdentityCardSignature", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalIdentityCardSignature indicates an expected call of PostInternalIdentityCardSignature.
+func (mr *MockClientInterfaceMockRecorder) PostInternalIdentityCardSignature(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalIdentityCardSignature", reflect.TypeOf((*MockClientInterface)(nil).PostInternalIdentityCardSignature), varargs...)
+}
+
+// PostInternalIdentityCardSignatureWithBody mocks base method.
+func (m *MockClientInterface) PostInternalIdentityCardSignatureWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalIdentityCardSignatureWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalIdentityCardSignatureWithBody indicates an expected call of PostInternalIdentityCardSignatureWithBody.
+func (mr *MockClientInterfaceMockRecorder) PostInternalIdentityCardSignatureWithBody(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalIdentityCardSignatureWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalIdentityCardSignatureWithBody), varargs...)
+}
+
 // PostInternalIdentityEnsPublish mocks base method.
 func (m *MockClientInterface) PostInternalIdentityEnsPublish(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1844,6 +1884,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConversation
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, conversationId, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConversationsConversationIdMessagesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConversationsConversationIdMessagesWithResponse), varargs...)
+}
+
+// PostInternalIdentityCardSignatureWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalIdentityCardSignatureWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalIdentityCardSignatureResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalIdentityCardSignatureWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalIdentityCardSignatureResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalIdentityCardSignatureWithBodyWithResponse indicates an expected call of PostInternalIdentityCardSignatureWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalIdentityCardSignatureWithBodyWithResponse(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalIdentityCardSignatureWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalIdentityCardSignatureWithBodyWithResponse), varargs...)
+}
+
+// PostInternalIdentityCardSignatureWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalIdentityCardSignatureWithResponse(ctx context.Context, body clients.PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalIdentityCardSignatureResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalIdentityCardSignatureWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalIdentityCardSignatureResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalIdentityCardSignatureWithResponse indicates an expected call of PostInternalIdentityCardSignatureWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalIdentityCardSignatureWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalIdentityCardSignatureWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalIdentityCardSignatureWithResponse), varargs...)
 }
 
 // PostInternalIdentityEnsPublishWithResponse mocks base method.

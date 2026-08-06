@@ -163,6 +163,11 @@ components:
         platform:
           $ref: '#/components/schemas/enums.LLMConnectionPlatform'
       type: object
+    requests.SignAgentCardRequest:
+      properties:
+        card:
+          type: object
+      type: object
     requests.UpdateMCPConnectionRequest:
       properties:
         allowedToolPatterns:
@@ -177,6 +182,13 @@ components:
         name:
           type: string
         url:
+          type: string
+      type: object
+    responses.AgentCardSignatureResponse:
+      properties:
+        protected:
+          type: string
+        signature:
           type: string
       type: object
     responses.AgentCollectionResponse:
@@ -1494,6 +1506,43 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: identity_lookup_failed
       summary: Internal identity lookup
+      tags:
+      - Internal
+  /internal/identity/card-signature:
+    post:
+      description: Returns an A2A detached JWS (ES256K) over the JCS-canonicalized
+        card. The card must not carry a `signatures` member.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SignAgentCardRequest'
+                description: Agent card to sign
+                summary: request
+        description: Agent card to sign
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.AgentCardSignatureResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: card
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: agent_card_signing_failed
+      summary: Sign an agent card
       tags:
       - Internal
   /internal/identity/ens/publish:

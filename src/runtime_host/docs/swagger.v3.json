@@ -243,6 +243,14 @@
                 },
                 "type": "object"
             },
+            "requests.SignAgentCardRequest": {
+                "properties": {
+                    "card": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "requests.UpdateMCPConnectionRequest": {
                 "properties": {
                     "allowedToolPatterns": {
@@ -262,6 +270,17 @@
                         "type": "string"
                     },
                     "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AgentCardSignatureResponse": {
+                "properties": {
+                    "protected": {
+                        "type": "string"
+                    },
+                    "signature": {
                         "type": "string"
                     }
                 },
@@ -2388,6 +2407,67 @@
                     }
                 },
                 "summary": "Internal identity lookup",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/identity/card-signature": {
+            "post": {
+                "description": "Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card. The card must not carry a `signatures` member.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.SignAgentCardRequest",
+                                        "summary": "request",
+                                        "description": "Agent card to sign"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Agent card to sign",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AgentCardSignatureResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "card"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "agent_card_signing_failed"
+                    }
+                },
+                "summary": "Sign an agent card",
                 "tags": [
                     "Internal"
                 ]

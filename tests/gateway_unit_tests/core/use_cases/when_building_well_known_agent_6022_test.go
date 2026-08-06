@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -19,28 +20,43 @@ import (
 type WhenBuildingWellKnownAgent6022TestingSuite struct {
 	sut *use_cases.GetWellKnownAgent6022
 
-	mockAgentRegistrationClient *identity_mocks.MockAgentRegistrationClientInterface
-	mockPaymentRuleClient       *payment_mocks.MockPaymentRuleClientInterface
+	mockAgentRegistrationClient  *identity_mocks.MockAgentRegistrationClientInterface
+	mockAgentCardSignatureClient *identity_mocks.MockAgentCardSignatureClientInterface
+	mockPaymentRuleClient        *payment_mocks.MockPaymentRuleClientInterface
+	signedBody                   []byte
 }
 
 func WhenBuildingWellKnownAgent6022BeforeEach(t *testing.T, runtimeUrl, publicPrefix string) *WhenBuildingWellKnownAgent6022TestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRegistrationClient := identity_mocks.NewMockAgentRegistrationClientInterface(mockController)
+	mockAgentCardSignatureClient := identity_mocks.NewMockAgentCardSignatureClientInterface(mockController)
 	mockPaymentRuleClient := payment_mocks.NewMockPaymentRuleClientInterface(mockController)
 
 	sut := use_cases.NewGetWellKnownAgent6022(
 		mockAgentRegistrationClient,
+		mockAgentCardSignatureClient,
 		mockPaymentRuleClient,
 		&identity_settings.AgentIdentitySettings{RuntimeUrl: runtimeUrl},
 		&core_settings.GatewaySettings{PublicPrefix: publicPrefix},
 	)
 
 	return &WhenBuildingWellKnownAgent6022TestingSuite{
-		sut:                         sut,
-		mockAgentRegistrationClient: mockAgentRegistrationClient,
-		mockPaymentRuleClient:       mockPaymentRuleClient,
+		sut:                          sut,
+		mockAgentRegistrationClient:  mockAgentRegistrationClient,
+		mockAgentCardSignatureClient: mockAgentCardSignatureClient,
+		mockPaymentRuleClient:        mockPaymentRuleClient,
 	}
+}
+
+// expectCardSignature captures the exact bytes handed to the runtime — the spec's signed content.
+func (s *WhenBuildingWellKnownAgent6022TestingSuite) expectCardSignature(ctx context.Context) {
+	s.mockAgentCardSignatureClient.EXPECT().
+		Sign(ctx, gomock.Any()).
+		DoAndReturn(func(_ context.Context, card []byte) (*identity_models.ExternalAgentCardSignaturePayload, error) {
+			s.signedBody = card
+			return &identity_models.ExternalAgentCardSignaturePayload{Protected: "protected", Signature: "signature"}, nil
+		})
 }
 
 func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
@@ -65,6 +81,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 					{Method: "x402"},
 					{Method: "l402"},
 				}, nil)
+			suite.expectCardSignature(ctx)
 		}
 
 		t.Run("Should build the document with responses url and the distinct rule methods", func(t *testing.T) {
@@ -81,7 +98,66 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			assert.Equal(t, "hermes", document.Name)
 			assert.Equal(t, "hermes.agents6022.eth", document.EnsDomain)
 			assert.Equal(t, "https://agent.example.com/api/responses", document.Endpoints.Responses)
-			assert.Equal(t, []string{"x402", "l402"}, document.PaymentMethods)
+			assert.Equal(t, []string{"l402", "x402"}, document.PaymentMethods)
+		})
+
+		t.Run("Should attach the signature the runtime returned", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			if assert.Len(t, document.Signatures, 1) {
+				assert.Equal(t, "protected", document.Signatures[0].Protected)
+				assert.Equal(t, "signature", document.Signatures[0].Signature)
+			}
+		})
+
+		t.Run("Should sign a body with no signatures member, as the spec requires", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(ctx)
+			assert.NoError(t, err)
+
+			members := map[string]json.RawMessage{}
+			assert.NoError(t, json.Unmarshal(suite.signedBody, &members))
+			assert.NotContains(t, members, "signatures")
+			assert.Contains(t, members, "protocol")
+		})
+	})
+
+	t.Run("Given the runtime cannot sign the card", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, nil)
+			suite.mockAgentCardSignatureClient.EXPECT().
+				Sign(ctx, gomock.Any()).
+				Return(nil, apperrors.NewInternalError("agent_card_signing_failed", "vault unreachable"))
+		}
+
+		t.Run("Should fail rather than serve an unsigned document", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.Nil(t, document)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
 		})
 	})
 
@@ -95,6 +171,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(ctx).
 				Return([]payment_models.ExternalPaymentRule{}, nil)
+			suite.expectCardSignature(ctx)
 		}
 
 		t.Run("Should serve the document without payment methods", func(t *testing.T) {
@@ -121,6 +198,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, apperrors.NewNotFoundError("payment_policy_not_found", "no policy"))
+			suite.expectCardSignature(ctx)
 		}
 
 		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
@@ -146,6 +224,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
+			suite.expectCardSignature(ctx)
 		}
 
 		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
@@ -220,6 +299,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, nil)
+			suite.expectCardSignature(ctx)
 		}
 
 		t.Run("Should honor it", func(t *testing.T) {

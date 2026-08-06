@@ -135,12 +135,23 @@ type RequestsSetupLLMConnectionRequest struct {
 	Platform *EnumsLLMConnectionPlatform `json:"platform,omitempty"`
 }
 
+// RequestsSignAgentCardRequest defines model for requests.SignAgentCardRequest.
+type RequestsSignAgentCardRequest struct {
+	Card *map[string]interface{} `json:"card,omitempty"`
+}
+
 // RequestsUpdateMCPConnectionRequest defines model for requests.UpdateMCPConnectionRequest.
 type RequestsUpdateMCPConnectionRequest struct {
 	AllowedToolPatterns *[]string          `json:"allowedToolPatterns,omitempty"`
 	HeaderAuth          *map[string]string `json:"headerAuth,omitempty"`
 	Name                *string            `json:"name,omitempty"`
 	Url                 *string            `json:"url,omitempty"`
+}
+
+// ResponsesAgentCardSignatureResponse defines model for responses.AgentCardSignatureResponse.
+type ResponsesAgentCardSignatureResponse struct {
+	Protected *string `json:"protected,omitempty"`
+	Signature *string `json:"signature,omitempty"`
 }
 
 // ResponsesAgentCollectionResponse defines model for responses.AgentCollectionResponse.
@@ -516,6 +527,14 @@ type PostInternalConversationsConversationIdMessagesJSONBody struct {
 // PostInternalConversationsConversationIdMessagesJSONBody0 defines parameters for PostInternalConversationsConversationIdMessages.
 type PostInternalConversationsConversationIdMessagesJSONBody0 = map[string]interface{}
 
+// PostInternalIdentityCardSignatureJSONBody defines parameters for PostInternalIdentityCardSignature.
+type PostInternalIdentityCardSignatureJSONBody struct {
+	union json.RawMessage
+}
+
+// PostInternalIdentityCardSignatureJSONBody0 defines parameters for PostInternalIdentityCardSignature.
+type PostInternalIdentityCardSignatureJSONBody0 = map[string]interface{}
+
 // PostInternalResponsesJSONBody defines parameters for PostInternalResponses.
 type PostInternalResponsesJSONBody struct {
 	union json.RawMessage
@@ -559,6 +578,9 @@ type PutInternalConfigPaymentPolicyRulesIdJSONRequestBody PutInternalConfigPayme
 
 // PostInternalConversationsConversationIdMessagesJSONRequestBody defines body for PostInternalConversationsConversationIdMessages for application/json ContentType.
 type PostInternalConversationsConversationIdMessagesJSONRequestBody PostInternalConversationsConversationIdMessagesJSONBody
+
+// PostInternalIdentityCardSignatureJSONRequestBody defines body for PostInternalIdentityCardSignature for application/json ContentType.
+type PostInternalIdentityCardSignatureJSONRequestBody PostInternalIdentityCardSignatureJSONBody
 
 // PostInternalResponsesJSONRequestBody defines body for PostInternalResponses for application/json ContentType.
 type PostInternalResponsesJSONRequestBody PostInternalResponsesJSONBody
@@ -759,6 +781,11 @@ type ClientInterface interface {
 
 	// GetInternalIdentity request
 	GetInternalIdentity(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInternalIdentityCardSignatureWithBody request with any body
+	PostInternalIdentityCardSignatureWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInternalIdentityCardSignature(ctx context.Context, body PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostInternalIdentityEnsPublish request
 	PostInternalIdentityEnsPublish(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1299,6 +1326,30 @@ func (c *Client) PostInternalConversationsConversationIdMessages(ctx context.Con
 
 func (c *Client) GetInternalIdentity(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInternalIdentityRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalIdentityCardSignatureWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalIdentityCardSignatureRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalIdentityCardSignature(ctx context.Context, body PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalIdentityCardSignatureRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2473,6 +2524,46 @@ func NewGetInternalIdentityRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewPostInternalIdentityCardSignatureRequest calls the generic PostInternalIdentityCardSignature builder with application/json body
+func NewPostInternalIdentityCardSignatureRequest(server string, body PostInternalIdentityCardSignatureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInternalIdentityCardSignatureRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostInternalIdentityCardSignatureRequestWithBody generates requests for PostInternalIdentityCardSignature with any type of body
+func NewPostInternalIdentityCardSignatureRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/identity/card-signature")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewPostInternalIdentityEnsPublishRequest generates requests for PostInternalIdentityEnsPublish
 func NewPostInternalIdentityEnsPublishRequest(server string) (*http.Request, error) {
 	var err error
@@ -2706,6 +2797,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetInternalIdentityWithResponse request
 	GetInternalIdentityWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalIdentityResponse, error)
+
+	// PostInternalIdentityCardSignatureWithBodyWithResponse request with any body
+	PostInternalIdentityCardSignatureWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalIdentityCardSignatureResponse, error)
+
+	PostInternalIdentityCardSignatureWithResponse(ctx context.Context, body PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalIdentityCardSignatureResponse, error)
 
 	// PostInternalIdentityEnsPublishWithResponse request
 	PostInternalIdentityEnsPublishWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostInternalIdentityEnsPublishResponse, error)
@@ -3512,6 +3608,30 @@ func (r GetInternalIdentityResponse) StatusCode() int {
 	return 0
 }
 
+type PostInternalIdentityCardSignatureResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAgentCardSignatureResponse
+	JSON400      *FiberMap
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInternalIdentityCardSignatureResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInternalIdentityCardSignatureResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type PostInternalIdentityEnsPublishResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3951,6 +4071,23 @@ func (c *ClientWithResponses) GetInternalIdentityWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseGetInternalIdentityResponse(rsp)
+}
+
+// PostInternalIdentityCardSignatureWithBodyWithResponse request with arbitrary body returning *PostInternalIdentityCardSignatureResponse
+func (c *ClientWithResponses) PostInternalIdentityCardSignatureWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalIdentityCardSignatureResponse, error) {
+	rsp, err := c.PostInternalIdentityCardSignatureWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalIdentityCardSignatureResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostInternalIdentityCardSignatureWithResponse(ctx context.Context, body PostInternalIdentityCardSignatureJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalIdentityCardSignatureResponse, error) {
+	rsp, err := c.PostInternalIdentityCardSignature(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalIdentityCardSignatureResponse(rsp)
 }
 
 // PostInternalIdentityEnsPublishWithResponse request returning *PostInternalIdentityEnsPublishResponse
@@ -5186,6 +5323,46 @@ func ParseGetInternalIdentityResponse(rsp *http.Response) (*GetInternalIdentityR
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInternalIdentityCardSignatureResponse parses an HTTP response from a PostInternalIdentityCardSignatureWithResponse call
+func ParsePostInternalIdentityCardSignatureResponse(rsp *http.Response) (*PostInternalIdentityCardSignatureResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInternalIdentityCardSignatureResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAgentCardSignatureResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest FiberMap

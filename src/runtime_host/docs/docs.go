@@ -1183,6 +1183,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/identity/card-signature": {
+            "post": {
+                "description": "Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card. The card must not carry a ` + "`" + `signatures` + "`" + ` member.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Sign an agent card",
+                "parameters": [
+                    {
+                        "description": "Agent card to sign",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SignAgentCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AgentCardSignatureResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "card",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_card_signing_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/identity/ens/publish": {
             "post": {
                 "description": "Writes the ` + "`" + `url` + "`" + ` text record for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.",
@@ -1498,6 +1544,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SignAgentCardRequest": {
+            "type": "object",
+            "properties": {
+                "card": {
+                    "type": "object"
+                }
+            }
+        },
         "requests.UpdateMCPConnectionRequest": {
             "type": "object",
             "properties": {
@@ -1517,6 +1571,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.AgentCardSignatureResponse": {
+            "type": "object",
+            "properties": {
+                "protected": {
+                    "type": "string"
+                },
+                "signature": {
                     "type": "string"
                 }
             }

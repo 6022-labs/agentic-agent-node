@@ -82,6 +82,12 @@ func addIdentityConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		identity_services.NewHttpAgentCardSignatureClient,
+		dig.As(new(identity_interfaces.AgentCardSignatureClientInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 func addKnowledgeConfiguration(container *dig.Container) {

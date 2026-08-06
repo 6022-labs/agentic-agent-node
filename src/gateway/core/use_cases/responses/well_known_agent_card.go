@@ -2,14 +2,15 @@ package responses
 
 // WellKnownAgentCard is the A2A v1.0 discovery document (ProtoJSON shape).
 type WellKnownAgentCard struct {
-	Name                string            `json:"name"`
-	Description         string            `json:"description"`
-	SupportedInterfaces []AgentInterface  `json:"supportedInterfaces"`
-	Version             string            `json:"version"`
-	Capabilities        AgentCapabilities `json:"capabilities"`
-	DefaultInputModes   []string          `json:"defaultInputModes"`
-	DefaultOutputModes  []string          `json:"defaultOutputModes"`
-	Skills              []AgentSkill      `json:"skills"`
+	Name                string               `json:"name"`
+	Description         string               `json:"description"`
+	SupportedInterfaces []AgentInterface     `json:"supportedInterfaces"`
+	Version             string               `json:"version"`
+	Capabilities        AgentCapabilities    `json:"capabilities"`
+	DefaultInputModes   []string             `json:"defaultInputModes"`
+	DefaultOutputModes  []string             `json:"defaultOutputModes"`
+	Skills              []AgentSkill         `json:"skills"`
+	Signatures          []AgentCardSignature `json:"signatures,omitempty"`
 }
 
 type AgentInterface struct {

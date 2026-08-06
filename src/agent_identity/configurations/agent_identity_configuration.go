@@ -111,6 +111,13 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		services.NewAgentCardSigner,
+		dig.As(new(identity_interfaces.AgentCardSignerInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewAgentChainRecoverer,
 		dig.As(new(identity_interfaces.AgentChainRecovererInterface)),
 	); err != nil {
@@ -170,6 +177,7 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		use_cases.NewSelfRegisterAgent,
 		use_cases.NewListAgentCollections,
 		use_cases.NewGetAgentSoul,
+		use_cases.NewSignAgentCard,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

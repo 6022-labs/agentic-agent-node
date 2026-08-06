@@ -15,6 +15,7 @@ require (
 	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
+	github.com/gowebpki/jcs v1.0.1
 	github.com/hashicorp/vault/api v1.22.0
 	github.com/joho/godotenv v1.5.1
 	github.com/knadh/koanf/parsers/json v1.0.0

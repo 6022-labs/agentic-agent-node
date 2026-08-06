@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -22,6 +23,8 @@ const (
 )
 
 type GetWellKnownAgent6022 struct {
+	wellKnownCardSigner
+
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface
 	paymentRuleClient       payment_interfaces.PaymentRuleClientInterface
 	agentIdentitySettings   *identity_settings.AgentIdentitySettings
@@ -30,11 +33,13 @@ type GetWellKnownAgent6022 struct {
 
 func NewGetWellKnownAgent6022(
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface,
+	agentCardSignatureClient identity_interfaces.AgentCardSignatureClientInterface,
 	paymentRuleClient payment_interfaces.PaymentRuleClientInterface,
 	agentIdentitySettings *identity_settings.AgentIdentitySettings,
 	gatewaySettings *core_settings.GatewaySettings,
 ) *GetWellKnownAgent6022 {
 	return &GetWellKnownAgent6022{
+		wellKnownCardSigner:     wellKnownCardSigner{agentCardSignatureClient: agentCardSignatureClient},
 		agentRegistrationClient: agentRegistrationClient,
 		paymentRuleClient:       paymentRuleClient,
 		agentIdentitySettings:   agentIdentitySettings,
@@ -54,7 +59,7 @@ func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKno
 		return nil, err
 	}
 
-	return &responses.WellKnownAgent6022{
+	card := &responses.WellKnownAgent6022{
 		Protocol:        protocol6022,
 		ProtocolVersion: protocol6022Version,
 		Name:            strings.TrimSpace(payload.Name),
@@ -63,7 +68,15 @@ func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKno
 			Responses: u.agentIdentitySettings.RuntimeUrl + u.gatewaySettings.PublicPrefix + responsesRoute,
 		},
 		PaymentMethods: paymentMethods,
-	}, nil
+	}
+
+	signatures, err := u.signCard(ctx, card)
+	if err != nil {
+		return nil, err
+	}
+	card.Signatures = signatures
+
+	return card, nil
 }
 
 // listPaymentMethods derives the distinct configured rule methods; a missing or not-yet-minted policy means no payment, not an error.
@@ -78,7 +91,11 @@ func (u *GetWellKnownAgent6022) listPaymentMethods(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	return lo.Uniq(lo.Map(rules, func(rule payment_models.ExternalPaymentRule, _ int) string {
+	methods := lo.Uniq(lo.Map(rules, func(rule payment_models.ExternalPaymentRule, _ int) string {
 		return rule.Method
-	})), nil
+	}))
+
+	slices.Sort(methods)
+
+	return methods, nil
 }

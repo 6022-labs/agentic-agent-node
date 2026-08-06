@@ -19,6 +19,8 @@ const (
 )
 
 type GetWellKnownAgentCard struct {
+	wellKnownCardSigner
+
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface
 	agentIdentitySettings   *identity_settings.AgentIdentitySettings
 	gatewaySettings         *core_settings.GatewaySettings
@@ -26,10 +28,12 @@ type GetWellKnownAgentCard struct {
 
 func NewGetWellKnownAgentCard(
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface,
+	agentCardSignatureClient identity_interfaces.AgentCardSignatureClientInterface,
 	agentIdentitySettings *identity_settings.AgentIdentitySettings,
 	gatewaySettings *core_settings.GatewaySettings,
 ) *GetWellKnownAgentCard {
 	return &GetWellKnownAgentCard{
+		wellKnownCardSigner:     wellKnownCardSigner{agentCardSignatureClient: agentCardSignatureClient},
 		agentRegistrationClient: agentRegistrationClient,
 		agentIdentitySettings:   agentIdentitySettings,
 		gatewaySettings:         gatewaySettings,
@@ -45,7 +49,7 @@ func (u *GetWellKnownAgentCard) Execute(ctx context.Context) (*responses.WellKno
 
 	name := strings.TrimSpace(payload.Name)
 
-	return &responses.WellKnownAgentCard{
+	card := &responses.WellKnownAgentCard{
 		Name:        name,
 		Description: name + " — 6022 agent reachable over A2A",
 		SupportedInterfaces: []responses.AgentInterface{{
@@ -68,5 +72,13 @@ func (u *GetWellKnownAgentCard) Execute(ctx context.Context) (*responses.WellKno
 			InputModes:  []string{"text/plain"},
 			OutputModes: []string{"text/plain"},
 		}},
-	}, nil
+	}
+
+	signatures, err := u.signCard(ctx, card)
+	if err != nil {
+		return nil, err
+	}
+	card.Signatures = signatures
+
+	return card, nil
 }

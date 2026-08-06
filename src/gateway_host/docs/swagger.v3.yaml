@@ -279,6 +279,13 @@ components:
         streaming:
           type: boolean
       type: object
+    responses.AgentCardSignature:
+      properties:
+        protected:
+          type: string
+        signature:
+          type: string
+      type: object
     responses.AgentCollectionResponse:
       properties:
         address:
@@ -720,6 +727,13 @@ components:
           type: string
         protocolVersion:
           type: string
+        signatures:
+          description: Signatures must stay empty while the card is being signed —
+            the spec excludes this member from the signed content.
+          items:
+            $ref: '#/components/schemas/responses.AgentCardSignature'
+          type: array
+          uniqueItems: false
       type: object
     responses.WellKnownAgentCard:
       properties:
@@ -739,6 +753,13 @@ components:
           type: string
         name:
           type: string
+        signatures:
+          description: Signatures must stay empty while the card is being signed —
+            the spec excludes this member from the signed content.
+          items:
+            $ref: '#/components/schemas/responses.AgentCardSignature'
+          type: array
+          uniqueItems: false
         skills:
           items:
             $ref: '#/components/schemas/responses.AgentSkill'
