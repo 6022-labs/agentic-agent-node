@@ -97,7 +97,7 @@ export default function SelfToolsSection() {
                     <TableRow className="hover:bg-transparent">
                       <TableCell
                         colSpan={2}
-                        className="sticky top-0 z-10 bg-card pt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        className="sticky top-0 z-10 bg-muted pt-3 pb-3 text-sm font-semibold tracking-wide text-foreground"
                       >
                         {group}
                       </TableCell>
