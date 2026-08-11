@@ -47,7 +47,7 @@ func NewGetWellKnownAgent6022(
 	}
 }
 
-// Execute fetches the agent identity from the runtime; the document requires it, so a failure surfaces rather than a placeholder.
+// Execute fetches the identity from the runtime; the document requires it, so a failure surfaces, not a placeholder.
 func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKnownAgent6022, error) {
 	payload, err := u.agentRegistrationClient.Get(ctx)
 	if err != nil {
@@ -79,7 +79,7 @@ func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKno
 	return card, nil
 }
 
-// listPaymentMethods derives the distinct configured rule methods; a missing or not-yet-minted policy means no payment, not an error.
+// listPaymentMethods derives distinct rule methods; a missing or not-yet-minted policy means no payment, not an error.
 func (u *GetWellKnownAgent6022) listPaymentMethods(ctx context.Context) ([]string, error) {
 	rules, err := u.paymentRuleClient.List(ctx)
 	if err != nil {

@@ -17,7 +17,7 @@ import (
 
 // @title Agentic Agent Node — Gateway Host API
 // @version 1.0
-// @description Public HTTP front for one agent: auth (JWT + EIP-191), bootstrap status, config endpoints, /responses. Authenticated routes proxy to runtime_host on the loopback interface.
+// @description Public HTTP front: auth (JWT + EIP-191), config, /responses; proxies to runtime_host on loopback.
 // @BasePath /
 // @securityDefinitions.apikey BearerAuth
 // @in header

@@ -27,7 +27,9 @@ func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.Blockchai
 	return u.toResponse(payload), nil
 }
 
-func (u *GetBlockchainConfig) toResponse(p *models.ExternalBlockchainConfigPayload) *responses.BlockchainConfigResponse {
+func (u *GetBlockchainConfig) toResponse(
+	p *models.ExternalBlockchainConfigPayload,
+) *responses.BlockchainConfigResponse {
 	evmChains := make(map[string]responses.EvmChainConfig, len(p.EvmChains))
 	for chainId, c := range p.EvmChains {
 		evmChains[chainId] = responses.EvmChainConfig{

@@ -98,7 +98,10 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 go build ./src/...                                            # build everything (CI: go-build.yml)
 find . -type d -name '*unit_tests' -exec go test {}/... \;   # all unit tests (CI: go-unit-tests.yml)
 go test ./tests/<package>_unit_tests/...                     # one package
+make fmt                                                      # golines, 120-char cap (needs golines)
 ```
+
+**Always run `make fmt` before handing work back** — it wraps code lines to the 120-char cap and **errors on comments over the cap**: shorten those comments, never wrap them.
 
 - **Integration tests** (`tests/*_integration_tests`) spin up real Postgres/Vault via `tests/common_tests/container_builders` — they need Docker and are **not** in the unit-test CI sweep.
 - **Mocks** are generated, never hand-written. Regenerate after changing any interface: `deepsearch-mockgen -S ./src -O ./tests -A -P` (CLI: https://github.com/FournyP/deepsearch-mockgen-cli).

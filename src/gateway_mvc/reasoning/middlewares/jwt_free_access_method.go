@@ -50,7 +50,10 @@ func (m *JwtFreeAccessMethod) TryHandle(ctx *fiber.Ctx, rules []models.ExternalP
 }
 
 // freeAccessAddress returns the bearer's free-entitled address; false on any failure.
-func (m *JwtFreeAccessMethod) freeAccessAddress(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) (common.Address, bool) {
+func (m *JwtFreeAccessMethod) freeAccessAddress(
+	ctx *fiber.Ctx,
+	rules []models.ExternalPaymentRule,
+) (common.Address, bool) {
 	const prefix = "Bearer "
 	header := ctx.Get(fiber.HeaderAuthorization)
 	if !strings.HasPrefix(header, prefix) {

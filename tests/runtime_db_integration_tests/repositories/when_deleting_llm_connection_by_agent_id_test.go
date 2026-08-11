@@ -24,7 +24,9 @@ type WhenDeletingLLMConnectionByAgentIdTestingSuite struct {
 	sut                      *repositories.LLMConnectionRepository
 }
 
-func WhenDeletingLLMConnectionByAgentIdBeforeEach(tc *repositoryTestCase) *WhenDeletingLLMConnectionByAgentIdTestingSuite {
+func WhenDeletingLLMConnectionByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenDeletingLLMConnectionByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

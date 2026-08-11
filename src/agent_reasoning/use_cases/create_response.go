@@ -37,7 +37,10 @@ func NewCreateResponse(
 }
 
 // Execute resolves the conversation key, drives the turn (instructions feed the per-turn overlay), builds the Response.
-func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error) {
+func (u *CreateResponse) Execute(
+	ctx context.Context,
+	request *requests.CreateResponseRequest,
+) (*responses.CreateResponseResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -70,7 +73,11 @@ func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateRe
 	return u.buildResponse(request, conversationId, persisted), nil
 }
 
-func (u *CreateResponse) buildResponse(request *requests.CreateResponseRequest, conversationId string, persisted *knowledge_interfaces.ConversationMessage) *responses.CreateResponseResponse {
+func (u *CreateResponse) buildResponse(
+	request *requests.CreateResponseRequest,
+	conversationId string,
+	persisted *knowledge_interfaces.ConversationMessage,
+) *responses.CreateResponseResponse {
 	response := &responses.CreateResponseResponse{
 		Id:           conversationId,
 		Object:       "response",

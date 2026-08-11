@@ -43,7 +43,14 @@ func WhenUpdatingPaymentRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentRuleTes
 	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenUpdatingPaymentRuleTestingSuite{
-		sut: use_cases.NewUpdatePaymentRule(mockAgentRepository, mockAgentAddressRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, token6022Settings),
+		sut: use_cases.NewUpdatePaymentRule(
+			mockAgentRepository,
+			mockAgentAddressRepository,
+			mockPaymentPolicyRepository,
+			mockPaymentRuleRepository,
+			strategies,
+			token6022Settings,
+		),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockAgentAddressRepository:  mockAgentAddressRepository,
@@ -86,7 +93,10 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 			request := generateSavePaymentRuleRequest()
 			request.Name = "Friends discount"
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: rule.Id, SavePaymentRuleRequest: *request})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{Id: rule.Id, SavePaymentRuleRequest: *request},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Friends discount", updated.Name)
@@ -103,7 +113,10 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 			request := generateSavePaymentRuleRequest()
 			request.Name = ""
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: uuid.New(), SavePaymentRuleRequest: *request})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{Id: uuid.New(), SavePaymentRuleRequest: *request},
+			)
 
 			assert.Nil(t, updated)
 			var validationErr *apperrors.ValidationError
@@ -127,7 +140,13 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: uuid.New(), SavePaymentRuleRequest: *generateSavePaymentRuleRequest()})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{
+					Id:                     uuid.New(),
+					SavePaymentRuleRequest: *generateSavePaymentRuleRequest(),
+				},
+			)
 
 			assert.Nil(t, updated)
 			var validationErr *apperrors.ValidationError
@@ -141,7 +160,10 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				GetById(gomock.Any(), gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
 		}
 
 		t.Run("Should return an internal error", func(t *testing.T) {
@@ -150,7 +172,13 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: uuid.New(), SavePaymentRuleRequest: *generateSavePaymentRuleRequest()})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{
+					Id:                     uuid.New(),
+					SavePaymentRuleRequest: *generateSavePaymentRuleRequest(),
+				},
+			)
 
 			assert.Nil(t, updated)
 			var internalErr *apperrors.InternalError
@@ -166,7 +194,10 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
 			return rule
 		}
 
@@ -176,7 +207,13 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			rule := initSuite(suite)
 
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: rule.Id, SavePaymentRuleRequest: *generateSavePaymentRuleRequest()})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{
+					Id:                     rule.Id,
+					SavePaymentRuleRequest: *generateSavePaymentRuleRequest(),
+				},
+			)
 
 			assert.Nil(t, updated)
 			var internalErr *apperrors.InternalError
@@ -198,7 +235,13 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			updated, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: uuid.New(), SavePaymentRuleRequest: *generateSavePaymentRuleRequest()})
+			updated, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{
+					Id:                     uuid.New(),
+					SavePaymentRuleRequest: *generateSavePaymentRuleRequest(),
+				},
+			)
 
 			assert.Nil(t, updated)
 			var notFoundErr *apperrors.NotFoundError

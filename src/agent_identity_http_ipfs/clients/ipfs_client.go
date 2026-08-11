@@ -54,7 +54,11 @@ func (client *IPFSClient) applyAuth(req *http.Request) {
 	}
 }
 
-func (client *IPFSClient) Add(fileBytes []byte, fileName string, params *models.ExternalAddQueryRequest) (*models.ExternalAddResponse, error) {
+func (client *IPFSClient) Add(
+	fileBytes []byte,
+	fileName string,
+	params *models.ExternalAddQueryRequest,
+) (*models.ExternalAddResponse, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", fileName)

@@ -43,7 +43,11 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 
 	t.Run("Given the name is whitespace", func(t *testing.T) {
 		t.Parallel()
-		req := &requests.CreateMcpConnectionRequest{Name: "  ", Url: "https://mcp.example.com", AllowedToolPatterns: []string{"search_issues"}}
+		req := &requests.CreateMcpConnectionRequest{
+			Name:                "  ",
+			Url:                 "https://mcp.example.com",
+			AllowedToolPatterns: []string{"search_issues"},
+		}
 
 		t.Run("Should reject with a validation error on name", func(t *testing.T) {
 			t.Parallel()
@@ -55,7 +59,11 @@ func TestWhenValidatingCreateMcpConnectionRequest(t *testing.T) {
 
 	t.Run("Given the url is empty", func(t *testing.T) {
 		t.Parallel()
-		req := &requests.CreateMcpConnectionRequest{Name: "search", Url: "", AllowedToolPatterns: []string{"search_issues"}}
+		req := &requests.CreateMcpConnectionRequest{
+			Name:                "search",
+			Url:                 "",
+			AllowedToolPatterns: []string{"search_issues"},
+		}
 
 		t.Run("Should reject with a validation error on url", func(t *testing.T) {
 			t.Parallel()

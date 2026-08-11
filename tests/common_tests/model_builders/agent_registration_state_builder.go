@@ -67,7 +67,9 @@ func (b *AgentRegistrationStateBuilder) WithMintedAt(mintedAt time.Time) *AgentR
 	return b
 }
 
-func (b *AgentRegistrationStateBuilder) WithEnsRegistryStatus(status enums.TransactionStatus) *AgentRegistrationStateBuilder {
+func (b *AgentRegistrationStateBuilder) WithEnsRegistryStatus(
+	status enums.TransactionStatus,
+) *AgentRegistrationStateBuilder {
 	b.ensRegistryStatus = status
 	return b
 }

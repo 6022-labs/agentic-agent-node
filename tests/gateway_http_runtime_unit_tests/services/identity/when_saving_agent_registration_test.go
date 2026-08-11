@@ -40,21 +40,33 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, contentType string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
-					assert.Contains(t, contentType, "multipart/form-data")
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, contentType string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAgentRegistrationResponse, error) {
+						assert.Contains(t, contentType, "multipart/form-data")
 
-					buffered, err := io.ReadAll(reader)
-					assert.NoError(t, err)
-					assert.Equal(t, "bob", readMultipartField(t, contentType, bytes.NewReader(buffered), "name"))
-					assert.Equal(t, "0xowner", readMultipartField(t, contentType, bytes.NewReader(buffered), "owner"))
-					assert.Equal(t, "base.png", readMultipartField(t, contentType, bytes.NewReader(buffered), "image"))
+						buffered, err := io.ReadAll(reader)
+						assert.NoError(t, err)
+						assert.Equal(t, "bob", readMultipartField(t, contentType, bytes.NewReader(buffered), "name"))
+						assert.Equal(
+							t,
+							"0xowner",
+							readMultipartField(t, contentType, bytes.NewReader(buffered), "owner"),
+						)
+						assert.Equal(
+							t,
+							"base.png",
+							readMultipartField(t, contentType, bytes.NewReader(buffered), "image"),
+						)
 
-					return &clients.PostInternalAgentRegistrationResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"collectionAddress":"0xabc","name":"bob","role":"agent","owner":"0xowner"}`),
-					}, nil
-				})
+						return &clients.PostInternalAgentRegistrationResponse{
+							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+							Body: []byte(
+								`{"collectionAddress":"0xabc","name":"bob","role":"agent","owner":"0xowner"}`,
+							),
+						}, nil
+					})
 		}
 
 		t.Run("Should decode the saved registration payload", func(t *testing.T) {
@@ -82,10 +94,12 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).Return(&clients.PostInternalAgentRegistrationResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-				Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
+				}, nil)
 		}
 
 		t.Run("Should return a ValidationError", func(t *testing.T) {

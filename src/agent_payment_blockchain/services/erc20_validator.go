@@ -26,7 +26,11 @@ func NewErc20Validator(ethClientFactory interfaces.EthClientFactoryInterface) *E
 	return &Erc20Validator{ethClientFactory: ethClientFactory}
 }
 
-func (v *Erc20Validator) ValidateErc20(ctx context.Context, chainId string, asset string) (enums.AssetTransferMethod, string, string, error) {
+func (v *Erc20Validator) ValidateErc20(
+	ctx context.Context,
+	chainId string,
+	asset string,
+) (enums.AssetTransferMethod, string, string, error) {
 	// Numeric id for the EIP-712 domain separator.
 	evmChainId, err := strconv.ParseUint(chainId, 10, 64)
 	if err != nil {
@@ -65,7 +69,12 @@ func (v *Erc20Validator) ValidateErc20(ctx context.Context, chainId string, asse
 
 // detectTransferMethod resolves the token's EIP-712 domain to decide the x402
 // transfer method: a usable domain (EIP-3009 or Permit2).
-func (v *Erc20Validator) detectTransferMethod(token *abi.Erc20Caller, chainId int64, asset string, callOpts *bind.CallOpts) (enums.AssetTransferMethod, string, string) {
+func (v *Erc20Validator) detectTransferMethod(
+	token *abi.Erc20Caller,
+	chainId int64,
+	asset string,
+	callOpts *bind.CallOpts,
+) (enums.AssetTransferMethod, string, string) {
 	if domain, err := token.Eip712Domain(callOpts); err == nil {
 		return enums.AssetTransferMethodEip3009, domain.Name, domain.Version
 	}
@@ -73,7 +82,8 @@ func (v *Erc20Validator) detectTransferMethod(token *abi.Erc20Caller, chainId in
 	name, nameErr := token.Name(callOpts)
 	version, versionErr := token.Version(callOpts)
 	if nameErr == nil && versionErr == nil {
-		if separator, err := token.DOMAINSEPARATOR(callOpts); err == nil && helper.ComputeDomainSeparator(name, version, chainId, asset) == separator {
+		if separator, err := token.DOMAINSEPARATOR(callOpts); err == nil &&
+			helper.ComputeDomainSeparator(name, version, chainId, asset) == separator {
 			return enums.AssetTransferMethodEip3009, name, version
 		}
 	}

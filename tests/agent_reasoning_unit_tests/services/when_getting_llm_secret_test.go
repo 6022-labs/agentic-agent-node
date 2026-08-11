@@ -41,7 +41,9 @@ func TestWhenGettingLLMSecret(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMSecretTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 		}
 
 		t.Run("Should report not-found", func(t *testing.T) {
@@ -62,7 +64,9 @@ func TestWhenGettingLLMSecret(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMSecretTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{"apiKey": "sk-secret-123"}, nil)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(map[string]string{"apiKey": "sk-secret-123"}, nil)
 		}
 
 		t.Run("Should return the api key", func(t *testing.T) {

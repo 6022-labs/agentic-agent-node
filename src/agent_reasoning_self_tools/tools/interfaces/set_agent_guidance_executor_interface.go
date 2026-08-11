@@ -9,5 +9,8 @@ import (
 
 // SetAgentGuidanceExecutorInterface exposes the guidance write to the self tools.
 type SetAgentGuidanceExecutorInterface interface {
-	Execute(ctx context.Context, request *reasoning_requests.SetAgentGuidanceRequest) (*reasoning_responses.AgentGuidanceResponse, error)
+	Execute(
+		ctx context.Context,
+		request *reasoning_requests.SetAgentGuidanceRequest,
+	) (*reasoning_responses.AgentGuidanceResponse, error)
 }

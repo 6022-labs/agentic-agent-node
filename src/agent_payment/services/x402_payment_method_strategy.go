@@ -85,7 +85,10 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 		return errors.NewValidationError("config.payTo", "must be a hex address")
 	}
 	if len(config.AddressPatterns) == 0 {
-		return errors.NewValidationError("config.addressPatterns", "at least one pattern is required (\".*\" opens the rule to everyone)")
+		return errors.NewValidationError(
+			"config.addressPatterns",
+			"at least one pattern is required (\".*\" opens the rule to everyone)",
+		)
 	}
 	for i, pattern := range config.AddressPatterns {
 		trimmed := strings.TrimSpace(pattern)
@@ -93,7 +96,10 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 			return errors.NewValidationError("config.addressPatterns", "patterns cannot be empty")
 		}
 		if _, err := regexp.Compile(trimmed); err != nil {
-			return errors.NewValidationError("config.addressPatterns", "must be valid regexes matched against the lowercase 0x address")
+			return errors.NewValidationError(
+				"config.addressPatterns",
+				"must be valid regexes matched against the lowercase 0x address",
+			)
 		}
 		config.AddressPatterns[i] = trimmed
 	}

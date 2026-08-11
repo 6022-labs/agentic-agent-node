@@ -40,7 +40,7 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 
 // Challenge issues a single-use EIP-4361 message the caller must sign with their wallet.
 // @Summary Auth challenge
-// @Description Returns a fresh SIWE (EIP-4361) message + expiry for the given address. The caller signs the message verbatim (EIP-191 personal_sign) and posts the result to /auth/verify.
+// @Description Returns a fresh SIWE (EIP-4361) message + expiry; sign it verbatim (EIP-191) and post to /auth/verify.
 // @Tags Auth
 // @Produce json
 // @Param address query string true "wallet address the message is issued for"
@@ -63,7 +63,7 @@ func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
 
 // Verify exchanges a signed SIWE message for a JWT.
 // @Summary Auth verify
-// @Description Rebuilds the EIP-4361 message for the nonce, verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.
+// @Description Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership, issues a HS256 JWT.
 // @Tags Auth
 // @Accept json
 // @Produce json

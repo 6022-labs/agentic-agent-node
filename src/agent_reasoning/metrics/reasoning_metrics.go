@@ -98,7 +98,12 @@ func (m *ReasoningMetrics) RecordLoopExceeded(ctx context.Context, duration time
 	m.maxIterationsCounter.Add(ctx, 1)
 }
 
-func (m *ReasoningMetrics) RecordLoopAborted(ctx context.Context, reason string, duration time.Duration, iterations int64) {
+func (m *ReasoningMetrics) RecordLoopAborted(
+	ctx context.Context,
+	reason string,
+	duration time.Duration,
+	iterations int64,
+) {
 	m.recordLoop(ctx, reason, duration, iterations)
 	m.abortedCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("reasoning.abort_reason", reason)))
 }

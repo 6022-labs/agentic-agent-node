@@ -22,7 +22,9 @@ type WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite struct {
 	mockAnthropicMessagesClient *clients_mocks.MockAnthropicMessagesStandardClientInterface
 }
 
-func WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite {
+func WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(
+	t *testing.T,
+) *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAnthropicMessagesClient := clients_mocks.NewMockAnthropicMessagesStandardClientInterface(mockController)
@@ -120,7 +122,12 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
 								{Type: "text", Text: &first},
 								{Type: "mcp_tool_use", Id: &id, Name: &name, Input: map[string]any{}},
-								{Type: "mcp_tool_result", ToolUseId: &id, IsError: &isError, Content: []map[string]any{{"type": "text", "text": "20C"}}},
+								{
+									Type:      "mcp_tool_result",
+									ToolUseId: &id,
+									IsError:   &isError,
+									Content:   []map[string]any{{"type": "text", "text": "20C"}},
+								},
 								{Type: "text", Text: &second},
 							},
 						},
@@ -265,7 +272,15 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -338,7 +353,12 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 							Role: "assistant",
 							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
 								{Type: "mcp_tool_use", Id: &id, Name: &name, ServerName: &label, Input: toolArgs},
-								{Type: "mcp_tool_result", ToolUseId: &id, IsError: &isError, Content: []map[string]any{{"type": "text", "text": "20C"}}},
+								{
+									Type:      "mcp_tool_result",
+									ToolUseId: &id,
+									IsError:   &isError,
+									Content:   []map[string]any{{"type": "text", "text": "20C"}},
+								},
 								{Type: "text", Text: &finalText},
 							},
 						},
@@ -352,7 +372,15 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
 			initSuite(suite, "weather")
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
 				assert.Equal(t, "mcptoolu_1", result.ExecutedToolCalls[0].Id)
@@ -369,7 +397,15 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
 			initSuite(suite, "normalized-weather")
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
 				assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)

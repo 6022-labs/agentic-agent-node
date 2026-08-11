@@ -33,7 +33,12 @@ func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
 	}
 	for index, message := range r.Messages {
 		if !appendableRoles.Contains(enums.ConversationMessageRole(message.Role)) {
-			return errors.NewValidationError("messages.role", "invalid role, must be one of: "+appendableRoles.String()+", check message at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"messages.role",
+				"invalid role, must be one of: "+appendableRoles.String()+", check message at index "+strconv.Itoa(
+					index,
+				),
+			)
 		}
 	}
 	return nil

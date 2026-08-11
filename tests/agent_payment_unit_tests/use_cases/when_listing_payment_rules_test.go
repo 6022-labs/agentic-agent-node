@@ -44,7 +44,14 @@ func WhenListingPaymentRulesBeforeEach(t *testing.T) *WhenListingPaymentRulesTes
 	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenListingPaymentRulesTestingSuite{
-		sut: use_cases.NewListPaymentRules(mockAgentRepository, mockAgentAddressRepository, mockPaymentPolicyRepository, mockPaymentRuleRepository, strategies, token6022Settings),
+		sut: use_cases.NewListPaymentRules(
+			mockAgentRepository,
+			mockAgentAddressRepository,
+			mockPaymentPolicyRepository,
+			mockPaymentRuleRepository,
+			strategies,
+			token6022Settings,
+		),
 
 		mockAgentRepository:         mockAgentRepository,
 		mockAgentAddressRepository:  mockAgentAddressRepository,
@@ -89,9 +96,18 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			rule := model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).Return(nil, nil).AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().ListByPolicyId(gomock.Any(), gomock.Any()).Return([]models.PaymentRule{*rule}, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(policy, nil).
+				Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), gomock.Any()).
+				Return([]models.PaymentRule{*rule}, nil).
+				Times(1)
 			// Each rule's config is joined back from its method's table.
 			suite.mockStrategy.EXPECT().
 				LoadConfig(gomock.Any(), rule.Id).
@@ -125,14 +141,26 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).Return(nil, nil).AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
 			// Seeding the default rule persists its config, then the empty list
 			// is returned.
-			suite.mockPaymentRuleRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(model_builders.NewPaymentRuleBuilder().Build(), nil).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewPaymentRuleBuilder().Build(), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().ListByPolicyId(gomock.Any(), gomock.Any()).Return([]models.PaymentRule{}, nil).Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), gomock.Any()).
+				Return([]models.PaymentRule{}, nil).
+				Times(1)
 		}
 
 		t.Run("Should materialize the policy before listing", func(t *testing.T) {
@@ -156,9 +184,18 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).Return(nil, nil).AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().ListByPolicyId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down")).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(policy, nil).
+				Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down")).
+				Times(1)
 		}
 
 		t.Run("Should return an internal error", func(t *testing.T) {

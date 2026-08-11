@@ -88,7 +88,11 @@ func (s *AgentChainRecoverer) Recover(ctx context.Context) (bool, error) {
 // findOnChain scans every configured manager chain for an NFT the wallet controls.
 func (s *AgentChainRecoverer) findOnChain(wallet common.Address) (common.Address, uint64, string, bool) {
 	for _, chainId := range s.agentCollectionsManagersSettings.ChainIds() {
-		collection, tokenId, _, err := s.agentCollectionsManagerRequester.FindAgentByAddress(chainId, enums.AddressTypeEvm, wallet.Hex())
+		collection, tokenId, _, err := s.agentCollectionsManagerRequester.FindAgentByAddress(
+			chainId,
+			enums.AddressTypeEvm,
+			wallet.Hex(),
+		)
 		if err != nil {
 			s.logger.Warn("scan collections failed during recovery",
 				zap.String("chainId", chainId), zap.Error(err))

@@ -55,8 +55,12 @@ func (r *AgentCollectionsManagerRequester) IsKnownCollection(chainId string, col
 	return contract.IsKnownCollection(nil, collection)
 }
 
-// FindAgentByAddress returns the agent NFT a typed address belongs to, or a zero address if none. The manager scans collections on-chain, paginated by the cursor.
-func (r *AgentCollectionsManagerRequester) FindAgentByAddress(chainId string, addressType enums.AddressType, value string) (common.Address, uint64, string, error) {
+// FindAgentByAddress returns the agent NFT a typed address belongs to, or zero if none; scans collections by cursor.
+func (r *AgentCollectionsManagerRequester) FindAgentByAddress(
+	chainId string,
+	addressType enums.AddressType,
+	value string,
+) (common.Address, uint64, string, error) {
 	contract, err := r.manager(chainId)
 	if err != nil {
 		return common.Address{}, 0, "", err

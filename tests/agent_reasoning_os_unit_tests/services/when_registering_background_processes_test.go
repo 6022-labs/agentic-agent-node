@@ -29,7 +29,11 @@ func WhenRegisteringBackgroundProcessesBeforeEach(t *testing.T) *WhenRegistering
 	mockController := gomock.NewController(t)
 
 	osSettings := os_settings.NewOsSettings(zap.NewNop(), koanf.New("."))
-	commandSettings := os_settings.NewCommandSettings(zap.NewNop(), koanf.New("."), reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")))
+	commandSettings := os_settings.NewCommandSettings(
+		zap.NewNop(),
+		koanf.New("."),
+		reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")),
+	)
 
 	return &WhenRegisteringBackgroundProcessesTestingSuite{
 		sut:             services.NewProcessRegistry(commandSettings),
@@ -40,7 +44,9 @@ func WhenRegisteringBackgroundProcessesBeforeEach(t *testing.T) *WhenRegistering
 }
 
 // handle builds a mock whose Snapshot always reports the given state.
-func (s *WhenRegisteringBackgroundProcessesTestingSuite) handle(result *os_interfaces.CommandResult) *services_mocks.MockCommandHandleInterface {
+func (s *WhenRegisteringBackgroundProcessesTestingSuite) handle(
+	result *os_interfaces.CommandResult,
+) *services_mocks.MockCommandHandleInterface {
 	mockCommandHandle := services_mocks.NewMockCommandHandleInterface(s.mockController)
 	mockCommandHandle.EXPECT().Snapshot().Return(result).AnyTimes()
 	return mockCommandHandle
@@ -57,7 +63,11 @@ func TestWhenRegisteringBackgroundProcesses(t *testing.T) {
 
 			suite := WhenRegisteringBackgroundProcessesBeforeEach(t)
 
-			process, err := suite.sut.Register("tail -f log", "/workspace", suite.handle(&os_interfaces.CommandResult{Running: true}))
+			process, err := suite.sut.Register(
+				"tail -f log",
+				"/workspace",
+				suite.handle(&os_interfaces.CommandResult{Running: true}),
+			)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, process) {
@@ -77,11 +87,19 @@ func TestWhenRegisteringBackgroundProcesses(t *testing.T) {
 
 			suite := WhenRegisteringBackgroundProcessesBeforeEach(t)
 			for range suite.commandSettings.MaxBackgroundProcesses {
-				_, err := suite.sut.Register("sleep 60", "/workspace", suite.handle(&os_interfaces.CommandResult{Running: true}))
+				_, err := suite.sut.Register(
+					"sleep 60",
+					"/workspace",
+					suite.handle(&os_interfaces.CommandResult{Running: true}),
+				)
 				assert.NoError(t, err)
 			}
 
-			process, err := suite.sut.Register("sleep 60", "/workspace", suite.handle(&os_interfaces.CommandResult{Running: true}))
+			process, err := suite.sut.Register(
+				"sleep 60",
+				"/workspace",
+				suite.handle(&os_interfaces.CommandResult{Running: true}),
+			)
 
 			assert.Nil(t, process)
 			var conflictError *apperrors.ConflictError
@@ -94,11 +112,19 @@ func TestWhenRegisteringBackgroundProcesses(t *testing.T) {
 			suite := WhenRegisteringBackgroundProcessesBeforeEach(t)
 			for i := range suite.commandSettings.MaxBackgroundProcesses {
 				running := i > 0
-				_, err := suite.sut.Register("sleep 60", "/workspace", suite.handle(&os_interfaces.CommandResult{Running: running}))
+				_, err := suite.sut.Register(
+					"sleep 60",
+					"/workspace",
+					suite.handle(&os_interfaces.CommandResult{Running: running}),
+				)
 				assert.NoError(t, err)
 			}
 
-			process, err := suite.sut.Register("echo hi", "/workspace", suite.handle(&os_interfaces.CommandResult{Running: true}))
+			process, err := suite.sut.Register(
+				"echo hi",
+				"/workspace",
+				suite.handle(&os_interfaces.CommandResult{Running: true}),
+			)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, process)
@@ -112,7 +138,11 @@ func TestWhenRegisteringBackgroundProcesses(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRegisteringBackgroundProcessesBeforeEach(t)
-			registered, err := suite.sut.Register("false", "/workspace", suite.handle(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(1)}))
+			registered, err := suite.sut.Register(
+				"false",
+				"/workspace",
+				suite.handle(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(1)}),
+			)
 			assert.NoError(t, err)
 
 			process, result, err := suite.sut.Get(registered.Id)

@@ -40,7 +40,9 @@ func TestWhenSavingLLMSecret(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingLLMSecretTestingSuite) {
-			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, map[string]string{"apiKey": "sk-secret"}).Return(nil)
+			suite.mockStorage.EXPECT().
+				Write(gomock.Any(), scopedKey, map[string]string{"apiKey": "sk-secret"}).
+				Return(nil)
 		}
 
 		t.Run("Should write it to the scoped key", func(t *testing.T) {

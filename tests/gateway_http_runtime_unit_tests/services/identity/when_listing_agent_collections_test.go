@@ -37,10 +37,14 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).Return(&clients.GetInternalAgentCollectionsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"collections":[{"address":"0xaaa","name":"alpha","description":"first","moderatorCount":2,"nextTokenId":7}]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).
+				Return(&clients.GetInternalAgentCollectionsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"collections":[{"address":"0xaaa","name":"alpha","description":"first","moderatorCount":2,"nextTokenId":7}]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the collections payload", func(t *testing.T) {
@@ -65,10 +69,12 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).Return(&clients.GetInternalAgentCollectionsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
-				Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).
+				Return(&clients.GetInternalAgentCollectionsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
+					Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

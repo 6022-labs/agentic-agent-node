@@ -41,7 +41,9 @@ func TestWhenExecutingGetLLMConnectionTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingGetLLMConnectionToolBeforeEach(t)
-			suite.mockGetLLMConnectionExecutor.EXPECT().Execute(ctx).Return(&reasoning_responses.LLMConnectionResponse{}, nil)
+			suite.mockGetLLMConnectionExecutor.EXPECT().
+				Execute(ctx).
+				Return(&reasoning_responses.LLMConnectionResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

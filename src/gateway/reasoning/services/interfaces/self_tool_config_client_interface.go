@@ -15,5 +15,9 @@ var ErrSelfToolNotFound = errors.New("self tool not found")
 // self tool config endpoints. Implemented by `gateway_http_runtime/services` over HTTP.
 type SelfToolConfigClientInterface interface {
 	List(ctx context.Context) (*models.ExternalSelfToolListPayload, error)
-	Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateSelfToolPayload) (*models.ExternalSelfToolPayload, error)
+	Update(
+		ctx context.Context,
+		id uuid.UUID,
+		body *models.ExternalUpdateSelfToolPayload,
+	) (*models.ExternalSelfToolPayload, error)
 }

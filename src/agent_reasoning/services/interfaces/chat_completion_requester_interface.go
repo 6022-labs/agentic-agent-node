@@ -58,7 +58,7 @@ type ToolCall struct {
 	Arguments map[string]any
 }
 
-// ExecutedToolCalls carry their own results — the provider ran them server-side, so the loop must not re-dispatch them.
+// ExecutedToolCalls carry their own results — provider-run server-side, so the loop must not re-dispatch them.
 type ExecutedToolCall struct {
 	Id        string
 	Name      string

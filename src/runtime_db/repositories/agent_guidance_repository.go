@@ -30,7 +30,10 @@ func (r *AgentGuidanceRepository) GetByAgentId(ctx context.Context, agentId uuid
 	return &entity, nil
 }
 
-func (r *AgentGuidanceRepository) Upsert(ctx context.Context, guidance *models.AgentGuidance) (*models.AgentGuidance, error) {
+func (r *AgentGuidanceRepository) Upsert(
+	ctx context.Context,
+	guidance *models.AgentGuidance,
+) (*models.AgentGuidance, error) {
 	existing, err := r.GetByAgentId(ctx, guidance.AgentId)
 	if err != nil {
 		return nil, err

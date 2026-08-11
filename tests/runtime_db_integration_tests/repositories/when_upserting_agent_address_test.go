@@ -61,7 +61,11 @@ func WhenUpsertingAgentAddressAfterEach(suite *WhenUpsertingAgentAddressTestingS
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func agentAddress(agentId uuid.UUID, addressType identity_enums.AddressType, address string) *identity_models.AgentAddress {
+func agentAddress(
+	agentId uuid.UUID,
+	addressType identity_enums.AddressType,
+	address string,
+) *identity_models.AgentAddress {
 	return &identity_models.AgentAddress{AgentId: agentId, Type: addressType, Address: address}
 }
 
@@ -80,9 +84,19 @@ func TestWhenUpsertingAgentAddress(t *testing.T) {
 					suite := WhenUpsertingAgentAddressBeforeEach(tc)
 					defer WhenUpsertingAgentAddressAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc")))
+					assert.NoError(
+						t,
+						suite.sut.Upsert(
+							context.Background(),
+							agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc"),
+						),
+					)
 
-					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeEvm)
+					stored, err := suite.sut.GetByAgentIdAndType(
+						context.Background(),
+						suite.agentId,
+						identity_enums.AddressTypeEvm,
+					)
 
 					assert.NoError(t, err)
 					assert.Equal(t, "0xabc", stored.Address)
@@ -97,10 +111,26 @@ func TestWhenUpsertingAgentAddress(t *testing.T) {
 					suite := WhenUpsertingAgentAddressBeforeEach(tc)
 					defer WhenUpsertingAgentAddressAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qfirst")))
-					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qsecond")))
+					assert.NoError(
+						t,
+						suite.sut.Upsert(
+							context.Background(),
+							agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qfirst"),
+						),
+					)
+					assert.NoError(
+						t,
+						suite.sut.Upsert(
+							context.Background(),
+							agentAddress(suite.agentId, identity_enums.AddressTypeBtc, "bc1qsecond"),
+						),
+					)
 
-					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeBtc)
+					stored, err := suite.sut.GetByAgentIdAndType(
+						context.Background(),
+						suite.agentId,
+						identity_enums.AddressTypeBtc,
+					)
 
 					assert.NoError(t, err)
 					assert.Equal(t, "bc1qsecond", stored.Address)

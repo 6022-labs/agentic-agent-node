@@ -28,7 +28,9 @@ func WhenCheckingEnsProvisioningBeforeEach(t *testing.T) *WhenCheckingEnsProvisi
 
 	mockEnsRegistrar := interface_mocks.NewMockEnsRegistrarInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 	mockRuntimeRecordsProvider := interface_mocks.NewMockRuntimeRecordsProviderInterface(mockController)
 
 	sut := services.NewEnsPublisher(
@@ -78,7 +80,9 @@ func TestWhenCheckingEnsProvisioning(t *testing.T) {
 		initSuite := func(suite *WhenCheckingEnsProvisioningTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).WithName("alice").Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").Return(true, nil)
+			suite.mockEnsRegistrar.EXPECT().
+				Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").
+				Return(true, nil)
 		}
 
 		t.Run("Should report the registrar's provisioning result", func(t *testing.T) {

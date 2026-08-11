@@ -22,7 +22,9 @@ type WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite struct {
 	mockGenerator *identity_mocks.MockAddressKeyGeneratorInterface
 }
 
-func WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t *testing.T) *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite {
+func WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(
+	t *testing.T,
+) *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockStorage := runtime_common_mocks.NewMockSecretStorageInterface(mockController)
@@ -75,8 +77,13 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
-			suite.mockGenerator.EXPECT().Generate().Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).Times(1)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockGenerator.EXPECT().
+				Generate().
+				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).
+				Times(1)
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, map[string]string{
 				"privateKey": "0xnewpk",
 				"address":    "0xnewaddr",
@@ -101,7 +108,9 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), "scope/wallet/btc").Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), "scope/wallet/btc").
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 		}
 
 		t.Run("Should error without generating", func(t *testing.T) {
@@ -120,8 +129,13 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
-			suite.mockGenerator.EXPECT().Generate().Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).Times(1)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockGenerator.EXPECT().
+				Generate().
+				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).
+				Times(1)
 			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(errors.New("vault down"))
 		}
 

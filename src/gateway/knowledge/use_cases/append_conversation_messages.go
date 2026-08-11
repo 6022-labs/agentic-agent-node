@@ -17,7 +17,11 @@ func NewAppendConversationMessages(client interfaces.ConversationHistoryClientIn
 	return &AppendConversationMessages{client: client}
 }
 
-func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, request *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
+func (u *AppendConversationMessages) Execute(
+	ctx context.Context,
+	conversationId string,
+	request *requests.AppendConversationMessagesRequest,
+) (*responses.AppendConversationMessagesResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

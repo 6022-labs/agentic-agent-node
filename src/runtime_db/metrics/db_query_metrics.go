@@ -67,7 +67,13 @@ func NewDbQueryMetrics() *DbQueryMetrics {
 }
 
 // RecordQuery records one DB query: count + duration always, plus rows on success or an error on failure.
-func (m *DbQueryMetrics) RecordQuery(ctx context.Context, operation, model string, duration time.Duration, rows int64, failed bool) {
+func (m *DbQueryMetrics) RecordQuery(
+	ctx context.Context,
+	operation, model string,
+	duration time.Duration,
+	rows int64,
+	failed bool,
+) {
 	attrs := metric.WithAttributes(
 		attribute.String("db.operation", operation),
 		attribute.String("db.model", model),

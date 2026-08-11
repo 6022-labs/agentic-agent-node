@@ -72,7 +72,10 @@ func TestWhenEnsuringConversation(t *testing.T) {
 
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
-					conversation := model_builders.NewConversationBuilder().WithId("conv-dup").WithAgentId(agentId).Build()
+					conversation := model_builders.NewConversationBuilder().
+						WithId("conv-dup").
+						WithAgentId(agentId).
+						Build()
 
 					created, err := suite.sut.Ensure(context.Background(), conversation)
 					assert.NoError(t, err)

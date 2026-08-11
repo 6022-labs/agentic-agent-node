@@ -82,7 +82,10 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet")).Times(1)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet")).
+				Times(1)
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 			suite.linkA.EXPECT().TryHandle(gomock.Any(), gomock.Len(0)).Return(true, nil).Times(1)
 

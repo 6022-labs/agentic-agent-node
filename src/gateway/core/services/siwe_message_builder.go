@@ -17,7 +17,13 @@ func NewSiweMessageBuilder(siweSettings *settings.SiweSettings) *SiweMessageBuil
 	return &SiweMessageBuilder{siweSettings: siweSettings}
 }
 
-func (b *SiweMessageBuilder) Build(address common.Address, chainId uint64, nonce string, issuedAt time.Time, expiresAt time.Time) string {
+func (b *SiweMessageBuilder) Build(
+	address common.Address,
+	chainId uint64,
+	nonce string,
+	issuedAt time.Time,
+	expiresAt time.Time,
+) string {
 	return fmt.Sprintf(
 		"%s wants you to sign in with your Ethereum account:\n%s\n\n%s\n\nURI: %s\nVersion: 1\nChain ID: %d\nNonce: %s\nIssued At: %s\nExpiration Time: %s",
 		b.siweSettings.Domain,

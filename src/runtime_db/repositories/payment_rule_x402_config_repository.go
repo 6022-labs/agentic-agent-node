@@ -29,7 +29,10 @@ func (r *PaymentRuleX402ConfigRepository) Upsert(ctx context.Context, config *mo
 		Create(config).Error
 }
 
-func (r *PaymentRuleX402ConfigRepository) GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentRuleX402Config, error) {
+func (r *PaymentRuleX402ConfigRepository) GetByRuleId(
+	ctx context.Context,
+	ruleId uuid.UUID,
+) (*models.PaymentRuleX402Config, error) {
 	var entity models.PaymentRuleX402Config
 	err := r.client.GetDB().WithContext(ctx).First(&entity, "payment_rule_id = ?", ruleId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -113,7 +113,10 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-func (r *OpenAICompletionsStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+func (r *OpenAICompletionsStandardChatCompletionRequester) Probe(
+	baseUrl, apiKey string,
+	llmConnection *models.LLMConnection,
+) error {
 	content := probeMessage
 	request := &external_models.ExternalOpenAICompletionsStandardRequest{
 		Model:     llmConnection.Model,
@@ -150,14 +153,17 @@ func (r *OpenAICompletionsStandardChatCompletionRequester) buildRequestMessages(
 				if err != nil {
 					return nil, fmt.Errorf("failed to marshal tool call arguments: %w", err)
 				}
-				msg.ToolCalls = append(msg.ToolCalls, external_models.ExternalOpenAICompletionsStandardRequestMessageToolCall{
-					ID:   tc.Id,
-					Type: "function",
-					Function: external_models.ExternalOpenAICompletionsStandardToolCallFunction{
-						Name:      tc.Name,
-						Arguments: string(argsBytes),
+				msg.ToolCalls = append(
+					msg.ToolCalls,
+					external_models.ExternalOpenAICompletionsStandardRequestMessageToolCall{
+						ID:   tc.Id,
+						Type: "function",
+						Function: external_models.ExternalOpenAICompletionsStandardToolCallFunction{
+							Name:      tc.Name,
+							Arguments: string(argsBytes),
+						},
 					},
-				})
+				)
 			}
 			out = append(out, msg)
 

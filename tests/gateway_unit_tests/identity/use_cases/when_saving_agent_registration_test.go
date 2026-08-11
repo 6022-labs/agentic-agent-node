@@ -40,7 +40,11 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.SaveAgentRegistrationRequest{Name: "Alice"}, owner)
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.SaveAgentRegistrationRequest{Name: "Alice"},
+				owner,
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)

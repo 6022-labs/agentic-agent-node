@@ -17,7 +17,14 @@ func TestWhenParsingPaymentRuleX402Config(t *testing.T) {
 			t.Parallel()
 
 			config := &models.PaymentRuleX402Config{}
-			assert.NoError(t, config.Parse([]byte(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`)))
+			assert.NoError(
+				t,
+				config.Parse(
+					[]byte(
+						`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					),
+				),
+			)
 			assert.Equal(t, "eip155:80002", config.Network)
 			assert.Equal(t, []string{".*"}, config.AddressPatterns)
 

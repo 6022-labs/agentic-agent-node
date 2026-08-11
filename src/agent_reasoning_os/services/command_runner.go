@@ -29,7 +29,11 @@ type CommandRunner struct {
 	credential      *syscall.Credential
 }
 
-func NewCommandRunner(logger *zap.Logger, osSettings *settings.OsSettings, commandSettings *settings.CommandSettings) (*CommandRunner, error) {
+func NewCommandRunner(
+	logger *zap.Logger,
+	osSettings *settings.OsSettings,
+	commandSettings *settings.CommandSettings,
+) (*CommandRunner, error) {
 	credential, err := commandCredential(osSettings.CommandUser)
 	if err != nil {
 		return nil, err
@@ -57,7 +61,9 @@ func NewCommandRunner(logger *zap.Logger, osSettings *settings.OsSettings, comma
 	}
 
 	if credential == nil {
-		logger.Warn("commands run as the runtime's own user, so the agent can signal the runtime, the gateway and nginx")
+		logger.Warn(
+			"commands run as the runtime's own user, so the agent can signal the runtime, the gateway and nginx",
+		)
 	}
 
 	return &CommandRunner{
@@ -84,7 +90,7 @@ func (r *CommandRunner) Run(ctx context.Context, spec *interfaces.CommandSpec) (
 }
 
 func (r *CommandRunner) Start(spec *interfaces.CommandSpec) (interfaces.CommandHandleInterface, error) {
-	// Rooted in Background, not the caller's context: the http request that started it is gone long before the command is.
+	// Rooted in Background, not the caller's ctx: the http request that started it is gone long before the command is.
 	ctx, cancel := context.WithTimeout(context.Background(), spec.Timeout)
 
 	handle, err := r.start(ctx, spec)
@@ -106,7 +112,7 @@ func (r *CommandRunner) start(ctx context.Context, spec *interfaces.CommandSpec)
 	cmd.Dir = spec.Workdir
 	cmd.Env = r.commandEnv()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Credential: r.credential}
-	// A grandchild that escapes the process group keeps the output pipe open, and Wait would otherwise block on it forever.
+	// A grandchild escaping the process group keeps the output pipe open; Wait would otherwise block on it forever.
 	cmd.WaitDelay = pipeDrainDelay
 
 	handle := &commandHandle{

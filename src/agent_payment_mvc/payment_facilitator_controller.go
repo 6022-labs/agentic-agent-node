@@ -12,7 +12,9 @@ type PaymentFacilitatorController struct {
 	getPaymentFacilitators *use_cases.GetPaymentFacilitators
 }
 
-func NewPaymentFacilitatorController(getPaymentFacilitators *use_cases.GetPaymentFacilitators) *PaymentFacilitatorController {
+func NewPaymentFacilitatorController(
+	getPaymentFacilitators *use_cases.GetPaymentFacilitators,
+) *PaymentFacilitatorController {
 	return &PaymentFacilitatorController{getPaymentFacilitators: getPaymentFacilitators}
 }
 

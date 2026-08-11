@@ -25,7 +25,9 @@ type WhenUpsertingPaymentRuleX402ConfigTestingSuite struct {
 	rule                     *models.PaymentRule
 }
 
-func WhenUpsertingPaymentRuleX402ConfigBeforeEach(tc *repositoryTestCase) *WhenUpsertingPaymentRuleX402ConfigTestingSuite {
+func WhenUpsertingPaymentRuleX402ConfigBeforeEach(
+	tc *repositoryTestCase,
+) *WhenUpsertingPaymentRuleX402ConfigTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

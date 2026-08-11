@@ -56,7 +56,11 @@ func TestWhenListingSelfTools(t *testing.T) {
 				capturedMethod = r.Method
 				capturedPath = r.URL.Path
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`{"tools":[{"id":"tool-1","name":"run_command","description":"runs a command","enabled":true}]}`))
+				_, _ = w.Write(
+					[]byte(
+						`{"tools":[{"id":"tool-1","name":"run_command","description":"runs a command","enabled":true}]}`,
+					),
+				)
 			}
 		}
 

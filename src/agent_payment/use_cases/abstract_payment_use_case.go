@@ -52,7 +52,9 @@ func NewAbstractPaymentUseCase(
 
 // ensurePaymentPolicy returns the policy head, materializing it with the
 // seeded default rule on first access.
-func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*models.PaymentPolicy, *identity_models.Agent, error) {
+func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
+	ctx context.Context,
+) (*models.PaymentPolicy, *identity_models.Agent, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
@@ -105,7 +107,11 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(ctx context.Context) (*mode
 // with the config JSON the x402 strategy persists. The $6022 token is only the
 // EIP-712 signing context — zero-price rules never settle on-chain. Returns
 // (nil, nil) when the agent has no addresses to scope to.
-func (u *AbstractPaymentUseCase) defaultRule(policy *models.PaymentPolicy, agent *identity_models.Agent, evmAddress string) (*models.PaymentRule, json.RawMessage) {
+func (u *AbstractPaymentUseCase) defaultRule(
+	policy *models.PaymentPolicy,
+	agent *identity_models.Agent,
+	evmAddress string,
+) (*models.PaymentRule, json.RawMessage) {
 	patterns := []string{}
 	if len(evmAddress) != 0 {
 		patterns = append(patterns, strings.ToLower(evmAddress))

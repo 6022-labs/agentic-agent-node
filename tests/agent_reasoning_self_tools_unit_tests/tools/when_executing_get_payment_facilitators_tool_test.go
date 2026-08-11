@@ -18,10 +18,14 @@ type WhenExecutingGetPaymentFacilitatorsToolTestingSuite struct {
 	mockGetPaymentFacilitatorsExecutor *interfaces_mocks.MockGetPaymentFacilitatorsExecutorInterface
 }
 
-func WhenExecutingGetPaymentFacilitatorsToolBeforeEach(t *testing.T) *WhenExecutingGetPaymentFacilitatorsToolTestingSuite {
+func WhenExecutingGetPaymentFacilitatorsToolBeforeEach(
+	t *testing.T,
+) *WhenExecutingGetPaymentFacilitatorsToolTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockGetPaymentFacilitatorsExecutor := interfaces_mocks.NewMockGetPaymentFacilitatorsExecutorInterface(mockController)
+	mockGetPaymentFacilitatorsExecutor := interfaces_mocks.NewMockGetPaymentFacilitatorsExecutorInterface(
+		mockController,
+	)
 
 	return &WhenExecutingGetPaymentFacilitatorsToolTestingSuite{
 		sut:                                tools.NewGetPaymentFacilitatorsTool(mockGetPaymentFacilitatorsExecutor),
@@ -41,7 +45,9 @@ func TestWhenExecutingGetPaymentFacilitatorsTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingGetPaymentFacilitatorsToolBeforeEach(t)
-			suite.mockGetPaymentFacilitatorsExecutor.EXPECT().Execute(ctx).Return(&payment_responses.PaymentFacilitatorsResponse{}, nil)
+			suite.mockGetPaymentFacilitatorsExecutor.EXPECT().
+				Execute(ctx).
+				Return(&payment_responses.PaymentFacilitatorsResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

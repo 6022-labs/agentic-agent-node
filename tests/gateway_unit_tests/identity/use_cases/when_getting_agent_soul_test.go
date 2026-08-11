@@ -38,7 +38,9 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalAgentSoulPayload{Soul: "persona"}, nil)
+			suite.mockAgentSoulClient.EXPECT().
+				Get(gomock.Any()).
+				Return(&models.ExternalAgentSoulPayload{Soul: "persona"}, nil)
 		}
 
 		t.Run("Should return the soul", func(t *testing.T) {

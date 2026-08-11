@@ -68,7 +68,10 @@ func NewSaveAgentRegistration(
 	}
 }
 
-func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveAgentRegistrationRequest) (*responses.AgentRegistrationResponse, error) {
+func (u *SaveAgentRegistration) Execute(
+	ctx context.Context,
+	req *requests.SaveAgentRegistrationRequest,
+) (*responses.AgentRegistrationResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -155,7 +158,12 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	return resp, nil
 }
 
-func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, addresses map[enums.AddressType]string, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) resolveImages(
+	agent, existing *models.Agent,
+	addresses map[enums.AddressType]string,
+	creator common.Address,
+	baseImage *multipart.FileHeader,
+) (map[string]string, error) {
 	if baseImage != nil {
 		return u.buildImages(agent, addresses, creator, baseImage)
 	}
@@ -167,7 +175,12 @@ func (u *SaveAgentRegistration) resolveImages(agent, existing *models.Agent, add
 
 // buildImages frames the uploaded base image, pins each rendered variant to
 // IPFS, and returns the CID per image key (what the mint stores on-chain).
-func (u *SaveAgentRegistration) buildImages(agent *models.Agent, addresses map[enums.AddressType]string, creator common.Address, baseImage *multipart.FileHeader) (map[string]string, error) {
+func (u *SaveAgentRegistration) buildImages(
+	agent *models.Agent,
+	addresses map[enums.AddressType]string,
+	creator common.Address,
+	baseImage *multipart.FileHeader,
+) (map[string]string, error) {
 	wallets := []string{}
 	for _, addressType := range enums.GetAllAddressTypes() {
 		if address := addresses[addressType]; address != "" {

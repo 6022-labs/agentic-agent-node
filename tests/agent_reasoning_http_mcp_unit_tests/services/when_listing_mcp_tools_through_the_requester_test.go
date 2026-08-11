@@ -24,7 +24,9 @@ type WhenListingMcpToolsThroughTheRequesterTestingSuite struct {
 	testMcpConnection *models.MCPConnection
 }
 
-func WhenListingMcpToolsThroughTheRequesterBeforeEach(t *testing.T) *WhenListingMcpToolsThroughTheRequesterTestingSuite {
+func WhenListingMcpToolsThroughTheRequesterBeforeEach(
+	t *testing.T,
+) *WhenListingMcpToolsThroughTheRequesterTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockMcpClient := clients_mocks.NewMockMcpClientInterface(mockController)

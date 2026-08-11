@@ -89,11 +89,32 @@ func TestWhenListingSelfToolsByAgentId(t *testing.T) {
 					seedAgent(suite.dbClient, agentId)
 					seedAgent(suite.dbClient, otherAgentId)
 
-					_, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("web_search").WithEnabled(true).Build())
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("web_search").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(false).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(false).
+							Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(otherAgentId).WithName("bash").WithEnabled(true).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(otherAgentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					list, err := suite.sut.ListByAgentId(context.Background(), agentId)

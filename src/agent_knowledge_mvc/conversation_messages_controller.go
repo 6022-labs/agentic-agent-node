@@ -57,7 +57,7 @@ func (c *ConversationMessagesController) ListConversations(ctx *fiber.Ctx) error
 
 // Append adds messages to a conversation transcript.
 // @Summary Internal append messages
-// @Description Idempotent batch append to the local conversation transcript. Dedup by SHA-512 hash of (role, content, conversationId).
+// @Description Idempotent batch append to the transcript. Dedup by SHA-512 hash of (role, content, conversationId).
 // @Tags Internal
 // @Accept json
 // @Produce json

@@ -13,7 +13,10 @@ type HttpMetricsRoundTripper struct {
 	metrics metrics_interfaces.ExternalHttpMetricsInterface
 }
 
-func NewHttpMetricsRoundTripper(base http.RoundTripper, metrics metrics_interfaces.ExternalHttpMetricsInterface) *HttpMetricsRoundTripper {
+func NewHttpMetricsRoundTripper(
+	base http.RoundTripper,
+	metrics metrics_interfaces.ExternalHttpMetricsInterface,
+) *HttpMetricsRoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
 	}

@@ -18,7 +18,10 @@ func NewDiscoverMcpServerTools(client gateway_interfaces.MCPConfigClientInterfac
 	return &DiscoverMcpServerTools{client: client}
 }
 
-func (u *DiscoverMcpServerTools) Execute(ctx context.Context, request *requests.DiscoverMcpServerToolsRequest) (*responses.McpServerToolsResponse, error) {
+func (u *DiscoverMcpServerTools) Execute(
+	ctx context.Context,
+	request *requests.DiscoverMcpServerToolsRequest,
+) (*responses.McpServerToolsResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

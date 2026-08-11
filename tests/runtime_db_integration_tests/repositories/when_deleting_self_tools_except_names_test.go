@@ -76,11 +76,32 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					seedAgent(suite.dbClient, agentId)
 					seedAgent(suite.dbClient, otherAgentId)
 
-					kept, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					kept, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("stale").WithEnabled(true).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
-					otherAgentRow, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(otherAgentId).WithName("stale").WithEnabled(true).Build())
+					otherAgentRow, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(otherAgentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					deleted, err := suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash"})
@@ -112,12 +133,30 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					_, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("curl").WithEnabled(false).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("curl").
+							WithEnabled(false).
+							Build(),
+					)
 					assert.NoError(t, err)
 
-					deleted, err := suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash", "curl"})
+					deleted, err := suite.sut.DeleteAllExceptNames(
+						context.Background(),
+						agentId,
+						[]string{"bash", "curl"},
+					)
 					assert.NoError(t, err)
 					assert.Equal(t, int64(0), deleted)
 
@@ -138,9 +177,23 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					_, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("curl").WithEnabled(false).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("curl").
+							WithEnabled(false).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					deleted, err := suite.sut.DeleteAllExceptNames(context.Background(), agentId, nil)

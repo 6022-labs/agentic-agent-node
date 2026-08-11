@@ -10,7 +10,17 @@ import (
 // baseUrl comes from the matched rule (one facilitator per network).
 type X402FacilitatorClientInterface interface {
 	// Verify asks the facilitator whether the payment is valid and fundable.
-	Verify(ctx context.Context, baseUrl string, payload *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.VerifyResponse, error)
+	Verify(
+		ctx context.Context,
+		baseUrl string,
+		payload *x402.PaymentPayload,
+		requirements *x402.PaymentRequirements,
+	) (*x402.VerifyResponse, error)
 	// Settle submits the payment on-chain and reports the transaction.
-	Settle(ctx context.Context, baseUrl string, payload *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.SettleResponse, error)
+	Settle(
+		ctx context.Context,
+		baseUrl string,
+		payload *x402.PaymentPayload,
+		requirements *x402.PaymentRequirements,
+	) (*x402.SettleResponse, error)
 }

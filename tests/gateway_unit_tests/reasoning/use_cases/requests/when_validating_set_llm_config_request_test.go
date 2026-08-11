@@ -53,9 +53,12 @@ func TestWhenValidatingSetLlmConfigRequest(t *testing.T) {
 		t.Parallel()
 		req := &requests.SetLlmConfigRequest{Provider: "anthropic", Model: "claude-opus-4-7", ApiKey: ""}
 
-		t.Run("Should pass validation (empty means keep the stored key; runtime enforces first setup)", func(t *testing.T) {
-			t.Parallel()
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
+		t.Run(
+			"Should pass validation (empty means keep the stored key; runtime enforces first setup)",
+			func(t *testing.T) {
+				t.Parallel()
+				assert.NoError(t, req.ValidateAndSanitize())
+			},
+		)
 	})
 }

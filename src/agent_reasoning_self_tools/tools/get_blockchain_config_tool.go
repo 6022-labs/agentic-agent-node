@@ -13,7 +13,9 @@ type GetBlockchainConfigTool struct {
 	getBlockchainConfigExecutor tool_interfaces.GetBlockchainConfigExecutorInterface
 }
 
-func NewGetBlockchainConfigTool(getBlockchainConfigExecutor tool_interfaces.GetBlockchainConfigExecutorInterface) *GetBlockchainConfigTool {
+func NewGetBlockchainConfigTool(
+	getBlockchainConfigExecutor tool_interfaces.GetBlockchainConfigExecutorInterface,
+) *GetBlockchainConfigTool {
 	return &GetBlockchainConfigTool{getBlockchainConfigExecutor: getBlockchainConfigExecutor}
 }
 

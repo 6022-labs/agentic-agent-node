@@ -28,10 +28,14 @@ func (g *DefaultImageGenerator) Generate(params identity_interfaces.GenerateImag
 	borderGradient := g.renderBorderGradient(params.Creator)
 	imageDataURI := g.renderImageData(params.BaseImageBytes, params.BaseImageMimeType)
 
-	sb.WriteString(`<svg width="512" height="768" viewBox="0 0 512 768" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`)
+	sb.WriteString(
+		`<svg width="512" height="768" viewBox="0 0 512 768" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`,
+	)
 	sb.WriteString(`<defs>`)
 	sb.WriteString(`<clipPath id="clip-border"><rect width="512" height="768" rx="20" ry="20" /></clipPath>`)
-	sb.WriteString(`<clipPath id="clip-image"><rect x="20" y="20" width="472" height="728" rx="16" ry="16" /></clipPath>`)
+	sb.WriteString(
+		`<clipPath id="clip-image"><rect x="20" y="20" width="472" height="728" rx="16" ry="16" /></clipPath>`,
+	)
 	sb.WriteString(`<clipPath id="wallet-carousel-clip"><rect x="7" y="750" width="498" height="24"/></clipPath>`)
 	sb.WriteString(`<linearGradient id="fadeOverlay" x1="0" y1="0" x2="1" y2="1">`)
 	sb.WriteString(`<stop offset="0%" stop-color="black" stop-opacity="1"/>`)
@@ -104,31 +108,77 @@ func (g *DefaultImageGenerator) renderNameAndEnsDomain(name string, ensDomain st
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(`<g transform="translate(%d,%d)">`, x, y))
-	sb.WriteString(fmt.Sprintf(`<rect width="%d" height="%d" rx="12" ry="12" fill="rgba(0,0,0,0.7)" />`, backgroundWith, backgroundHeight))
+	sb.WriteString(
+		fmt.Sprintf(
+			`<rect width="%d" height="%d" rx="12" ry="12" fill="rgba(0,0,0,0.7)" />`,
+			backgroundWith,
+			backgroundHeight,
+		),
+	)
 	sb.WriteString(fmt.Sprintf(`<svg width="%d" height="%d">`, backgroundWith, backgroundHeight))
 	sb.WriteString(`<defs>`)
 	if needCarouselName {
 		nameY := 48
 		nameClipY := nameY - int(nameFontSize*0.75)
-		sb.WriteString(fmt.Sprintf(`<clipPath id="name-carousel-clip"><rect x="%d" y="%d" width="%d" height="%f"/></clipPath>`, padding, nameClipY, backgroundWith-2*padding, nameFontSize+8))
-		sb.WriteString(fmt.Sprintf(`<path id="nameCarouselPath" d="M %d,%d H %d" />`, padding, nameY, backgroundWith-padding))
+		sb.WriteString(
+			fmt.Sprintf(
+				`<clipPath id="name-carousel-clip"><rect x="%d" y="%d" width="%d" height="%f"/></clipPath>`,
+				padding,
+				nameClipY,
+				backgroundWith-2*padding,
+				nameFontSize+8,
+			),
+		)
+		sb.WriteString(
+			fmt.Sprintf(`<path id="nameCarouselPath" d="M %d,%d H %d" />`, padding, nameY, backgroundWith-padding),
+		)
 	}
 	if needCarouselEns {
 		ensY := 80
 		ensClipY := ensY - int(ensFontSize*0.75)
-		sb.WriteString(fmt.Sprintf(`<clipPath id="ens-carousel-clip"><rect x="%d" y="%d" width="%d" height="%f"/></clipPath>`, padding, ensClipY, backgroundWith-2*padding, ensFontSize+6))
-		sb.WriteString(fmt.Sprintf(`<path id="ensCarouselPath" d="M %d,%d H %d" />`, padding, ensY, backgroundWith-padding))
+		sb.WriteString(
+			fmt.Sprintf(
+				`<clipPath id="ens-carousel-clip"><rect x="%d" y="%d" width="%d" height="%f"/></clipPath>`,
+				padding,
+				ensClipY,
+				backgroundWith-2*padding,
+				ensFontSize+6,
+			),
+		)
+		sb.WriteString(
+			fmt.Sprintf(`<path id="ensCarouselPath" d="M %d,%d H %d" />`, padding, ensY, backgroundWith-padding),
+		)
 	}
 	sb.WriteString(`</defs>`)
 
 	if needCarouselName {
-		sb.WriteString(g.renderCarousel([]string{name}, 20, nameFontSize, backgroundWith-2*padding, "name-carousel-clip", "nameCarouselPath", false))
+		sb.WriteString(
+			g.renderCarousel(
+				[]string{name},
+				20,
+				nameFontSize,
+				backgroundWith-2*padding,
+				"name-carousel-clip",
+				"nameCarouselPath",
+				false,
+			),
+		)
 	} else {
 		sb.WriteString(fmt.Sprintf(`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`, backgroundWith/2, 48, int(nameFontSize), name))
 	}
 
 	if needCarouselEns {
-		sb.WriteString(g.renderCarousel([]string{ensDomain}, 20, ensFontSize, backgroundWith, "ens-carousel-clip", "ensCarouselPath", true))
+		sb.WriteString(
+			g.renderCarousel(
+				[]string{ensDomain},
+				20,
+				ensFontSize,
+				backgroundWith,
+				"ens-carousel-clip",
+				"ensCarouselPath",
+				true,
+			),
+		)
 	} else {
 		sb.WriteString(fmt.Sprintf(`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`, backgroundWith/2, 80, int(ensFontSize), ensDomain))
 	}
@@ -142,14 +192,23 @@ func (g *DefaultImageGenerator) renderWalletCarousel(wallets []string) string {
 	return g.renderCarousel(wallets, 10, 14, 512, "wallet-carousel-clip", "walletCarouselPath", false)
 }
 
-func (g *DefaultImageGenerator) renderCarousel(values []string, durationByValue uint, fontSize float32, containerLength int, clipPathId, carouselPathId string, rightToLeft bool) string {
+func (g *DefaultImageGenerator) renderCarousel(
+	values []string,
+	durationByValue uint,
+	fontSize float32,
+	containerLength int,
+	clipPathId, carouselPathId string,
+	rightToLeft bool,
+) string {
 	if len(values) == 0 {
 		return ""
 	}
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(`<g clip-path="url(#%s)">`, clipPathId))
-	sb.WriteString(fmt.Sprintf(`<text fill="white" font-family="Courier, Liberation Mono, monospace" font-size="%.f">`, fontSize))
+	sb.WriteString(
+		fmt.Sprintf(`<text fill="white" font-family="Courier, Liberation Mono, monospace" font-size="%.f">`, fontSize),
+	)
 
 	baseFirstValueLength := g.estimateStrLen(values[0], fontSize)
 	spacing := baseFirstValueLength + containerLength
@@ -167,7 +226,12 @@ func (g *DefaultImageGenerator) renderCarousel(values []string, durationByValue 
 		}
 		sb.WriteString(fmt.Sprintf(
 			`<textPath xlink:href="#%s" startOffset="%d">%s<animate attributeName="startOffset" from="%d" to="%d" dur="%ds" repeatCount="indefinite" /></textPath>`,
-			carouselPathId, offsetStart, value, offsetStart, offsetEnd, duration,
+			carouselPathId,
+			offsetStart,
+			value,
+			offsetStart,
+			offsetEnd,
+			duration,
 		))
 	}
 
@@ -216,9 +280,27 @@ func (g *DefaultImageGenerator) renderAgentInformation(p identity_interfaces.Gen
 		sb.WriteString(g.renderMultiLineBadge(50, 522, "Origin", origin, *p.OriginEnsDomain, badgeWith))
 	}
 
-	sb.WriteString(g.renderBadge(48, 580, "Role", p.Role, g.estimateStrLen(fmt.Sprintf("Role: %s", p.Role), fontSize)+padding))
-	sb.WriteString(g.renderBadge(48, 620, "Created", created, g.estimateStrLen(fmt.Sprintf("Created: %s", created), fontSize)+padding))
-	sb.WriteString(g.renderBadge(48, 660, "Creator", p.Creator, g.estimateStrLen(fmt.Sprintf("Creator %s", p.Creator), fontSize)+padding))
+	sb.WriteString(
+		g.renderBadge(48, 580, "Role", p.Role, g.estimateStrLen(fmt.Sprintf("Role: %s", p.Role), fontSize)+padding),
+	)
+	sb.WriteString(
+		g.renderBadge(
+			48,
+			620,
+			"Created",
+			created,
+			g.estimateStrLen(fmt.Sprintf("Created: %s", created), fontSize)+padding,
+		),
+	)
+	sb.WriteString(
+		g.renderBadge(
+			48,
+			660,
+			"Creator",
+			p.Creator,
+			g.estimateStrLen(fmt.Sprintf("Creator %s", p.Creator), fontSize)+padding,
+		),
+	)
 
 	return sb.String()
 }
@@ -240,7 +322,9 @@ func (g *DefaultImageGenerator) renderStars(stars uint8) string {
 
 	return fmt.Sprintf(
 		`<text x="256" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`,
-		y, fontSize, starString,
+		y,
+		fontSize,
+		starString,
 	)
 }
 

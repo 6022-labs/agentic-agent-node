@@ -15,7 +15,7 @@ type PaymentRuleResponse struct {
 	Name      string          `json:"name"`
 	Price     string          `json:"price"`
 	Method    string          `json:"method"`
-	Config    json.RawMessage `json:"config" swaggertype:"object"`
+	Config    json.RawMessage `json:"config"    swaggertype:"object"`
 	CreatedAt time.Time       `json:"createdAt"`
 	UpdatedAt time.Time       `json:"updatedAt"`
 }

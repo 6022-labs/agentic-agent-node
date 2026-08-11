@@ -18,12 +18,19 @@ func NewHttpResponseClient(client clients.ClientWithResponsesInterface) *HttpRes
 	return &HttpResponseClient{client: client}
 }
 
-func (c *HttpResponseClient) Create(ctx context.Context, body *models.ExternalCreateResponsePayload) (*models.ExternalCreateResponseResultPayload, error) {
+func (c *HttpResponseClient) Create(
+	ctx context.Context,
+	body *models.ExternalCreateResponsePayload,
+) (*models.ExternalCreateResponseResultPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalResponsesWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalResponsesWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, err
 	}

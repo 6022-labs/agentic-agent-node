@@ -8,7 +8,9 @@ import (
 // newMockStrategies returns a mock registry that resolves every method to a
 // single mock strategy — the seam every payment use case dispatches config
 // work through.
-func newMockStrategies(mockController *gomock.Controller) (*payment_interfaces_mocks.MockPaymentMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentMethodStrategyInterface) {
+func newMockStrategies(
+	mockController *gomock.Controller,
+) (*payment_interfaces_mocks.MockPaymentMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentMethodStrategyInterface) {
 	mockStrategy := payment_interfaces_mocks.NewMockPaymentMethodStrategyInterface(mockController)
 	mockStrategies := payment_interfaces_mocks.NewMockPaymentMethodStrategiesInterface(mockController)
 	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()

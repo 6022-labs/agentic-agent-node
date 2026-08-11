@@ -36,9 +36,11 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
-			suite.mockClient.EXPECT().DeleteInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.DeleteInternalConfigPaymentPolicyResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
-			}, nil)
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigPaymentPolicyWithResponse(gomock.Any()).
+				Return(&clients.DeleteInternalConfigPaymentPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
+				}, nil)
 		}
 
 		t.Run("Should delete the configuration without error", func(t *testing.T) {
@@ -57,10 +59,12 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
-			suite.mockClient.EXPECT().DeleteInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.DeleteInternalConfigPaymentPolicyResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigPaymentPolicyWithResponse(gomock.Any()).
+				Return(&clients.DeleteInternalConfigPaymentPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

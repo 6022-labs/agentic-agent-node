@@ -23,7 +23,7 @@ func (c *AuthorizeController) RegisterRoutes(app fiber.Router) {
 
 // Authorize checks whether an address owns the agent's NFT.
 // @Summary Internal authorize
-// @Description Resolves the agent identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by gateway during /auth/verify.
+// @Description Resolves the identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by /auth/verify.
 // @Tags Internal
 // @Accept json
 // @Produce json

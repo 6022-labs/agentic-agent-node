@@ -37,10 +37,14 @@ func TestWhenListingMCPConfigs(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMCPConfigsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigMcpWithResponse(gomock.Any()).Return(&clients.GetInternalConfigMcpResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"connections":[{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigMcpWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigMcpResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"connections":[{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the MCP connection list payload", func(t *testing.T) {
@@ -63,7 +67,9 @@ func TestWhenListingMCPConfigs(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingMCPConfigsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigMcpWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().
+				GetInternalConfigMcpWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should propagate the transport error", func(t *testing.T) {

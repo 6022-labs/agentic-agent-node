@@ -14,7 +14,9 @@ type SetAgentGuidanceTool struct {
 	setAgentGuidanceExecutor tool_interfaces.SetAgentGuidanceExecutorInterface
 }
 
-func NewSetAgentGuidanceTool(setAgentGuidanceExecutor tool_interfaces.SetAgentGuidanceExecutorInterface) *SetAgentGuidanceTool {
+func NewSetAgentGuidanceTool(
+	setAgentGuidanceExecutor tool_interfaces.SetAgentGuidanceExecutorInterface,
+) *SetAgentGuidanceTool {
 	return &SetAgentGuidanceTool{setAgentGuidanceExecutor: setAgentGuidanceExecutor}
 }
 
@@ -33,7 +35,9 @@ func (t *SetAgentGuidanceTool) Execute(ctx context.Context, args map[string]any)
 	if err != nil {
 		return nil, err
 	}
-	return utils.ToToolResult(t.setAgentGuidanceExecutor.Execute(ctx, &reasoning_requests.SetAgentGuidanceRequest{Content: content}))
+	return utils.ToToolResult(
+		t.setAgentGuidanceExecutor.Execute(ctx, &reasoning_requests.SetAgentGuidanceRequest{Content: content}),
+	)
 }
 
 func (t *SetAgentGuidanceTool) IsEnabledByDefault() bool {

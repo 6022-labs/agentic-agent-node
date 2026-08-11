@@ -29,7 +29,9 @@ func WhenCheckingMintBeforeEach(t *testing.T) *WhenCheckingMintTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 	mockMintPublisher := interface_mocks.NewMockMintPublisherInterface(mockController)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
@@ -63,12 +65,20 @@ func TestWhenCheckingMint(t *testing.T) {
 		initSuite := func(suite *WhenCheckingMintTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
 			savedAgent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			savedState := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
+			savedState := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(common_tests.RandomEthAddress(), uint64(7), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(7), gomock.Any()).Return(savedAgent, savedState, nil)
+			suite.mockMintPublisher.EXPECT().
+				ResolveMintedToken(gomock.Any(), gomock.Any()).
+				Return(common_tests.RandomEthAddress(), uint64(7), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(7), gomock.Any()).
+				Return(savedAgent, savedState, nil)
 		}
 
 		t.Run("Should confirm the mint and return the tokenId", func(t *testing.T) {
@@ -91,10 +101,14 @@ func TestWhenCheckingMint(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingMintTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			state := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusConfirmed).Build()
+			state := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(state, nil)
 		}
 
 		t.Run("Should return confirmed without reading the chain", func(t *testing.T) {
@@ -117,11 +131,17 @@ func TestWhenCheckingMint(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingMintTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			state := model_builders.NewAgentRegistrationStateBuilder().WithMintStatus(identity_enums.TransactionStatusPending).Build()
+			state := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusPending).
+				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockMintPublisher.EXPECT().ResolveMintedToken(gomock.Any(), gomock.Any()).Return(common.Address{}, uint64(0), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
+			suite.mockMintPublisher.EXPECT().
+				ResolveMintedToken(gomock.Any(), gomock.Any()).
+				Return(common.Address{}, uint64(0), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(state, nil)
 		}
 
 		t.Run("Should report mint still pending", func(t *testing.T) {

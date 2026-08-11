@@ -14,7 +14,9 @@ type AbstractReasoningUseCase struct {
 	agentRepository identity_repositories.AgentRepositoryInterface
 }
 
-func NewAbstractReasoningUseCase(agentRepository identity_repositories.AgentRepositoryInterface) *AbstractReasoningUseCase {
+func NewAbstractReasoningUseCase(
+	agentRepository identity_repositories.AgentRepositoryInterface,
+) *AbstractReasoningUseCase {
 	return &AbstractReasoningUseCase{
 		agentRepository: agentRepository,
 	}

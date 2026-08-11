@@ -41,7 +41,9 @@ func NewEvmChainsSettings(logger *zap.Logger, k *koanf.Koanf) *EvmChainsSettings
 	}
 
 	if len(settings) == 0 {
-		logger.Fatal("configure at least one chain under blockchain.evm_chains (or BLOCKCHAIN__EVM_CHAINS__<chainId>__HTTP_URL env)")
+		logger.Fatal(
+			"configure at least one chain under blockchain.evm_chains (or BLOCKCHAIN__EVM_CHAINS__<chainId>__HTTP_URL env)",
+		)
 	}
 
 	return &settings

@@ -43,20 +43,24 @@ func TestWhenUpdatingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenUpdatingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ string, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PutInternalConfigMcpIdResponse, error) {
-					raw, err := io.ReadAll(reader)
-					assert.NoError(t, err)
+			suite.mockClient.EXPECT().
+				PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, _ string, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PutInternalConfigMcpIdResponse, error) {
+						raw, err := io.ReadAll(reader)
+						assert.NoError(t, err)
 
-					var sent models.ExternalUpdateMCPConnectionPayload
-					assert.NoError(t, json.Unmarshal(raw, &sent))
-					assert.Equal(t, "renamed", sent.Name)
+						var sent models.ExternalUpdateMCPConnectionPayload
+						assert.NoError(t, json.Unmarshal(raw, &sent))
+						assert.Equal(t, "renamed", sent.Name)
 
-					return &clients.PutInternalConfigMcpIdResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"id":"mcp-1","name":"renamed","url":"https://mcp.example","headerAuthKeys":[]}`),
-					}, nil
-				})
+						return &clients.PutInternalConfigMcpIdResponse{
+							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+							Body: []byte(
+								`{"id":"mcp-1","name":"renamed","url":"https://mcp.example","headerAuthKeys":[]}`,
+							),
+						}, nil
+					})
 		}
 
 		t.Run("Should decode the updated MCP connection payload", func(t *testing.T) {
@@ -83,10 +87,12 @@ func TestWhenUpdatingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenUpdatingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).Return(&clients.PutInternalConfigMcpIdResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"not_found"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).
+				Return(&clients.PutInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found"}`),
+				}, nil)
 		}
 
 		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {

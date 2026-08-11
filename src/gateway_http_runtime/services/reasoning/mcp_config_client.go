@@ -32,12 +32,19 @@ func (c *HttpMCPConfigClient) List(ctx context.Context) (*models.ExternalMCPConn
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Create(ctx context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+func (c *HttpMCPConfigClient) Create(
+	ctx context.Context,
+	body *models.ExternalCreateMCPConnectionPayload,
+) (*models.ExternalMCPConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalConfigMcpWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConfigMcpWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}
@@ -48,12 +55,19 @@ func (c *HttpMCPConfigClient) Create(ctx context.Context, body *models.ExternalC
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) DiscoverTools(ctx context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+func (c *HttpMCPConfigClient) DiscoverTools(
+	ctx context.Context,
+	body *models.ExternalDiscoverMCPServerToolsPayload,
+) (*models.ExternalMCPServerToolsPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalConfigMcpToolsWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConfigMcpToolsWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}
@@ -76,12 +90,21 @@ func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*model
 	return &payload, nil
 }
 
-func (c *HttpMCPConfigClient) Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+func (c *HttpMCPConfigClient) Update(
+	ctx context.Context,
+	id uuid.UUID,
+	body *models.ExternalUpdateMCPConnectionPayload,
+) (*models.ExternalMCPConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PutInternalConfigMcpIdWithBodyWithResponse(ctx, id.String(), helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PutInternalConfigMcpIdWithBodyWithResponse(
+		ctx,
+		id.String(),
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

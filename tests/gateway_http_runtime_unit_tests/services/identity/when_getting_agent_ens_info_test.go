@@ -38,10 +38,12 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationEnsInfoResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"collectionAddress":"0xabc","tokenId":7,"records":[]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationEnsInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"collectionAddress":"0xabc","tokenId":7,"records":[]}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the ENS info payload", func(t *testing.T) {
@@ -64,7 +66,9 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

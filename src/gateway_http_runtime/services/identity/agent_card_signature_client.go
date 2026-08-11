@@ -22,14 +22,21 @@ func NewHttpAgentCardSignatureClient(client clients.ClientWithResponsesInterface
 	return &HttpAgentCardSignatureClient{client: client}
 }
 
-func (c *HttpAgentCardSignatureClient) Sign(ctx context.Context, card []byte) (*models.ExternalAgentCardSignaturePayload, error) {
+func (c *HttpAgentCardSignatureClient) Sign(
+	ctx context.Context,
+	card []byte,
+) (*models.ExternalAgentCardSignaturePayload, error) {
 	// Raw JSON, not the generated map body, so the runtime signs exactly these bytes.
 	body, err := json.Marshal(signAgentCardBody{Card: card})
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}
 
-	resp, err := c.client.PostInternalIdentityCardSignatureWithBodyWithResponse(ctx, "application/json", bytes.NewReader(body))
+	resp, err := c.client.PostInternalIdentityCardSignatureWithBodyWithResponse(
+		ctx,
+		"application/json",
+		bytes.NewReader(body),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

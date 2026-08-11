@@ -41,7 +41,9 @@ func TestWhenExecutingListMCPConnectionsTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingListMCPConnectionsToolBeforeEach(t)
-			suite.mockListMCPConnectionsExecutor.EXPECT().Execute(ctx).Return(&reasoning_responses.MCPConnectionListResponse{}, nil)
+			suite.mockListMCPConnectionsExecutor.EXPECT().
+				Execute(ctx).
+				Return(&reasoning_responses.MCPConnectionListResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

@@ -65,7 +65,10 @@ func (b *SystemPromptBuilder) headerSection(agent *identity_models.Agent) string
 	return fmt.Sprintf("# %s — 6022 Agent", lo.FromPtr(agent.Name))
 }
 
-func (b *SystemPromptBuilder) identitySection(agent *identity_models.Agent, addresses map[identity_enums.AddressType]string) string {
+func (b *SystemPromptBuilder) identitySection(
+	agent *identity_models.Agent,
+	addresses map[identity_enums.AddressType]string,
+) string {
 	lines := []string{"## Identity (on-chain, authoritative)"}
 	if agent == nil {
 		return lines[0] + "\nThis agent's on-chain identity has not been initialized yet."

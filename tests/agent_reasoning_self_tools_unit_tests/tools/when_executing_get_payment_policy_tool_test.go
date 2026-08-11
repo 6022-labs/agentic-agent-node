@@ -41,7 +41,9 @@ func TestWhenExecutingGetPaymentPolicyTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingGetPaymentPolicyToolBeforeEach(t)
-			suite.mockGetPaymentPolicyExecutor.EXPECT().Execute(ctx).Return(&payment_responses.PaymentPolicyResponse{}, nil)
+			suite.mockGetPaymentPolicyExecutor.EXPECT().
+				Execute(ctx).
+				Return(&payment_responses.PaymentPolicyResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

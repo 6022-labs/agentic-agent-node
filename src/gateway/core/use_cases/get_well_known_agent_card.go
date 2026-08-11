@@ -40,7 +40,7 @@ func NewGetWellKnownAgentCard(
 	}
 }
 
-// Execute fetches the agent identity from the runtime; the card requires it, so a failure surfaces rather than a placeholder.
+// Execute fetches the identity from the runtime; the card requires it, so a failure surfaces, not a placeholder.
 func (u *GetWellKnownAgentCard) Execute(ctx context.Context) (*responses.WellKnownAgentCard, error) {
 	payload, err := u.agentRegistrationClient.Get(ctx)
 	if err != nil {

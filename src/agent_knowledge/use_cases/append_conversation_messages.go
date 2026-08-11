@@ -25,7 +25,11 @@ func NewAppendConversationMessages(
 	return &AppendConversationMessages{messageAppender: messageAppender, agentRepository: agentRepository}
 }
 
-func (u *AppendConversationMessages) Execute(ctx context.Context, conversationId string, req *requests.AppendConversationMessagesRequest) (*responses.AppendConversationMessagesResponse, error) {
+func (u *AppendConversationMessages) Execute(
+	ctx context.Context,
+	conversationId string,
+	req *requests.AppendConversationMessagesRequest,
+) (*responses.AppendConversationMessagesResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

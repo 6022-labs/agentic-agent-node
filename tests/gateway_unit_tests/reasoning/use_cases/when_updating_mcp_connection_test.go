@@ -68,12 +68,14 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
-				// The blank value is forwarded on purpose: the runtime reads it as "keep the stored one".
-				assert.Equal(t, map[string]string{"Authorization": ""}, body.HeaderAuth)
-				assert.Equal(t, []string{"search_issues"}, body.AllowedToolPatterns)
-				return &models.ExternalMCPConnectionPayload{Id: id.String(), Name: body.Name, Url: body.Url}, nil
-			})
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+					// The blank value is forwarded on purpose: the runtime reads it as "keep the stored one".
+					assert.Equal(t, map[string]string{"Authorization": ""}, body.HeaderAuth)
+					assert.Equal(t, []string{"search_issues"}, body.AllowedToolPatterns)
+					return &models.ExternalMCPConnectionPayload{Id: id.String(), Name: body.Name, Url: body.Url}, nil
+				})
 		}
 
 		t.Run("Should forward the blank value so the runtime keeps the stored header", func(t *testing.T) {
@@ -94,10 +96,12 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
-				assert.Nil(t, body.HeaderAuth)
-				return &models.ExternalMCPConnectionPayload{Id: id.String()}, nil
-			})
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+					assert.Nil(t, body.HeaderAuth)
+					return &models.ExternalMCPConnectionPayload{Id: id.String()}, nil
+				})
 		}
 
 		t.Run("Should pass nil for HeaderAuth so the runtime drops every stored header", func(t *testing.T) {
@@ -119,7 +123,9 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(nil, gateway_interfaces.ErrMCPConnectionNotFound)
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, gateway_interfaces.ErrMCPConnectionNotFound)
 		}
 
 		t.Run("Should surface the client error", func(t *testing.T) {

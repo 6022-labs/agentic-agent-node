@@ -51,7 +51,15 @@ func (m *AgentMinter) Mint(ctx context.Context, chainId string, params identity_
 		return "", fmt.Errorf("bind AgentCollectionV1: %w", err)
 	}
 
-	tx, err := contract.Mint(opts, params.To, params.Name, helper.ToAgentAddresses(params.Addresses), helper.ToKeyValues(params.Images), helper.ToKeyValues(params.Attributes), helper.ToNullableUint256(params.CloneOf))
+	tx, err := contract.Mint(
+		opts,
+		params.To,
+		params.Name,
+		helper.ToAgentAddresses(params.Addresses),
+		helper.ToKeyValues(params.Images),
+		helper.ToKeyValues(params.Attributes),
+		helper.ToNullableUint256(params.CloneOf),
+	)
 	if err != nil {
 		return "", fmt.Errorf("mint: %w", err)
 	}
@@ -67,7 +75,11 @@ func (m *AgentMinter) Mint(ctx context.Context, chainId string, params identity_
 	return tx.Hash().Hex(), nil
 }
 
-func (m *AgentMinter) CreateMintProposal(ctx context.Context, chainId string, params identity_interfaces.MintParams) (string, uint64, error) {
+func (m *AgentMinter) CreateMintProposal(
+	ctx context.Context,
+	chainId string,
+	params identity_interfaces.MintParams,
+) (string, uint64, error) {
 	client, err := m.ethClientFactory.For(chainId)
 	if err != nil {
 		return "", 0, err
@@ -85,7 +97,15 @@ func (m *AgentMinter) CreateMintProposal(ctx context.Context, chainId string, pa
 		return "", 0, fmt.Errorf("bind AgentCollectionV1: %w", err)
 	}
 
-	tx, err := contract.CreateMintProposal(opts, params.To, params.Name, helper.ToAgentAddresses(params.Addresses), helper.ToKeyValues(params.Images), helper.ToKeyValues(params.Attributes), helper.ToNullableUint256(params.CloneOf))
+	tx, err := contract.CreateMintProposal(
+		opts,
+		params.To,
+		params.Name,
+		helper.ToAgentAddresses(params.Addresses),
+		helper.ToKeyValues(params.Images),
+		helper.ToKeyValues(params.Attributes),
+		helper.ToNullableUint256(params.CloneOf),
+	)
 	if err != nil {
 		return "", 0, fmt.Errorf("createMintProposal: %w", err)
 	}

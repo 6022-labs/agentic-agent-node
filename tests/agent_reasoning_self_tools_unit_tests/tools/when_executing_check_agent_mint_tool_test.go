@@ -41,7 +41,9 @@ func TestWhenExecutingCheckAgentMintTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingCheckAgentMintToolBeforeEach(t)
-			suite.mockCheckAgentMintExecutor.EXPECT().Execute(ctx).Return(&identity_responses.RegistrationStatusResponse{}, nil)
+			suite.mockCheckAgentMintExecutor.EXPECT().
+				Execute(ctx).
+				Return(&identity_responses.RegistrationStatusResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

@@ -78,7 +78,11 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			defer WhenUpdatingSelfToolAfterEach(suite)
 			initSuite(suite)
 
-			payload, err := suite.sut.Update(context.Background(), id, &models.ExternalUpdateSelfToolPayload{Enabled: false})
+			payload, err := suite.sut.Update(
+				context.Background(),
+				id,
+				&models.ExternalUpdateSelfToolPayload{Enabled: false},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, http.MethodPut, capturedMethod)
@@ -110,7 +114,11 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			defer WhenUpdatingSelfToolAfterEach(suite)
 			initSuite(suite)
 
-			_, err := suite.sut.Update(context.Background(), uuid.New(), &models.ExternalUpdateSelfToolPayload{Enabled: true})
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
 
 			assert.ErrorIs(t, err, gateway_interfaces.ErrSelfToolNotFound)
 		})
@@ -134,7 +142,11 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			defer WhenUpdatingSelfToolAfterEach(suite)
 			initSuite(suite)
 
-			_, err := suite.sut.Update(context.Background(), uuid.New(), &models.ExternalUpdateSelfToolPayload{Enabled: true})
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)

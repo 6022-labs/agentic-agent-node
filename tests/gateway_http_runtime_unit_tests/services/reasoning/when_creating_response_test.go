@@ -47,7 +47,8 @@ func TestWhenCreatingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalResponsesResponse, error) {
 					var sent models.ExternalCreateResponsePayload
 					raw, _ := io.ReadAll(reader)
@@ -55,7 +56,9 @@ func TestWhenCreatingResponse(t *testing.T) {
 					assert.Equal(t, "conv-1", sent.PreviousResponseId)
 					return &clients.PostInternalResponsesResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"id":"conv-1","object":"response","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}]}`),
+						Body: []byte(
+							`{"id":"conv-1","object":"response","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}]}`,
+						),
 					}, nil
 				})
 		}
@@ -83,7 +86,8 @@ func TestWhenCreatingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(&clients.PostInternalResponsesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body:         []byte(`{"id":"conv-1","object":"response","status":"incomplete","output":[]}`),
@@ -110,7 +114,8 @@ func TestWhenCreatingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(nil, errors.New("runtime down"))
 		}
 

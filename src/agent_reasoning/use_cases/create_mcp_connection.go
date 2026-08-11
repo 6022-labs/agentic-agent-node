@@ -36,7 +36,10 @@ func NewCreateMCPConnection(
 // Execute creates the row first to get a stable connectionId, then writes
 // every header value to Vault under that id. The persisted row only ever
 // stores the header *names*; values stay in Vault.
-func (u *CreateMCPConnection) Execute(ctx context.Context, request *requests.CreateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *CreateMCPConnection) Execute(
+	ctx context.Context,
+	request *requests.CreateMCPConnectionRequest,
+) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

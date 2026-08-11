@@ -37,10 +37,12 @@ func TestWhenCheckingAgentEns(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"mintStatus":"minted","ensStatus":"published"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"mintStatus":"minted","ensStatus":"published"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the registration status payload", func(t *testing.T) {
@@ -62,10 +64,12 @@ func TestWhenCheckingAgentEns(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

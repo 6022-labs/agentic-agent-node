@@ -13,7 +13,9 @@ type DeletePaymentPolicyTool struct {
 	deletePaymentPolicyExecutor tool_interfaces.DeletePaymentPolicyExecutorInterface
 }
 
-func NewDeletePaymentPolicyTool(deletePaymentPolicyExecutor tool_interfaces.DeletePaymentPolicyExecutorInterface) *DeletePaymentPolicyTool {
+func NewDeletePaymentPolicyTool(
+	deletePaymentPolicyExecutor tool_interfaces.DeletePaymentPolicyExecutorInterface,
+) *DeletePaymentPolicyTool {
 	return &DeletePaymentPolicyTool{deletePaymentPolicyExecutor: deletePaymentPolicyExecutor}
 }
 

@@ -7,13 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// AgentAddress is one of the agent's wallet addresses, one row per chain family keyed by (agent_id, type); the private key lives in Vault.
+// AgentAddress is one wallet address row per chain family, keyed by (agent_id, type); the private key lives in Vault.
 type AgentAddress struct {
 	AgentId   uuid.UUID         `gorm:"primaryKey;size:36" json:"agentId"`
 	Type      enums.AddressType `gorm:"primaryKey;size:16" json:"type"`
-	Address   string            `gorm:"not null;size:90" json:"address"`
-	UpdatedAt time.Time         `gorm:"not null" json:"updatedAt"`
-	CreatedAt time.Time         `gorm:"not null" json:"createdAt"`
+	Address   string            `gorm:"not null;size:90"   json:"address"`
+	UpdatedAt time.Time         `gorm:"not null"           json:"updatedAt"`
+	CreatedAt time.Time         `gorm:"not null"           json:"createdAt"`
 }
 
 func (AgentAddress) TableName() string {

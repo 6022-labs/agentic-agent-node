@@ -23,7 +23,9 @@ type WhenListingAgentCollectionsTestingSuite struct {
 func WhenListingAgentCollectionsBeforeEach(t *testing.T) *WhenListingAgentCollectionsTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
+	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(
+		mockController,
+	)
 
 	sut := use_cases.NewListAgentCollections(mockAgentCollectionsManagerRequester)
 
@@ -41,10 +43,12 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return([]models.AgentCollection{
-				{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
-				{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
-			}, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				ListCollections(gomock.Any()).
+				Return([]models.AgentCollection{
+					{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
+					{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
+				}, nil)
 		}
 
 		t.Run("Should return them in order with their moderator state", func(t *testing.T) {
@@ -53,7 +57,10 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+			)
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Collections, 2)
@@ -68,7 +75,9 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return([]models.AgentCollection{}, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				ListCollections(gomock.Any()).
+				Return([]models.AgentCollection{}, nil)
 		}
 
 		t.Run("Should return an empty list, not null", func(t *testing.T) {
@@ -77,7 +86,10 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+			)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, resp.Collections)
@@ -89,7 +101,9 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().ListCollections(gomock.Any()).Return(nil, errors.New("rpc down"))
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				ListCollections(gomock.Any()).
+				Return(nil, errors.New("rpc down"))
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

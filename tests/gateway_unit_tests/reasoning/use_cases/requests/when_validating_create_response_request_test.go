@@ -92,7 +92,15 @@ func TestWhenUnmarshallingCreateResponseRequest(t *testing.T) {
 	t.Run("Given input content is an array of text parts", func(t *testing.T) {
 		t.Parallel()
 		var req requests.CreateResponseRequest
-		require.NoError(t, json.Unmarshal([]byte(`{"input":[{"role":"user","content":[{"type":"input_text","text":"a"},{"type":"input_text","text":"b"}]}]}`), &req))
+		require.NoError(
+			t,
+			json.Unmarshal(
+				[]byte(
+					`{"input":[{"role":"user","content":[{"type":"input_text","text":"a"},{"type":"input_text","text":"b"}]}]}`,
+				),
+				&req,
+			),
+		)
 
 		t.Run("Should concatenate the parts", func(t *testing.T) {
 			t.Parallel()
@@ -126,7 +134,10 @@ func TestWhenUnmarshallingCreateResponseRequest(t *testing.T) {
 	t.Run("Given both previous_response_id and conversation are set", func(t *testing.T) {
 		t.Parallel()
 		var req requests.CreateResponseRequest
-		require.NoError(t, json.Unmarshal([]byte(`{"input":"hi","previous_response_id":"resp-1","conversation":"conv-7"}`), &req))
+		require.NoError(
+			t,
+			json.Unmarshal([]byte(`{"input":"hi","previous_response_id":"resp-1","conversation":"conv-7"}`), &req),
+		)
 
 		t.Run("Should prefer previous_response_id", func(t *testing.T) {
 			t.Parallel()

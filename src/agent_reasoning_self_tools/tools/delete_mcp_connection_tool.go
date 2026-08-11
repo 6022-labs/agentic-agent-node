@@ -14,7 +14,9 @@ type DeleteMCPConnectionTool struct {
 	deleteMCPConnectionExecutor tool_interfaces.DeleteMCPConnectionExecutorInterface
 }
 
-func NewDeleteMCPConnectionTool(deleteMCPConnectionExecutor tool_interfaces.DeleteMCPConnectionExecutorInterface) *DeleteMCPConnectionTool {
+func NewDeleteMCPConnectionTool(
+	deleteMCPConnectionExecutor tool_interfaces.DeleteMCPConnectionExecutorInterface,
+) *DeleteMCPConnectionTool {
 	return &DeleteMCPConnectionTool{deleteMCPConnectionExecutor: deleteMCPConnectionExecutor}
 }
 

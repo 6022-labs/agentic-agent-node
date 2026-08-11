@@ -52,7 +52,11 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 		return nil, fmt.Errorf("failed to build bedrock messages: %w", err)
 	}
 
-	externalRequest := external_models.NewExternalAmazonBedrockConverseStandardRequest(llmConnection.Model, extMessages, systems)
+	externalRequest := external_models.NewExternalAmazonBedrockConverseStandardRequest(
+		llmConnection.Model,
+		extMessages,
+		systems,
+	)
 
 	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
 		tools := mcpTools[mcpConnection]
@@ -71,9 +75,12 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 		return nil, fmt.Errorf("failed to call Amazon Bedrock Converse API: %w", err)
 	}
 
-	contentTypes := lo.Map(response.Output.Message.Content, func(c external_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) string {
-		return c.ContentType()
-	})
+	contentTypes := lo.Map(
+		response.Output.Message.Content,
+		func(c external_models.ExternalAmazonBedrockConverseStandardMessageContent, _ int) string {
+			return c.ContentType()
+		},
+	)
 
 	r.logger.Debug("Response from Amazon Bedrock Converse Messages endpoint",
 		zap.Strings("contentTypes", contentTypes),
@@ -116,7 +123,10 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-func (r *AmazonBedrockConverseStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+func (r *AmazonBedrockConverseStandardChatCompletionRequester) Probe(
+	baseUrl, apiKey string,
+	llmConnection *models.LLMConnection,
+) error {
 	text := probeMessage
 	request := &external_models.ExternalAmazonBedrockConverseStandardRequest{
 		ModelId: llmConnection.Model,
@@ -125,7 +135,9 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) Probe(baseUrl, ap
 			Role:    "user",
 			Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{{Text: &text}},
 		}},
-		InferenceConfig: &external_models.ExternalAmazonBedrockConverseStandardRequestInferenceConfig{MaxTokens: probeMaxTokens},
+		InferenceConfig: &external_models.ExternalAmazonBedrockConverseStandardRequestInferenceConfig{
+			MaxTokens: probeMaxTokens,
+		},
 	}
 
 	_, err := r.amazonBedrockConverseClient.Messages(baseUrl, apiKey, request)
@@ -184,7 +196,10 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) buildRequestMessa
 			contents := make([]external_models.ExternalAmazonBedrockConverseStandardMessageContent, 0)
 			if m.Content != "" {
 				text := m.Content
-				contents = append(contents, external_models.ExternalAmazonBedrockConverseStandardMessageContent{Text: &text})
+				contents = append(
+					contents,
+					external_models.ExternalAmazonBedrockConverseStandardMessageContent{Text: &text},
+				)
 			}
 			for _, tc := range m.ToolCalls {
 				contents = append(contents, external_models.ExternalAmazonBedrockConverseStandardMessageContent{
@@ -202,14 +217,17 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) buildRequestMessa
 
 		case "tool":
 			content := m.Content
-			pendingToolResults = append(pendingToolResults, external_models.ExternalAmazonBedrockConverseStandardMessageContent{
-				ToolResult: &external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResult{
-					ToolUseId: m.ToolCallId,
-					Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResultContent{
-						{Text: &content},
+			pendingToolResults = append(
+				pendingToolResults,
+				external_models.ExternalAmazonBedrockConverseStandardMessageContent{
+					ToolResult: &external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResult{
+						ToolUseId: m.ToolCallId,
+						Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContentToolResultContent{
+							{Text: &content},
+						},
 					},
 				},
-			})
+			)
 
 		default:
 			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)

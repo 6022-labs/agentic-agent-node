@@ -40,10 +40,14 @@ func TestWhenGettingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.GetInternalConfigMcpIdResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
+				Return(&clients.GetInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":[]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the MCP connection payload", func(t *testing.T) {
@@ -67,10 +71,12 @@ func TestWhenGettingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.GetInternalConfigMcpIdResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"not_found"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
+				Return(&clients.GetInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found"}`),
+				}, nil)
 		}
 
 		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {

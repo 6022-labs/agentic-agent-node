@@ -38,7 +38,13 @@ func WhenVerifyingAuthBeforeEach(t *testing.T) *WhenVerifyingAuthTestingSuite {
 	mockAuthorizer := common_mocks.NewMockAuthorizerInterface(mockController)
 	mockJwtIssuer := gateway_mocks.NewMockJwtIssuerInterface(mockController)
 
-	sut := use_cases.NewVerifyAuth(mockNonceStore, mockSiweMessageBuilder, mockSignatureVerifier, mockAuthorizer, mockJwtIssuer)
+	sut := use_cases.NewVerifyAuth(
+		mockNonceStore,
+		mockSiweMessageBuilder,
+		mockSignatureVerifier,
+		mockAuthorizer,
+		mockJwtIssuer,
+	)
 
 	return &WhenVerifyingAuthTestingSuite{
 		sut: sut,
@@ -120,7 +126,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
-			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(common.HexToAddress("0xdeadbeef"), nil)
+			suite.mockSignatureVerifier.EXPECT().
+				Recover(siweMessage, testSignature).
+				Return(common.HexToAddress("0xdeadbeef"), nil)
 		}
 
 		t.Run("Should return Unauthorized with signature_mismatch", func(t *testing.T) {
@@ -144,7 +152,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
-			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(common.Address{}, errors.New("malformed"))
+			suite.mockSignatureVerifier.EXPECT().
+				Recover(siweMessage, testSignature).
+				Return(common.Address{}, errors.New("malformed"))
 		}
 
 		t.Run("Should return InternalError", func(t *testing.T) {
@@ -194,7 +204,9 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
-			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, common_interfaces.ErrIdentityNotFound)
+			suite.mockAuthorizer.EXPECT().
+				IsAuthorized(gomock.Any(), address).
+				Return(false, common_interfaces.ErrIdentityNotFound)
 		}
 
 		t.Run("Should return Unavailable with identity_not_found", func(t *testing.T) {

@@ -25,7 +25,10 @@ func NewCreateResponse(client interfaces.ResponseClientInterface) *CreateRespons
 // Execute authenticates (upstream, via the payment gate) then forwards the
 // OpenAI Responses request to the runtime, which owns history and builds the
 // response. The gateway only translates between its DTOs and the wire payload.
-func (u *CreateResponse) Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
+func (u *CreateResponse) Execute(
+	ctx context.Context,
+	request *requests.CreateResponseRequest,
+) (*responses.Response, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

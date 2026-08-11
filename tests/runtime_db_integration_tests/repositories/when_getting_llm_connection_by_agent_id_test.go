@@ -23,7 +23,9 @@ type WhenGettingLLMConnectionByAgentIdTestingSuite struct {
 	sut                      *repositories.LLMConnectionRepository
 }
 
-func WhenGettingLLMConnectionByAgentIdBeforeEach(tc *repositoryTestCase) *WhenGettingLLMConnectionByAgentIdTestingSuite {
+func WhenGettingLLMConnectionByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingLLMConnectionByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

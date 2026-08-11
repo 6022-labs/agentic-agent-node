@@ -8,7 +8,7 @@ import (
 	external_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/models"
 )
 
-// McpMetricsInterface records the OTel MCP-semconv client metric; callers hand over the raw outcome, not semconv values.
+// McpMetricsInterface records the OTel MCP-semconv client metric; callers pass the raw outcome, not semconv values.
 type McpMetricsInterface interface {
 	// RecordToolCall records one tools/call; err and rpcError are nil on success.
 	RecordToolCall(

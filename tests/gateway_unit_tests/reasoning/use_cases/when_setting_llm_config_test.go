@@ -65,38 +65,55 @@ func TestWhenSettingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
-				assert.Equal(t, "openai", body.Platform)
-				assert.Equal(t, "gpt-4o", body.Model)
-				assert.Equal(t, "sk-secret", body.ApiKey)
-				assert.NotNil(t, body.BaseUrl)
-				assert.Equal(t, "https://api.openai.com/v1", *body.BaseUrl)
-				return &models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model, BaseUrl: body.BaseUrl, SetupStatus: "established"}, nil
-			})
+			suite.mockClient.EXPECT().
+				Setup(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
+					assert.Equal(t, "openai", body.Platform)
+					assert.Equal(t, "gpt-4o", body.Model)
+					assert.Equal(t, "sk-secret", body.ApiKey)
+					assert.NotNil(t, body.BaseUrl)
+					assert.Equal(t, "https://api.openai.com/v1", *body.BaseUrl)
+					return &models.ExternalLLMConnectionPayload{
+						Id:          "new",
+						Platform:    body.Platform,
+						Model:       body.Model,
+						BaseUrl:     body.BaseUrl,
+						SetupStatus: "established",
+					}, nil
+				})
 		}
 
-		t.Run("Should return Ok mapping Provider to Platform and forwarding BaseUrl as a non-nil pointer", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should return Ok mapping Provider to Platform and forwarding BaseUrl as a non-nil pointer",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenSettingLlmConfigBeforeEach(t)
-			request := generateValidSetLlmConfigRequest()
-			initSuite(suite)
+				suite := WhenSettingLlmConfigBeforeEach(t)
+				request := generateValidSetLlmConfigRequest()
+				initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), request)
+				resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "openai", resp.Provider)
-		})
+				assert.NoError(t, err)
+				assert.Equal(t, "openai", resp.Provider)
+			},
+		)
 	})
 
 	t.Run("Given a request with a blank BaseUrl", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Setup(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
-				assert.Nil(t, body.BaseUrl)
-				return &models.ExternalLLMConnectionPayload{Id: "new", Platform: body.Platform, Model: body.Model}, nil
-			})
+			suite.mockClient.EXPECT().
+				Setup(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
+					assert.Nil(t, body.BaseUrl)
+					return &models.ExternalLLMConnectionPayload{
+						Id:       "new",
+						Platform: body.Platform,
+						Model:    body.Model,
+					}, nil
+				})
 		}
 
 		t.Run("Should pass nil for BaseUrl on the runtime payload", func(t *testing.T) {

@@ -46,7 +46,11 @@ func (a *NftOwnerAuthorizer) IsAuthorized(ctx context.Context, address common.Ad
 		return true, nil
 	}
 
-	owner, err := a.collectionRequester.OwnerOf(lo.FromPtr(agent.ChainId), common.HexToAddress(agent.CollectionAddress), *agent.CollectionTokenId)
+	owner, err := a.collectionRequester.OwnerOf(
+		lo.FromPtr(agent.ChainId),
+		common.HexToAddress(agent.CollectionAddress),
+		*agent.CollectionTokenId,
+	)
 	if err != nil {
 		return false, err
 	}

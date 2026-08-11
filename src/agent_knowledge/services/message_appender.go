@@ -41,7 +41,11 @@ func NewMessageAppender(
 	}
 }
 
-func (s *MessageAppender) Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (s *MessageAppender) Append(
+	ctx context.Context,
+	conversationId string,
+	messages []models.ConversationMessage,
+) ([]models.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 || len(messages) == 0 {
 		return nil, nil

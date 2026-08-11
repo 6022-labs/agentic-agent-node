@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ConversationMessage persists one discussion turn — text, an assistant tool-call turn (ToolCalls), or a tool result (ToolCallId); dedup by Hash, Content demojized before write so reasoning + knowledge agree.
+// ConversationMessage persists one turn (text, ToolCalls, or a ToolCallId result); dedup by Hash on demojized Content.
 type ConversationMessage struct {
 	Id             uuid.UUID                     `gorm:"primaryKey;size:36"`
 	ConversationId string                        `gorm:"not null;size:128;index:idx_conversation_messages_conversation_id"`
@@ -42,7 +42,13 @@ func (m *ConversationMessage) BeforeCreate(_ *gorm.DB) error {
 }
 
 func (m *ConversationMessage) ComputeHash() error {
-	hash, err := utils.ComputeConversationMessageHash(string(m.Role), lo.FromPtr(m.Content), lo.FromPtr(m.ToolCalls), lo.FromPtr(m.ToolCallId), m.ConversationId)
+	hash, err := utils.ComputeConversationMessageHash(
+		string(m.Role),
+		lo.FromPtr(m.Content),
+		lo.FromPtr(m.ToolCalls),
+		lo.FromPtr(m.ToolCallId),
+		m.ConversationId,
+	)
 	if err != nil {
 		return err
 	}

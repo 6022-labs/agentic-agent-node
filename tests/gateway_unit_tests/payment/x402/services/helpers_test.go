@@ -42,7 +42,12 @@ func x402TestAuthorization(from string, accept *x402.X402Config) x402.Eip3009Aut
 }
 
 // signX402Payment signs the EIP-3009 typed data exactly like an x402 client.
-func signX402Payment(t *testing.T, key *ecdsa.PrivateKey, auth x402.Eip3009Authorization, accept *x402.X402Config) *x402.PaymentPayload {
+func signX402Payment(
+	t *testing.T,
+	key *ecdsa.PrivateKey,
+	auth x402.Eip3009Authorization,
+	accept *x402.X402Config,
+) *x402.PaymentPayload {
 	t.Helper()
 
 	parsedChainId, err := helpers.ParseCaip2(accept.Network)
@@ -167,7 +172,12 @@ func permit2TypedData(t *testing.T, auth *x402.Permit2Authorization, chainId int
 	}
 }
 
-func signPermit2Payment(t *testing.T, key *ecdsa.PrivateKey, auth *x402.Permit2Authorization, config *x402.X402Config) *x402.PaymentPayload {
+func signPermit2Payment(
+	t *testing.T,
+	key *ecdsa.PrivateKey,
+	auth *x402.Permit2Authorization,
+	config *x402.X402Config,
+) *x402.PaymentPayload {
 	t.Helper()
 
 	parsedChainId, err := helpers.ParseCaip2(config.Network)

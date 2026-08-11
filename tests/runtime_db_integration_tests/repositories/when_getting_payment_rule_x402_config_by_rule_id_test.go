@@ -25,7 +25,9 @@ type WhenGettingPaymentRuleX402ConfigByRuleIdTestingSuite struct {
 	rule                     *models.PaymentRule
 }
 
-func WhenGettingPaymentRuleX402ConfigByRuleIdBeforeEach(tc *repositoryTestCase) *WhenGettingPaymentRuleX402ConfigByRuleIdTestingSuite {
+func WhenGettingPaymentRuleX402ConfigByRuleIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingPaymentRuleX402ConfigByRuleIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

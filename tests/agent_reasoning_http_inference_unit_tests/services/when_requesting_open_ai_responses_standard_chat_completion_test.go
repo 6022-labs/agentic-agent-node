@@ -22,7 +22,9 @@ type WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite struct {
 	mockOpenAIResponsesClient *clients_mocks.MockOpenAIResponsesStandardClientInterface
 }
 
-func WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite {
+func WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(
+	t *testing.T,
+) *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockOpenAIResponsesClient := clients_mocks.NewMockOpenAIResponsesStandardClientInterface(mockController)
@@ -265,7 +267,15 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -314,7 +324,15 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, selfTools, map[*models.MCPConnection][]*models.Tool{remoteConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				selfTools,
+				map[*models.MCPConnection][]*models.Tool{remoteConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -339,7 +357,14 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 					assistantRole := "assistant"
 					return &external_models.ExternalOpenAIResponsesStandardResponse{
 						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
-							{Type: "mcp_call", ID: "mcp_1", Name: &name, ServerLabel: &label, Arguments: &argsStr, Output: &output},
+							{
+								Type:        "mcp_call",
+								ID:          "mcp_1",
+								Name:        &name,
+								ServerLabel: &label,
+								Arguments:   &argsStr,
+								Output:      &output,
+							},
 							{
 								Type: "message",
 								Role: &assistantRole,
@@ -358,7 +383,15 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite, "weather")
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
 				assert.Equal(t, "mcp_1", result.ExecutedToolCalls[0].Id)
@@ -375,7 +408,15 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite, "normalized-weather")
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, true, llmConnection, nil, map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}, messages)
+			result, err := suite.sut.ChatCompletion(
+				baseUrl,
+				apiKey,
+				true,
+				llmConnection,
+				nil,
+				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+				messages,
+			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
 				assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)

@@ -30,9 +30,15 @@ func WhenReconcilingMintBeforeEach(t *testing.T) *WhenReconcilingMintTestingSuit
 
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 
-	sut := services.NewRegistrationReconciler(mockAgentRepository, mockAgentCollectionRequester, mockAgentRegistrationStateRepository)
+	sut := services.NewRegistrationReconciler(
+		mockAgentRepository,
+		mockAgentCollectionRequester,
+		mockAgentRegistrationStateRepository,
+	)
 
 	return &WhenReconcilingMintTestingSuite{
 		sut:                                  sut,
@@ -52,8 +58,12 @@ func TestWhenReconcilingMint(t *testing.T) {
 		nftOwner := common_tests.RandomEthAddress()
 
 		initSuite := func(suite *WhenReconcilingMintTestingSuite) {
-			suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).Return(nftOwner, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				InformationOf(gomock.Any(), gomock.Any(), uint64(5)).
+				Return(identity_interfaces.OnChainAgentInfo{Creator: creator}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).
+				Return(nftOwner, nil)
 			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
 			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -69,7 +79,14 @@ func TestWhenReconcilingMint(t *testing.T) {
 			initSuite(suite)
 
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			savedAgent, savedState, err := suite.sut.ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
+			savedAgent, savedState, err := suite.sut.ReconcileMint(
+				context.Background(),
+				agent,
+				nil,
+				common_tests.RandomEthAddress(),
+				5,
+				nil,
+			)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, savedAgent.CollectionTokenId)
@@ -81,8 +98,12 @@ func TestWhenReconcilingMint(t *testing.T) {
 	})
 
 	initSoulSuite := func(suite *WhenReconcilingMintTestingSuite) {
-		suite.mockAgentCollectionRequester.EXPECT().InformationOf(gomock.Any(), gomock.Any(), uint64(5)).Return(identity_interfaces.OnChainAgentInfo{Creator: common_tests.RandomEthAddress()}, nil)
-		suite.mockAgentCollectionRequester.EXPECT().OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).Return(common_tests.RandomEthAddress(), nil)
+		suite.mockAgentCollectionRequester.EXPECT().
+			InformationOf(gomock.Any(), gomock.Any(), uint64(5)).
+			Return(identity_interfaces.OnChainAgentInfo{Creator: common_tests.RandomEthAddress()}, nil)
+		suite.mockAgentCollectionRequester.EXPECT().
+			OwnerOf(gomock.Any(), gomock.Any(), uint64(5)).
+			Return(common_tests.RandomEthAddress(), nil)
 		suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
 			func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
 		suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -105,7 +126,14 @@ func TestWhenReconcilingMint(t *testing.T) {
 				WithEnsDomain("alice.agent.eth").
 				WithAttributes(map[string]string{"specialty": "defi"}).
 				Build()
-			savedAgent, _, err := suite.sut.ReconcileMint(context.Background(), agent, nil, common_tests.RandomEthAddress(), 5, nil)
+			savedAgent, _, err := suite.sut.ReconcileMint(
+				context.Background(),
+				agent,
+				nil,
+				common_tests.RandomEthAddress(),
+				5,
+				nil,
+			)
 
 			assert.NoError(t, err)
 			assert.Contains(t, lo.FromPtr(savedAgent.Soul), "### Core identity")

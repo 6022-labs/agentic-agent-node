@@ -43,7 +43,9 @@ func (b *PaymentRuleX402ConfigBuilder) WithAddressPatterns(patterns []string) *P
 	return b
 }
 
-func (b *PaymentRuleX402ConfigBuilder) WithAssetTransferMethod(method enums.AssetTransferMethod) *PaymentRuleX402ConfigBuilder {
+func (b *PaymentRuleX402ConfigBuilder) WithAssetTransferMethod(
+	method enums.AssetTransferMethod,
+) *PaymentRuleX402ConfigBuilder {
 	b.assetTransferMethod = method
 	return b
 }

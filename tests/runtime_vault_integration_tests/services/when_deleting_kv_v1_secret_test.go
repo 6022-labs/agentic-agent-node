@@ -38,7 +38,9 @@ func WhenDeletingKvV1SecretBeforeEach(t *testing.T) *WhenDeletingKvV1SecretTesti
 	}
 
 	mockMetrics := metrics_interfaces_mocks.NewMockVaultMetricsInterface(gomock.NewController(t))
-	mockMetrics.EXPECT().RecordOperation(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().
+		RecordOperation(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
 
 	return &WhenDeletingKvV1SecretTestingSuite{
 		mountPath: cfg.KvV1MountPath,

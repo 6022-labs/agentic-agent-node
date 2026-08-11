@@ -22,7 +22,9 @@ type WhenGettingAgentGuidanceByAgentIdTestingSuite struct {
 	sut                      *repositories.AgentGuidanceRepository
 }
 
-func WhenGettingAgentGuidanceByAgentIdBeforeEach(tc *repositoryTestCase) *WhenGettingAgentGuidanceByAgentIdTestingSuite {
+func WhenGettingAgentGuidanceByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingAgentGuidanceByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

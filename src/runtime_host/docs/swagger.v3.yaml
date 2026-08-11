@@ -636,8 +636,8 @@ externalDocs:
   description: ""
   url: ""
 info:
-  description: Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only
-    gateway_host calls it. All endpoints are mounted under /internal.
+  description: Internal-only runtime + knowledge surface on 127.0.0.1; gateway_host
+    calls it; mounted under /internal.
   title: Agentic Agent Node — Runtime Host API
   version: "1.0"
 openapi: 3.1.0
@@ -738,7 +738,7 @@ paths:
       - Internal
     post:
       description: Validates the collection + form and binds the draft to the node
-        wallet. Returns the stored draft + status.
+        wallet. Returns stored draft + status.
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -897,8 +897,8 @@ paths:
       - Internal
   /internal/authorize:
     post:
-      description: Resolves the agent identity, fetches OwnerOf(tokenId), compares
-        to the supplied address. Used by gateway during /auth/verify.
+      description: Resolves the identity, fetches OwnerOf(tokenId), compares to the
+        supplied address. Used by /auth/verify.
       requestBody:
         content:
           application/json:
@@ -1534,8 +1534,8 @@ paths:
       tags:
       - Internal
     post:
-      description: Idempotent batch append to the local conversation transcript. Dedup
-        by SHA-512 hash of (role, content, conversationId).
+      description: Idempotent batch append to the transcript. Dedup by SHA-512 hash
+        of (role, content, conversationId).
       parameters:
       - description: Conversation id
         in: path
@@ -1605,7 +1605,7 @@ paths:
   /internal/identity/card-signature:
     post:
       description: Returns an A2A detached JWS (ES256K) over the JCS-canonicalized
-        card. The card must not carry a `signatures` member.
+        card; no `signatures` member allowed.
       requestBody:
         content:
           application/json:
@@ -1642,7 +1642,7 @@ paths:
   /internal/identity/ens/publish:
     post:
       description: Writes the `url` text record for the agent's NFT via AgentEnsRegistry.
-        Requires the NFT to already exist.
+        Requires an existing NFT.
       responses:
         "204":
           description: No Content

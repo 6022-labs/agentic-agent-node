@@ -13,7 +13,9 @@ type GetPaymentPolicyTool struct {
 	getPaymentPolicyExecutor tool_interfaces.GetPaymentPolicyExecutorInterface
 }
 
-func NewGetPaymentPolicyTool(getPaymentPolicyExecutor tool_interfaces.GetPaymentPolicyExecutorInterface) *GetPaymentPolicyTool {
+func NewGetPaymentPolicyTool(
+	getPaymentPolicyExecutor tool_interfaces.GetPaymentPolicyExecutorInterface,
+) *GetPaymentPolicyTool {
 	return &GetPaymentPolicyTool{getPaymentPolicyExecutor: getPaymentPolicyExecutor}
 }
 

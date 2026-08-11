@@ -28,7 +28,10 @@ type agentCollectionsManagersFile struct {
 // chain id (inner join of the built-in registry and the configured chains).
 type AgentCollectionsManagersSettings map[string]common.Address
 
-func NewAgentCollectionsManagersSettings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *AgentCollectionsManagersSettings {
+func NewAgentCollectionsManagersSettings(
+	logger *zap.Logger,
+	evmChainsSettings *EvmChainsSettings,
+) *AgentCollectionsManagersSettings {
 	var f agentCollectionsManagersFile
 	if err := json.Unmarshal(agentCollectionsManagersJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collections_managers.json", zap.Error(err))

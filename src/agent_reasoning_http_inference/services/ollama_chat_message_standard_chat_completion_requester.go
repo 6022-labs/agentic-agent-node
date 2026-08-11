@@ -113,13 +113,18 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-func (r *OllamaChatMessageStandardChatCompletionRequester) Probe(baseUrl string, llmConnection *models.LLMConnection) error {
+func (r *OllamaChatMessageStandardChatCompletionRequester) Probe(
+	baseUrl string,
+	llmConnection *models.LLMConnection,
+) error {
 	stream := false
 	request := &external_models.ExternalOllamaChatMessageStandardRequest{
 		Model:    llmConnection.Model,
 		Stream:   &stream,
 		Messages: []external_models.ExternalOllamaChatMessageStandardMessage{{Role: "user", Content: probeMessage}},
-		Options:  &external_models.ExternalOllamaChatMessageStandardRequestOptions{NumPredict: lo.ToPtr(probeMaxTokens)},
+		Options: &external_models.ExternalOllamaChatMessageStandardRequestOptions{
+			NumPredict: lo.ToPtr(probeMaxTokens),
+		},
 	}
 
 	_, err := r.ollamaChatMessageClient.ChatMessage(baseUrl, request)
@@ -146,12 +151,15 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) buildRequestMessages(
 			}
 			for _, tc := range m.ToolCalls {
 				name := tc.Name
-				extMsg.ToolCalls = append(extMsg.ToolCalls, external_models.ExternalOllamaChatMessageStandardMessageToolCall{
-					Function: &external_models.ExternalOllamaChatMessageStandardMessageToolCallFunction{
-						Name:      name,
-						Arguments: tc.Arguments,
+				extMsg.ToolCalls = append(
+					extMsg.ToolCalls,
+					external_models.ExternalOllamaChatMessageStandardMessageToolCall{
+						Function: &external_models.ExternalOllamaChatMessageStandardMessageToolCallFunction{
+							Name:      name,
+							Arguments: tc.Arguments,
+						},
 					},
-				})
+				)
 			}
 			out = append(out, extMsg)
 

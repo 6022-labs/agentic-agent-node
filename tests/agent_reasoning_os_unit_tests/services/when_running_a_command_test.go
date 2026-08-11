@@ -30,7 +30,11 @@ func WhenRunningACommandBeforeEach(t *testing.T) *WhenRunningACommandTestingSuit
 	workdir := t.TempDir()
 
 	osSettings := os_settings.NewOsSettings(zap.NewNop(), koanf.New("."))
-	commandSettings := os_settings.NewCommandSettings(zap.NewNop(), koanf.New("."), reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")))
+	commandSettings := os_settings.NewCommandSettings(
+		zap.NewNop(),
+		koanf.New("."),
+		reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")),
+	)
 	osSettings.Workdir = workdir
 
 	return &WhenRunningACommandTestingSuite{
@@ -41,7 +45,11 @@ func WhenRunningACommandBeforeEach(t *testing.T) *WhenRunningACommandTestingSuit
 	}
 }
 
-func newCommandRunner(t *testing.T, osSettings *os_settings.OsSettings, commandSettings *os_settings.CommandSettings) *services.CommandRunner {
+func newCommandRunner(
+	t *testing.T,
+	osSettings *os_settings.OsSettings,
+	commandSettings *os_settings.CommandSettings,
+) *services.CommandRunner {
 	runner, err := services.NewCommandRunner(zap.NewNop(), osSettings, commandSettings)
 	assert.NoError(t, err)
 	return runner
@@ -129,7 +137,10 @@ func TestWhenRunningACommand(t *testing.T) {
 			suite := WhenRunningACommandBeforeEach(t)
 			suite.commandSettings.MaxOutputChars = 64
 
-			result, err := suite.sut.Run(ctx, suite.spec("echo start; head -c 500 /dev/zero | tr '\\0' 'x'; echo; echo end", time.Second*5))
+			result, err := suite.sut.Run(
+				ctx,
+				suite.spec("echo start; head -c 500 /dev/zero | tr '\\0' 'x'; echo; echo end", time.Second*5),
+			)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
@@ -215,7 +226,11 @@ func TestWhenRunningACommand(t *testing.T) {
 			runner, err := services.NewCommandRunner(
 				zap.NewNop(),
 				osSettings,
-				os_settings.NewCommandSettings(zap.NewNop(), koanf.New("."), reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New("."))),
+				os_settings.NewCommandSettings(
+					zap.NewNop(),
+					koanf.New("."),
+					reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")),
+				),
 			)
 
 			assert.Error(t, err)

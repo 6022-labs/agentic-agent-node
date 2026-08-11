@@ -23,7 +23,9 @@ type WhenGettingAgentRegistrationStateByAgentIdTestingSuite struct {
 	sut                      *repositories.AgentRegistrationStateRepository
 }
 
-func WhenGettingAgentRegistrationStateByAgentIdBeforeEach(tc *repositoryTestCase) *WhenGettingAgentRegistrationStateByAgentIdTestingSuite {
+func WhenGettingAgentRegistrationStateByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingAgentRegistrationStateByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -52,7 +54,9 @@ func WhenGettingAgentRegistrationStateByAgentIdBeforeEach(tc *repositoryTestCase
 	}
 }
 
-func WhenGettingAgentRegistrationStateByAgentIdAfterEach(suite *WhenGettingAgentRegistrationStateByAgentIdTestingSuite) {
+func WhenGettingAgentRegistrationStateByAgentIdAfterEach(
+	suite *WhenGettingAgentRegistrationStateByAgentIdTestingSuite,
+) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -88,13 +92,16 @@ func TestWhenGettingAgentRegistrationStateByAgentId(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
-						WithAgentId(agentId).
-						WithMintStatus(identity_enums.TransactionStatusConfirmed).
-						WithMintChainId(80002).
-						WithMintTxHash("0xabc").
-						WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
-						Build())
+					inserted, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithMintTxHash("0xabc").
+							WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
 
 					assert.NoError(t, err)
 

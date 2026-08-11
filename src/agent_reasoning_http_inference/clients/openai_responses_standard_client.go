@@ -17,7 +17,10 @@ const (
 )
 
 type OpenAIResponsesStandardClientInterface interface {
-	Responses(baseUrl, apiKey string, request *models.ExternalOpenAIResponsesStandardRequest) (*models.ExternalOpenAIResponsesStandardResponse, error)
+	Responses(
+		baseUrl, apiKey string,
+		request *models.ExternalOpenAIResponsesStandardRequest,
+	) (*models.ExternalOpenAIResponsesStandardResponse, error)
 }
 
 type OpenAIResponsesStandardClient struct {
@@ -39,7 +42,10 @@ func NewOpenAIResponsesStandardClient(params NewOpenAIResponsesStandardClientPar
 	}
 }
 
-func (c *OpenAIResponsesStandardClient) Responses(baseUrl, apiKey string, request *models.ExternalOpenAIResponsesStandardRequest) (*models.ExternalOpenAIResponsesStandardResponse, error) {
+func (c *OpenAIResponsesStandardClient) Responses(
+	baseUrl, apiKey string,
+	request *models.ExternalOpenAIResponsesStandardRequest,
+) (*models.ExternalOpenAIResponsesStandardResponse, error) {
 	url := fmt.Sprintf("%s%s", baseUrl, OPEN_AI_RESPONSES_ENDPOINT)
 
 	// Convert the request to JSON

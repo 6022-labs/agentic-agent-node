@@ -41,7 +41,9 @@ func TestWhenExecutingGetBlockchainConfigTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingGetBlockchainConfigToolBeforeEach(t)
-			suite.mockGetBlockchainConfigExecutor.EXPECT().Execute(ctx).Return(&common_responses.BlockchainConfigResponse{}, nil)
+			suite.mockGetBlockchainConfigExecutor.EXPECT().
+				Execute(ctx).
+				Return(&common_responses.BlockchainConfigResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

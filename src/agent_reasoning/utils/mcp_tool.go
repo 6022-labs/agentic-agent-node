@@ -56,7 +56,10 @@ func SortedMcpConnections(mcpTools map[*models.MCPConnection][]*models.Tool) []*
 }
 
 // FindMcpConnectionByName returns the connection with the given name, if present.
-func FindMcpConnectionByName(mcpTools map[*models.MCPConnection][]*models.Tool, name string) (*models.MCPConnection, bool) {
+func FindMcpConnectionByName(
+	mcpTools map[*models.MCPConnection][]*models.Tool,
+	name string,
+) (*models.MCPConnection, bool) {
 	return lo.FindKeyBy(mcpTools, func(mcpConnection *models.MCPConnection, _ []*models.Tool) bool {
 		return mcpConnection.Name == name
 	})

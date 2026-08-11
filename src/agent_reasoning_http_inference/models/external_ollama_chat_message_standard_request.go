@@ -6,11 +6,11 @@ import (
 )
 
 type ExternalOllamaChatMessageStandardRequest struct {
-	Model    string                                          `json:"model"`
-	Messages []ExternalOllamaChatMessageStandardMessage      `json:"messages"`
-	Tools    []ExternalOllamaChatMessageStandardRequestTool  `json:"tools,omitempty"`
-	Think    *bool                                           `json:"think,omitempty"`
-	Stream   *bool                                           `json:"stream,omitempty"`
+	Model    string                                           `json:"model"`
+	Messages []ExternalOllamaChatMessageStandardMessage       `json:"messages"`
+	Tools    []ExternalOllamaChatMessageStandardRequestTool   `json:"tools,omitempty"`
+	Think    *bool                                            `json:"think,omitempty"`
+	Stream   *bool                                            `json:"stream,omitempty"`
 	Options  *ExternalOllamaChatMessageStandardRequestOptions `json:"options,omitempty"`
 }
 
@@ -23,7 +23,10 @@ type ExternalOllamaChatMessageStandardRequestTool struct {
 	Function ExternalOllamaChatMessageStandardMessageToolCallFunction `json:"function"`
 }
 
-func NewExternalOllamaChatMessageStandardRequest(model string, messages []ExternalOllamaChatMessageStandardMessage) *ExternalOllamaChatMessageStandardRequest {
+func NewExternalOllamaChatMessageStandardRequest(
+	model string,
+	messages []ExternalOllamaChatMessageStandardMessage,
+) *ExternalOllamaChatMessageStandardRequest {
 	stream := false
 
 	return &ExternalOllamaChatMessageStandardRequest{

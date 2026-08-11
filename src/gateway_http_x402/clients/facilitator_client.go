@@ -45,7 +45,12 @@ func NewFacilitatorClient(params NewFacilitatorClientParams) *FacilitatorClient 
 	}
 }
 
-func (c *FacilitatorClient) Verify(ctx context.Context, baseUrl string, payload *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.VerifyResponse, error) {
+func (c *FacilitatorClient) Verify(
+	ctx context.Context,
+	baseUrl string,
+	payload *x402.PaymentPayload,
+	requirements *x402.PaymentRequirements,
+) (*x402.VerifyResponse, error) {
 	var verifyResponse x402.VerifyResponse
 	if err := c.post(ctx, baseUrl, FacilitatorVerifyPath, payload, requirements, &verifyResponse); err != nil {
 		return nil, err
@@ -53,7 +58,12 @@ func (c *FacilitatorClient) Verify(ctx context.Context, baseUrl string, payload 
 	return &verifyResponse, nil
 }
 
-func (c *FacilitatorClient) Settle(ctx context.Context, baseUrl string, payload *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.SettleResponse, error) {
+func (c *FacilitatorClient) Settle(
+	ctx context.Context,
+	baseUrl string,
+	payload *x402.PaymentPayload,
+	requirements *x402.PaymentRequirements,
+) (*x402.SettleResponse, error) {
 	var settleResponse x402.SettleResponse
 	if err := c.post(ctx, baseUrl, FacilitatorSettlePath, payload, requirements, &settleResponse); err != nil {
 		return nil, err
@@ -61,7 +71,14 @@ func (c *FacilitatorClient) Settle(ctx context.Context, baseUrl string, payload 
 	return &settleResponse, nil
 }
 
-func (c *FacilitatorClient) post(ctx context.Context, baseUrl string, path string, payload *x402.PaymentPayload, requirements *x402.PaymentRequirements, out any) error {
+func (c *FacilitatorClient) post(
+	ctx context.Context,
+	baseUrl string,
+	path string,
+	payload *x402.PaymentPayload,
+	requirements *x402.PaymentRequirements,
+	out any,
+) error {
 	encoded, err := json.Marshal(&facilitatorRequest{
 		X402Version:         x402.Version,
 		PaymentPayload:      payload,

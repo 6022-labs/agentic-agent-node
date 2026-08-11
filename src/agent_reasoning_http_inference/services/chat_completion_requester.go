@@ -160,7 +160,11 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-func (r *ChatCompletionRequester) ProbeConnection(ctx context.Context, llmConnection *models.LLMConnection, apiKey string) error {
+func (r *ChatCompletionRequester) ProbeConnection(
+	ctx context.Context,
+	llmConnection *models.LLMConnection,
+	apiKey string,
+) error {
 	platformSettings, err := r.getPlatformSettings(llmConnection.Platform)
 	if err != nil {
 		return err
@@ -256,7 +260,7 @@ func (r *ChatCompletionRequester) resolveApiKey(ctx context.Context) (*string, e
 	return &apiKey, nil
 }
 
-// trimTokenizer resolves the gpt-4 tokenizer once; it's an approximation for non-OpenAI models but cheap and consistent enough for trimming.
+// trimTokenizer resolves the gpt-4 tokenizer once; approximate for non-OpenAI models but cheap and consistent enough.
 func (r *ChatCompletionRequester) trimTokenizer() (*tiktoken.Tiktoken, error) {
 	r.tokenizerOnce.Do(func() {
 		r.tokenizer, r.tokenizerErr = tiktoken.EncodingForModel("gpt-4")
@@ -305,7 +309,9 @@ func (r *ChatCompletionRequester) trimMessagesToTokenLimit(
 	return append(systemMessages, rest[startIdx:]...), nil
 }
 
-func (r *ChatCompletionRequester) getPlatformSettings(platform enums.LLMConnectionPlatform) (settings.StandardSettingsInterface, error) {
+func (r *ChatCompletionRequester) getPlatformSettings(
+	platform enums.LLMConnectionPlatform,
+) (settings.StandardSettingsInterface, error) {
 	switch platform {
 	case enums.LLMConnectionPlatformLibertAi:
 		return r.libertAiSettings, nil

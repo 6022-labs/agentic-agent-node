@@ -30,7 +30,10 @@ func (r *PaymentPolicyRepository) GetByAgentId(ctx context.Context, agentId uuid
 	return &entity, nil
 }
 
-func (r *PaymentPolicyRepository) Create(ctx context.Context, policy *models.PaymentPolicy) (*models.PaymentPolicy, error) {
+func (r *PaymentPolicyRepository) Create(
+	ctx context.Context,
+	policy *models.PaymentPolicy,
+) (*models.PaymentPolicy, error) {
 	if err := r.client.GetDB().WithContext(ctx).Create(policy).Error; err != nil {
 		return nil, err
 	}

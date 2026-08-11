@@ -67,7 +67,13 @@ func NewExternalHttpMetrics(meterName string) *ExternalHttpMetrics {
 
 // RecordRequest records one completed outbound request: count, duration, response
 // size (when >0), and a 5xx error. responseSize <= 0 is omitted.
-func (m *ExternalHttpMetrics) RecordRequest(ctx context.Context, method, route string, statusCode int, duration time.Duration, responseSize int64) {
+func (m *ExternalHttpMetrics) RecordRequest(
+	ctx context.Context,
+	method, route string,
+	statusCode int,
+	duration time.Duration,
+	responseSize int64,
+) {
 	attrs := metric.WithAttributes(
 		attribute.String("http.method", method),
 		attribute.String("http.route", route),

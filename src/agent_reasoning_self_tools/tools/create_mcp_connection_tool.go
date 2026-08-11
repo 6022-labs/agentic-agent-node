@@ -9,12 +9,14 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
 
-// CreateMCPConnectionTool exposes CreateMCPConnection as a self tool; no header-auth input, so no secret transits the model.
+// CreateMCPConnectionTool exposes CreateMCPConnection; no header-auth input, so no secret transits the model.
 type CreateMCPConnectionTool struct {
 	createMCPConnectionExecutor tool_interfaces.CreateMCPConnectionExecutorInterface
 }
 
-func NewCreateMCPConnectionTool(createMCPConnectionExecutor tool_interfaces.CreateMCPConnectionExecutorInterface) *CreateMCPConnectionTool {
+func NewCreateMCPConnectionTool(
+	createMCPConnectionExecutor tool_interfaces.CreateMCPConnectionExecutorInterface,
+) *CreateMCPConnectionTool {
 	return &CreateMCPConnectionTool{createMCPConnectionExecutor: createMCPConnectionExecutor}
 }
 

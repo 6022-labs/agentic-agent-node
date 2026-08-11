@@ -10,7 +10,7 @@ import (
 
 const commandMeterName = "agentic_runtime_reasoning_os"
 
-// Command duration is not recorded here: the self tool registry already times every call as gen_ai.execute_tool.duration.
+// Command duration is not recorded here: the self tool registry already times calls as gen_ai.execute_tool.duration.
 type CommandMetrics struct {
 	backgroundStartedCounter metric.Int64Counter
 	processKilledCounter     metric.Int64Counter

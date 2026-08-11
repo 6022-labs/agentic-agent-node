@@ -18,7 +18,10 @@ func NewGetAgentIdentity(
 	agentRepository repositories.AgentRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *GetAgentIdentity {
-	return &GetAgentIdentity{agentRepository: agentRepository, agentRegistrationStateRepository: agentRegistrationStateRepository}
+	return &GetAgentIdentity{
+		agentRepository:                  agentRepository,
+		agentRegistrationStateRepository: agentRegistrationStateRepository,
+	}
 }
 
 func (u *GetAgentIdentity) Execute(ctx context.Context) (*responses.GetAgentIdentityResponse, error) {

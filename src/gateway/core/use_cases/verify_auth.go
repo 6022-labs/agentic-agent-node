@@ -44,7 +44,10 @@ func NewVerifyAuth(
 	}
 }
 
-func (u *VerifyAuth) Execute(ctx context.Context, req *requests.VerifyAuthRequest) (*responses.VerifyAuthResponse, error) {
+func (u *VerifyAuth) Execute(
+	ctx context.Context,
+	req *requests.VerifyAuthRequest,
+) (*responses.VerifyAuthResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

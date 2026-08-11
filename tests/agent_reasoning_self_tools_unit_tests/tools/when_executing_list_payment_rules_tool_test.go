@@ -41,7 +41,9 @@ func TestWhenExecutingListPaymentRulesTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingListPaymentRulesToolBeforeEach(t)
-			suite.mockListPaymentRulesExecutor.EXPECT().Execute(ctx).Return(&payment_responses.ListPaymentRulesResponse{}, nil)
+			suite.mockListPaymentRulesExecutor.EXPECT().
+				Execute(ctx).
+				Return(&payment_responses.ListPaymentRulesResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

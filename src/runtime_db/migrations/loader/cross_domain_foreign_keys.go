@@ -7,7 +7,7 @@ import (
 	agent_reasoning_models "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 )
 
-// Loader-only wrappers that add the cross-domain agent_id -> agents.id FK without coupling domain models to agent_identity (which would risk an import cycle).
+// Loader-only wrappers adding the agent_id -> agents.id FK without coupling models to agent_identity (import cycle).
 type conversationWithCrossDomainFK struct {
 	agent_knowledge_models.Conversation
 	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`

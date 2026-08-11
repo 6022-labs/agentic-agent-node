@@ -54,7 +54,10 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+			)
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Collections, 2)

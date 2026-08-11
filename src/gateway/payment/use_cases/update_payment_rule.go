@@ -16,6 +16,9 @@ func NewUpdatePaymentRule(paymentRuleClient gateway_interfaces.PaymentRuleClient
 	return &UpdatePaymentRule{paymentRuleClient: paymentRuleClient}
 }
 
-func (u *UpdatePaymentRule) Execute(ctx context.Context, request *requests.UpdatePaymentRuleRequest) (*models.ExternalPaymentRule, error) {
+func (u *UpdatePaymentRule) Execute(
+	ctx context.Context,
+	request *requests.UpdatePaymentRuleRequest,
+) (*models.ExternalPaymentRule, error) {
 	return u.paymentRuleClient.Update(ctx, request.Id.String(), request.ToExternalPaymentRule())
 }

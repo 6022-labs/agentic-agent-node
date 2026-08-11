@@ -174,7 +174,10 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 	return nil
 }
 
-func (m *X402AccessMethod) recoverAgainstCandidates(payload *x402.PaymentPayload, candidates []x402Rule) (common.Address, []x402Rule, error) {
+func (m *X402AccessMethod) recoverAgainstCandidates(
+	payload *x402.PaymentPayload,
+	candidates []x402Rule,
+) (common.Address, []x402Rule, error) {
 	var payer common.Address
 	var recovered []x402Rule
 	var lastErr error
@@ -197,10 +200,16 @@ func (m *X402AccessMethod) recoverAgainstCandidates(payload *x402.PaymentPayload
 }
 
 // paymentRequired writes the spec 402, advertising only public rules (scoped ones would leak patterns).
-func (m *X402AccessMethod) paymentRequired(ctx *fiber.Ctx, x402Rules []x402Rule, facilitators map[string]models.ExternalPaymentFacilitator, errorCode string) error {
+func (m *X402AccessMethod) paymentRequired(
+	ctx *fiber.Ctx,
+	x402Rules []x402Rule,
+	facilitators map[string]models.ExternalPaymentFacilitator,
+	errorCode string,
+) error {
 	accepts := []x402.PaymentRequirements{}
 	for i := range x402Rules {
-		if slices.Contains(x402Rules[i].config.AddressPatterns, everyoneAddressPattern) && !m.unsettleablePaidRule(&x402Rules[i], facilitators) {
+		if slices.Contains(x402Rules[i].config.AddressPatterns, everyoneAddressPattern) &&
+			!m.unsettleablePaidRule(&x402Rules[i], facilitators) {
 			maxTimeoutSeconds := facilitators[x402Rules[i].config.Network].MaxTimeoutSeconds
 			accepts = append(accepts, *m.toPaymentRequirements(&x402Rules[i], maxTimeoutSeconds))
 		}
@@ -256,7 +265,11 @@ func (m *X402AccessMethod) matchRules(x402Rules []x402Rule, payload *x402.Paymen
 }
 
 // cheapestEntitledRule picks the lowest-priced pattern-matching rule, skipping unsettleable paid ones.
-func (m *X402AccessMethod) cheapestEntitledRule(x402Rules []x402Rule, payer common.Address, facilitators map[string]models.ExternalPaymentFacilitator) *x402Rule {
+func (m *X402AccessMethod) cheapestEntitledRule(
+	x402Rules []x402Rule,
+	payer common.Address,
+	facilitators map[string]models.ExternalPaymentFacilitator,
+) *x402Rule {
 	var best *x402Rule
 	var bestPrice *big.Int
 	for i := range x402Rules {
@@ -280,7 +293,10 @@ func (m *X402AccessMethod) cheapestEntitledRule(x402Rules []x402Rule, payer comm
 }
 
 // unsettleablePaidRule is a paid rule whose network has no facilitator — never advertised or honored.
-func (m *X402AccessMethod) unsettleablePaidRule(candidate *x402Rule, facilitators map[string]models.ExternalPaymentFacilitator) bool {
+func (m *X402AccessMethod) unsettleablePaidRule(
+	candidate *x402Rule,
+	facilitators map[string]models.ExternalPaymentFacilitator,
+) bool {
 	_, hasFacilitator := facilitators[candidate.config.Network]
 	return !m.isZeroPrice(candidate.rule.Price) && !hasFacilitator
 }

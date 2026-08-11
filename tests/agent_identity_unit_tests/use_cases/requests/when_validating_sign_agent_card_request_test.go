@@ -24,7 +24,9 @@ func TestWhenValidatingSignAgentCardRequest(t *testing.T) {
 
 	t.Run("Given a card that already carries a signatures member", func(t *testing.T) {
 		t.Parallel()
-		req := &requests.SignAgentCardRequest{Card: []byte(`{"name":"hermes","signatures":[{"protected":"x","signature":"y"}]}`)}
+		req := &requests.SignAgentCardRequest{
+			Card: []byte(`{"name":"hermes","signatures":[{"protected":"x","signature":"y"}]}`),
+		}
 
 		t.Run("Should reject it, since the spec excludes that member from the signed content", func(t *testing.T) {
 			t.Parallel()

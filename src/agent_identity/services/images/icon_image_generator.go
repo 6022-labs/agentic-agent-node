@@ -119,7 +119,13 @@ func (c *iconCanvas) drawBaseImage(data []byte) error {
 
 	covered := c.coverResize(img, iconInnerWidth, iconInnerHeight)
 	layer := image.NewRGBA(c.img.Bounds())
-	xdraw.Draw(layer, image.Rect(iconBorder, iconBorder, iconBorder+iconInnerWidth, iconBorder+iconInnerHeight), covered, image.Point{}, xdraw.Src)
+	xdraw.Draw(
+		layer,
+		image.Rect(iconBorder, iconBorder, iconBorder+iconInnerWidth, iconBorder+iconInnerHeight),
+		covered,
+		image.Point{},
+		xdraw.Src,
+	)
 
 	mask := c.roundedRectMask(iconBorder, iconBorder, iconInnerWidth, iconInnerHeight, iconInnerRadius)
 	xdraw.DrawMask(c.img, c.img.Bounds(), layer, image.Point{}, mask, image.Point{}, xdraw.Over)
@@ -193,7 +199,13 @@ func (c *iconCanvas) drawMark(path string) error {
 
 	covered := c.coverResize(mark, imgSize, imgSize)
 	layer := image.NewRGBA(c.img.Bounds())
-	xdraw.Draw(layer, image.Rect(int(cx)-imgSize/2, int(cy)-imgSize/2, int(cx)+imgSize/2, int(cy)+imgSize/2), covered, image.Point{}, xdraw.Src)
+	xdraw.Draw(
+		layer,
+		image.Rect(int(cx)-imgSize/2, int(cy)-imgSize/2, int(cx)+imgSize/2, int(cy)+imgSize/2),
+		covered,
+		image.Point{},
+		xdraw.Src,
+	)
 	mask := c.circleMask(cx, cy, imgSize/2)
 	xdraw.DrawMask(c.img, c.img.Bounds(), layer, image.Point{}, mask, image.Point{}, xdraw.Over)
 	return nil

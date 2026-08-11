@@ -21,7 +21,9 @@ type WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite struc
 	mockAmazonBedrockConverseClient *clients_mocks.MockAmazonBedrockConverseStandardClientInterface
 }
 
-func WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite {
+func WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(
+	t *testing.T,
+) *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAmazonBedrockConverseClient := clients_mocks.NewMockAmazonBedrockConverseStandardClientInterface(mockController)

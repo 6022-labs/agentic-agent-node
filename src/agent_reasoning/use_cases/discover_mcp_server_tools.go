@@ -37,7 +37,10 @@ func NewDiscoverMCPServerTools(
 }
 
 // Execute lists what a server exposes, so the console can offer its tools for selection.
-func (u *DiscoverMCPServerTools) Execute(ctx context.Context, request *requests.DiscoverMCPServerToolsRequest) (*responses.MCPServerToolsResponse, error) {
+func (u *DiscoverMCPServerTools) Execute(
+	ctx context.Context,
+	request *requests.DiscoverMCPServerToolsRequest,
+) (*responses.MCPServerToolsResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

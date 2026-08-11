@@ -9,5 +9,8 @@ import (
 
 // ListAgentCollectionsExecutorInterface exposes the collections read to the self tools.
 type ListAgentCollectionsExecutorInterface interface {
-	Execute(ctx context.Context, req *identity_requests.ListAgentCollectionsRequest) (*identity_responses.AgentCollectionsResponse, error)
+	Execute(
+		ctx context.Context,
+		req *identity_requests.ListAgentCollectionsRequest,
+	) (*identity_responses.AgentCollectionsResponse, error)
 }

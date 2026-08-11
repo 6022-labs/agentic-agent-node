@@ -44,7 +44,9 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
-			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).Return(nil)
+			suite.mockDeleteMCPConnectionExecutor.EXPECT().
+				Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).
+				Return(nil)
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 
@@ -77,7 +79,9 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
-			suite.mockDeleteMCPConnectionExecutor.EXPECT().Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).Return(errors.New("not found"))
+			suite.mockDeleteMCPConnectionExecutor.EXPECT().
+				Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).
+				Return(errors.New("not found"))
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 

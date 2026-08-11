@@ -13,7 +13,9 @@ type GetPaymentFacilitatorsTool struct {
 	getPaymentFacilitatorsExecutor tool_interfaces.GetPaymentFacilitatorsExecutorInterface
 }
 
-func NewGetPaymentFacilitatorsTool(getPaymentFacilitatorsExecutor tool_interfaces.GetPaymentFacilitatorsExecutorInterface) *GetPaymentFacilitatorsTool {
+func NewGetPaymentFacilitatorsTool(
+	getPaymentFacilitatorsExecutor tool_interfaces.GetPaymentFacilitatorsExecutorInterface,
+) *GetPaymentFacilitatorsTool {
 	return &GetPaymentFacilitatorsTool{getPaymentFacilitatorsExecutor: getPaymentFacilitatorsExecutor}
 }
 

@@ -9,7 +9,7 @@ import (
 
 const AgentIdentitySettingsKey = "agent_identity"
 
-// AgentIdentitySettings exposes the agent's public runtime URL (the ENS `url` record); it must match the runtime's value.
+// AgentIdentitySettings exposes the agent's runtime URL (the ENS `url` record); it must match the runtime's value.
 type AgentIdentitySettings struct {
 	RuntimeUrl string `koanf:"runtime_url"`
 }

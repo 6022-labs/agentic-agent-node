@@ -31,7 +31,10 @@ func WhenValidatingX402RuleBeforeEach(t *testing.T) *WhenValidatingX402RuleTesti
 // validatingX402RuleSuite builds the suite with a given facilitator config so the
 // facilitator-gate cases can run with no facilitator configured. Chains 80002
 // and 84532 are reachable; any other chain (e.g. eip155:1) is not.
-func validatingX402RuleSuite(t *testing.T, facilitators *runtime_common_settings.PaymentFacilitatorsSettings) *WhenValidatingX402RuleTestingSuite {
+func validatingX402RuleSuite(
+	t *testing.T,
+	facilitators *runtime_common_settings.PaymentFacilitatorsSettings,
+) *WhenValidatingX402RuleTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
@@ -42,7 +45,12 @@ func validatingX402RuleSuite(t *testing.T, facilitators *runtime_common_settings
 	}
 
 	return &WhenValidatingX402RuleTestingSuite{
-		sut:                services.NewX402PaymentMethodStrategy(facilitators, evmChainsSettings, mockErc20Validator, mockConfigRepository),
+		sut: services.NewX402PaymentMethodStrategy(
+			facilitators,
+			evmChainsSettings,
+			mockErc20Validator,
+			mockConfigRepository,
+		),
 		mockErc20Validator: mockErc20Validator,
 	}
 }
@@ -119,7 +127,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"solana:mainnet","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"solana:mainnet","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -137,7 +148,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 				suite := WhenValidatingX402RuleBeforeEach(t)
 
-				request := generateSaveRequest(`{"network":"`+network+`","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+				request := generateSaveRequest(
+					`{"network":"`+network+`","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					"10000",
+				)
 				err := suite.sut.Validate(context.Background(), request)
 
 				var validationErr *apperrors.ValidationError
@@ -155,7 +169,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -176,7 +193,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 				Return(enums.AssetTransferMethodEip3009, "USD Coin", "2", nil).
 				Times(1)
 
-			request := generateSaveRequest(`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			assert.NoError(t, err)
@@ -191,7 +211,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -208,7 +231,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex","addressPatterns":[".*"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex","addressPatterns":[".*"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -225,7 +251,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -242,7 +271,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -259,7 +291,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
-			request := generateSaveRequest(`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["[invalid"]}`, "10000")
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["[invalid"]}`,
+				"10000",
+			)
 			err := suite.sut.Validate(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
@@ -272,7 +307,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).Times(1)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
+				Times(1)
 		}
 
 		t.Run("Should return a validation error on config.network", func(t *testing.T) {
@@ -294,7 +332,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).Times(1)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
+				Times(1)
 		}
 
 		t.Run("Should be allowed (free rules never settle)", func(t *testing.T) {
@@ -314,7 +355,10 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			suite.mockErc20Validator.EXPECT().ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).Return(enums.AssetTransferMethod(""), "", "", assert.AnError).Times(1)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethod(""), "", "", assert.AnError).
+				Times(1)
 		}
 
 		t.Run("Should return a validation error on config.asset", func(t *testing.T) {

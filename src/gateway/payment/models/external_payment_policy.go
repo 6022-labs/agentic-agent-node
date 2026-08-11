@@ -14,7 +14,7 @@ type ExternalPaymentRule struct {
 	Name   string          `json:"name"`
 	Price  string          `json:"price"`
 	Method string          `json:"method"`
-	Config json.RawMessage `json:"config" swaggertype:"object"`
+	Config json.RawMessage `json:"config"       swaggertype:"object"`
 }
 
 // ExternalPaymentFacilitator mirrors one network's runtime-configured x402

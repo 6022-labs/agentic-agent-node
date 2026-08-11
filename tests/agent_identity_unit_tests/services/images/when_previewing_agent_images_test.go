@@ -27,7 +27,7 @@ import (
 // sets it for you. You can also run it directly with the env var on the same
 // line:
 //
-//	AGENT_IMAGE_PREVIEW_DIR=/tmp/agent-images go test ./tests/agent_identity_unit_tests/services/images/ -run TestWhenPreviewingAgentImages -count=1 -v
+//	AGENT_IMAGE_PREVIEW_DIR=/tmp/agent-images go test ./tests/.../images -run TestWhenPreviewingAgentImages -count=1
 //
 // It drops default.svg (open in a browser) + icon.png (the rasterized frame).
 func TestWhenPreviewingAgentImages(t *testing.T) {
@@ -161,5 +161,15 @@ func fetchImage(t *testing.T, url string) ([]byte, string) {
 // preview shows the mark regardless of the working directory.
 func repoMarkPath() string {
 	_, thisFile, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..", "src", "runtime_host", "images", "nft_mark.png")
+	return filepath.Join(
+		filepath.Dir(thisFile),
+		"..",
+		"..",
+		"..",
+		"..",
+		"src",
+		"runtime_host",
+		"images",
+		"nft_mark.png",
+	)
 }

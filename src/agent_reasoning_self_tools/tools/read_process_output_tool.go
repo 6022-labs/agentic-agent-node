@@ -13,7 +13,9 @@ type ReadProcessOutputTool struct {
 	readProcessOutputExecutor tool_interfaces.ReadProcessOutputExecutorInterface
 }
 
-func NewReadProcessOutputTool(readProcessOutputExecutor tool_interfaces.ReadProcessOutputExecutorInterface) *ReadProcessOutputTool {
+func NewReadProcessOutputTool(
+	readProcessOutputExecutor tool_interfaces.ReadProcessOutputExecutorInterface,
+) *ReadProcessOutputTool {
 	return &ReadProcessOutputTool{readProcessOutputExecutor: readProcessOutputExecutor}
 }
 

@@ -21,7 +21,10 @@ func NewListConversationMessages(
 	}
 }
 
-func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
+func (u *ListConversationMessages) Execute(
+	ctx context.Context,
+	conversationId string,
+) (*responses.ListConversationMessagesResponse, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 {
 		return &responses.ListConversationMessagesResponse{Messages: []responses.ConversationMessage{}}, nil

@@ -18,7 +18,10 @@ func NewAgentRegistrationStateRepository(client *runtime_db.DatabaseClient) *Age
 	return &AgentRegistrationStateRepository{client: client}
 }
 
-func (r *AgentRegistrationStateRepository) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.AgentRegistrationState, error) {
+func (r *AgentRegistrationStateRepository) GetByAgentId(
+	ctx context.Context,
+	agentId uuid.UUID,
+) (*models.AgentRegistrationState, error) {
 	var entity models.AgentRegistrationState
 	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -30,7 +33,10 @@ func (r *AgentRegistrationStateRepository) GetByAgentId(ctx context.Context, age
 	return &entity, nil
 }
 
-func (r *AgentRegistrationStateRepository) Upsert(ctx context.Context, state *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+func (r *AgentRegistrationStateRepository) Upsert(
+	ctx context.Context,
+	state *models.AgentRegistrationState,
+) (*models.AgentRegistrationState, error) {
 	existing, err := r.GetByAgentId(ctx, state.AgentId)
 	if err != nil {
 		return nil, err

@@ -26,7 +26,9 @@ func NewPaymentMethodStrategies(params NewPaymentMethodStrategiesParams) *Paymen
 	return &PaymentMethodStrategies{byMethod: byMethod}
 }
 
-func (r *PaymentMethodStrategies) For(method enums.PaymentMethod) (payment_interfaces.PaymentMethodStrategyInterface, bool) {
+func (r *PaymentMethodStrategies) For(
+	method enums.PaymentMethod,
+) (payment_interfaces.PaymentMethodStrategyInterface, bool) {
 	strategy, ok := r.byMethod[method]
 	return strategy, ok
 }

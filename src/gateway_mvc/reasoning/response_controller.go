@@ -34,7 +34,7 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 
 // CreateResponse runs the agent's inference loop for one turn.
 // @Summary Create response
-// @Description x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays the cheapest accept option whose address patterns match them — zero-price options (agent wallet and NFT owner by default) are served free without settlement. Anonymous 402 responses advertise only the options open to everyone.
+// @Description x402 v2 gated (PAYMENT-SIGNATURE header): callers pay the cheapest matching option; zero-price is free.
 // @Tags Responses
 // @Accept json
 // @Produce json

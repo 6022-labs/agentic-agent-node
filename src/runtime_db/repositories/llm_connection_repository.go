@@ -31,7 +31,10 @@ func (r *LLMConnectionRepository) GetByAgentId(ctx context.Context, agentId uuid
 }
 
 // Upsert keeps a single row per agent: update in place if one exists, otherwise insert.
-func (r *LLMConnectionRepository) Upsert(ctx context.Context, connection *models.LLMConnection) (*models.LLMConnection, error) {
+func (r *LLMConnectionRepository) Upsert(
+	ctx context.Context,
+	connection *models.LLMConnection,
+) (*models.LLMConnection, error) {
 	existing, err := r.GetByAgentId(ctx, connection.AgentId)
 	if err != nil {
 		return nil, err

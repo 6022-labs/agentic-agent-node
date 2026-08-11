@@ -2,7 +2,7 @@ package interfaces
 
 import "time"
 
-// GenerateAgentImagesInterface renders an agent's framed images, keyed "default" and "icon" as the collection contract expects.
+// GenerateAgentImagesInterface renders the agent's framed images, keyed "default" and "icon" as the collection expects.
 type GenerateAgentImagesInterface interface {
 	Generate(params GenerateImageParams) (map[string][]byte, error)
 }

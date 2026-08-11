@@ -103,7 +103,10 @@ func TestWhenListingExistingHashes(t *testing.T) {
 
 					unknown := newHashableMessage("conv-partial", "unknown")
 
-					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{stored.Hash, unknown.Hash})
+					existing, err := suite.sut.ListExistingHashes(
+						context.Background(),
+						[]string{stored.Hash, unknown.Hash},
+					)
 					assert.NoError(t, err)
 					assert.ElementsMatch(t, []string{stored.Hash}, existing)
 				})
@@ -140,7 +143,10 @@ func TestWhenListingExistingHashes(t *testing.T) {
 					ghost1 := newHashableMessage("conv-none-match", "never-stored-1")
 					ghost2 := newHashableMessage("conv-none-match", "never-stored-2")
 
-					existing, err := suite.sut.ListExistingHashes(context.Background(), []string{ghost1.Hash, ghost2.Hash})
+					existing, err := suite.sut.ListExistingHashes(
+						context.Background(),
+						[]string{ghost1.Hash, ghost2.Hash},
+					)
 					assert.NoError(t, err)
 					assert.Empty(t, existing)
 				})

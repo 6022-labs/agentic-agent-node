@@ -60,7 +60,7 @@ func (c *AgentRegistrationController) RegisterRoutes(app fiber.Router) {
 
 // Save upserts the agent draft filled by the connected wallet.
 // @Summary Save agent registration draft
-// @Description Validates the collection + form and binds the draft to the node wallet. Returns the stored draft + status.
+// @Description Validates the collection + form and binds the draft to the node wallet. Returns stored draft + status.
 // @Tags Internal
 // @Accept multipart/form-data
 // @Produce json

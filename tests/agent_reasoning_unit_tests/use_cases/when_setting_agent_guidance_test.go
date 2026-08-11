@@ -60,7 +60,10 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 			suite := WhenSettingAgentGuidanceBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "answer concisely"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetAgentGuidanceRequest{Content: "answer concisely"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "answer concisely", resp.Content)
@@ -73,7 +76,9 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentGuidanceRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentGuidanceRepository.EXPECT().
+				Upsert(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError with guidance_update_failed", func(t *testing.T) {

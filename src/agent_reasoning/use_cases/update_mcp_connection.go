@@ -34,7 +34,10 @@ func NewUpdateMCPConnection(
 
 // Execute applies full-replacement semantics: name, url, and the entire
 // HeaderAuth map are overwritten, and dropped headers leave Vault.
-func (u *UpdateMCPConnection) Execute(ctx context.Context, request *requests.UpdateMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *UpdateMCPConnection) Execute(
+	ctx context.Context,
+	request *requests.UpdateMCPConnectionRequest,
+) (*responses.MCPConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -111,7 +114,11 @@ func (u *UpdateMCPConnection) resolveHeaderValues(
 	return resolved, nil
 }
 
-func (u *UpdateMCPConnection) dropRemovedHeaders(ctx context.Context, existing *models.MCPConnection, next map[string]string) error {
+func (u *UpdateMCPConnection) dropRemovedHeaders(
+	ctx context.Context,
+	existing *models.MCPConnection,
+	next map[string]string,
+) error {
 	for _, key := range existing.HeaderAuthKeys {
 		if _, kept := next[string(key)]; kept {
 			continue

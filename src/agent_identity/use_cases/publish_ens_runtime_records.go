@@ -26,7 +26,10 @@ func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) error {
 	if err := u.ensPublisher.PublishRuntimeRecords(ctx); err != nil {
 		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
 			u.ensPublicationMetrics.RecordEnsPublishedNotMinted(ctx)
-			return apperrors.NewConflictError("identity_not_found", "agent NFT must be minted before ENS records can be published")
+			return apperrors.NewConflictError(
+				"identity_not_found",
+				"agent NFT must be minted before ENS records can be published",
+			)
 		}
 		u.ensPublicationMetrics.RecordEnsPublishedFailed(ctx)
 		return apperrors.NewInternalError("ens_publish_failed", err.Error())

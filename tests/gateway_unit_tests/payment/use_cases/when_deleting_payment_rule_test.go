@@ -57,7 +57,10 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().Delete(gomock.Any(), ruleId.String()).Return(errors.New("runtime down")).Times(1)
+			suite.mockPaymentRuleClient.EXPECT().
+				Delete(gomock.Any(), ruleId.String()).
+				Return(errors.New("runtime down")).
+				Times(1)
 		}
 
 		t.Run("Should pass the error through", func(t *testing.T) {

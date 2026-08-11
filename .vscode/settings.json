@@ -1,4 +1,12 @@
 {
+  "go.formatTool": "custom",
+  "go.alternateTools": {
+    "customFormatter": "golines"
+  },
+  "go.formatFlags": ["-m", "120", "--base-formatter=gofmt"],
+  "[go]": {
+    "editor.formatOnSave": true
+  },
   "gopls": {
     "build.directoryFilters": ["-worktrees", "-.worktrees"]
   },

@@ -23,7 +23,10 @@ func NewHttpAgentRegistrationClient(client clients.ClientWithResponsesInterface)
 	return &HttpAgentRegistrationClient{client: client}
 }
 
-func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *models.ExternalSaveAgentRegistrationPayload) (*models.ExternalAgentRegistrationPayload, error) {
+func (c *HttpAgentRegistrationClient) Save(
+	ctx context.Context,
+	body *models.ExternalSaveAgentRegistrationPayload,
+) (*models.ExternalAgentRegistrationPayload, error) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
@@ -51,7 +54,10 @@ func (c *HttpAgentRegistrationClient) Save(ctx context.Context, body *models.Ext
 }
 
 // writeSaveFields writes the non-file draft fields; attributes go as a JSON object string.
-func (c *HttpAgentRegistrationClient) writeSaveFields(writer *multipart.Writer, body *models.ExternalSaveAgentRegistrationPayload) error {
+func (c *HttpAgentRegistrationClient) writeSaveFields(
+	writer *multipart.Writer,
+	body *models.ExternalSaveAgentRegistrationPayload,
+) error {
 	fields := map[string]string{
 		"chainId":           body.ChainId,
 		"collectionAddress": body.CollectionAddress,
@@ -124,7 +130,9 @@ func (c *HttpAgentRegistrationClient) MintInfo(ctx context.Context) (*models.Ext
 	return &payload, nil
 }
 
-func (c *HttpAgentRegistrationClient) CheckMint(ctx context.Context) (*models.ExternalRegistrationStatusPayload, error) {
+func (c *HttpAgentRegistrationClient) CheckMint(
+	ctx context.Context,
+) (*models.ExternalRegistrationStatusPayload, error) {
 	resp, err := c.client.PostInternalAgentRegistrationMintCheckWithResponse(ctx)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)

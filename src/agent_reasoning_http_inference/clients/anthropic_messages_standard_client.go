@@ -17,7 +17,10 @@ const (
 )
 
 type AnthropicMessagesStandardClientInterface interface {
-	Messages(baseUrl, apiKey string, request *models.ExternalAnthropicMessagesStandardRequest) (*models.ExternalAnthropicMessagesStandardResponse, error)
+	Messages(
+		baseUrl, apiKey string,
+		request *models.ExternalAnthropicMessagesStandardRequest,
+	) (*models.ExternalAnthropicMessagesStandardResponse, error)
 }
 
 type AnthropicMessagesStandardClient struct {
@@ -32,14 +35,19 @@ type NewAnthropicMessagesStandardClientParams struct {
 	HttpClient *http.Client `name:"llm-inference-http-client"`
 }
 
-func NewAnthropicMessagesStandardClient(params NewAnthropicMessagesStandardClientParams) *AnthropicMessagesStandardClient {
+func NewAnthropicMessagesStandardClient(
+	params NewAnthropicMessagesStandardClientParams,
+) *AnthropicMessagesStandardClient {
 	return &AnthropicMessagesStandardClient{
 		logger:     params.Logger,
 		httpClient: params.HttpClient,
 	}
 }
 
-func (c *AnthropicMessagesStandardClient) Messages(baseUrl, apiKey string, request *models.ExternalAnthropicMessagesStandardRequest) (*models.ExternalAnthropicMessagesStandardResponse, error) {
+func (c *AnthropicMessagesStandardClient) Messages(
+	baseUrl, apiKey string,
+	request *models.ExternalAnthropicMessagesStandardRequest,
+) (*models.ExternalAnthropicMessagesStandardResponse, error) {
 	url := fmt.Sprintf("%s%s", baseUrl, ANTHROPIC_MESSAGES_ENDPOINT)
 
 	// Convert the request to JSON

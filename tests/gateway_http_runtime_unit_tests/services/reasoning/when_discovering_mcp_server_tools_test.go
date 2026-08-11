@@ -42,20 +42,22 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpToolsResponse, error) {
-					raw, err := io.ReadAll(reader)
-					assert.NoError(t, err)
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpToolsResponse, error) {
+						raw, err := io.ReadAll(reader)
+						assert.NoError(t, err)
 
-					var sent models.ExternalDiscoverMCPServerToolsPayload
-					assert.NoError(t, json.Unmarshal(raw, &sent))
-					assert.Equal(t, "https://mcp.github.example", lo.FromPtr(sent.Url))
+						var sent models.ExternalDiscoverMCPServerToolsPayload
+						assert.NoError(t, json.Unmarshal(raw, &sent))
+						assert.Equal(t, "https://mcp.github.example", lo.FromPtr(sent.Url))
 
-					return &clients.PostInternalConfigMcpToolsResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"tools":[{"name":"search_issues","description":"Search issues"}]}`),
-					}, nil
-				})
+						return &clients.PostInternalConfigMcpToolsResponse{
+							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+							Body:         []byte(`{"tools":[{"name":"search_issues","description":"Search issues"}]}`),
+						}, nil
+					})
 		}
 
 		t.Run("Should decode the tools payload", func(t *testing.T) {
@@ -80,10 +82,14 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigMcpToolsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-				Body:         []byte(`{"code":"validation_error","field":"url","message":"failed to list tools: connection refused"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigMcpToolsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body: []byte(
+						`{"code":"validation_error","field":"url","message":"failed to list tools: connection refused"}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should map it to a ValidationError preserving the field", func(t *testing.T) {
@@ -92,7 +98,10 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.DiscoverTools(context.Background(), &models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")})
+			_, err := suite.sut.DiscoverTools(
+				context.Background(),
+				&models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -104,10 +113,12 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigMcpToolsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"mcp_connection_not_found"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigMcpToolsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"mcp_connection_not_found"}`),
+				}, nil)
 		}
 
 		t.Run("Should return the not-found sentinel untouched", func(t *testing.T) {
@@ -116,7 +127,10 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.DiscoverTools(context.Background(), &models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")})
+			_, err := suite.sut.DiscoverTools(
+				context.Background(),
+				&models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")},
+			)
 
 			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
 		})

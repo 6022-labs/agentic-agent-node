@@ -57,7 +57,12 @@ func NewVaultMetrics() *VaultMetrics {
 }
 
 // RecordOperation records one Vault operation: count, duration, and (when failed) an error.
-func (m *VaultMetrics) RecordOperation(ctx context.Context, operation, mount string, duration time.Duration, failed bool) {
+func (m *VaultMetrics) RecordOperation(
+	ctx context.Context,
+	operation, mount string,
+	duration time.Duration,
+	failed bool,
+) {
 	attrs := metric.WithAttributes(
 		attribute.String("vault.operation", operation),
 		attribute.String("vault.mount", mount),

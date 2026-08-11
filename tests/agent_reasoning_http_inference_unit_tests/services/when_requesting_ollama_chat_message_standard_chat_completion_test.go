@@ -22,7 +22,9 @@ type WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite struct {
 	mockOllamaClient *clients_mocks.MockOllamaChatMessageStandardClientInterface
 }
 
-func WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite {
+func WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(
+	t *testing.T,
+) *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockOllamaClient := clients_mocks.NewMockOllamaChatMessageStandardClientInterface(mockController)

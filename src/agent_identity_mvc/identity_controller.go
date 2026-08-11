@@ -57,7 +57,7 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 // PublishEns re-publishes the agent's runtime ENS `url` record. Use when the
 // URL changed or the boot-time publish failed (e.g. NFT not yet minted).
 // @Summary Re-publish ENS runtime records
-// @Description Writes the `url` text record for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.
+// @Description Writes the `url` text record for the agent's NFT via AgentEnsRegistry. Requires an existing NFT.
 // @Tags Internal
 // @Produce json
 // @Success 204
@@ -73,7 +73,7 @@ func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
 
 // SignCard signs a caller-supplied agent card with the node wallet key.
 // @Summary Sign an agent card
-// @Description Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card. The card must not carry a `signatures` member.
+// @Description Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card; no `signatures` member allowed.
 // @Tags Internal
 // @Accept json
 // @Produce json

@@ -25,7 +25,10 @@ func NewX402PaymentVerifier() *X402PaymentVerifier {
 	return &X402PaymentVerifier{}
 }
 
-func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
+func (v *X402PaymentVerifier) RecoverPayer(
+	payload *x402.PaymentPayload,
+	config *x402.X402Config,
+) (common.Address, error) {
 	switch config.AssetTransferMethod {
 	case x402.AssetTransferMethodEip3009:
 		return v.recoverEip3009(payload, config)
@@ -36,7 +39,10 @@ func (v *X402PaymentVerifier) RecoverPayer(payload *x402.PaymentPayload, config 
 	}
 }
 
-func (v *X402PaymentVerifier) recoverEip3009(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
+func (v *X402PaymentVerifier) recoverEip3009(
+	payload *x402.PaymentPayload,
+	config *x402.X402Config,
+) (common.Address, error) {
 	auth := payload.Payload.Authorization
 	if auth == nil {
 		return common.Address{}, errors.New("missing authorization")
@@ -90,7 +96,10 @@ func (v *X402PaymentVerifier) recoverEip3009(payload *x402.PaymentPayload, confi
 
 // recoverPermit2 validates a Permit2 PermitWitnessTransferFrom signature,
 // hashed under Permit2's own fixed domain rather than the token's.
-func (v *X402PaymentVerifier) recoverPermit2(payload *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
+func (v *X402PaymentVerifier) recoverPermit2(
+	payload *x402.PaymentPayload,
+	config *x402.X402Config,
+) (common.Address, error) {
 	auth := payload.Payload.Permit2Authorization
 	if auth == nil {
 		return common.Address{}, errors.New("missing permit2 authorization")
@@ -177,7 +186,11 @@ func (v *X402PaymentVerifier) recoverSigner(digest []byte, signature string) (co
 }
 
 // transferWithAuthorizationDigest hashes the EIP-3009 typed data under the asset's EIP-712 domain.
-func (v *X402PaymentVerifier) transferWithAuthorizationDigest(auth *x402.Eip3009Authorization, config *x402.X402Config, chainId int64) ([]byte, error) {
+func (v *X402PaymentVerifier) transferWithAuthorizationDigest(
+	auth *x402.Eip3009Authorization,
+	config *x402.X402Config,
+	chainId int64,
+) ([]byte, error) {
 	typedData := apitypes.TypedData{
 		Types: apitypes.Types{
 			"EIP712Domain": {
@@ -220,7 +233,10 @@ func (v *X402PaymentVerifier) transferWithAuthorizationDigest(auth *x402.Eip3009
 
 // permitWitnessTransferFromDigest hashes the Permit2 typed data under Permit2's
 // fixed domain (NO version field) with the x402 {to, validAfter} witness bound in.
-func (v *X402PaymentVerifier) permitWitnessTransferFromDigest(auth *x402.Permit2Authorization, chainId int64) ([]byte, error) {
+func (v *X402PaymentVerifier) permitWitnessTransferFromDigest(
+	auth *x402.Permit2Authorization,
+	chainId int64,
+) ([]byte, error) {
 	typedData := apitypes.TypedData{
 		Types: apitypes.Types{
 			"EIP712Domain": {

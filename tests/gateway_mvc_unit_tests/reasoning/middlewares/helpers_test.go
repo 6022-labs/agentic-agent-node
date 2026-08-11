@@ -60,7 +60,11 @@ func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPay
 // chain can settle. The "no facilitator" scenarios return an empty map.
 func x402GateFacilitators() map[string]models.ExternalPaymentFacilitator {
 	return map[string]models.ExternalPaymentFacilitator{
-		"eip155:80002": {Network: "eip155:80002", BaseUrl: "https://x402-amoy.polygon.technology", MaxTimeoutSeconds: 120},
+		"eip155:80002": {
+			Network:           "eip155:80002",
+			BaseUrl:           "https://x402-amoy.polygon.technology",
+			MaxTimeoutSeconds: 120,
+		},
 	}
 }
 

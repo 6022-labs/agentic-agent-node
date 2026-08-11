@@ -38,7 +38,10 @@ func NewAbstractMCPConnectionUseCase(
 }
 
 // listTools probes the server, blaming the headers when it refused them and the url otherwise.
-func (u *AbstractMCPConnectionUseCase) listTools(ctx context.Context, mcpConnection *models.MCPConnection) ([]*models.Tool, error) {
+func (u *AbstractMCPConnectionUseCase) listTools(
+	ctx context.Context,
+	mcpConnection *models.MCPConnection,
+) ([]*models.Tool, error) {
 	tools, err := u.mcpRequester.ListTools(ctx, mcpConnection)
 	if err != nil {
 		if stderrors.Is(err, reasoning_interfaces.ErrMCPUnauthorized) {

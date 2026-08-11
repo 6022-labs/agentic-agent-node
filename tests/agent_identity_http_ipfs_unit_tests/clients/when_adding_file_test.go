@@ -59,26 +59,33 @@ func TestWhenAddingFile(t *testing.T) {
 			_, _ = w.Write([]byte(`{"Name":"agent.png","Hash":"QmHashValue","Size":"123"}`))
 		}
 
-		t.Run("Should POST multipart to /api/v0/add with pin, the bearer header, and decode the hash", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should POST multipart to /api/v0/add with pin, the bearer header, and decode the hash",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenAddingFileBeforeEach(t, handler, "secret-token123")
-			defer WhenAddingFileAfterEach(suite)
+				suite := WhenAddingFileBeforeEach(t, handler, "secret-token123")
+				defer WhenAddingFileAfterEach(suite)
 
-			resp, err := suite.sut.Add([]byte("image-bytes"), "agent.png", &models.ExternalAddQueryRequest{Pin: &pin})
+				resp, err := suite.sut.Add(
+					[]byte("image-bytes"),
+					"agent.png",
+					&models.ExternalAddQueryRequest{Pin: &pin},
+				)
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, resp) {
-				assert.Equal(t, "QmHashValue", resp.Hash)
-			}
-			assert.Equal(t, http.MethodPost, seenMethod)
-			assert.Equal(t, "/api/v0/add", seenPath)
-			assert.Contains(t, seenQuery, "pin=true")
-			assert.Contains(t, seenContentType, "multipart/form-data")
-			assert.Equal(t, "Bearer secret-token123", seenAuth)
-			assert.Contains(t, string(seenBody), "image-bytes")
-			assert.Contains(t, string(seenBody), "agent.png")
-		})
+				assert.NoError(t, err)
+				if assert.NotNil(t, resp) {
+					assert.Equal(t, "QmHashValue", resp.Hash)
+				}
+				assert.Equal(t, http.MethodPost, seenMethod)
+				assert.Equal(t, "/api/v0/add", seenPath)
+				assert.Contains(t, seenQuery, "pin=true")
+				assert.Contains(t, seenContentType, "multipart/form-data")
+				assert.Equal(t, "Bearer secret-token123", seenAuth)
+				assert.Contains(t, string(seenBody), "image-bytes")
+				assert.Contains(t, string(seenBody), "agent.png")
+			},
+		)
 	})
 
 	t.Run("Given no bearer token is configured", func(t *testing.T) {

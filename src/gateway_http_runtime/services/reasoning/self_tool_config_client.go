@@ -32,12 +32,21 @@ func (c *HttpSelfToolConfigClient) List(ctx context.Context) (*models.ExternalSe
 	return &payload, nil
 }
 
-func (c *HttpSelfToolConfigClient) Update(ctx context.Context, id uuid.UUID, body *models.ExternalUpdateSelfToolPayload) (*models.ExternalSelfToolPayload, error) {
+func (c *HttpSelfToolConfigClient) Update(
+	ctx context.Context,
+	id uuid.UUID,
+	body *models.ExternalUpdateSelfToolPayload,
+) (*models.ExternalSelfToolPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PutInternalConfigSelfToolsIdWithBodyWithResponse(ctx, id.String(), helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PutInternalConfigSelfToolsIdWithBodyWithResponse(
+		ctx,
+		id.String(),
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

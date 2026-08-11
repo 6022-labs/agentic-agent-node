@@ -29,7 +29,10 @@ func NewUpdateSelfTool(
 	}
 }
 
-func (u *UpdateSelfTool) Execute(ctx context.Context, request *requests.UpdateSelfToolRequest) (*responses.SelfToolResponse, error) {
+func (u *UpdateSelfTool) Execute(
+	ctx context.Context,
+	request *requests.UpdateSelfToolRequest,
+) (*responses.SelfToolResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

@@ -9,5 +9,8 @@ import (
 
 // CreateMCPConnectionExecutorInterface exposes the MCP connection create to the self tools.
 type CreateMCPConnectionExecutorInterface interface {
-	Execute(ctx context.Context, request *reasoning_requests.CreateMCPConnectionRequest) (*reasoning_responses.MCPConnectionResponse, error)
+	Execute(
+		ctx context.Context,
+		request *reasoning_requests.CreateMCPConnectionRequest,
+	) (*reasoning_responses.MCPConnectionResponse, error)
 }

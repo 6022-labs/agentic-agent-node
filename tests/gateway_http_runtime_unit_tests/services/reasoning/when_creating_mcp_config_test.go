@@ -39,21 +39,25 @@ func TestWhenCreatingMCPConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpResponse, error) {
-					raw, err := io.ReadAll(reader)
-					assert.NoError(t, err)
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConfigMcpResponse, error) {
+						raw, err := io.ReadAll(reader)
+						assert.NoError(t, err)
 
-					var sent models.ExternalCreateMCPConnectionPayload
-					assert.NoError(t, json.Unmarshal(raw, &sent))
-					assert.Equal(t, "tools", sent.Name)
-					assert.Equal(t, "Bearer x", sent.HeaderAuth["Authorization"])
+						var sent models.ExternalCreateMCPConnectionPayload
+						assert.NoError(t, json.Unmarshal(raw, &sent))
+						assert.Equal(t, "tools", sent.Name)
+						assert.Equal(t, "Bearer x", sent.HeaderAuth["Authorization"])
 
-					return &clients.PostInternalConfigMcpResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":["Authorization"]}`),
-					}, nil
-				})
+						return &clients.PostInternalConfigMcpResponse{
+							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+							Body: []byte(
+								`{"id":"mcp-1","name":"tools","url":"https://mcp.example","headerAuthKeys":["Authorization"]}`,
+							),
+						}, nil
+					})
 		}
 
 		t.Run("Should decode the created MCP connection payload", func(t *testing.T) {
@@ -80,10 +84,12 @@ func TestWhenCreatingMCPConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).Return(&clients.PostInternalConfigMcpResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigMcpResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

@@ -17,7 +17,11 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db")
-			assert.Equal(t, "/data/agent.db?_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)", result)
+			assert.Equal(
+				t,
+				"/data/agent.db?_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)",
+				result,
+			)
 		})
 	})
 
@@ -28,7 +32,11 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("file:agent.db?cache=shared")
-			assert.Equal(t, "file:agent.db?cache=shared&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)", result)
+			assert.Equal(
+				t,
+				"file:agent.db?cache=shared&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)",
+				result,
+			)
 		})
 	})
 
@@ -39,7 +47,11 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=busy_timeout(500)")
-			assert.Equal(t, "/data/agent.db?_pragma=busy_timeout(500)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)", result)
+			assert.Equal(
+				t,
+				"/data/agent.db?_pragma=busy_timeout(500)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)",
+				result,
+			)
 		})
 	})
 
@@ -61,7 +73,11 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=")
-			assert.Equal(t, "/data/agent.db?_pragma=&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)", result)
+			assert.Equal(
+				t,
+				"/data/agent.db?_pragma=&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)",
+				result,
+			)
 		})
 	})
 
@@ -72,7 +88,11 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=journal_mode%3DDELETE")
-			assert.Equal(t, "/data/agent.db?_pragma=journal_mode%3DDELETE&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)", result)
+			assert.Equal(
+				t,
+				"/data/agent.db?_pragma=journal_mode%3DDELETE&_pragma=foreign_keys(1)&_pragma=busy_timeout(10000)",
+				result,
+			)
 		})
 	})
 }

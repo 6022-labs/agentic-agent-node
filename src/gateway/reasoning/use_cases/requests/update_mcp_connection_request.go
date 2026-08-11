@@ -11,10 +11,10 @@ import (
 // set — an omitted header is dropped, and one sent blank keeps its vault value.
 type UpdateMcpConnectionRequest struct {
 	Id                  uuid.UUID         `params:"id" json:"-"`
-	Name                string            `json:"name"`
-	Url                 string            `json:"url"`
-	AllowedToolPatterns []string          `json:"allowedToolPatterns"`
-	HeaderAuth          map[string]string `json:"headerAuth,omitempty"`
+	Name                string            `            json:"name"`
+	Url                 string            `            json:"url"`
+	AllowedToolPatterns []string          `            json:"allowedToolPatterns"`
+	HeaderAuth          map[string]string `            json:"headerAuth,omitempty"`
 }
 
 func (r *UpdateMcpConnectionRequest) ValidateAndSanitize() error {

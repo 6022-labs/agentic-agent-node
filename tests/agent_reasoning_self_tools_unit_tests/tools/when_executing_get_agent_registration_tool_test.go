@@ -41,7 +41,9 @@ func TestWhenExecutingGetAgentRegistrationTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingGetAgentRegistrationToolBeforeEach(t)
-			suite.mockGetAgentRegistrationExecutor.EXPECT().Execute(ctx).Return(&identity_responses.AgentRegistrationResponse{}, nil)
+			suite.mockGetAgentRegistrationExecutor.EXPECT().
+				Execute(ctx).
+				Return(&identity_responses.AgentRegistrationResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, nil)
 

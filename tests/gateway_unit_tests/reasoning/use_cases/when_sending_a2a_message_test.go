@@ -99,7 +99,10 @@ func TestWhenSendingA2AMessage(t *testing.T) {
 					}
 					return &responses.Response{
 						Output: []responses.OutputItem{
-							{Role: "assistant", Content: []responses.OutputContent{{Type: "output_text", Text: "hi there"}}},
+							{
+								Role:    "assistant",
+								Content: []responses.OutputContent{{Type: "output_text", Text: "hi there"}},
+							},
 						},
 						Conversation: &responses.ConversationRef{Id: "ctx-1"},
 					}, nil

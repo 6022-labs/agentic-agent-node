@@ -42,7 +42,7 @@ type WhenDrivingResponseTestingSuite struct {
 	mockEmojiDecoder               *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
-// WhenDrivingResponseBeforeEach registers selfTools as the registry content (none by default), all default-enabled with no stored rows.
+// WhenDrivingResponseBeforeEach registers selfTools as the registry content, all default-enabled with no stored rows.
 func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *WhenDrivingResponseTestingSuite {
 	defaultEnabled := make(map[string]bool, len(selfTools))
 	for _, tool := range selfTools {
@@ -52,7 +52,12 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 }
 
 // WhenDrivingResponseWithSelfToolStateBeforeEach lets a case pin the stored self tool rows and registry defaults.
-func WhenDrivingResponseWithSelfToolStateBeforeEach(t *testing.T, selfToolRows []models.SelfTool, defaultEnabled map[string]bool, selfTools ...*models.Tool) *WhenDrivingResponseTestingSuite {
+func WhenDrivingResponseWithSelfToolStateBeforeEach(
+	t *testing.T,
+	selfToolRows []models.SelfTool,
+	defaultEnabled map[string]bool,
+	selfTools ...*models.Tool,
+) *WhenDrivingResponseTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockInferenceLoop := interfaces_mocks.NewMockInferenceLoopInterface(mockController)
@@ -143,11 +148,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -163,7 +177,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 						assert.Equal(t, "user", msgs[1].Role)
 						assert.Equal(t, "hello", msgs[1].Content)
 					}
-					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
+					return append(
+						msgs,
+						&interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal},
+					), nil
 				})
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
@@ -200,11 +217,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			// Instructions feed the per-turn overlay only — never a message, never persisted.
 			suite.mockSystemPromptBuilder.EXPECT().
@@ -259,9 +285,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -310,9 +343,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -335,8 +375,14 @@ func TestWhenDrivingResponse(t *testing.T) {
 						assert.Equal(t, "call-1", msgs[2].ToolCallId)
 						assert.Equal(t, "user", msgs[3].Role)
 					}
-					return append(msgs,
-						&interfaces.ChatCompletionMessage{Role: "assistant", ToolCalls: []interfaces.ToolCall{{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}}}},
+					return append(
+						msgs,
+						&interfaces.ChatCompletionMessage{
+							Role: "assistant",
+							ToolCalls: []interfaces.ToolCall{
+								{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}},
+							},
+						},
 						&interfaces.ChatCompletionMessage{Role: "tool", ToolCallId: "call-2", Content: `{"temp":"15"}`},
 						&interfaces.ChatCompletionMessage{Role: "assistant", Content: "final answer"},
 					), nil
@@ -395,9 +441,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -445,9 +498,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -480,7 +540,12 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, "", []knowledge_interfaces.ConversationMessage{stored, freshInput})
+			result, err := suite.sut.Drive(
+				ctx,
+				conversationId,
+				"",
+				[]knowledge_interfaces.ConversationMessage{stored, freshInput},
+			)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -497,9 +562,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -539,8 +611,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥"}
 
 		// Sanity: the hash of the demojized input matches the stored one.
-		storedHash, _ := utils.ComputeConversationMessageHash(stored.Role, stored.Content, stored.ToolCalls, stored.ToolCallId, conversationId)
-		inputHash, _ := utils.ComputeConversationMessageHash(emojiInput.Role, "hi :fire:", emojiInput.ToolCalls, emojiInput.ToolCallId, conversationId)
+		storedHash, _ := utils.ComputeConversationMessageHash(
+			stored.Role,
+			stored.Content,
+			stored.ToolCalls,
+			stored.ToolCallId,
+			conversationId,
+		)
+		inputHash, _ := utils.ComputeConversationMessageHash(
+			emojiInput.Role,
+			"hi :fire:",
+			emojiInput.ToolCalls,
+			emojiInput.ToolCallId,
+			conversationId,
+		)
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
@@ -551,9 +635,16 @@ func TestWhenDrivingResponse(t *testing.T) {
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -581,7 +672,12 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Drive(ctx, conversationId, "", []knowledge_interfaces.ConversationMessage{emojiInput})
+			result, err := suite.sut.Drive(
+				ctx,
+				conversationId,
+				"",
+				[]knowledge_interfaces.ConversationMessage{emojiInput},
+			)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -599,11 +695,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{mcpConnection}, nil)
 
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
@@ -637,7 +742,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 							assert.Len(t, tools, 1)
 						}
 					}
-					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal}), nil
+					return append(
+						msgs,
+						&interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal},
+					), nil
 				})
 
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
@@ -672,11 +780,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{mcpConnection}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 			suite.mockMcpRequester.EXPECT().
@@ -734,11 +851,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 			// mockMcpRequester.ListTools is never expected — self tools are not listed over MCP.
@@ -785,11 +911,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -830,11 +965,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 			suite.mockSystemPromptBuilder.EXPECT().
@@ -886,11 +1030,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 			suite.mockSystemPromptBuilder.EXPECT().
@@ -939,11 +1092,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(model_builders.NewAgentGuidanceBuilder().WithContent("answer concisely").Build(), nil)
@@ -978,11 +1140,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -1024,12 +1195,24 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{connA, connB}, nil)
-			suite.mockMCPHeaderAuthSecretStorage.EXPECT().GetValue(gomock.Any(), gomock.Any(), gomock.Any()).Return("", false, nil).AnyTimes()
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{connA, connB}, nil)
+			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
+				GetValue(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return("", false, nil).
+				AnyTimes()
 
 			// Fanned out per connection, resolved in any order.
 			suite.mockMcpRequester.EXPECT().
@@ -1105,9 +1288,14 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
 			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 		}
 
@@ -1128,10 +1316,17 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should wrap the error before loading MCP connections", func(t *testing.T) {
@@ -1157,11 +1352,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{mcpConnection}, nil)
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(ctx, mcpConnection.Id, "Authorization").
 				Return("", false, errors.New("vault down"))
@@ -1189,11 +1393,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{mcpConnection}, nil)
 			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
 				GetValue(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return("", false, nil).
@@ -1224,12 +1437,24 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{connA, connB}, nil)
-			suite.mockMCPHeaderAuthSecretStorage.EXPECT().GetValue(gomock.Any(), gomock.Any(), gomock.Any()).Return("", false, nil).AnyTimes()
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{connA, connB}, nil)
+			suite.mockMCPHeaderAuthSecretStorage.EXPECT().
+				GetValue(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return("", false, nil).
+				AnyTimes()
 
 			// Both are attempted concurrently; beta fails, which fails the whole discovery.
 			suite.mockMcpRequester.EXPECT().
@@ -1260,11 +1485,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
@@ -1294,11 +1528,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").

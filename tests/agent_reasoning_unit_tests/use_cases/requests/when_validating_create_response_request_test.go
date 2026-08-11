@@ -94,7 +94,15 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		t.Parallel()
 
 		var req requests.CreateResponseRequest
-		require.NoError(t, json.Unmarshal([]byte(`{"input":[{"type":"message","role":"user","content":"hi"}],"previous_response_id":"resp-1","conversation":{"id":"conv-7"}}`), &req))
+		require.NoError(
+			t,
+			json.Unmarshal(
+				[]byte(
+					`{"input":[{"type":"message","role":"user","content":"hi"}],"previous_response_id":"resp-1","conversation":{"id":"conv-7"}}`,
+				),
+				&req,
+			),
+		)
 
 		t.Run("Should prefer previous_response_id as the conversation key", func(t *testing.T) {
 			t.Parallel()

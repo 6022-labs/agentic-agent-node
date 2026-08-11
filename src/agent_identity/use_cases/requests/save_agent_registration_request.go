@@ -12,7 +12,7 @@ import (
 
 const maxImageBytes = 5 * 1024 * 1024
 
-// ensLabelCharsPattern mirrors ENSUtils.isValidENSName's character set; length and hyphen-position rules are checked alongside.
+// ensLabelCharsPattern mirrors ENSUtils.isValidENSName's character set; length and hyphen rules are checked alongside.
 var ensLabelCharsPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // SaveAgentRegistrationRequest is the multipart draft form. Owner is injected by
@@ -52,7 +52,10 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 	}
 	if len(r.Name) > 63 || r.Name[0] == '-' || r.Name[len(r.Name)-1] == '-' ||
 		strings.Contains(r.Name, "--") || !ensLabelCharsPattern.MatchString(r.Name) {
-		return errors.NewValidationError("name", "must be a valid ENS label: lowercase letters, digits and hyphens; no leading, trailing or repeated hyphens; 1-63 chars")
+		return errors.NewValidationError(
+			"name",
+			"must be a valid ENS label: lowercase letters, digits and hyphens; no leading, trailing or repeated hyphens; 1-63 chars",
+		)
 	}
 
 	if r.Image != nil && r.Image.Size > maxImageBytes {

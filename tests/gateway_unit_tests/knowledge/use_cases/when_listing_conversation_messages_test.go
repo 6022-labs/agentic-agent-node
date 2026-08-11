@@ -43,13 +43,34 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		now := time.Now().UTC().Truncate(time.Microsecond)
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().ListMessages(gomock.Any(), conversationId).Return(&models.ExternalListConversationMessagesPayload{
-				Messages: []models.ExternalConversationMessage{
-					{Id: "m1", ConversationId: conversationId, Role: "user", Content: lo.ToPtr("hi"), Timestamp: now},
-					{Id: "m2", ConversationId: conversationId, Role: "assistant", ToolCalls: lo.ToPtr(`[{"Id":"call_1"}]`), Timestamp: now},
-					{Id: "m3", ConversationId: conversationId, Role: "tool", Content: lo.ToPtr(`{"ok":true}`), ToolCallId: lo.ToPtr("call_1"), Timestamp: now},
-				},
-			}, nil)
+			suite.mockClient.EXPECT().
+				ListMessages(gomock.Any(), conversationId).
+				Return(&models.ExternalListConversationMessagesPayload{
+					Messages: []models.ExternalConversationMessage{
+						{
+							Id:             "m1",
+							ConversationId: conversationId,
+							Role:           "user",
+							Content:        lo.ToPtr("hi"),
+							Timestamp:      now,
+						},
+						{
+							Id:             "m2",
+							ConversationId: conversationId,
+							Role:           "assistant",
+							ToolCalls:      lo.ToPtr(`[{"Id":"call_1"}]`),
+							Timestamp:      now,
+						},
+						{
+							Id:             "m3",
+							ConversationId: conversationId,
+							Role:           "tool",
+							Content:        lo.ToPtr(`{"ok":true}`),
+							ToolCallId:     lo.ToPtr("call_1"),
+							Timestamp:      now,
+						},
+					},
+				}, nil)
 		}
 
 		t.Run("Should map them onto the wire response including tool calls", func(t *testing.T) {

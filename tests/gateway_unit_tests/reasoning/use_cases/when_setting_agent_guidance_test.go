@@ -49,7 +49,10 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 			suite := WhenSettingAgentGuidanceBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "be concise"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetAgentGuidanceRequest{Content: "be concise"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "be concise", resp.Content)
@@ -60,7 +63,9 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockAgentGuidanceClient.EXPECT().
+				Set(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
 		}
 
 		t.Run("Should return runtime_unavailable", func(t *testing.T) {

@@ -28,7 +28,10 @@ func NewConversationHistory(
 	}
 }
 
-func (h *ConversationHistory) Read(ctx context.Context, conversationId string) ([]interfaces.ConversationMessage, error) {
+func (h *ConversationHistory) Read(
+	ctx context.Context,
+	conversationId string,
+) ([]interfaces.ConversationMessage, error) {
 	conversationId = strings.TrimSpace(conversationId)
 	if len(conversationId) == 0 {
 		return nil, nil
@@ -44,7 +47,11 @@ func (h *ConversationHistory) Read(ctx context.Context, conversationId string) (
 	return out, nil
 }
 
-func (h *ConversationHistory) Write(ctx context.Context, conversationId string, messages []interfaces.ConversationMessage) ([]interfaces.ConversationMessage, error) {
+func (h *ConversationHistory) Write(
+	ctx context.Context,
+	conversationId string,
+	messages []interfaces.ConversationMessage,
+) ([]interfaces.ConversationMessage, error) {
 	in := make([]models.ConversationMessage, 0, len(messages))
 	for _, m := range messages {
 		in = append(in, h.toModel(m))

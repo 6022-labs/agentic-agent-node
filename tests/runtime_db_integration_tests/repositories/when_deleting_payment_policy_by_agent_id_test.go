@@ -23,7 +23,9 @@ type WhenDeletingPaymentPolicyByAgentIdTestingSuite struct {
 	paymentRuleRepository    *repositories.PaymentRuleRepository
 }
 
-func WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc *repositoryTestCase) *WhenDeletingPaymentPolicyByAgentIdTestingSuite {
+func WhenDeletingPaymentPolicyByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenDeletingPaymentPolicyByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -87,9 +89,15 @@ func TestWhenDeletingPaymentPolicyByAgentId(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					policy, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build())
+					policy, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build(),
+					)
 					assert.NoError(t, err)
-					_, err = suite.paymentRuleRepository.Create(context.Background(), model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build())
+					_, err = suite.paymentRuleRepository.Create(
+						context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build(),
+					)
 					assert.NoError(t, err)
 
 					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))

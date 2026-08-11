@@ -29,7 +29,12 @@ func WhenLoadingX402ConfigBeforeEach(t *testing.T) *WhenLoadingX402ConfigTesting
 	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
 
 	return &WhenLoadingX402ConfigTestingSuite{
-		sut:                  services.NewX402PaymentMethodStrategy(facilitators, &runtime_common_settings.EvmChainsSettings{}, mockErc20Validator, mockConfigRepository),
+		sut: services.NewX402PaymentMethodStrategy(
+			facilitators,
+			&runtime_common_settings.EvmChainsSettings{},
+			mockErc20Validator,
+			mockConfigRepository,
+		),
 		mockConfigRepository: mockConfigRepository,
 	}
 }
@@ -88,7 +93,10 @@ func TestWhenLoadingX402Config(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, assert.AnError).Times(1)
+			suite.mockConfigRepository.EXPECT().
+				GetByRuleId(gomock.Any(), gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
 		}
 
 		t.Run("Should return the error", func(t *testing.T) {

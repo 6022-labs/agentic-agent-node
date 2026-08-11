@@ -30,12 +30,19 @@ func (c *HttpPaymentRuleClient) List(ctx context.Context) ([]models.ExternalPaym
 	return payload.Rules, nil
 }
 
-func (c *HttpPaymentRuleClient) Create(ctx context.Context, rule *models.ExternalPaymentRule) (*models.ExternalPaymentRule, error) {
+func (c *HttpPaymentRuleClient) Create(
+	ctx context.Context,
+	rule *models.ExternalPaymentRule,
+) (*models.ExternalPaymentRule, error) {
 	encoded, err := json.Marshal(rule)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalConfigPaymentPolicyRulesWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConfigPaymentPolicyRulesWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}
@@ -46,12 +53,21 @@ func (c *HttpPaymentRuleClient) Create(ctx context.Context, rule *models.Externa
 	return &payload, nil
 }
 
-func (c *HttpPaymentRuleClient) Update(ctx context.Context, id string, rule *models.ExternalPaymentRule) (*models.ExternalPaymentRule, error) {
+func (c *HttpPaymentRuleClient) Update(
+	ctx context.Context,
+	id string,
+	rule *models.ExternalPaymentRule,
+) (*models.ExternalPaymentRule, error) {
 	encoded, err := json.Marshal(rule)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse(ctx, id, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse(
+		ctx,
+		id,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

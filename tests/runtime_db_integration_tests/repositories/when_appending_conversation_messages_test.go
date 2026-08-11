@@ -25,7 +25,9 @@ type WhenAppendingConversationMessagesTestingSuite struct {
 	conversationRepository   *repositories.ConversationRepository
 }
 
-func WhenAppendingConversationMessagesBeforeEach(tc *repositoryTestCase) *WhenAppendingConversationMessagesTestingSuite {
+func WhenAppendingConversationMessagesBeforeEach(
+	tc *repositoryTestCase,
+) *WhenAppendingConversationMessagesTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -70,7 +72,11 @@ func newMessage(conversationId, content string) models.ConversationMessage {
 
 // ensureConversations seeds the conversation heads that messages reference,
 // satisfying the conversation_messages.conversation_id FK.
-func ensureConversations(dbClient *runtime_db.DatabaseClient, conversationRepository *repositories.ConversationRepository, conversationIds ...string) {
+func ensureConversations(
+	dbClient *runtime_db.DatabaseClient,
+	conversationRepository *repositories.ConversationRepository,
+	conversationIds ...string,
+) {
 	for _, id := range conversationIds {
 		agentId := uuid.New()
 		seedAgent(dbClient, agentId)
@@ -133,7 +139,10 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 					defer WhenAppendingConversationMessagesAfterEach(suite)
 
 					ensureConversations(suite.dbClient, suite.conversationRepository, "conv-2")
-					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{newMessage("conv-2", "hi")})
+					_, err := suite.sut.AppendMessages(
+						context.Background(),
+						[]models.ConversationMessage{newMessage("conv-2", "hi")},
+					)
 					assert.NoError(t, err)
 
 					_, err = suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{

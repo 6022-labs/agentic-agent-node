@@ -28,7 +28,10 @@ type agentCollectionCreatorsFile struct {
 // chain present here is mintable.
 type AgentCollectionCreatorsSettings map[string]common.Address
 
-func NewAgentCollectionCreatorsSettings(logger *zap.Logger, evmChainsSettings *EvmChainsSettings) *AgentCollectionCreatorsSettings {
+func NewAgentCollectionCreatorsSettings(
+	logger *zap.Logger,
+	evmChainsSettings *EvmChainsSettings,
+) *AgentCollectionCreatorsSettings {
 	var f agentCollectionCreatorsFile
 	if err := json.Unmarshal(agentCollectionCreatorsJson, &f); err != nil {
 		logger.Fatal("failed to parse built-in agent_collection_creators.json", zap.Error(err))

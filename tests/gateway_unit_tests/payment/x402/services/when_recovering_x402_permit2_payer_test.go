@@ -30,11 +30,19 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 		t.Run("Should match the x402 spec type strings", func(t *testing.T) {
 			t.Parallel()
 
-			typedData := permit2TypedData(t, x402Permit2TestAuthorization("0x0000000000000000000000000000000000000001", x402Permit2TestConfig()), 80002)
+			typedData := permit2TypedData(
+				t,
+				x402Permit2TestAuthorization("0x0000000000000000000000000000000000000001", x402Permit2TestConfig()),
+				80002,
+			)
 
 			// The witness-bound primary type, exactly as the x402 spec encodes it.
 			expectedType := "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,Witness witness)TokenPermissions(address token,uint256 amount)Witness(address to,uint256 validAfter)"
-			assert.Equal(t, crypto.Keccak256([]byte(expectedType)), []byte(typedData.TypeHash("PermitWitnessTransferFrom")))
+			assert.Equal(
+				t,
+				crypto.Keccak256([]byte(expectedType)),
+				[]byte(typedData.TypeHash("PermitWitnessTransferFrom")),
+			)
 
 			// Permit2's domain omits version — including it changes the hash.
 			expectedDomain := "EIP712Domain(string name,uint256 chainId,address verifyingContract)"

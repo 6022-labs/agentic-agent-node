@@ -18,7 +18,11 @@ func NewSaveAgentRegistration(client gateway_interfaces.AgentRegistrationClientI
 }
 
 // Execute forwards the draft to the runtime, injecting the authenticated owner.
-func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveAgentRegistrationRequest, owner string) (*responses.AgentRegistrationResponse, error) {
+func (u *SaveAgentRegistration) Execute(
+	ctx context.Context,
+	req *requests.SaveAgentRegistrationRequest,
+	owner string,
+) (*responses.AgentRegistrationResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -38,7 +42,9 @@ func (u *SaveAgentRegistration) Execute(ctx context.Context, req *requests.SaveA
 	return u.toResponse(payload), nil
 }
 
-func (u *SaveAgentRegistration) toResponse(p *models.ExternalAgentRegistrationPayload) *responses.AgentRegistrationResponse {
+func (u *SaveAgentRegistration) toResponse(
+	p *models.ExternalAgentRegistrationPayload,
+) *responses.AgentRegistrationResponse {
 	return &responses.AgentRegistrationResponse{
 		ChainId:           p.ChainId,
 		CollectionAddress: p.CollectionAddress,

@@ -55,13 +55,15 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Validate(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) error {
-				assert.Equal(t, "openai", body.Platform)
-				assert.Equal(t, "gpt-4o", body.Model)
-				assert.Equal(t, "sk-secret", body.ApiKey)
-				assert.Nil(t, body.BaseUrl)
-				return nil
-			})
+			suite.mockClient.EXPECT().
+				Validate(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalSetupLLMConnectionPayload) error {
+					assert.Equal(t, "openai", body.Platform)
+					assert.Equal(t, "gpt-4o", body.Model)
+					assert.Equal(t, "sk-secret", body.ApiKey)
+					assert.Nil(t, body.BaseUrl)
+					return nil
+				})
 		}
 
 		t.Run("Should map Provider to Platform and forward a blank BaseUrl as nil", func(t *testing.T) {
@@ -85,7 +87,9 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(apperrors.NewValidationError("connection", "unauthorized"))
+			suite.mockClient.EXPECT().
+				Validate(gomock.Any(), gomock.Any()).
+				Return(apperrors.NewValidationError("connection", "unauthorized"))
 		}
 
 		t.Run("Should surface the runtime error as-is", func(t *testing.T) {
@@ -94,7 +98,10 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 			suite := WhenValidatingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.Execute(context.Background(), &requests.SetLlmConfigRequest{Provider: "openai", Model: "gpt-4o"})
+			err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetLlmConfigRequest{Provider: "openai", Model: "gpt-4o"},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)

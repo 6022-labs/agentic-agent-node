@@ -22,7 +22,9 @@ type WhenGettingPaymentPolicyByAgentIdTestingSuite struct {
 	sut                      *repositories.PaymentPolicyRepository
 }
 
-func WhenGettingPaymentPolicyByAgentIdBeforeEach(tc *repositoryTestCase) *WhenGettingPaymentPolicyByAgentIdTestingSuite {
+func WhenGettingPaymentPolicyByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingPaymentPolicyByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -88,7 +90,10 @@ func TestWhenGettingPaymentPolicyByAgentId(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					created, err := suite.sut.Create(context.Background(), model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build())
+					created, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build(),
+					)
 					assert.NoError(t, err)
 
 					policy, err := suite.sut.GetByAgentId(context.Background(), created.AgentId)

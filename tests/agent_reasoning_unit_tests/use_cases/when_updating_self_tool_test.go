@@ -141,7 +141,9 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockSelfToolRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, errors.New("db down"))
+			suite.mockSelfToolRepository.EXPECT().
+				GetById(gomock.Any(), gomock.Any(), id).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return an internal error", func(t *testing.T) {

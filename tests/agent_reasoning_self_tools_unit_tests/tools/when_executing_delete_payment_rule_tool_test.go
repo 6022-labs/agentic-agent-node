@@ -44,7 +44,9 @@ func TestWhenExecutingDeletePaymentRuleTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeletePaymentRuleToolBeforeEach(t)
-			suite.mockDeletePaymentRuleExecutor.EXPECT().Execute(ctx, &payment_requests.DeletePaymentRuleRequest{Id: id}).Return(nil)
+			suite.mockDeletePaymentRuleExecutor.EXPECT().
+				Execute(ctx, &payment_requests.DeletePaymentRuleRequest{Id: id}).
+				Return(nil)
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 
@@ -77,7 +79,9 @@ func TestWhenExecutingDeletePaymentRuleTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeletePaymentRuleToolBeforeEach(t)
-			suite.mockDeletePaymentRuleExecutor.EXPECT().Execute(ctx, &payment_requests.DeletePaymentRuleRequest{Id: id}).Return(errors.New("not found"))
+			suite.mockDeletePaymentRuleExecutor.EXPECT().
+				Execute(ctx, &payment_requests.DeletePaymentRuleRequest{Id: id}).
+				Return(errors.New("not found"))
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
 

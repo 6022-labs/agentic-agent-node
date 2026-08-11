@@ -62,14 +62,18 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(defaults)
-			suite.mockSelfToolRepository.EXPECT().ListExistingNames(gomock.Any(), agent.Id, gomock.InAnyOrder([]string{"get_identity", "run_command"})).Return(nil, nil)
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, gomock.InAnyOrder([]string{"get_identity", "run_command"})).
+				Return(nil, nil)
 			suite.mockSelfToolRepository.EXPECT().Create(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, tool *models.SelfTool) (*models.SelfTool, error) {
 					assert.Equal(t, agent.Id, tool.AgentId)
 					created[tool.Name] = tool.Enabled
 					return tool, nil
 				}).Times(2)
-			suite.mockSelfToolRepository.EXPECT().DeleteAllExceptNames(gomock.Any(), agent.Id, gomock.InAnyOrder([]string{"get_identity", "run_command"})).Return(int64(0), nil)
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, gomock.InAnyOrder([]string{"get_identity", "run_command"})).
+				Return(int64(0), nil)
 		}
 
 		t.Run("Should insert every missing tool with its default enabled value", func(t *testing.T) {
@@ -91,9 +95,13 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return([]string{"get_identity"}, nil)
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
 			// No Create expectation — the stale cleanup happens set-based, without fetching rows.
-			suite.mockSelfToolRepository.EXPECT().DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return(int64(1), nil)
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(1), nil)
 		}
 
 		t.Run("Should delete them with a single set-based call", func(t *testing.T) {
@@ -114,9 +122,13 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return([]string{"get_identity"}, nil)
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
 			// No Create expectation — inserting a matching row would fail the test.
-			suite.mockSelfToolRepository.EXPECT().DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return(int64(0), nil)
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(0), nil)
 		}
 
 		t.Run("Should not insert anything", func(t *testing.T) {
@@ -157,7 +169,9 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return(nil, errors.New("db down"))
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should wrap the error", func(t *testing.T) {
@@ -179,8 +193,12 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return([]string{"get_identity"}, nil)
-			suite.mockSelfToolRepository.EXPECT().DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).Return(int64(0), errors.New("db down"))
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(0), errors.New("db down"))
 		}
 
 		t.Run("Should wrap the error", func(t *testing.T) {

@@ -18,7 +18,9 @@ func NewHttpConversationHistoryClient(client clients.ClientWithResponsesInterfac
 	return &HttpConversationHistoryClient{client: client}
 }
 
-func (c *HttpConversationHistoryClient) ListConversations(ctx context.Context) (*models.ExternalListConversationsPayload, error) {
+func (c *HttpConversationHistoryClient) ListConversations(
+	ctx context.Context,
+) (*models.ExternalListConversationsPayload, error) {
 	resp, err := c.client.GetInternalConversationsWithResponse(ctx)
 	if err != nil {
 		return nil, err
@@ -30,7 +32,10 @@ func (c *HttpConversationHistoryClient) ListConversations(ctx context.Context) (
 	return &payload, nil
 }
 
-func (c *HttpConversationHistoryClient) ListMessages(ctx context.Context, conversationId string) (*models.ExternalListConversationMessagesPayload, error) {
+func (c *HttpConversationHistoryClient) ListMessages(
+	ctx context.Context,
+	conversationId string,
+) (*models.ExternalListConversationMessagesPayload, error) {
 	resp, err := c.client.GetInternalConversationsConversationIdMessagesWithResponse(ctx, conversationId)
 	if err != nil {
 		return nil, err
@@ -42,12 +47,21 @@ func (c *HttpConversationHistoryClient) ListMessages(ctx context.Context, conver
 	return &payload, nil
 }
 
-func (c *HttpConversationHistoryClient) AppendMessages(ctx context.Context, conversationId string, body *models.ExternalAppendConversationMessagesPayload) (*models.ExternalAppendConversationMessagesResultPayload, error) {
+func (c *HttpConversationHistoryClient) AppendMessages(
+	ctx context.Context,
+	conversationId string,
+	body *models.ExternalAppendConversationMessagesPayload,
+) (*models.ExternalAppendConversationMessagesResultPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalConversationsConversationIdMessagesWithBodyWithResponse(ctx, conversationId, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+		ctx,
+		conversationId,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

@@ -38,10 +38,12 @@ func TestWhenGettingLLMConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.GetInternalConfigLlmResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"id":"llm-1","platform":"openai","model":"gpt-4o","setupStatus":"ready"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigLlmWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigLlmResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"id":"llm-1","platform":"openai","model":"gpt-4o","setupStatus":"ready"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the LLM connection payload", func(t *testing.T) {
@@ -65,10 +67,12 @@ func TestWhenGettingLLMConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(&clients.GetInternalConfigLlmResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"not_found"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigLlmWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigLlmResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found"}`),
+				}, nil)
 		}
 
 		t.Run("Should return ErrLLMConnectionNotFound", func(t *testing.T) {
@@ -87,7 +91,9 @@ func TestWhenGettingLLMConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigLlmWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().
+				GetInternalConfigLlmWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should propagate the transport error", func(t *testing.T) {

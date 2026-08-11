@@ -39,14 +39,20 @@ func WhenRecoveringAgentFromChainBeforeEach(t *testing.T) *WhenRecoveringAgentFr
 	mockController := gomock.NewController(t)
 
 	mockWalletCredentialsStorage := interface_mocks.NewMockWalletCredentialsStorageInterface(mockController)
-	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(mockController)
+	mockAgentCollectionsManagerRequester := interface_mocks.NewMockAgentCollectionsManagerRequesterInterface(
+		mockController,
+	)
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 	mockEnsRegistrar := interface_mocks.NewMockEnsRegistrarInterface(mockController)
 
-	managersSettings := runtime_common_settings.AgentCollectionsManagersSettings{recoveryChainId: common_tests.RandomEthAddress()}
+	managersSettings := runtime_common_settings.AgentCollectionsManagersSettings{
+		recoveryChainId: common_tests.RandomEthAddress(),
+	}
 
 	sut := services.NewAgentChainRecoverer(
 		zap.NewNop(),
@@ -116,18 +122,34 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(collection, uint64(9), "alice", nil)
-			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).DoAndReturn(
-				func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
-					capturedAgent = agent
-					return agent, savedState, nil
-				})
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), recoveryChainId, collection, "alice").Return(true, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), savedState).Return(savedState, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
+				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
+				Return(collection, uint64(9), "alice", nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				InformationOf(recoveryChainId, collection, uint64(9)).
+				Return(onChainInfo, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				CollectionName(recoveryChainId, collection).
+				Return("mycollection", nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
+						capturedAgent = agent
+						return agent, savedState, nil
+					})
+			suite.mockEnsRegistrar.EXPECT().
+				Provisioned(gomock.Any(), recoveryChainId, collection, "alice").
+				Return(true, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileEnsRegistry(gomock.Any(), gomock.Any(), savedState).
+				Return(savedState, nil)
 		}
 
 		t.Run("Should recover the full identity in place and confirm ENS", func(t *testing.T) {
@@ -157,13 +179,27 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(collection, uint64(9), "alice", nil)
-			suite.mockAgentCollectionRequester.EXPECT().InformationOf(recoveryChainId, collection, uint64(9)).Return(onChainInfo, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName(recoveryChainId, collection).Return("mycollection", nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).Return(&models.Agent{}, &models.AgentRegistrationState{}, nil)
-			suite.mockEnsRegistrar.EXPECT().Provisioned(gomock.Any(), recoveryChainId, collection, "alice").Return(false, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
+				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
+				Return(collection, uint64(9), "alice", nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				InformationOf(recoveryChainId, collection, uint64(9)).
+				Return(onChainInfo, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				CollectionName(recoveryChainId, collection).
+				Return("mycollection", nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
+				Return(&models.Agent{}, &models.AgentRegistrationState{}, nil)
+			suite.mockEnsRegistrar.EXPECT().
+				Provisioned(gomock.Any(), recoveryChainId, collection, "alice").
+				Return(false, nil)
 		}
 
 		t.Run("Should recover without confirming ENS", func(t *testing.T) {
@@ -184,8 +220,12 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).Return(common.Address{}, uint64(0), "", nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
+				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
+				Return(common.Address{}, uint64(0), "", nil)
 		}
 
 		t.Run("Should report nothing recovered without writing the agent", func(t *testing.T) {

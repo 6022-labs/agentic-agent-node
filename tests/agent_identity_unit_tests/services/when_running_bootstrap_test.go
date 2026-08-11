@@ -84,7 +84,10 @@ func waitForEnsRefresh(t *testing.T, done chan struct{}) {
 // chain family (the bootstrap loop runs once per AddressType).
 func expectWalletsReady(suite *WhenRunningBootstrapTestingSuite) {
 	cred := &identity_interfaces.WalletCredentials{PrivateKeyHex: "pk", Address: "addr"}
-	suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(cred, nil).AnyTimes()
+	suite.mockWalletCredentialsStorage.EXPECT().
+		GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(cred, nil).
+		AnyTimes()
 	suite.mockAgentAddressRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
@@ -188,7 +191,9 @@ func TestWhenRunningBootstrap(t *testing.T) {
 			suite := WhenRunningBootstrapBeforeEach(t)
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("vault down"))
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("vault down"))
 
 			err := suite.sut.Run(context.Background())
 

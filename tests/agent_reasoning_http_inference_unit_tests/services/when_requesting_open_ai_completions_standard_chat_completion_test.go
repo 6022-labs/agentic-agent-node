@@ -22,7 +22,9 @@ type WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite struct {
 	mockOpenAICompletionsClient *clients_mocks.MockOpenAICompletionsStandardClientInterface
 }
 
-func WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t *testing.T) *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite {
+func WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(
+	t *testing.T,
+) *WhenRequestingOpenAICompletionsStandardChatCompletionTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockOpenAICompletionsClient := clients_mocks.NewMockOpenAICompletionsStandardClientInterface(mockController)
@@ -220,7 +222,12 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 
 					return &external_models.ExternalOpenAICompletionsStandardResponse{
 						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
-							{Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{Role: "assistant", Content: expectedContent}},
+							{
+								Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{
+									Role:    "assistant",
+									Content: expectedContent,
+								},
+							},
 						},
 					}, nil
 				})
@@ -275,7 +282,12 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 
 					return &external_models.ExternalOpenAICompletionsStandardResponse{
 						Choices: []external_models.ExternalOpenAICompletionsStandardResponseChoice{
-							{Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{Role: "assistant", Content: expectedContent}},
+							{
+								Message: external_models.ExternalOpenAICompletionsStandardResponseChoiceMessage{
+									Role:    "assistant",
+									Content: expectedContent,
+								},
+							},
 						},
 					}, nil
 				})

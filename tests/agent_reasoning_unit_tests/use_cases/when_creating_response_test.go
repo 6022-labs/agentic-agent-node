@@ -95,30 +95,33 @@ func TestWhenCreatingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should forward instructions as the overlay and surface the assistant message as an OpenAI output item", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should forward instructions as the overlay and surface the assistant message as an OpenAI output item",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
+				suite := WhenCreatingResponseBeforeEach(t)
+				initSuite(suite)
 
-			resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
-				PreviousResponseId: conversationId,
-				Instructions:       "be nice",
-				Input:              []requests.InputMessage{{Role: "user", Content: "hello"}},
-			})
+				resp, err := suite.sut.Execute(ctx, &requests.CreateResponseRequest{
+					PreviousResponseId: conversationId,
+					Instructions:       "be nice",
+					Input:              []requests.InputMessage{{Role: "user", Content: "hello"}},
+				})
 
-			assert.NoError(t, err)
-			assert.Equal(t, "response", resp.Object)
-			assert.Equal(t, "completed", resp.Status)
-			assert.Equal(t, conversationId, resp.Id)
-			if assert.Len(t, resp.Output, 1) {
-				assert.Equal(t, "message", resp.Output[0].Type)
-				if assert.Len(t, resp.Output[0].Content, 1) {
-					assert.Equal(t, "output_text", resp.Output[0].Content[0].Type)
-					assert.Equal(t, expectedFinal, resp.Output[0].Content[0].Text)
+				assert.NoError(t, err)
+				assert.Equal(t, "response", resp.Object)
+				assert.Equal(t, "completed", resp.Status)
+				assert.Equal(t, conversationId, resp.Id)
+				if assert.Len(t, resp.Output, 1) {
+					assert.Equal(t, "message", resp.Output[0].Type)
+					if assert.Len(t, resp.Output[0].Content, 1) {
+						assert.Equal(t, "output_text", resp.Output[0].Content[0].Type)
+						assert.Equal(t, expectedFinal, resp.Output[0].Content[0].Text)
+					}
 				}
-			}
-		})
+			},
+		)
 	})
 
 	t.Run("Given no conversation key is provided", func(t *testing.T) {

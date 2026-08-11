@@ -31,12 +31,19 @@ func (c *HttpLLMConfigClient) Get(ctx context.Context) (*models.ExternalLLMConne
 	return &payload, nil
 }
 
-func (c *HttpLLMConfigClient) Setup(ctx context.Context, body *models.ExternalSetupLLMConnectionPayload) (*models.ExternalLLMConnectionPayload, error) {
+func (c *HttpLLMConfigClient) Setup(
+	ctx context.Context,
+	body *models.ExternalSetupLLMConnectionPayload,
+) (*models.ExternalLLMConnectionPayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PostInternalConfigLlmWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConfigLlmWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}
@@ -52,7 +59,11 @@ func (c *HttpLLMConfigClient) Validate(ctx context.Context, body *models.Externa
 	if err != nil {
 		return err
 	}
-	resp, err := c.client.PostInternalConfigLlmValidateWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PostInternalConfigLlmValidateWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return helpers.MapRuntimeError(err)
 	}

@@ -28,9 +28,15 @@ func WhenReconcilingEnsRegistryBeforeEach(t *testing.T) *WhenReconcilingEnsRegis
 
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 
-	sut := services.NewRegistrationReconciler(mockAgentRepository, mockAgentCollectionRequester, mockAgentRegistrationStateRepository)
+	sut := services.NewRegistrationReconciler(
+		mockAgentRepository,
+		mockAgentCollectionRequester,
+		mockAgentRegistrationStateRepository,
+	)
 
 	return &WhenReconcilingEnsRegistryTestingSuite{
 		sut:                                  sut,

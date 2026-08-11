@@ -115,17 +115,23 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*row}, nil)
-			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).Return([]*models.Tool{{Name: "search_issues"}}, nil)
+			suite.mockRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{*row}, nil)
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return([]*models.Tool{{Name: "search_issues"}}, nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
-			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
-				assert.Equal(t, "new-name", c.Name)
-				assert.Equal(t, "https://new", c.Url)
-				assert.Equal(t, []string{"search_issues"}, c.AllowedToolPatterns)
-				assert.Len(t, c.HeaderAuthKeys, 1)
-				assert.Equal(t, "Authorization", string(c.HeaderAuthKeys[0]))
-				return c, nil
-			})
+			suite.mockRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
+					assert.Equal(t, "new-name", c.Name)
+					assert.Equal(t, "https://new", c.Url)
+					assert.Equal(t, []string{"search_issues"}, c.AllowedToolPatterns)
+					assert.Len(t, c.HeaderAuthKeys, 1)
+					assert.Equal(t, "Authorization", string(c.HeaderAuthKeys[0]))
+					return c, nil
+				})
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer new").Return(nil)
 		}
 
@@ -157,14 +163,20 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("Bearer stored", true, nil)
-			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) ([]*models.Tool, error) {
-				assert.Equal(t, map[string]string{"Authorization": "Bearer stored"}, c.HeaderAuth)
-				return []*models.Tool{{Name: "search_issues"}}, nil
-			})
-			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
-				return c, nil
-			})
+			suite.mockSecretStorage.EXPECT().
+				GetValue(gomock.Any(), id, "Authorization").
+				Return("Bearer stored", true, nil)
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) ([]*models.Tool, error) {
+					assert.Equal(t, map[string]string{"Authorization": "Bearer stored"}, c.HeaderAuth)
+					return []*models.Tool{{Name: "search_issues"}}, nil
+				})
+			suite.mockRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
+					return c, nil
+				})
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer stored").Return(nil)
 		}
 
@@ -223,22 +235,27 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
 		}
 
-		t.Run("Should reject the save with a validation error, leaving the row and vault untouched", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should reject the save with a validation error, leaving the row and vault untouched",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-			initSuite(suite)
+				suite := WhenUpdatingMCPConnectionBeforeEach(t)
+				initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMCPConnectionRequest(id))
+				_, err := suite.sut.Execute(context.Background(), generateValidUpdateMCPConnectionRequest(id))
 
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "url", validationErr.Field)
-			assert.Contains(t, validationErr.Message, "connection refused")
-		})
+				var validationErr *apperrors.ValidationError
+				assert.ErrorAs(t, err, &validationErr)
+				assert.Equal(t, "url", validationErr.Field)
+				assert.Contains(t, validationErr.Message, "connection refused")
+			},
+		)
 	})
 
 	t.Run("Given the new name collides with another connection", func(t *testing.T) {
@@ -250,7 +267,9 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			other := model_builders.NewMCPConnectionBuilder().WithName("taken").Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{*row, *other}, nil)
+			suite.mockRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{*row, *other}, nil)
 		}
 
 		t.Run("Should return a conflict without updating", func(t *testing.T) {
@@ -281,16 +300,20 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) ([]*models.Tool, error) {
-				assert.Empty(t, c.HeaderAuth)
-				return []*models.Tool{{Name: "search_issues"}}, nil
-			})
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) ([]*models.Tool, error) {
+					assert.Empty(t, c.HeaderAuth)
+					return []*models.Tool{{Name: "search_issues"}}, nil
+				})
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "Authorization").Return(nil)
 			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Api-Key").Return(nil)
-			suite.mockRepository.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
-				assert.Empty(t, c.HeaderAuthKeys)
-				return c, nil
-			})
+			suite.mockRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
+					assert.Empty(t, c.HeaderAuthKeys)
+					return c, nil
+				})
 		}
 
 		t.Run("Should delete every stored secret and leave the row without header keys", func(t *testing.T) {

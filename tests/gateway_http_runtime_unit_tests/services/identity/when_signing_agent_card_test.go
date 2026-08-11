@@ -71,21 +71,24 @@ func TestWhenSigningAgentCard(t *testing.T) {
 			}
 		})
 
-		t.Run("Should forward the card bytes verbatim so the runtime signs what the gateway serves", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should forward the card bytes verbatim so the runtime signs what the gateway serves",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
+				suite := WhenSigningAgentCardBeforeEach(t)
+				initSuite(suite)
 
-			_, err := suite.sut.Sign(context.Background(), []byte(card))
-			assert.NoError(t, err)
+				_, err := suite.sut.Sign(context.Background(), []byte(card))
+				assert.NoError(t, err)
 
-			var sent struct {
-				Card json.RawMessage `json:"card"`
-			}
-			assert.NoError(t, json.Unmarshal(suite.sentBody, &sent))
-			assert.JSONEq(t, card, string(sent.Card))
-		})
+				var sent struct {
+					Card json.RawMessage `json:"card"`
+				}
+				assert.NoError(t, json.Unmarshal(suite.sentBody, &sent))
+				assert.JSONEq(t, card, string(sent.Card))
+			},
+		)
 	})
 
 	t.Run("Given the runtime rejects the card", func(t *testing.T) {

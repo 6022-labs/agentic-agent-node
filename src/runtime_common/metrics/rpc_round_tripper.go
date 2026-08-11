@@ -14,7 +14,11 @@ type RpcRoundTripper struct {
 	chainId string
 }
 
-func NewRpcRoundTripper(base http.RoundTripper, metrics metrics_interfaces.BlockchainRpcMetricsInterface, chainId string) *RpcRoundTripper {
+func NewRpcRoundTripper(
+	base http.RoundTripper,
+	metrics metrics_interfaces.BlockchainRpcMetricsInterface,
+	chainId string,
+) *RpcRoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
 	}

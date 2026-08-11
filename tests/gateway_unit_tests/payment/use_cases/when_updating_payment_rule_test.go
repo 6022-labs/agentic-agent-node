@@ -58,11 +58,14 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			suite := WhenUpdatingPaymentRuleBeforeEach(t)
 			initSuite(suite)
 
-			rule, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId, SavePaymentRuleRequest: requests.SavePaymentRuleRequest{
-				Name:   "Renamed",
-				Method: "x402",
-				Config: json.RawMessage(`{"network":"eip155:80002"}`),
-			}})
+			rule, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdatePaymentRuleRequest{Id: ruleId, SavePaymentRuleRequest: requests.SavePaymentRuleRequest{
+					Name:   "Renamed",
+					Method: "x402",
+					Config: json.RawMessage(`{"network":"eip155:80002"}`),
+				}},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, ruleId.String(), rule.Id)

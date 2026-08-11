@@ -28,7 +28,9 @@ func WhenCheckingEnsBeforeEach(t *testing.T) *WhenCheckingEnsTestingSuite {
 
 	mockEnsPublisher := interface_mocks.NewMockEnsPublisherInterface(mockController)
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 	mockRegistrationReconciler := interface_mocks.NewMockRegistrationReconcilerInterface(mockController)
 
 	sut := use_cases.NewCheckAgentEns(
@@ -76,10 +78,14 @@ func TestWhenCheckingEns(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			confirmedState := model_builders.NewAgentRegistrationStateBuilder().WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).Build()
+			confirmedState := model_builders.NewAgentRegistrationStateBuilder().
+				WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
 
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(confirmedState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(confirmedState, nil)
 		}
 
 		t.Run("Should return confirmed without reading the chain", func(t *testing.T) {
@@ -100,13 +106,21 @@ func TestWhenCheckingEns(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			pendingState := model_builders.NewAgentRegistrationStateBuilder().WithEnsRegistryStatus(identity_enums.TransactionStatusPending).Build()
-			confirmedState := model_builders.NewAgentRegistrationStateBuilder().WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).Build()
+			pendingState := model_builders.NewAgentRegistrationStateBuilder().
+				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+				Build()
+			confirmedState := model_builders.NewAgentRegistrationStateBuilder().
+				WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(true, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(pendingState, nil)
-			suite.mockRegistrationReconciler.EXPECT().ReconcileEnsRegistry(gomock.Any(), gomock.Any(), gomock.Any()).Return(confirmedState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(pendingState, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileEnsRegistry(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(confirmedState, nil)
 		}
 
 		t.Run("Should reconcile ENS and report confirmed", func(t *testing.T) {
@@ -127,11 +141,15 @@ func TestWhenCheckingEns(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			pendingState := model_builders.NewAgentRegistrationStateBuilder().WithEnsRegistryStatus(identity_enums.TransactionStatusPending).Build()
+			pendingState := model_builders.NewAgentRegistrationStateBuilder().
+				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+				Build()
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(pendingState, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(pendingState, nil)
 		}
 
 		t.Run("Should report ENS still pending without reconciling", func(t *testing.T) {

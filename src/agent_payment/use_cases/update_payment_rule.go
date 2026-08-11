@@ -39,7 +39,10 @@ func NewUpdatePaymentRule(
 
 // Execute replaces the rule's fields; identity, position and policy binding are
 // preserved.
-func (u *UpdatePaymentRule) Execute(ctx context.Context, request *requests.UpdatePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
+func (u *UpdatePaymentRule) Execute(
+	ctx context.Context,
+	request *requests.UpdatePaymentRuleRequest,
+) (*responses.PaymentRuleResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

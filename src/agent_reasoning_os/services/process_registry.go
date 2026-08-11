@@ -29,7 +29,11 @@ func NewProcessRegistry(commandSettings *settings.CommandSettings) *ProcessRegis
 	}
 }
 
-func (r *ProcessRegistry) Register(command string, workdir string, handle interfaces.CommandHandleInterface) (*interfaces.BackgroundProcess, error) {
+func (r *ProcessRegistry) Register(
+	command string,
+	workdir string,
+	handle interfaces.CommandHandleInterface,
+) (*interfaces.BackgroundProcess, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 

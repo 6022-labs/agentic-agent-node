@@ -27,7 +27,11 @@ func NewMCPHeaderAuthSecretStorage(
 	return &MCPHeaderAuthSecretStorage{storage: storage, agentScopedKeyBuilder: agentScopedKeyBuilder}
 }
 
-func (s *MCPHeaderAuthSecretStorage) GetValue(ctx context.Context, connectionId uuid.UUID, key string) (string, bool, error) {
+func (s *MCPHeaderAuthSecretStorage) GetValue(
+	ctx context.Context,
+	connectionId uuid.UUID,
+	key string,
+) (string, bool, error) {
 	secretKey, err := s.secretPath(ctx, connectionId, key)
 	if err != nil {
 		return "", false, err
@@ -46,7 +50,12 @@ func (s *MCPHeaderAuthSecretStorage) GetValue(ctx context.Context, connectionId 
 	return value, true, nil
 }
 
-func (s *MCPHeaderAuthSecretStorage) SaveValue(ctx context.Context, connectionId uuid.UUID, key string, value string) error {
+func (s *MCPHeaderAuthSecretStorage) SaveValue(
+	ctx context.Context,
+	connectionId uuid.UUID,
+	key string,
+	value string,
+) error {
 	if len(key) == 0 {
 		return errors.New("header key cannot be empty")
 	}
@@ -68,6 +77,10 @@ func (s *MCPHeaderAuthSecretStorage) DeleteValue(ctx context.Context, connection
 	return s.storage.Delete(ctx, secretKey)
 }
 
-func (s *MCPHeaderAuthSecretStorage) secretPath(ctx context.Context, connectionId uuid.UUID, key string) (string, error) {
+func (s *MCPHeaderAuthSecretStorage) secretPath(
+	ctx context.Context,
+	connectionId uuid.UUID,
+	key string,
+) (string, error) {
 	return s.agentScopedKeyBuilder.ScopedKey(ctx, fmt.Sprintf(mcpHeaderAuthSecretKeyTemplate, connectionId, key))
 }

@@ -32,7 +32,10 @@ func (t *ReasoningTracer) conversationIdFromContext(ctx context.Context) string 
 	return id
 }
 
-func (t *ReasoningTracer) StartInference(ctx context.Context, conversationId, requestModel string) (context.Context, interfaces.Span) {
+func (t *ReasoningTracer) StartInference(
+	ctx context.Context,
+	conversationId, requestModel string,
+) (context.Context, interfaces.Span) {
 	ctx = context.WithValue(ctx, conversationIdKey{}, conversationId)
 	ctx, span := t.tracer.Start(ctx, "invoke_agent")
 	span.SetAttributes(
@@ -47,7 +50,10 @@ func (t *ReasoningTracer) StartInference(ctx context.Context, conversationId, re
 	return ctx, &otelSpan{span: span}
 }
 
-func (t *ReasoningTracer) StartChatCompletion(ctx context.Context, provider, model string) (context.Context, interfaces.ChatCompletionSpan) {
+func (t *ReasoningTracer) StartChatCompletion(
+	ctx context.Context,
+	provider, model string,
+) (context.Context, interfaces.ChatCompletionSpan) {
 	ctx, span := t.tracer.Start(ctx, "chat "+model, trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
 		attribute.String("gen_ai.operation.name", "chat"),
@@ -60,7 +66,10 @@ func (t *ReasoningTracer) StartChatCompletion(ctx context.Context, provider, mod
 	return ctx, &chatCompletionSpan{otelSpan{span: span}}
 }
 
-func (t *ReasoningTracer) StartToolCall(ctx context.Context, toolName, toolCallId, serverName string) (context.Context, interfaces.Span) {
+func (t *ReasoningTracer) StartToolCall(
+	ctx context.Context,
+	toolName, toolCallId, serverName string,
+) (context.Context, interfaces.Span) {
 	ctx, span := t.tracer.Start(ctx, "execute_tool "+toolName)
 	span.SetAttributes(
 		attribute.String("gen_ai.operation.name", "execute_tool"),

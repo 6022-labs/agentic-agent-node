@@ -26,7 +26,13 @@ type EnsRegistrarInterface interface {
 	// Text reads a single text record off the agent's subnode.
 	Text(ctx context.Context, chainId string, collection common.Address, agentName, key string) (string, error)
 	// InitRecords seeds the agent's subnode with its initial records.
-	InitRecords(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, records []EnsRecord) error
+	InitRecords(
+		ctx context.Context,
+		chainId string,
+		collection common.Address,
+		tokenId *big.Int,
+		records []EnsRecord,
+	) error
 	// SetRecord overwrites a single record on the agent's subnode.
 	SetRecord(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, key, value string) error
 }

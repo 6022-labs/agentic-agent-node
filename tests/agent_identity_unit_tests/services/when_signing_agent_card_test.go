@@ -47,7 +47,10 @@ func WhenSigningAgentCardBeforeEach(t *testing.T) *WhenSigningAgentCardTestingSu
 	mockWalletCredentialsStorage := identity_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
 	return &WhenSigningAgentCardTestingSuite{
-		sut:                          identity_services.NewAgentCardSigner(mockAgentRepository, mockWalletCredentialsStorage),
+		sut: identity_services.NewAgentCardSigner(
+			mockAgentRepository,
+			mockWalletCredentialsStorage,
+		),
 		mockAgentRepository:          mockAgentRepository,
 		mockWalletCredentialsStorage: mockWalletCredentialsStorage,
 	}

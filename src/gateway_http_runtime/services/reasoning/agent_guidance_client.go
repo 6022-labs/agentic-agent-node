@@ -30,12 +30,19 @@ func (c *HttpAgentGuidanceClient) Get(ctx context.Context) (*models.ExternalAgen
 	return &payload, nil
 }
 
-func (c *HttpAgentGuidanceClient) Set(ctx context.Context, body *models.ExternalAgentGuidancePayload) (*models.ExternalAgentGuidancePayload, error) {
+func (c *HttpAgentGuidanceClient) Set(
+	ctx context.Context,
+	body *models.ExternalAgentGuidancePayload,
+) (*models.ExternalAgentGuidancePayload, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.client.PutInternalAgentGuidanceWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(encoded))
+	resp, err := c.client.PutInternalAgentGuidanceWithBodyWithResponse(
+		ctx,
+		helpers.JsonContentType,
+		bytes.NewReader(encoded),
+	)
 	if err != nil {
 		return nil, helpers.MapRuntimeError(err)
 	}

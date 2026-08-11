@@ -43,7 +43,8 @@ func TestWhenAuthorizing(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalAuthorizeResponse, error) {
 					var sent models.ExternalAuthorizePayload
 					raw, _ := io.ReadAll(reader)
@@ -73,7 +74,8 @@ func TestWhenAuthorizing(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(&clients.PostInternalAuthorizeResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body:         []byte(`{"authorized":false}`),
@@ -97,7 +99,8 @@ func TestWhenAuthorizing(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				Return(nil, errors.New("runtime down"))
 		}
 

@@ -23,7 +23,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 			t.Parallel()
 
 			var out decodedPayload
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusOK}, []byte(`{"name":"agent"}`), &out, nil)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusOK},
+				[]byte(`{"name":"agent"}`),
+				&out,
+				nil,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "agent", out.Name)
@@ -50,7 +55,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 		t.Run("Should return the sentinel error", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusNotFound}, []byte(`{"code":"not_found"}`), nil, notFound)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusNotFound},
+				[]byte(`{"code":"not_found"}`),
+				nil,
+				notFound,
+			)
 
 			assert.ErrorIs(t, err, notFound)
 		})
@@ -62,7 +72,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 		t.Run("Should return a RuntimeStatusError preserving the status and parsed code", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusNotFound}, []byte(`{"code":"not_found","message":"missing"}`), nil, nil)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusNotFound},
+				[]byte(`{"code":"not_found","message":"missing"}`),
+				nil,
+				nil,
+			)
 
 			var statusErr *helpers.RuntimeStatusError
 			assert.ErrorAs(t, err, &statusErr)
@@ -78,7 +93,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 		t.Run("Should return a RuntimeStatusError preserving the field and message", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusBadRequest}, []byte(`{"field":"name","message":"required"}`), nil, nil)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusBadRequest},
+				[]byte(`{"field":"name","message":"required"}`),
+				nil,
+				nil,
+			)
 
 			var statusErr *helpers.RuntimeStatusError
 			assert.ErrorAs(t, err, &statusErr)
@@ -94,7 +114,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 		t.Run("Should return a RuntimeStatusError carrying the raw body and empty fields", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusBadGateway}, []byte("upstream exploded"), nil, nil)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusBadGateway},
+				[]byte("upstream exploded"),
+				nil,
+				nil,
+			)
 
 			var statusErr *helpers.RuntimeStatusError
 			assert.ErrorAs(t, err, &statusErr)
@@ -114,7 +139,12 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 		t.Run("Should return the sentinel even when the body carries a conflict code", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusNotFound}, []byte(`{"code":"conflict"}`), nil, notFound)
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusNotFound},
+				[]byte(`{"code":"conflict"}`),
+				nil,
+				notFound,
+			)
 
 			assert.ErrorIs(t, err, notFound)
 

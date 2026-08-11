@@ -13,7 +13,9 @@ type GetPaymentFacilitators struct {
 	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings
 }
 
-func NewGetPaymentFacilitators(paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings) *GetPaymentFacilitators {
+func NewGetPaymentFacilitators(
+	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
+) *GetPaymentFacilitators {
 	return &GetPaymentFacilitators{paymentFacilitatorsSettings: paymentFacilitatorsSettings}
 }
 

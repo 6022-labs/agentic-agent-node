@@ -17,7 +17,11 @@ type KvV1SecretStorage struct {
 	metrics  metrics_interfaces.VaultMetricsInterface
 }
 
-func NewKvV1SecretStorage(client *vault.Client, settings *vault_settings.VaultSettings, metrics metrics_interfaces.VaultMetricsInterface) *KvV1SecretStorage {
+func NewKvV1SecretStorage(
+	client *vault.Client,
+	settings *vault_settings.VaultSettings,
+	metrics metrics_interfaces.VaultMetricsInterface,
+) *KvV1SecretStorage {
 	return &KvV1SecretStorage{client: client, settings: settings, metrics: metrics}
 }
 

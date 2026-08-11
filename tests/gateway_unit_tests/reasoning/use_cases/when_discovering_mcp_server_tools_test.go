@@ -76,14 +76,18 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDiscoveringMcpServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().DiscoverTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
-				assert.Equal(t, "https://mcp.github.example", lo.FromPtr(body.Url))
-				assert.Equal(t, map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"}, body.HeaderAuth)
-				assert.Nil(t, body.ConnectionId)
-				return &models.ExternalMCPServerToolsPayload{
-					Tools: []models.ExternalMCPServerToolPayload{{Name: "search_issues", Description: "Search issues"}},
-				}, nil
-			})
+			suite.mockClient.EXPECT().
+				DiscoverTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+					assert.Equal(t, "https://mcp.github.example", lo.FromPtr(body.Url))
+					assert.Equal(t, map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"}, body.HeaderAuth)
+					assert.Nil(t, body.ConnectionId)
+					return &models.ExternalMCPServerToolsPayload{
+						Tools: []models.ExternalMCPServerToolPayload{
+							{Name: "search_issues", Description: "Search issues"},
+						},
+					}, nil
+				})
 		}
 
 		t.Run("Should return the tools the runtime listed", func(t *testing.T) {
@@ -109,12 +113,14 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenDiscoveringMcpServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().DiscoverTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
-				// The blank value travels: the runtime reads it as "use the stored value".
-				assert.Equal(t, map[string]string{"Authorization": ""}, body.HeaderAuth)
-				assert.Equal(t, id.String(), *body.ConnectionId)
-				return &models.ExternalMCPServerToolsPayload{}, nil
-			})
+			suite.mockClient.EXPECT().
+				DiscoverTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+					// The blank value travels: the runtime reads it as "use the stored value".
+					assert.Equal(t, map[string]string{"Authorization": ""}, body.HeaderAuth)
+					assert.Equal(t, id.String(), *body.ConnectionId)
+					return &models.ExternalMCPServerToolsPayload{}, nil
+				})
 		}
 
 		t.Run("Should forward the connection id and the valueless header", func(t *testing.T) {
@@ -138,10 +144,12 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenDiscoveringMcpServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().DiscoverTools(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
-				assert.Nil(t, body.HeaderAuth)
-				return &models.ExternalMCPServerToolsPayload{}, nil
-			})
+			suite.mockClient.EXPECT().
+				DiscoverTools(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalDiscoverMCPServerToolsPayload) (*models.ExternalMCPServerToolsPayload, error) {
+					assert.Nil(t, body.HeaderAuth)
+					return &models.ExternalMCPServerToolsPayload{}, nil
+				})
 		}
 
 		t.Run("Should pass nil so the runtime uses every stored header", func(t *testing.T) {
@@ -150,7 +158,10 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 			suite := WhenDiscoveringMcpServerToolsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMcpServerToolsRequest{ConnectionId: &id})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.DiscoverMcpServerToolsRequest{ConnectionId: &id},
+			)
 
 			assert.NoError(t, err)
 		})

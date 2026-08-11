@@ -23,7 +23,9 @@ func NewGetAuthChallenge(
 	}
 }
 
-func (u *GetAuthChallenge) Execute(request *requests.GetAuthChallengeRequest) (*responses.GetAuthChallengeResponse, error) {
+func (u *GetAuthChallenge) Execute(
+	request *requests.GetAuthChallengeRequest,
+) (*responses.GetAuthChallengeResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

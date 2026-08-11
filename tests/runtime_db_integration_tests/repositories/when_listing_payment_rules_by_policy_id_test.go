@@ -24,7 +24,9 @@ type WhenListingPaymentRulesByPolicyIdTestingSuite struct {
 	policy                   *models.PaymentPolicy
 }
 
-func WhenListingPaymentRulesByPolicyIdBeforeEach(tc *repositoryTestCase) *WhenListingPaymentRulesByPolicyIdTestingSuite {
+func WhenListingPaymentRulesByPolicyIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenListingPaymentRulesByPolicyIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

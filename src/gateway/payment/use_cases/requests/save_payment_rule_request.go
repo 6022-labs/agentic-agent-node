@@ -13,7 +13,7 @@ type SavePaymentRuleRequest struct {
 	Name   string          `json:"name"`
 	Price  string          `json:"price"`
 	Method string          `json:"method,omitempty"`
-	Config json.RawMessage `json:"config" swaggertype:"object"`
+	Config json.RawMessage `json:"config"           swaggertype:"object"`
 }
 
 // ToExternalPaymentRule maps the request onto the runtime's payment-rule payload.

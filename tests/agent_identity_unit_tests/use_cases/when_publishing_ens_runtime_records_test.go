@@ -64,7 +64,9 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
-			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(common_interfaces.ErrIdentityNotFound)
+			suite.mockEnsPublisher.EXPECT().
+				PublishRuntimeRecords(gomock.Any()).
+				Return(common_interfaces.ErrIdentityNotFound)
 		}
 
 		t.Run("Should return Conflict with identity_not_found", func(t *testing.T) {

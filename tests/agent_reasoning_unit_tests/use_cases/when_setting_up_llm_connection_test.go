@@ -35,7 +35,12 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 	mockLlmConnectionValidator := interfaces_mocks.NewMockLLMConnectionValidatorInterface(mockController)
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
 
-	sut := use_cases.NewSetupLLMConnection(mockRepository, mockSecretStorage, mockLlmConnectionValidator, mockAgentRepository)
+	sut := use_cases.NewSetupLLMConnection(
+		mockRepository,
+		mockSecretStorage,
+		mockLlmConnectionValidator,
+		mockAgentRepository,
+	)
 
 	return &WhenSettingUpLLMConnectionTestingSuite{
 		sut: sut,
@@ -82,33 +87,40 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			gomock.InOrder(
-				suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "sk-secret").DoAndReturn(func(_ context.Context, c *models.LLMConnection, _ string) error {
-					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
-					assert.Equal(t, "gpt-4o", c.Model)
-					return nil
-				}),
+				suite.mockLlmConnectionValidator.EXPECT().
+					Validate(gomock.Any(), gomock.Any(), "sk-secret").
+					DoAndReturn(func(_ context.Context, c *models.LLMConnection, _ string) error {
+						assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
+						assert.Equal(t, "gpt-4o", c.Model)
+						return nil
+					}),
 				suite.mockSecretStorage.EXPECT().Save(gomock.Any(), "sk-secret").Return(nil),
-				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
-					assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
-					assert.Equal(t, "gpt-4o", c.Model)
-					assert.Equal(t, reasoning_enums.LLMConnectionSetupStatusEstablished, c.SetupStatus)
-					return c, nil
-				}),
+				suite.mockRepository.EXPECT().
+					Upsert(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
+						assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
+						assert.Equal(t, "gpt-4o", c.Model)
+						assert.Equal(t, reasoning_enums.LLMConnectionSetupStatusEstablished, c.SetupStatus)
+						return c, nil
+					}),
 			)
 		}
 
-		t.Run("Should validate the connection, save the api key in vault, then upsert the row with established status", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should validate the connection, save the api key in vault, then upsert the row with established status",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenSettingUpLLMConnectionBeforeEach(t)
-			request := generateValidSetupLLMConnectionRequest()
-			initSuite(suite)
+				suite := WhenSettingUpLLMConnectionBeforeEach(t)
+				request := generateValidSetupLLMConnectionRequest()
+				initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), request)
+				resp, err := suite.sut.Execute(context.Background(), request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
-		})
+				assert.NoError(t, err)
+				assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
+			},
+		)
 	})
 
 	t.Run("Given the connection fails validation", func(t *testing.T) {
@@ -141,9 +153,11 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			gomock.InOrder(
 				suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil),
 				suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("sk-existing", true, nil),
-				suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
-					return c, nil
-				}),
+				suite.mockRepository.EXPECT().
+					Upsert(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
+						return c, nil
+					}),
 			)
 		}
 

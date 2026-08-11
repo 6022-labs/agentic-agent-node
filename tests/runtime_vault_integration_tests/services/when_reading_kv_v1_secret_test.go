@@ -38,7 +38,9 @@ func WhenReadingKvV1SecretBeforeEach(t *testing.T) *WhenReadingKvV1SecretTesting
 	}
 
 	mockMetrics := metrics_interfaces_mocks.NewMockVaultMetricsInterface(gomock.NewController(t))
-	mockMetrics.EXPECT().RecordOperation(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().
+		RecordOperation(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
 
 	return &WhenReadingKvV1SecretTestingSuite{
 		mountPath: cfg.KvV1MountPath,

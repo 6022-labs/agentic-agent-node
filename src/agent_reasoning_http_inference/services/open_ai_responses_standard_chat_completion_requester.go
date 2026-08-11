@@ -78,9 +78,12 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 		return nil, err
 	}
 
-	outputTypes := lo.Map(response.Output, func(o external_models.ExternalOpenAIResponsesStandardResponseOutput, _ int) string {
-		return o.Type
-	})
+	outputTypes := lo.Map(
+		response.Output,
+		func(o external_models.ExternalOpenAIResponsesStandardResponseOutput, _ int) string {
+			return o.Type
+		},
+	)
 
 	r.logger.Debug("Response from Responses endpoint",
 		zap.Strings("outputTypes", outputTypes),
@@ -126,8 +129,12 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 			}
 			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
 				Id: o.ID,
-				// Align the provider-executed name with the local mcp_<conn>_<tool> convention when the server is one of ours.
-				Name:      inference_utils.ProviderExecutedToolFunctionName(mcpTools, lo.FromPtr(o.ServerLabel), *o.Name),
+				// Align the provider-executed name with local mcp_<conn>_<tool> when the server is one of ours.
+				Name: inference_utils.ProviderExecutedToolFunctionName(
+					mcpTools,
+					lo.FromPtr(o.ServerLabel),
+					*o.Name,
+				),
 				Arguments: args,
 				Output:    lo.FromPtr(o.Output),
 				IsError:   o.Error != nil,
@@ -147,12 +154,17 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-func (r *OpenAIResponsesStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+func (r *OpenAIResponsesStandardChatCompletionRequester) Probe(
+	baseUrl, apiKey string,
+	llmConnection *models.LLMConnection,
+) error {
 	role := "user"
 	content := probeMessage
 	request := &external_models.ExternalOpenAIResponsesStandardRequest{
-		Model:           llmConnection.Model,
-		Input:           []external_models.ExternalOpenAIResponsesStandardRequestInput{{Type: "message", Role: &role, Content: &content}},
+		Model: llmConnection.Model,
+		Input: []external_models.ExternalOpenAIResponsesStandardRequestInput{
+			{Type: "message", Role: &role, Content: &content},
+		},
 		Tools:           []external_models.ExternalOpenAIResponsesStandardRequestTool{},
 		MaxOutputTokens: lo.ToPtr(probeMaxTokens),
 	}

@@ -84,9 +84,12 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		return nil, fmt.Errorf("failed to call Anthropic Messages API: %w", err)
 	}
 
-	contentTypes := lo.Map(response.Content, func(c external_models.ExternalAnthropicMessagesStandardMessageContent, _ int) string {
-		return c.Type
-	})
+	contentTypes := lo.Map(
+		response.Content,
+		func(c external_models.ExternalAnthropicMessagesStandardMessageContent, _ int) string {
+			return c.Type
+		},
+	)
 
 	r.logger.Debug("Response from Anthropic Messages endpoint",
 		zap.Int("contentItems", len(response.Content)),
@@ -127,8 +130,12 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 			}
 			completion.ExecutedToolCalls = append(completion.ExecutedToolCalls, interfaces.ExecutedToolCall{
 				Id: *c.Id,
-				// Align the provider-executed name with the local mcp_<conn>_<tool> convention when the server is one of ours.
-				Name:      inference_utils.ProviderExecutedToolFunctionName(mcpTools, lo.FromPtr(c.ServerName), *c.Name),
+				// Align the provider-executed name with local mcp_<conn>_<tool> when the server is one of ours.
+				Name: inference_utils.ProviderExecutedToolFunctionName(
+					mcpTools,
+					lo.FromPtr(c.ServerName),
+					*c.Name,
+				),
 				Arguments: c.Input,
 			})
 			executedByToolUseId[*c.Id] = len(completion.ExecutedToolCalls) - 1
@@ -161,7 +168,7 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	return completion, nil
 }
 
-// supportsDirectMcp holds for servers with no auth, or a single OAuth Bearer Authorization header — all Anthropic accepts.
+// supportsDirectMcp holds for no-auth servers or a single OAuth Bearer Authorization header — all Anthropic accepts.
 func (r *AnthropicMessagesStandardChatCompletionRequester) supportsDirectMcp(mcpConnection *models.MCPConnection) bool {
 	if len(mcpConnection.HeaderAuth) == 0 {
 		return true
@@ -170,7 +177,10 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) supportsDirectMcp(mcp
 	return ok && len(mcpConnection.HeaderAuth) == 1 && strings.HasPrefix(auth, "Bearer ")
 }
 
-func (r *AnthropicMessagesStandardChatCompletionRequester) Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error {
+func (r *AnthropicMessagesStandardChatCompletionRequester) Probe(
+	baseUrl, apiKey string,
+	llmConnection *models.LLMConnection,
+) error {
 	text := probeMessage
 	request := &external_models.ExternalAnthropicMessagesStandardRequest{
 		Model:     llmConnection.Model,
@@ -265,11 +275,14 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) buildRequestMessages(
 		case "tool":
 			callId := m.ToolCallId
 			content := m.Content
-			pendingToolResults = append(pendingToolResults, external_models.ExternalAnthropicMessagesStandardMessageContent{
-				Type:      "tool_result",
-				ToolUseId: &callId,
-				Content:   &content,
-			})
+			pendingToolResults = append(
+				pendingToolResults,
+				external_models.ExternalAnthropicMessagesStandardMessageContent{
+					Type:      "tool_result",
+					ToolUseId: &callId,
+					Content:   &content,
+				},
+			)
 
 		default:
 			return nil, fmt.Errorf("unsupported chat completion message role: %q", m.Role)

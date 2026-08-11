@@ -23,7 +23,9 @@ type WhenListingMCPConnectionsByAgentIdTestingSuite struct {
 	sut                      *repositories.MCPConnectionRepository
 }
 
-func WhenListingMCPConnectionsByAgentIdBeforeEach(tc *repositoryTestCase) *WhenListingMCPConnectionsByAgentIdTestingSuite {
+func WhenListingMCPConnectionsByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenListingMCPConnectionsByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

@@ -17,7 +17,10 @@ const (
 )
 
 type OllamaChatMessageStandardClientInterface interface {
-	ChatMessage(baseUrl string, request *models.ExternalOllamaChatMessageStandardRequest) (*models.ExternalOllamaChatMessageStandardResponse, error)
+	ChatMessage(
+		baseUrl string,
+		request *models.ExternalOllamaChatMessageStandardRequest,
+	) (*models.ExternalOllamaChatMessageStandardResponse, error)
 }
 
 type OllamaChatMessageStandardClient struct {
@@ -32,14 +35,19 @@ type NewOllamaChatMessageStandardClientParams struct {
 	HttpClient *http.Client `name:"llm-inference-http-client"`
 }
 
-func NewOllamaChatMessageStandardClient(params NewOllamaChatMessageStandardClientParams) *OllamaChatMessageStandardClient {
+func NewOllamaChatMessageStandardClient(
+	params NewOllamaChatMessageStandardClientParams,
+) *OllamaChatMessageStandardClient {
 	return &OllamaChatMessageStandardClient{
 		logger:     params.Logger,
 		httpClient: params.HttpClient,
 	}
 }
 
-func (c *OllamaChatMessageStandardClient) ChatMessage(baseUrl string, request *models.ExternalOllamaChatMessageStandardRequest) (*models.ExternalOllamaChatMessageStandardResponse, error) {
+func (c *OllamaChatMessageStandardClient) ChatMessage(
+	baseUrl string,
+	request *models.ExternalOllamaChatMessageStandardRequest,
+) (*models.ExternalOllamaChatMessageStandardResponse, error) {
 	url := fmt.Sprintf("%s%s", baseUrl, OLLAMA_CHAT_MESSAGE_ENDPOINT)
 
 	// Convert the request to JSON

@@ -26,7 +26,10 @@ type WhenBuildingWellKnownAgent6022TestingSuite struct {
 	signedBody                   []byte
 }
 
-func WhenBuildingWellKnownAgent6022BeforeEach(t *testing.T, runtimeUrl, publicPrefix string) *WhenBuildingWellKnownAgent6022TestingSuite {
+func WhenBuildingWellKnownAgent6022BeforeEach(
+	t *testing.T,
+	runtimeUrl, publicPrefix string,
+) *WhenBuildingWellKnownAgent6022TestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRegistrationClient := identity_mocks.NewMockAgentRegistrationClientInterface(mockController)
@@ -55,7 +58,10 @@ func (s *WhenBuildingWellKnownAgent6022TestingSuite) expectCardSignature(ctx con
 		Sign(ctx, gomock.Any()).
 		DoAndReturn(func(_ context.Context, card []byte) (*identity_models.ExternalAgentCardSignaturePayload, error) {
 			s.signedBody = card
-			return &identity_models.ExternalAgentCardSignaturePayload{Protected: "protected", Signature: "signature"}, nil
+			return &identity_models.ExternalAgentCardSignaturePayload{
+				Protected: "protected",
+				Signature: "signature",
+			}, nil
 		})
 }
 

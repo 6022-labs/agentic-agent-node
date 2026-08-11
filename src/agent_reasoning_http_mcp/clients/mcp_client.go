@@ -32,8 +32,18 @@ func (e *McpStatusError) Error() string {
 }
 
 type McpClientInterface interface {
-	ListTools(ctx context.Context, mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error)
-	CallTool(ctx context.Context, mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error)
+	ListTools(
+		ctx context.Context,
+		mcpServerUrl string,
+		headers map[string]string,
+	) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error)
+	CallTool(
+		ctx context.Context,
+		mcpServerUrl string,
+		toolName string,
+		input map[string]any,
+		headers map[string]string,
+	) (*models.ExternalJsonRPCResponse[json.RawMessage], error)
 }
 
 type McpClient struct {
@@ -57,7 +67,11 @@ func NewMcpClient(
 	}
 }
 
-func (c *McpClient) ListTools(ctx context.Context, mcpServerUrl string, headers map[string]string) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
+func (c *McpClient) ListTools(
+	ctx context.Context,
+	mcpServerUrl string,
+	headers map[string]string,
+) (*models.ExternalJsonRPCResponse[models.ExternalMcpToolsResponse], error) {
 	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,
@@ -106,7 +120,13 @@ func (c *McpClient) ListTools(ctx context.Context, mcpServerUrl string, headers 
 	return rpcResponse, nil
 }
 
-func (c *McpClient) CallTool(ctx context.Context, mcpServerUrl string, toolName string, input map[string]any, headers map[string]string) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
+func (c *McpClient) CallTool(
+	ctx context.Context,
+	mcpServerUrl string,
+	toolName string,
+	input map[string]any,
+	headers map[string]string,
+) (*models.ExternalJsonRPCResponse[json.RawMessage], error) {
 	requestBody, err := json.Marshal(models.ExternalJsonRPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,

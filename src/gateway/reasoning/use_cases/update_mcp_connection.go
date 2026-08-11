@@ -17,7 +17,10 @@ func NewUpdateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 	return &UpdateMcpConnection{client: client}
 }
 
-func (u *UpdateMcpConnection) Execute(ctx context.Context, request *requests.UpdateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
+func (u *UpdateMcpConnection) Execute(
+	ctx context.Context,
+	request *requests.UpdateMcpConnectionRequest,
+) (*responses.McpConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

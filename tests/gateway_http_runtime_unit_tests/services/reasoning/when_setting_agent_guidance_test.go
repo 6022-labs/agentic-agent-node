@@ -59,7 +59,10 @@ func TestWhenSettingAgentGuidanceClient(t *testing.T) {
 			suite := WhenSettingAgentGuidanceClientBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.Set(context.Background(), &models.ExternalAgentGuidancePayload{Content: "be concise"})
+			payload, err := suite.sut.Set(
+				context.Background(),
+				&models.ExternalAgentGuidancePayload{Content: "be concise"},
+			)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, payload) {

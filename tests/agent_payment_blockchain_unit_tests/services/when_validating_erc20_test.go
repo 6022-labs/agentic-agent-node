@@ -27,7 +27,11 @@ type WhenValidatingErc20TestingSuite struct {
 
 // WhenValidatingErc20BeforeEach points the validator at a fake RPC scripted with
 // the given per-method answers (hasCode backs the binding's no-code check).
-func WhenValidatingErc20BeforeEach(t *testing.T, methods map[string]erc20Method, hasCode bool) *WhenValidatingErc20TestingSuite {
+func WhenValidatingErc20BeforeEach(
+	t *testing.T,
+	methods map[string]erc20Method,
+	hasCode bool,
+) *WhenValidatingErc20TestingSuite {
 	server := newErc20RpcServer(t, methods, hasCode)
 	t.Cleanup(server.Close)
 
@@ -59,7 +63,11 @@ func TestWhenValidatingErc20(t *testing.T) {
 
 			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			method, name, version, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AssetTransferMethodEip3009, method)
@@ -74,14 +82,20 @@ func TestWhenValidatingErc20(t *testing.T) {
 		methods := erc20ProbeMethods(t)
 		methods["name"] = erc20Method{data: packErc20Output(t, "name", "USD Coin")}
 		methods["version"] = erc20Method{data: packErc20Output(t, "version", "2")}
-		methods["DOMAIN_SEPARATOR"] = erc20Method{data: packErc20Output(t, "DOMAIN_SEPARATOR", eip712DomainSeparator(t, "USD Coin", "2"))}
+		methods["DOMAIN_SEPARATOR"] = erc20Method{
+			data: packErc20Output(t, "DOMAIN_SEPARATOR", eip712DomainSeparator(t, "USD Coin", "2")),
+		}
 
 		t.Run("Should detect eip3009 via the fallback", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			method, name, version, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AssetTransferMethodEip3009, method)
@@ -103,7 +117,11 @@ func TestWhenValidatingErc20(t *testing.T) {
 
 			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			method, name, version, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AssetTransferMethodPermit2, method)
@@ -123,7 +141,11 @@ func TestWhenValidatingErc20(t *testing.T) {
 
 			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			method, name, version, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AssetTransferMethodPermit2, method)
@@ -144,7 +166,11 @@ func TestWhenValidatingErc20(t *testing.T) {
 
 			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			method, name, version, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.AssetTransferMethodPermit2, method)

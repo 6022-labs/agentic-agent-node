@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// AddressType is a chain family the agent holds a wallet for; the value doubles as the per-type Vault path segment (wallet/<type>).
+// AddressType is a chain family the agent holds a wallet for; it doubles as the Vault path segment (wallet/<type>).
 type AddressType string
 
 const (

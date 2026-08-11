@@ -5,10 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateSelfToolRequest toggles one self tool; Enabled is a pointer so an absent body field fails validation instead of silently disabling.
+// UpdateSelfToolRequest toggles one self tool; Enabled is a pointer so an absent field fails instead of disabling.
 type UpdateSelfToolRequest struct {
 	Id      uuid.UUID `params:"id" json:"-"`
-	Enabled *bool     `json:"enabled"`
+	Enabled *bool     `            json:"enabled"`
 }
 
 func (r *UpdateSelfToolRequest) ValidateAndSanitize() error {

@@ -17,7 +17,10 @@ func TestWhenValidatingGetAuthChallengeRequest(t *testing.T) {
 		t.Run("Should sanitize and pass", func(t *testing.T) {
 			t.Parallel()
 
-			request := &requests.GetAuthChallengeRequest{Address: "  0xd389d997Df5654b87914492E1e0C6861bfe835DE  ", ChainId: 80002}
+			request := &requests.GetAuthChallengeRequest{
+				Address: "  0xd389d997Df5654b87914492E1e0C6861bfe835DE  ",
+				ChainId: 80002,
+			}
 
 			assert.NoError(t, request.ValidateAndSanitize())
 			assert.Equal(t, "0xd389d997Df5654b87914492E1e0C6861bfe835DE", request.Address)

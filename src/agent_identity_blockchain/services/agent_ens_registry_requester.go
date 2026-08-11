@@ -44,7 +44,12 @@ func NewAgentEnsRegistryRequester(
 	}
 }
 
-func (r *AgentEnsRegistryRequester) Provisioned(ctx context.Context, chainId string, collection common.Address, agentName string) (bool, error) {
+func (r *AgentEnsRegistryRequester) Provisioned(
+	ctx context.Context,
+	chainId string,
+	collection common.Address,
+	agentName string,
+) (bool, error) {
 	registry, err := r.registry(chainId)
 	if err != nil {
 		return false, err
@@ -56,7 +61,12 @@ func (r *AgentEnsRegistryRequester) Provisioned(ctx context.Context, chainId str
 	return registry.Provisioned(&bind.CallOpts{Context: ctx}, node)
 }
 
-func (r *AgentEnsRegistryRequester) Text(ctx context.Context, chainId string, collection common.Address, agentName, key string) (string, error) {
+func (r *AgentEnsRegistryRequester) Text(
+	ctx context.Context,
+	chainId string,
+	collection common.Address,
+	agentName, key string,
+) (string, error) {
 	registry, err := r.registry(chainId)
 	if err != nil {
 		return "", err
@@ -68,7 +78,13 @@ func (r *AgentEnsRegistryRequester) Text(ctx context.Context, chainId string, co
 	return registry.Text(&bind.CallOpts{Context: ctx}, node, key)
 }
 
-func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, records []identity_interfaces.EnsRecord) error {
+func (r *AgentEnsRegistryRequester) InitRecords(
+	ctx context.Context,
+	chainId string,
+	collection common.Address,
+	tokenId *big.Int,
+	records []identity_interfaces.EnsRecord,
+) error {
 	client, err := r.ethClientFactory.For(chainId)
 	if err != nil {
 		return err
@@ -102,7 +118,13 @@ func (r *AgentEnsRegistryRequester) InitRecords(ctx context.Context, chainId str
 	return nil
 }
 
-func (r *AgentEnsRegistryRequester) SetRecord(ctx context.Context, chainId string, collection common.Address, tokenId *big.Int, key, value string) error {
+func (r *AgentEnsRegistryRequester) SetRecord(
+	ctx context.Context,
+	chainId string,
+	collection common.Address,
+	tokenId *big.Int,
+	key, value string,
+) error {
 	client, err := r.ethClientFactory.For(chainId)
 	if err != nil {
 		return err

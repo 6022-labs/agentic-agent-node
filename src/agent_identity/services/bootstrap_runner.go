@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// BootstrapRunner ensures the agent row exists, loads or generates a wallet per chain family, then best-effort refreshes ENS records.
+// BootstrapRunner ensures the agent row, loads or generates a wallet per chain family, then best-effort refreshes ENS.
 type BootstrapRunner struct {
 	logger                   *zap.Logger
 	agentRepository          repositories.AgentRepositoryInterface

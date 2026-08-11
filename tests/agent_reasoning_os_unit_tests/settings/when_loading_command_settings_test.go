@@ -94,13 +94,16 @@ func TestWhenLoadingCommandSettings(t *testing.T) {
 			"command.max_timeout_seconds":     60,
 		}, "."), nil)
 
-		t.Run("Should raise the ceiling so an unqualified command is not capped below its own default", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should raise the ceiling so an unqualified command is not capped below its own default",
+			func(t *testing.T) {
+				t.Parallel()
 
-			result := settings.NewCommandSettings(zap.NewNop(), k, loopSettings())
+				result := settings.NewCommandSettings(zap.NewNop(), k, loopSettings())
 
-			assert.Equal(t, 300, result.MaxTimeoutSeconds)
-		})
+				assert.Equal(t, 300, result.MaxTimeoutSeconds)
+			},
+		)
 	})
 
 	t.Run("Given a ceiling at or above the loop budget", func(t *testing.T) {

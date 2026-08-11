@@ -26,7 +26,10 @@ func NewSetAgentGuidance(
 	}
 }
 
-func (u *SetAgentGuidance) Execute(ctx context.Context, request *requests.SetAgentGuidanceRequest) (*responses.AgentGuidanceResponse, error) {
+func (u *SetAgentGuidance) Execute(
+	ctx context.Context,
+	request *requests.SetAgentGuidanceRequest,
+) (*responses.AgentGuidanceResponse, error) {
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return nil, err

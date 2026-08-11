@@ -16,7 +16,10 @@ type WhenCallingAnthropicMessagesTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenCallingAnthropicMessagesBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingAnthropicMessagesTestingSuite {
+func WhenCallingAnthropicMessagesBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+) *WhenCallingAnthropicMessagesTestingSuite {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	sut := clients.NewAnthropicMessagesStandardClient(clients.NewAnthropicMessagesStandardClientParams{
@@ -46,7 +49,9 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 			seenVersion = r.Header.Get("anthropic-version")
 			seenBeta = r.Header.Get("anthropic-beta")
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"id":"msg-1","model":"claude","role":"assistant","content":[{"type":"text","text":"hi"}]}`))
+			_, _ = w.Write(
+				[]byte(`{"id":"msg-1","model":"claude","role":"assistant","content":[{"type":"text","text":"hi"}]}`),
+			)
 		}
 
 		t.Run("Should POST to /v1/messages with x-api-key + anthropic-version + anthropic-beta", func(t *testing.T) {
@@ -55,7 +60,11 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 			suite := WhenCallingAnthropicMessagesBeforeEach(t, handler)
 			defer WhenCallingAnthropicMessagesAfterEach(suite)
 
-			res, err := suite.sut.Messages(suite.server.URL, "sk-secret", &models.ExternalAnthropicMessagesStandardRequest{Model: "claude"})
+			res, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk-secret",
+				&models.ExternalAnthropicMessagesStandardRequest{Model: "claude"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "/v1/messages", seenPath)
@@ -79,7 +88,11 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 			suite := WhenCallingAnthropicMessagesBeforeEach(t, handler)
 			defer WhenCallingAnthropicMessagesAfterEach(suite)
 
-			_, err := suite.sut.Messages(suite.server.URL, "sk", &models.ExternalAnthropicMessagesStandardRequest{Model: "claude"})
+			_, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk",
+				&models.ExternalAnthropicMessagesStandardRequest{Model: "claude"},
+			)
 			assert.Error(t, err)
 		})
 	})

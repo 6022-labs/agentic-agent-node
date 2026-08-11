@@ -51,7 +51,14 @@ func (s *CommandExecutor) Defaults() *interfaces.CommandDefaults {
 	}
 }
 
-func (s *CommandExecutor) Run(ctx context.Context, command string, workdir string, timeoutSeconds *int, yieldSeconds *int, background *bool) (*interfaces.CommandResult, error) {
+func (s *CommandExecutor) Run(
+	ctx context.Context,
+	command string,
+	workdir string,
+	timeoutSeconds *int,
+	yieldSeconds *int,
+	background *bool,
+) (*interfaces.CommandResult, error) {
 	if strings.TrimSpace(command) == "" {
 		return nil, errors.NewValidationError("command", "must not be empty")
 	}
@@ -120,7 +127,10 @@ func (s *CommandExecutor) Kill(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *CommandExecutor) startBackground(ctx context.Context, spec *interfaces.CommandSpec) (*interfaces.CommandResult, error) {
+func (s *CommandExecutor) startBackground(
+	ctx context.Context,
+	spec *interfaces.CommandSpec,
+) (*interfaces.CommandResult, error) {
 	handle, err := s.commandRunner.Start(spec)
 	if err != nil {
 		return nil, s.runnerError(err)
@@ -136,8 +146,12 @@ func (s *CommandExecutor) startBackground(ctx context.Context, spec *interfaces.
 	return result, nil
 }
 
-// runUntilYield returns whatever a slow command has printed so far and hands back a session id instead of blocking on it.
-func (s *CommandExecutor) runUntilYield(ctx context.Context, spec *interfaces.CommandSpec, yield time.Duration) (*interfaces.CommandResult, error) {
+// runUntilYield returns whatever a slow command printed so far and hands back a session id instead of blocking.
+func (s *CommandExecutor) runUntilYield(
+	ctx context.Context,
+	spec *interfaces.CommandSpec,
+	yield time.Duration,
+) (*interfaces.CommandResult, error) {
 	handle, err := s.commandRunner.Start(spec)
 	if err != nil {
 		return nil, s.runnerError(err)
@@ -164,7 +178,11 @@ func (s *CommandExecutor) runUntilYield(ctx context.Context, spec *interfaces.Co
 }
 
 // detach hands a running command to the registry; the snapshot is taken after, since it may already have exited.
-func (s *CommandExecutor) detach(ctx context.Context, spec *interfaces.CommandSpec, handle interfaces.CommandHandleInterface) (*interfaces.CommandResult, error) {
+func (s *CommandExecutor) detach(
+	ctx context.Context,
+	spec *interfaces.CommandSpec,
+	handle interfaces.CommandHandleInterface,
+) (*interfaces.CommandResult, error) {
 	process, err := s.processRegistry.Register(spec.Command, spec.Workdir, handle)
 	if err != nil {
 		return nil, err

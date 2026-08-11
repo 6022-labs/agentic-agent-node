@@ -36,10 +36,12 @@ func TestWhenGettingAgentGuidanceClient(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentGuidanceClientTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentGuidanceWithResponse(gomock.Any()).Return(&clients.GetInternalAgentGuidanceResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"content":"be concise"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentGuidanceWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentGuidanceResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"content":"be concise"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the guidance payload", func(t *testing.T) {

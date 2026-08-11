@@ -24,7 +24,9 @@ type WhenUpsertingAgentRegistrationStateTestingSuite struct {
 	sut                      *repositories.AgentRegistrationStateRepository
 }
 
-func WhenUpsertingAgentRegistrationStateBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentRegistrationStateTestingSuite {
+func WhenUpsertingAgentRegistrationStateBeforeEach(
+	tc *repositoryTestCase,
+) *WhenUpsertingAgentRegistrationStateTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -75,7 +77,10 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().WithAgentId(agentId).Build())
+					inserted, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().WithAgentId(agentId).Build(),
+					)
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 
@@ -96,19 +101,25 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
-						WithAgentId(agentId).
-						WithMintStatus(identity_enums.TransactionStatusPending).
-						Build())
+					first, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
 
 					assert.NoError(t, err)
 
-					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentRegistrationStateBuilder().
-						WithAgentId(agentId).
-						WithMintStatus(identity_enums.TransactionStatusConfirmed).
-						WithMintChainId(80002).
-						WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
-						Build())
+					second, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+							Build(),
+					)
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)

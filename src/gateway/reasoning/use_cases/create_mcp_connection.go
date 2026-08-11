@@ -17,7 +17,10 @@ func NewCreateMcpConnection(client gateway_interfaces.MCPConfigClientInterface) 
 	return &CreateMcpConnection{client: client}
 }
 
-func (u *CreateMcpConnection) Execute(ctx context.Context, request *requests.CreateMcpConnectionRequest) (*responses.McpConnectionResponse, error) {
+func (u *CreateMcpConnection) Execute(
+	ctx context.Context,
+	request *requests.CreateMcpConnectionRequest,
+) (*responses.McpConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

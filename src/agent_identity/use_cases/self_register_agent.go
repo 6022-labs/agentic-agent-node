@@ -98,7 +98,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 	return resp, nil
 }
 
-// ensureMinted reconciles an already-minted token (e.g. an approved proposal) before self-minting so /self is resumable; the bool reports a pending proposal.
+// ensureMinted reconciles an already-minted token so /self is resumable; the bool reports a pending proposal.
 func (u *SelfRegisterAgent) ensureMinted(
 	ctx context.Context,
 	agent *models.Agent,

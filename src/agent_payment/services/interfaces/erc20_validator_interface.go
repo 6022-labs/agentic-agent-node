@@ -13,5 +13,9 @@ type Erc20ValidatorInterface interface {
 	// For a token with a usable EIP-712 domain it returns eip3009 + that domain's
 	// name/version; otherwise permit2 (empty name/version). The caller guarantees
 	// the chain is reachable.
-	ValidateErc20(ctx context.Context, chainId string, asset string) (method enums.AssetTransferMethod, eip712Name, eip712Version string, err error)
+	ValidateErc20(
+		ctx context.Context,
+		chainId string,
+		asset string,
+	) (method enums.AssetTransferMethod, eip712Name, eip712Version string, err error)
 }

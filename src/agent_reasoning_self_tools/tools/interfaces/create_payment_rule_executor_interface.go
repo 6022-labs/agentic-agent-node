@@ -9,5 +9,8 @@ import (
 
 // CreatePaymentRuleExecutorInterface exposes the payment rule create to the self tools.
 type CreatePaymentRuleExecutorInterface interface {
-	Execute(ctx context.Context, request *payment_requests.SavePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error)
+	Execute(
+		ctx context.Context,
+		request *payment_requests.SavePaymentRuleRequest,
+	) (*payment_responses.PaymentRuleResponse, error)
 }

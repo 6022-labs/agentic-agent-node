@@ -82,7 +82,13 @@ func TestWhenValidatingJwt(t *testing.T) {
 
 			suite := WhenValidatingJwtBeforeEach()
 
-			token := craftToken(t, suite.jwtSettings.SigningKey, address.Hex(), time.Now().Add(-time.Hour).Unix(), time.Now().Add(-2*time.Hour).Unix())
+			token := craftToken(
+				t,
+				suite.jwtSettings.SigningKey,
+				address.Hex(),
+				time.Now().Add(-time.Hour).Unix(),
+				time.Now().Add(-2*time.Hour).Unix(),
+			)
 
 			_, err := suite.sut.Verify(token)
 

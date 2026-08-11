@@ -18,7 +18,10 @@ func NewSetAgentGuidance(agentGuidanceClient gateway_interfaces.AgentGuidanceCli
 	return &SetAgentGuidance{agentGuidanceClient: agentGuidanceClient}
 }
 
-func (u *SetAgentGuidance) Execute(ctx context.Context, request *requests.SetAgentGuidanceRequest) (*responses.AgentGuidanceResponse, error) {
+func (u *SetAgentGuidance) Execute(
+	ctx context.Context,
+	request *requests.SetAgentGuidanceRequest,
+) (*responses.AgentGuidanceResponse, error) {
 	payload, err := u.agentGuidanceClient.Set(ctx, &models.ExternalAgentGuidancePayload{Content: request.Content})
 	if err != nil {
 		return nil, apperrors.NewUnavailableError("runtime_unavailable", err.Error())

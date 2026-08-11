@@ -446,7 +446,10 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
 			// No facilitator configured for the rule's network.
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().
+				Get(gomock.Any()).
+				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+				Times(1)
 		}
 
 		t.Run("Should return 402 without advertising the unsettleable rule", func(t *testing.T) {
@@ -471,7 +474,10 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GateFreeRule(strings.ToLower(x402TestPayerHex))), nil).
 				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().
+				Get(gomock.Any()).
+				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+				Times(1)
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
@@ -502,7 +508,10 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(map[string]models.ExternalPaymentFacilitator{}, nil).Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().
+				Get(gomock.Any()).
+				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+				Times(1)
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).

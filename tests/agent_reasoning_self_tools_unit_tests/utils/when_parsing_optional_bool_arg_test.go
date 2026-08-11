@@ -19,7 +19,11 @@ func TestWhenParsingOptionalBoolArg(t *testing.T) {
 
 			assert.Equal(t, lo.ToPtr(true), utils.OptionalBoolArg(map[string]any{"background": true}, "background"))
 			assert.Equal(t, lo.ToPtr(true), utils.OptionalBoolArg(map[string]any{"background": "true"}, "background"))
-			assert.Equal(t, lo.ToPtr(true), utils.OptionalBoolArg(map[string]any{"background": float64(1)}, "background"))
+			assert.Equal(
+				t,
+				lo.ToPtr(true),
+				utils.OptionalBoolArg(map[string]any{"background": float64(1)}, "background"),
+			)
 		})
 	})
 

@@ -36,7 +36,7 @@ func (c *WellKnownController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 
 // GetWellKnownAgentCard serves the A2A v1.0 discovery card.
 // @Summary A2A agent card
-// @Description A2A v1.0 discovery document (ProtoJSON), open/unauthenticated. supportedInterfaces advertises the SendMessage endpoint. Requires agent identity, so it errors until the node is registered.
+// @Description Open A2A v1.0 agent card (ProtoJSON); advertises SendMessage. Errors until the node is registered.
 // @Tags A2A
 // @Produce json
 // @Success 200 {object} responses.WellKnownAgentCard
@@ -53,7 +53,7 @@ func (c *WellKnownController) GetWellKnownAgentCard(ctx *fiber.Ctx) error {
 
 // GetWellKnownAgent6022 serves the 6022-protocol agent card.
 // @Summary 6022 agent card
-// @Description 6022 discovery document (identity + invocation), open/unauthenticated. Documents POST /responses, including the caller-supplied `instructions` per-request session overlay (bounded; it cannot override the agent's built-in system prompt and is not carried across turns). Requires agent identity, so it errors until the node is registered.
+// @Description Open 6022 discovery document; documents POST /responses and its bounded `instructions` overlay.
 // @Tags 6022
 // @Produce json
 // @Success 200 {object} responses.WellKnownAgent6022

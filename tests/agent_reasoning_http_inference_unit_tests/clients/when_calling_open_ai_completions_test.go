@@ -16,7 +16,10 @@ type WhenCallingOpenAICompletionsTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenCallingOpenAICompletionsBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingOpenAICompletionsTestingSuite {
+func WhenCallingOpenAICompletionsBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+) *WhenCallingOpenAICompletionsTestingSuite {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	sut := clients.NewOpenAICompletionsStandardClient(clients.NewOpenAICompletionsStandardClientParams{
@@ -44,7 +47,11 @@ func TestWhenCallingOpenAICompletions(t *testing.T) {
 			seenPath = r.URL.Path
 			seenAuth = r.Header.Get("Authorization")
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"id":"chatcmpl-1","object":"chat.completion","model":"gpt-4o","choices":[{"index":0,"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}]}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"id":"chatcmpl-1","object":"chat.completion","model":"gpt-4o","choices":[{"index":0,"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}]}`,
+				),
+			)
 		}
 
 		t.Run("Should POST to /v1/chat/completions with bearer auth and decode the response", func(t *testing.T) {
@@ -53,7 +60,11 @@ func TestWhenCallingOpenAICompletions(t *testing.T) {
 			suite := WhenCallingOpenAICompletionsBeforeEach(t, handler)
 			defer WhenCallingOpenAICompletionsAfterEach(suite)
 
-			res, err := suite.sut.ChatCompletion(suite.server.URL, "sk-secret", &models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"})
+			res, err := suite.sut.ChatCompletion(
+				suite.server.URL,
+				"sk-secret",
+				&models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "/v1/chat/completions", seenPath)
@@ -77,7 +88,11 @@ func TestWhenCallingOpenAICompletions(t *testing.T) {
 			suite := WhenCallingOpenAICompletionsBeforeEach(t, handler)
 			defer WhenCallingOpenAICompletionsAfterEach(suite)
 
-			_, err := suite.sut.ChatCompletion(suite.server.URL, "sk", &models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"})
+			_, err := suite.sut.ChatCompletion(
+				suite.server.URL,
+				"sk",
+				&models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"},
+			)
 			assert.Error(t, err)
 		})
 	})

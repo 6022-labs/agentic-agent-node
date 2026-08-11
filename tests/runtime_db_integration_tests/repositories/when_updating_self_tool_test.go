@@ -74,7 +74,11 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					ghost := model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("ghost").WithEnabled(true).Build()
+					ghost := model_builders.NewSelfToolBuilder().
+						WithAgentId(agentId).
+						WithName("ghost").
+						WithEnabled(true).
+						Build()
 
 					_, err := suite.sut.Update(context.Background(), ghost)
 					assert.NoError(t, err)
@@ -96,7 +100,14 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 					originalUpdatedAt := inserted.UpdatedAt
 

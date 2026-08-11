@@ -45,7 +45,11 @@ func TestWhenListingMcpTools(t *testing.T) {
 			seenAccept = r.Header.Get("Accept")
 			seenAuth = r.Header.Get("Authorization")
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input","inputSchema":{"type":"object","properties":{},"required":[]}}]}}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input","inputSchema":{"type":"object","properties":{},"required":[]}}]}}`,
+				),
+			)
 		}
 
 		t.Run("Should POST jsonrpc list tools and forward custom headers", func(t *testing.T) {
@@ -54,7 +58,11 @@ func TestWhenListingMcpTools(t *testing.T) {
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
 			defer WhenListingMcpToolsAfterEach(suite)
 
-			res, err := suite.sut.ListTools(context.Background(), suite.server.URL, map[string]string{"Authorization": "Bearer token"})
+			res, err := suite.sut.ListTools(
+				context.Background(),
+				suite.server.URL,
+				map[string]string{"Authorization": "Bearer token"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "application/json", seenContentType)
@@ -96,7 +104,11 @@ func TestWhenListingMcpTools(t *testing.T) {
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
 			defer WhenListingMcpToolsAfterEach(suite)
 
-			_, err := suite.sut.ListTools(context.Background(), suite.server.URL, map[string]string{"Authorization": "Bearer wrong"})
+			_, err := suite.sut.ListTools(
+				context.Background(),
+				suite.server.URL,
+				map[string]string{"Authorization": "Bearer wrong"},
+			)
 
 			var statusErr *clients.McpStatusError
 			assert.ErrorAs(t, err, &statusErr)
@@ -131,7 +143,11 @@ func TestWhenListingMcpTools(t *testing.T) {
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "text/event-stream")
-			_, _ = w.Write([]byte("data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n"))
+			_, _ = w.Write(
+				[]byte(
+					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n",
+				),
+			)
 			_, _ = w.Write([]byte("data: {}\n\n"))
 		}
 
@@ -155,7 +171,11 @@ func TestWhenListingMcpTools(t *testing.T) {
 		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "text/event-stream")
 			_, _ = w.Write([]byte("data: {}\n\n"))
-			_, _ = w.Write([]byte("data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n"))
+			_, _ = w.Write(
+				[]byte(
+					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n",
+				),
+			)
 		}
 
 		t.Run("Should let the real result win over the earlier keep-alive", func(t *testing.T) {

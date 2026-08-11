@@ -51,21 +51,25 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).DoAndReturn(
-				func(_ context.Context, _ string, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConversationsConversationIdMessagesResponse, error) {
-					raw, err := io.ReadAll(reader)
-					assert.NoError(t, err)
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, _ string, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConversationsConversationIdMessagesResponse, error) {
+						raw, err := io.ReadAll(reader)
+						assert.NoError(t, err)
 
-					var sent models.ExternalAppendConversationMessagesPayload
-					assert.NoError(t, json.Unmarshal(raw, &sent))
-					assert.Len(t, sent.Messages, 1)
-					assert.Equal(t, "fake memory", sent.Messages[0].Content)
+						var sent models.ExternalAppendConversationMessagesPayload
+						assert.NoError(t, json.Unmarshal(raw, &sent))
+						assert.Len(t, sent.Messages, 1)
+						assert.Equal(t, "fake memory", sent.Messages[0].Content)
 
-					return &clients.PostInternalConversationsConversationIdMessagesResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body:         []byte(`{"inserted":[{"id":"m1","conversationId":"conv-1","role":"user","content":"fake memory","timestamp":"2026-01-01T00:00:00Z"}]}`),
-					}, nil
-				})
+						return &clients.PostInternalConversationsConversationIdMessagesResponse{
+							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+							Body: []byte(
+								`{"inserted":[{"id":"m1","conversationId":"conv-1","role":"user","content":"fake memory","timestamp":"2026-01-01T00:00:00Z"}]}`,
+							),
+						}, nil
+					})
 		}
 
 		t.Run("Should decode the inserted messages payload", func(t *testing.T) {
@@ -88,10 +92,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-				Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 to a ConflictError keeping the code", func(t *testing.T) {
@@ -112,10 +118,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom","message":"runtime down"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom","message":"runtime down"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

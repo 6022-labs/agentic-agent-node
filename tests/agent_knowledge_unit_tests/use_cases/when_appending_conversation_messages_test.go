@@ -59,7 +59,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), conversationId, &requests.AppendConversationMessagesRequest{})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				conversationId,
+				&requests.AppendConversationMessagesRequest{},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -165,7 +169,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			expectMintedAgent(suite)
-			suite.mockMessageAppender.EXPECT().Append(gomock.Any(), conversationId, mapped).Return(nil, errors.New("db down"))
+			suite.mockMessageAppender.EXPECT().
+				Append(gomock.Any(), conversationId, mapped).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError carrying the appender message", func(t *testing.T) {

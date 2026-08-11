@@ -6,7 +6,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// AgentRegistrationResponse is the stored draft + on-chain status; Addresses carries every chain family's wallet address keyed by AddressType.
+// AgentRegistrationResponse is the stored draft + on-chain status; Addresses maps AddressType to each wallet address.
 type AgentRegistrationResponse struct {
 	ChainId           string                       `json:"chainId"`
 	CollectionAddress string                       `json:"collectionAddress"`
@@ -23,7 +23,11 @@ type AgentRegistrationResponse struct {
 	EnsStatus         string                       `json:"ensStatus"`
 }
 
-func (r *AgentRegistrationResponse) FromModel(agent *models.Agent, addresses map[enums.AddressType]string, state *models.AgentRegistrationState) {
+func (r *AgentRegistrationResponse) FromModel(
+	agent *models.Agent,
+	addresses map[enums.AddressType]string,
+	state *models.AgentRegistrationState,
+) {
 	owner := ""
 	if agent.Owner != nil {
 		owner = *agent.Owner

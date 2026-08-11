@@ -172,7 +172,11 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 			assert.Contains(t, prompt, "- mcp_inventory_fetch-items: list stock")
 			assert.Contains(t, prompt, "- mcp_weather_forecast: get weather")
 			assert.Contains(t, prompt, "- mcp_weather_current")
-			assert.Less(t, strings.Index(prompt, "mcp_inventory_fetch-items"), strings.Index(prompt, "mcp_weather_current"))
+			assert.Less(
+				t,
+				strings.Index(prompt, "mcp_inventory_fetch-items"),
+				strings.Index(prompt, "mcp_weather_current"),
+			)
 			assert.NotContains(t, prompt, "(no tools configured)")
 		})
 	})

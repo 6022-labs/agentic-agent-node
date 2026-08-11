@@ -12,7 +12,7 @@ type ConversationHistoryInterface interface {
 	Write(ctx context.Context, conversationId string, messages []ConversationMessage) ([]ConversationMessage, error)
 }
 
-// ConversationMessage is the port-level DTO — semantic fields only; ToolCalls is an assistant turn's tool calls as opaque JSON, ToolCallId pairs a tool result to its call.
+// ConversationMessage is the port DTO; ToolCalls holds assistant tool calls (opaque JSON), ToolCallId pairs a result.
 type ConversationMessage struct {
 	Role       string
 	Content    string

@@ -44,7 +44,10 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 		now := time.Now()
 		stored := []models.ConversationMessage{
-			model_builders.NewConversationMessageBuilder().WithConversationId(conversationId).WithTimestamp(now).Build(),
+			model_builders.NewConversationMessageBuilder().
+				WithConversationId(conversationId).
+				WithTimestamp(now).
+				Build(),
 		}
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
@@ -69,7 +72,9 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockRepository.EXPECT().ListByConversationId(gomock.Any(), conversationId).Return(nil, errors.New("db blew"))
+			suite.mockRepository.EXPECT().
+				ListByConversationId(gomock.Any(), conversationId).
+				Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {

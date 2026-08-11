@@ -100,5 +100,10 @@ func (s *EnsPublisher) IsProvisioned(ctx context.Context) (bool, error) {
 	if agent == nil || agent.CollectionTokenId == nil {
 		return false, common_interfaces.ErrIdentityNotFound
 	}
-	return s.ensRegistrar.Provisioned(ctx, lo.FromPtr(agent.ChainId), common.HexToAddress(agent.CollectionAddress), lo.FromPtr(agent.Name))
+	return s.ensRegistrar.Provisioned(
+		ctx,
+		lo.FromPtr(agent.ChainId),
+		common.HexToAddress(agent.CollectionAddress),
+		lo.FromPtr(agent.Name),
+	)
 }

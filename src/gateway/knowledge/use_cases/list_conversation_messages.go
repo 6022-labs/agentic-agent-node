@@ -16,7 +16,10 @@ func NewListConversationMessages(client interfaces.ConversationHistoryClientInte
 	return &ListConversationMessages{client: client}
 }
 
-func (u *ListConversationMessages) Execute(ctx context.Context, conversationId string) (*responses.ListConversationMessagesResponse, error) {
+func (u *ListConversationMessages) Execute(
+	ctx context.Context,
+	conversationId string,
+) (*responses.ListConversationMessagesResponse, error) {
 	payload, err := u.client.ListMessages(ctx, conversationId)
 	if err != nil {
 		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())

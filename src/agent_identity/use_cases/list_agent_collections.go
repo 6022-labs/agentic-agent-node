@@ -21,7 +21,10 @@ func NewListAgentCollections(
 	return &ListAgentCollections{agentCollectionsManagerRequester: agentCollectionsManagerRequester}
 }
 
-func (u *ListAgentCollections) Execute(ctx context.Context, req *requests.ListAgentCollectionsRequest) (*responses.AgentCollectionsResponse, error) {
+func (u *ListAgentCollections) Execute(
+	ctx context.Context,
+	req *requests.ListAgentCollectionsRequest,
+) (*responses.AgentCollectionsResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

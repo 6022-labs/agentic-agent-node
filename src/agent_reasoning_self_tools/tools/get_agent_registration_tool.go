@@ -13,7 +13,9 @@ type GetAgentRegistrationTool struct {
 	getAgentRegistrationExecutor tool_interfaces.GetAgentRegistrationExecutorInterface
 }
 
-func NewGetAgentRegistrationTool(getAgentRegistrationExecutor tool_interfaces.GetAgentRegistrationExecutorInterface) *GetAgentRegistrationTool {
+func NewGetAgentRegistrationTool(
+	getAgentRegistrationExecutor tool_interfaces.GetAgentRegistrationExecutorInterface,
+) *GetAgentRegistrationTool {
 	return &GetAgentRegistrationTool{getAgentRegistrationExecutor: getAgentRegistrationExecutor}
 }
 

@@ -14,7 +14,7 @@ type conversationMessageHashFields struct {
 	ConversationId string `json:"conversationId"`
 }
 
-// ComputeConversationMessageHash returns the canonical SHA-512 dedup hash; caller must demojize Content first so reasoning + knowledge agree.
+// ComputeConversationMessageHash returns the SHA-512 dedup hash; demojize Content first so reasoning + knowledge agree.
 func ComputeConversationMessageHash(role, content, toolCalls, toolCallId, conversationId string) (string, error) {
 	b, err := json.Marshal(conversationMessageHashFields{
 		Role:           role,

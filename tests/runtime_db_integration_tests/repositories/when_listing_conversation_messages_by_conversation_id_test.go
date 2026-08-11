@@ -25,7 +25,9 @@ type WhenListingConversationMessagesByConversationIdTestingSuite struct {
 	conversationRepository   *repositories.ConversationRepository
 }
 
-func WhenListingConversationMessagesByConversationIdBeforeEach(tc *repositoryTestCase) *WhenListingConversationMessagesByConversationIdTestingSuite {
+func WhenListingConversationMessagesByConversationIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenListingConversationMessagesByConversationIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -55,7 +57,9 @@ func WhenListingConversationMessagesByConversationIdBeforeEach(tc *repositoryTes
 	}
 }
 
-func WhenListingConversationMessagesByConversationIdAfterEach(suite *WhenListingConversationMessagesByConversationIdTestingSuite) {
+func WhenListingConversationMessagesByConversationIdAfterEach(
+	suite *WhenListingConversationMessagesByConversationIdTestingSuite,
+) {
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -91,9 +95,21 @@ func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 					ensureConversations(suite.dbClient, suite.conversationRepository, "a", "b")
 					now := time.Now().UTC().Truncate(time.Microsecond)
 					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
-						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-second").WithTimestamp(now.Add(time.Second)).Build(),
-						model_builders.NewConversationMessageBuilder().WithConversationId("a").WithContent("a-first").WithTimestamp(now).Build(),
-						model_builders.NewConversationMessageBuilder().WithConversationId("b").WithContent("b-only").WithTimestamp(now).Build(),
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("a").
+							WithContent("a-second").
+							WithTimestamp(now.Add(time.Second)).
+							Build(),
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("a").
+							WithContent("a-first").
+							WithTimestamp(now).
+							Build(),
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("b").
+							WithContent("b-only").
+							WithTimestamp(now).
+							Build(),
 					})
 
 					assert.NoError(t, err)

@@ -27,7 +27,11 @@ func NewMigrationsSettings(logger *zap.Logger, k *koanf.Koanf) *MigrationsSettin
 	}
 
 	if _, err := os.Stat(settings.FolderPath); os.IsNotExist(err) {
-		logger.Fatal("runtime_migrations folder does not exist", zap.String("path", settings.FolderPath), zap.Error(err))
+		logger.Fatal(
+			"runtime_migrations folder does not exist",
+			zap.String("path", settings.FolderPath),
+			zap.Error(err),
+		)
 	}
 
 	return &settings

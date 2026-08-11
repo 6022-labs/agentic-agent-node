@@ -23,7 +23,9 @@ type WhenGettingAgentAddressByAgentIdAndTypeTestingSuite struct {
 	agentId                  uuid.UUID
 }
 
-func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(tc *repositoryTestCase) *WhenGettingAgentAddressByAgentIdAndTypeTestingSuite {
+func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
+	tc *repositoryTestCase,
+) *WhenGettingAgentAddressByAgentIdAndTypeTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -75,9 +77,19 @@ func TestWhenGettingAgentAddressByAgentIdAndType(t *testing.T) {
 					suite := WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(tc)
 					defer WhenGettingAgentAddressByAgentIdAndTypeAfterEach(suite)
 
-					assert.NoError(t, suite.sut.Upsert(context.Background(), agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc")))
+					assert.NoError(
+						t,
+						suite.sut.Upsert(
+							context.Background(),
+							agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc"),
+						),
+					)
 
-					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeEvm)
+					stored, err := suite.sut.GetByAgentIdAndType(
+						context.Background(),
+						suite.agentId,
+						identity_enums.AddressTypeEvm,
+					)
 
 					assert.NoError(t, err)
 					assert.Equal(t, "0xabc", stored.Address)
@@ -92,7 +104,11 @@ func TestWhenGettingAgentAddressByAgentIdAndType(t *testing.T) {
 					suite := WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(tc)
 					defer WhenGettingAgentAddressByAgentIdAndTypeAfterEach(suite)
 
-					stored, err := suite.sut.GetByAgentIdAndType(context.Background(), suite.agentId, identity_enums.AddressTypeBtc)
+					stored, err := suite.sut.GetByAgentIdAndType(
+						context.Background(),
+						suite.agentId,
+						identity_enums.AddressTypeBtc,
+					)
 
 					assert.NoError(t, err)
 					assert.Nil(t, stored)

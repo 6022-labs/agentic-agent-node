@@ -59,10 +59,21 @@ func (r *CreateResponseRequest) ValidateAndSanitize() error {
 	}
 	for index := range r.Input {
 		if len(strings.TrimSpace(r.Input[index].Content)) == 0 {
-			return errors.NewValidationError("input", "message content cannot be empty, check input at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"input",
+				"message content cannot be empty, check input at index "+strconv.Itoa(index),
+			)
 		}
 		if !slices.Contains(inputRoles, r.Input[index].Role) {
-			return errors.NewValidationError("input", "invalid role, must be one of: "+strings.Join(inputRoles, ", ")+", check input at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"input",
+				"invalid role, must be one of: "+strings.Join(
+					inputRoles,
+					", ",
+				)+", check input at index "+strconv.Itoa(
+					index,
+				),
+			)
 		}
 	}
 	return nil

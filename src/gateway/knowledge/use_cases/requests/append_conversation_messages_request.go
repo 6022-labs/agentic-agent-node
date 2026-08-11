@@ -32,13 +32,24 @@ func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
 
 	for index, message := range r.Messages {
 		if len(strings.TrimSpace(message.Content)) == 0 {
-			return errors.NewValidationError("messages.content", "cannot be empty, check message at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"messages.content",
+				"cannot be empty, check message at index "+strconv.Itoa(index),
+			)
 		}
 		if message.Timestamp.IsZero() {
-			return errors.NewValidationError("messages.timestamp", "cannot be empty, check message at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"messages.timestamp",
+				"cannot be empty, check message at index "+strconv.Itoa(index),
+			)
 		}
 		if !appendableMessageRoles.Contains(message.Role) {
-			return errors.NewValidationError("messages.role", "invalid role, must be one of: "+appendableMessageRoles.String()+", check message at index "+strconv.Itoa(index))
+			return errors.NewValidationError(
+				"messages.role",
+				"invalid role, must be one of: "+appendableMessageRoles.String()+", check message at index "+strconv.Itoa(
+					index,
+				),
+			)
 		}
 	}
 

@@ -7,7 +7,7 @@ import (
 	"go.opentelemetry.io/otel/metric/embedded"
 )
 
-// NewAgentIdentityMeterProvider wraps a MeterProvider so sync measurements gain the ctx agent identity (observables pass through).
+// NewAgentIdentityMeterProvider adds the ctx agent identity to sync measurements (observables pass through).
 func NewAgentIdentityMeterProvider(inner metricapi.MeterProvider) metricapi.MeterProvider {
 	return ctxMeterProvider{inner: inner}
 }
@@ -52,7 +52,10 @@ func (m ctxMeter) Int64Counter(name string, opts ...metricapi.Int64CounterOption
 	return ctxInt64Counter{Int64Counter: inst}, nil
 }
 
-func (m ctxMeter) Int64UpDownCounter(name string, opts ...metricapi.Int64UpDownCounterOption) (metricapi.Int64UpDownCounter, error) {
+func (m ctxMeter) Int64UpDownCounter(
+	name string,
+	opts ...metricapi.Int64UpDownCounterOption,
+) (metricapi.Int64UpDownCounter, error) {
 	inst, err := m.inner.Int64UpDownCounter(name, opts...)
 	if err != nil {
 		return nil, err
@@ -60,7 +63,10 @@ func (m ctxMeter) Int64UpDownCounter(name string, opts ...metricapi.Int64UpDownC
 	return ctxInt64UpDownCounter{Int64UpDownCounter: inst}, nil
 }
 
-func (m ctxMeter) Int64Histogram(name string, opts ...metricapi.Int64HistogramOption) (metricapi.Int64Histogram, error) {
+func (m ctxMeter) Int64Histogram(
+	name string,
+	opts ...metricapi.Int64HistogramOption,
+) (metricapi.Int64Histogram, error) {
 	inst, err := m.inner.Int64Histogram(name, opts...)
 	if err != nil {
 		return nil, err
@@ -76,7 +82,10 @@ func (m ctxMeter) Int64Gauge(name string, opts ...metricapi.Int64GaugeOption) (m
 	return ctxInt64Gauge{Int64Gauge: inst}, nil
 }
 
-func (m ctxMeter) Float64Counter(name string, opts ...metricapi.Float64CounterOption) (metricapi.Float64Counter, error) {
+func (m ctxMeter) Float64Counter(
+	name string,
+	opts ...metricapi.Float64CounterOption,
+) (metricapi.Float64Counter, error) {
 	inst, err := m.inner.Float64Counter(name, opts...)
 	if err != nil {
 		return nil, err
@@ -84,7 +93,10 @@ func (m ctxMeter) Float64Counter(name string, opts ...metricapi.Float64CounterOp
 	return ctxFloat64Counter{Float64Counter: inst}, nil
 }
 
-func (m ctxMeter) Float64UpDownCounter(name string, opts ...metricapi.Float64UpDownCounterOption) (metricapi.Float64UpDownCounter, error) {
+func (m ctxMeter) Float64UpDownCounter(
+	name string,
+	opts ...metricapi.Float64UpDownCounterOption,
+) (metricapi.Float64UpDownCounter, error) {
 	inst, err := m.inner.Float64UpDownCounter(name, opts...)
 	if err != nil {
 		return nil, err
@@ -92,7 +104,10 @@ func (m ctxMeter) Float64UpDownCounter(name string, opts ...metricapi.Float64UpD
 	return ctxFloat64UpDownCounter{Float64UpDownCounter: inst}, nil
 }
 
-func (m ctxMeter) Float64Histogram(name string, opts ...metricapi.Float64HistogramOption) (metricapi.Float64Histogram, error) {
+func (m ctxMeter) Float64Histogram(
+	name string,
+	opts ...metricapi.Float64HistogramOption,
+) (metricapi.Float64Histogram, error) {
 	inst, err := m.inner.Float64Histogram(name, opts...)
 	if err != nil {
 		return nil, err
@@ -109,31 +124,52 @@ func (m ctxMeter) Float64Gauge(name string, opts ...metricapi.Float64GaugeOption
 }
 
 // Observable instruments and callbacks delegate unchanged — their collection ctx carries no agent.
-func (m ctxMeter) Int64ObservableCounter(name string, opts ...metricapi.Int64ObservableCounterOption) (metricapi.Int64ObservableCounter, error) {
+func (m ctxMeter) Int64ObservableCounter(
+	name string,
+	opts ...metricapi.Int64ObservableCounterOption,
+) (metricapi.Int64ObservableCounter, error) {
 	return m.inner.Int64ObservableCounter(name, opts...)
 }
 
-func (m ctxMeter) Int64ObservableUpDownCounter(name string, opts ...metricapi.Int64ObservableUpDownCounterOption) (metricapi.Int64ObservableUpDownCounter, error) {
+func (m ctxMeter) Int64ObservableUpDownCounter(
+	name string,
+	opts ...metricapi.Int64ObservableUpDownCounterOption,
+) (metricapi.Int64ObservableUpDownCounter, error) {
 	return m.inner.Int64ObservableUpDownCounter(name, opts...)
 }
 
-func (m ctxMeter) Int64ObservableGauge(name string, opts ...metricapi.Int64ObservableGaugeOption) (metricapi.Int64ObservableGauge, error) {
+func (m ctxMeter) Int64ObservableGauge(
+	name string,
+	opts ...metricapi.Int64ObservableGaugeOption,
+) (metricapi.Int64ObservableGauge, error) {
 	return m.inner.Int64ObservableGauge(name, opts...)
 }
 
-func (m ctxMeter) Float64ObservableCounter(name string, opts ...metricapi.Float64ObservableCounterOption) (metricapi.Float64ObservableCounter, error) {
+func (m ctxMeter) Float64ObservableCounter(
+	name string,
+	opts ...metricapi.Float64ObservableCounterOption,
+) (metricapi.Float64ObservableCounter, error) {
 	return m.inner.Float64ObservableCounter(name, opts...)
 }
 
-func (m ctxMeter) Float64ObservableUpDownCounter(name string, opts ...metricapi.Float64ObservableUpDownCounterOption) (metricapi.Float64ObservableUpDownCounter, error) {
+func (m ctxMeter) Float64ObservableUpDownCounter(
+	name string,
+	opts ...metricapi.Float64ObservableUpDownCounterOption,
+) (metricapi.Float64ObservableUpDownCounter, error) {
 	return m.inner.Float64ObservableUpDownCounter(name, opts...)
 }
 
-func (m ctxMeter) Float64ObservableGauge(name string, opts ...metricapi.Float64ObservableGaugeOption) (metricapi.Float64ObservableGauge, error) {
+func (m ctxMeter) Float64ObservableGauge(
+	name string,
+	opts ...metricapi.Float64ObservableGaugeOption,
+) (metricapi.Float64ObservableGauge, error) {
 	return m.inner.Float64ObservableGauge(name, opts...)
 }
 
-func (m ctxMeter) RegisterCallback(callback metricapi.Callback, instruments ...metricapi.Observable) (metricapi.Registration, error) {
+func (m ctxMeter) RegisterCallback(
+	callback metricapi.Callback,
+	instruments ...metricapi.Observable,
+) (metricapi.Registration, error) {
 	return m.inner.RegisterCallback(callback, instruments...)
 }
 

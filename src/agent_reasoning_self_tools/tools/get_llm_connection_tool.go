@@ -13,7 +13,9 @@ type GetLLMConnectionTool struct {
 	getLLMConnectionExecutor tool_interfaces.GetLLMConnectionExecutorInterface
 }
 
-func NewGetLLMConnectionTool(getLLMConnectionExecutor tool_interfaces.GetLLMConnectionExecutorInterface) *GetLLMConnectionTool {
+func NewGetLLMConnectionTool(
+	getLLMConnectionExecutor tool_interfaces.GetLLMConnectionExecutorInterface,
+) *GetLLMConnectionTool {
 	return &GetLLMConnectionTool{getLLMConnectionExecutor: getLLMConnectionExecutor}
 }
 

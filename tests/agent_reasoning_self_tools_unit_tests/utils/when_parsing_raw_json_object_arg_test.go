@@ -17,7 +17,10 @@ func TestWhenParsingRawJsonObjectArg(t *testing.T) {
 		t.Run("Should re-encode it as raw json", func(t *testing.T) {
 			t.Parallel()
 
-			raw, err := utils.RawJsonObjectArg(map[string]any{"config": map[string]any{"network": "eip155:80002"}}, "config")
+			raw, err := utils.RawJsonObjectArg(
+				map[string]any{"config": map[string]any{"network": "eip155:80002"}},
+				"config",
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, json.RawMessage(`{"network":"eip155:80002"}`), raw)
@@ -61,7 +64,10 @@ func TestWhenParsingRawJsonObjectArg(t *testing.T) {
 		t.Run("Should fail", func(t *testing.T) {
 			t.Parallel()
 
-			raw, err := utils.RawJsonObjectArg(map[string]any{"config": map[string]any{"bad": make(chan int)}}, "config")
+			raw, err := utils.RawJsonObjectArg(
+				map[string]any{"config": map[string]any{"bad": make(chan int)}},
+				"config",
+			)
 
 			assert.Nil(t, raw)
 			assert.ErrorContains(t, err, "config")

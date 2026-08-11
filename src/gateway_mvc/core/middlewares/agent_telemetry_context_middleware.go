@@ -13,7 +13,7 @@ import (
 
 const agentIdentityResolveInterval = 30 * time.Second
 
-// AgentTelemetryContextMiddleware puts the agent identity (resolved from the runtime, cached) on the ctx so gateway signals carry it. Runs first.
+// AgentTelemetryContextMiddleware puts the cached agent identity on the ctx so gateway signals carry it. Runs first.
 type AgentTelemetryContextMiddleware struct {
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface
 
@@ -22,7 +22,9 @@ type AgentTelemetryContextMiddleware struct {
 	lastAttempt time.Time
 }
 
-func NewAgentTelemetryContextMiddleware(agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface) *AgentTelemetryContextMiddleware {
+func NewAgentTelemetryContextMiddleware(
+	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface,
+) *AgentTelemetryContextMiddleware {
 	return &AgentTelemetryContextMiddleware{agentRegistrationClient: agentRegistrationClient}
 }
 
@@ -35,8 +37,10 @@ func (m *AgentTelemetryContextMiddleware) Handle(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-// resolveAgentIdentity fetches the identity from the runtime once, caching it and throttling retries while unknown (no lock during I/O).
-func (m *AgentTelemetryContextMiddleware) resolveAgentIdentity(reqCtx context.Context) (observability.AgentIdentity, bool) {
+// resolveAgentIdentity fetches the identity once, caching and throttling retries while unknown (no lock during I/O).
+func (m *AgentTelemetryContextMiddleware) resolveAgentIdentity(
+	reqCtx context.Context,
+) (observability.AgentIdentity, bool) {
 	m.mu.Lock()
 	if m.identity != nil {
 		identity := *m.identity

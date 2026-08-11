@@ -17,7 +17,10 @@ type WhenCallingOpenAIResponsesTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenCallingOpenAIResponsesBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingOpenAIResponsesTestingSuite {
+func WhenCallingOpenAIResponsesBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+) *WhenCallingOpenAIResponsesTestingSuite {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	sut := clients.NewOpenAIResponsesStandardClient(clients.NewOpenAIResponsesStandardClientParams{
@@ -47,7 +50,11 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			seenAuth = r.Header.Get("Authorization")
 			seenBody, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`,
+				),
+			)
 		}
 
 		t.Run("Should POST to /v1/responses with bearer auth and decode the response", func(t *testing.T) {
@@ -56,9 +63,13 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
 			defer WhenCallingOpenAIResponsesAfterEach(suite)
 
-			res, err := suite.sut.Responses(suite.server.URL, "sk-secret", &models.ExternalOpenAIResponsesStandardRequest{
-				Model: "gpt-4o",
-			})
+			res, err := suite.sut.Responses(
+				suite.server.URL,
+				"sk-secret",
+				&models.ExternalOpenAIResponsesStandardRequest{
+					Model: "gpt-4o",
+				},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "/v1/responses", seenPath)
@@ -82,7 +93,11 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
 			defer WhenCallingOpenAIResponsesAfterEach(suite)
 
-			_, err := suite.sut.Responses(suite.server.URL, "sk", &models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"})
+			_, err := suite.sut.Responses(
+				suite.server.URL,
+				"sk",
+				&models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"},
+			)
 			assert.Error(t, err)
 		})
 	})
@@ -100,7 +115,11 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
 			defer WhenCallingOpenAIResponsesAfterEach(suite)
 
-			_, err := suite.sut.Responses(suite.server.URL, "sk", &models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"})
+			_, err := suite.sut.Responses(
+				suite.server.URL,
+				"sk",
+				&models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"},
+			)
 			assert.ErrorContains(t, err, "decode")
 		})
 	})

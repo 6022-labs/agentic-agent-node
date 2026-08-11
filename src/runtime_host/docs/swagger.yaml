@@ -613,8 +613,8 @@ definitions:
     type: object
 info:
   contact: {}
-  description: Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only
-    gateway_host calls it. All endpoints are mounted under /internal.
+  description: Internal-only runtime + knowledge surface on 127.0.0.1; gateway_host
+    calls it; mounted under /internal.
   title: Agentic Agent Node — Runtime Host API
   version: "1.0"
 paths:
@@ -703,7 +703,7 @@ paths:
       consumes:
       - multipart/form-data
       description: Validates the collection + form and binds the draft to the node
-        wallet. Returns the stored draft + status.
+        wallet. Returns stored draft + status.
       parameters:
       - description: Collection address
         in: formData
@@ -855,8 +855,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Resolves the agent identity, fetches OwnerOf(tokenId), compares
-        to the supplied address. Used by gateway during /auth/verify.
+      description: Resolves the identity, fetches OwnerOf(tokenId), compares to the
+        supplied address. Used by /auth/verify.
       parameters:
       - description: Address to check
         in: body
@@ -1384,8 +1384,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Idempotent batch append to the local conversation transcript. Dedup
-        by SHA-512 hash of (role, content, conversationId).
+      description: Idempotent batch append to the transcript. Dedup by SHA-512 hash
+        of (role, content, conversationId).
       parameters:
       - description: Conversation id
         in: path
@@ -1443,7 +1443,7 @@ paths:
       consumes:
       - application/json
       description: Returns an A2A detached JWS (ES256K) over the JCS-canonicalized
-        card. The card must not carry a `signatures` member.
+        card; no `signatures` member allowed.
       parameters:
       - description: Agent card to sign
         in: body
@@ -1472,7 +1472,7 @@ paths:
   /internal/identity/ens/publish:
     post:
       description: Writes the `url` text record for the agent's NFT via AgentEnsRegistry.
-        Requires the NFT to already exist.
+        Requires an existing NFT.
       produces:
       - application/json
       responses:

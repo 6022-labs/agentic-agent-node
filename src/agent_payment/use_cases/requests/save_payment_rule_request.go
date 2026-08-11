@@ -16,7 +16,7 @@ type SavePaymentRuleRequest struct {
 	Name   string          `json:"name"`
 	Price  string          `json:"price"`
 	Method string          `json:"method,omitempty"`
-	Config json.RawMessage `json:"config" swaggertype:"object"`
+	Config json.RawMessage `json:"config"           swaggertype:"object"`
 }
 
 // ValidateAndSanitize checks the method-agnostic fields and defaults the method
@@ -30,7 +30,10 @@ func (a *SavePaymentRuleRequest) ValidateAndSanitize() error {
 	}
 	price, ok := new(big.Int).SetString(a.Price, 10)
 	if !ok || price.Sign() < 0 {
-		return errors.NewValidationError("price", "must be a non-negative integer in the asset's atomic units (0 = free)")
+		return errors.NewValidationError(
+			"price",
+			"must be a non-negative integer in the asset's atomic units (0 = free)",
+		)
 	}
 
 	var method enums.PaymentMethod

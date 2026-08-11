@@ -41,7 +41,13 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 
 	mockEmojiDecoder := runtime_services_mocks.NewMockEmojiDecoderInterface(mockController)
 
-	sut := services.NewMessageAppender(mockRepository, mockConversationRepository, mockAgentRepository, mockKnowledgeMetrics, mockEmojiDecoder)
+	sut := services.NewMessageAppender(
+		mockRepository,
+		mockConversationRepository,
+		mockAgentRepository,
+		mockKnowledgeMetrics,
+		mockEmojiDecoder,
+	)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:                        sut,
@@ -155,8 +161,16 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := []models.ConversationMessage{
-				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("hi 🔥").WithTimestamp(now).Build(),
-				model_builders.NewConversationMessageBuilder().WithRole("assistant").WithContent("hello").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("hi 🔥").
+					WithTimestamp(now).
+					Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("assistant").
+					WithContent("hello").
+					WithTimestamp(now).
+					Build(),
 			}
 			res, err := suite.sut.Append(context.Background(), conversationId, input)
 
@@ -170,13 +184,27 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given some inputs match existing hashes", func(t *testing.T) {
 		t.Parallel()
 
-		duplicateInput := model_builders.NewConversationMessageBuilder().WithConversationId(conversationId).WithRole("user").WithContent("dup").WithTimestamp(now).Build()
-		dupHash, _ := utils.ComputeConversationMessageHash(duplicateInput.Role.String(), lo.FromPtr(duplicateInput.Content), "", "", conversationId)
+		duplicateInput := model_builders.NewConversationMessageBuilder().
+			WithConversationId(conversationId).
+			WithRole("user").
+			WithContent("dup").
+			WithTimestamp(now).
+			Build()
+		dupHash, _ := utils.ComputeConversationMessageHash(
+			duplicateInput.Role.String(),
+			lo.FromPtr(duplicateInput.Content),
+			"",
+			"",
+			conversationId,
+		)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
-			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content }).Times(2)
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content }).
+				Times(2)
 
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
@@ -199,8 +227,16 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			initSuite(suite)
 
 			input := []models.ConversationMessage{
-				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build(),
-				model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("fresh").WithTimestamp(now).Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("dup").
+					WithTimestamp(now).
+					Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("fresh").
+					WithTimestamp(now).
+					Build(),
 			}
 			res, err := suite.sut.Append(context.Background(), conversationId, input)
 
@@ -212,14 +248,26 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given every input is already stored", func(t *testing.T) {
 		t.Parallel()
 
-		input := model_builders.NewConversationMessageBuilder().WithRole("user").WithContent("dup").WithTimestamp(now).Build()
+		input := model_builders.NewConversationMessageBuilder().
+			WithRole("user").
+			WithContent("dup").
+			WithTimestamp(now).
+			Build()
 		input.ConversationId = conversationId
-		dupHash, _ := utils.ComputeConversationMessageHash(input.Role.String(), lo.FromPtr(input.Content), "", "", conversationId)
+		dupHash, _ := utils.ComputeConversationMessageHash(
+			input.Role.String(),
+			lo.FromPtr(input.Content),
+			"",
+			"",
+			conversationId,
+		)
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
-			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
 
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
@@ -246,7 +294,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
-			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
 
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).
@@ -272,7 +322,9 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.expectAgentResolutionAndEnsure()
 
-			suite.mockEmojiDecoder.EXPECT().DemojizeContent(gomock.Any()).DoAndReturn(func(content string) string { return content })
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
 
 			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
 				gomock.Any()).

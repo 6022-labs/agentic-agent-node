@@ -74,7 +74,15 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithId(uuid.Nil).WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
 					assert.Equal(t, "bash", inserted.Name)
@@ -97,10 +105,26 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					_, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithId(uuid.Nil).WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithId(uuid.Nil).WithAgentId(agentId).WithName("bash").WithEnabled(false).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(false).
+							Build(),
+					)
 					assert.Error(t, err)
 
 					var count int64
@@ -122,10 +146,26 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					seedAgent(suite.dbClient, firstAgentId)
 					seedAgent(suite.dbClient, secondAgentId)
 
-					_, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithId(uuid.Nil).WithAgentId(firstAgentId).WithName("bash").WithEnabled(true).Build())
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(firstAgentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
-					_, err = suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithId(uuid.Nil).WithAgentId(secondAgentId).WithName("bash").WithEnabled(true).Build())
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(secondAgentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					var count int64

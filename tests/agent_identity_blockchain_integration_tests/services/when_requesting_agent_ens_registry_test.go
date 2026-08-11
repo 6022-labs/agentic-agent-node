@@ -76,7 +76,12 @@ func TestWhenRequestingAgentEnsRegistry(t *testing.T) {
 			)
 			assert.NoError(t, err)
 
-			provisioned, err := suite.sut.Provisioned(ctx, suite.fixture.chainId(), suite.fixture.stack.Collection, agentName)
+			provisioned, err := suite.sut.Provisioned(
+				ctx,
+				suite.fixture.chainId(),
+				suite.fixture.stack.Collection,
+				agentName,
+			)
 			assert.NoError(t, err)
 			assert.True(t, provisioned)
 

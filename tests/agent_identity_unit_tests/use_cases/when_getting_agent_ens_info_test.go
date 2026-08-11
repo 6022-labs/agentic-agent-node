@@ -45,7 +45,9 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockRuntimeRecordsProvider.EXPECT().RuntimeRecords().Return([]identity_interfaces.EnsRecord{{Key: "url", Value: "https://agent.example.com"}})
+			suite.mockRuntimeRecordsProvider.EXPECT().
+				RuntimeRecords().
+				Return([]identity_interfaces.EnsRecord{{Key: "url", Value: "https://agent.example.com"}})
 		}
 
 		t.Run("Should return the tokenId and records to publish", func(t *testing.T) {

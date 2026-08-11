@@ -54,7 +54,13 @@ func TestWhenCallingMcpTool(t *testing.T) {
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
 			defer WhenCallingMcpToolAfterEach(suite)
 
-			res, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", map[string]any{"value": "hi"}, nil)
+			res, err := suite.sut.CallTool(
+				context.Background(),
+				suite.server.URL,
+				"echo",
+				map[string]any{"value": "hi"},
+				nil,
+			)
 
 			assert.NoError(t, err)
 			assert.Contains(t, string(seenBody), `"name":"echo"`)
@@ -68,7 +74,11 @@ func TestWhenCallingMcpTool(t *testing.T) {
 
 		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "text/event-stream")
-			_, _ = w.Write([]byte("data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"echoed\"}]}}\n\n"))
+			_, _ = w.Write(
+				[]byte(
+					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"echoed\"}]}}\n\n",
+				),
+			)
 			_, _ = w.Write([]byte("data: {}\n\n"))
 		}
 
@@ -78,7 +88,13 @@ func TestWhenCallingMcpTool(t *testing.T) {
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
 			defer WhenCallingMcpToolAfterEach(suite)
 
-			res, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", map[string]any{"value": "hi"}, nil)
+			res, err := suite.sut.CallTool(
+				context.Background(),
+				suite.server.URL,
+				"echo",
+				map[string]any{"value": "hi"},
+				nil,
+			)
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, res.Result)

@@ -37,7 +37,9 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalAgentGuidancePayload{Content: "answer concisely"}, nil)
+			suite.mockAgentGuidanceClient.EXPECT().
+				Get(gomock.Any()).
+				Return(&models.ExternalAgentGuidancePayload{Content: "answer concisely"}, nil)
 		}
 
 		t.Run("Should return the content", func(t *testing.T) {

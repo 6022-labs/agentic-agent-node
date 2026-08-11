@@ -45,10 +45,16 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateSelfToolPayload) (*models.ExternalSelfToolPayload, error) {
-				assert.False(t, body.Enabled)
-				return &models.ExternalSelfToolPayload{Id: id.String(), Name: "run_command", Enabled: body.Enabled}, nil
-			})
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ uuid.UUID, body *models.ExternalUpdateSelfToolPayload) (*models.ExternalSelfToolPayload, error) {
+					assert.False(t, body.Enabled)
+					return &models.ExternalSelfToolPayload{
+						Id:      id.String(),
+						Name:    "run_command",
+						Enabled: body.Enabled,
+					}, nil
+				})
 		}
 
 		t.Run("Should forward the flag and return the updated tool", func(t *testing.T) {
@@ -57,7 +63,10 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			suite := WhenUpdatingSelfToolBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(false)})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(false)},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, id.String(), resp.Id)
@@ -86,7 +95,9 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(nil, gateway_interfaces.ErrSelfToolNotFound)
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, gateway_interfaces.ErrSelfToolNotFound)
 		}
 
 		t.Run("Should return a NotFoundError", func(t *testing.T) {
@@ -95,7 +106,10 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			suite := WhenUpdatingSelfToolBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
@@ -118,7 +132,10 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			suite := WhenUpdatingSelfToolBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
 
 			assert.ErrorIs(t, err, clientErr)
 		})

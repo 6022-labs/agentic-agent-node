@@ -26,7 +26,10 @@ func NewSendA2AMessage(createResponse CreateResponseInterface) *SendA2AMessage {
 
 func (u *SendA2AMessage) Execute(ctx context.Context, request *requests.A2ARequest) (*responses.A2AResponse, error) {
 	if request.Method != requests.A2AMethodSendMessage {
-		return nil, errors.NewValidationError("method", "unsupported method, expected "+requests.A2AMethodSendMessage.String())
+		return nil, errors.NewValidationError(
+			"method",
+			"unsupported method, expected "+requests.A2AMethodSendMessage.String(),
+		)
 	}
 
 	text := strings.TrimSpace(request.Params.Message.Text())

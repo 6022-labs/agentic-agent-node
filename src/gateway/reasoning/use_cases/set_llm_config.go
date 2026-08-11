@@ -19,7 +19,10 @@ func NewSetLlmConfig(client gateway_interfaces.LLMConfigClientInterface) *SetLlm
 	return &SetLlmConfig{client: client}
 }
 
-func (u *SetLlmConfig) Execute(ctx context.Context, request *requests.SetLlmConfigRequest) (*responses.GetLlmConfigResponse, error) {
+func (u *SetLlmConfig) Execute(
+	ctx context.Context,
+	request *requests.SetLlmConfigRequest,
+) (*responses.GetLlmConfigResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

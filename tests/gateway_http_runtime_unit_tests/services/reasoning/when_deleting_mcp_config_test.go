@@ -39,9 +39,11 @@ func TestWhenDeletingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenDeletingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.DeleteInternalConfigMcpIdResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
-			}, nil)
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
+				Return(&clients.DeleteInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
+				}, nil)
 		}
 
 		t.Run("Should not return an error", func(t *testing.T) {
@@ -62,10 +64,12 @@ func TestWhenDeletingMCPConfig(t *testing.T) {
 		id := uuid.New()
 
 		initSuite := func(suite *WhenDeletingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).Return(&clients.DeleteInternalConfigMcpIdResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
+				Return(&clients.DeleteInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

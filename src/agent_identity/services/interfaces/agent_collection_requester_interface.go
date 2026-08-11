@@ -24,7 +24,12 @@ type AgentCollectionRequesterInterface interface {
 	// CollectionName returns the ERC721 collection-level name.
 	CollectionName(chainId string, collectionAddress common.Address) (string, error)
 	// AddressToTokenId returns the tokenId a typed address maps to, or 0 if none.
-	AddressToTokenId(chainId string, collectionAddress common.Address, addressType enums.AddressType, value string) (uint64, error)
+	AddressToTokenId(
+		chainId string,
+		collectionAddress common.Address,
+		addressType enums.AddressType,
+		value string,
+	) (uint64, error)
 	// NameToTokenId returns the tokenId an agent name maps to, or 0 if unused.
 	NameToTokenId(chainId string, collectionAddress common.Address, name string) (uint64, error)
 	// InformationOf returns the on-chain agent record for a minted token.

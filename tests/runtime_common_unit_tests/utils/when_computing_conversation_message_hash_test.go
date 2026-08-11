@@ -100,8 +100,12 @@ func TestWhenComputingConversationMessageHash(t *testing.T) {
 			withGlyph, _ := utils.ComputeConversationMessageHash("user", "hi 🔥", "", "", "conv-1")
 			withShortcode, _ := utils.ComputeConversationMessageHash("user", "hi :fire:", "", "", "conv-1")
 
-			assert.NotEqual(t, withGlyph, withShortcode,
-				"hash compare requires content already demojized — this confirms reasoning + knowledge MUST demojize before hashing")
+			assert.NotEqual(
+				t,
+				withGlyph,
+				withShortcode,
+				"hash compare requires content already demojized — this confirms reasoning + knowledge MUST demojize before hashing",
+			)
 		})
 	})
 }

@@ -37,10 +37,14 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"evmChains":{"80002":{"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","mintable":true,"facilitatorNetwork":"eip155:80002"}}}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigBlockchainWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigBlockchainResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"evmChains":{"80002":{"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","mintable":true,"facilitatorNetwork":"eip155:80002"}}}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the config payload", func(t *testing.T) {
@@ -72,10 +76,12 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigBlockchainWithResponse(gomock.Any()).Return(&clients.GetInternalConfigBlockchainResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigBlockchainWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigBlockchainResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

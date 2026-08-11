@@ -24,7 +24,9 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 	return u.toResponse(payload), nil
 }
 
-func (u *SelfRegisterAgent) toResponse(p *models.ExternalRegistrationStatusPayload) *responses.RegistrationStatusResponse {
+func (u *SelfRegisterAgent) toResponse(
+	p *models.ExternalRegistrationStatusPayload,
+) *responses.RegistrationStatusResponse {
 	return &responses.RegistrationStatusResponse{
 		MintStatus: p.MintStatus,
 		EnsStatus:  p.EnsStatus,

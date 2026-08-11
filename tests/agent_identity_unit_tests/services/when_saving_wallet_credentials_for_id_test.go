@@ -60,7 +60,12 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 			initSuite(suite)
 
-			err := suite.sut.SaveForId(context.Background(), "agent-1", enums.AddressTypeEvm, &identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"})
+			err := suite.sut.SaveForId(
+				context.Background(),
+				"agent-1",
+				enums.AddressTypeEvm,
+				&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xpk", Address: "0xaddr"},
+			)
 
 			assert.NoError(t, err)
 		})
@@ -74,7 +79,12 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 
 			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
 
-			err := suite.sut.SaveForId(context.Background(), "agent-1", enums.AddressTypeEvm, &identity_interfaces.WalletCredentials{})
+			err := suite.sut.SaveForId(
+				context.Background(),
+				"agent-1",
+				enums.AddressTypeEvm,
+				&identity_interfaces.WalletCredentials{},
+			)
 
 			assert.Error(t, err)
 		})

@@ -30,7 +30,11 @@ type PaymentFacilitator struct {
 // else its assets can't be validated and it could never settle.
 type PaymentFacilitatorsSettings map[string]PaymentFacilitator
 
-func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, evmChainsSettings *EvmChainsSettings) *PaymentFacilitatorsSettings {
+func NewPaymentFacilitatorsSettings(
+	logger *zap.Logger,
+	k *koanf.Koanf,
+	evmChainsSettings *EvmChainsSettings,
+) *PaymentFacilitatorsSettings {
 	configByChainId := map[string]*PaymentFacilitator{}
 	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByChainId, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
@@ -51,10 +55,14 @@ func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, evmChain
 		// the payment domain matches on CAIP-2, so the stored key is reconstructed.
 		chainId, err := strconv.ParseUint(chainIdKey, 10, 64)
 		if err != nil || chainId == 0 {
-			logger.Fatal("payment facilitator key must be a numeric chain id, e.g. 80002", zap.String("chainId", chainIdKey))
+			logger.Fatal(
+				"payment facilitator key must be a numeric chain id, e.g. 80002",
+				zap.String("chainId", chainIdKey),
+			)
 		}
 		if !evmChainsSettings.Has(chainIdKey) {
-			logger.Fatal("payment facilitator has no matching RPC in blockchain.evm_chains; add the chain or drop the facilitator",
+			logger.Fatal(
+				"payment facilitator has no matching RPC in blockchain.evm_chains; add the chain or drop the facilitator",
 				zap.String("chainId", chainIdKey),
 			)
 		}
@@ -63,7 +71,10 @@ func NewPaymentFacilitatorsSettings(logger *zap.Logger, k *koanf.Koanf, evmChain
 		if maxTimeoutSeconds <= 0 {
 			maxTimeoutSeconds = defaultMaxTimeoutSeconds
 		}
-		settings[helpers.FormatCaip2(chainId)] = PaymentFacilitator{BaseUrl: baseUrl, MaxTimeoutSeconds: maxTimeoutSeconds}
+		settings[helpers.FormatCaip2(chainId)] = PaymentFacilitator{
+			BaseUrl:           baseUrl,
+			MaxTimeoutSeconds: maxTimeoutSeconds,
+		}
 	}
 
 	return &settings

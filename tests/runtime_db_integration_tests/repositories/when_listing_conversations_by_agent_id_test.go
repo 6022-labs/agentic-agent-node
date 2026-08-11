@@ -22,7 +22,9 @@ type WhenListingConversationsByAgentIdTestingSuite struct {
 	sut                      *repositories.ConversationRepository
 }
 
-func WhenListingConversationsByAgentIdBeforeEach(tc *repositoryTestCase) *WhenListingConversationsByAgentIdTestingSuite {
+func WhenListingConversationsByAgentIdBeforeEach(
+	tc *repositoryTestCase,
+) *WhenListingConversationsByAgentIdTestingSuite {
 	databaseContainerBuilder := tc.clientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 

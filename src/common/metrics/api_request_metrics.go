@@ -73,7 +73,12 @@ func (m *ApiRequestMetrics) DecActiveRequests(ctx context.Context, method string
 }
 
 // RecordRequest records one completed request: count, duration, and a 5xx error.
-func (m *ApiRequestMetrics) RecordRequest(ctx context.Context, method, route string, statusCode int, duration time.Duration) {
+func (m *ApiRequestMetrics) RecordRequest(
+	ctx context.Context,
+	method, route string,
+	statusCode int,
+	duration time.Duration,
+) {
 	attrs := metric.WithAttributes(
 		attribute.String("http.method", method),
 		attribute.String("http.route", route),

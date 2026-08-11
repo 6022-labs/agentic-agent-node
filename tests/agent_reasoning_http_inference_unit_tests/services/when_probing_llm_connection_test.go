@@ -40,11 +40,21 @@ func WhenProbingLLMConnectionBeforeEach(t *testing.T) *WhenProbingLLMConnectionT
 	mockController := gomock.NewController(t)
 
 	mockLlmSecretStorage := reasoning_interfaces_mocks.NewMockLLMSecretStorageInterface(mockController)
-	mockOpenAIResponsesStandardChatCompletionRequester := services_mocks.NewMockOpenAIResponsesStandardChatCompletionRequesterInterface(mockController)
-	mockOllamaChatMessageStandardChatCompletionRequester := services_mocks.NewMockOllamaChatMessageStandardChatCompletionRequesterInterface(mockController)
-	mockAnthropicMessagesStandardChatCompletionRequester := services_mocks.NewMockAnthropicMessagesStandardChatCompletionRequesterInterface(mockController)
-	mockOpenAICompletionsStandardChatCompletionRequester := services_mocks.NewMockOpenAICompletionsStandardChatCompletionRequesterInterface(mockController)
-	mockAmazonBedrockConverseStandardChatCompletionRequester := services_mocks.NewMockAmazonBedrockConverseStandardChatCompletionRequesterInterface(mockController)
+	mockOpenAIResponsesStandardChatCompletionRequester := services_mocks.NewMockOpenAIResponsesStandardChatCompletionRequesterInterface(
+		mockController,
+	)
+	mockOllamaChatMessageStandardChatCompletionRequester := services_mocks.NewMockOllamaChatMessageStandardChatCompletionRequesterInterface(
+		mockController,
+	)
+	mockAnthropicMessagesStandardChatCompletionRequester := services_mocks.NewMockAnthropicMessagesStandardChatCompletionRequesterInterface(
+		mockController,
+	)
+	mockOpenAICompletionsStandardChatCompletionRequester := services_mocks.NewMockOpenAICompletionsStandardChatCompletionRequesterInterface(
+		mockController,
+	)
+	mockAmazonBedrockConverseStandardChatCompletionRequester := services_mocks.NewMockAmazonBedrockConverseStandardChatCompletionRequesterInterface(
+		mockController,
+	)
 
 	mockMetrics := metrics_interfaces_mocks.NewMockLlmInferenceMetricsInterface(mockController)
 	mockMetrics.EXPECT().RecordProbe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()

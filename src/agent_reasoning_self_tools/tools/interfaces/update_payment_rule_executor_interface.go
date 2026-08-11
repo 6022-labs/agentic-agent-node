@@ -9,5 +9,8 @@ import (
 
 // UpdatePaymentRuleExecutorInterface exposes the payment rule update to the self tools.
 type UpdatePaymentRuleExecutorInterface interface {
-	Execute(ctx context.Context, request *payment_requests.UpdatePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error)
+	Execute(
+		ctx context.Context,
+		request *payment_requests.UpdatePaymentRuleRequest,
+	) (*payment_responses.PaymentRuleResponse, error)
 }

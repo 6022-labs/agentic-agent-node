@@ -42,7 +42,9 @@ func TestWhenGettingMCPHeaderAuthSecret(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingMCPHeaderAuthSecretTestingSuite, connectionId uuid.UUID) {
 			scopedKey := fmt.Sprintf("scope/mcp_auth_header_secret/%s/Authorization", connectionId)
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 		}
 
 		t.Run("Should report not-found", func(t *testing.T) {
@@ -65,7 +67,9 @@ func TestWhenGettingMCPHeaderAuthSecret(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingMCPHeaderAuthSecretTestingSuite, connectionId uuid.UUID) {
 			scopedKey := fmt.Sprintf("scope/mcp_auth_header_secret/%s/Authorization", connectionId)
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{"value": "Bearer abc"}, nil)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(map[string]string{"value": "Bearer abc"}, nil)
 		}
 
 		t.Run("Should return the header value", func(t *testing.T) {

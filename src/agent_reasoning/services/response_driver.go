@@ -173,7 +173,7 @@ func (d *ResponseDriver) Drive(
 	return finalAssistant, nil
 }
 
-// assembleToPersist stamps strictly increasing timestamps so stored order — and tool-call ↔ result pairing — survives a timestamp-asc reload.
+// assembleToPersist stamps strictly increasing timestamps so order and tool-call pairing survive timestamp-asc reload.
 func (d *ResponseDriver) assembleToPersist(
 	newInputs []knowledge_interfaces.ConversationMessage,
 	added []*interfaces.ChatCompletionMessage,
@@ -371,7 +371,9 @@ func (d *ResponseDriver) loadSelfTools(ctx context.Context, agentId uuid.UUID) (
 	return out, nil
 }
 
-func (d *ResponseDriver) knowledgeMessagesToChatMessages(history []knowledge_interfaces.ConversationMessage) []*interfaces.ChatCompletionMessage {
+func (d *ResponseDriver) knowledgeMessagesToChatMessages(
+	history []knowledge_interfaces.ConversationMessage,
+) []*interfaces.ChatCompletionMessage {
 	out := make([]*interfaces.ChatCompletionMessage, 0, len(history))
 	for _, m := range history {
 		// System rows only feed the session-context overlay — the builder owns the system slot.
@@ -384,7 +386,7 @@ func (d *ResponseDriver) knowledgeMessagesToChatMessages(history []knowledge_int
 			ToolCallId: m.ToolCallId,
 		}
 		if m.ToolCalls != "" {
-			// Tolerate a corrupted or hand-edited row: drop the unreadable tool calls instead of failing the whole conversation.
+			// Tolerate a corrupted row: drop the unreadable tool calls instead of failing the whole conversation.
 			if err := json.Unmarshal([]byte(m.ToolCalls), &msg.ToolCalls); err != nil {
 				d.logger.Warn("skipping unreadable stored tool calls", zap.String("role", m.Role), zap.Error(err))
 				msg.ToolCalls = nil
@@ -395,7 +397,9 @@ func (d *ResponseDriver) knowledgeMessagesToChatMessages(history []knowledge_int
 	return out
 }
 
-func (d *ResponseDriver) chatMessageToKnowledgeMessage(m *interfaces.ChatCompletionMessage) (knowledge_interfaces.ConversationMessage, error) {
+func (d *ResponseDriver) chatMessageToKnowledgeMessage(
+	m *interfaces.ChatCompletionMessage,
+) (knowledge_interfaces.ConversationMessage, error) {
 	km := knowledge_interfaces.ConversationMessage{
 		Role:       m.Role,
 		Content:    m.Content,
@@ -411,7 +415,9 @@ func (d *ResponseDriver) chatMessageToKnowledgeMessage(m *interfaces.ChatComplet
 	return km, nil
 }
 
-func (d *ResponseDriver) pickFinalAssistantMessage(added []*interfaces.ChatCompletionMessage) *knowledge_interfaces.ConversationMessage {
+func (d *ResponseDriver) pickFinalAssistantMessage(
+	added []*interfaces.ChatCompletionMessage,
+) *knowledge_interfaces.ConversationMessage {
 	for i := len(added) - 1; i >= 0; i-- {
 		m := added[i]
 		if m.Role == "assistant" && m.Content != "" {

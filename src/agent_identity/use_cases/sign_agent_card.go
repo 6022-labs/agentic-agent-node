@@ -17,7 +17,10 @@ func NewSignAgentCard(agentCardSigner identity_interfaces.AgentCardSignerInterfa
 	return &SignAgentCard{agentCardSigner: agentCardSigner}
 }
 
-func (u *SignAgentCard) Execute(ctx context.Context, request *requests.SignAgentCardRequest) (*responses.AgentCardSignatureResponse, error) {
+func (u *SignAgentCard) Execute(
+	ctx context.Context,
+	request *requests.SignAgentCardRequest,
+) (*responses.AgentCardSignatureResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

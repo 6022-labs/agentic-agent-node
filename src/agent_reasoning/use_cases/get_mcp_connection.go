@@ -30,7 +30,10 @@ func NewGetMCPConnection(
 }
 
 // Execute returns the connection with HeaderAuth hydrated from Vault.
-func (u *GetMCPConnection) Execute(ctx context.Context, request *requests.GetMCPConnectionRequest) (*responses.MCPConnectionResponse, error) {
+func (u *GetMCPConnection) Execute(
+	ctx context.Context,
+	request *requests.GetMCPConnectionRequest,
+) (*responses.MCPConnectionResponse, error) {
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return nil, err

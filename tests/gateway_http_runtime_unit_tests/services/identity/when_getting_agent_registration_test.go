@@ -37,10 +37,12 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"collectionAddress":"0xabc","name":"bob","role":"agent","owner":"0xowner"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"collectionAddress":"0xabc","name":"bob","role":"agent","owner":"0xowner"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the registration payload", func(t *testing.T) {
@@ -62,10 +64,12 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"not_found","message":"no draft"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found","message":"no draft"}`),
+				}, nil)
 		}
 
 		t.Run("Should return a NotFoundError", func(t *testing.T) {

@@ -15,7 +15,10 @@ type Token6022Requester struct {
 	token6022Settings *settings.Token6022Settings
 }
 
-func NewToken6022Requester(ethClientFactory *factory.EthClientFactory, token6022Settings *settings.Token6022Settings) *Token6022Requester {
+func NewToken6022Requester(
+	ethClientFactory *factory.EthClientFactory,
+	token6022Settings *settings.Token6022Settings,
+) *Token6022Requester {
 	return &Token6022Requester{
 		ethClientFactory:  ethClientFactory,
 		token6022Settings: token6022Settings,

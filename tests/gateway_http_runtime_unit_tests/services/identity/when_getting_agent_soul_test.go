@@ -38,10 +38,12 @@ func TestWhenGettingAgentSoulClient(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulClientTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentSoulWithResponse(gomock.Any()).Return(&clients.GetInternalAgentSoulResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"soul":"persona text"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentSoulWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentSoulResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"soul":"persona text"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the soul payload", func(t *testing.T) {
@@ -63,10 +65,12 @@ func TestWhenGettingAgentSoulClient(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulClientTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentSoulWithResponse(gomock.Any()).Return(&clients.GetInternalAgentSoulResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-				Body:         []byte(`{"code":"identity_not_found","message":"agent identity not found"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentSoulWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentSoulResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"identity_not_found","message":"agent identity not found"}`),
+				}, nil)
 		}
 
 		t.Run("Should surface the not-found sentinel", func(t *testing.T) {
@@ -85,7 +89,9 @@ func TestWhenGettingAgentSoulClient(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulClientTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentSoulWithResponse(gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockClient.EXPECT().
+				GetInternalAgentSoulWithResponse(gomock.Any()).
+				Return(nil, errors.New("connection refused"))
 		}
 
 		t.Run("Should map the transport error", func(t *testing.T) {

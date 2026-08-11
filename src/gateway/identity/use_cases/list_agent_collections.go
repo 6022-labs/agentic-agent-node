@@ -19,7 +19,10 @@ func NewListAgentCollections(
 	return &ListAgentCollections{agentCollectionsClient: agentCollectionsClient}
 }
 
-func (u *ListAgentCollections) Execute(ctx context.Context, req *requests.ListAgentCollectionsRequest) (*responses.AgentCollectionsResponse, error) {
+func (u *ListAgentCollections) Execute(
+	ctx context.Context,
+	req *requests.ListAgentCollectionsRequest,
+) (*responses.AgentCollectionsResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -31,7 +34,9 @@ func (u *ListAgentCollections) Execute(ctx context.Context, req *requests.ListAg
 	return u.toResponse(payload), nil
 }
 
-func (u *ListAgentCollections) toResponse(p *models.ExternalAgentCollectionsPayload) *responses.AgentCollectionsResponse {
+func (u *ListAgentCollections) toResponse(
+	p *models.ExternalAgentCollectionsPayload,
+) *responses.AgentCollectionsResponse {
 	collections := make([]responses.AgentCollectionResponse, 0, len(p.Collections))
 	for _, c := range p.Collections {
 		collections = append(collections, responses.AgentCollectionResponse{

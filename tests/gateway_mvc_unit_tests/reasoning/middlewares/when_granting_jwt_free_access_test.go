@@ -131,7 +131,10 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
-			suite.mockJwtValidator.EXPECT().Verify(jwtTestToken).Return(common.Address{}, errors.New("expired")).Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify(jwtTestToken).
+				Return(common.Address{}, errors.New("expired")).
+				Times(1)
 			suite.build(suite.matcherA)
 
 			resp, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
@@ -148,8 +151,14 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
-			suite.mockJwtValidator.EXPECT().Verify(jwtTestToken).Return(common.HexToAddress(x402TestPayerHex), nil).Times(1)
-			suite.matcherA.EXPECT().MatchesFreeRule(gomock.Any(), common.HexToAddress(x402TestPayerHex)).Return(false).Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify(jwtTestToken).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+			suite.matcherA.EXPECT().
+				MatchesFreeRule(gomock.Any(), common.HexToAddress(x402TestPayerHex)).
+				Return(false).
+				Times(1)
 			suite.build(suite.matcherA)
 
 			resp, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
@@ -167,8 +176,14 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
-			suite.mockJwtValidator.EXPECT().Verify(jwtTestToken).Return(common.HexToAddress(x402TestPayerHex), nil).Times(1)
-			suite.matcherA.EXPECT().MatchesFreeRule(gomock.Any(), common.HexToAddress(x402TestPayerHex)).Return(true).Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify(jwtTestToken).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+			suite.matcherA.EXPECT().
+				MatchesFreeRule(gomock.Any(), common.HexToAddress(x402TestPayerHex)).
+				Return(true).
+				Times(1)
 			suite.build(suite.matcherA)
 
 			resp, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
@@ -187,7 +202,10 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
-			suite.mockJwtValidator.EXPECT().Verify(jwtTestToken).Return(common.HexToAddress(x402TestPayerHex), nil).Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify(jwtTestToken).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
 			gomock.InOrder(
 				suite.matcherA.EXPECT().MatchesFreeRule(gomock.Any(), gomock.Any()).Return(false),
 				suite.matcherB.EXPECT().MatchesFreeRule(gomock.Any(), gomock.Any()).Return(true),

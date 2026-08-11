@@ -19,7 +19,7 @@ import (
 
 // @title Agentic Agent Node — Runtime Host API
 // @version 1.0
-// @description Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only gateway_host calls it. All endpoints are mounted under /internal.
+// @description Internal-only runtime + knowledge surface on 127.0.0.1; gateway_host calls it; mounted under /internal.
 // @BasePath /
 func main() {
 	_ = godotenv.Load(".env")

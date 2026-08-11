@@ -16,7 +16,10 @@ type WhenCallingOllamaChatMessageTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenCallingOllamaChatMessageBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingOllamaChatMessageTestingSuite {
+func WhenCallingOllamaChatMessageBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+) *WhenCallingOllamaChatMessageTestingSuite {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	sut := clients.NewOllamaChatMessageStandardClient(clients.NewOllamaChatMessageStandardClientParams{
@@ -53,7 +56,10 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
 			defer WhenCallingOllamaChatMessageAfterEach(suite)
 
-			res, err := suite.sut.ChatMessage(suite.server.URL, &models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"})
+			res, err := suite.sut.ChatMessage(
+				suite.server.URL,
+				&models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "/api/chat", seenPath)
@@ -76,7 +82,10 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
 			defer WhenCallingOllamaChatMessageAfterEach(suite)
 
-			_, err := suite.sut.ChatMessage(suite.server.URL, &models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"})
+			_, err := suite.sut.ChatMessage(
+				suite.server.URL,
+				&models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"},
+			)
 			assert.Error(t, err)
 		})
 	})

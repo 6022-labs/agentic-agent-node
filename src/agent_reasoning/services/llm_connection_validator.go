@@ -13,11 +13,17 @@ type LLMConnectionValidator struct {
 	chatCompletionRequester interfaces.ChatCompletionRequesterInterface
 }
 
-func NewLLMConnectionValidator(chatCompletionRequester interfaces.ChatCompletionRequesterInterface) *LLMConnectionValidator {
+func NewLLMConnectionValidator(
+	chatCompletionRequester interfaces.ChatCompletionRequesterInterface,
+) *LLMConnectionValidator {
 	return &LLMConnectionValidator{chatCompletionRequester: chatCompletionRequester}
 }
 
-func (v *LLMConnectionValidator) Validate(ctx context.Context, llmConnection *models.LLMConnection, apiKey string) error {
+func (v *LLMConnectionValidator) Validate(
+	ctx context.Context,
+	llmConnection *models.LLMConnection,
+	apiKey string,
+) error {
 	if err := v.chatCompletionRequester.ProbeConnection(ctx, llmConnection, apiKey); err != nil {
 		return errors.NewValidationError("connection", err.Error())
 	}

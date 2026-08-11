@@ -17,7 +17,10 @@ const (
 )
 
 type AmazonBedrockConverseStandardClientInterface interface {
-	Messages(baseUrl, apiKey string, request *models.ExternalAmazonBedrockConverseStandardRequest) (*models.ExternalAmazonBedrockConverseStandardResponse, error)
+	Messages(
+		baseUrl, apiKey string,
+		request *models.ExternalAmazonBedrockConverseStandardRequest,
+	) (*models.ExternalAmazonBedrockConverseStandardResponse, error)
 }
 
 type AmazonBedrockConverseStandardClient struct {
@@ -32,14 +35,19 @@ type NewAmazonBedrockConverseStandardClientParams struct {
 	HttpClient *http.Client `name:"llm-inference-http-client"`
 }
 
-func NewAmazonBedrockConverseStandardClient(params NewAmazonBedrockConverseStandardClientParams) *AmazonBedrockConverseStandardClient {
+func NewAmazonBedrockConverseStandardClient(
+	params NewAmazonBedrockConverseStandardClientParams,
+) *AmazonBedrockConverseStandardClient {
 	return &AmazonBedrockConverseStandardClient{
 		logger:     params.Logger,
 		httpClient: params.HttpClient,
 	}
 }
 
-func (c *AmazonBedrockConverseStandardClient) Messages(baseUrl, apiKey string, request *models.ExternalAmazonBedrockConverseStandardRequest) (*models.ExternalAmazonBedrockConverseStandardResponse, error) {
+func (c *AmazonBedrockConverseStandardClient) Messages(
+	baseUrl, apiKey string,
+	request *models.ExternalAmazonBedrockConverseStandardRequest,
+) (*models.ExternalAmazonBedrockConverseStandardResponse, error) {
 	endpoint := fmt.Sprintf(AMAZON_BEDROCK_CONVERSE_ENDPOINT_TEMPLATE, request.ModelId)
 	url := fmt.Sprintf("%s%s", baseUrl, endpoint)
 

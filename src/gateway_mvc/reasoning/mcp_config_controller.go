@@ -14,11 +14,11 @@ const (
 )
 
 type McpConfigController struct {
-	listMcpConnections  *use_cases.ListMcpConnections
-	createMcpConnection *use_cases.CreateMcpConnection
-	updateMcpConnection *use_cases.UpdateMcpConnection
-	deleteMcpConnection *use_cases.DeleteMcpConnection
-	discoverMcpServerTools  *use_cases.DiscoverMcpServerTools
+	listMcpConnections     *use_cases.ListMcpConnections
+	createMcpConnection    *use_cases.CreateMcpConnection
+	updateMcpConnection    *use_cases.UpdateMcpConnection
+	deleteMcpConnection    *use_cases.DeleteMcpConnection
+	discoverMcpServerTools *use_cases.DiscoverMcpServerTools
 }
 
 func NewMcpConfigController(
@@ -29,11 +29,11 @@ func NewMcpConfigController(
 	discoverMcpServerTools *use_cases.DiscoverMcpServerTools,
 ) *McpConfigController {
 	return &McpConfigController{
-		listMcpConnections:  listMcpConnections,
-		createMcpConnection: createMcpConnection,
-		updateMcpConnection: updateMcpConnection,
-		deleteMcpConnection: deleteMcpConnection,
-		discoverMcpServerTools:  discoverMcpServerTools,
+		listMcpConnections:     listMcpConnections,
+		createMcpConnection:    createMcpConnection,
+		updateMcpConnection:    updateMcpConnection,
+		deleteMcpConnection:    deleteMcpConnection,
+		discoverMcpServerTools: discoverMcpServerTools,
 	}
 }
 

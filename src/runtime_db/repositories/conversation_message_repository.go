@@ -16,7 +16,10 @@ func NewConversationMessageRepository(client *runtime_db.DatabaseClient) *Conver
 	return &ConversationMessageRepository{client: client}
 }
 
-func (r *ConversationMessageRepository) AppendMessages(ctx context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
+func (r *ConversationMessageRepository) AppendMessages(
+	ctx context.Context,
+	messages []models.ConversationMessage,
+) ([]models.ConversationMessage, error) {
 	if len(messages) == 0 {
 		return nil, nil
 	}
@@ -29,7 +32,10 @@ func (r *ConversationMessageRepository) AppendMessages(ctx context.Context, mess
 	return messages, nil
 }
 
-func (r *ConversationMessageRepository) ListByConversationId(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
+func (r *ConversationMessageRepository) ListByConversationId(
+	ctx context.Context,
+	conversationId string,
+) ([]models.ConversationMessage, error) {
 	var entities []models.ConversationMessage
 	if err := r.client.GetDB().
 		WithContext(ctx).

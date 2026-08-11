@@ -27,9 +27,15 @@ func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegis
 
 	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
 	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
-	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(mockController)
+	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
+		mockController,
+	)
 
-	sut := use_cases.NewGetAgentRegistration(mockAgentRepository, mockAgentAddressRepository, mockAgentRegistrationStateRepository)
+	sut := use_cases.NewGetAgentRegistration(
+		mockAgentRepository,
+		mockAgentAddressRepository,
+		mockAgentRegistrationStateRepository,
+	)
 
 	return &WhenGettingAgentRegistrationTestingSuite{
 		sut:                                  sut,
@@ -49,8 +55,12 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
 			state := model_builders.NewAgentRegistrationStateBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(state, nil)
-			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(state, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
 		}
 
 		t.Run("Should return the stored draft and status", func(t *testing.T) {
@@ -72,7 +82,9 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
 		}
 
 		t.Run("Should return a NotFound since no draft has been started", func(t *testing.T) {

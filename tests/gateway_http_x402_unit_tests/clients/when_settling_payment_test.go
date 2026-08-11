@@ -46,7 +46,11 @@ func TestWhenSettlingPayment(t *testing.T) {
 			seenPath = r.URL.Path
 			seenBody, _ = io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"success":true,"transaction":"0xtxhash","network":"eip155:80002","payer":"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"success":true,"transaction":"0xtxhash","network":"eip155:80002","payer":"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"}`,
+				),
+			)
 		}
 
 		t.Run("Should POST to /settle and decode the transaction", func(t *testing.T) {

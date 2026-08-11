@@ -36,10 +36,14 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentFacilitatorsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigPaymentFacilitatorsWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"facilitators":[{"network":"eip155:80002","baseUrl":"https://x402-amoy.polygon.technology","maxTimeoutSeconds":90}]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentFacilitatorsWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"facilitators":[{"network":"eip155:80002","baseUrl":"https://x402-amoy.polygon.technology","maxTimeoutSeconds":90}]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode them into a network → facilitator map", func(t *testing.T) {
@@ -60,10 +64,12 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentFacilitatorsTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigPaymentFacilitatorsWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentFacilitatorsWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

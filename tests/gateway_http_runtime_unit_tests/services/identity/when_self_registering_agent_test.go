@@ -38,10 +38,12 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationSelfResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"mintStatus":"submitted","ensStatus":"pending"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"mintStatus":"submitted","ensStatus":"pending"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the registration status payload", func(t *testing.T) {
@@ -63,7 +65,9 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

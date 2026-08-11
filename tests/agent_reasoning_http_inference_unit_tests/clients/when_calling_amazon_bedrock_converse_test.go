@@ -16,7 +16,10 @@ type WhenCallingAmazonBedrockConverseTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenCallingAmazonBedrockConverseBeforeEach(t *testing.T, handler http.HandlerFunc) *WhenCallingAmazonBedrockConverseTestingSuite {
+func WhenCallingAmazonBedrockConverseBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+) *WhenCallingAmazonBedrockConverseTestingSuite {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	sut := clients.NewAmazonBedrockConverseStandardClient(clients.NewAmazonBedrockConverseStandardClientParams{
@@ -53,9 +56,13 @@ func TestWhenCallingAmazonBedrockConverse(t *testing.T) {
 			suite := WhenCallingAmazonBedrockConverseBeforeEach(t, handler)
 			defer WhenCallingAmazonBedrockConverseAfterEach(suite)
 
-			res, err := suite.sut.Messages(suite.server.URL, "sk-secret", &models.ExternalAmazonBedrockConverseStandardRequest{
-				ModelId: "anthropic.claude-3-sonnet",
-			})
+			res, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk-secret",
+				&models.ExternalAmazonBedrockConverseStandardRequest{
+					ModelId: "anthropic.claude-3-sonnet",
+				},
+			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "/model/anthropic.claude-3-sonnet/converse", seenPath)
@@ -77,7 +84,11 @@ func TestWhenCallingAmazonBedrockConverse(t *testing.T) {
 			suite := WhenCallingAmazonBedrockConverseBeforeEach(t, handler)
 			defer WhenCallingAmazonBedrockConverseAfterEach(suite)
 
-			_, err := suite.sut.Messages(suite.server.URL, "sk", &models.ExternalAmazonBedrockConverseStandardRequest{ModelId: "x"})
+			_, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk",
+				&models.ExternalAmazonBedrockConverseStandardRequest{ModelId: "x"},
+			)
 			assert.Error(t, err)
 		})
 	})

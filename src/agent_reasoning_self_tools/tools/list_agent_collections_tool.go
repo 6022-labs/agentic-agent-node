@@ -15,7 +15,9 @@ type ListAgentCollectionsTool struct {
 	listAgentCollectionsExecutor tool_interfaces.ListAgentCollectionsExecutorInterface
 }
 
-func NewListAgentCollectionsTool(listAgentCollectionsExecutor tool_interfaces.ListAgentCollectionsExecutorInterface) *ListAgentCollectionsTool {
+func NewListAgentCollectionsTool(
+	listAgentCollectionsExecutor tool_interfaces.ListAgentCollectionsExecutorInterface,
+) *ListAgentCollectionsTool {
 	return &ListAgentCollectionsTool{listAgentCollectionsExecutor: listAgentCollectionsExecutor}
 }
 
@@ -34,7 +36,9 @@ func (t *ListAgentCollectionsTool) Execute(ctx context.Context, args map[string]
 	if err != nil {
 		return nil, err
 	}
-	return utils.ToToolResult(t.listAgentCollectionsExecutor.Execute(ctx, &identity_requests.ListAgentCollectionsRequest{ChainId: chainId}))
+	return utils.ToToolResult(
+		t.listAgentCollectionsExecutor.Execute(ctx, &identity_requests.ListAgentCollectionsRequest{ChainId: chainId}),
+	)
 }
 
 func (t *ListAgentCollectionsTool) IsEnabledByDefault() bool {

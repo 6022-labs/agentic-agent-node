@@ -38,7 +38,10 @@ func NewCreatePaymentRule(
 	}
 }
 
-func (u *CreatePaymentRule) Execute(ctx context.Context, request *requests.SavePaymentRuleRequest) (*responses.PaymentRuleResponse, error) {
+func (u *CreatePaymentRule) Execute(
+	ctx context.Context,
+	request *requests.SavePaymentRuleRequest,
+) (*responses.PaymentRuleResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
@@ -68,7 +71,10 @@ func (u *CreatePaymentRule) Execute(ctx context.Context, request *requests.SaveP
 	return responses.ToPaymentRuleResponse(rule, request.Config), nil
 }
 
-func (u *CreatePaymentRule) toPaymentRule(policy *models.PaymentPolicy, request *requests.SavePaymentRuleRequest) *models.PaymentRule {
+func (u *CreatePaymentRule) toPaymentRule(
+	policy *models.PaymentPolicy,
+	request *requests.SavePaymentRuleRequest,
+) *models.PaymentRule {
 	return &models.PaymentRule{
 		PolicyId: policy.Id,
 		Name:     request.Name,

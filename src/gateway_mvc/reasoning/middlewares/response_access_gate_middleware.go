@@ -56,5 +56,8 @@ func (m *ResponseAccessGateMiddleware) Handle(ctx *fiber.Ctx) error {
 	}
 
 	// Unreachable while a terminal link (x402) is configured.
-	return mvc.WriteError(ctx, apperrors.NewUnavailableError("access_methods_unavailable", "no access method handled the request"))
+	return mvc.WriteError(
+		ctx,
+		apperrors.NewUnavailableError("access_methods_unavailable", "no access method handled the request"),
+	)
 }

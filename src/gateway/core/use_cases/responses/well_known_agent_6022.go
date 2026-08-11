@@ -1,6 +1,6 @@
 package responses
 
-// WellKnownAgent6022 is the 6022-protocol discovery document; payment terms come from the HTTP 402 handshake on /responses.
+// WellKnownAgent6022 is the 6022 discovery document; payment terms come from the HTTP 402 handshake on /responses.
 type WellKnownAgent6022 struct {
 	Protocol        string               `json:"protocol"`
 	ProtocolVersion string               `json:"protocolVersion"`

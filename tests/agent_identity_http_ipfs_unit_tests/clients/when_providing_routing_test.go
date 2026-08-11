@@ -17,7 +17,11 @@ type WhenProvidingRoutingTestingSuite struct {
 	server *httptest.Server
 }
 
-func WhenProvidingRoutingBeforeEach(t *testing.T, handler http.HandlerFunc, bearerToken string) *WhenProvidingRoutingTestingSuite {
+func WhenProvidingRoutingBeforeEach(
+	t *testing.T,
+	handler http.HandlerFunc,
+	bearerToken string,
+) *WhenProvidingRoutingTestingSuite {
 	t.Helper()
 
 	server := httptest.NewServer(handler)

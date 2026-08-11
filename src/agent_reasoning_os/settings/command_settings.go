@@ -74,7 +74,8 @@ func NewCommandSettings(
 	}
 	// Not clamped: the operator may have raised the loop budget for a reason, but a silent turn loss is worse.
 	if settings.MaxTimeoutSeconds >= inferenceLoopSettings.MaxDurationSeconds {
-		logger.Warn("command.max_timeout_seconds is not below inference_loop.max_duration_seconds, so a command reaching it will abort the whole turn",
+		logger.Warn(
+			"command.max_timeout_seconds is not below inference_loop.max_duration_seconds, so a command reaching it will abort the whole turn",
 			zap.Int("command.max_timeout_seconds", settings.MaxTimeoutSeconds),
 			zap.Int("inference_loop.max_duration_seconds", inferenceLoopSettings.MaxDurationSeconds),
 		)

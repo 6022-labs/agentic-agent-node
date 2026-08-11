@@ -28,7 +28,7 @@ type MintAddress struct {
 	Value       string
 }
 
-// FromMap flattens per-type addresses in GetAllAddressTypes() order (evm first — ENS addr() reads the first evm entry).
+// FromMap flattens per-type addresses in GetAllAddressTypes() order (evm first — ENS addr() reads it).
 func (MintAddress) FromMap(m map[enums.AddressType]string) []MintAddress {
 	out := make([]MintAddress, 0, len(m))
 	for _, addressType := range enums.GetAllAddressTypes() {
@@ -57,5 +57,9 @@ type AgentMinterInterface interface {
 	// Mint calls mint() directly (no moderators, or node wallet is one). Returns the tx hash.
 	Mint(ctx context.Context, chainId string, params MintParams) (txHash string, err error)
 	// CreateMintProposal calls createMintProposal() on moderated collections. Returns tx hash + proposalId.
-	CreateMintProposal(ctx context.Context, chainId string, params MintParams) (txHash string, proposalId uint64, err error)
+	CreateMintProposal(
+		ctx context.Context,
+		chainId string,
+		params MintParams,
+	) (txHash string, proposalId uint64, err error)
 }

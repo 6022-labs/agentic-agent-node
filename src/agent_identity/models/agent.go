@@ -15,14 +15,14 @@ type Agent struct {
 	ChainId *string `gorm:"size:64" json:"chainId"`
 
 	CollectionTokenId *uint64 `json:"collectionTokenId"`
-	CollectionAddress string  `gorm:"size:42" json:"collectionAddress"`
+	CollectionAddress string  `json:"collectionAddress" gorm:"size:42"`
 	ProposalId        *uint64 `json:"proposalId"`
 
 	Name      *string `gorm:"size:255" json:"name"`
-	CloneOf   *uint64 `json:"cloneOf"`
+	CloneOf   *uint64 `                json:"cloneOf"`
 	EnsDomain *string `gorm:"size:255" json:"ensDomain"`
-	Creator   *string `gorm:"size:42" json:"creator"`
-	Owner     *string `gorm:"size:42" json:"owner"`
+	Creator   *string `gorm:"size:42"  json:"creator"`
+	Owner     *string `gorm:"size:42"  json:"owner"`
 
 	// Soul is the persona layer of the system prompt, recomputed from on-chain facts at each mint reconcile.
 	Soul *string `gorm:"type:text" json:"soul"`

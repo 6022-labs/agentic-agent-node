@@ -24,7 +24,22 @@ const callKindKey = "reasoning.call_kind"
 
 // Advisory bucket boundaries from the OTel GenAI metrics semantic conventions.
 var (
-	genAiTokenBuckets = []float64{1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864}
+	genAiTokenBuckets = []float64{
+		1,
+		4,
+		16,
+		64,
+		256,
+		1024,
+		4096,
+		16384,
+		65536,
+		262144,
+		1048576,
+		4194304,
+		16777216,
+		67108864,
+	}
 )
 
 type LlmInferenceMetrics struct {
@@ -62,24 +77,43 @@ func NewLlmInferenceMetrics() *LlmInferenceMetrics {
 	}
 }
 
-func (m *LlmInferenceMetrics) RecordOperationDuration(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, err error) {
+func (m *LlmInferenceMetrics) RecordOperationDuration(
+	ctx context.Context,
+	call interfaces.CompletionCall,
+	duration time.Duration,
+	err error,
+) {
 	attrs := append(m.callAttributes(call), attribute.String(callKindKey, "inference"))
 	attrs = append(attrs, m.failureAttributes(err)...)
 	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
 }
 
-func (m *LlmInferenceMetrics) RecordProbe(ctx context.Context, call interfaces.CompletionCall, duration time.Duration, err error) {
+func (m *LlmInferenceMetrics) RecordProbe(
+	ctx context.Context,
+	call interfaces.CompletionCall,
+	duration time.Duration,
+	err error,
+) {
 	attrs := append(m.callAttributes(call), attribute.String(callKindKey, "probe"))
 	attrs = append(attrs, m.failureAttributes(err)...)
 	m.durationHistogram.Record(ctx, duration.Seconds(), metric.WithAttributes(attrs...))
 }
 
-func (m *LlmInferenceMetrics) RecordTokenUsage(ctx context.Context, call interfaces.CompletionCall, inputTokens, outputTokens int64) {
+func (m *LlmInferenceMetrics) RecordTokenUsage(
+	ctx context.Context,
+	call interfaces.CompletionCall,
+	inputTokens, outputTokens int64,
+) {
 	m.recordTokens(ctx, call, "input", inputTokens)
 	m.recordTokens(ctx, call, "output", outputTokens)
 }
 
-func (m *LlmInferenceMetrics) recordTokens(ctx context.Context, call interfaces.CompletionCall, tokenType string, tokens int64) {
+func (m *LlmInferenceMetrics) recordTokens(
+	ctx context.Context,
+	call interfaces.CompletionCall,
+	tokenType string,
+	tokens int64,
+) {
 	attrs := append(m.callAttributes(call), attribute.String("gen_ai.token.type", tokenType))
 	m.tokenUsageHistogram.Record(ctx, tokens, metric.WithAttributes(attrs...))
 }

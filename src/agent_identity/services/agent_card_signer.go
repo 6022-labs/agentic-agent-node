@@ -124,7 +124,9 @@ func (s *AgentCardSigner) loadWalletKey(ctx context.Context) (*ecdsa.PrivateKey,
 		return nil, fmt.Errorf("node wallet not bootstrapped")
 	}
 
-	key, err := crypto.HexToECDSA(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(cred.PrivateKeyHex), "0x"), "0X"))
+	key, err := crypto.HexToECDSA(
+		strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(cred.PrivateKeyHex), "0x"), "0X"),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("invalid wallet private key: %w", err)
 	}

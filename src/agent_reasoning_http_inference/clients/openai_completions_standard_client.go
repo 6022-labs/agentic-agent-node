@@ -17,7 +17,10 @@ const (
 )
 
 type OpenAICompletionsStandardClientInterface interface {
-	ChatCompletion(baseUrl, apiKey string, request *models.ExternalOpenAICompletionsStandardRequest) (*models.ExternalOpenAICompletionsStandardResponse, error)
+	ChatCompletion(
+		baseUrl, apiKey string,
+		request *models.ExternalOpenAICompletionsStandardRequest,
+	) (*models.ExternalOpenAICompletionsStandardResponse, error)
 }
 
 type OpenAICompletionsStandardClient struct {
@@ -32,14 +35,19 @@ type NewOpenAICompletionsStandardClientParams struct {
 	HttpClient *http.Client `name:"llm-inference-http-client"`
 }
 
-func NewOpenAICompletionsStandardClient(params NewOpenAICompletionsStandardClientParams) *OpenAICompletionsStandardClient {
+func NewOpenAICompletionsStandardClient(
+	params NewOpenAICompletionsStandardClientParams,
+) *OpenAICompletionsStandardClient {
 	return &OpenAICompletionsStandardClient{
 		logger:     params.Logger,
 		httpClient: params.HttpClient,
 	}
 }
 
-func (c *OpenAICompletionsStandardClient) ChatCompletion(baseUrl, apiKey string, request *models.ExternalOpenAICompletionsStandardRequest) (*models.ExternalOpenAICompletionsStandardResponse, error) {
+func (c *OpenAICompletionsStandardClient) ChatCompletion(
+	baseUrl, apiKey string,
+	request *models.ExternalOpenAICompletionsStandardRequest,
+) (*models.ExternalOpenAICompletionsStandardResponse, error) {
 	url := fmt.Sprintf("%s%s", baseUrl, OPEN_AI_CHAT_COMPLETION_ENDPOINT)
 
 	// Convert the request to JSON

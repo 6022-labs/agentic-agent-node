@@ -65,12 +65,19 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
-				assert.Equal(t, "github", body.Name)
-				assert.Equal(t, "https://mcp.github.example", body.Url)
-				assert.Equal(t, map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"}, body.HeaderAuth)
-				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url, HeaderAuthKeys: []string{"Authorization", "X-Api-Key"}}, nil
-			})
+			suite.mockClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+					assert.Equal(t, "github", body.Name)
+					assert.Equal(t, "https://mcp.github.example", body.Url)
+					assert.Equal(t, map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"}, body.HeaderAuth)
+					return &models.ExternalMCPConnectionPayload{
+						Id:             "new",
+						Name:           body.Name,
+						Url:            body.Url,
+						HeaderAuthKeys: []string{"Authorization", "X-Api-Key"},
+					}, nil
+				})
 		}
 
 		t.Run("Should forward every header and return Created", func(t *testing.T) {
@@ -92,10 +99,12 @@ func TestWhenCreatingMcpConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
-				assert.Nil(t, body.HeaderAuth)
-				return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
-			})
+			suite.mockClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, body *models.ExternalCreateMCPConnectionPayload) (*models.ExternalMCPConnectionPayload, error) {
+					assert.Nil(t, body.HeaderAuth)
+					return &models.ExternalMCPConnectionPayload{Id: "new", Name: body.Name, Url: body.Url}, nil
+				})
 		}
 
 		t.Run("Should pass nil for HeaderAuth", func(t *testing.T) {

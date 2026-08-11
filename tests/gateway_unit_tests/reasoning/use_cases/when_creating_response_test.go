@@ -101,23 +101,26 @@ func TestWhenCreatingResponse(t *testing.T) {
 				})
 		}
 
-		t.Run("Should forward the mapped payload and return the runtime's OpenAI response verbatim", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should forward the mapped payload and return the runtime's OpenAI response verbatim",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
+				suite := WhenCreatingResponseBeforeEach(t)
+				initSuite(suite)
 
-			resp, err := suite.sut.Execute(ctx, request)
+				resp, err := suite.sut.Execute(ctx, request)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "response", resp.Object)
-			assert.Equal(t, "completed", resp.Status)
-			assert.Equal(t, "conv-1", resp.Id)
-			if assert.Len(t, resp.Output, 1) && assert.Len(t, resp.Output[0].Content, 1) {
-				assert.Equal(t, "output_text", resp.Output[0].Content[0].Type)
-				assert.Equal(t, "hello back", resp.Output[0].Content[0].Text)
-			}
-		})
+				assert.NoError(t, err)
+				assert.Equal(t, "response", resp.Object)
+				assert.Equal(t, "completed", resp.Status)
+				assert.Equal(t, "conv-1", resp.Id)
+				if assert.Len(t, resp.Output, 1) && assert.Len(t, resp.Output[0].Content, 1) {
+					assert.Equal(t, "output_text", resp.Output[0].Content[0].Type)
+					assert.Equal(t, "hello back", resp.Output[0].Content[0].Text)
+				}
+			},
+		)
 	})
 
 	t.Run("Given the runtime client fails", func(t *testing.T) {

@@ -41,7 +41,10 @@ func WhenRunningInferenceLoopBeforeEach(t *testing.T, maxIterations int) *WhenRu
 		})
 }
 
-func WhenRunningInferenceLoopWithSettingsBeforeEach(t *testing.T, inferenceLoopSettings *settings.InferenceLoopSettings) *WhenRunningInferenceLoopTestingSuite {
+func WhenRunningInferenceLoopWithSettingsBeforeEach(
+	t *testing.T,
+	inferenceLoopSettings *settings.InferenceLoopSettings,
+) *WhenRunningInferenceLoopTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockLLMExecutor := interfaces_mocks.NewMockLLMExecutorInterface(mockController)
@@ -291,7 +294,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				selfTools,
+				nil,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -333,7 +342,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				selfTools,
+				nil,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -379,7 +394,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				selfTools,
+				nil,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -426,7 +447,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				selfTools,
+				nil,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -488,7 +515,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, selfTools, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				selfTools,
+				mcpTools,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 5) {
@@ -542,7 +575,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				nil,
+				mcpTools,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -574,7 +613,12 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 				Return(&interfaces.LLMCompletion{
 					Texts: []string{expectedFinal},
 					ExecutedToolCalls: []interfaces.ExecutedToolCall{
-						{Id: "mcp_1", Name: "weather_get", Arguments: map[string]any{"city": "paris"}, Output: `{"temp":"20"}`},
+						{
+							Id:        "mcp_1",
+							Name:      "weather_get",
+							Arguments: map[string]any{"city": "paris"},
+							Output:    `{"temp":"20"}`,
+						},
 					},
 				}, nil)
 		}
@@ -748,7 +792,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				nil,
+				mcpTools,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -794,7 +844,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				nil,
+				mcpTools,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {
@@ -873,7 +929,13 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
 			initSuite(suite)
 
-			out, err := suite.sut.Run(ctx, llmConnection, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+			out, err := suite.sut.Run(
+				ctx,
+				llmConnection,
+				nil,
+				mcpTools,
+				[]*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}},
+			)
 
 			assert.NoError(t, err)
 			if assert.Len(t, out, 4) {

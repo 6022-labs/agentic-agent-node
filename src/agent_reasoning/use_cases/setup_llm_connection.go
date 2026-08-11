@@ -34,8 +34,11 @@ func NewSetupLLMConnection(
 	}
 }
 
-// Execute probes before touching Vault, and resolves the api key before upserting, so the row never points at a missing secret.
-func (u *SetupLLMConnection) Execute(ctx context.Context, request *requests.SetupLLMConnectionRequest) (*responses.LLMConnectionResponse, error) {
+// Execute probes before Vault and resolves the api key before upserting, so the row never points at a missing secret.
+func (u *SetupLLMConnection) Execute(
+	ctx context.Context,
+	request *requests.SetupLLMConnectionRequest,
+) (*responses.LLMConnectionResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}

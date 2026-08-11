@@ -13,7 +13,9 @@ func NewAbstractPaymentRuleTool() *AbstractPaymentRuleTool {
 	return &AbstractPaymentRuleTool{}
 }
 
-func (t *AbstractPaymentRuleTool) savePaymentRuleRequestFromArgs(args map[string]any) (*payment_requests.SavePaymentRuleRequest, error) {
+func (t *AbstractPaymentRuleTool) savePaymentRuleRequestFromArgs(
+	args map[string]any,
+) (*payment_requests.SavePaymentRuleRequest, error) {
 	name, err := utils.StringArg(args, "name")
 	if err != nil {
 		return nil, err

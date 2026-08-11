@@ -21,7 +21,10 @@ func NewAgentCollectionRequester(ethClientFactory *factory.EthClientFactory) *Ag
 	}
 }
 
-func (r *AgentCollectionRequester) collection(chainId string, collectionAddress common.Address) (*abi.AgentCollectionV1, error) {
+func (r *AgentCollectionRequester) collection(
+	chainId string,
+	collectionAddress common.Address,
+) (*abi.AgentCollectionV1, error) {
 	client, err := r.ethClientFactory.For(chainId)
 	if err != nil {
 		return nil, err
@@ -29,7 +32,11 @@ func (r *AgentCollectionRequester) collection(chainId string, collectionAddress 
 	return abi.NewAgentCollectionV1(collectionAddress, client)
 }
 
-func (r *AgentCollectionRequester) OwnerOf(chainId string, collectionAddress common.Address, tokenId uint64) (common.Address, error) {
+func (r *AgentCollectionRequester) OwnerOf(
+	chainId string,
+	collectionAddress common.Address,
+	tokenId uint64,
+) (common.Address, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return common.Address{}, err
@@ -45,7 +52,12 @@ func (r *AgentCollectionRequester) CollectionName(chainId string, collectionAddr
 	return contract.Name(nil)
 }
 
-func (r *AgentCollectionRequester) AddressToTokenId(chainId string, collectionAddress common.Address, addressType enums.AddressType, value string) (uint64, error) {
+func (r *AgentCollectionRequester) AddressToTokenId(
+	chainId string,
+	collectionAddress common.Address,
+	addressType enums.AddressType,
+	value string,
+) (uint64, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
@@ -57,7 +69,11 @@ func (r *AgentCollectionRequester) AddressToTokenId(chainId string, collectionAd
 	return id.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) NameToTokenId(chainId string, collectionAddress common.Address, name string) (uint64, error) {
+func (r *AgentCollectionRequester) NameToTokenId(
+	chainId string,
+	collectionAddress common.Address,
+	name string,
+) (uint64, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return 0, err
@@ -69,7 +85,11 @@ func (r *AgentCollectionRequester) NameToTokenId(chainId string, collectionAddre
 	return id.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) InformationOf(chainId string, collectionAddress common.Address, tokenId uint64) (identity_interfaces.OnChainAgentInfo, error) {
+func (r *AgentCollectionRequester) InformationOf(
+	chainId string,
+	collectionAddress common.Address,
+	tokenId uint64,
+) (identity_interfaces.OnChainAgentInfo, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return identity_interfaces.OnChainAgentInfo{}, err
@@ -106,7 +126,11 @@ func (r *AgentCollectionRequester) ModeratorCount(chainId string, collectionAddr
 	return count.Uint64(), nil
 }
 
-func (r *AgentCollectionRequester) IsModerator(chainId string, collectionAddress common.Address, account common.Address) (bool, error) {
+func (r *AgentCollectionRequester) IsModerator(
+	chainId string,
+	collectionAddress common.Address,
+	account common.Address,
+) (bool, error) {
 	contract, err := r.collection(chainId, collectionAddress)
 	if err != nil {
 		return false, err

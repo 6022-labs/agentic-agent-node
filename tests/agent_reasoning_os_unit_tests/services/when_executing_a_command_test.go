@@ -40,7 +40,11 @@ func WhenExecutingACommandBeforeEach(t *testing.T) *WhenExecutingACommandTesting
 	_ = k.Load(confmap.Provider(map[string]any{"command.default_yield_seconds": 0}, "."), nil)
 
 	osSettings := os_settings.NewOsSettings(zap.NewNop(), koanf.New("."))
-	commandSettings := os_settings.NewCommandSettings(zap.NewNop(), k, reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")))
+	commandSettings := os_settings.NewCommandSettings(
+		zap.NewNop(),
+		k,
+		reasoning_settings.NewInferenceLoopSettings(zap.NewNop(), koanf.New(".")),
+	)
 	mockCommandRunner := services_mocks.NewMockCommandRunnerInterface(mockController)
 	mockCommandHandle := services_mocks.NewMockCommandHandleInterface(mockController)
 	mockProcessRegistry := services_mocks.NewMockProcessRegistryInterface(mockController)
@@ -169,27 +173,30 @@ func TestWhenExecutingACommand(t *testing.T) {
 			}
 		})
 
-		t.Run("Should let a background command run to the background ceiling, not the foreground default", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should let a background command run to the background ceiling, not the foreground default",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenExecutingACommandBeforeEach(t)
-			suite.mockCommandRunner.EXPECT().
-				Start(&os_interfaces.CommandSpec{
-					Command: "tail -f log",
-					Workdir: suite.osSettings.Workdir,
-					Timeout: time.Duration(suite.commandSettings.MaxBackgroundSeconds) * time.Second,
-				}).
-				Return(suite.mockCommandHandle, nil)
-			suite.mockProcessRegistry.EXPECT().
-				Register(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&os_interfaces.BackgroundProcess{Id: uuid.New(), Running: true}, nil)
-			suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
-			suite.mockCommandHandle.EXPECT().Snapshot().Return(&os_interfaces.CommandResult{Running: true})
+				suite := WhenExecutingACommandBeforeEach(t)
+				suite.mockCommandRunner.EXPECT().
+					Start(&os_interfaces.CommandSpec{
+						Command: "tail -f log",
+						Workdir: suite.osSettings.Workdir,
+						Timeout: time.Duration(suite.commandSettings.MaxBackgroundSeconds) * time.Second,
+					}).
+					Return(suite.mockCommandHandle, nil)
+				suite.mockProcessRegistry.EXPECT().
+					Register(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&os_interfaces.BackgroundProcess{Id: uuid.New(), Running: true}, nil)
+				suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
+				suite.mockCommandHandle.EXPECT().Snapshot().Return(&os_interfaces.CommandResult{Running: true})
 
-			_, err := suite.sut.Run(ctx, "tail -f log", "", nil, nil, lo.ToPtr(true))
+				_, err := suite.sut.Run(ctx, "tail -f log", "", nil, nil, lo.ToPtr(true))
 
-			assert.NoError(t, err)
-		})
+				assert.NoError(t, err)
+			},
+		)
 
 		t.Run("Should kill the process when the registry refuses it", func(t *testing.T) {
 			t.Parallel()

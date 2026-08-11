@@ -45,7 +45,11 @@ func NewWalletCredentialsStorage(params NewWalletCredentialsStorageParams) *Wall
 	}
 }
 
-func (w *WalletCredentialsStorage) GetForId(ctx context.Context, agentId string, addressType enums.AddressType) (*identity_interfaces.WalletCredentials, bool, error) {
+func (w *WalletCredentialsStorage) GetForId(
+	ctx context.Context,
+	agentId string,
+	addressType enums.AddressType,
+) (*identity_interfaces.WalletCredentials, bool, error) {
 	data, err := w.storage.Read(ctx, w.vaultKey(agentId, addressType))
 	if errors.Is(err, runtime_common_interfaces.ErrSecretNotFound) {
 		return nil, false, nil
@@ -66,7 +70,12 @@ func (w *WalletCredentialsStorage) GetForId(ctx context.Context, agentId string,
 	return &identity_interfaces.WalletCredentials{PrivateKeyHex: pk, Address: addr}, true, nil
 }
 
-func (w *WalletCredentialsStorage) SaveForId(ctx context.Context, agentId string, addressType enums.AddressType, cred *identity_interfaces.WalletCredentials) error {
+func (w *WalletCredentialsStorage) SaveForId(
+	ctx context.Context,
+	agentId string,
+	addressType enums.AddressType,
+	cred *identity_interfaces.WalletCredentials,
+) error {
 	if cred == nil || len(cred.PrivateKeyHex) == 0 || len(cred.Address) == 0 {
 		return errors.New("wallet credentials must have both privateKey and address")
 	}
@@ -76,7 +85,11 @@ func (w *WalletCredentialsStorage) SaveForId(ctx context.Context, agentId string
 	})
 }
 
-func (w *WalletCredentialsStorage) GetOrGenerateForId(ctx context.Context, agentId string, addressType enums.AddressType) (*identity_interfaces.WalletCredentials, error) {
+func (w *WalletCredentialsStorage) GetOrGenerateForId(
+	ctx context.Context,
+	agentId string,
+	addressType enums.AddressType,
+) (*identity_interfaces.WalletCredentials, error) {
 	cred, found, err := w.GetForId(ctx, agentId, addressType)
 	if err != nil {
 		return nil, err

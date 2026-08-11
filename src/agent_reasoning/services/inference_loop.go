@@ -74,7 +74,7 @@ func (l *InferenceLoop) Run(
 	totalTokens := 0
 
 	for iteration := 0; iteration < l.inferenceLoopSettings.MaxIterations; iteration++ {
-		// Checked before the next round-trip, not after, so a final answer that lands on the budget edge is never discarded.
+		// Checked before the next round-trip so a final answer landing on the budget edge is never discarded.
 		if totalTokens > l.inferenceLoopSettings.MaxTotalTokens {
 			l.reasoningMetrics.RecordLoopAborted(ctx, "token_budget_exceeded", time.Since(start), int64(iteration))
 			return nil, fmt.Errorf("%w: %d tokens used", interfaces.ErrInferenceLoopTokenBudgetExceeded, totalTokens)
@@ -84,7 +84,11 @@ func (l *InferenceLoop) Run(
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				l.reasoningMetrics.RecordLoopAborted(ctx, "deadline_exceeded", time.Since(start), int64(iteration))
-				return nil, fmt.Errorf("%w after %s", interfaces.ErrInferenceLoopDeadlineExceeded, time.Since(start).Round(time.Millisecond))
+				return nil, fmt.Errorf(
+					"%w after %s",
+					interfaces.ErrInferenceLoopDeadlineExceeded,
+					time.Since(start).Round(time.Millisecond),
+				)
 			}
 			l.reasoningMetrics.RecordLoopAborted(ctx, "llm_failed", time.Since(start), int64(iteration))
 			return nil, fmt.Errorf("llm executor failed at iteration %d: %w", iteration, err)
@@ -138,7 +142,11 @@ func (l *InferenceLoop) Run(
 
 	l.reasoningMetrics.RecordLoopExceeded(ctx, time.Since(start), int64(l.inferenceLoopSettings.MaxIterations))
 
-	return nil, fmt.Errorf("%w: %d", interfaces.ErrInferenceLoopMaxIterationsExceeded, l.inferenceLoopSettings.MaxIterations)
+	return nil, fmt.Errorf(
+		"%w: %d",
+		interfaces.ErrInferenceLoopMaxIterationsExceeded,
+		l.inferenceLoopSettings.MaxIterations,
+	)
 }
 
 // selectAssistantText returns the last non-empty text block (earlier blocks are pre-tool-call preamble), or nil.
@@ -152,7 +160,7 @@ func (l *InferenceLoop) selectAssistantText(texts []string) *string {
 	return nil
 }
 
-// recordExecutedToolCalls mirrors provider-run MCP calls into the stream (assistant turn + a tool turn per result) so they persist without being re-dispatched.
+// recordExecutedToolCalls mirrors provider-run MCP calls into the stream so they persist without being re-dispatched.
 func (l *InferenceLoop) recordExecutedToolCalls(
 	ctx context.Context,
 	executed []interfaces.ExecutedToolCall,
@@ -231,11 +239,17 @@ func (l *InferenceLoop) dispatchToolCall(
 	case utils.SelfToolNamespace:
 		selfToolName, err := utils.ExtractSelfToolNameFromFunctionName(toolCall.Name)
 		if err != nil {
-			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()))
+			return nil, apperrors.NewValidationError(
+				"tool",
+				fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()),
+			)
 		}
 
 		if !slices.ContainsFunc(selfTools, func(t *models.Tool) bool { return t.Name == selfToolName }) {
-			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("self tool %q is disabled or unknown", selfToolName))
+			return nil, apperrors.NewValidationError(
+				"tool",
+				fmt.Sprintf("self tool %q is disabled or unknown", selfToolName),
+			)
 		}
 
 		l.logger.Debug("Calling self tool", zap.String("selfToolName", selfToolName))
@@ -245,7 +259,10 @@ func (l *InferenceLoop) dispatchToolCall(
 	case utils.McpToolNamespace:
 		mcpConnection, mcpTool, err := utils.ExtractMcpInfoFromFunctionName(toolCall.Name, mcpTools)
 		if err != nil {
-			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()))
+			return nil, apperrors.NewValidationError(
+				"tool",
+				fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()),
+			)
 		}
 
 		l.logger.Debug("Calling MCP tool",
@@ -256,7 +273,10 @@ func (l *InferenceLoop) dispatchToolCall(
 		return l.callMcpTool(ctx, toolCall, mcpConnection, mcpTool)
 
 	default:
-		return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: unknown tool namespace %q", toolCall.Name, namespace))
+		return nil, apperrors.NewValidationError(
+			"tool",
+			fmt.Sprintf("failed to map tool call %q: unknown tool namespace %q", toolCall.Name, namespace),
+		)
 	}
 }
 
@@ -293,7 +313,10 @@ func (l *InferenceLoop) callMcpTool(
 	return l.toolResultMessage(toolCall, result)
 }
 
-func (l *InferenceLoop) toolResultMessage(toolCall interfaces.ToolCall, result map[string]any) (*interfaces.ChatCompletionMessage, error) {
+func (l *InferenceLoop) toolResultMessage(
+	toolCall interfaces.ToolCall,
+	result map[string]any,
+) (*interfaces.ChatCompletionMessage, error) {
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal tool result for %q: %w", toolCall.Name, err)
@@ -306,7 +329,7 @@ func (l *InferenceLoop) toolResultMessage(toolCall interfaces.ToolCall, result m
 	}, nil
 }
 
-// errorPayload sanitizes a failed tool call for the model: business-error messages pass through, but internal/unavailable/unknown errors surface only a safe code with a generic message so infra detail (DB, Vault, HTTP) never reaches the model or transcript.
+// errorPayload passes business-error messages through; internal errors become a safe code so infra detail never leaks.
 func (l *InferenceLoop) errorPayload(err error) map[string]any {
 	var validationErr *apperrors.ValidationError
 	if errors.As(err, &validationErr) {
@@ -326,11 +349,15 @@ func (l *InferenceLoop) errorPayload(err error) map[string]any {
 	}
 	var internalErr *apperrors.InternalError
 	if errors.As(err, &internalErr) {
-		return l.errObject(map[string]any{"code": internalErr.Code, "message": "the tool encountered an internal error"})
+		return l.errObject(
+			map[string]any{"code": internalErr.Code, "message": "the tool encountered an internal error"},
+		)
 	}
 	var unavailableErr *apperrors.UnavailableError
 	if errors.As(err, &unavailableErr) {
-		return l.errObject(map[string]any{"code": unavailableErr.Code, "message": "the tool is temporarily unavailable"})
+		return l.errObject(
+			map[string]any{"code": unavailableErr.Code, "message": "the tool is temporarily unavailable"},
+		)
 	}
 	return l.errObject(map[string]any{"message": "the tool call failed"})
 }

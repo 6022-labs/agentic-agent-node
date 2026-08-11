@@ -37,10 +37,14 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"id":"a","agentId":"b","agentWalletAddress":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"id":"a","agentId":"b","agentWalletAddress":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the head", func(t *testing.T) {
@@ -61,10 +65,12 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-				Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+				}, nil)
 		}
 
 		t.Run("Should return a conflict error carrying the runtime code", func(t *testing.T) {
@@ -86,10 +92,12 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).Return(&clients.GetInternalConfigPaymentPolicyResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"get_failed"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"get_failed"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an error", func(t *testing.T) {

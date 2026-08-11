@@ -27,7 +27,10 @@ func (r *SetupLLMConnectionRequest) ValidateAndSanitize() error {
 	}
 
 	if !reasoning_enums.GetAllLLMConnectionPlatforms().Contains(r.Platform) {
-		return errors.NewValidationError("platform", "must be one of "+reasoning_enums.GetAllLLMConnectionPlatforms().String())
+		return errors.NewValidationError(
+			"platform",
+			"must be one of "+reasoning_enums.GetAllLLMConnectionPlatforms().String(),
+		)
 	}
 	if len(r.Model) == 0 {
 		return errors.NewValidationError("model", "cannot be empty")

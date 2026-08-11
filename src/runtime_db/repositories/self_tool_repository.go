@@ -52,7 +52,11 @@ func (r *SelfToolRepository) Update(ctx context.Context, tool *models.SelfTool) 
 	return tool, nil
 }
 
-func (r *SelfToolRepository) ListExistingNames(ctx context.Context, agentId uuid.UUID, names []string) ([]string, error) {
+func (r *SelfToolRepository) ListExistingNames(
+	ctx context.Context,
+	agentId uuid.UUID,
+	names []string,
+) ([]string, error) {
 	if len(names) == 0 {
 		return nil, nil
 	}
@@ -65,7 +69,11 @@ func (r *SelfToolRepository) ListExistingNames(ctx context.Context, agentId uuid
 	return existing, nil
 }
 
-func (r *SelfToolRepository) DeleteAllExceptNames(ctx context.Context, agentId uuid.UUID, names []string) (int64, error) {
+func (r *SelfToolRepository) DeleteAllExceptNames(
+	ctx context.Context,
+	agentId uuid.UUID,
+	names []string,
+) (int64, error) {
 	db := r.client.GetDB().WithContext(ctx)
 	// An empty NOT IN would match nothing in SQL; an empty registry means every row is stale.
 	if len(names) == 0 {

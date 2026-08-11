@@ -23,7 +23,10 @@ type WhenBuildingWellKnownAgentCardTestingSuite struct {
 	signedBody                   []byte
 }
 
-func WhenBuildingWellKnownAgentCardBeforeEach(t *testing.T, runtimeUrl, publicPrefix string) *WhenBuildingWellKnownAgentCardTestingSuite {
+func WhenBuildingWellKnownAgentCardBeforeEach(
+	t *testing.T,
+	runtimeUrl, publicPrefix string,
+) *WhenBuildingWellKnownAgentCardTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentRegistrationClient := identity_mocks.NewMockAgentRegistrationClientInterface(mockController)
@@ -49,7 +52,10 @@ func (s *WhenBuildingWellKnownAgentCardTestingSuite) expectCardSignature(ctx con
 		Sign(ctx, gomock.Any()).
 		DoAndReturn(func(_ context.Context, card []byte) (*identity_models.ExternalAgentCardSignaturePayload, error) {
 			s.signedBody = card
-			return &identity_models.ExternalAgentCardSignaturePayload{Protected: "protected", Signature: "signature"}, nil
+			return &identity_models.ExternalAgentCardSignaturePayload{
+				Protected: "protected",
+				Signature: "signature",
+			}, nil
 		})
 }
 
@@ -98,27 +104,30 @@ func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 			assert.Contains(t, members, "name")
 		})
 
-		t.Run("Should build the card from the agent name with url = runtime_url + public prefix + /a2a", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should build the card from the agent name with url = runtime_url + public prefix + /a2a",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
+				suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
+				initSuite(suite)
 
-			card, err := suite.sut.Execute(ctx)
+				card, err := suite.sut.Execute(ctx)
 
-			assert.NoError(t, err)
-			assert.Equal(t, "hermes", card.Name)
-			assert.False(t, card.Capabilities.Streaming)
-			if assert.Len(t, card.SupportedInterfaces, 1) {
-				assert.Equal(t, "https://agent.example.com/api/a2a", card.SupportedInterfaces[0].Url)
-				assert.Equal(t, "JSONRPC", card.SupportedInterfaces[0].ProtocolBinding)
-				assert.Equal(t, "1.0", card.SupportedInterfaces[0].ProtocolVersion)
-			}
-			if assert.Len(t, card.Skills, 1) {
-				assert.Equal(t, "chat", card.Skills[0].Id)
-				assert.Equal(t, "hermes", card.Skills[0].Name)
-			}
-		})
+				assert.NoError(t, err)
+				assert.Equal(t, "hermes", card.Name)
+				assert.False(t, card.Capabilities.Streaming)
+				if assert.Len(t, card.SupportedInterfaces, 1) {
+					assert.Equal(t, "https://agent.example.com/api/a2a", card.SupportedInterfaces[0].Url)
+					assert.Equal(t, "JSONRPC", card.SupportedInterfaces[0].ProtocolBinding)
+					assert.Equal(t, "1.0", card.SupportedInterfaces[0].ProtocolVersion)
+				}
+				if assert.Len(t, card.Skills, 1) {
+					assert.Equal(t, "chat", card.Skills[0].Id)
+					assert.Equal(t, "hermes", card.Skills[0].Name)
+				}
+			},
+		)
 	})
 
 	t.Run("Given the registration client fails", func(t *testing.T) {

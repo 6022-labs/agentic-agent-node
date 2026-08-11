@@ -7,5 +7,8 @@ import (
 )
 
 type ResponseClientInterface interface {
-	Create(ctx context.Context, body *models.ExternalCreateResponsePayload) (*models.ExternalCreateResponseResultPayload, error)
+	Create(
+		ctx context.Context,
+		body *models.ExternalCreateResponsePayload,
+	) (*models.ExternalCreateResponseResultPayload, error)
 }

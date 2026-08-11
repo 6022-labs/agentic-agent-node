@@ -13,7 +13,9 @@ type ListMCPConnectionsTool struct {
 	listMCPConnectionsExecutor tool_interfaces.ListMCPConnectionsExecutorInterface
 }
 
-func NewListMCPConnectionsTool(listMCPConnectionsExecutor tool_interfaces.ListMCPConnectionsExecutorInterface) *ListMCPConnectionsTool {
+func NewListMCPConnectionsTool(
+	listMCPConnectionsExecutor tool_interfaces.ListMCPConnectionsExecutorInterface,
+) *ListMCPConnectionsTool {
 	return &ListMCPConnectionsTool{listMCPConnectionsExecutor: listMCPConnectionsExecutor}
 }
 

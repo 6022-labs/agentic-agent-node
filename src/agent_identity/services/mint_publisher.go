@@ -104,7 +104,12 @@ func (s *MintPublisher) createMint(
 	if err != nil {
 		return nil, fmt.Errorf("mint: %w", err)
 	}
-	tokenId, err := s.agentCollectionRequester.AddressToTokenId(chainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(
+		chainId,
+		collection,
+		enums.AddressTypeEvm,
+		nodeWallet.Hex(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read minted token: %w", err)
 	}
@@ -112,7 +117,14 @@ func (s *MintPublisher) createMint(
 		return nil, fmt.Errorf("mint succeeded but token not found on chain")
 	}
 
-	savedAgent, savedState, err := s.registrationReconciler.ReconcileMint(ctx, agent, state, collection, tokenId, &txHash)
+	savedAgent, savedState, err := s.registrationReconciler.ReconcileMint(
+		ctx,
+		agent,
+		state,
+		collection,
+		tokenId,
+		&txHash,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("reconcile mint: %w", err)
 	}
@@ -131,14 +143,23 @@ func (s *MintPublisher) ResolveMintedToken(ctx context.Context, agent *models.Ag
 	collection := common.HexToAddress(agent.CollectionAddress)
 
 	chainId := lo.FromPtr(agent.ChainId)
-	tokenId, err := s.agentCollectionRequester.AddressToTokenId(chainId, collection, enums.AddressTypeEvm, nodeWallet.Hex())
+	tokenId, err := s.agentCollectionRequester.AddressToTokenId(
+		chainId,
+		collection,
+		enums.AddressTypeEvm,
+		nodeWallet.Hex(),
+	)
 	if err != nil {
 		return common.Address{}, 0, fmt.Errorf("read minted token: %w", err)
 	}
 
 	// Fallback: the draft's collection may be wrong/empty; scan the manager.
 	if tokenId == 0 {
-		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByAddress(chainId, enums.AddressTypeEvm, nodeWallet.Hex())
+		foundCollection, foundTokenId, _, findErr := s.agentCollectionsManagerRequester.FindAgentByAddress(
+			chainId,
+			enums.AddressTypeEvm,
+			nodeWallet.Hex(),
+		)
 		if findErr != nil {
 			return common.Address{}, 0, fmt.Errorf("scan collections: %w", findErr)
 		}

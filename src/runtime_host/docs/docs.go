@@ -141,7 +141,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Validates the collection + form and binds the draft to the node wallet. Returns the stored draft + status.",
+                "description": "Validates the collection + form and binds the draft to the node wallet. Returns stored draft + status.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -370,7 +370,7 @@ const docTemplate = `{
         },
         "/internal/authorize": {
             "post": {
-                "description": "Resolves the agent identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by gateway during /auth/verify.",
+                "description": "Resolves the identity, fetches OwnerOf(tokenId), compares to the supplied address. Used by /auth/verify.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1183,7 +1183,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Idempotent batch append to the local conversation transcript. Dedup by SHA-512 hash of (role, content, conversationId).",
+                "description": "Idempotent batch append to the transcript. Dedup by SHA-512 hash of (role, content, conversationId).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1268,7 +1268,7 @@ const docTemplate = `{
         },
         "/internal/identity/card-signature": {
             "post": {
-                "description": "Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card. The card must not carry a ` + "`" + `signatures` + "`" + ` member.",
+                "description": "Returns an A2A detached JWS (ES256K) over the JCS-canonicalized card; no ` + "`" + `signatures` + "`" + ` member allowed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1314,7 +1314,7 @@ const docTemplate = `{
         },
         "/internal/identity/ens/publish": {
             "post": {
-                "description": "Writes the ` + "`" + `url` + "`" + ` text record for the agent's NFT via AgentEnsRegistry. Requires the NFT to already exist.",
+                "description": "Writes the ` + "`" + `url` + "`" + ` text record for the agent's NFT via AgentEnsRegistry. Requires an existing NFT.",
                 "produces": [
                     "application/json"
                 ],
@@ -2333,7 +2333,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Agentic Agent Node — Runtime Host API",
-	Description:      "Internal-only runtime + knowledge surface. Bound to 127.0.0.1; only gateway_host calls it. All endpoints are mounted under /internal.",
+	Description:      "Internal-only runtime + knowledge surface on 127.0.0.1; gateway_host calls it; mounted under /internal.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

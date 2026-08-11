@@ -37,10 +37,14 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"collectionAddress":"0xabc","to":"0xowner","role":"agent","name":"bob","wallets":[]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"collectionAddress":"0xabc","to":"0xowner","role":"agent","name":"bob","wallets":[]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the mint info payload", func(t *testing.T) {
@@ -63,10 +67,12 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-				Body:         []byte(`{"code":"boom"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

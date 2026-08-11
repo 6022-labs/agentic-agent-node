@@ -29,7 +29,10 @@ func TestWhenCarryingAgentIdentityInContext(t *testing.T) {
 		t.Run("Should read it back from the derived context", func(t *testing.T) {
 			t.Parallel()
 
-			ctx := observability.ContextWithAgentIdentity(context.Background(), observability.AgentIdentity{EnsDomain: "myagent.6022.eth"})
+			ctx := observability.ContextWithAgentIdentity(
+				context.Background(),
+				observability.AgentIdentity{EnsDomain: "myagent.6022.eth"},
+			)
 
 			identity, ok := observability.AgentIdentityFromContext(ctx)
 

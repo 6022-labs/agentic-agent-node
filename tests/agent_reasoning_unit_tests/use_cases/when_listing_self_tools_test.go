@@ -88,7 +88,9 @@ func TestWhenListingSelfTools(t *testing.T) {
 
 		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockSelfToolRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockSelfToolRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return an internal error", func(t *testing.T) {

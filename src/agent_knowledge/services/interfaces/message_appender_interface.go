@@ -9,5 +9,9 @@ import (
 type MessageAppenderInterface interface {
 	// Append demojizes, hashes and dedups against stored rows, returning only
 	// the rows actually inserted.
-	Append(ctx context.Context, conversationId string, messages []models.ConversationMessage) ([]models.ConversationMessage, error)
+	Append(
+		ctx context.Context,
+		conversationId string,
+		messages []models.ConversationMessage,
+	) ([]models.ConversationMessage, error)
 }

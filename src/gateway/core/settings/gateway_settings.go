@@ -11,7 +11,7 @@ const GatewaySettingsKey = "gateway"
 
 const defaultPublicPrefix = "/api"
 
-// GatewaySettings holds gateway-wide public-exposure config; PublicPrefix is the reverse-proxy mount path (nginx) the gateway is served under, used to build any absolute URL it advertises.
+// GatewaySettings holds public-exposure config; PublicPrefix is the nginx mount path used in advertised absolute URLs.
 type GatewaySettings struct {
 	PublicPrefix string `koanf:"public_prefix"`
 }

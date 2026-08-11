@@ -49,7 +49,9 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
 		}
 
 		t.Run("Should report not-found", func(t *testing.T) {

@@ -15,7 +15,9 @@ type CreatePaymentRuleTool struct {
 	createPaymentRuleExecutor tool_interfaces.CreatePaymentRuleExecutorInterface
 }
 
-func NewCreatePaymentRuleTool(createPaymentRuleExecutor tool_interfaces.CreatePaymentRuleExecutorInterface) *CreatePaymentRuleTool {
+func NewCreatePaymentRuleTool(
+	createPaymentRuleExecutor tool_interfaces.CreatePaymentRuleExecutorInterface,
+) *CreatePaymentRuleTool {
 	return &CreatePaymentRuleTool{
 		AbstractPaymentRuleTool:   NewAbstractPaymentRuleTool(),
 		createPaymentRuleExecutor: createPaymentRuleExecutor,
@@ -30,7 +32,9 @@ func (t *CreatePaymentRuleTool) Definition() *models.Tool {
 			"name":   utils.StringProperty("Rule name (1-64 characters)."),
 			"price":  utils.StringProperty("Non-negative integer price in the asset's atomic units (0 = free)."),
 			"method": utils.StringProperty("Payment method; defaults to x402."),
-			"config": utils.ObjectProperty("Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), payTo (address), assetTransferMethod, addressPatterns}."),
+			"config": utils.ObjectProperty(
+				"Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), payTo (address), assetTransferMethod, addressPatterns}.",
+			),
 		}, []string{"name", "price", "config"}),
 	}
 }

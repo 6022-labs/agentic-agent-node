@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/.well-known/6022": {
             "get": {
-                "description": "6022 discovery document (identity + invocation), open/unauthenticated. Documents POST /responses, including the caller-supplied ` + "`" + `instructions` + "`" + ` per-request session overlay (bounded; it cannot override the agent's built-in system prompt and is not carried across turns). Requires agent identity, so it errors until the node is registered.",
+                "description": "Open 6022 discovery document; documents POST /responses and its bounded ` + "`" + `instructions` + "`" + ` overlay.",
                 "produces": [
                     "application/json"
                 ],
@@ -49,7 +49,7 @@ const docTemplate = `{
         },
         "/.well-known/agent-card.json": {
             "get": {
-                "description": "A2A v1.0 discovery document (ProtoJSON), open/unauthenticated. supportedInterfaces advertises the SendMessage endpoint. Requires agent identity, so it errors until the node is registered.",
+                "description": "Open A2A v1.0 agent card (ProtoJSON); advertises SendMessage. Errors until the node is registered.",
                 "produces": [
                     "application/json"
                 ],
@@ -81,7 +81,7 @@ const docTemplate = `{
         },
         "/a2a": {
             "post": {
-                "description": "JSON-RPC 2.0 \"SendMessage\" (A2A v1.0). Maps the message onto one inference turn and returns an immediate agent Message in result.message. x402-gated like /responses: send a PAYMENT-SIGNATURE header.",
+                "description": "JSON-RPC 2.0 SendMessage (A2A v1.0): one inference turn, immediate reply. x402-gated like /responses.",
                 "consumes": [
                     "application/json"
                 ],
@@ -508,7 +508,7 @@ const docTemplate = `{
         },
         "/auth/challenge": {
             "get": {
-                "description": "Returns a fresh SIWE (EIP-4361) message + expiry for the given address. The caller signs the message verbatim (EIP-191 personal_sign) and posts the result to /auth/verify.",
+                "description": "Returns a fresh SIWE (EIP-4361) message + expiry; sign it verbatim (EIP-191) and post to /auth/verify.",
                 "produces": [
                     "application/json"
                 ],
@@ -556,7 +556,7 @@ const docTemplate = `{
         },
         "/auth/verify": {
             "post": {
-                "description": "Rebuilds the EIP-4361 message for the nonce, verifies the EIP-191 signature, checks the recovered address against the NFT owner via the worker, and issues a HS256 JWT.",
+                "description": "Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership, issues a HS256 JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1496,7 +1496,7 @@ const docTemplate = `{
         },
         "/responses": {
             "post": {
-                "description": "x402 v2 gated: send a PAYMENT-SIGNATURE header. Each caller pays the cheapest accept option whose address patterns match them — zero-price options (agent wallet and NFT owner by default) are served free without settlement. Anonymous 402 responses advertise only the options open to everyone.",
+                "description": "x402 v2 gated (PAYMENT-SIGNATURE header): callers pay the cheapest matching option; zero-price is free.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2809,7 +2809,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Agentic Agent Node — Gateway Host API",
-	Description:      "Public HTTP front for one agent: auth (JWT + EIP-191), bootstrap status, config endpoints, /responses. Authenticated routes proxy to runtime_host on the loopback interface.",
+	Description:      "Public HTTP front: auth (JWT + EIP-191), config, /responses; proxies to runtime_host on loopback.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

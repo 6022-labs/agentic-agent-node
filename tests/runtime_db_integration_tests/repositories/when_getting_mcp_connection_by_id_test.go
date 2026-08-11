@@ -87,7 +87,15 @@ func TestWhenGettingMCPConnectionById(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), model_builders.NewMCPConnectionBuilder().WithAgentId(agentId).WithName("github").WithUrl("https://mcp.github.example").WithHeaderAuthKeys([]string{"Authorization"}).Build())
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewMCPConnectionBuilder().
+							WithAgentId(agentId).
+							WithName("github").
+							WithUrl("https://mcp.github.example").
+							WithHeaderAuthKeys([]string{"Authorization"}).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)

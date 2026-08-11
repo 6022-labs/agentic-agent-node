@@ -11,7 +11,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// AgentTelemetryContextMiddleware puts the agent identity on the ctx — the one place resolving "which agent" (swap for multi-agent). Runs first.
+// AgentTelemetryContextMiddleware puts the agent identity on the ctx — the one "which agent" resolver. Runs first.
 type AgentTelemetryContextMiddleware struct {
 	agentRepository repositories.AgentRepositoryInterface
 	cachedIdentity  atomic.Pointer[observability.AgentIdentity]
@@ -26,7 +26,7 @@ func NewAgentTelemetryContextMiddleware(
 }
 
 func (m *AgentTelemetryContextMiddleware) Handle(ctx *fiber.Ctx) error {
-	// Bridge the cancellable request ctx into UserContext (handlers are synchronous) + attach identity, so use cases get both.
+	// Bridge the cancellable request ctx into UserContext (handlers are synchronous) + attach identity for use cases.
 	var userCtx context.Context = ctx.Context()
 	if identity, ok := m.resolveAgentIdentity(userCtx); ok {
 		userCtx = observability.ContextWithAgentIdentity(userCtx, identity)
@@ -36,7 +36,9 @@ func (m *AgentTelemetryContextMiddleware) Handle(ctx *fiber.Ctx) error {
 }
 
 // resolveAgentIdentity caches the single agent's identity once known (lazy until minted).
-func (m *AgentTelemetryContextMiddleware) resolveAgentIdentity(reqCtx context.Context) (observability.AgentIdentity, bool) {
+func (m *AgentTelemetryContextMiddleware) resolveAgentIdentity(
+	reqCtx context.Context,
+) (observability.AgentIdentity, bool) {
 	if cached := m.cachedIdentity.Load(); cached != nil {
 		return *cached, true
 	}

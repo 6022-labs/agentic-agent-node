@@ -37,10 +37,12 @@ func TestWhenCheckingAgentMint(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCheckingAgentMintTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"mintStatus":"minted","ensStatus":"pending"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body:         []byte(`{"mintStatus":"minted","ensStatus":"pending"}`),
+				}, nil)
 		}
 
 		t.Run("Should decode the registration status payload", func(t *testing.T) {
@@ -62,10 +64,12 @@ func TestWhenCheckingAgentMint(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCheckingAgentMintTestingSuite) {
-			suite.mockClient.EXPECT().PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-				Body:         []byte(`{"code":"conflict","message":"already minting"}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationMintCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationMintCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"conflict","message":"already minting"}`),
+				}, nil)
 		}
 
 		t.Run("Should return a ConflictError", func(t *testing.T) {

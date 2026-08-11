@@ -87,7 +87,14 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
@@ -112,7 +119,14 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 					seedAgent(suite.dbClient, agentId)
 					seedAgent(suite.dbClient, otherAgentId)
 
-					inserted, err := suite.sut.Create(context.Background(), model_builders.NewSelfToolBuilder().WithAgentId(agentId).WithName("bash").WithEnabled(true).Build())
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), otherAgentId, inserted.Id)

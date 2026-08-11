@@ -13,7 +13,9 @@ type ListPaymentRulesTool struct {
 	listPaymentRulesExecutor tool_interfaces.ListPaymentRulesExecutorInterface
 }
 
-func NewListPaymentRulesTool(listPaymentRulesExecutor tool_interfaces.ListPaymentRulesExecutorInterface) *ListPaymentRulesTool {
+func NewListPaymentRulesTool(
+	listPaymentRulesExecutor tool_interfaces.ListPaymentRulesExecutorInterface,
+) *ListPaymentRulesTool {
 	return &ListPaymentRulesTool{listPaymentRulesExecutor: listPaymentRulesExecutor}
 }
 

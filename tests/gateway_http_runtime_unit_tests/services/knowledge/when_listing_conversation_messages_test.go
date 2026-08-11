@@ -40,10 +40,14 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
-				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				Body:         []byte(`{"messages":[{"id":"m1","conversationId":"conv-1","role":"user","content":"hi","timestamp":"2026-01-01T00:00:00Z"}]}`),
-			}, nil)
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"messages":[{"id":"m1","conversationId":"conv-1","role":"user","content":"hi","timestamp":"2026-01-01T00:00:00Z"}]}`,
+					),
+				}, nil)
 		}
 
 		t.Run("Should decode the conversation messages payload", func(t *testing.T) {
@@ -66,7 +70,9 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).Return(nil, errors.New("runtime down"))
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(nil, errors.New("runtime down"))
 		}
 
 		t.Run("Should propagate the transport error", func(t *testing.T) {

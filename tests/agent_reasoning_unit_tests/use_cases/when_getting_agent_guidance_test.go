@@ -90,7 +90,9 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), agent.Id).Return(nil, errors.New("db down"))
+			suite.mockAgentGuidanceRepository.EXPECT().
+				GetByAgentId(gomock.Any(), agent.Id).
+				Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return InternalError with guidance_lookup_failed", func(t *testing.T) {

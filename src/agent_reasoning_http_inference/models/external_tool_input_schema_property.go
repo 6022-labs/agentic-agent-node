@@ -13,7 +13,9 @@ type ExternalToolInputSchemaProperty struct {
 
 type ExternalToolInputSchemaProperties map[string]ExternalToolInputSchemaProperty
 
-func NewExternalToolInputSchemaPropertyFromInternalModel(internalProperty reasoning_models.ToolInputSchemeProperty) ExternalToolInputSchemaProperty {
+func NewExternalToolInputSchemaPropertyFromInternalModel(
+	internalProperty reasoning_models.ToolInputSchemeProperty,
+) ExternalToolInputSchemaProperty {
 	this := ExternalToolInputSchemaProperty{
 		Type:                 internalProperty.Type,
 		Description:          internalProperty.Description,
@@ -28,7 +30,9 @@ func NewExternalToolInputSchemaPropertyFromInternalModel(internalProperty reason
 	return this
 }
 
-func NewExternalToolInputSchemaPropertiesFromInternalModels(internalProperties map[string]reasoning_models.ToolInputSchemeProperty) ExternalToolInputSchemaProperties {
+func NewExternalToolInputSchemaPropertiesFromInternalModels(
+	internalProperties map[string]reasoning_models.ToolInputSchemeProperty,
+) ExternalToolInputSchemaProperties {
 	externalProperties := make(ExternalToolInputSchemaProperties)
 
 	for key, internalProperty := range internalProperties {
