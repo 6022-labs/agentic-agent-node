@@ -424,6 +424,7 @@ type ResponsesSelfToolResponse struct {
 	CreatedAt   *string `json:"createdAt,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Enabled     *bool   `json:"enabled,omitempty"`
+	Group       *string `json:"group,omitempty"`
 	Id          *string `json:"id,omitempty"`
 	Name        *string `json:"name,omitempty"`
 	UpdatedAt   *string `json:"updatedAt,omitempty"`

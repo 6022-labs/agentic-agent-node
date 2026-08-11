@@ -616,6 +616,8 @@ components:
           type: string
         enabled:
           type: boolean
+        group:
+          type: string
         id:
           type: string
         name:

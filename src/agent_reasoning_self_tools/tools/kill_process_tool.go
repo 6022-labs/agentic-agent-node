@@ -41,3 +41,7 @@ func (t *KillProcessTool) Execute(ctx context.Context, args map[string]any) (map
 func (t *KillProcessTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *KillProcessTool) GroupName() string {
+	return GroupMachine
+}

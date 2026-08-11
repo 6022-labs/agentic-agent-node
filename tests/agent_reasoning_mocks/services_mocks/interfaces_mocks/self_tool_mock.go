@@ -70,6 +70,20 @@ func (mr *MockSelfToolInterfaceMockRecorder) Execute(ctx, args any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockSelfToolInterface)(nil).Execute), ctx, args)
 }
 
+// GroupName mocks base method.
+func (m *MockSelfToolInterface) GroupName() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupName")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GroupName indicates an expected call of GroupName.
+func (mr *MockSelfToolInterfaceMockRecorder) GroupName() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupName", reflect.TypeOf((*MockSelfToolInterface)(nil).GroupName))
+}
+
 // IsEnabledByDefault mocks base method.
 func (m *MockSelfToolInterface) IsEnabledByDefault() bool {
 	m.ctrl.T.Helper()

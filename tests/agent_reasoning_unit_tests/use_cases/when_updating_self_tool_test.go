@@ -117,6 +117,7 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			suite.mockSelfToolRegistry.EXPECT().ListTools().Return([]*models.Tool{
 				{Name: "run_command", Description: "run a command"},
 			})
+			suite.mockSelfToolRegistry.EXPECT().ListGroupNames().Return(map[string]string{"run_command": "Machine"})
 		}
 
 		t.Run("Should toggle it off and return the joined response", func(t *testing.T) {
@@ -131,6 +132,7 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			assert.Equal(t, id, resp.Id)
 			assert.Equal(t, "run_command", resp.Name)
 			assert.Equal(t, "run a command", resp.Description)
+			assert.Equal(t, "Machine", resp.Group)
 			assert.False(t, resp.Enabled)
 		})
 	})

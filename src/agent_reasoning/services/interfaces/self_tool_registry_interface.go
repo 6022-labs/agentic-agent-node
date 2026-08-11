@@ -16,4 +16,7 @@ type SelfToolRegistryInterface interface {
 
 	// ListDefaultEnabled maps every registered tool name to its declared default enabled flag.
 	ListDefaultEnabled() map[string]bool
+
+	// ListGroupNames maps every registered tool name to its console display group.
+	ListGroupNames() map[string]string
 }

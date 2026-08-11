@@ -44,3 +44,7 @@ func (t *DeletePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 func (t *DeletePaymentRuleTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *DeletePaymentRuleTool) GroupName() string {
+	return GroupPayments
+}

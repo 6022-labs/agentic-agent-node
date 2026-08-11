@@ -44,3 +44,7 @@ func (t *ListAgentCollectionsTool) Execute(ctx context.Context, args map[string]
 func (t *ListAgentCollectionsTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *ListAgentCollectionsTool) GroupName() string {
+	return GroupIdentity
+}

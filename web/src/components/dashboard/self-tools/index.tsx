@@ -11,14 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import {
   Tooltip,
   TooltipContent,
@@ -57,14 +50,25 @@ export default function SelfToolsSection() {
       await updateSelfTool(tool.id, { enabled })
     } catch (error) {
       setTools((prev) =>
-        prev.map((t) => (t.id === tool.id ? { ...t, enabled: tool.enabled } : t))
+        prev.map((t) =>
+          t.id === tool.id ? { ...t, enabled: tool.enabled } : t
+        )
       )
       toast.error(extractErrorMessage(error, "Failed to update tool"))
     }
   }
 
+  const groups = React.useMemo(() => {
+    const byGroup = new Map<string, SelfTool[]>()
+    for (const tool of tools) {
+      const group = tool.group || "Other"
+      byGroup.set(group, [...(byGroup.get(group) ?? []), tool])
+    }
+    return [...byGroup.entries()].sort(([a], [b]) => a.localeCompare(b))
+  }, [tools])
+
   return (
-    <Card>
+    <Card className="lg:h-full lg:min-h-0 lg:overflow-hidden">
       <CardHeader>
         <CardTitle>Built-in tools</CardTitle>
         <CardDescription>
@@ -72,7 +76,7 @@ export default function SelfToolsSection() {
           are not offered to the model.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {loading ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
@@ -86,40 +90,48 @@ export default function SelfToolsSection() {
             description="The runtime has not registered any built-in tools yet."
           />
         ) : (
-          <div className="max-h-[28rem] overflow-y-auto">
+          <div className="max-h-[28rem] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
             <Table>
-              <TableHeader className="sticky top-0 z-10 bg-card">
-                <TableRow>
-                  <TableHead>Tool</TableHead>
-                  <TableHead className="w-24 text-right">Enabled</TableHead>
-                </TableRow>
-              </TableHeader>
               <TableBody>
-                {tools.map((tool) => (
-                  <TableRow key={tool.id}>
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            tabIndex={0}
-                            className="cursor-help font-mono text-xs font-medium underline decoration-dotted underline-offset-4"
-                          >
-                            {tool.name}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm">
-                          {tool.description}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Switch
-                        checked={tool.enabled}
-                        onCheckedChange={(enabled) => onToggle(tool, enabled)}
-                        aria-label={`Toggle ${tool.name}`}
-                      />
-                    </TableCell>
-                  </TableRow>
+                {groups.map(([group, groupTools]) => (
+                  <React.Fragment key={group}>
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={2}
+                        className="sticky top-0 z-10 bg-card pt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                      >
+                        {group}
+                      </TableCell>
+                    </TableRow>
+                    {groupTools.map((tool) => (
+                      <TableRow key={tool.id}>
+                        <TableCell>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                tabIndex={0}
+                                className="cursor-help font-mono text-xs font-medium underline decoration-dotted underline-offset-4"
+                              >
+                                {tool.name}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              {tool.description}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell className="w-24 text-right">
+                          <Switch
+                            checked={tool.enabled}
+                            onCheckedChange={(enabled) =>
+                              onToggle(tool, enabled)
+                            }
+                            aria-label={`Toggle ${tool.name}`}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>

@@ -34,3 +34,7 @@ func (t *GetPaymentFacilitatorsTool) Execute(ctx context.Context, _ map[string]a
 func (t *GetPaymentFacilitatorsTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *GetPaymentFacilitatorsTool) GroupName() string {
+	return GroupPayments
+}

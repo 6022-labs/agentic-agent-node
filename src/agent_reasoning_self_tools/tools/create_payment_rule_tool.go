@@ -50,3 +50,7 @@ func (t *CreatePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 func (t *CreatePaymentRuleTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *CreatePaymentRuleTool) GroupName() string {
+	return GroupPayments
+}

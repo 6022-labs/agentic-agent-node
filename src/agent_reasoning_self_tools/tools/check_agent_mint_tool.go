@@ -32,3 +32,7 @@ func (t *CheckAgentMintTool) Execute(ctx context.Context, _ map[string]any) (map
 func (t *CheckAgentMintTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *CheckAgentMintTool) GroupName() string {
+	return GroupIdentity
+}

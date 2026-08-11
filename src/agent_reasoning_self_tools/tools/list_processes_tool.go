@@ -33,3 +33,7 @@ func (t *ListProcessesTool) Execute(_ context.Context, _ map[string]any) (map[st
 func (t *ListProcessesTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *ListProcessesTool) GroupName() string {
+	return GroupMachine
+}

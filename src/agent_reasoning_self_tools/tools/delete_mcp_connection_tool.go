@@ -44,3 +44,7 @@ func (t *DeleteMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 func (t *DeleteMCPConnectionTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *DeleteMCPConnectionTool) GroupName() string {
+	return GroupMCP
+}

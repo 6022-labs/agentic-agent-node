@@ -63,5 +63,5 @@ func (u *UpdateSelfTool) Execute(
 			break
 		}
 	}
-	return responses.ToSelfToolResponse(updated, description), nil
+	return responses.ToSelfToolResponse(updated, description, u.selfToolRegistry.ListGroupNames()[updated.Name]), nil
 }

@@ -60,3 +60,7 @@ func (t *UpdatePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 func (t *UpdatePaymentRuleTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *UpdatePaymentRuleTool) GroupName() string {
+	return GroupPayments
+}

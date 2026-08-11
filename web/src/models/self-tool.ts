@@ -2,6 +2,7 @@ export type SelfTool = {
   id: string
   name: string
   description: string
+  group: string
   enabled: boolean
   createdAt: string
   updatedAt: string

@@ -34,3 +34,7 @@ func (t *GetAgentRegistrationTool) Execute(ctx context.Context, _ map[string]any
 func (t *GetAgentRegistrationTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *GetAgentRegistrationTool) GroupName() string {
+	return GroupIdentity
+}

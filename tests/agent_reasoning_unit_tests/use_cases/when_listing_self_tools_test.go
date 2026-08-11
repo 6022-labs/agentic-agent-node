@@ -59,9 +59,13 @@ func TestWhenListingSelfTools(t *testing.T) {
 				{Name: "get_identity", Description: "read own identity"},
 				{Name: "run_command", Description: "run a command"},
 			})
+			suite.mockSelfToolRegistry.EXPECT().ListGroupNames().Return(map[string]string{
+				"get_identity": "Identity",
+				"run_command":  "Machine",
+			})
 		}
 
-		t.Run("Should return the rows joined with their descriptions", func(t *testing.T) {
+		t.Run("Should return the rows joined with their descriptions and groups", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingSelfToolsBeforeEach(t)
@@ -74,10 +78,12 @@ func TestWhenListingSelfTools(t *testing.T) {
 				assert.Equal(t, rows[0].Id, resp.Tools[0].Id)
 				assert.Equal(t, "get_identity", resp.Tools[0].Name)
 				assert.Equal(t, "read own identity", resp.Tools[0].Description)
+				assert.Equal(t, "Identity", resp.Tools[0].Group)
 				assert.True(t, resp.Tools[0].Enabled)
 
 				assert.Equal(t, "run_command", resp.Tools[1].Name)
 				assert.Equal(t, "run a command", resp.Tools[1].Description)
+				assert.Equal(t, "Machine", resp.Tools[1].Group)
 				assert.False(t, resp.Tools[1].Enabled)
 			}
 		})

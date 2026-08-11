@@ -69,3 +69,7 @@ func (t *RunCommandTool) Execute(ctx context.Context, args map[string]any) (map[
 func (t *RunCommandTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *RunCommandTool) GroupName() string {
+	return GroupMachine
+}

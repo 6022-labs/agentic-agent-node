@@ -61,7 +61,7 @@ export default function McpConfigSection() {
   }
 
   return (
-    <Card>
+    <Card className="lg:h-full lg:min-h-0 lg:overflow-hidden">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -73,7 +73,7 @@ export default function McpConfigSection() {
           <McpConnectionDialog onSaved={load} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {loading ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
@@ -87,70 +87,72 @@ export default function McpConfigSection() {
             description="Connect an external tool server so the agent can call its tools while reasoning."
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Connection</TableHead>
-                <TableHead>Server URL</TableHead>
-                <TableHead>Tools</TableHead>
-                <TableHead>Auth</TableHead>
-                <TableHead className="w-24" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {connections.map((connection) => (
-                <TableRow key={connection.id}>
-                  <TableCell className="font-medium">
-                    {connection.name}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className="font-mono text-xs text-muted-foreground"
-                      title={connection.url}
-                    >
-                      {connection.url}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {connection.allowedToolPatterns?.length ? (
-                      <Badge variant="secondary">
-                        {connection.allowedToolPatterns.length} allowed
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">all</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {connection.headerAuthKeys?.length ? (
-                      <Badge variant="secondary">auth</Badge>
-                    ) : (
-                      <Badge variant="outline">none</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <McpConnectionDialog
-                      connection={connection}
-                      onSaved={load}
-                    />
-                    <ConfirmDialog
-                      title="Remove MCP connection?"
-                      description={`The agent will no longer be able to call tools from "${connection.name}".`}
-                      confirmLabel="Remove"
-                      onConfirm={() => onDelete(connection.id)}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Remove connection"
-                      >
-                        <Trash2 />
-                      </Button>
-                    </ConfirmDialog>
-                  </TableCell>
+          <div className="max-h-[28rem] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead>Connection</TableHead>
+                  <TableHead>Server URL</TableHead>
+                  <TableHead>Tools</TableHead>
+                  <TableHead>Auth</TableHead>
+                  <TableHead className="w-24" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {connections.map((connection) => (
+                  <TableRow key={connection.id}>
+                    <TableCell className="font-medium">
+                      {connection.name}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className="font-mono text-xs text-muted-foreground"
+                        title={connection.url}
+                      >
+                        {connection.url}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {connection.allowedToolPatterns?.length ? (
+                        <Badge variant="secondary">
+                          {connection.allowedToolPatterns.length} allowed
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">all</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {connection.headerAuthKeys?.length ? (
+                        <Badge variant="secondary">auth</Badge>
+                      ) : (
+                        <Badge variant="outline">none</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <McpConnectionDialog
+                        connection={connection}
+                        onSaved={load}
+                      />
+                      <ConfirmDialog
+                        title="Remove MCP connection?"
+                        description={`The agent will no longer be able to call tools from "${connection.name}".`}
+                        confirmLabel="Remove"
+                        onConfirm={() => onDelete(connection.id)}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Remove connection"
+                        >
+                          <Trash2 />
+                        </Button>
+                      </ConfirmDialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

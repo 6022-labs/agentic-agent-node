@@ -34,3 +34,7 @@ func (t *ListPaymentRulesTool) Execute(ctx context.Context, _ map[string]any) (m
 func (t *ListPaymentRulesTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *ListPaymentRulesTool) GroupName() string {
+	return GroupPayments
+}

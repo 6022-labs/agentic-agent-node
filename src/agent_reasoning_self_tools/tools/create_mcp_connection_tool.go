@@ -51,3 +51,7 @@ func (t *CreateMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 func (t *CreateMCPConnectionTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *CreateMCPConnectionTool) GroupName() string {
+	return GroupMCP
+}

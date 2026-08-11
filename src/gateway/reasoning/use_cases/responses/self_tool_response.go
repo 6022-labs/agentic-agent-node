@@ -11,6 +11,7 @@ type SelfToolResponse struct {
 	Id          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	Group       string    `json:"group"`
 	Enabled     bool      `json:"enabled"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -25,6 +26,7 @@ func ToSelfToolResponse(p *models.ExternalSelfToolPayload) *SelfToolResponse {
 		Id:          p.Id,
 		Name:        p.Name,
 		Description: p.Description,
+		Group:       p.Group,
 		Enabled:     p.Enabled,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,

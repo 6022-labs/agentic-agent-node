@@ -70,6 +70,20 @@ func (mr *MockSelfToolRegistryInterfaceMockRecorder) ListDefaultEnabled() *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDefaultEnabled", reflect.TypeOf((*MockSelfToolRegistryInterface)(nil).ListDefaultEnabled))
 }
 
+// ListGroupNames mocks base method.
+func (m *MockSelfToolRegistryInterface) ListGroupNames() map[string]string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListGroupNames")
+	ret0, _ := ret[0].(map[string]string)
+	return ret0
+}
+
+// ListGroupNames indicates an expected call of ListGroupNames.
+func (mr *MockSelfToolRegistryInterfaceMockRecorder) ListGroupNames() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupNames", reflect.TypeOf((*MockSelfToolRegistryInterface)(nil).ListGroupNames))
+}
+
 // ListTools mocks base method.
 func (m *MockSelfToolRegistryInterface) ListTools() []*models.Tool {
 	m.ctrl.T.Helper()

@@ -34,3 +34,7 @@ func (t *ListMCPConnectionsTool) Execute(ctx context.Context, _ map[string]any) 
 func (t *ListMCPConnectionsTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *ListMCPConnectionsTool) GroupName() string {
+	return GroupMCP
+}

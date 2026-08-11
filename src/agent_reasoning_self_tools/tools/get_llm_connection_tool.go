@@ -34,3 +34,7 @@ func (t *GetLLMConnectionTool) Execute(ctx context.Context, _ map[string]any) (m
 func (t *GetLLMConnectionTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *GetLLMConnectionTool) GroupName() string {
+	return GroupConfiguration
+}

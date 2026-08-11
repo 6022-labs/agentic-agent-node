@@ -44,11 +44,15 @@ func (u *ListSelfTools) Execute(ctx context.Context) (*responses.SelfToolListRes
 	for _, definition := range u.selfToolRegistry.ListTools() {
 		descriptionByName[definition.Name] = definition.Description
 	}
+	groupByName := u.selfToolRegistry.ListGroupNames()
 
 	// Post-reconcile every row matches a declared tool.
 	tools := make([]responses.SelfToolResponse, 0, len(rows))
 	for i := range rows {
-		tools = append(tools, *responses.ToSelfToolResponse(&rows[i], descriptionByName[rows[i].Name]))
+		tools = append(
+			tools,
+			*responses.ToSelfToolResponse(&rows[i], descriptionByName[rows[i].Name], groupByName[rows[i].Name]),
+		)
 	}
 	return &responses.SelfToolListResponse{Tools: tools}, nil
 }

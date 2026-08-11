@@ -16,4 +16,7 @@ type SelfToolInterface interface {
 
 	// IsEnabledByDefault seeds the tool's enabled flag when its DB row is first created.
 	IsEnabledByDefault() bool
+
+	// GroupName names the console section this tool is displayed under.
+	GroupName() string
 }

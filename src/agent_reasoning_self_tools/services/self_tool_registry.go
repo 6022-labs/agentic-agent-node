@@ -20,6 +20,7 @@ type SelfToolRegistry struct {
 	toolsByName     map[string]interfaces.SelfToolInterface
 	definitions     []*models.Tool
 	defaultEnabled  map[string]bool
+	groupByName     map[string]string
 }
 
 type NewSelfToolRegistryParams struct {
@@ -34,6 +35,7 @@ func NewSelfToolRegistry(params NewSelfToolRegistryParams) *SelfToolRegistry {
 	toolsByName := make(map[string]interfaces.SelfToolInterface, len(params.SelfTools))
 	definitions := make([]*models.Tool, 0, len(params.SelfTools))
 	defaultEnabled := make(map[string]bool, len(params.SelfTools))
+	groupByName := make(map[string]string, len(params.SelfTools))
 
 	for _, tool := range params.SelfTools {
 		definition := tool.Definition()
@@ -44,6 +46,7 @@ func NewSelfToolRegistry(params NewSelfToolRegistryParams) *SelfToolRegistry {
 		toolsByName[definition.Name] = tool
 		definitions = append(definitions, definition)
 		defaultEnabled[definition.Name] = tool.IsEnabledByDefault()
+		groupByName[definition.Name] = tool.GroupName()
 	}
 
 	return &SelfToolRegistry{
@@ -52,6 +55,7 @@ func NewSelfToolRegistry(params NewSelfToolRegistryParams) *SelfToolRegistry {
 		toolsByName:     toolsByName,
 		definitions:     utils.SortedToolsByName(definitions),
 		defaultEnabled:  defaultEnabled,
+		groupByName:     groupByName,
 	}
 }
 
@@ -61,6 +65,10 @@ func (r *SelfToolRegistry) ListTools() []*models.Tool {
 
 func (r *SelfToolRegistry) ListDefaultEnabled() map[string]bool {
 	return r.defaultEnabled
+}
+
+func (r *SelfToolRegistry) ListGroupNames() map[string]string {
+	return r.groupByName
 }
 
 func (r *SelfToolRegistry) CallTool(ctx context.Context, toolName string, args map[string]any) (map[string]any, error) {

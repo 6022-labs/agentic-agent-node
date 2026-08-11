@@ -2608,6 +2608,9 @@ const docTemplate = `{
                 "enabled": {
                     "type": "boolean"
                 },
+                "group": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },

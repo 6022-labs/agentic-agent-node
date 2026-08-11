@@ -41,3 +41,7 @@ func (t *ReadProcessOutputTool) Execute(_ context.Context, args map[string]any) 
 func (t *ReadProcessOutputTool) IsEnabledByDefault() bool {
 	return true
 }
+
+func (t *ReadProcessOutputTool) GroupName() string {
+	return GroupMachine
+}

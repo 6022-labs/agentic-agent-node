@@ -34,3 +34,7 @@ func (t *GetBlockchainConfigTool) Execute(ctx context.Context, _ map[string]any)
 func (t *GetBlockchainConfigTool) IsEnabledByDefault() bool {
 	return false
 }
+
+func (t *GetBlockchainConfigTool) GroupName() string {
+	return GroupConfiguration
+}

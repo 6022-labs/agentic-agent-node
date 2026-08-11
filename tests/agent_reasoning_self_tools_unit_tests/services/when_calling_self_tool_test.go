@@ -30,6 +30,7 @@ func WhenCallingSelfToolBeforeEach(t *testing.T) *WhenCallingSelfToolTestingSuit
 		Return(&models.Tool{Name: "get_registration", Description: "read own registration"}).
 		AnyTimes()
 	mockSelfTool.EXPECT().IsEnabledByDefault().Return(true).AnyTimes()
+	mockSelfTool.EXPECT().GroupName().Return("General").AnyTimes()
 
 	mockSelfToolMetrics := metrics_mocks.NewMockSelfToolMetricsInterface(mockController)
 	mockSelfToolMetrics.EXPECT().RecordToolCall(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
