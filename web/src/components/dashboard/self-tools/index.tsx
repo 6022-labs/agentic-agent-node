@@ -19,6 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import EmptyState from "@/components/dashboard/empty-state"
 import type { SelfTool } from "@/models/self-tool"
 import { listSelfTools, updateSelfTool } from "@/queries/api/self-tools.queries"
@@ -81,34 +86,44 @@ export default function SelfToolsSection() {
             description="The runtime has not registered any built-in tools yet."
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tool</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="w-24 text-right">Enabled</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tools.map((tool) => (
-                <TableRow key={tool.id}>
-                  <TableCell className="font-medium font-mono text-xs">
-                    {tool.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {tool.description}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Switch
-                      checked={tool.enabled}
-                      onCheckedChange={(enabled) => onToggle(tool, enabled)}
-                      aria-label={`Toggle ${tool.name}`}
-                    />
-                  </TableCell>
+          <div className="max-h-[28rem] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead>Tool</TableHead>
+                  <TableHead className="w-24 text-right">Enabled</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tools.map((tool) => (
+                  <TableRow key={tool.id}>
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            tabIndex={0}
+                            className="cursor-help font-mono text-xs font-medium underline decoration-dotted underline-offset-4"
+                          >
+                            {tool.name}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          {tool.description}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Switch
+                        checked={tool.enabled}
+                        onCheckedChange={(enabled) => onToggle(tool, enabled)}
+                        aria-label={`Toggle ${tool.name}`}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
