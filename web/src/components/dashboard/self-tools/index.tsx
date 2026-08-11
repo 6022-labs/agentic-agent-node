@@ -2,6 +2,7 @@ import React from "react"
 import { toast } from "sonner"
 import { Wrench } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardContent,
@@ -94,12 +95,11 @@ export default function SelfToolsSection() {
               <TableBody>
                 {groups.map(([group, groupTools]) => (
                   <React.Fragment key={group}>
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell
-                        colSpan={2}
-                        className="sticky top-0 z-10 bg-muted pt-3 pb-3 text-sm font-semibold tracking-wide text-foreground"
-                      >
-                        {group}
+                    <TableRow className="border-b-0 hover:bg-transparent">
+                      <TableCell colSpan={2} className="sticky top-0 z-10 bg-card pt-4 pb-2">
+                        <Badge variant="secondary" className="text-sm font-semibold">
+                          {group}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                     {groupTools.map((tool) => (
