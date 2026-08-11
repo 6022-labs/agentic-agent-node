@@ -42,3 +42,7 @@ func (t *CreatePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 	}
 	return utils.ToToolResult(t.createPaymentRuleExecutor.Execute(ctx, request))
 }
+
+func (t *CreatePaymentRuleTool) IsEnabledByDefault() bool {
+	return false
+}

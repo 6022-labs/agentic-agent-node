@@ -28,3 +28,7 @@ func (t *GetPaymentFacilitatorsTool) Definition() *models.Tool {
 func (t *GetPaymentFacilitatorsTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.getPaymentFacilitatorsExecutor.Execute(ctx))
 }
+
+func (t *GetPaymentFacilitatorsTool) IsEnabledByDefault() bool {
+	return false
+}

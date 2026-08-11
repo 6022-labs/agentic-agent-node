@@ -52,3 +52,7 @@ func (t *UpdatePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 
 	return utils.ToToolResult(t.updatePaymentRuleExecutor.Execute(ctx, request))
 }
+
+func (t *UpdatePaymentRuleTool) IsEnabledByDefault() bool {
+	return false
+}

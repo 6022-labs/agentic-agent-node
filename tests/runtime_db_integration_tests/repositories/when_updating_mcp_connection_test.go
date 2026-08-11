@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "alpha", "https://a.example", "X-Old"))
+					inserted, err := suite.sut.Create(context.Background(), model_builders.NewMCPConnectionBuilder().WithAgentId(agentId).WithName("alpha").WithUrl("https://a.example").WithHeaderAuthKeys([]string{"X-Old"}).Build())
 					assert.NoError(t, err)
 
 					inserted.Name = "alpha-renamed"

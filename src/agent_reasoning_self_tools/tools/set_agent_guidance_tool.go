@@ -35,3 +35,7 @@ func (t *SetAgentGuidanceTool) Execute(ctx context.Context, args map[string]any)
 	}
 	return utils.ToToolResult(t.setAgentGuidanceExecutor.Execute(ctx, &reasoning_requests.SetAgentGuidanceRequest{Content: content}))
 }
+
+func (t *SetAgentGuidanceTool) IsEnabledByDefault() bool {
+	return false
+}

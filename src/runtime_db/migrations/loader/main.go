@@ -20,6 +20,7 @@ func main() {
 		&mcpConnectionWithCrossDomainFK{},
 		&llmConnectionWithCrossDomainFK{},
 		&agentGuidanceWithCrossDomainFK{},
+		&selfToolWithCrossDomainFK{},
 
 		&conversationWithCrossDomainFK{},
 		&agent_knowledge_models.ConversationMessage{},

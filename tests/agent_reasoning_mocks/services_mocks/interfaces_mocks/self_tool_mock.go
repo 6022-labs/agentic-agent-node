@@ -69,3 +69,17 @@ func (mr *MockSelfToolInterfaceMockRecorder) Execute(ctx, args any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockSelfToolInterface)(nil).Execute), ctx, args)
 }
+
+// IsEnabledByDefault mocks base method.
+func (m *MockSelfToolInterface) IsEnabledByDefault() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsEnabledByDefault")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsEnabledByDefault indicates an expected call of IsEnabledByDefault.
+func (mr *MockSelfToolInterfaceMockRecorder) IsEnabledByDefault() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEnabledByDefault", reflect.TypeOf((*MockSelfToolInterface)(nil).IsEnabledByDefault))
+}

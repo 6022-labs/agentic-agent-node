@@ -148,6 +148,11 @@ type RequestsUpdateMCPConnectionRequest struct {
 	Url                 *string            `json:"url,omitempty"`
 }
 
+// RequestsUpdateSelfToolRequest defines model for requests.UpdateSelfToolRequest.
+type RequestsUpdateSelfToolRequest struct {
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
 // ResponsesAgentCardSignatureResponse defines model for responses.AgentCardSignatureResponse.
 type ResponsesAgentCardSignatureResponse struct {
 	Protected *string `json:"protected,omitempty"`
@@ -409,6 +414,21 @@ type ResponsesResponseError struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// ResponsesSelfToolListResponse defines model for responses.SelfToolListResponse.
+type ResponsesSelfToolListResponse struct {
+	Tools *[]ResponsesSelfToolResponse `json:"tools,omitempty"`
+}
+
+// ResponsesSelfToolResponse defines model for responses.SelfToolResponse.
+type ResponsesSelfToolResponse struct {
+	CreatedAt   *string `json:"createdAt,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Enabled     *bool   `json:"enabled,omitempty"`
+	Id          *string `json:"id,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	UpdatedAt   *string `json:"updatedAt,omitempty"`
+}
+
 // ResponsesUsage defines model for responses.Usage.
 type ResponsesUsage struct {
 	InputTokens  *int `json:"input_tokens,omitempty"`
@@ -519,6 +539,14 @@ type PutInternalConfigPaymentPolicyRulesIdJSONBody struct {
 // PutInternalConfigPaymentPolicyRulesIdJSONBody0 defines parameters for PutInternalConfigPaymentPolicyRulesId.
 type PutInternalConfigPaymentPolicyRulesIdJSONBody0 = map[string]interface{}
 
+// PutInternalConfigSelfToolsIdJSONBody defines parameters for PutInternalConfigSelfToolsId.
+type PutInternalConfigSelfToolsIdJSONBody struct {
+	union json.RawMessage
+}
+
+// PutInternalConfigSelfToolsIdJSONBody0 defines parameters for PutInternalConfigSelfToolsId.
+type PutInternalConfigSelfToolsIdJSONBody0 = map[string]interface{}
+
 // PostInternalConversationsConversationIdMessagesJSONBody defines parameters for PostInternalConversationsConversationIdMessages.
 type PostInternalConversationsConversationIdMessagesJSONBody struct {
 	union json.RawMessage
@@ -575,6 +603,9 @@ type PostInternalConfigPaymentPolicyRulesJSONRequestBody PostInternalConfigPayme
 
 // PutInternalConfigPaymentPolicyRulesIdJSONRequestBody defines body for PutInternalConfigPaymentPolicyRulesId for application/json ContentType.
 type PutInternalConfigPaymentPolicyRulesIdJSONRequestBody PutInternalConfigPaymentPolicyRulesIdJSONBody
+
+// PutInternalConfigSelfToolsIdJSONRequestBody defines body for PutInternalConfigSelfToolsId for application/json ContentType.
+type PutInternalConfigSelfToolsIdJSONRequestBody PutInternalConfigSelfToolsIdJSONBody
 
 // PostInternalConversationsConversationIdMessagesJSONRequestBody defines body for PostInternalConversationsConversationIdMessages for application/json ContentType.
 type PostInternalConversationsConversationIdMessagesJSONRequestBody PostInternalConversationsConversationIdMessagesJSONBody
@@ -767,6 +798,14 @@ type ClientInterface interface {
 	PutInternalConfigPaymentPolicyRulesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PutInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInternalConfigSelfTools request
+	GetInternalConfigSelfTools(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutInternalConfigSelfToolsIdWithBody request with any body
+	PutInternalConfigSelfToolsIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutInternalConfigSelfToolsId(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConversations request
 	GetInternalConversations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1266,6 +1305,42 @@ func (c *Client) PutInternalConfigPaymentPolicyRulesIdWithBody(ctx context.Conte
 
 func (c *Client) PutInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutInternalConfigPaymentPolicyRulesIdRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInternalConfigSelfTools(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConfigSelfToolsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConfigSelfToolsIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigSelfToolsIdRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConfigSelfToolsId(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigSelfToolsIdRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2389,6 +2464,80 @@ func NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody(server string, id s
 	return req, nil
 }
 
+// NewGetInternalConfigSelfToolsRequest generates requests for GetInternalConfigSelfTools
+func NewGetInternalConfigSelfToolsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/self-tools")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutInternalConfigSelfToolsIdRequest calls the generic PutInternalConfigSelfToolsId builder with application/json body
+func NewPutInternalConfigSelfToolsIdRequest(server string, id string, body PutInternalConfigSelfToolsIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutInternalConfigSelfToolsIdRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewPutInternalConfigSelfToolsIdRequestWithBody generates requests for PutInternalConfigSelfToolsId with any type of body
+func NewPutInternalConfigSelfToolsIdRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/self-tools/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetInternalConversationsRequest generates requests for GetInternalConversations
 func NewGetInternalConversationsRequest(server string) (*http.Request, error) {
 	var err error
@@ -2783,6 +2932,14 @@ type ClientWithResponsesInterface interface {
 	PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error)
 
 	PutInternalConfigPaymentPolicyRulesIdWithResponse(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error)
+
+	// GetInternalConfigSelfToolsWithResponse request
+	GetInternalConfigSelfToolsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigSelfToolsResponse, error)
+
+	// PutInternalConfigSelfToolsIdWithBodyWithResponse request with any body
+	PutInternalConfigSelfToolsIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigSelfToolsIdResponse, error)
+
+	PutInternalConfigSelfToolsIdWithResponse(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigSelfToolsIdResponse, error)
 
 	// GetInternalConversationsWithResponse request
 	GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error)
@@ -3513,6 +3670,54 @@ func (r PutInternalConfigPaymentPolicyRulesIdResponse) StatusCode() int {
 	return 0
 }
 
+type GetInternalConfigSelfToolsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesSelfToolListResponse
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInternalConfigSelfToolsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInternalConfigSelfToolsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutInternalConfigSelfToolsIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesSelfToolResponse
+	JSON400      *ErrorsValidationError
+	JSON404      *ErrorsNotFoundError
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PutInternalConfigSelfToolsIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutInternalConfigSelfToolsIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInternalConversationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4027,6 +4232,32 @@ func (c *ClientWithResponses) PutInternalConfigPaymentPolicyRulesIdWithResponse(
 		return nil, err
 	}
 	return ParsePutInternalConfigPaymentPolicyRulesIdResponse(rsp)
+}
+
+// GetInternalConfigSelfToolsWithResponse request returning *GetInternalConfigSelfToolsResponse
+func (c *ClientWithResponses) GetInternalConfigSelfToolsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigSelfToolsResponse, error) {
+	rsp, err := c.GetInternalConfigSelfTools(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInternalConfigSelfToolsResponse(rsp)
+}
+
+// PutInternalConfigSelfToolsIdWithBodyWithResponse request with arbitrary body returning *PutInternalConfigSelfToolsIdResponse
+func (c *ClientWithResponses) PutInternalConfigSelfToolsIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigSelfToolsIdResponse, error) {
+	rsp, err := c.PutInternalConfigSelfToolsIdWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConfigSelfToolsIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutInternalConfigSelfToolsIdWithResponse(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigSelfToolsIdResponse, error) {
+	rsp, err := c.PutInternalConfigSelfToolsId(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConfigSelfToolsIdResponse(rsp)
 }
 
 // GetInternalConversationsWithResponse request returning *GetInternalConversationsResponse
@@ -5152,6 +5383,86 @@ func ParsePutInternalConfigPaymentPolicyRulesIdResponse(rsp *http.Response) (*Pu
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ResponsesPaymentRuleResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorsNotFoundError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInternalConfigSelfToolsResponse parses an HTTP response from a GetInternalConfigSelfToolsWithResponse call
+func ParseGetInternalConfigSelfToolsResponse(rsp *http.Response) (*GetInternalConfigSelfToolsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInternalConfigSelfToolsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesSelfToolListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutInternalConfigSelfToolsIdResponse parses an HTTP response from a PutInternalConfigSelfToolsIdWithResponse call
+func ParsePutInternalConfigSelfToolsIdResponse(rsp *http.Response) (*PutInternalConfigSelfToolsIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutInternalConfigSelfToolsIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesSelfToolResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

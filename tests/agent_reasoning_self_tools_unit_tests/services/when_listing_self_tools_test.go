@@ -24,6 +24,7 @@ func WhenListingSelfToolsBeforeEach(t *testing.T, toolNames ...string) *WhenList
 	for _, name := range toolNames {
 		mockSelfTool := interfaces_mocks.NewMockSelfToolInterface(mockController)
 		mockSelfTool.EXPECT().Definition().Return(&models.Tool{Name: name}).AnyTimes()
+		mockSelfTool.EXPECT().IsEnabledByDefault().Return(true).AnyTimes()
 		selfTools = append(selfTools, mockSelfTool)
 	}
 

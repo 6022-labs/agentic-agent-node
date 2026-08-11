@@ -28,3 +28,7 @@ func (t *CheckAgentEnsTool) Definition() *models.Tool {
 func (t *CheckAgentEnsTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.checkAgentEnsExecutor.Execute(ctx))
 }
+
+func (t *CheckAgentEnsTool) IsEnabledByDefault() bool {
+	return false
+}

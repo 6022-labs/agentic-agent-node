@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -86,7 +87,7 @@ func TestWhenGettingMCPConnectionById(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "github", "https://mcp.github.example", "Authorization"))
+					inserted, err := suite.sut.Create(context.Background(), model_builders.NewMCPConnectionBuilder().WithAgentId(agentId).WithName("github").WithUrl("https://mcp.github.example").WithHeaderAuthKeys([]string{"Authorization"}).Build())
 					assert.NoError(t, err)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)

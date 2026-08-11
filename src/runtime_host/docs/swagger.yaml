@@ -180,6 +180,11 @@ definitions:
       url:
         type: string
     type: object
+  requests.UpdateSelfToolRequest:
+    properties:
+      enabled:
+        type: boolean
+    type: object
   responses.AgentCardSignatureResponse:
     properties:
       protected:
@@ -573,6 +578,28 @@ definitions:
       code:
         type: string
       message:
+        type: string
+    type: object
+  responses.SelfToolListResponse:
+    properties:
+      tools:
+        items:
+          $ref: '#/definitions/responses.SelfToolResponse'
+        type: array
+    type: object
+  responses.SelfToolResponse:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+      updatedAt:
         type: string
     type: object
   responses.Usage:
@@ -1256,6 +1283,60 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       summary: Internal update payment rule
+      tags:
+      - Internal
+  /internal/config/self-tools:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SelfToolListResponse'
+        "500":
+          description: list_self_tools_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list self tools
+      tags:
+      - Internal
+  /internal/config/self-tools/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: self tool id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: self tool
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateSelfToolRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SelfToolResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: update_self_tool_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal update self tool
       tags:
       - Internal
   /internal/conversations:

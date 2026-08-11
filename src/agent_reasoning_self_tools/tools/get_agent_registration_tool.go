@@ -28,3 +28,7 @@ func (t *GetAgentRegistrationTool) Definition() *models.Tool {
 func (t *GetAgentRegistrationTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.getAgentRegistrationExecutor.Execute(ctx))
 }
+
+func (t *GetAgentRegistrationTool) IsEnabledByDefault() bool {
+	return false
+}

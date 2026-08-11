@@ -42,6 +42,15 @@ func (model mcpConnectionWithCrossDomainFK) TableName() string {
 	return model.MCPConnection.TableName()
 }
 
+type selfToolWithCrossDomainFK struct {
+	agent_reasoning_models.SelfTool
+	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`
+}
+
+func (model selfToolWithCrossDomainFK) TableName() string {
+	return model.SelfTool.TableName()
+}
+
 type paymentPolicyWithCrossDomainFK struct {
 	agent_payment_models.PaymentPolicy
 	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`

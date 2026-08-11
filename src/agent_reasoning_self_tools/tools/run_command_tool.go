@@ -49,3 +49,7 @@ func (t *RunCommandTool) Execute(ctx context.Context, args map[string]any) (map[
 		utils.OptionalBoolArg(args, "background"),
 	))
 }
+
+func (t *RunCommandTool) IsEnabledByDefault() bool {
+	return true
+}

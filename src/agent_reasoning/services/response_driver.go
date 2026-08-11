@@ -37,6 +37,7 @@ type ResponseDriver struct {
 	systemPromptBuilder        interfaces.SystemPromptBuilderInterface
 	mcpRequester               interfaces.McpRequesterInterface
 	selfToolRegistry           interfaces.SelfToolRegistryInterface
+	selfToolRepository         repositories.SelfToolRepositoryInterface
 	reasoningTracer            traces_interfaces.ReasoningTracerInterface
 	emojiDecoder               runtime_services_interfaces.EmojiDecoderInterface
 }
@@ -54,6 +55,7 @@ func NewResponseDriver(
 	systemPromptBuilder interfaces.SystemPromptBuilderInterface,
 	mcpRequester interfaces.McpRequesterInterface,
 	selfToolRegistry interfaces.SelfToolRegistryInterface,
+	selfToolRepository repositories.SelfToolRepositoryInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
 ) *ResponseDriver {
@@ -70,6 +72,7 @@ func NewResponseDriver(
 		systemPromptBuilder:        systemPromptBuilder,
 		mcpRequester:               mcpRequester,
 		selfToolRegistry:           selfToolRegistry,
+		selfToolRepository:         selfToolRepository,
 		reasoningTracer:            reasoningTracer,
 		emojiDecoder:               emojiDecoder,
 	}
@@ -122,7 +125,10 @@ func (d *ResponseDriver) Drive(
 		return nil, err
 	}
 
-	selfTools := d.selfToolRegistry.ListTools()
+	selfTools, err := d.loadSelfTools(ctx, agent.Id)
+	if err != nil {
+		return nil, err
+	}
 
 	guidance, err := d.loadGuidance(ctx, agent.Id)
 	if err != nil {
@@ -334,6 +340,33 @@ func (d *ResponseDriver) loadMCPConnections(ctx context.Context, agentId uuid.UU
 			}
 		}
 		out = append(out, &c)
+	}
+	return out, nil
+}
+
+func (d *ResponseDriver) loadSelfTools(ctx context.Context, agentId uuid.UUID) ([]*models.Tool, error) {
+	rows, err := d.selfToolRepository.ListByAgentId(ctx, agentId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list self tools: %w", err)
+	}
+
+	enabledByName := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		enabledByName[row.Name] = row.Enabled
+	}
+
+	defaultEnabled := d.selfToolRegistry.ListDefaultEnabled()
+
+	definitions := d.selfToolRegistry.ListTools()
+	out := make([]*models.Tool, 0, len(definitions))
+	for _, definition := range definitions {
+		enabled, found := enabledByName[definition.Name]
+		if !found {
+			enabled = defaultEnabled[definition.Name]
+		}
+		if enabled {
+			out = append(out, definition)
+		}
 	}
 	return out, nil
 }

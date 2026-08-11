@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -85,7 +86,7 @@ func TestWhenDeletingMCPConnectionById(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					inserted, err := suite.sut.Create(context.Background(), newMCPConnection(agentId, "alpha", "https://a.example"))
+					inserted, err := suite.sut.Create(context.Background(), model_builders.NewMCPConnectionBuilder().WithAgentId(agentId).WithName("alpha").WithUrl("https://a.example").WithHeaderAuthKeys(nil).Build())
 					assert.NoError(t, err)
 
 					assert.NoError(t, suite.sut.DeleteById(context.Background(), inserted.AgentId, inserted.Id))

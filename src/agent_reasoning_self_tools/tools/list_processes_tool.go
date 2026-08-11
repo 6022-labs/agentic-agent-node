@@ -29,3 +29,7 @@ func (t *ListProcessesTool) Execute(_ context.Context, _ map[string]any) (map[st
 	// Wrapped in an object: a tool result is never a bare array.
 	return utils.ToToolResult(map[string]any{"processes": t.listProcessesExecutor.List()}, nil)
 }
+
+func (t *ListProcessesTool) IsEnabledByDefault() bool {
+	return true
+}

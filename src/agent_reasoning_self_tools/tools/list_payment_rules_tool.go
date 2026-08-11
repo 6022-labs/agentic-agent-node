@@ -28,3 +28,7 @@ func (t *ListPaymentRulesTool) Definition() *models.Tool {
 func (t *ListPaymentRulesTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.listPaymentRulesExecutor.Execute(ctx))
 }
+
+func (t *ListPaymentRulesTool) IsEnabledByDefault() bool {
+	return false
+}

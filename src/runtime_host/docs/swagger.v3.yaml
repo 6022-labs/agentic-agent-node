@@ -184,6 +184,11 @@ components:
         url:
           type: string
       type: object
+    requests.UpdateSelfToolRequest:
+      properties:
+        enabled:
+          type: boolean
+      type: object
     responses.AgentCardSignatureResponse:
       properties:
         protected:
@@ -593,6 +598,29 @@ components:
         code:
           type: string
         message:
+          type: string
+      type: object
+    responses.SelfToolListResponse:
+      properties:
+        tools:
+          items:
+            $ref: '#/components/schemas/responses.SelfToolResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.SelfToolResponse:
+      properties:
+        createdAt:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        name:
+          type: string
+        updatedAt:
           type: string
       type: object
     responses.Usage:
@@ -1388,6 +1416,72 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: update_payment_rule_failed
       summary: Internal update payment rule
+      tags:
+      - Internal
+  /internal/config/self-tools:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.SelfToolListResponse'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: list_self_tools_failed
+      summary: Internal list self tools
+      tags:
+      - Internal
+  /internal/config/self-tools/{id}:
+    put:
+      parameters:
+      - description: self tool id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.UpdateSelfToolRequest'
+                description: self tool
+                summary: request
+        description: self tool
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.SelfToolResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: update_self_tool_failed
+      summary: Internal update self tool
       tags:
       - Internal
   /internal/conversations:

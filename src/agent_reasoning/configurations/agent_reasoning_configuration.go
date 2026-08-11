@@ -94,6 +94,10 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(services.NewSelfToolReconciler); err != nil {
+		panic(err)
+	}
+
 	providers := []any{
 		use_cases.NewSetupLLMConnection,
 		use_cases.NewGetLLMConnection,
@@ -107,6 +111,8 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		use_cases.NewDeleteMCPConnection,
 		use_cases.NewGetAgentGuidance,
 		use_cases.NewSetAgentGuidance,
+		use_cases.NewListSelfTools,
+		use_cases.NewUpdateSelfTool,
 	}
 	for _, p := range providers {
 		if err := container.Provide(p); err != nil {

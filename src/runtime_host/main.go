@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	agent_identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
+	agent_reasoning_services "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/common/host_configurations"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_host/configurations"
@@ -47,6 +48,20 @@ func main() {
 	) error {
 		if err := bootstrapRunner.Run(bootstrapCtx); err != nil {
 			logger.Error("bootstrap runner failed", zap.Error(err))
+			return err
+		}
+		return nil
+	}); err != nil {
+		panic(err)
+	}
+
+	// Self tool rows must mirror the registry before the first inference turn.
+	if err := container.Invoke(func(
+		selfToolReconciler *agent_reasoning_services.SelfToolReconciler,
+		logger *zap.Logger,
+	) error {
+		if err := selfToolReconciler.Reconcile(bootstrapCtx); err != nil {
+			logger.Error("self tool reconciliation failed", zap.Error(err))
 			return err
 		}
 		return nil

@@ -28,3 +28,7 @@ func (t *GetBlockchainConfigTool) Definition() *models.Tool {
 func (t *GetBlockchainConfigTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.getBlockchainConfigExecutor.Execute(ctx))
 }
+
+func (t *GetBlockchainConfigTool) IsEnabledByDefault() bool {
+	return false
+}

@@ -28,3 +28,7 @@ func (t *GetPaymentPolicyTool) Definition() *models.Tool {
 func (t *GetPaymentPolicyTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.getPaymentPolicyExecutor.Execute(ctx))
 }
+
+func (t *GetPaymentPolicyTool) IsEnabledByDefault() bool {
+	return false
+}

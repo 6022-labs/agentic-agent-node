@@ -134,6 +134,12 @@ func addReasoningConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		reasoning_services.NewHttpSelfToolConfigClient,
+		dig.As(new(reasoning_interfaces.SelfToolConfigClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		reasoning_services.NewHttpResponseClient,
 		dig.As(new(reasoning_interfaces.ResponseClientInterface)),
 	); err != nil {

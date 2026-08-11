@@ -28,3 +28,7 @@ func (t *ListMCPConnectionsTool) Definition() *models.Tool {
 func (t *ListMCPConnectionsTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.listMCPConnectionsExecutor.Execute(ctx))
 }
+
+func (t *ListMCPConnectionsTool) IsEnabledByDefault() bool {
+	return true
+}

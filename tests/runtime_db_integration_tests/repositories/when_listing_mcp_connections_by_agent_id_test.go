@@ -3,12 +3,14 @@ package repositories_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -86,8 +88,20 @@ func TestWhenListingMCPConnectionsByAgentId(t *testing.T) {
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
 
-					alpha := newMCPConnection(agentId, "alpha", "https://a.example")
-					beta := newMCPConnection(agentId, "beta", "https://b.example")
+					alpha := model_builders.NewMCPConnectionBuilder().
+						WithAgentId(agentId).
+						WithName("alpha").
+						WithUrl("https://a.example").
+						WithHeaderAuthKeys(nil).
+						WithCreatedAt(time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)).
+						Build()
+					beta := model_builders.NewMCPConnectionBuilder().
+						WithAgentId(agentId).
+						WithName("beta").
+						WithUrl("https://b.example").
+						WithHeaderAuthKeys(nil).
+						WithCreatedAt(time.Date(2026, 1, 1, 11, 0, 0, 0, time.UTC)).
+						Build()
 
 					_, err := suite.sut.Create(context.Background(), alpha)
 					assert.NoError(t, err)

@@ -159,6 +159,8 @@ func addReasoningConfiguration(container *dig.Container) {
 		reasoning_use_cases.NewCreateMcpConnection,
 		reasoning_use_cases.NewUpdateMcpConnection,
 		reasoning_use_cases.NewDeleteMcpConnection,
+		reasoning_use_cases.NewListSelfTools,
+		reasoning_use_cases.NewUpdateSelfTool,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

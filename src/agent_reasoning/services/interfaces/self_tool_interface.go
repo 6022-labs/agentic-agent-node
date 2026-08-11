@@ -13,4 +13,7 @@ type SelfToolInterface interface {
 
 	// Execute runs the tool; domain failures come back as a result payload, not an error.
 	Execute(ctx context.Context, args map[string]any) (map[string]any, error)
+
+	// IsEnabledByDefault seeds the tool's enabled flag when its DB row is first created.
+	IsEnabledByDefault() bool
 }

@@ -56,6 +56,20 @@ func (mr *MockSelfToolRegistryInterfaceMockRecorder) CallTool(ctx, toolName, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CallTool", reflect.TypeOf((*MockSelfToolRegistryInterface)(nil).CallTool), ctx, toolName, args)
 }
 
+// ListDefaultEnabled mocks base method.
+func (m *MockSelfToolRegistryInterface) ListDefaultEnabled() map[string]bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDefaultEnabled")
+	ret0, _ := ret[0].(map[string]bool)
+	return ret0
+}
+
+// ListDefaultEnabled indicates an expected call of ListDefaultEnabled.
+func (mr *MockSelfToolRegistryInterfaceMockRecorder) ListDefaultEnabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDefaultEnabled", reflect.TypeOf((*MockSelfToolRegistryInterface)(nil).ListDefaultEnabled))
+}
+
 // ListTools mocks base method.
 func (m *MockSelfToolRegistryInterface) ListTools() []*models.Tool {
 	m.ctrl.T.Helper()

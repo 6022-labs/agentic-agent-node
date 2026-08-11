@@ -38,11 +38,21 @@ type WhenDrivingResponseTestingSuite struct {
 	mockSystemPromptBuilder        *interfaces_mocks.MockSystemPromptBuilderInterface
 	mockMcpRequester               *interfaces_mocks.MockMcpRequesterInterface
 	mockSelfToolRegistry           *interfaces_mocks.MockSelfToolRegistryInterface
+	mockSelfToolRepository         *repositories_mocks.MockSelfToolRepositoryInterface
 	mockEmojiDecoder               *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
-// WhenDrivingResponseBeforeEach registers selfTools as the registry content (none by default).
+// WhenDrivingResponseBeforeEach registers selfTools as the registry content (none by default), all default-enabled with no stored rows.
 func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *WhenDrivingResponseTestingSuite {
+	defaultEnabled := make(map[string]bool, len(selfTools))
+	for _, tool := range selfTools {
+		defaultEnabled[tool.Name] = true
+	}
+	return WhenDrivingResponseWithSelfToolStateBeforeEach(t, nil, defaultEnabled, selfTools...)
+}
+
+// WhenDrivingResponseWithSelfToolStateBeforeEach lets a case pin the stored self tool rows and registry defaults.
+func WhenDrivingResponseWithSelfToolStateBeforeEach(t *testing.T, selfToolRows []models.SelfTool, defaultEnabled map[string]bool, selfTools ...*models.Tool) *WhenDrivingResponseTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockInferenceLoop := interfaces_mocks.NewMockInferenceLoopInterface(mockController)
@@ -59,6 +69,10 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 
 	mockSelfToolRegistry := interfaces_mocks.NewMockSelfToolRegistryInterface(mockController)
 	mockSelfToolRegistry.EXPECT().ListTools().Return(selfTools).AnyTimes()
+	mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(defaultEnabled).AnyTimes()
+
+	mockSelfToolRepository := repositories_mocks.NewMockSelfToolRepositoryInterface(mockController)
+	mockSelfToolRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return(selfToolRows, nil).AnyTimes()
 
 	mockSpan := traces_interfaces_mocks.NewMockSpan(mockController)
 	mockSpan.EXPECT().Fail(gomock.Any()).AnyTimes()
@@ -83,6 +97,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 		mockSystemPromptBuilder,
 		mockMcpRequester,
 		mockSelfToolRegistry,
+		mockSelfToolRepository,
 		mockReasoningTracer,
 		mockEmojiDecoder,
 	)
@@ -100,6 +115,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, selfTools ...*models.Tool) *Whe
 		mockSystemPromptBuilder:        mockSystemPromptBuilder,
 		mockMcpRequester:               mockMcpRequester,
 		mockSelfToolRegistry:           mockSelfToolRegistry,
+		mockSelfToolRepository:         mockSelfToolRepository,
 		mockEmojiDecoder:               mockEmojiDecoder,
 	}
 }
@@ -643,6 +659,74 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
+	t.Run("Given an MCP connection restricts its allowed tool patterns", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := *model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			WithHeaderAuthKeys(nil).
+			WithAllowedToolPatterns([]string{"fetch_.*"}).
+			Build()
+		allowedTool := &models.Tool{Name: "fetch_items"}
+		filteredTool := &models.Tool{Name: "delete_items"}
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{mcpConnection}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return([]*models.Tool{allowedTool, filteredTool}, nil)
+
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				DoAndReturn(func(_ any, _ map[identity_enums.AddressType]string, _ string, _ []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, _ string) string {
+					if assert.Len(t, mcpTools, 1) {
+						for _, tools := range mcpTools {
+							if assert.Len(t, tools, 1) {
+								assert.Equal(t, "fetch_items", tools[0].Name)
+							}
+						}
+					}
+					return builtSystemPrompt
+				})
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					if assert.Len(t, mcpTools, 1) {
+						for _, tools := range mcpTools {
+							if assert.Len(t, tools, 1) {
+								assert.Equal(t, "fetch_items", tools[0].Name)
+							}
+						}
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should pass only the pattern-allowed tools to builder + loop", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
 	t.Run("Given the self tool registry exposes tools", func(t *testing.T) {
 		t.Parallel()
 
@@ -729,6 +813,119 @@ func TestWhenDrivingResponse(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
+	t.Run("Given a stored row disables a declared self tool", func(t *testing.T) {
+		t.Parallel()
+
+		enabledTool := &models.Tool{Name: "get_identity"}
+		disabledTool := &models.Tool{Name: "run_command"}
+		disabledRow := *model_builders.NewSelfToolBuilder().WithName("run_command").WithEnabled(false).Build()
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				DoAndReturn(func(_ any, _ map[identity_enums.AddressType]string, _ string, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, _ string) string {
+					assert.Empty(t, mcpTools)
+					if assert.Len(t, selfTools, 1) {
+						assert.Equal(t, "get_identity", selfTools[0].Name)
+					}
+					return builtSystemPrompt
+				})
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					assert.Empty(t, mcpTools)
+					if assert.Len(t, selfTools, 1) {
+						assert.Equal(t, "get_identity", selfTools[0].Name)
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should filter the disabled tool out of the list passed to builder + loop", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseWithSelfToolStateBeforeEach(t,
+				[]models.SelfTool{disabledRow},
+				map[string]bool{"get_identity": true, "run_command": true},
+				enabledTool, disabledTool)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+		})
+	})
+
+	t.Run("Given a declared self tool has no stored row", func(t *testing.T) {
+		t.Parallel()
+
+		defaultOnTool := &models.Tool{Name: "get_identity"}
+		defaultOffTool := &models.Tool{Name: "run_command"}
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.expectDemojizePassthrough()
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().GetAllByAgentId(gomock.Any(), gomock.Any()).Return(map[identity_enums.AddressType]string{}, nil).AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				DoAndReturn(func(_ any, _ map[identity_enums.AddressType]string, _ string, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, _ string) string {
+					assert.Empty(t, mcpTools)
+					if assert.Len(t, selfTools, 1) {
+						assert.Equal(t, "get_identity", selfTools[0].Name)
+					}
+					return builtSystemPrompt
+				})
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					assert.Empty(t, mcpTools)
+					if assert.Len(t, selfTools, 1) {
+						assert.Equal(t, "get_identity", selfTools[0].Name)
+					}
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: "ok"}), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should fall back to each tool's registry default", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseWithSelfToolStateBeforeEach(t,
+				nil,
+				map[string]bool{"get_identity": true, "run_command": false},
+				defaultOnTool, defaultOffTool)
 			initSuite(suite)
 
 			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)

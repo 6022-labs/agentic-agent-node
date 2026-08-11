@@ -38,3 +38,7 @@ func (t *DeleteMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 	}
 	return utils.SuccessResult(), nil
 }
+
+func (t *DeleteMCPConnectionTool) IsEnabledByDefault() bool {
+	return true
+}

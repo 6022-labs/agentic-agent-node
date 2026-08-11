@@ -35,3 +35,7 @@ func (t *ReadProcessOutputTool) Execute(_ context.Context, args map[string]any) 
 
 	return utils.ToToolResult(t.readProcessOutputExecutor.ReadOutput(sessionId))
 }
+
+func (t *ReadProcessOutputTool) IsEnabledByDefault() bool {
+	return true
+}

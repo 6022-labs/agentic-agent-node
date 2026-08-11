@@ -123,6 +123,7 @@ func addReasoningConfiguration(container *dig.Container) {
 	provideController(container, reasoning.NewResponseController)
 	provideController(container, reasoning.NewLlmConfigController)
 	provideController(container, reasoning.NewMcpConfigController)
+	provideController(container, reasoning.NewSelfToolConfigController)
 	provideController(container, reasoning.NewA2AMessageController)
 	provideController(container, reasoning.NewAgentGuidanceController)
 }

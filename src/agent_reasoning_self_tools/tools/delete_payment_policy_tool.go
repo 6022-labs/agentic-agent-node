@@ -31,3 +31,7 @@ func (t *DeletePaymentPolicyTool) Execute(ctx context.Context, _ map[string]any)
 	}
 	return utils.SuccessResult(), nil
 }
+
+func (t *DeletePaymentPolicyTool) IsEnabledByDefault() bool {
+	return false
+}

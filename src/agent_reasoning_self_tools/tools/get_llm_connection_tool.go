@@ -28,3 +28,7 @@ func (t *GetLLMConnectionTool) Definition() *models.Tool {
 func (t *GetLLMConnectionTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.getLLMConnectionExecutor.Execute(ctx))
 }
+
+func (t *GetLLMConnectionTool) IsEnabledByDefault() bool {
+	return false
+}

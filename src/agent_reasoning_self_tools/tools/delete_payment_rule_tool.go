@@ -38,3 +38,7 @@ func (t *DeletePaymentRuleTool) Execute(ctx context.Context, args map[string]any
 	}
 	return utils.SuccessResult(), nil
 }
+
+func (t *DeletePaymentRuleTool) IsEnabledByDefault() bool {
+	return false
+}

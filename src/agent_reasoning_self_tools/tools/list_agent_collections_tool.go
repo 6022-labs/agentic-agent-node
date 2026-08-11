@@ -36,3 +36,7 @@ func (t *ListAgentCollectionsTool) Execute(ctx context.Context, args map[string]
 	}
 	return utils.ToToolResult(t.listAgentCollectionsExecutor.Execute(ctx, &identity_requests.ListAgentCollectionsRequest{ChainId: chainId}))
 }
+
+func (t *ListAgentCollectionsTool) IsEnabledByDefault() bool {
+	return false
+}

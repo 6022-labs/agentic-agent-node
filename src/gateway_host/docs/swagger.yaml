@@ -222,6 +222,11 @@ definitions:
       url:
         type: string
     type: object
+  requests.UpdateSelfToolRequest:
+    properties:
+      enabled:
+        type: boolean
+    type: object
   requests.VerifyAuthRequest:
     properties:
       address:
@@ -526,6 +531,13 @@ definitions:
           $ref: '#/definitions/models.ExternalPaymentRule'
         type: array
     type: object
+  responses.ListSelfToolsResponse:
+    properties:
+      tools:
+        items:
+          $ref: '#/definitions/responses.SelfToolResponse'
+        type: array
+    type: object
   responses.McpConnectionResponse:
     properties:
       allowedToolPatterns:
@@ -664,6 +676,21 @@ definitions:
       message:
         type: string
     type: object
+  responses.SelfToolResponse:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   responses.SendMessageResult:
     properties:
       message:
@@ -702,8 +729,6 @@ definitions:
       protocolVersion:
         type: string
       signatures:
-        description: Signatures must stay empty while the card is being signed — the
-          spec excludes this member from the signed content.
         items:
           $ref: '#/definitions/responses.AgentCardSignature'
         type: array
@@ -725,8 +750,6 @@ definitions:
       name:
         type: string
       signatures:
-        description: Signatures must stay empty while the card is being signed — the
-          spec excludes this member from the signed content.
         items:
           $ref: '#/definitions/responses.AgentCardSignature'
         type: array
@@ -1571,6 +1594,64 @@ paths:
       security:
       - BearerAuth: []
       summary: Update payment rule
+      tags:
+      - Config
+  /config/self-tools:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListSelfToolsResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List self tools
+      tags:
+      - Config
+  /config/self-tools/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: self tool id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: self tool
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateSelfToolRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SelfToolResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update self tool
       tags:
       - Config
   /conversations:

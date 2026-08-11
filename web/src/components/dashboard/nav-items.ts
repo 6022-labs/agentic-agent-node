@@ -4,7 +4,7 @@ import {
   Coins,
   Fingerprint,
   MessagesSquare,
-  Plug,
+  Wrench,
   type LucideIcon,
 } from "lucide-react"
 
@@ -17,7 +17,7 @@ export type NavItem = {
 export const configureNavItems: NavItem[] = [
   { title: "Identity", path: "/dashboard/identity", icon: Fingerprint },
   { title: "LLM", path: "/dashboard/llm", icon: Brain },
-  { title: "MCP Connections", path: "/dashboard/mcp", icon: Plug },
+  { title: "Tools", path: "/dashboard/mcp", icon: Wrench },
   { title: "Memory", path: "/dashboard/memory", icon: BrainCircuit },
   { title: "Payments", path: "/dashboard/payments", icon: Coins },
 ]

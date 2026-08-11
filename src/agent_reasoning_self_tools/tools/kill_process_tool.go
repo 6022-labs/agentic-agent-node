@@ -37,3 +37,7 @@ func (t *KillProcessTool) Execute(ctx context.Context, args map[string]any) (map
 	}
 	return utils.SuccessResult(), nil
 }
+
+func (t *KillProcessTool) IsEnabledByDefault() bool {
+	return true
+}

@@ -302,6 +302,49 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the LLM calls a self tool that is not offered this turn", func(t *testing.T) {
+		t.Parallel()
+
+		offeredTool := &models.Tool{Name: "get_identity"}
+		selfTools := []*models.Tool{offeredTool}
+		expectedFinal := "understood"
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
+			// mockSelfToolRegistry.CallTool carries no expectation — dispatching the refused tool would fail the test.
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: "self_run_command"},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should feed a refusal payload back without invoking the registry", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, selfTools, nil, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "call_1", out[2].ToolCallId)
+				assert.Contains(t, out[2].Content, "disabled or unknown")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
+		})
+	})
+
 	t.Run("Given the self tool call fails with a structured validation error", func(t *testing.T) {
 		t.Parallel()
 
@@ -667,6 +710,53 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorIs(t, err, interfaces.ErrInferenceLoopMaxIterationsExceeded)
+		})
+	})
+
+	t.Run("Given the LLM calls an MCP tool that is not offered this turn", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			Build()
+		offeredTool := &models.Tool{Name: "fetch_items"}
+		expectedFinal := "understood"
+
+		mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: {offeredTool}}
+
+		initSuite := func(suite *WhenRunningInferenceLoopTestingSuite) {
+			suite.expectDemojizePassthrough()
+			// mockMcpRequester.CallTool carries no expectation — dispatching the refused tool would fail the test.
+			firstCall := suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{
+					ToolCalls: []interfaces.ToolCall{
+						{Id: "call_1", Name: fmt.Sprintf("mcp_%s_ghost_tool", mcpConnection.Name)},
+					},
+				}, nil)
+
+			secondCall := suite.mockLLMExecutor.EXPECT().
+				Complete(gomock.Any(), gomock.Any(), gomock.Any(), mcpTools, gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{expectedFinal}}, nil)
+
+			gomock.InOrder(firstCall, secondCall)
+		}
+
+		t.Run("Should feed a refusal payload back without invoking the requester", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningInferenceLoopBeforeEach(t, 5)
+			initSuite(suite)
+
+			out, err := suite.sut.Run(ctx, llmConnection, nil, mcpTools, []*interfaces.ChatCompletionMessage{{Role: "user", Content: "go"}})
+
+			assert.NoError(t, err)
+			if assert.Len(t, out, 4) {
+				assert.Equal(t, "tool", out[2].Role)
+				assert.Equal(t, "call_1", out[2].ToolCallId)
+				assert.Contains(t, out[2].Content, "failed to map tool call")
+				assert.Equal(t, expectedFinal, out[3].Content)
+			}
 		})
 	})
 

@@ -16,7 +16,8 @@ type MCPConnectionBuilder struct {
 	createdAt time.Time
 	updatedAt time.Time
 
-	headerAuthKeys []string
+	headerAuthKeys      []string
+	allowedToolPatterns []string
 }
 
 func NewMCPConnectionBuilder() *MCPConnectionBuilder {
@@ -69,6 +70,11 @@ func (b *MCPConnectionBuilder) WithHeaderAuthKeys(headerAuthKeys []string) *MCPC
 	return b
 }
 
+func (b *MCPConnectionBuilder) WithAllowedToolPatterns(allowedToolPatterns []string) *MCPConnectionBuilder {
+	b.allowedToolPatterns = allowedToolPatterns
+	return b
+}
+
 func (b *MCPConnectionBuilder) WithCreatedAt(createdAt time.Time) *MCPConnectionBuilder {
 	b.createdAt = createdAt
 	return b
@@ -84,12 +90,13 @@ func (b *MCPConnectionBuilder) Build() *models.MCPConnection {
 	headerAuthKeys.FromArray(b.headerAuthKeys)
 
 	return &models.MCPConnection{
-		Id:             b.id,
-		AgentId:        b.agentId,
-		Url:            b.url,
-		Name:           b.name,
-		CreatedAt:      b.createdAt,
-		UpdatedAt:      b.updatedAt,
-		HeaderAuthKeys: headerAuthKeys,
+		Id:                  b.id,
+		AgentId:             b.agentId,
+		Url:                 b.url,
+		Name:                b.name,
+		CreatedAt:           b.createdAt,
+		UpdatedAt:           b.updatedAt,
+		HeaderAuthKeys:      headerAuthKeys,
+		AllowedToolPatterns: b.allowedToolPatterns,
 	}
 }

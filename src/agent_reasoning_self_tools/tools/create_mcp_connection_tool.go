@@ -45,3 +45,7 @@ func (t *CreateMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 		AllowedToolPatterns: []string{".*"},
 	}))
 }
+
+func (t *CreateMCPConnectionTool) IsEnabledByDefault() bool {
+	return true
+}

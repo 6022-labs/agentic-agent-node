@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/metrics/interfaces"
@@ -113,7 +114,7 @@ func (l *InferenceLoop) Run(
 
 		if len(completion.ToolCalls) > 0 {
 			l.reasoningMetrics.RecordToolCalls(ctx, int64(len(completion.ToolCalls)))
-			toolMessages, err := l.dispatchToolCalls(ctx, completion.ToolCalls, mcpTools)
+			toolMessages, err := l.dispatchToolCalls(ctx, completion.ToolCalls, selfTools, mcpTools)
 			if err != nil {
 				return nil, err
 			}
@@ -199,12 +200,13 @@ func (l *InferenceLoop) recordExecutedToolCalls(
 func (l *InferenceLoop) dispatchToolCalls(
 	ctx context.Context,
 	toolCalls []interfaces.ToolCall,
+	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 ) ([]*interfaces.ChatCompletionMessage, error) {
 	out := make([]*interfaces.ChatCompletionMessage, 0, len(toolCalls))
 
 	for _, toolCall := range toolCalls {
-		message, err := l.dispatchToolCall(ctx, toolCall, mcpTools)
+		message, err := l.dispatchToolCall(ctx, toolCall, selfTools, mcpTools)
 		if err != nil {
 			l.logger.Warn("tool call failed", zap.String("toolName", toolCall.Name), zap.Error(err))
 			message, err = l.toolResultMessage(toolCall, l.errorPayload(err))
@@ -221,6 +223,7 @@ func (l *InferenceLoop) dispatchToolCalls(
 func (l *InferenceLoop) dispatchToolCall(
 	ctx context.Context,
 	toolCall interfaces.ToolCall,
+	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 ) (*interfaces.ChatCompletionMessage, error) {
 	namespace := utils.ExtractNamespaceFromFunctionName(toolCall.Name)
@@ -229,6 +232,10 @@ func (l *InferenceLoop) dispatchToolCall(
 		selfToolName, err := utils.ExtractSelfToolNameFromFunctionName(toolCall.Name)
 		if err != nil {
 			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("failed to map tool call %q: %s", toolCall.Name, err.Error()))
+		}
+
+		if !slices.ContainsFunc(selfTools, func(t *models.Tool) bool { return t.Name == selfToolName }) {
+			return nil, apperrors.NewValidationError("tool", fmt.Sprintf("self tool %q is disabled or unknown", selfToolName))
 		}
 
 		l.logger.Debug("Calling self tool", zap.String("selfToolName", selfToolName))

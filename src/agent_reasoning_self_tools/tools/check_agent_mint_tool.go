@@ -28,3 +28,7 @@ func (t *CheckAgentMintTool) Definition() *models.Tool {
 func (t *CheckAgentMintTool) Execute(ctx context.Context, _ map[string]any) (map[string]any, error) {
 	return utils.ToToolResult(t.checkAgentMintExecutor.Execute(ctx))
 }
+
+func (t *CheckAgentMintTool) IsEnabledByDefault() bool {
+	return false
+}

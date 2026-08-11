@@ -1251,6 +1251,99 @@ const docTemplate = `{
                 }
             }
         },
+        "/config/self-tools": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "List self tools",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListSelfToolsResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/self-tools/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Update self tool",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "self tool id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "self tool",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateSelfToolRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.SelfToolResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/conversations": {
             "get": {
                 "security": [
@@ -1802,6 +1895,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.UpdateSelfToolRequest": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
         "requests.VerifyAuthRequest": {
             "type": "object",
             "properties": {
@@ -2273,6 +2374,17 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.ListSelfToolsResponse": {
+            "type": "object",
+            "properties": {
+                "tools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.SelfToolResponse"
+                    }
+                }
+            }
+        },
         "responses.McpConnectionResponse": {
             "type": "object",
             "properties": {
@@ -2484,6 +2596,29 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.SelfToolResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.SendMessageResult": {
             "type": "object",
             "properties": {
@@ -2542,7 +2677,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "signatures": {
-                    "description": "Signatures must stay empty while the card is being signed — the spec excludes this member from the signed content.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/responses.AgentCardSignature"
@@ -2575,7 +2709,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "signatures": {
-                    "description": "Signatures must stay empty while the card is being signed — the spec excludes this member from the signed content.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/responses.AgentCardSignature"

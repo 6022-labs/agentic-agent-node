@@ -422,6 +422,26 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalConfigPaymentPolicyRules(c
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentPolicyRules", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigPaymentPolicyRules), varargs...)
 }
 
+// GetInternalConfigSelfTools mocks base method.
+func (m *MockClientInterface) GetInternalConfigSelfTools(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigSelfTools", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigSelfTools indicates an expected call of GetInternalConfigSelfTools.
+func (mr *MockClientInterfaceMockRecorder) GetInternalConfigSelfTools(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigSelfTools", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigSelfTools), varargs...)
+}
+
 // GetInternalConversations mocks base method.
 func (m *MockClientInterface) GetInternalConversations(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1082,6 +1102,46 @@ func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentPolicyRulesId
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentPolicyRulesIdWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentPolicyRulesIdWithBody), varargs...)
 }
 
+// PutInternalConfigSelfToolsId mocks base method.
+func (m *MockClientInterface) PutInternalConfigSelfToolsId(ctx context.Context, id string, body clients.PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigSelfToolsId", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigSelfToolsId indicates an expected call of PutInternalConfigSelfToolsId.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigSelfToolsId(ctx, id, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigSelfToolsId", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigSelfToolsId), varargs...)
+}
+
+// PutInternalConfigSelfToolsIdWithBody mocks base method.
+func (m *MockClientInterface) PutInternalConfigSelfToolsIdWithBody(ctx context.Context, id, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigSelfToolsIdWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigSelfToolsIdWithBody indicates an expected call of PutInternalConfigSelfToolsIdWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigSelfToolsIdWithBody(ctx, id, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigSelfToolsIdWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigSelfToolsIdWithBody), varargs...)
+}
+
 // MockClientWithResponsesInterface is a mock of ClientWithResponsesInterface interface.
 type MockClientWithResponsesInterface struct {
 	ctrl     *gomock.Controller
@@ -1444,6 +1504,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigPayment
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentPolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigPaymentPolicyWithResponse), varargs...)
+}
+
+// GetInternalConfigSelfToolsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalConfigSelfToolsWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalConfigSelfToolsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigSelfToolsWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalConfigSelfToolsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigSelfToolsWithResponse indicates an expected call of GetInternalConfigSelfToolsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigSelfToolsWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigSelfToolsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigSelfToolsWithResponse), varargs...)
 }
 
 // GetInternalConversationsConversationIdMessagesWithResponse mocks base method.
@@ -2104,4 +2184,44 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPayment
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, id, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentPolicyRulesIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentPolicyRulesIdWithResponse), varargs...)
+}
+
+// PutInternalConfigSelfToolsIdWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigSelfToolsIdWithBodyWithResponse(ctx context.Context, id, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigSelfToolsIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigSelfToolsIdWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigSelfToolsIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigSelfToolsIdWithBodyWithResponse indicates an expected call of PutInternalConfigSelfToolsIdWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigSelfToolsIdWithBodyWithResponse(ctx, id, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigSelfToolsIdWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigSelfToolsIdWithBodyWithResponse), varargs...)
+}
+
+// PutInternalConfigSelfToolsIdWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigSelfToolsIdWithResponse(ctx context.Context, id string, body clients.PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigSelfToolsIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigSelfToolsIdWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigSelfToolsIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigSelfToolsIdWithResponse indicates an expected call of PutInternalConfigSelfToolsIdWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigSelfToolsIdWithResponse(ctx, id, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigSelfToolsIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigSelfToolsIdWithResponse), varargs...)
 }

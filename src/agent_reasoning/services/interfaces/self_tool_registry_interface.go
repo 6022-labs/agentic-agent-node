@@ -13,4 +13,7 @@ type SelfToolRegistryInterface interface {
 
 	// CallTool executes a registered tool and returns its result, or an error the caller surfaces to the model.
 	CallTool(ctx context.Context, toolName string, args map[string]any) (map[string]any, error)
+
+	// ListDefaultEnabled maps every registered tool name to its declared default enabled flag.
+	ListDefaultEnabled() map[string]bool
 }
