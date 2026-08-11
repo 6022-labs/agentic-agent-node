@@ -72,8 +72,7 @@ export default function SelfToolsSection() {
       <CardHeader>
         <CardTitle>Built-in tools</CardTitle>
         <CardDescription>
-          Tools the agent can call on itself during reasoning. Disabled tools
-          are not offered to the model.
+          Built-in tools the agent can call on itself during reasoning.
         </CardDescription>
       </CardHeader>
       <CardContent className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
