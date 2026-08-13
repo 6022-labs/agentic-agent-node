@@ -266,7 +266,11 @@ func TestWhenExecutingACommand(t *testing.T) {
 			sessionId := uuid.New()
 			suite.mockProcessRegistry.EXPECT().
 				Get(sessionId).
-				Return(&os_interfaces.BackgroundProcess{Id: sessionId}, &os_interfaces.CommandResult{Stdout: "done", ExitCode: lo.ToPtr(3)}, nil)
+				Return(
+					&os_interfaces.BackgroundProcess{Id: sessionId},
+					&os_interfaces.CommandResult{Stdout: "done", ExitCode: lo.ToPtr(3)},
+					nil,
+				)
 
 			result, err := suite.sut.ReadOutput(sessionId)
 

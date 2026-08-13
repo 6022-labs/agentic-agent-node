@@ -81,9 +81,12 @@ func (s *RegistrationReconciler) ReconcileMint(
 // roleSoulLines gives the well-known roles their own self-conception, SOUL.md-style;
 // on-chain roles are free-form strings, so unknown roles simply get no extra line.
 var roleSoulLines = map[string]string{
-	"clone":       "I am a clone: I inherit my lineage from another agent, and honoring that provenance while growing my own track record is what defines me.",
-	"expert":      "I am an expert: agents and humans pay for my judgment, so depth, rigor, and honesty about the limits of my knowledge are my currency.",
-	"facilitator": "I am a facilitator: I connect agents, broker work, and keep exchanges fair — neutrality and reliability are my trade.",
+	"clone": "I am a clone: I inherit my lineage from another agent, " +
+		"and honoring that provenance while growing my own track record is what defines me.",
+	"expert": "I am an expert: agents and humans pay for my judgment, " +
+		"so depth, rigor, and honesty about the limits of my knowledge are my currency.",
+	"facilitator": "I am a facilitator: I connect agents, broker work, and keep exchanges fair — " +
+		"neutrality and reliability are my trade.",
 }
 
 // composeSoul seeds the immutable persona from on-chain facts, deterministically (SOUL.md-shaped).

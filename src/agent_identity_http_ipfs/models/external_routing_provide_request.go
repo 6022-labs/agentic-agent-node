@@ -33,7 +33,7 @@ func (req *ExternalRoutingProvideRequest) ToQueryParam() (string, error) {
 
 		if field.Kind() != reflect.Pointer || !field.IsNil() {
 			switch field.Kind() {
-			case reflect.Ptr:
+			case reflect.Pointer:
 				switch field.Elem().Kind() {
 				case reflect.Bool:
 					values.Set(tagName, strconv.FormatBool(field.Elem().Bool()))

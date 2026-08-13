@@ -23,7 +23,11 @@ type EvmChainsSettings map[string]EvmChainSettings
 
 func NewEvmChainsSettings(logger *zap.Logger, k *koanf.Koanf) *EvmChainsSettings {
 	configByChainId := map[string]*EvmChainSettings{}
-	if err := k.UnmarshalWithConf(EvmChainsSettingsKey, &configByChainId, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
+	if err := k.UnmarshalWithConf(
+		EvmChainsSettingsKey,
+		&configByChainId,
+		koanf.UnmarshalConf{Tag: "koanf"},
+	); err != nil {
 		logger.Fatal("failed to unmarshal blockchain evm chains settings", zap.Error(err))
 	}
 

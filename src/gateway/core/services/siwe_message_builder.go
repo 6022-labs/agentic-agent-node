@@ -25,7 +25,8 @@ func (b *SiweMessageBuilder) Build(
 	expiresAt time.Time,
 ) string {
 	return fmt.Sprintf(
-		"%s wants you to sign in with your Ethereum account:\n%s\n\n%s\n\nURI: %s\nVersion: 1\nChain ID: %d\nNonce: %s\nIssued At: %s\nExpiration Time: %s",
+		"%s wants you to sign in with your Ethereum account:\n%s\n\n%s\n\n"+
+			"URI: %s\nVersion: 1\nChain ID: %d\nNonce: %s\nIssued At: %s\nExpiration Time: %s",
 		b.siweSettings.Domain,
 		address.Hex(),
 		b.siweSettings.Statement,

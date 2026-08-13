@@ -19,8 +19,10 @@ func NewListProcessesTool(listProcessesExecutor tool_interfaces.ListProcessesExe
 
 func (t *ListProcessesTool) Definition() *models.Tool {
 	return &models.Tool{
-		Name:        "list_processes",
-		Description: "List the background commands you started here: their session id, command, and whether they are still running. It never lists the other processes on this machine, and it forgets everything when the runtime restarts.",
+		Name: "list_processes",
+		Description: "List the background commands you started here: their session id, command, " +
+			"and whether they are still running. It never lists the other processes on this machine, " +
+			"and it forgets everything when the runtime restarts.",
 		InputScheme: utils.EmptyObjectScheme(),
 	}
 }

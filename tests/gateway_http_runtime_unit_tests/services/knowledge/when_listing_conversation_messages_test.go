@@ -45,7 +45,8 @@ func TestWhenListingConversationMessages(t *testing.T) {
 				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
-						`{"messages":[{"id":"m1","conversationId":"conv-1","role":"user","content":"hi","timestamp":"2026-01-01T00:00:00Z"}]}`,
+						`{"messages":[{"id":"m1","conversationId":"conv-1","role":"user",` +
+							`"content":"hi","timestamp":"2026-01-01T00:00:00Z"}]}`,
 					),
 				}, nil)
 		}

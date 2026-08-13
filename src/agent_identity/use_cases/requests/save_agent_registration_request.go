@@ -54,7 +54,8 @@ func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
 		strings.Contains(r.Name, "--") || !ensLabelCharsPattern.MatchString(r.Name) {
 		return errors.NewValidationError(
 			"name",
-			"must be a valid ENS label: lowercase letters, digits and hyphens; no leading, trailing or repeated hyphens; 1-63 chars",
+			"must be a valid ENS label: lowercase letters, digits and hyphens; "+
+				"no leading, trailing or repeated hyphens; 1-63 chars",
 		)
 	}
 

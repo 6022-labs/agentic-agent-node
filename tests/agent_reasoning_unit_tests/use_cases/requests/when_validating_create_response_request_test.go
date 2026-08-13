@@ -98,7 +98,8 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 			t,
 			json.Unmarshal(
 				[]byte(
-					`{"input":[{"type":"message","role":"user","content":"hi"}],"previous_response_id":"resp-1","conversation":{"id":"conv-7"}}`,
+					`{"input":[{"type":"message","role":"user","content":"hi"}],"previous_response_id":"resp-1",`+
+						`"conversation":{"id":"conv-7"}}`,
 				),
 				&req,
 			),

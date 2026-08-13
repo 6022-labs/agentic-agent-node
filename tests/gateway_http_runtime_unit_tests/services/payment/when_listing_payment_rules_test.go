@@ -42,7 +42,8 @@ func TestWhenListingPaymentRules(t *testing.T) {
 				Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
-						`{"rules":[{"id":"r1","name":"Public price","method":"x402","config":{"network":"eip155:80002","addressPatterns":[".*"]}}]}`,
+						`{"rules":[{"id":"r1","name":"Public price","method":"x402",` +
+							`"config":{"network":"eip155:80002","addressPatterns":[".*"]}}]}`,
 					),
 				}, nil)
 		}

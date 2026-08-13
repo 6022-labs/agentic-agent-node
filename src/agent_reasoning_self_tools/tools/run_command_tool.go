@@ -22,8 +22,9 @@ func (t *RunCommandTool) Definition() *models.Tool {
 	defaults := t.runCommandExecutor.Defaults()
 
 	return &models.Tool{
-		Name:        "run_command",
-		Description: "Run a shell command on your own machine and return its output. Every call starts a fresh shell, so no directory or variable survives between calls.",
+		Name: "run_command",
+		Description: "Run a shell command on your own machine and return its output. " +
+			"Every call starts a fresh shell, so no directory or variable survives between calls.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"command": utils.StringProperty("The shell command to run."),
 			"workdir": utils.StringProperty(
@@ -39,7 +40,9 @@ func (t *RunCommandTool) Definition() *models.Tool {
 			),
 			"yield_seconds": utils.IntegerProperty(
 				fmt.Sprintf(
-					"Seconds to wait before a still-running command is detached, returning its output so far plus a session id. It still stops at timeout_seconds. Defaults to %d; 0 waits for the command however long it takes.",
+					"Seconds to wait before a still-running command is detached, "+
+						"returning its output so far plus a session id. It still stops at timeout_seconds. "+
+						"Defaults to %d; 0 waits for the command however long it takes.",
 					defaults.YieldSeconds,
 				),
 			),

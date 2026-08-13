@@ -743,7 +743,15 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 
 			suite.mockX402FacilitatorClient.EXPECT().
 				Settle(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				Return(&x402.SettleResponse{Success: true, Transaction: "0xtxhash", Network: "eip155:80002", Payer: x402TestPayerHex}, nil).
+				Return(
+					&x402.SettleResponse{
+						Success:     true,
+						Transaction: "0xtxhash",
+						Network:     "eip155:80002",
+						Payer:       x402TestPayerHex,
+					},
+					nil,
+				).
 				Times(1)
 		}
 

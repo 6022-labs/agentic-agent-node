@@ -51,7 +51,12 @@ func (c *HttpSelfToolConfigClient) Update(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalSelfToolPayload
-	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrSelfToolNotFound); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(
+		resp.HTTPResponse,
+		resp.Body,
+		&payload,
+		gateway_interfaces.ErrSelfToolNotFound,
+	); err != nil {
 		return nil, err
 	}
 	return &payload, nil

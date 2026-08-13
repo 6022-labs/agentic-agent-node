@@ -81,8 +81,12 @@ func provideIdentityExecutors(container *dig.Container) {
 	asListAgentCollections := func(u *identity_use_cases.ListAgentCollections) tool_interfaces.ListAgentCollectionsExecutorInterface {
 		return u
 	}
-	asCheckAgentMint := func(u *identity_use_cases.CheckAgentMint) tool_interfaces.CheckAgentMintExecutorInterface { return u }
-	asCheckAgentEns := func(u *identity_use_cases.CheckAgentEns) tool_interfaces.CheckAgentEnsExecutorInterface { return u }
+	asCheckAgentMint := func(u *identity_use_cases.CheckAgentMint) tool_interfaces.CheckAgentMintExecutorInterface {
+		return u
+	}
+	asCheckAgentEns := func(u *identity_use_cases.CheckAgentEns) tool_interfaces.CheckAgentEnsExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetAgentRegistration)
 	provideExecutor(container, asListAgentCollections)

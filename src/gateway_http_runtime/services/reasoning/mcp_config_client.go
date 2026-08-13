@@ -72,7 +72,12 @@ func (c *HttpMCPConfigClient) DiscoverTools(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPServerToolsPayload
-	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(
+		resp.HTTPResponse,
+		resp.Body,
+		&payload,
+		gateway_interfaces.ErrMCPConnectionNotFound,
+	); err != nil {
 		return nil, err
 	}
 	return &payload, nil
@@ -84,7 +89,12 @@ func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*model
 		return nil, err
 	}
 	var payload models.ExternalMCPConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
+	if err := helpers.DecodeRuntimeResponse(
+		resp.HTTPResponse,
+		resp.Body,
+		&payload,
+		gateway_interfaces.ErrMCPConnectionNotFound,
+	); err != nil {
 		return nil, err
 	}
 	return &payload, nil
@@ -109,7 +119,12 @@ func (c *HttpMCPConfigClient) Update(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPConnectionPayload
-	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrMCPConnectionNotFound); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(
+		resp.HTTPResponse,
+		resp.Body,
+		&payload,
+		gateway_interfaces.ErrMCPConnectionNotFound,
+	); err != nil {
 		return nil, err
 	}
 	return &payload, nil

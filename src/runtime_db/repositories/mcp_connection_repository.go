@@ -23,7 +23,12 @@ func (r *MCPConnectionRepository) ListByAgentId(
 	agentId uuid.UUID,
 ) ([]models.MCPConnection, error) {
 	var entities []models.MCPConnection
-	if err := r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId).Order("created_at ASC").Find(&entities).Error; err != nil {
+	if err := r.client.GetDB().
+		WithContext(ctx).
+		Where("agent_id = ?", agentId).
+		Order("created_at ASC").
+		Find(&entities).
+		Error; err != nil {
 		return nil, err
 	}
 	return entities, nil

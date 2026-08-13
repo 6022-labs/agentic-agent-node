@@ -57,7 +57,8 @@ func TestWhenCreatingResponse(t *testing.T) {
 					return &clients.PostInternalResponsesResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 						Body: []byte(
-							`{"id":"conv-1","object":"response","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}]}`,
+							`{"id":"conv-1","object":"response","status":"completed",` +
+								`"output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}]}`,
 						),
 					}, nil
 				})

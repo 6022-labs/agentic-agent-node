@@ -42,7 +42,9 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 				Return(&clients.GetInternalConfigBlockchainResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
-						`{"evmChains":{"80002":{"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator","token6022Address":"0xtoken","ensRegistryAddress":"0xens","mintable":true,"facilitatorNetwork":"eip155:80002"}}}`,
+						`{"evmChains":{"80002":{"collectionsManagerAddress":"0xmanager","collectionCreatorAddress":"0xcreator",` +
+							`"token6022Address":"0xtoken","ensRegistryAddress":"0xens","mintable":true,` +
+							`"facilitatorNetwork":"eip155:80002"}}}`,
 					),
 				}, nil)
 		}

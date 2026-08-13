@@ -80,7 +80,10 @@ func ensureConversations(
 	for _, id := range conversationIds {
 		agentId := uuid.New()
 		seedAgent(dbClient, agentId)
-		if _, err := conversationRepository.Ensure(context.Background(), model_builders.NewConversationBuilder().WithId(id).WithAgentId(agentId).Build()); err != nil {
+		if _, err := conversationRepository.Ensure(
+			context.Background(),
+			model_builders.NewConversationBuilder().WithId(id).WithAgentId(agentId).Build(),
+		); err != nil {
 			panic(err)
 		}
 	}

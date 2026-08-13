@@ -41,7 +41,8 @@ func TestWhenGettingPaymentFacilitators(t *testing.T) {
 				Return(&clients.GetInternalConfigPaymentFacilitatorsResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
-						`{"facilitators":[{"network":"eip155:80002","baseUrl":"https://x402-amoy.polygon.technology","maxTimeoutSeconds":90}]}`,
+						`{"facilitators":[{"network":"eip155:80002",` +
+							`"baseUrl":"https://x402-amoy.polygon.technology","maxTimeoutSeconds":90}]}`,
 					),
 				}, nil)
 		}

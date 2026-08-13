@@ -104,7 +104,8 @@ func TestWhenComputingConversationMessageHash(t *testing.T) {
 				t,
 				withGlyph,
 				withShortcode,
-				"hash compare requires content already demojized — this confirms reasoning + knowledge MUST demojize before hashing",
+				"hash compare requires content already demojized — "+
+					"this confirms reasoning + knowledge MUST demojize before hashing",
 			)
 		})
 	})

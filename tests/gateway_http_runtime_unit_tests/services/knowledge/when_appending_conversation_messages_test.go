@@ -52,7 +52,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockClient.EXPECT().
-				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
 				DoAndReturn(
 					func(_ context.Context, _ string, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalConversationsConversationIdMessagesResponse, error) {
 						raw, err := io.ReadAll(reader)
@@ -66,7 +71,8 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 						return &clients.PostInternalConversationsConversationIdMessagesResponse{
 							HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 							Body: []byte(
-								`{"inserted":[{"id":"m1","conversationId":"conv-1","role":"user","content":"fake memory","timestamp":"2026-01-01T00:00:00Z"}]}`,
+								`{"inserted":[{"id":"m1","conversationId":"conv-1","role":"user",` +
+									`"content":"fake memory","timestamp":"2026-01-01T00:00:00Z"}]}`,
 							),
 						}, nil
 					})
@@ -93,7 +99,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockClient.EXPECT().
-				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
 				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
 					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
@@ -119,7 +130,12 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			suite.mockClient.EXPECT().
-				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(gomock.Any(), conversationId, "application/json", gomock.Any()).
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
 				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 					Body:         []byte(`{"code":"boom","message":"runtime down"}`),

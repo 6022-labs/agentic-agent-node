@@ -37,7 +37,9 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 			)
 
 			// The witness-bound primary type, exactly as the x402 spec encodes it.
-			expectedType := "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,Witness witness)TokenPermissions(address token,uint256 amount)Witness(address to,uint256 validAfter)"
+			expectedType := "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce," +
+				"uint256 deadline,Witness witness)TokenPermissions(address token,uint256 amount)" +
+				"Witness(address to,uint256 validAfter)"
 			assert.Equal(
 				t,
 				crypto.Keccak256([]byte(expectedType)),

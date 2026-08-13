@@ -35,7 +35,10 @@ func (t *DeleteMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 	if err != nil {
 		return nil, err
 	}
-	if err := t.deleteMCPConnectionExecutor.Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}); err != nil {
+	if err := t.deleteMCPConnectionExecutor.Execute(
+		ctx,
+		&reasoning_requests.DeleteMCPConnectionRequest{Id: id},
+	); err != nil {
 		return nil, err
 	}
 	return utils.SuccessResult(), nil

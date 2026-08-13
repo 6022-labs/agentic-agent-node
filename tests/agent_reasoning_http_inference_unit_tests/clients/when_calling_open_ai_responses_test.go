@@ -52,7 +52,8 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(
 				[]byte(
-					`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`,
+					`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant",` +
+						`"status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`,
 				),
 			)
 		}

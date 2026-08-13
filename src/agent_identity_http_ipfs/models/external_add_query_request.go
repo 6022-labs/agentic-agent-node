@@ -51,7 +51,7 @@ func (req *ExternalAddQueryRequest) ToQueryParam() (string, error) {
 
 		if !field.IsNil() {
 			switch field.Kind() {
-			case reflect.Ptr:
+			case reflect.Pointer:
 				switch field.Elem().Kind() {
 				case reflect.Bool:
 					values.Set(tagName, strconv.FormatBool(field.Elem().Bool()))

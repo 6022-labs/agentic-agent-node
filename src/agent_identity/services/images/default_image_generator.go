@@ -29,7 +29,8 @@ func (g *DefaultImageGenerator) Generate(params identity_interfaces.GenerateImag
 	imageDataURI := g.renderImageData(params.BaseImageBytes, params.BaseImageMimeType)
 
 	sb.WriteString(
-		`<svg width="512" height="768" viewBox="0 0 512 768" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`,
+		`<svg width="512" height="768" viewBox="0 0 512 768" ` +
+			`xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`,
 	)
 	sb.WriteString(`<defs>`)
 	sb.WriteString(`<clipPath id="clip-border"><rect width="512" height="768" rx="20" ry="20" /></clipPath>`)
@@ -164,7 +165,16 @@ func (g *DefaultImageGenerator) renderNameAndEnsDomain(name string, ensDomain st
 			),
 		)
 	} else {
-		sb.WriteString(fmt.Sprintf(`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`, backgroundWith/2, 48, int(nameFontSize), name))
+		sb.WriteString(
+			fmt.Sprintf(
+				`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" `+
+					`font-family="Courier, Liberation Mono, monospace">%s</text>`,
+				backgroundWith/2,
+				48,
+				int(nameFontSize),
+				name,
+			),
+		)
 	}
 
 	if needCarouselEns {
@@ -180,7 +190,16 @@ func (g *DefaultImageGenerator) renderNameAndEnsDomain(name string, ensDomain st
 			),
 		)
 	} else {
-		sb.WriteString(fmt.Sprintf(`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`, backgroundWith/2, 80, int(ensFontSize), ensDomain))
+		sb.WriteString(
+			fmt.Sprintf(
+				`<text x="%d" y="%d" text-anchor="middle" fill="white" font-size="%d" `+
+					`font-family="Courier, Liberation Mono, monospace">%s</text>`,
+				backgroundWith/2,
+				80,
+				int(ensFontSize),
+				ensDomain,
+			),
+		)
 	}
 
 	sb.WriteString(`</svg></g>`)
@@ -225,7 +244,9 @@ func (g *DefaultImageGenerator) renderCarousel(
 			offsetEnd = totalDistance + offsetStart
 		}
 		sb.WriteString(fmt.Sprintf(
-			`<textPath xlink:href="#%s" startOffset="%d">%s<animate attributeName="startOffset" from="%d" to="%d" dur="%ds" repeatCount="indefinite" /></textPath>`,
+			`<textPath xlink:href="#%s" startOffset="%d">%s`+
+				`<animate attributeName="startOffset" from="%d" to="%d" dur="%ds" repeatCount="indefinite" />`+
+				`</textPath>`,
 			carouselPathId,
 			offsetStart,
 			value,
@@ -321,7 +342,8 @@ func (g *DefaultImageGenerator) renderStars(stars uint8) string {
 	y := ((lastBadgeBottom + available) / 2) + (fontSize / 2) - 4
 
 	return fmt.Sprintf(
-		`<text x="256" y="%d" text-anchor="middle" fill="white" font-size="%d" font-family="Courier, Liberation Mono, monospace">%s</text>`,
+		`<text x="256" y="%d" text-anchor="middle" fill="white" font-size="%d" `+
+			`font-family="Courier, Liberation Mono, monospace">%s</text>`,
 		y,
 		fontSize,
 		starString,

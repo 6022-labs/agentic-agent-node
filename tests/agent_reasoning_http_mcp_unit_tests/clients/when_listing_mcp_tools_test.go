@@ -47,7 +47,8 @@ func TestWhenListingMcpTools(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(
 				[]byte(
-					`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input","inputSchema":{"type":"object","properties":{},"required":[]}}]}}`,
+					`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input",` +
+						`"inputSchema":{"type":"object","properties":{},"required":[]}}]}}`,
 				),
 			)
 		}
@@ -145,7 +146,9 @@ func TestWhenListingMcpTools(t *testing.T) {
 			w.Header().Set("Content-Type", "text/event-stream")
 			_, _ = w.Write(
 				[]byte(
-					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n",
+					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\"," +
+						"\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{}," +
+						"\"required\":[]}}]}}\n\n",
 				),
 			)
 			_, _ = w.Write([]byte("data: {}\n\n"))
@@ -173,7 +176,9 @@ func TestWhenListingMcpTools(t *testing.T) {
 			_, _ = w.Write([]byte("data: {}\n\n"))
 			_, _ = w.Write(
 				[]byte(
-					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\",\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"required\":[]}}]}}\n\n",
+					"data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"echo\"," +
+						"\"description\":\"Echo input\",\"inputSchema\":{\"type\":\"object\",\"properties\":{}," +
+						"\"required\":[]}}]}}\n\n",
 				),
 			)
 		}

@@ -34,7 +34,8 @@ func (t *UpdatePaymentRuleTool) Definition() *models.Tool {
 			"price":  utils.StringProperty("Non-negative integer price in the asset's atomic units (0 = free)."),
 			"method": utils.StringProperty("Payment method; defaults to x402."),
 			"config": utils.ObjectProperty(
-				"Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), payTo (address), assetTransferMethod, addressPatterns}.",
+				"Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), " +
+					"payTo (address), assetTransferMethod, addressPatterns}.",
 			),
 		}, []string{"id", "name", "price", "config"}),
 	}

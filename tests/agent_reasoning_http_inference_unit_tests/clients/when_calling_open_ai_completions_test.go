@@ -49,7 +49,8 @@ func TestWhenCallingOpenAICompletions(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(
 				[]byte(
-					`{"id":"chatcmpl-1","object":"chat.completion","model":"gpt-4o","choices":[{"index":0,"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}]}`,
+					`{"id":"chatcmpl-1","object":"chat.completion","model":"gpt-4o","choices":[{"index":0,` +
+						`"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}]}`,
 				),
 			)
 		}

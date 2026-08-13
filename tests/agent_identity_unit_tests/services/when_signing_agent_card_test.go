@@ -26,10 +26,16 @@ const (
 	vectorPrivateKeyHex = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	vectorAddress       = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
-	vectorCard      = `{"protocol":"6022","protocolVersion":"0.1","name":"hermes","ensDomain":"hermes.agents6022.eth","endpoints":{"responses":"https://agent.example.com/api/responses"},"paymentMethods":["l402","x402"]}`
-	vectorCanonical = `{"endpoints":{"responses":"https://agent.example.com/api/responses"},"ensDomain":"hermes.agents6022.eth","name":"hermes","paymentMethods":["l402","x402"],"protocol":"6022","protocolVersion":"0.1"}`
+	vectorCard = `{"protocol":"6022","protocolVersion":"0.1","name":"hermes",` +
+		`"ensDomain":"hermes.agents6022.eth","endpoints":{"responses":"https://agent.example.com/api/responses"},` +
+		`"paymentMethods":["l402","x402"]}`
+	vectorCanonical = `{"endpoints":{"responses":"https://agent.example.com/api/responses"},` +
+		`"ensDomain":"hermes.agents6022.eth","name":"hermes","paymentMethods":["l402","x402"],"protocol":"6022",` +
+		`"protocolVersion":"0.1"}`
 
-	vectorProtected = "eyJhbGciOiJFUzI1NksiLCJqd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiZ3hoVFcxUVFYVXA2cm1EQWo4UmZsb2NZRzBfZnhpVzlHblVfcHpsXzdYVSIsInkiOiJOVWZ4SEtocFprYnk4Nnl3ampFQmF2ckNQbU1NWFJIMW4ySC05WHNOS3FVIn0sImtpZCI6IjB4ZjM5RmQ2ZTUxYWFkODhGNkY0Y2U2YUI4ODI3Mjc5Y2ZmRmI5MjI2NiIsInR5cCI6IkpPU0UifQ"
+	vectorProtected = "eyJhbGciOiJFUzI1NksiLCJqd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiZ3hoVFcxUVFYVXA2cm" +
+		"1EQWo4UmZsb2NZRzBfZnhpVzlHblVfcHpsXzdYVSIsInkiOiJOVWZ4SEtocFprYnk4Nnl3ampFQmF2ckNQbU1NWFJIMW4ySC05WHNOS3FVIn" +
+		"0sImtpZCI6IjB4ZjM5RmQ2ZTUxYWFkODhGNkY0Y2U2YUI4ODI3Mjc5Y2ZmRmI5MjI2NiIsInR5cCI6IkpPU0UifQ"
 	vectorSignature = "HoLnS3IMLIFR8cgB35NLrQbvgxvUq_NFj6-cbEVbUm4CX_RV-lSHMNiy2kaKPbyvp8htlPvGlT0dTNJkHPjhvA"
 )
 
@@ -133,7 +139,9 @@ func TestWhenSigningAgentCard(t *testing.T) {
 			suite := WhenSigningAgentCardBeforeEach(t)
 			expectWallet(suite)
 
-			reordered := `{"paymentMethods":["l402","x402"],"name":"hermes","protocolVersion":"0.1","endpoints":{"responses":"https://agent.example.com/api/responses"},"protocol":"6022","ensDomain":"hermes.agents6022.eth"}`
+			reordered := `{"paymentMethods":["l402","x402"],"name":"hermes","protocolVersion":"0.1",` +
+				`"endpoints":{"responses":"https://agent.example.com/api/responses"},"protocol":"6022",` +
+				`"ensDomain":"hermes.agents6022.eth"}`
 			signature, err := suite.sut.Sign(ctx, []byte(reordered))
 
 			assert.NoError(t, err)

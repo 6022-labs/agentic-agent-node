@@ -25,7 +25,12 @@ func (c *HttpLLMConfigClient) Get(ctx context.Context) (*models.ExternalLLMConne
 		return nil, err
 	}
 	var payload models.ExternalLLMConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, gateway_interfaces.ErrLLMConnectionNotFound); err != nil {
+	if err := helpers.DecodeRuntimeResponse(
+		resp.HTTPResponse,
+		resp.Body,
+		&payload,
+		gateway_interfaces.ErrLLMConnectionNotFound,
+	); err != nil {
 		return nil, err
 	}
 	return &payload, nil

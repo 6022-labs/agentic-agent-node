@@ -20,7 +20,12 @@ func NewSelfToolRepository(client *runtime_db.DatabaseClient) *SelfToolRepositor
 
 func (r *SelfToolRepository) ListByAgentId(ctx context.Context, agentId uuid.UUID) ([]models.SelfTool, error) {
 	var entities []models.SelfTool
-	if err := r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId).Order("name ASC").Find(&entities).Error; err != nil {
+	if err := r.client.GetDB().
+		WithContext(ctx).
+		Where("agent_id = ?", agentId).
+		Order("name ASC").
+		Find(&entities).
+		Error; err != nil {
 		return nil, err
 	}
 	return entities, nil

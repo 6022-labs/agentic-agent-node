@@ -55,7 +55,9 @@ func validatingX402RuleSuite(
 	}
 }
 
-const validConfig = `{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"," 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 "]}`
+const validConfig = `{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",` +
+	`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*",` +
+	`" 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 "]}`
 
 func TestWhenValidatingX402Rule(t *testing.T) {
 	t.Parallel()
@@ -128,7 +130,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"solana:mainnet","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				`{"network":"solana:mainnet","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -149,7 +152,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 				suite := WhenValidatingX402RuleBeforeEach(t)
 
 				request := generateSaveRequest(
-					`{"network":"`+network+`","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					`{"network":"`+network+`","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+						`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
 					"10000",
 				)
 				err := suite.sut.Validate(context.Background(), request)
@@ -170,7 +174,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -194,7 +199,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 				Times(1)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -212,7 +218,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",`+
+					`"addressPatterns":[".*"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -232,7 +239,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex","addressPatterns":[".*"]}`,
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex",`+
+					`"addressPatterns":[".*"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -252,7 +260,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -272,7 +281,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`,
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -292,7 +302,8 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["[invalid"]}`,
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["[invalid"]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)

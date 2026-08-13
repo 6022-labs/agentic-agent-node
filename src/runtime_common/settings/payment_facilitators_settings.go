@@ -36,7 +36,11 @@ func NewPaymentFacilitatorsSettings(
 	evmChainsSettings *EvmChainsSettings,
 ) *PaymentFacilitatorsSettings {
 	configByChainId := map[string]*PaymentFacilitator{}
-	if err := k.UnmarshalWithConf(PaymentFacilitatorsSettingsKey, &configByChainId, koanf.UnmarshalConf{Tag: "koanf"}); err != nil {
+	if err := k.UnmarshalWithConf(
+		PaymentFacilitatorsSettingsKey,
+		&configByChainId,
+		koanf.UnmarshalConf{Tag: "koanf"},
+	); err != nil {
 		logger.Fatal("failed to unmarshal payment facilitators settings", zap.Error(err))
 	}
 

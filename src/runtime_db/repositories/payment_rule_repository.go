@@ -42,7 +42,11 @@ func (r *PaymentRuleRepository) GetById(ctx context.Context, id uuid.UUID) (*mod
 func (r *PaymentRuleRepository) Create(ctx context.Context, rule *models.PaymentRule) (*models.PaymentRule, error) {
 	err := r.client.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var maxPosition *int
-		if err := tx.Model(&models.PaymentRule{}).Where("policy_id = ?", rule.PolicyId).Select("MAX(position)").Scan(&maxPosition).Error; err != nil {
+		if err := tx.Model(&models.PaymentRule{}).
+			Where("policy_id = ?", rule.PolicyId).
+			Select("MAX(position)").
+			Scan(&maxPosition).
+			Error; err != nil {
 			return err
 		}
 		if maxPosition != nil {

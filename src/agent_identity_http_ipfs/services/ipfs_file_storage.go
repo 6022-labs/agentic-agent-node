@@ -24,7 +24,9 @@ func (s *IPFSFileStorage) UploadFile(fileBytes []byte, filename string) (*string
 
 	// Announce the CID to the DHT in the background — best effort.
 	go func(hash string) {
-		if err := s.ipfsClient.RoutingProvideWithoutResponse(&models.ExternalRoutingProvideRequest{Arg: hash}); err != nil {
+		if err := s.ipfsClient.RoutingProvideWithoutResponse(
+			&models.ExternalRoutingProvideRequest{Arg: hash},
+		); err != nil {
 			s.logger.Error("failed to provide routing", zap.String("hash", hash), zap.Error(err))
 		}
 	}(response.Hash)

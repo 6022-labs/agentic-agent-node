@@ -19,8 +19,9 @@ func NewKillProcessTool(killProcessExecutor tool_interfaces.KillProcessExecutorI
 
 func (t *KillProcessTool) Definition() *models.Tool {
 	return &models.Tool{
-		Name:        "kill_process",
-		Description: "Stop a background command you started here, along with anything it spawned. It takes a session id, not a process id from ps.",
+		Name: "kill_process",
+		Description: "Stop a background command you started here, along with anything it spawned. " +
+			"It takes a session id, not a process id from ps.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"session_id": utils.StringProperty("Session id returned by run_command (see list_processes)."),
 		}, []string{"session_id"}),
