@@ -12,9 +12,12 @@ const EvmChainsSettingsKey = "blockchain.evm_chains"
 
 // EvmChainSettings is one EVM chain's RPC endpoint.
 type EvmChainSettings struct {
-	ChainId string `koanf:"-"`
-	HttpUrl string `koanf:"http_url"`
+	ChainId               string `koanf:"-"`
+	HttpUrl               string `koanf:"http_url"`
+	RequestTimeoutSeconds uint64 `koanf:"request_timeout_seconds"`
 }
+
+const defaultRequestTimeoutSeconds = 10
 
 // EvmChainsSettings holds the operator-configured EVM chains the node has an RPC
 // for, keyed by chain id (e.g. "80002"). A plain chain id, not a CAIP-2/eip155
@@ -41,7 +44,15 @@ func NewEvmChainsSettings(logger *zap.Logger, k *koanf.Koanf) *EvmChainsSettings
 		if len(chainId) == 0 || len(httpUrl) == 0 {
 			logger.Fatal("blockchain evm chain needs a chain id key and an http_url", zap.String("chainId", chainId))
 		}
-		settings[chainId] = EvmChainSettings{ChainId: chainId, HttpUrl: httpUrl}
+		requestTimeoutSeconds := chain.RequestTimeoutSeconds
+		if requestTimeoutSeconds == 0 {
+			requestTimeoutSeconds = defaultRequestTimeoutSeconds
+		}
+		settings[chainId] = EvmChainSettings{
+			ChainId:               chainId,
+			HttpUrl:               httpUrl,
+			RequestTimeoutSeconds: requestTimeoutSeconds,
+		}
 	}
 
 	if len(settings) == 0 {
@@ -62,13 +73,13 @@ func (s *EvmChainsSettings) Has(chainId string) bool {
 	return ok
 }
 
-// HttpUrlFor returns the RPC URL for a chain, if configured.
-func (s *EvmChainsSettings) HttpUrlFor(chainId string) (string, bool) {
+// ChainFor returns how to reach a chain's RPC, if configured.
+func (s *EvmChainsSettings) ChainFor(chainId string) (EvmChainSettings, bool) {
 	if s == nil {
-		return "", false
+		return EvmChainSettings{}, false
 	}
 	chain, ok := (*s)[chainId]
-	return chain.HttpUrl, ok
+	return chain, ok
 }
 
 // ChainIds lists the configured chain ids, sorted (map iteration is unordered).

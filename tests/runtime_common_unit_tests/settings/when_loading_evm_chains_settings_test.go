@@ -19,7 +19,10 @@ func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"blockchain.evm_chains": map[string]any{
-				"80002": map[string]any{"http_url": "https://rpc-amoy.polygon.technology"},
+				"80002": map[string]any{
+					"http_url":                "https://rpc-amoy.polygon.technology",
+					"request_timeout_seconds": 30,
+				},
 				"84532": map[string]any{"http_url": "https://sepolia.base.org"},
 			},
 		}, "."), nil)
@@ -33,15 +36,37 @@ func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 			assert.True(t, result.Has("84532"))
 			assert.False(t, result.Has("1"))
 
-			amoy, ok := result.HttpUrlFor("80002")
+			amoy, ok := result.ChainFor("80002")
 			assert.True(t, ok)
-			assert.Equal(t, "https://rpc-amoy.polygon.technology", amoy)
+			assert.Equal(t, "https://rpc-amoy.polygon.technology", amoy.HttpUrl)
+			assert.Equal(t, uint64(30), amoy.RequestTimeoutSeconds)
 
-			base, ok := result.HttpUrlFor("84532")
+			base, ok := result.ChainFor("84532")
 			assert.True(t, ok)
-			assert.Equal(t, "https://sepolia.base.org", base)
+			assert.Equal(t, "https://sepolia.base.org", base.HttpUrl)
 
 			assert.Equal(t, []string{"80002", "84532"}, result.ChainIds())
+		})
+	})
+
+	t.Run("Given a chain with no configured timeout", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"blockchain.evm_chains": map[string]any{
+				"80002": map[string]any{"http_url": "https://rpc-amoy.polygon.technology"},
+			},
+		}, "."), nil)
+
+		t.Run("Should fall back to the default", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
+
+			amoy, ok := result.ChainFor("80002")
+			assert.True(t, ok)
+			assert.Equal(t, uint64(10), amoy.RequestTimeoutSeconds)
 		})
 	})
 
@@ -60,9 +85,9 @@ func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 
 			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
 
-			httpUrl, ok := result.HttpUrlFor("1")
+			chain, ok := result.ChainFor("1")
 			assert.False(t, ok)
-			assert.Empty(t, httpUrl)
+			assert.Empty(t, chain.HttpUrl)
 		})
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics/interfaces"
@@ -40,14 +41,15 @@ func (f *EthClientFactory) For(chainId string) (*ethclient.Client, error) {
 	if client, ok := f.clients[chainId]; ok {
 		return client, nil
 	}
-	httpUrl, ok := f.evmChainsSettings.HttpUrlFor(chainId)
+	chain, ok := f.evmChainsSettings.ChainFor(chainId)
 	if !ok {
 		return nil, fmt.Errorf("no RPC configured for chain %s", chainId)
 	}
 	httpClient := &http.Client{
 		Transport: metrics.NewRpcRoundTripper(http.DefaultTransport, f.rpcMetrics, chainId),
+		Timeout:   time.Duration(chain.RequestTimeoutSeconds) * time.Second,
 	}
-	rpcClient, err := rpc.DialOptions(context.Background(), httpUrl, rpc.WithHTTPClient(httpClient))
+	rpcClient, err := rpc.DialOptions(context.Background(), chain.HttpUrl, rpc.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("dial chain %s: %w", chainId, err)
 	}
