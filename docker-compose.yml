@@ -29,6 +29,10 @@ services:
       - TELEMETRY__ENDPOINT=agent-node-alloy:4317
       - TELEMETRY__INSECURE=true
       - TELEMETRY__NODE_ID=local-dev
+      # A token means bearer, a username + password means basic; setting both is fatal.
+      # - TELEMETRY__AUTH_TOKEN=shared-secret
+      # - TELEMETRY__AUTH_USERNAME=ingest-user
+      # - TELEMETRY__AUTH_PASSWORD=secret
     networks:
       agent-node-network:
     depends_on:
@@ -120,16 +124,19 @@ services:
   # the agent.node.id / service.instance.id resource attribute distinguishes them.
   # ---------------------------------------------------------------------------
   agent-node-alloy:
-    image: "grafana/alloy:v1.17.0"
+    build: ./grafana/alloy
     container_name: agent-node-alloy
     environment:
       - LOKI_URL=http://agent-node-loki:3100
       - MIMIR_URL=http://agent-node-mimir:9009
       - TEMPO_OTLP_URL=http://agent-node-tempo:4318
-    command:
-      ["run", "--stability.level=experimental", "/etc/alloy/config.alloy"]
-    volumes:
-      - ./grafana/alloy/alloy-config.alloy:/etc/alloy/config.alloy
+      # Ingest auth is off by default. htpasswd (one credential per node, `$` escaped as `$$`)
+      # wins over token (one shared by every node).
+      # - OTLP_AUTH_HTPASSWD=ingest-user:secret
+      # - OTLP_AUTH_TOKEN=shared-secret
+      # - OTLP_TLS_CERT_FILE=/certs/alloy.crt
+      # - OTLP_TLS_KEY_FILE=/certs/alloy.key
+      # - OTLP_TLS_CLIENT_CA_FILE=/certs/ca.crt
     ports:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP

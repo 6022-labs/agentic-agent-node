@@ -57,6 +57,19 @@ func ConfigureTelemetry(container *dig.Container, serviceName string) func(conte
 			metricOpts = append(metricOpts, metricgrpc.WithTLSCredentials(creds))
 		}
 
+		authMode := "none"
+		if header, ok := telemetrySettings.AuthorizationHeader(); ok {
+			headers := map[string]string{"authorization": header}
+			traceOpts = append(traceOpts, otlptracegrpc.WithHeaders(headers))
+			logOpts = append(logOpts, otlploggrpc.WithHeaders(headers))
+			metricOpts = append(metricOpts, metricgrpc.WithHeaders(headers))
+			authMode = telemetrySettings.AuthScheme
+
+			if telemetrySettings.Insecure {
+				logger.Warn("telemetry credential sent over an insecure connection")
+			}
+		}
+
 		traceExporter, err := otlptracegrpc.New(ctx, traceOpts...)
 		if err != nil {
 			logger.Error("Failed to create OTLP trace exporter", zap.Error(err))
@@ -132,6 +145,7 @@ func ConfigureTelemetry(container *dig.Container, serviceName string) func(conte
 			zap.String("endpoint", telemetrySettings.Endpoint),
 			zap.String("service", serviceName),
 			zap.String("creds", credMode),
+			zap.String("auth", authMode),
 		)
 		return nil
 	})

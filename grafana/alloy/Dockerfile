@@ -1,5 +1,6 @@
 FROM grafana/alloy:v1.17.0
 
-COPY alloy-config.alloy /etc/alloy/config.alloy
+COPY alloy-config.alloy.template /etc/alloy/config.alloy.template
+COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
-CMD ["run", "--stability.level=experimental", "/etc/alloy/config.alloy"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -1,6 +1,7 @@
 package settings_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
@@ -19,7 +20,7 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"telemetry.enabled":  true,
-			"telemetry.endpoint": " http://collector:4317 ",
+			"telemetry.endpoint": " collector:4317 ",
 			"telemetry.insecure": true,
 			"telemetry.node_id":  " node-1 ",
 		}, "."), nil)
@@ -30,9 +31,22 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			result := settings.NewTelemetrySettings(zap.NewNop(), k)
 
 			assert.True(t, result.Enabled)
-			assert.Equal(t, "http://collector:4317", result.Endpoint)
+			assert.Equal(t, "collector:4317", result.Endpoint)
 			assert.True(t, result.Insecure)
 			assert.Equal(t, "node-1", result.NodeId)
+		})
+
+		t.Run("Should not authenticate", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
+
+			assert.Empty(t, result.AuthScheme)
+
+			header, ok := result.AuthorizationHeader()
+
+			assert.False(t, ok)
+			assert.Empty(t, header)
 		})
 	})
 
@@ -49,6 +63,80 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			assert.False(t, result.Enabled)
 			assert.Empty(t, result.Endpoint)
 			assert.Empty(t, result.NodeId)
+		})
+	})
+
+	t.Run("Given only an auth token", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"telemetry.enabled":    true,
+			"telemetry.endpoint":   "collector:4317",
+			"telemetry.node_id":    "node-1",
+			"telemetry.auth_token": " a-token ",
+		}, "."), nil)
+
+		t.Run("Should resolve bearer and send a bearer header", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
+
+			assert.Equal(t, settings.TelemetryAuthSchemeBearer, result.AuthScheme)
+
+			header, ok := result.AuthorizationHeader()
+
+			assert.True(t, ok)
+			assert.Equal(t, "Bearer a-token", header)
+		})
+	})
+
+	t.Run("Given a username and a password", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"telemetry.enabled":       true,
+			"telemetry.endpoint":      "collector:4317",
+			"telemetry.node_id":       "node-1",
+			"telemetry.auth_username": " ingest-user ",
+			"telemetry.auth_password": " a-password ",
+		}, "."), nil)
+
+		t.Run("Should resolve basic and build the header from the credential, not the node id", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
+
+			assert.Equal(t, settings.TelemetryAuthSchemeBasic, result.AuthScheme)
+			assert.Equal(t, "ingest-user", result.AuthUsername)
+
+			header, ok := result.AuthorizationHeader()
+
+			assert.True(t, ok)
+			assert.Equal(t, "Basic "+base64.StdEncoding.EncodeToString([]byte("ingest-user:a-password")), header)
+		})
+	})
+
+	t.Run("Given auth settings while telemetry is disabled", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"telemetry.enabled":    false,
+			"telemetry.auth_token": "a-token",
+		}, "."), nil)
+
+		t.Run("Should not resolve a scheme", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
+
+			assert.Empty(t, result.AuthScheme)
+
+			_, ok := result.AuthorizationHeader()
+
+			assert.False(t, ok)
 		})
 	})
 }

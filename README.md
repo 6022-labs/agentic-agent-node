@@ -18,8 +18,48 @@ Postgres, IPFS, pgAdmin, and a Grafana observability stack. Once it is up:
 
 - **Console:** http://localhost:5500
 - **API:** http://localhost:5500/api
+- **Grafana:** http://localhost:3000
 
 nginx listens on port 5000 in-container and is published on host port 5500.
+
+## Observability
+
+Both hosts export metrics, logs and traces over OTLP/gRPC to Grafana Alloy, which
+fans them out to Mimir, Loki and Tempo. Several nodes can share one stack; the
+`agent.node.id` resource attribute distinguishes them, and every dashboard filters
+on it.
+
+Agent side (`TELEMETRY__*`, or the `telemetry` block of `appsettings.json`):
+
+| Setting | Meaning |
+| --- | --- |
+| `enabled` | export at all |
+| `endpoint` | Alloy OTLP/gRPC `host:port` |
+| `insecure` | disable TLS on the connection |
+| `node_id` | value of `agent.node.id` |
+| `auth_token` | bearer credential |
+| `auth_username` + `auth_password` | basic credential |
+
+The scheme is derived: a token means bearer, a username and password mean basic,
+neither means no authentication. Setting both is fatal at startup.
+
+Alloy side — the OTLP ingest is **unauthenticated by default** and the entrypoint
+logs a warning saying so. Set one of these on the alloy container to change that:
+
+| Variable | Effect |
+| --- | --- |
+| `OTLP_AUTH_HTPASSWD` | basic auth, `user:password` per line — one credential per node, matched against that node's `auth_username` |
+| `OTLP_AUTH_TOKEN` | bearer auth with a single token shared by every node |
+| `OTLP_TLS_CERT_FILE` + `OTLP_TLS_KEY_FILE` | serve OTLP over TLS |
+| `OTLP_TLS_CLIENT_CA_FILE` | additionally require a client certificate (mTLS) |
+
+`OTLP_AUTH_HTPASSWD` wins when both are set. Its content is read with go-htpasswd,
+so bcrypt/md5/sha hashes and plaintext lines all work — prefer hashes, and escape
+`$` as `$$` inside `docker-compose.yml`.
+
+Authentication over a plaintext connection sends the credential in the clear: pair
+it with TLS on any untrusted network. The agent logs a warning when it is asked to
+do otherwise.
 
 ## Architecture at a glance
 
