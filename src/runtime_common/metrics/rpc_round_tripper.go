@@ -7,7 +7,7 @@ import (
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics/interfaces"
 )
 
-// RpcRoundTripper records rpc.request.* per JSON-RPC call, aggregated per chain (the method is in the body).
+// RpcRoundTripper records rpc.client.* per JSON-RPC call, aggregated per chain (the method is in the body).
 type RpcRoundTripper struct {
 	base    http.RoundTripper
 	metrics metrics_interfaces.BlockchainRpcMetricsInterface

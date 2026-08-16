@@ -33,6 +33,8 @@ metrics_generator:
     # Promote these resource attributes to span-metric labels so dashboards can filter by them.
     span_metrics:
       dimensions:
+        - deployment.environment.name
+        - service.namespace
         - agent.node.id
         - agent.ens.domain
         - service.instance.id

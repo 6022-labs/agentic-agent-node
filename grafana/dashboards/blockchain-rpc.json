@@ -1,5 +1,5 @@
 {
-  "title": "Agentic Agent Node \u2014 Blockchain RPC",
+  "title": "Agentic \u2014 Blockchain RPC",
   "schemaVersion": 39,
   "version": 1,
   "tags": [
@@ -14,6 +14,35 @@
   "refresh": "30s",
   "templating": {
     "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(deployment_environment_name)",
+          "refId": "environment"
+        },
+        "definition": "label_values(deployment_environment_name)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
       {
         "name": "service",
         "label": "Service",
@@ -38,60 +67,6 @@
           "value": [
             "$__all"
           ]
-        },
-        "refresh": 2,
-        "sort": 1,
-        "hide": 0
-      },
-      {
-        "name": "node",
-        "label": "Node",
-        "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "mimir"
-        },
-        "query": {
-          "query": "label_values(agent_node_id)",
-          "refId": "node"
-        },
-        "definition": "label_values(agent_node_id)",
-        "includeAll": true,
-        "allValue": ".*",
-        "multi": true,
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
-        "refresh": 2,
-        "sort": 1,
-        "hide": 0
-      },
-      {
-        "name": "ens",
-        "label": "ENS",
-        "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "mimir"
-        },
-        "query": {
-          "query": "label_values(agent_ens_domain)",
-          "refId": "ens"
-        },
-        "definition": "label_values(agent_ens_domain)",
-        "includeAll": true,
-        "allValue": ".*",
-        "multi": true,
-        "current": {
-          "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
         },
         "refresh": 2,
         "sort": 1,
@@ -122,7 +97,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (chain_id) (rate(rpc_request_count_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum by (chain_id) (rate(rpc_request_count_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
           "legendFormat": "chain {{chain_id}}"
         }
       ]
@@ -149,7 +124,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (chain_id) (rate(rpc_request_errors_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum by (chain_id) (rate(rpc_request_errors_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
           "legendFormat": "chain {{chain_id}}"
         }
       ]
@@ -176,7 +151,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, chain_id) (rate(rpc_request_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, chain_id) (rate(rpc_client_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m])))",
           "legendFormat": "chain {{chain_id}}"
         }
       ]

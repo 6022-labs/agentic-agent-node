@@ -1,5 +1,5 @@
 {
-  "title": "Agentic Agent Node — Traces (GenAI)",
+  "title": "Agentic Agent Node \u2014 Traces (GenAI)",
   "schemaVersion": 39,
   "version": 1,
   "tags": [
@@ -14,6 +14,35 @@
   "refresh": "30s",
   "templating": {
     "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(traces_spanmetrics_calls_total, deployment_environment_name)",
+          "refId": "environment"
+        },
+        "definition": "label_values(traces_spanmetrics_calls_total, deployment_environment_name)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
       {
         "name": "service",
         "label": "Service",
@@ -32,8 +61,12 @@
         "multi": true,
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "refresh": 2,
         "sort": 1,
@@ -57,8 +90,12 @@
         "multi": true,
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "refresh": 2,
         "sort": 1,
@@ -82,8 +119,12 @@
         "multi": true,
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "refresh": 2,
         "sort": 1,
@@ -126,7 +167,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval]))",
+          "expr": "sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval]))",
           "legendFormat": ""
         }
       ]
@@ -167,7 +208,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", status_code=\"STATUS_CODE_ERROR\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])), 1e-9)",
+          "expr": "100 * sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", status_code=\"STATUS_CODE_ERROR\", deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_name=\"invoke_agent\", deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])), 1e-9)",
           "legendFormat": ""
         }
       ]
@@ -206,7 +247,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{span_name=\"invoke_agent\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{span_name=\"invoke_agent\", deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])))",
           "legendFormat": ""
         }
       ]
@@ -249,7 +290,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval]))",
+          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval]))",
           "legendFormat": "{{span_name}}"
         }
       ]
@@ -289,7 +330,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (span_name, le) (rate(traces_spanmetrics_latency_bucket{service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (span_name, le) (rate(traces_spanmetrics_latency_bucket{deployment_environment_name=~\"$environment\", service=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[$__rate_interval])))",
           "legendFormat": "{{span_name}}"
         }
       ]
@@ -318,7 +359,7 @@
             "uid": "tempo"
           },
           "queryType": "traceql",
-          "query": "{ name = \"invoke_agent\" && resource.service.name =~ \"${service:regex}\" && resource.agent.node.id =~ \"${node:regex}\" && span.agent.ens.domain =~ \"${ens:regex}\" }",
+          "query": "{ name = \"invoke_agent\" && resource.deployment.environment.name =~ \"${environment:regex}\" && resource.service.name =~ \"${service:regex}\" && resource.agent.node.id =~ \"${node:regex}\" && span.agent.ens.domain =~ \"${ens:regex}\" }",
           "tableType": "traces",
           "limit": 20
         }

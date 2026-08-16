@@ -14,15 +14,16 @@ import (
 func TestWhenLoadingTelemetrySettings(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given telemetry enabled with an endpoint and node id", func(t *testing.T) {
+	t.Run("Given telemetry enabled with an endpoint, instance id and environment", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"telemetry.enabled":  true,
-			"telemetry.endpoint": " collector:4317 ",
-			"telemetry.insecure": true,
-			"telemetry.node_id":  " node-1 ",
+			"telemetry.enabled":     true,
+			"telemetry.endpoint":    " collector:4317 ",
+			"telemetry.insecure":    true,
+			"telemetry.instance_id": " node-1 ",
+			"telemetry.environment": " staging ",
 		}, "."), nil)
 
 		t.Run("Should load and trim the values", func(t *testing.T) {
@@ -33,7 +34,8 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			assert.True(t, result.Enabled)
 			assert.Equal(t, "collector:4317", result.Endpoint)
 			assert.True(t, result.Insecure)
-			assert.Equal(t, "node-1", result.NodeId)
+			assert.Equal(t, "node-1", result.InstanceId)
+			assert.Equal(t, "staging", result.Environment)
 		})
 
 		t.Run("Should not authenticate", func(t *testing.T) {
@@ -62,7 +64,8 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 
 			assert.False(t, result.Enabled)
 			assert.Empty(t, result.Endpoint)
-			assert.Empty(t, result.NodeId)
+			assert.Empty(t, result.InstanceId)
+			assert.Empty(t, result.Environment)
 		})
 	})
 
@@ -71,10 +74,11 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
-			"telemetry.enabled":    true,
-			"telemetry.endpoint":   "collector:4317",
-			"telemetry.node_id":    "node-1",
-			"telemetry.auth_token": " a-token ",
+			"telemetry.enabled":     true,
+			"telemetry.endpoint":    "collector:4317",
+			"telemetry.instance_id": "node-1",
+			"telemetry.environment": "staging",
+			"telemetry.auth_token":  " a-token ",
 		}, "."), nil)
 
 		t.Run("Should resolve bearer and send a bearer header", func(t *testing.T) {
@@ -98,12 +102,13 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 		_ = k.Load(confmap.Provider(map[string]any{
 			"telemetry.enabled":       true,
 			"telemetry.endpoint":      "collector:4317",
-			"telemetry.node_id":       "node-1",
+			"telemetry.instance_id":   "node-1",
+			"telemetry.environment":   "staging",
 			"telemetry.auth_username": " ingest-user ",
 			"telemetry.auth_password": " a-password ",
 		}, "."), nil)
 
-		t.Run("Should resolve basic and build the header from the credential, not the node id", func(t *testing.T) {
+		t.Run("Should resolve basic and build the header from the credential, not the instance id", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewTelemetrySettings(zap.NewNop(), k)

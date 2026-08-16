@@ -41,11 +41,11 @@ func NewApiRequestMetrics(meterName string) *ApiRequestMetrics {
 	}
 
 	activeRequests, err := meter.Int64UpDownCounter(
-		"http.server.request.active",
+		"http.server.active_requests",
 		metric.WithDescription("Number of in-flight HTTP requests"),
 	)
 	if err != nil {
-		activeRequests, _ = noopMeter.Int64UpDownCounter("http.server.request.active")
+		activeRequests, _ = noopMeter.Int64UpDownCounter("http.server.active_requests")
 	}
 
 	errorCounter, err := meter.Int64Counter(
@@ -65,11 +65,11 @@ func NewApiRequestMetrics(meterName string) *ApiRequestMetrics {
 }
 
 func (m *ApiRequestMetrics) IncActiveRequests(ctx context.Context, method string) {
-	m.activeRequests.Add(ctx, 1, metric.WithAttributes(attribute.String("http.method", method)))
+	m.activeRequests.Add(ctx, 1, metric.WithAttributes(attribute.String("http.request.method", method)))
 }
 
 func (m *ApiRequestMetrics) DecActiveRequests(ctx context.Context, method string) {
-	m.activeRequests.Add(ctx, -1, metric.WithAttributes(attribute.String("http.method", method)))
+	m.activeRequests.Add(ctx, -1, metric.WithAttributes(attribute.String("http.request.method", method)))
 }
 
 // RecordRequest records one completed request: count, duration, and a 5xx error.
@@ -80,9 +80,9 @@ func (m *ApiRequestMetrics) RecordRequest(
 	duration time.Duration,
 ) {
 	attrs := metric.WithAttributes(
-		attribute.String("http.method", method),
+		attribute.String("http.request.method", method),
 		attribute.String("http.route", route),
-		attribute.Int("http.status_code", statusCode),
+		attribute.Int("http.response.status_code", statusCode),
 	)
 	m.requestCounter.Add(ctx, 1, attrs)
 	m.durationHistogram.Record(ctx, duration.Seconds(), attrs)

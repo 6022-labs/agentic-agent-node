@@ -18,3 +18,6 @@ var GenAiDurationSecondsBuckets = []float64{
 
 // LoopIterationsBuckets bound small integer counts; the SDK defaults start at 5 and hide what a bounded loop does.
 var LoopIterationsBuckets = []float64{1, 2, 3, 4, 5, 8, 12, 20}
+
+// RetryAttemptsBuckets bound small retry counts; the SDK defaults start at 5 and hide a 3-attempt loop.
+var RetryAttemptsBuckets = []float64{1, 2, 3, 4, 5, 8}

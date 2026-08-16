@@ -1,5 +1,5 @@
 {
-  "title": "Agentic Agent Node \u2014 Logs",
+  "title": "Agentic \u2014 Logs",
   "schemaVersion": 39,
   "version": 1,
   "tags": [
@@ -14,20 +14,20 @@
   "templating": {
     "list": [
       {
-        "name": "service",
-        "label": "Service",
+        "name": "environment",
+        "label": "Environment",
         "type": "query",
         "datasource": {
           "type": "prometheus",
           "uid": "mimir"
         },
         "query": {
-          "query": "label_values(service_name)",
-          "refId": "service"
+          "query": "label_values(deployment_environment_name)",
+          "refId": "environment"
         },
-        "definition": "label_values(service_name)",
+        "definition": "label_values(deployment_environment_name)",
         "includeAll": true,
-        "allValue": ".+",
+        "allValue": ".*",
         "multi": true,
         "current": {
           "selected": true,
@@ -43,18 +43,18 @@
         "hide": 0
       },
       {
-        "name": "node",
-        "label": "Node",
+        "name": "service",
+        "label": "Service",
         "type": "query",
         "datasource": {
           "type": "prometheus",
           "uid": "mimir"
         },
         "query": {
-          "query": "label_values(agent_node_id)",
-          "refId": "node"
+          "query": "label_values(service_name)",
+          "refId": "service"
         },
-        "definition": "label_values(agent_node_id)",
+        "definition": "label_values(service_name)",
         "includeAll": true,
         "allValue": ".+",
         "multi": true,
@@ -90,7 +90,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{service_name=~\"$service\"} | json",
+          "expr": "{deployment_environment_name=~\"$environment\", service_name=~\"$service\"} | json",
           "datasource": {
             "type": "loki",
             "uid": "loki"

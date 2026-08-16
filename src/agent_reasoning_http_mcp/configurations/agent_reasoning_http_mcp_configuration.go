@@ -11,6 +11,7 @@ import (
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/services"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/dig"
 )
 
@@ -49,10 +50,10 @@ func AddAgentReasoningHttpMcpConfiguration(container *dig.Container) {
 		transport.TLSHandshakeTimeout = 10 * time.Second
 		transport.IdleConnTimeout = 90 * time.Second
 		return &http.Client{
-			Transport: common_metrics.NewHttpMetricsRoundTripper(
+			Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 				transport,
 				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_mcp"),
-			)}
+			))}
 	}, dig.Name("mcp-http-client"))
 	if err != nil {
 		panic(err)

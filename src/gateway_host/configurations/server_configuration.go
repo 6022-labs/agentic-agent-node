@@ -7,6 +7,7 @@ import (
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/gofiber/contrib/fiberzap/v2"
+	"github.com/gofiber/contrib/otelfiber/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
@@ -52,6 +53,8 @@ func registerRoutes(p registerRoutesParams) {
 	}))
 
 	p.App.Use(p.AgentTelemetry.Handle)
+	// Spans only: ApiRequestMetrics owns http.server.*.
+	p.App.Use(otelfiber.Middleware(otelfiber.WithoutMetrics(true)))
 	p.App.Use(p.RequestMetrics.Handle)
 
 	p.App.Use(fiberzap.New(fiberzap.Config{

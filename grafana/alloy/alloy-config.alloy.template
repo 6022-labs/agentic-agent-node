@@ -37,8 +37,8 @@ otelcol.exporter.debug "debug" {
 }
 
 // resource_to_telemetry_conversion promotes OTEL resource attributes
-// (service.name, service.instance.id, agent.node.id) to Prometheus labels so
-// dashboards can filter by service and by agent node.
+// (service.name, service.instance.id, deployment.environment.name) to Prometheus
+// labels so dashboards can filter by service and by environment.
 otelcol.exporter.prometheus "prom_export" {
   resource_to_telemetry_conversion = true
   forward_to = [prometheus.remote_write.mimir.receiver]

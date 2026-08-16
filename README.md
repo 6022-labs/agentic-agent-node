@@ -25,9 +25,10 @@ nginx listens on port 5000 in-container and is published on host port 5500.
 ## Observability
 
 Both hosts export metrics, logs and traces over OTLP/gRPC to Grafana Alloy, which
-fans them out to Mimir, Loki and Tempo. Several nodes can share one stack; the
-`agent.node.id` resource attribute distinguishes them, and every dashboard filters
-on it.
+fans them out to Mimir, Loki and Tempo. Several nodes, apps and environments can
+share one stack; `service.name`, `service.instance.id` and
+`deployment.environment.name` distinguish them, and every dashboard filters on
+them.
 
 Agent side (`TELEMETRY__*`, or the `telemetry` block of `appsettings.json`):
 
@@ -36,7 +37,8 @@ Agent side (`TELEMETRY__*`, or the `telemetry` block of `appsettings.json`):
 | `enabled` | export at all |
 | `endpoint` | Alloy OTLP/gRPC `host:port` |
 | `insecure` | disable TLS on the connection |
-| `node_id` | value of `agent.node.id` |
+| `instance_id` | value of `service.instance.id` and `agent.node.id` |
+| `environment` | value of `deployment.environment.name` (required when enabled) |
 | `auth_token` | bearer credential |
 | `auth_username` + `auth_password` | basic credential |
 

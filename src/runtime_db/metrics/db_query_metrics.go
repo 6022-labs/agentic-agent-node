@@ -25,37 +25,37 @@ func NewDbQueryMetrics() *DbQueryMetrics {
 	meter := otel.GetMeterProvider().Meter(meterName)
 
 	queryCounter, err := meter.Int64Counter(
-		"db.query.count",
+		"db.client.operation.count",
 		metric.WithDescription("Total number of database queries"),
 	)
 	if err != nil {
-		queryCounter, _ = noopMeter.Int64Counter("db.query.count")
+		queryCounter, _ = noopMeter.Int64Counter("db.client.operation.count")
 	}
 
 	durationHistogram, err := meter.Float64Histogram(
-		"db.query.duration",
+		"db.client.operation.duration",
 		metric.WithUnit("s"),
 		metric.WithExplicitBucketBoundaries(common_metrics.LatencySecondsBuckets...),
 		metric.WithDescription("Duration of database queries"),
 	)
 	if err != nil {
-		durationHistogram, _ = noopMeter.Float64Histogram("db.query.duration")
+		durationHistogram, _ = noopMeter.Float64Histogram("db.client.operation.duration")
 	}
 
 	rowsHistogram, err := meter.Int64Histogram(
-		"db.query.rows",
+		"db.client.operation.rows",
 		metric.WithDescription("Rows affected/returned by database queries"),
 	)
 	if err != nil {
-		rowsHistogram, _ = noopMeter.Int64Histogram("db.query.rows")
+		rowsHistogram, _ = noopMeter.Int64Histogram("db.client.operation.rows")
 	}
 
 	errorCounter, err := meter.Int64Counter(
-		"db.query.errors",
+		"db.client.operation.errors",
 		metric.WithDescription("Total number of failed database queries"),
 	)
 	if err != nil {
-		errorCounter, _ = noopMeter.Int64Counter("db.query.errors")
+		errorCounter, _ = noopMeter.Int64Counter("db.client.operation.errors")
 	}
 
 	return &DbQueryMetrics{
@@ -75,8 +75,8 @@ func (m *DbQueryMetrics) RecordQuery(
 	failed bool,
 ) {
 	attrs := metric.WithAttributes(
-		attribute.String("db.operation", operation),
-		attribute.String("db.model", model),
+		attribute.String("db.operation.name", operation),
+		attribute.String("db.collection.name", model),
 	)
 	m.queryCounter.Add(ctx, 1, attrs)
 	m.durationHistogram.Record(ctx, duration.Seconds(), attrs)

@@ -15,6 +15,35 @@
   "templating": {
     "list": [
       {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": {
+          "query": "label_values(deployment_environment_name)",
+          "refId": "environment"
+        },
+        "definition": "label_values(deployment_environment_name)",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
+      {
         "name": "service",
         "label": "Service",
         "type": "query",
@@ -90,8 +119,12 @@
         "multi": true,
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "refresh": 2,
         "sort": 1,
@@ -134,7 +167,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
+          "expr": "sum(rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
           "legendFormat": ""
         }
       ]
@@ -173,7 +206,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\", error_type=~\".+\"}[5m])) / clamp_min(sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])), 1)",
+          "expr": "100 * sum(rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\", error_type=~\".+\"}[5m])) / clamp_min(sum(rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])), 1)",
           "legendFormat": ""
         }
       ]
@@ -212,7 +245,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
           "legendFormat": ""
         }
       ]
@@ -251,7 +284,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(gen_ai_client_token_usage_sum{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": ""
         }
       ]
@@ -278,7 +311,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}} {{gen_ai_request_model}}"
         }
       ]
@@ -305,7 +338,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\", error_type=~\".+\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\", error_type=~\".+\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}}"
         }
       ]
@@ -332,12 +365,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
           "legendFormat": "p95 {{gen_ai_provider_name}} {{gen_ai_request_model}}"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.99, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, gen_ai_provider_name, gen_ai_request_model) (rate(gen_ai_client_operation_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m])))",
           "legendFormat": "p99 {{gen_ai_provider_name}} {{gen_ai_request_model}}"
         }
       ]
@@ -364,7 +397,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{gen_ai_token_type}}"
         }
       ]
@@ -391,7 +424,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
           "legendFormat": "{{reasoning_outcome}}"
         }
       ]
@@ -416,7 +449,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_iterations_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, reasoning_outcome) (rate(reasoning_loop_iterations_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
           "legendFormat": "{{reasoning_outcome}}"
         }
       ]
@@ -443,7 +476,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(reasoning_tool_calls_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum(rate(reasoning_tool_calls_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "tool calls"
         }
       ]
@@ -470,7 +503,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(reasoning_loop_max_iterations_exceeded_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum(rate(reasoning_loop_max_iterations_exceeded_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "exceeded"
         }
       ]
@@ -497,12 +530,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}} total"
         },
         {
           "refId": "B",
-          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\", error_type=~\".+\"}[5m]))",
+          "expr": "sum by (gen_ai_provider_name) (rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind=\"probe\", error_type=~\".+\"}[5m]))",
           "legendFormat": "{{gen_ai_provider_name}} failed"
         }
       ]
@@ -529,7 +562,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum by (gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{gen_ai_tool_name}}"
         }
       ]
@@ -556,7 +589,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_tool_name, error_type) (rate(gen_ai_execute_tool_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", error_type=~\".+\"}[5m]))",
+          "expr": "sum by (gen_ai_tool_name, error_type) (rate(gen_ai_execute_tool_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", error_type=~\".+\"}[5m]))",
           "legendFormat": "{{gen_ai_tool_name}} / {{error_type}}"
         }
       ]
@@ -583,7 +616,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_bucket{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_tool_name) (rate(gen_ai_execute_tool_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
           "legendFormat": "{{gen_ai_tool_name}}"
         }
       ]
@@ -610,7 +643,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (reasoning_abort_reason) (rate(reasoning_loop_aborted_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum by (reasoning_abort_reason) (rate(reasoning_loop_aborted_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "{{reasoning_abort_reason}}"
         }
       ]
@@ -637,7 +670,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (gen_ai_request_model, gen_ai_response_model) (rate(gen_ai_client_operation_duration_seconds_count{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
+          "expr": "sum by (gen_ai_request_model, gen_ai_response_model) (rate(gen_ai_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\", gen_ai_operation_name=\"chat\", reasoning_call_kind!=\"probe\"}[5m]))",
           "legendFormat": "{{gen_ai_request_model}} -> {{gen_ai_response_model}}"
         }
       ]
@@ -664,12 +697,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(reasoning_command_background_started_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum(rate(reasoning_command_background_started_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "started"
         },
         {
           "refId": "B",
-          "expr": "sum(rate(reasoning_command_killed_total{service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "expr": "sum(rate(reasoning_command_killed_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
           "legendFormat": "killed"
         }
       ]

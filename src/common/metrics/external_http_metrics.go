@@ -41,12 +41,12 @@ func NewExternalHttpMetrics(meterName string) *ExternalHttpMetrics {
 	}
 
 	responseSizeHistogram, err := meter.Int64Histogram(
-		"http.client.response.size",
+		"http.client.response.body.size",
 		metric.WithUnit("By"),
 		metric.WithDescription("Response size of outbound HTTP requests"),
 	)
 	if err != nil {
-		responseSizeHistogram, _ = noopMeter.Int64Histogram("http.client.response.size")
+		responseSizeHistogram, _ = noopMeter.Int64Histogram("http.client.response.body.size")
 	}
 
 	errorCounter, err := meter.Int64Counter(
@@ -75,9 +75,9 @@ func (m *ExternalHttpMetrics) RecordRequest(
 	responseSize int64,
 ) {
 	attrs := metric.WithAttributes(
-		attribute.String("http.method", method),
+		attribute.String("http.request.method", method),
 		attribute.String("http.route", route),
-		attribute.Int("http.status_code", statusCode),
+		attribute.Int("http.response.status_code", statusCode),
 	)
 	m.requestCounter.Add(ctx, 1, attrs)
 	m.durationHistogram.Record(ctx, duration.Seconds(), attrs)
@@ -93,7 +93,7 @@ func (m *ExternalHttpMetrics) RecordRequest(
 // (DNS, timeout, connection refused): count, duration, and an error, with no status.
 func (m *ExternalHttpMetrics) RecordTransportError(ctx context.Context, method, route string, duration time.Duration) {
 	attrs := metric.WithAttributes(
-		attribute.String("http.method", method),
+		attribute.String("http.request.method", method),
 		attribute.String("http.route", route),
 	)
 	m.requestCounter.Add(ctx, 1, attrs)

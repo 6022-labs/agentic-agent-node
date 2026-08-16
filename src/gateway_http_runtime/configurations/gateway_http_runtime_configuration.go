@@ -17,16 +17,17 @@ import (
 	payment_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/payment"
 	reasoning_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/reasoning"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/settings"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/dig"
 )
 
 // newRuntimeClient builds the generated runtime client with a metrics-wrapped transport.
 func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResponsesInterface, error) {
 	httpClient := &http.Client{
-		Transport: common_metrics.NewHttpMetricsRoundTripper(
+		Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 			http.DefaultTransport,
 			common_metrics.NewExternalHttpMetrics("agentic_gateway_http_runtime"),
-		),
+		)),
 	}
 	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
 }

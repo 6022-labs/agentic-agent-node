@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/noop"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 )
 
 const meterName = "agentic_runtime_blockchain"
@@ -32,13 +33,13 @@ func NewBlockchainRpcMetrics() *BlockchainRpcMetrics {
 	}
 
 	durationHistogram, err := meter.Float64Histogram(
-		"rpc.request.duration",
+		"rpc.client.duration",
 		metric.WithUnit("s"),
 		metric.WithExplicitBucketBoundaries(common_metrics.LatencySecondsBuckets...),
 		metric.WithDescription("Duration of blockchain JSON-RPC requests"),
 	)
 	if err != nil {
-		durationHistogram, _ = noopMeter.Float64Histogram("rpc.request.duration")
+		durationHistogram, _ = noopMeter.Float64Histogram("rpc.client.duration")
 	}
 
 	errorCounter, err := meter.Int64Counter(
@@ -58,7 +59,10 @@ func NewBlockchainRpcMetrics() *BlockchainRpcMetrics {
 
 // RecordRequest records one JSON-RPC call: count, duration, and (when failed) an error.
 func (m *BlockchainRpcMetrics) RecordRequest(ctx context.Context, chainID string, duration time.Duration, failed bool) {
-	attrs := metric.WithAttributes(attribute.String("chain.id", chainID))
+	attrs := metric.WithAttributes(
+		semconv.RPCSystemKey.String("jsonrpc"),
+		attribute.String("chain.id", chainID),
+	)
 	m.requestCounter.Add(ctx, 1, attrs)
 	m.durationHistogram.Record(ctx, duration.Seconds(), attrs)
 	if failed {

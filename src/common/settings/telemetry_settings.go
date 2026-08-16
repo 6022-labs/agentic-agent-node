@@ -21,7 +21,8 @@ type TelemetrySettings struct {
 	Enabled      bool   `koanf:"enabled"`
 	Endpoint     string `koanf:"endpoint"`
 	Insecure     bool   `koanf:"insecure"`
-	NodeId       string `koanf:"node_id"`
+	InstanceId   string `koanf:"instance_id"`
+	Environment  string `koanf:"environment"`
 	AuthToken    string `koanf:"auth_token"`
 	AuthUsername string `koanf:"auth_username"`
 	AuthPassword string `koanf:"auth_password"`
@@ -40,7 +41,8 @@ func NewTelemetrySettings(
 	}
 
 	settings.Endpoint = strings.TrimSpace(settings.Endpoint)
-	settings.NodeId = strings.TrimSpace(settings.NodeId)
+	settings.InstanceId = strings.TrimSpace(settings.InstanceId)
+	settings.Environment = strings.TrimSpace(settings.Environment)
 	settings.AuthToken = strings.TrimSpace(settings.AuthToken)
 	settings.AuthUsername = strings.TrimSpace(settings.AuthUsername)
 	settings.AuthPassword = strings.TrimSpace(settings.AuthPassword)
@@ -49,8 +51,11 @@ func NewTelemetrySettings(
 		if settings.Endpoint == "" {
 			logger.Fatal("telemetry.endpoint is required when telemetry.enabled is true")
 		}
-		if settings.NodeId == "" {
-			logger.Fatal("telemetry.node_id is required when telemetry.enabled is true")
+		if settings.InstanceId == "" {
+			logger.Fatal("telemetry.instance_id is required when telemetry.enabled is true")
+		}
+		if settings.Environment == "" {
+			logger.Fatal("telemetry.environment is required when telemetry.enabled is true")
 		}
 
 		settings.resolveAuth(logger)

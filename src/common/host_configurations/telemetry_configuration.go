@@ -17,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"go.uber.org/dig"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -92,9 +92,11 @@ func ConfigureTelemetry(container *dig.Container, serviceName string) func(conte
 			resource.WithSchemaURL(semconv.SchemaURL),
 			resource.WithAttributes(
 				semconv.ServiceName(serviceName),
-				// Tags every signal with the emitting node so a shared Grafana can filter by it.
-				semconv.ServiceInstanceID(telemetrySettings.NodeId),
-				attribute.String("agent.node.id", telemetrySettings.NodeId),
+				semconv.ServiceNamespace("agentic"),
+				// Tags every signal with the emitting node and environment so a shared Grafana can filter by them.
+				semconv.ServiceInstanceID(telemetrySettings.InstanceId),
+				semconv.DeploymentEnvironmentName(telemetrySettings.Environment),
+				attribute.String("agent.node.id", telemetrySettings.InstanceId),
 			),
 		)
 		if err != nil {
