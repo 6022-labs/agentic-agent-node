@@ -14,28 +14,21 @@ import (
 const meterName = "agentic_runtime_db"
 
 type DbQueryMetrics struct {
-	queryCounter      metric.Int64Counter
+	dbSystem          attribute.KeyValue
 	durationHistogram metric.Float64Histogram
 	rowsHistogram     metric.Int64Histogram
-	errorCounter      metric.Int64Counter
 }
 
-func NewDbQueryMetrics() *DbQueryMetrics {
+// NewDbQueryMetrics stamps db.system.name from the driver actually in use; the adapter may back
+// more than one engine.
+func NewDbQueryMetrics(dbSystem attribute.KeyValue) *DbQueryMetrics {
 	noopMeter := noop.NewMeterProvider().Meter(meterName)
 	meter := otel.GetMeterProvider().Meter(meterName)
-
-	queryCounter, err := meter.Int64Counter(
-		"db.client.operation.count",
-		metric.WithDescription("Total number of database queries"),
-	)
-	if err != nil {
-		queryCounter, _ = noopMeter.Int64Counter("db.client.operation.count")
-	}
 
 	durationHistogram, err := meter.Float64Histogram(
 		"db.client.operation.duration",
 		metric.WithUnit("s"),
-		metric.WithExplicitBucketBoundaries(common_metrics.LatencySecondsBuckets...),
+		metric.WithExplicitBucketBoundaries(common_metrics.DbLatencySecondsBuckets...),
 		metric.WithDescription("Duration of database queries"),
 	)
 	if err != nil {
@@ -43,26 +36,18 @@ func NewDbQueryMetrics() *DbQueryMetrics {
 	}
 
 	rowsHistogram, err := meter.Int64Histogram(
-		"db.client.operation.rows",
-		metric.WithDescription("Rows affected/returned by database queries"),
+		"db.client.response.returned_rows",
+		metric.WithUnit("{row}"),
+		metric.WithDescription("The number of rows returned by the operation"),
 	)
 	if err != nil {
-		rowsHistogram, _ = noopMeter.Int64Histogram("db.client.operation.rows")
-	}
-
-	errorCounter, err := meter.Int64Counter(
-		"db.client.operation.errors",
-		metric.WithDescription("Total number of failed database queries"),
-	)
-	if err != nil {
-		errorCounter, _ = noopMeter.Int64Counter("db.client.operation.errors")
+		rowsHistogram, _ = noopMeter.Int64Histogram("db.client.response.returned_rows")
 	}
 
 	return &DbQueryMetrics{
-		queryCounter:      queryCounter,
+		dbSystem:          dbSystem,
 		durationHistogram: durationHistogram,
 		rowsHistogram:     rowsHistogram,
-		errorCounter:      errorCounter,
 	}
 }
 
@@ -72,17 +57,21 @@ func (m *DbQueryMetrics) RecordQuery(
 	operation, model string,
 	duration time.Duration,
 	rows int64,
-	failed bool,
+	err error,
 ) {
-	attrs := metric.WithAttributes(
+	attrs := []attribute.KeyValue{
+		m.dbSystem,
 		attribute.String("db.operation.name", operation),
 		attribute.String("db.collection.name", model),
-	)
-	m.queryCounter.Add(ctx, 1, attrs)
-	m.durationHistogram.Record(ctx, duration.Seconds(), attrs)
-	if failed {
-		m.errorCounter.Add(ctx, 1, attrs)
-		return
 	}
-	m.rowsHistogram.Record(ctx, rows, attrs)
+	// error.type is conditionally required, and only on a failed operation.
+	if err != nil {
+		attrs = append(attrs, attribute.String("error.type", common_metrics.ErrorType(err)))
+	}
+
+	option := metric.WithAttributes(attrs...)
+	m.durationHistogram.Record(ctx, duration.Seconds(), option)
+	if err == nil {
+		m.rowsHistogram.Record(ctx, rows, option)
+	}
 }

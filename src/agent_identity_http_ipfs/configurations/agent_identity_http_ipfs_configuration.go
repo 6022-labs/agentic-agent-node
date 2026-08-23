@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_http_ipfs/settings"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/dig"
 )
 
@@ -28,7 +29,9 @@ func AddAgentIdentityHttpIpfsConfiguration(container *dig.Container) {
 			Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 				transport,
 				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_ipfs"),
-			))}
+			),
+				otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
+			)}
 	}, dig.Name("ipfs-http-client")); err != nil {
 		panic(err)
 	}

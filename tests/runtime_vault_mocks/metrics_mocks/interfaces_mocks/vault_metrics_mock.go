@@ -42,13 +42,13 @@ func (m *MockVaultMetricsInterface) EXPECT() *MockVaultMetricsInterfaceMockRecor
 }
 
 // RecordOperation mocks base method.
-func (m *MockVaultMetricsInterface) RecordOperation(ctx context.Context, operation, mount string, duration time.Duration, failed bool) {
+func (m *MockVaultMetricsInterface) RecordOperation(ctx context.Context, operation, mount string, duration time.Duration, err error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordOperation", ctx, operation, mount, duration, failed)
+	m.ctrl.Call(m, "RecordOperation", ctx, operation, mount, duration, err)
 }
 
 // RecordOperation indicates an expected call of RecordOperation.
-func (mr *MockVaultMetricsInterfaceMockRecorder) RecordOperation(ctx, operation, mount, duration, failed any) *gomock.Call {
+func (mr *MockVaultMetricsInterfaceMockRecorder) RecordOperation(ctx, operation, mount, duration, err any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordOperation", reflect.TypeOf((*MockVaultMetricsInterface)(nil).RecordOperation), ctx, operation, mount, duration, failed)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordOperation", reflect.TypeOf((*MockVaultMetricsInterface)(nil).RecordOperation), ctx, operation, mount, duration, err)
 }

@@ -27,8 +27,11 @@ func NewKvV1SecretStorage(
 
 func (s *KvV1SecretStorage) recordOperation(ctx context.Context, operation string, start time.Time, err *error) {
 	// ErrSecretNotFound is an expected "miss", not an operational failure.
-	failed := err != nil && *err != nil && !errors.Is(*err, runtime_common_interfaces.ErrSecretNotFound)
-	s.metrics.RecordOperation(ctx, operation, s.settings.KvV1MountPath, time.Since(start), failed)
+	var operationErr error
+	if err != nil && *err != nil && !errors.Is(*err, runtime_common_interfaces.ErrSecretNotFound) {
+		operationErr = *err
+	}
+	s.metrics.RecordOperation(ctx, operation, s.settings.KvV1MountPath, time.Since(start), operationErr)
 }
 
 func (s *KvV1SecretStorage) Write(ctx context.Context, key string, data map[string]string) (err error) {

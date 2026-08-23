@@ -33,7 +33,9 @@ func WhenValidatingErc20BeforeEach(t *testing.T) *WhenValidatingErc20TestingSuit
 	t.Cleanup(client.Close)
 
 	mockBlockchainRpcMetrics := runtime_metrics_mocks.NewMockBlockchainRpcMetricsInterface(gomock.NewController(t))
-	mockBlockchainRpcMetrics.EXPECT().RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockBlockchainRpcMetrics.EXPECT().
+		RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
 
 	return &WhenValidatingErc20TestingSuite{
 		anvilAccountSettings: anvilAccountSettings,

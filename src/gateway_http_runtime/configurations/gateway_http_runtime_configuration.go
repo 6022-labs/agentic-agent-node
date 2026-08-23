@@ -18,6 +18,7 @@ import (
 	reasoning_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/reasoning"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/settings"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/dig"
 )
 
@@ -27,7 +28,9 @@ func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResp
 		Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 			http.DefaultTransport,
 			common_metrics.NewExternalHttpMetrics("agentic_gateway_http_runtime"),
-		)),
+		),
+			otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
+		),
 	}
 	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
 }

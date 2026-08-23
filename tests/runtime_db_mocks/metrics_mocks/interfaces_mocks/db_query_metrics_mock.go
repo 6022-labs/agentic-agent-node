@@ -42,13 +42,13 @@ func (m *MockDbQueryMetricsInterface) EXPECT() *MockDbQueryMetricsInterfaceMockR
 }
 
 // RecordQuery mocks base method.
-func (m *MockDbQueryMetricsInterface) RecordQuery(ctx context.Context, operation, model string, duration time.Duration, rows int64, failed bool) {
+func (m *MockDbQueryMetricsInterface) RecordQuery(ctx context.Context, operation, model string, duration time.Duration, rows int64, err error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordQuery", ctx, operation, model, duration, rows, failed)
+	m.ctrl.Call(m, "RecordQuery", ctx, operation, model, duration, rows, err)
 }
 
 // RecordQuery indicates an expected call of RecordQuery.
-func (mr *MockDbQueryMetricsInterfaceMockRecorder) RecordQuery(ctx, operation, model, duration, rows, failed any) *gomock.Call {
+func (mr *MockDbQueryMetricsInterfaceMockRecorder) RecordQuery(ctx, operation, model, duration, rows, err any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordQuery", reflect.TypeOf((*MockDbQueryMetricsInterface)(nil).RecordQuery), ctx, operation, model, duration, rows, failed)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordQuery", reflect.TypeOf((*MockDbQueryMetricsInterface)(nil).RecordQuery), ctx, operation, model, duration, rows, err)
 }

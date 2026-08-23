@@ -11,6 +11,7 @@ require (
 	github.com/go-faker/faker/v4 v4.7.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.6
+	github.com/gofiber/contrib/otelfiber/v2 v2.2.3
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -33,6 +34,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/testcontainers/testcontainers-go v0.42.0
 	go.opentelemetry.io/contrib/bridges/otelzap v0.19.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.44.0
@@ -116,7 +118,6 @@ require (
 	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
-	github.com/gofiber/contrib/otelfiber/v2 v2.2.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -199,7 +200,6 @@ require (
 	go.opentelemetry.io/contrib v1.20.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.42.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect

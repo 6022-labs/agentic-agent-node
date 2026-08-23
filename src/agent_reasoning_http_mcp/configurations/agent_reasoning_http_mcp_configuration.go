@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/services"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/dig"
 )
 
@@ -53,7 +54,9 @@ func AddAgentReasoningHttpMcpConfiguration(container *dig.Container) {
 			Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 				transport,
 				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_mcp"),
-			))}
+			),
+				otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
+			)}
 	}, dig.Name("mcp-http-client"))
 	if err != nil {
 		panic(err)

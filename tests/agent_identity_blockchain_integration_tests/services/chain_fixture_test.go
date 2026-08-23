@@ -49,7 +49,9 @@ func newChainFixture(t *testing.T) *chainFixture {
 	mockController := gomock.NewController(t)
 
 	mockBlockchainRpcMetrics := runtime_metrics_mocks.NewMockBlockchainRpcMetricsInterface(mockController)
-	mockBlockchainRpcMetrics.EXPECT().RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockBlockchainRpcMetrics.EXPECT().
+		RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
 
 	agent := &models.Agent{Id: uuid.New()}
 	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)

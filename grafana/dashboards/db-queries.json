@@ -96,7 +96,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (db_operation_name, db_collection_name) (rate(db_client_operation_count_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
+          "expr": "sum by (db_operation_name, db_collection_name) (rate(db_client_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
           "legendFormat": "{{db_operation_name}} {{db_collection_name}}"
         }
       ]
@@ -123,7 +123,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (db_operation_name) (rate(db_client_operation_errors_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
+          "expr": "sum by (db_operation_name) (rate(db_client_operation_duration_seconds_count{error_type!=\"\",deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m]))",
           "legendFormat": "{{db_operation_name}}"
         }
       ]
@@ -175,7 +175,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, db_collection_name) (rate(db_client_operation_rows_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, db_collection_name) (rate(db_client_response_returned_rows_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\"}[5m])))",
           "legendFormat": "{{db_collection_name}}"
         }
       ]

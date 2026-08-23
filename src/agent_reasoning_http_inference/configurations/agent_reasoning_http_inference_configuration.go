@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/settings"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/dig"
 )
 
@@ -172,7 +173,9 @@ func AddAgentReasoningHttpInferenceConfiguration(container *dig.Container) {
 			Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 				transport,
 				common_metrics.NewExternalHttpMetrics("agentic_runtime_http_inference"),
-			))}
+			),
+				otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
+			)}
 	}, dig.Name("llm-inference-http-client"))
 	if err != nil {
 		panic(err)

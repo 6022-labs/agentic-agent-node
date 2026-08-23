@@ -40,7 +40,9 @@ func WhenValidatingErc20BeforeEach(
 	}
 
 	mockMetrics := metrics_interfaces_mocks.NewMockBlockchainRpcMetricsInterface(gomock.NewController(t))
-	mockMetrics.EXPECT().RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockMetrics.EXPECT().
+		RecordRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
 
 	return &WhenValidatingErc20TestingSuite{
 		sut: services.NewErc20Validator(factory.NewEthClientFactory(&chains, mockMetrics)),

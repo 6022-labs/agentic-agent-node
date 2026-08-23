@@ -154,8 +154,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (vault_operation) (rate(vault_operation_count_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{vault_operation}}"
+          "expr": "sum by (vault_operation_name) (rate(vault_operation_duration_seconds_count{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "{{vault_operation_name}}"
         }
       ]
     },
@@ -181,8 +181,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (vault_operation) (rate(vault_operation_errors_total{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
-          "legendFormat": "{{vault_operation}}"
+          "expr": "sum by (vault_operation_name) (rate(vault_operation_duration_seconds_count{error_type!=\"\",deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m]))",
+          "legendFormat": "{{vault_operation_name}}"
         }
       ]
     },
@@ -208,8 +208,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, vault_operation) (rate(vault_operation_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
-          "legendFormat": "{{vault_operation}}"
+          "expr": "histogram_quantile(0.95, sum by (le, vault_operation_name) (rate(vault_operation_duration_seconds_bucket{deployment_environment_name=~\"$environment\", service_name=~\"$service\", agent_node_id=~\"$node\", agent_ens_domain=~\"$ens\"}[5m])))",
+          "legendFormat": "{{vault_operation_name}}"
         }
       ]
     }

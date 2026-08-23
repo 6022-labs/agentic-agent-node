@@ -92,7 +92,10 @@ func (p *GormMetricsPlugin) makeAfter(operation string) func(*gorm.DB) {
 		}
 
 		// ErrRecordNotFound is an expected miss, not a failure (mirrors the vault adapter).
-		failed := db.Error != nil && !errors.Is(db.Error, gorm.ErrRecordNotFound)
-		p.metrics.RecordQuery(ctx, operation, model, duration, db.Statement.RowsAffected, failed)
+		queryErr := db.Error
+		if errors.Is(queryErr, gorm.ErrRecordNotFound) {
+			queryErr = nil
+		}
+		p.metrics.RecordQuery(ctx, operation, model, duration, db.Statement.RowsAffected, queryErr)
 	}
 }

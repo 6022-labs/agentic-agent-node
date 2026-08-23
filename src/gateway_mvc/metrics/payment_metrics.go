@@ -41,6 +41,8 @@ func (m *PaymentMetrics) RecordRejected(ctx context.Context, network string) {
 func (m *PaymentMetrics) record(ctx context.Context, outcome, network string) {
 	m.settlementCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("outcome", outcome),
-		attribute.String("network", network),
+		attribute.String("payment.network", network),
+		// This side is paid; the orchestrator records the paying side of the same transaction.
+		attribute.String("payment.direction", "inbound"),
 	))
 }

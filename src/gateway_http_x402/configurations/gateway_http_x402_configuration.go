@@ -8,6 +8,7 @@ import (
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_x402/clients"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/dig"
 )
 
@@ -23,7 +24,9 @@ func AddGatewayHttpX402Configuration(container *dig.Container) {
 				Transport: otelhttp.NewTransport(common_metrics.NewHttpMetricsRoundTripper(
 					http.DefaultTransport,
 					common_metrics.NewExternalHttpMetrics("agentic_gateway_http_x402"),
-				)),
+				),
+					otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
+				),
 			}
 		},
 		dig.Name("x402-facilitator-http-client"),
