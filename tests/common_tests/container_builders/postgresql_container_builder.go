@@ -38,7 +38,7 @@ func (b *PostgresContainerBuilder) start() string {
 	if b.container == nil {
 		ctx := context.Background()
 		req := testcontainers.ContainerRequest{
-			Image:        "postgres:16-alpine",
+			Image:        "postgres:18-alpine",
 			ExposedPorts: []string{"5432/tcp"},
 			Env: map[string]string{
 				"POSTGRES_USER":     "postgres",

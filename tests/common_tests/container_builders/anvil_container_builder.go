@@ -61,7 +61,7 @@ func (b *AnvilContainerBuilder) start() *rpc.Client {
 	if b.container == nil {
 		ctx := context.Background()
 		req := testcontainers.ContainerRequest{
-			Image:        "ghcr.io/foundry-rs/foundry:v1.5.0",
+			Image:        "ghcr.io/foundry-rs/foundry:v1.7.1",
 			ExposedPorts: []string{"8545/tcp"},
 			// The image entrypoint is a shell, so anvil has to be the explicit entrypoint.
 			Entrypoint: []string{"anvil", "--host", "0.0.0.0"},
