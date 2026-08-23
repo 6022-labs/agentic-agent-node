@@ -47,7 +47,7 @@ func (b *VaultContainerBuilder) start() *vault.Client {
 	if b.container == nil {
 		ctx := context.Background()
 		req := testcontainers.ContainerRequest{
-			Image:        "hashicorp/vault:1.18",
+			Image:        "hashicorp/vault:1.21",
 			ExposedPorts: []string{"8200/tcp"},
 			Env: map[string]string{
 				"VAULT_DEV_ROOT_TOKEN_ID":  vaultDevToken,
