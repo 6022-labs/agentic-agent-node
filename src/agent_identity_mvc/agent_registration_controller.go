@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -73,15 +73,15 @@ func (c *AgentRegistrationController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 400 {object} errors.ValidationError
 // @Router /internal/agent/registration [post]
-func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
+func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 	body := new(requests.SaveAgentRegistrationRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 	if image, err := ctx.FormFile("image"); err == nil {
 		body.Image = image
 	}
-	resp, err := c.saveAgentRegistration.Execute(ctx.UserContext(), body)
+	resp, err := c.saveAgentRegistration.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -95,8 +95,8 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Router /internal/agent/registration [get]
-func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentRegistration.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentRegistration.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -110,8 +110,8 @@ func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.MintInfoResponse
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Router /internal/agent/registration/mint-info [get]
-func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentMintInfo.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
+	resp, err := c.getAgentMintInfo.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -125,8 +125,8 @@ func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.RegistrationStatusResponse
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Router /internal/agent/registration/mint/check [post]
-func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
-	resp, err := c.checkAgentMint.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
+	resp, err := c.checkAgentMint.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -140,8 +140,8 @@ func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.EnsInfoResponse
 // @Failure 409 {object} fiber.Map "not_minted"
 // @Router /internal/agent/registration/ens-info [get]
-func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentEnsInfo.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
+	resp, err := c.getAgentEnsInfo.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -155,8 +155,8 @@ func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.RegistrationStatusResponse
 // @Failure 409 {object} fiber.Map "not_minted"
 // @Router /internal/agent/registration/ens/check [post]
-func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
-	resp, err := c.checkAgentEns.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
+	resp, err := c.checkAgentEns.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -171,8 +171,8 @@ func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.RegistrationStatusResponse
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Router /internal/agent/registration/self [post]
-func (c *AgentRegistrationController) Self(ctx *fiber.Ctx) error {
-	resp, err := c.selfRegisterAgent.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) Self(ctx fiber.Ctx) error {
+	resp, err := c.selfRegisterAgent.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalAuthorizeEndpoint = "/internal/authorize"
@@ -32,12 +32,12 @@ func (c *AuthorizeController) RegisterRoutes(app fiber.Router) {
 // @Failure 400 {object} errors.ValidationError
 // @Failure 500 {object} fiber.Map "authorize_failed"
 // @Router /internal/authorize [post]
-func (c *AuthorizeController) Authorize(ctx *fiber.Ctx) error {
+func (c *AuthorizeController) Authorize(ctx fiber.Ctx) error {
 	body := new(requests.AuthorizeRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.authorize.Execute(ctx.UserContext(), body)
+	resp, err := c.authorize.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

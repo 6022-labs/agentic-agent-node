@@ -3,7 +3,7 @@ package payment
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const PaymentPolicyEndpoint = "/config/payment-policy"
@@ -38,8 +38,8 @@ func (c *PaymentPolicyController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-policy [get]
-func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getPaymentPolicy.Execute(ctx.UserContext())
+func (c *PaymentPolicyController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getPaymentPolicy.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -54,8 +54,8 @@ func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-policy [delete]
-func (c *PaymentPolicyController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deletePaymentPolicy.Execute(ctx.UserContext()); err != nil {
+func (c *PaymentPolicyController) Delete(ctx fiber.Ctx) error {
+	if err := c.deletePaymentPolicy.Execute(ctx.Context()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

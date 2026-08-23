@@ -1,6 +1,6 @@
 package interfaces
 
-import "github.com/gofiber/fiber/v2"
+import "github.com/gofiber/fiber/v3"
 
 // ControllerInterface registers internal-only routes mounted under /internal.
 // Runtime has no auth split — gateway is the only caller and reaches it via

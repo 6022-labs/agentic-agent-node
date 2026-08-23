@@ -12,7 +12,7 @@ import (
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	payment_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
 	access_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mvc_mocks/reasoning_mocks/middlewares_mocks/interfaces_mocks"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -41,7 +41,7 @@ func (s *WhenRunningAccessChainTestingSuite) build(links ...middleware_interface
 		AccessMethods:     links,
 	})
 	app := fiber.New()
-	app.Post("/responses", sut.Handle, func(ctx *fiber.Ctx) error {
+	app.Post("/responses", sut.Handle, func(ctx fiber.Ctx) error {
 		s.downstreamRan = true
 		return ctx.JSON(fiber.Map{"ok": true})
 	})
@@ -151,7 +151,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 			suite.linkA.EXPECT().
 				TryHandle(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx *fiber.Ctx, _ []models.ExternalPaymentRule) (bool, error) {
+				DoAndReturn(func(ctx fiber.Ctx, _ []models.ExternalPaymentRule) (bool, error) {
 					return true, ctx.Next()
 				}).
 				Times(1)

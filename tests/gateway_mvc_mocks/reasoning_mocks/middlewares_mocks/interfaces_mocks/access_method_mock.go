@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	fiber "github.com/gofiber/fiber/v2"
+	fiber "github.com/gofiber/fiber/v3"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -56,7 +56,7 @@ func (mr *MockAccessMethodInterfaceMockRecorder) Priority() *gomock.Call {
 }
 
 // TryHandle mocks base method.
-func (m *MockAccessMethodInterface) TryHandle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *MockAccessMethodInterface) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "TryHandle", ctx, rules)
 	ret0, _ := ret[0].(bool)

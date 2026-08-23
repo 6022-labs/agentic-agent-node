@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -53,12 +53,12 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm/validate [post]
-func (c *LlmConfigController) Validate(ctx *fiber.Ctx) error {
+func (c *LlmConfigController) Validate(ctx fiber.Ctx) error {
 	body := new(requests.SetLlmConfigRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	if err := c.validateLlmConfig.Execute(ctx.UserContext(), body); err != nil {
+	if err := c.validateLlmConfig.Execute(ctx.Context(), body); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
@@ -72,8 +72,8 @@ func (c *LlmConfigController) Validate(ctx *fiber.Ctx) error {
 // @Failure 404 {object} fiber.Map "not_configured"
 // @Security BearerAuth
 // @Router /config/llm [get]
-func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getLlmConfig.Execute(ctx.UserContext())
+func (c *LlmConfigController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getLlmConfig.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -91,12 +91,12 @@ func (c *LlmConfigController) Get(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [post]
-func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
+func (c *LlmConfigController) Set(ctx fiber.Ctx) error {
 	body := new(requests.SetLlmConfigRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.setLlmConfig.Execute(ctx.UserContext(), body)
+	resp, err := c.setLlmConfig.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -111,8 +111,8 @@ func (c *LlmConfigController) Set(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [delete]
-func (c *LlmConfigController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deleteLlmConfig.Execute(ctx.UserContext()); err != nil {
+func (c *LlmConfigController) Delete(ctx fiber.Ctx) error {
+	if err := c.deleteLlmConfig.Execute(ctx.Context()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

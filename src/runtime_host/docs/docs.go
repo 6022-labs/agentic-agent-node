@@ -1444,7 +1444,7 @@ const docTemplate = `{
         },
         "fiber.Map": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {}
         },
         "requests.AppendConversationMessagesRequest": {
             "type": "object",

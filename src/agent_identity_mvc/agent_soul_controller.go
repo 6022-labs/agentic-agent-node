@@ -3,7 +3,7 @@ package agent_identity_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalAgentSoulEndpoint = "/internal/agent/soul"
@@ -28,8 +28,8 @@ func (c *AgentSoulController) RegisterRoutes(app fiber.Router) {
 // @Failure 404 {object} fiber.Map "identity_not_found"
 // @Failure 500 {object} fiber.Map "soul_lookup_failed"
 // @Router /internal/agent/soul [get]
-func (c *AgentSoulController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentSoul.Execute(ctx.UserContext())
+func (c *AgentSoulController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentSoul.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -3,7 +3,7 @@ package agent_payment_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalPaymentPolicyEndpoint = "/internal/config/payment-policy"
@@ -35,8 +35,8 @@ func (c *PaymentPolicyController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.PaymentPolicyResponse
 // @Failure 500 {object} fiber.Map "get_payment_policy_failed"
 // @Router /internal/config/payment-policy [get]
-func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getPaymentPolicy.Execute(ctx.UserContext())
+func (c *PaymentPolicyController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getPaymentPolicy.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -50,8 +50,8 @@ func (c *PaymentPolicyController) Get(ctx *fiber.Ctx) error {
 // @Success 204
 // @Failure 500 {object} fiber.Map "delete_payment_policy_failed"
 // @Router /internal/config/payment-policy [delete]
-func (c *PaymentPolicyController) Delete(ctx *fiber.Ctx) error {
-	if err := c.deletePaymentPolicy.Execute(ctx.UserContext()); err != nil {
+func (c *PaymentPolicyController) Delete(ctx fiber.Ctx) error {
+	if err := c.deletePaymentPolicy.Execute(ctx.Context()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

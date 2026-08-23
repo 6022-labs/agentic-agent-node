@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/responses"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const HealthEndpoint = "/health"
@@ -30,7 +30,7 @@ func (c *HealthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Produce json
 // @Success 200 {object} responses.GetHealthResponse
 // @Router /health [get]
-func (c *HealthController) Health(ctx *fiber.Ctx) error {
+func (c *HealthController) Health(ctx fiber.Ctx) error {
 	return ctx.JSON(&responses.GetHealthResponse{
 		Status:        "ok",
 		UptimeSeconds: int64(time.Since(c.startedAt).Seconds()),

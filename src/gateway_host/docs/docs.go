@@ -1603,7 +1603,7 @@ const docTemplate = `{
         },
         "fiber.Map": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {}
         },
         "models.ExternalPaymentRule": {
             "type": "object",

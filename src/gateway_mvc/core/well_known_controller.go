@@ -3,7 +3,7 @@ package core
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -43,8 +43,8 @@ func (c *WellKnownController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 404 {object} errors.NotFoundError
 // @Failure 502 {object} errors.UnavailableError
 // @Router /.well-known/agent-card.json [get]
-func (c *WellKnownController) GetWellKnownAgentCard(ctx *fiber.Ctx) error {
-	card, err := c.getWellKnownAgentCard.Execute(ctx.UserContext())
+func (c *WellKnownController) GetWellKnownAgentCard(ctx fiber.Ctx) error {
+	card, err := c.getWellKnownAgentCard.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -60,8 +60,8 @@ func (c *WellKnownController) GetWellKnownAgentCard(ctx *fiber.Ctx) error {
 // @Failure 404 {object} errors.NotFoundError
 // @Failure 502 {object} errors.UnavailableError
 // @Router /.well-known/6022 [get]
-func (c *WellKnownController) GetWellKnownAgent6022(ctx *fiber.Ctx) error {
-	card, err := c.getWellKnownAgent6022.Execute(ctx.UserContext())
+func (c *WellKnownController) GetWellKnownAgent6022(ctx fiber.Ctx) error {
+	card, err := c.getWellKnownAgent6022.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

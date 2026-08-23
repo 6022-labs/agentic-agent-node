@@ -5,7 +5,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const ResponsesEndpoint = "/responses"
@@ -45,12 +45,12 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 402 {object} x402.PaymentRequired
 // @Failure 502 {object} fiber.Map "runtime_failed"
 // @Router /responses [post]
-func (c *ResponseController) CreateResponse(ctx *fiber.Ctx) error {
+func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.createResponse.Execute(ctx.UserContext(), body)
+	resp, err := c.createResponse.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

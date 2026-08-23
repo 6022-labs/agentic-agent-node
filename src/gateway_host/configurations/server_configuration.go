@@ -6,11 +6,11 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
-	"github.com/gofiber/contrib/fiberzap/v2"
-	"github.com/gofiber/contrib/otelfiber/v2"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/swagger"
+	fiberotel "github.com/gofiber/contrib/v3/otel"
+	"github.com/gofiber/contrib/v3/swaggo"
+	fiberzap "github.com/gofiber/contrib/v3/zap"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
@@ -30,7 +30,6 @@ func ConfigureServer(container *dig.Container) {
 func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 	return fiber.New(fiber.Config{
 		AppName:   AppName,
-		Network:   "tcp",
 		BodyLimit: hostSettings.BodyLimitBytes,
 	})
 }
@@ -48,20 +47,20 @@ type registerRoutesParams struct {
 
 func registerRoutes(p registerRoutesParams) {
 	p.App.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "*",
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{"*"},
 	}))
 
 	p.App.Use(p.AgentTelemetry.Handle)
 	// Spans only: ApiRequestMetrics owns http.server.*.
-	p.App.Use(otelfiber.Middleware(otelfiber.WithoutMetrics(true)))
+	p.App.Use(fiberotel.Middleware(fiberotel.WithoutMetrics(true)))
 	p.App.Use(p.RequestMetrics.Handle)
 
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
 	}))
 
-	p.App.Get("/swagger/*", swagger.New())
+	p.App.Get("/swagger/*", swaggo.New())
 
 	for _, controller := range p.Controllers {
 		controller.RegisterUnauthenticatedRoutes(p.App)

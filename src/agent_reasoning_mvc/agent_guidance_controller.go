@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalAgentGuidanceEndpoint = "/internal/agent/guidance"
@@ -36,8 +36,8 @@ func (c *AgentGuidanceController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.AgentGuidanceResponse
 // @Failure 500 {object} fiber.Map "guidance_lookup_failed"
 // @Router /internal/agent/guidance [get]
-func (c *AgentGuidanceController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentGuidance.Execute(ctx.UserContext())
+func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentGuidance.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -53,12 +53,12 @@ func (c *AgentGuidanceController) Get(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.AgentGuidanceResponse
 // @Failure 500 {object} fiber.Map "guidance_update_failed"
 // @Router /internal/agent/guidance [put]
-func (c *AgentGuidanceController) Set(ctx *fiber.Ctx) error {
+func (c *AgentGuidanceController) Set(ctx fiber.Ctx) error {
 	body := new(requests.SetAgentGuidanceRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.setAgentGuidance.Execute(ctx.UserContext(), body)
+	resp, err := c.setAgentGuidance.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
