@@ -6,7 +6,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -76,9 +76,9 @@ func (c *AgentRegistrationController) RegisterAuthenticatedRoutes(app fiber.Rout
 // @Failure 400 {object} errors.ValidationError
 // @Security BearerAuth
 // @Router /agent/registration [post]
-func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
+func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 	body := new(requests.SaveAgentRegistrationRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 	if image, err := ctx.FormFile("image"); err == nil {
@@ -88,7 +88,7 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 	if !ok || owner == "" {
 		return mvc.WriteError(ctx, errors.NewUnauthorizedError("missing_owner", "authenticated address is required"))
 	}
-	resp, err := c.saveAgentRegistration.Execute(ctx.UserContext(), body, owner)
+	resp, err := c.saveAgentRegistration.Execute(ctx.Context(), body, owner)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -103,8 +103,8 @@ func (c *AgentRegistrationController) Save(ctx *fiber.Ctx) error {
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Security BearerAuth
 // @Router /agent/registration [get]
-func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentRegistration.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentRegistration.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -118,8 +118,8 @@ func (c *AgentRegistrationController) Get(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.MintInfoResponse
 // @Security BearerAuth
 // @Router /agent/registration/mint-info [get]
-func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentMintInfo.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
+	resp, err := c.getAgentMintInfo.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -133,8 +133,8 @@ func (c *AgentRegistrationController) MintInfo(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.RegistrationStatusResponse
 // @Security BearerAuth
 // @Router /agent/registration/mint/check [post]
-func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
-	resp, err := c.checkAgentMint.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
+	resp, err := c.checkAgentMint.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -149,8 +149,8 @@ func (c *AgentRegistrationController) CheckMint(ctx *fiber.Ctx) error {
 // @Failure 409 {object} fiber.Map "not_minted"
 // @Security BearerAuth
 // @Router /agent/registration/ens-info [get]
-func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentEnsInfo.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
+	resp, err := c.getAgentEnsInfo.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -164,8 +164,8 @@ func (c *AgentRegistrationController) EnsInfo(ctx *fiber.Ctx) error {
 // @Success 200 {object} responses.RegistrationStatusResponse
 // @Security BearerAuth
 // @Router /agent/registration/ens/check [post]
-func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
-	resp, err := c.checkAgentEns.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
+	resp, err := c.checkAgentEns.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -180,8 +180,8 @@ func (c *AgentRegistrationController) CheckEns(ctx *fiber.Ctx) error {
 // @Failure 404 {object} fiber.Map "draft_not_found"
 // @Security BearerAuth
 // @Router /agent/registration/self [post]
-func (c *AgentRegistrationController) Self(ctx *fiber.Ctx) error {
-	resp, err := c.selfRegisterAgent.Execute(ctx.UserContext())
+func (c *AgentRegistrationController) Self(ctx fiber.Ctx) error {
+	resp, err := c.selfRegisterAgent.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

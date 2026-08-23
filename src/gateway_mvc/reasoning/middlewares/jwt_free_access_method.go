@@ -8,7 +8,7 @@ import (
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"go.uber.org/dig"
 )
 
@@ -40,7 +40,7 @@ func (m *JwtFreeAccessMethod) Priority() int {
 	return jwtFreeAccessPriority
 }
 
-func (m *JwtFreeAccessMethod) TryHandle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *JwtFreeAccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
 	address, ok := m.freeAccessAddress(ctx, rules)
 	if !ok {
 		return false, nil
@@ -51,7 +51,7 @@ func (m *JwtFreeAccessMethod) TryHandle(ctx *fiber.Ctx, rules []models.ExternalP
 
 // freeAccessAddress returns the bearer's free-entitled address; false on any failure.
 func (m *JwtFreeAccessMethod) freeAccessAddress(
-	ctx *fiber.Ctx,
+	ctx fiber.Ctx,
 	rules []models.ExternalPaymentRule,
 ) (common.Address, bool) {
 	const prefix = "Bearer "

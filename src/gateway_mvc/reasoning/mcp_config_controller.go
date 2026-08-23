@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -60,12 +60,12 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/tools [post]
-func (c *McpConfigController) DiscoverTools(ctx *fiber.Ctx) error {
+func (c *McpConfigController) DiscoverTools(ctx fiber.Ctx) error {
 	body := new(requests.DiscoverMcpServerToolsRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.discoverMcpServerTools.Execute(ctx.UserContext(), body)
+	resp, err := c.discoverMcpServerTools.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -85,15 +85,15 @@ func (c *McpConfigController) DiscoverTools(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/{id} [put]
-func (c *McpConfigController) Update(ctx *fiber.Ctx) error {
+func (c *McpConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateMcpConnectionRequest)
-	if err := ctx.ParamsParser(request); err != nil {
+	if err := ctx.Bind().URI(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := ctx.BodyParser(request); err != nil {
+	if err := ctx.Bind().Body(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updateMcpConnection.Execute(ctx.UserContext(), request)
+	resp, err := c.updateMcpConnection.Execute(ctx.Context(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -108,8 +108,8 @@ func (c *McpConfigController) Update(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections [get]
-func (c *McpConfigController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listMcpConnections.Execute(ctx.UserContext())
+func (c *McpConfigController) List(ctx fiber.Ctx) error {
+	resp, err := c.listMcpConnections.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -127,12 +127,12 @@ func (c *McpConfigController) List(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections [post]
-func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
+func (c *McpConfigController) Create(ctx fiber.Ctx) error {
 	body := new(requests.CreateMcpConnectionRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.createMcpConnection.Execute(ctx.UserContext(), body)
+	resp, err := c.createMcpConnection.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -149,12 +149,12 @@ func (c *McpConfigController) Create(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/{id} [delete]
-func (c *McpConfigController) Delete(ctx *fiber.Ctx) error {
+func (c *McpConfigController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeleteMcpConnectionRequest)
-	if err := ctx.ParamsParser(request); err != nil {
+	if err := ctx.Bind().URI(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := c.deleteMcpConnection.Execute(ctx.UserContext(), request); err != nil {
+	if err := c.deleteMcpConnection.Execute(ctx.Context(), request); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)

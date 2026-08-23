@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalAgentCollectionsEndpoint = "/internal/agent/collections"
@@ -35,12 +35,12 @@ func (c *AgentCollectionsController) RegisterRoutes(app fiber.Router) {
 // @Failure 400 {object} fiber.Map "chain_id_required"
 // @Failure 502 {object} fiber.Map "collections_read_failed"
 // @Router /internal/agent/collections [get]
-func (c *AgentCollectionsController) List(ctx *fiber.Ctx) error {
+func (c *AgentCollectionsController) List(ctx fiber.Ctx) error {
 	req := &requests.ListAgentCollectionsRequest{}
-	if err := ctx.QueryParser(req); err != nil {
+	if err := ctx.Bind().Query(req); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
-	resp, err := c.listAgentCollections.Execute(ctx.UserContext(), req)
+	resp, err := c.listAgentCollections.Execute(ctx.Context(), req)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -39,8 +39,8 @@ func (c *SelfToolConfigController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.SelfToolListResponse
 // @Failure 500 {object} fiber.Map "list_self_tools_failed"
 // @Router /internal/config/self-tools [get]
-func (c *SelfToolConfigController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listSelfTools.Execute(ctx.UserContext())
+func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
+	resp, err := c.listSelfTools.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -59,15 +59,15 @@ func (c *SelfToolConfigController) List(ctx *fiber.Ctx) error {
 // @Failure 404 {object} errors.NotFoundError
 // @Failure 500 {object} fiber.Map "update_self_tool_failed"
 // @Router /internal/config/self-tools/{id} [put]
-func (c *SelfToolConfigController) Update(ctx *fiber.Ctx) error {
+func (c *SelfToolConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateSelfToolRequest)
-	if err := ctx.ParamsParser(request); err != nil {
+	if err := ctx.Bind().URI(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := ctx.BodyParser(request); err != nil {
+	if err := ctx.Bind().Body(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updateSelfTool.Execute(ctx.UserContext(), request)
+	resp, err := c.updateSelfTool.Execute(ctx.Context(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

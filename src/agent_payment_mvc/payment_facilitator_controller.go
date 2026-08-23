@@ -3,7 +3,7 @@ package agent_payment_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const InternalPaymentFacilitatorsEndpoint = "/internal/config/payment-facilitators"
@@ -28,8 +28,8 @@ func (c *PaymentFacilitatorController) RegisterRoutes(app fiber.Router) {
 // @Produce json
 // @Success 200 {object} responses.PaymentFacilitatorsResponse
 // @Router /internal/config/payment-facilitators [get]
-func (c *PaymentFacilitatorController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getPaymentFacilitators.Execute(ctx.UserContext())
+func (c *PaymentFacilitatorController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getPaymentFacilitators.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

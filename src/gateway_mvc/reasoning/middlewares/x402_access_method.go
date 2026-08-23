@@ -16,7 +16,7 @@ import (
 	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 )
 
@@ -73,7 +73,7 @@ func (m *X402AccessMethod) Priority() int {
 }
 
 // x402 is terminal: it always handles, settling a payment or advertising a 402.
-func (m *X402AccessMethod) TryHandle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *X402AccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
 	return true, m.handle(ctx, rules)
 }
 
@@ -86,9 +86,9 @@ func (m *X402AccessMethod) MatchesFreeRule(rules []models.ExternalPaymentRule, a
 	return false
 }
 
-func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPaymentRule) error {
+func (m *X402AccessMethod) handle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) error {
 	// A rule is settleable only if its network has a facilitator.
-	facilitators, err := m.paymentFacilitatorClient.Get(ctx.UserContext())
+	facilitators, err := m.paymentFacilitatorClient.Get(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_facilitators_unavailable", err.Error()))
 	}
@@ -136,7 +136,7 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 
 	facilitator := facilitators[entitled.config.Network]
 	requirements := m.toPaymentRequirements(entitled, facilitator.MaxTimeoutSeconds)
-	verifyResponse, err := m.x402FacilitatorClient.Verify(ctx.UserContext(), facilitator.BaseUrl, payload, requirements)
+	verifyResponse, err := m.x402FacilitatorClient.Verify(ctx.Context(), facilitator.BaseUrl, payload, requirements)
 	if err != nil {
 		return mvc.WriteError(ctx, apperrors.NewUnavailableError("facilitator_unavailable", err.Error()))
 	}
@@ -151,9 +151,9 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 		return nil
 	}
 
-	settleResponse, err := m.x402FacilitatorClient.Settle(ctx.UserContext(), facilitator.BaseUrl, payload, requirements)
+	settleResponse, err := m.x402FacilitatorClient.Settle(ctx.Context(), facilitator.BaseUrl, payload, requirements)
 	if err != nil || !settleResponse.Success {
-		m.paymentMetrics.RecordRejected(ctx.UserContext(), entitled.config.Network)
+		m.paymentMetrics.RecordRejected(ctx.Context(), entitled.config.Network)
 		if err != nil {
 			m.logger.Error("x402 settlement failed", zap.Error(err))
 		} else {
@@ -163,7 +163,7 @@ func (m *X402AccessMethod) handle(ctx *fiber.Ctx, rules []models.ExternalPayment
 		ctx.Response().ResetBody()
 		return m.paymentRequired(ctx, x402Rules, facilitators, "settlement_failed")
 	}
-	m.paymentMetrics.RecordSettled(ctx.UserContext(), entitled.config.Network)
+	m.paymentMetrics.RecordSettled(ctx.Context(), entitled.config.Network)
 
 	encoded, err := x402.EncodeBase64Json(settleResponse)
 	if err != nil {
@@ -201,7 +201,7 @@ func (m *X402AccessMethod) recoverAgainstCandidates(
 
 // paymentRequired writes the spec 402, advertising only public rules (scoped ones would leak patterns).
 func (m *X402AccessMethod) paymentRequired(
-	ctx *fiber.Ctx,
+	ctx fiber.Ctx,
 	x402Rules []x402Rule,
 	facilitators map[string]models.ExternalPaymentFacilitator,
 	errorCode string,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/observability"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/samber/lo"
 )
 
@@ -25,13 +25,13 @@ func NewAgentTelemetryContextMiddleware(
 	}
 }
 
-func (m *AgentTelemetryContextMiddleware) Handle(ctx *fiber.Ctx) error {
-	// Bridge the cancellable request ctx into UserContext (handlers are synchronous) + attach identity for use cases.
-	var userCtx context.Context = ctx.Context()
+func (m *AgentTelemetryContextMiddleware) Handle(ctx fiber.Ctx) error {
+	// Bridge the cancellable request ctx into the handler context (synchronous handlers) + attach identity for use cases.
+	var userCtx context.Context = ctx.RequestCtx()
 	if identity, ok := m.resolveAgentIdentity(userCtx); ok {
 		userCtx = observability.ContextWithAgentIdentity(userCtx, identity)
 	}
-	ctx.SetUserContext(userCtx)
+	ctx.SetContext(userCtx)
 	return ctx.Next()
 }
 

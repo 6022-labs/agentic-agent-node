@@ -8,7 +8,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/common/observability"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/identity/services/interfaces"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const agentIdentityResolveInterval = 30 * time.Second
@@ -28,12 +28,12 @@ func NewAgentTelemetryContextMiddleware(
 	return &AgentTelemetryContextMiddleware{agentRegistrationClient: agentRegistrationClient}
 }
 
-func (m *AgentTelemetryContextMiddleware) Handle(ctx *fiber.Ctx) error {
-	var userCtx context.Context = ctx.Context()
+func (m *AgentTelemetryContextMiddleware) Handle(ctx fiber.Ctx) error {
+	var userCtx context.Context = ctx.RequestCtx()
 	if identity, ok := m.resolveAgentIdentity(userCtx); ok {
 		userCtx = observability.ContextWithAgentIdentity(userCtx, identity)
 	}
-	ctx.SetUserContext(userCtx)
+	ctx.SetContext(userCtx)
 	return ctx.Next()
 }
 

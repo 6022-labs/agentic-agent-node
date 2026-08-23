@@ -3,7 +3,7 @@ package core
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const ConfigEndpoint = "/config"
@@ -32,8 +32,8 @@ func (c *ConfigController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Produce json
 // @Success 200 {object} responses.BlockchainConfigResponse
 // @Router /config [get]
-func (c *ConfigController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getBlockchainConfig.Execute(ctx.UserContext())
+func (c *ConfigController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getBlockchainConfig.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

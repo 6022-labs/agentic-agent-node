@@ -5,7 +5,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -49,9 +49,9 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 400 {object} errors.ValidationError
 // @Failure 500 {object} fiber.Map
 // @Router /auth/challenge [get]
-func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
+func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 	request := new(requests.GetAuthChallengeRequest)
-	if err := ctx.QueryParser(request); err != nil {
+	if err := ctx.Bind().Query(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_query", "message": err.Error()})
 	}
 	resp, err := c.getAuthChallenge.Execute(request)
@@ -73,16 +73,16 @@ func (c *AuthController) Challenge(ctx *fiber.Ctx) error {
 // @Failure 401 {object} fiber.Map "challenge_not_found | signature_mismatch | not_authorized"
 // @Failure 502 {object} fiber.Map "identity_not_found"
 // @Router /auth/verify [post]
-func (c *AuthController) Verify(ctx *fiber.Ctx) error {
+func (c *AuthController) Verify(ctx fiber.Ctx) error {
 	body := new(requests.VerifyAuthRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.verifyAuth.Execute(ctx.UserContext(), body)
+	resp, err := c.verifyAuth.Execute(ctx.Context(), body)
 	if err != nil {
-		c.authMetrics.RecordAuthFailure(ctx.UserContext())
+		c.authMetrics.RecordAuthFailure(ctx.Context())
 		return mvc.WriteError(ctx, err)
 	}
-	c.authMetrics.RecordAuthSuccess(ctx.UserContext())
+	c.authMetrics.RecordAuthSuccess(ctx.Context())
 	return ctx.JSON(resp)
 }

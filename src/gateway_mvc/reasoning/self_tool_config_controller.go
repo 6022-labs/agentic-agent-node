@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -42,8 +42,8 @@ func (c *SelfToolConfigController) RegisterAuthenticatedRoutes(app fiber.Router)
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/self-tools [get]
-func (c *SelfToolConfigController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listSelfTools.Execute(ctx.UserContext())
+func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
+	resp, err := c.listSelfTools.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -63,15 +63,15 @@ func (c *SelfToolConfigController) List(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/self-tools/{id} [put]
-func (c *SelfToolConfigController) Update(ctx *fiber.Ctx) error {
+func (c *SelfToolConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateSelfToolRequest)
-	if err := ctx.ParamsParser(request); err != nil {
+	if err := ctx.Bind().URI(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
-	if err := ctx.BodyParser(request); err != nil {
+	if err := ctx.Bind().Body(request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.updateSelfTool.Execute(ctx.UserContext(), request)
+	resp, err := c.updateSelfTool.Execute(ctx.Context(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

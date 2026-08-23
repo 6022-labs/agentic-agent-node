@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"go.uber.org/dig"
 )
 
@@ -38,8 +38,8 @@ func NewResponseAccessGateMiddleware(params NewResponseAccessGateMiddlewareParam
 	}
 }
 
-func (m *ResponseAccessGateMiddleware) Handle(ctx *fiber.Ctx) error {
-	rules, err := m.paymentRuleClient.List(ctx.UserContext())
+func (m *ResponseAccessGateMiddleware) Handle(ctx fiber.Ctx) error {
+	rules, err := m.paymentRuleClient.List(ctx.Context())
 	if err != nil {
 		// Pre-mint the runtime refuses to materialize rules; run the chain ruleless (x402 advertises a 402).
 		var conflictErr *apperrors.ConflictError

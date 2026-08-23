@@ -1,6 +1,6 @@
 package interfaces
 
-import "github.com/gofiber/fiber/v2"
+import "github.com/gofiber/fiber/v3"
 
 // AuthAwareControllerInterface splits unauthenticated routes (/health, /auth/*) from
 // JWT-gated ones (/responses, /config/*).

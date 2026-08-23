@@ -5,7 +5,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const A2AMessageEndpoint = "/a2a"
@@ -45,12 +45,12 @@ func (c *A2AMessageController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 402 {object} x402.PaymentRequired
 // @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Router /a2a [post]
-func (c *A2AMessageController) Handle(ctx *fiber.Ctx) error {
+func (c *A2AMessageController) Handle(ctx fiber.Ctx) error {
 	body := new(requests.A2ARequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.sendA2AMessage.Execute(ctx.UserContext(), body)
+	resp, err := c.sendA2AMessage.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -3,7 +3,7 @@ package identity
 import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const AgentSoulEndpoint = "/agent/soul"
@@ -31,8 +31,8 @@ func (c *AgentSoulController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/soul [get]
-func (c *AgentSoulController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentSoul.Execute(ctx.UserContext())
+func (c *AgentSoulController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentSoul.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

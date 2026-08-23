@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -50,8 +50,8 @@ func (c *ConversationsController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations [get]
-func (c *ConversationsController) List(ctx *fiber.Ctx) error {
-	resp, err := c.listConversations.Execute(ctx.UserContext())
+func (c *ConversationsController) List(ctx fiber.Ctx) error {
+	resp, err := c.listConversations.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -68,13 +68,13 @@ func (c *ConversationsController) List(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations/{conversationId}/messages [get]
-func (c *ConversationsController) ListMessages(ctx *fiber.Ctx) error {
+func (c *ConversationsController) ListMessages(ctx fiber.Ctx) error {
 	conversationId := strings.TrimSpace(ctx.Params("conversationId"))
 	if len(conversationId) == 0 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
-	resp, err := c.listConversationMessages.Execute(ctx.UserContext(), conversationId)
+	resp, err := c.listConversationMessages.Execute(ctx.Context(), conversationId)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -94,18 +94,18 @@ func (c *ConversationsController) ListMessages(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations/{conversationId}/messages [post]
-func (c *ConversationsController) AppendMessages(ctx *fiber.Ctx) error {
+func (c *ConversationsController) AppendMessages(ctx fiber.Ctx) error {
 	conversationId := strings.TrimSpace(ctx.Params("conversationId"))
 	if len(conversationId) == 0 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
 	}
 
 	body := new(requests.AppendConversationMessagesRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 
-	resp, err := c.appendConversationMessages.Execute(ctx.UserContext(), conversationId, body)
+	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -32,7 +32,7 @@ definitions:
         type: string
     type: object
   fiber.Map:
-    additionalProperties: true
+    additionalProperties: {}
     type: object
   models.ExternalPaymentRule:
     properties:

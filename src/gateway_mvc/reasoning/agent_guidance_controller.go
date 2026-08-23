@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const AgentGuidanceEndpoint = "/agent/guidance"
@@ -39,8 +39,8 @@ func (c *AgentGuidanceController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/guidance [get]
-func (c *AgentGuidanceController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentGuidance.Execute(ctx.UserContext())
+func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentGuidance.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -57,12 +57,12 @@ func (c *AgentGuidanceController) Get(ctx *fiber.Ctx) error {
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/guidance [put]
-func (c *AgentGuidanceController) Set(ctx *fiber.Ctx) error {
+func (c *AgentGuidanceController) Set(ctx fiber.Ctx) error {
 	body := new(requests.SetAgentGuidanceRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.setAgentGuidance.Execute(ctx.UserContext(), body)
+	resp, err := c.setAgentGuidance.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

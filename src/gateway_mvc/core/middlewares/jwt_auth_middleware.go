@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const AuthAddressLocalKey = "auth.address"
@@ -17,7 +17,7 @@ func NewJwtAuthMiddleware(validator gateway_interfaces.JwtValidatorInterface) *J
 	return &JwtAuthMiddleware{validator: validator}
 }
 
-func (m *JwtAuthMiddleware) Handle(ctx *fiber.Ctx) error {
+func (m *JwtAuthMiddleware) Handle(ctx fiber.Ctx) error {
 	header := ctx.Get(fiber.HeaderAuthorization)
 	if len(header) == 0 {
 		return unauthorized(ctx, "missing_authorization", "Authorization header is required")
@@ -40,7 +40,7 @@ func (m *JwtAuthMiddleware) Handle(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-func unauthorized(ctx *fiber.Ctx, code string, message string) error {
+func unauthorized(ctx fiber.Ctx, code string, message string) error {
 	return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 		"code":    code,
 		"message": message,

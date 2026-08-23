@@ -19,7 +19,7 @@ import (
 	x402_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/x402_mocks/services_mocks/interfaces_mocks"
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mvc_mocks/metrics_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -85,7 +85,7 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	}
 
 	app := fiber.New()
-	app.Post("/responses", sut.Handle, func(ctx *fiber.Ctx) error {
+	app.Post("/responses", sut.Handle, func(ctx fiber.Ctx) error {
 		suite.handlerCalled = true
 		suite.seenPayer, _ = ctx.Locals(middlewares.X402PayerLocalKey).(string)
 		suite.seenAddress, _ = ctx.Locals(core_middlewares.AuthAddressLocalKey).(string)
@@ -808,7 +808,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			initSuite(suite)
 
 			failingApp := fiber.New()
-			failingApp.Post("/responses", suite.sut.Handle, func(ctx *fiber.Ctx) error {
+			failingApp.Post("/responses", suite.sut.Handle, func(ctx fiber.Ctx) error {
 				return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"code": "runtime_failed"})
 			})
 

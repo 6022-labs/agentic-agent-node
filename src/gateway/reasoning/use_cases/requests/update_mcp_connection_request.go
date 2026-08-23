@@ -10,11 +10,11 @@ import (
 // UpdateMcpConnectionRequest edits a connection; HeaderAuth fully replaces the stored
 // set — an omitted header is dropped, and one sent blank keeps its vault value.
 type UpdateMcpConnectionRequest struct {
-	Id                  uuid.UUID         `params:"id" json:"-"`
-	Name                string            `            json:"name"`
-	Url                 string            `            json:"url"`
-	AllowedToolPatterns []string          `            json:"allowedToolPatterns"`
-	HeaderAuth          map[string]string `            json:"headerAuth,omitempty"`
+	Id                  uuid.UUID         `uri:"id" json:"-"`
+	Name                string            `         json:"name"`
+	Url                 string            `         json:"url"`
+	AllowedToolPatterns []string          `         json:"allowedToolPatterns"`
+	HeaderAuth          map[string]string `         json:"headerAuth,omitempty"`
 }
 
 func (r *UpdateMcpConnectionRequest) ValidateAndSanitize() error {

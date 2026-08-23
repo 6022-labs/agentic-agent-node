@@ -4,7 +4,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (
@@ -46,8 +46,8 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 // @Failure 404 {object} fiber.Map "identity_not_found"
 // @Failure 500 {object} fiber.Map "identity_lookup_failed"
 // @Router /internal/identity [get]
-func (c *IdentityController) Get(ctx *fiber.Ctx) error {
-	resp, err := c.getAgentIdentity.Execute(ctx.UserContext())
+func (c *IdentityController) Get(ctx fiber.Ctx) error {
+	resp, err := c.getAgentIdentity.Execute(ctx.Context())
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -64,8 +64,8 @@ func (c *IdentityController) Get(ctx *fiber.Ctx) error {
 // @Failure 409 {object} fiber.Map "identity_not_found"
 // @Failure 500 {object} fiber.Map "ens_publish_failed"
 // @Router /internal/identity/ens/publish [post]
-func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
-	if err := c.publishEnsRuntimeRecords.Execute(ctx.UserContext()); err != nil {
+func (c *IdentityController) PublishEns(ctx fiber.Ctx) error {
+	if err := c.publishEnsRuntimeRecords.Execute(ctx.Context()); err != nil {
 		return mvc.WriteError(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
@@ -82,12 +82,12 @@ func (c *IdentityController) PublishEns(ctx *fiber.Ctx) error {
 // @Failure 400 {object} fiber.Map "card"
 // @Failure 500 {object} fiber.Map "agent_card_signing_failed"
 // @Router /internal/identity/card-signature [post]
-func (c *IdentityController) SignCard(ctx *fiber.Ctx) error {
+func (c *IdentityController) SignCard(ctx fiber.Ctx) error {
 	body := new(requests.SignAgentCardRequest)
-	if err := ctx.BodyParser(body); err != nil {
+	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
-	resp, err := c.signAgentCard.Execute(ctx.UserContext(), body)
+	resp, err := c.signAgentCard.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

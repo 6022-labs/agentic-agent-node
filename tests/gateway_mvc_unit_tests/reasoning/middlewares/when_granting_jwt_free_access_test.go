@@ -12,7 +12,7 @@ import (
 	core_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	access_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mvc_mocks/reasoning_mocks/middlewares_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -48,14 +48,14 @@ func (s *WhenGrantingJwtFreeAccessTestingSuite) build(matchers ...middleware_int
 	})
 	app := fiber.New()
 	app.Post("/responses",
-		func(ctx *fiber.Ctx) error {
+		func(ctx fiber.Ctx) error {
 			handled, err := sut.TryHandle(ctx, nil)
 			if handled {
 				return err
 			}
 			return ctx.SendStatus(fiber.StatusTeapot)
 		},
-		func(ctx *fiber.Ctx) error {
+		func(ctx fiber.Ctx) error {
 			s.downstreamRan = true
 			s.seenAddress, _ = ctx.Locals(core_middlewares.AuthAddressLocalKey).(string)
 			return ctx.JSON(fiber.Map{"ok": true})
