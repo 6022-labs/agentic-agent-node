@@ -1,4 +1,4 @@
-FROM node:22-alpine AS web-builder
+FROM node:26-alpine AS web-builder
 
 WORKDIR /web
 
@@ -20,7 +20,7 @@ ENV VITE_GATEWAY_API_BASE_URL=$VITE_GATEWAY_API_BASE_URL \
 
 RUN npm run build
 
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 WORKDIR /usr/local/go/src/github.com/6022-labs/agentic-agent-node
 
@@ -35,7 +35,7 @@ COPY ./ ./
 RUN CGO_ENABLED=0 go build -installsuffix 'static' -o /gateway ./src/gateway_host \
  && CGO_ENABLED=0 go build -installsuffix 'static' -o /runtime ./src/runtime_host
 
-FROM alpine:3.20 AS final
+FROM alpine:3.24 AS final
 
 # tini handles PID 1 + signal forwarding so SIGTERM reaches the children
 # cleanly. ca-certificates lets outbound TLS calls work (Vault, RPC,

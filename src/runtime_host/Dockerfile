@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 WORKDIR /usr/local/go/src/github.com/6022-labs/agentic-agent-node
 
@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 go build \
     -installsuffix 'static' \
     -o /app .
 
-FROM alpine:3.20 AS final
+FROM alpine:3.24 AS final
 
 # bash backs the run_command self tool — models write bashisms busybox sh chokes on. tini reaps the orphans a killed
 # process group leaves behind, which the Go binary would not do as PID 1.

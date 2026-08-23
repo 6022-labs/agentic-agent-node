@@ -38,7 +38,7 @@ func (b *MariaDBContainerBuilder) start() string {
 	if b.container == nil {
 		ctx := context.Background()
 		req := testcontainers.ContainerRequest{
-			Image:        "mariadb:11",
+			Image:        "mariadb:12.3",
 			ExposedPorts: []string{"3306/tcp"},
 			Env: map[string]string{
 				"MARIADB_ROOT_PASSWORD": "root",
