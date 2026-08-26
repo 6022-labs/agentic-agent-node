@@ -9,10 +9,10 @@ import (
 )
 
 type ListConversationMessages struct {
-	client interfaces.ConversationHistoryClientInterface
+	client interfaces.ConversationClientInterface
 }
 
-func NewListConversationMessages(client interfaces.ConversationHistoryClientInterface) *ListConversationMessages {
+func NewListConversationMessages(client interfaces.ConversationClientInterface) *ListConversationMessages {
 	return &ListConversationMessages{client: client}
 }
 

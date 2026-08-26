@@ -94,7 +94,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -123,7 +123,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "openai completions returned no choices")
@@ -191,7 +191,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages, nil)
 
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
@@ -239,7 +239,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -299,7 +299,7 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAICompletionsStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, replay)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, replay, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)

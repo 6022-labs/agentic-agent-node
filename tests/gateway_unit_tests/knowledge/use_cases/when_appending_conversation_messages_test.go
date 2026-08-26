@@ -19,13 +19,13 @@ import (
 type WhenAppendingConversationMessagesTestingSuite struct {
 	sut *use_cases.AppendConversationMessages
 
-	mockClient *interfaces_mocks.MockConversationHistoryClientInterface
+	mockClient *interfaces_mocks.MockConversationClientInterface
 }
 
 func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingConversationMessagesTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockClient := interfaces_mocks.NewMockConversationHistoryClientInterface(mockController)
+	mockClient := interfaces_mocks.NewMockConversationClientInterface(mockController)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
 		sut:        use_cases.NewAppendConversationMessages(mockClient),

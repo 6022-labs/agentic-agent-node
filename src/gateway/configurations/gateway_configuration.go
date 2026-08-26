@@ -113,6 +113,8 @@ func addIdentityConfiguration(container *dig.Container) {
 func addKnowledgeConfiguration(container *dig.Container) {
 	useCaseProviders := []any{
 		knowledge_use_cases.NewListConversations,
+		knowledge_use_cases.NewCreateConversation,
+		knowledge_use_cases.NewUpdateConversation,
 		knowledge_use_cases.NewListConversationMessages,
 		knowledge_use_cases.NewAppendConversationMessages,
 	}

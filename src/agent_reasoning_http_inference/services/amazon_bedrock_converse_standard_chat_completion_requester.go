@@ -19,6 +19,7 @@ type AmazonBedrockConverseStandardChatCompletionRequesterInterface interface {
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
+		maxOutputTokens *int,
 	) (*interfaces.LLMCompletion, error)
 
 	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
@@ -45,6 +46,7 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	systems := r.buildSystems(messages)
 	extMessages, err := r.buildRequestMessages(messages)
@@ -57,6 +59,9 @@ func (r *AmazonBedrockConverseStandardChatCompletionRequester) ChatCompletion(
 		extMessages,
 		systems,
 	)
+	if maxOutputTokens != nil && externalRequest.InferenceConfig != nil {
+		externalRequest.InferenceConfig.MaxTokens = *maxOutputTokens
+	}
 
 	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
 		tools := mcpTools[mcpConnection]

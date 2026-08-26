@@ -17,7 +17,7 @@ import {
   emptyMessage,
   type DraftMessage,
 } from "@/components/dashboard/memory/forms/append-memory-form/draft-message"
-import type { ConversationSummary } from "@/models/conversation"
+import type { Conversation } from "@/models/conversation"
 import {
   appendConversationMessages,
   listConversations,
@@ -37,7 +37,7 @@ export default function AppendMemoryDialog({ onAppended }: Props) {
   // close, and the draft should survive a close-and-reopen.
   const [conversationId, setConversationId] = React.useState(() => newId())
   const [conversations, setConversations] = React.useState<
-    ConversationSummary[]
+    Conversation[]
   >([])
   const [messages, setMessages] = React.useState<DraftMessage[]>([
     emptyMessage(),
@@ -45,7 +45,7 @@ export default function AppendMemoryDialog({ onAppended }: Props) {
 
   React.useEffect(() => {
     if (!open) return
-    listConversations()
+    listConversations(1, 100)
       .then(({ data }) => setConversations(data.conversations ?? []))
       .catch(() => setConversations([]))
   }, [open])

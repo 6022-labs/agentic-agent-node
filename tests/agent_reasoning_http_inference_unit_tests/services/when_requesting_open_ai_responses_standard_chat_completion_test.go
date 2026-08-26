@@ -97,7 +97,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -135,7 +135,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{"first", "second"}, result.Texts)
@@ -162,7 +162,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Empty(t, result.Texts)
@@ -221,7 +221,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
 				assert.Equal(t, "call_1", result.ToolCalls[0].Id)
@@ -275,6 +275,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				nil,
 				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
 				messages,
+				nil,
 			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
@@ -332,6 +333,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				selfTools,
 				map[*models.MCPConnection][]*models.Tool{remoteConnection: nil},
 				messages,
+				nil,
 			)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
@@ -391,6 +393,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				nil,
 				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
 				messages,
+				nil,
 			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
@@ -416,6 +419,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				nil,
 				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
 				messages,
+				nil,
 			)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {

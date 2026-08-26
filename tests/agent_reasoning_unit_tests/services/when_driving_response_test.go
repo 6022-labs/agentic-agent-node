@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
@@ -40,6 +41,7 @@ type WhenDrivingResponseTestingSuite struct {
 	mockSelfToolRegistry           *interfaces_mocks.MockSelfToolRegistryInterface
 	mockSelfToolRepository         *repositories_mocks.MockSelfToolRepositoryInterface
 	mockEmojiDecoder               *runtime_services_mocks.MockEmojiDecoderInterface
+	mockConversationTitler         *interfaces_mocks.MockConversationTitlerInterface
 }
 
 // WhenDrivingResponseBeforeEach registers selfTools as the registry content, all default-enabled with no stored rows.
@@ -89,6 +91,9 @@ func WhenDrivingResponseWithSelfToolStateBeforeEach(
 			return ctx, mockSpan
 		}).AnyTimes()
 
+	// Titling runs in a goroutine after the turn: allow it, assert it elsewhere.
+	mockConversationTitler := interfaces_mocks.NewMockConversationTitlerInterface(mockController)
+
 	sut := services.NewResponseDriver(
 		zap.NewNop(),
 		mockInferenceLoop,
@@ -105,6 +110,8 @@ func WhenDrivingResponseWithSelfToolStateBeforeEach(
 		mockSelfToolRepository,
 		mockReasoningTracer,
 		mockEmojiDecoder,
+		mockConversationTitler,
+		&settings.ConversationTitlerSettings{TimeoutSeconds: 30},
 	)
 
 	return &WhenDrivingResponseTestingSuite{
@@ -122,6 +129,7 @@ func WhenDrivingResponseWithSelfToolStateBeforeEach(
 		mockSelfToolRegistry:           mockSelfToolRegistry,
 		mockSelfToolRepository:         mockSelfToolRepository,
 		mockEmojiDecoder:               mockEmojiDecoder,
+		mockConversationTitler:         mockConversationTitler,
 	}
 }
 
@@ -147,6 +155,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "hi there"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -210,12 +222,17 @@ func TestWhenDrivingResponse(t *testing.T) {
 				assert.Equal(t, expectedFinal, result.Content)
 			}
 		})
+
 	})
 
 	t.Run("Given instructions accompany the turn", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -282,6 +299,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
@@ -340,6 +361,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
@@ -438,6 +463,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		finalText := "recovered"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
@@ -493,6 +522,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		freshInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "follow-up"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
@@ -557,6 +590,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hello"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
@@ -628,6 +665,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.mockEmojiDecoder.EXPECT().
 				DemojizeContent(emojiInput.Content).
 				Return("hi :fire:")
@@ -694,6 +735,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		expectedFinal := "ok"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -779,6 +824,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		filteredTool := &models.Tool{Name: "delete_items"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -850,6 +899,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		selfTool := &models.Tool{Name: "get_identity", Description: "read own identity"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -910,6 +963,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -964,6 +1021,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		disabledRow := *model_builders.NewSelfToolBuilder().WithName("run_command").WithEnabled(false).Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -1029,6 +1090,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		defaultOffTool := &models.Tool{Name: "run_command"}
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -1091,6 +1156,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -1139,6 +1208,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -1194,6 +1267,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 		connB := *model_builders.NewMCPConnectionBuilder().WithName("beta").Build()
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
@@ -1554,6 +1631,10 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
 				Return(nil, errors.New("db down"))
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
 		}
 
 		t.Run("Should wrap the error", func(t *testing.T) {
@@ -1567,5 +1648,6 @@ func TestWhenDrivingResponse(t *testing.T) {
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "failed to persist conversation")
 		})
+
 	})
 }

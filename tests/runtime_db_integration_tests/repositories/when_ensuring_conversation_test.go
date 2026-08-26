@@ -85,7 +85,7 @@ func TestWhenEnsuringConversation(t *testing.T) {
 					assert.NoError(t, err)
 					assert.False(t, created)
 
-					list, err := suite.sut.ListByAgentId(context.Background(), agentId)
+					list, err := suite.sut.ListByAgentId(context.Background(), agentId, nil, nil)
 					assert.NoError(t, err)
 					assert.Len(t, list, 1)
 				})

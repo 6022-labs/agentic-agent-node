@@ -40,6 +40,18 @@ func (m *MockKnowledgeMetricsInterface) EXPECT() *MockKnowledgeMetricsInterfaceM
 	return m.recorder
 }
 
+// RecordConversationNamed mocks base method.
+func (m *MockKnowledgeMetricsInterface) RecordConversationNamed(ctx context.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordConversationNamed", ctx)
+}
+
+// RecordConversationNamed indicates an expected call of RecordConversationNamed.
+func (mr *MockKnowledgeMetricsInterfaceMockRecorder) RecordConversationNamed(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordConversationNamed", reflect.TypeOf((*MockKnowledgeMetricsInterface)(nil).RecordConversationNamed), ctx)
+}
+
 // RecordConversationStarted mocks base method.
 func (m *MockKnowledgeMetricsInterface) RecordConversationStarted(ctx context.Context) {
 	m.ctrl.T.Helper()

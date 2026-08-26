@@ -70,6 +70,11 @@ components:
         id:
           type: string
       type: object
+    requests.CreateConversationRequest:
+      properties:
+        name:
+          type: string
+      type: object
     requests.CreateMCPConnectionRequest:
       properties:
         allowedToolPatterns:
@@ -167,6 +172,11 @@ components:
       properties:
         card:
           type: object
+      type: object
+    requests.UpdateConversationRequest:
+      properties:
+        name:
+          type: string
       type: object
     requests.UpdateMCPConnectionRequest:
       properties:
@@ -304,16 +314,18 @@ components:
         id:
           type: string
       type: object
-    responses.ConversationSummary:
+    responses.ConversationResponse:
       properties:
         conversationId:
           type: string
-        firstMessageAt:
-          type: string
-        lastMessageAt:
+        createdAt:
           type: string
         messageCount:
           type: integer
+        name:
+          type: string
+        updatedAt:
+          type: string
       type: object
     responses.CreateResponseResponse:
       properties:
@@ -417,9 +429,15 @@ components:
       properties:
         conversations:
           items:
-            $ref: '#/components/schemas/responses.ConversationSummary'
+            $ref: '#/components/schemas/responses.ConversationResponse'
           type: array
           uniqueItems: false
+        elementsPerPage:
+          type: integer
+        page:
+          type: integer
+        totalElements:
+          type: integer
       type: object
     responses.ListPaymentRulesResponse:
       properties:
@@ -1488,6 +1506,17 @@ paths:
       - Internal
   /internal/conversations:
     get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        schema:
+          type: integer
+      - description: Elements per page (default 10, max 100)
+        in: query
+        name: elementsPerPage
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -1502,6 +1531,100 @@ paths:
                 $ref: '#/components/schemas/fiber.Map'
           description: list_failed
       summary: Internal list conversations
+      tags:
+      - Internal
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.CreateConversationRequest'
+                description: Conversation name
+                summary: request
+        description: Conversation name
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ConversationResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: conversation_name_taken
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: create_failed
+      summary: Internal create conversation
+      tags:
+      - Internal
+  /internal/conversations/{conversationId}:
+    put:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.UpdateConversationRequest'
+                description: Conversation name
+                summary: request
+        description: Conversation name
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ConversationResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: conversation_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: conversation_name_taken
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: update_failed
+      summary: Internal update conversation
       tags:
       - Internal
   /internal/conversations/{conversationId}/messages:

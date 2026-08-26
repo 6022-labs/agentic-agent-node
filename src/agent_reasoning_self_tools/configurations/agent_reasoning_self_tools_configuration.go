@@ -2,6 +2,7 @@ package configurations
 
 import (
 	identity_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	knowledge_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	reasoning_use_cases "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
@@ -53,6 +54,9 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewListProcessesTool)
 	provideSelfTool(container, tools.NewReadProcessOutputTool)
 	provideSelfTool(container, tools.NewKillProcessTool)
+	provideSelfTool(container, tools.NewListConversationsTool)
+	provideSelfTool(container, tools.NewCreateConversationTool)
+	provideSelfTool(container, tools.NewUpdateConversationTool)
 }
 
 func provideSelfTool(container *dig.Container, ctor any) {
@@ -68,6 +72,7 @@ func provideSelfTool(container *dig.Container, ctor any) {
 // provideExecutors binds each concrete use case or service to the narrow port its tool depends on.
 func provideExecutors(container *dig.Container) {
 	provideIdentityExecutors(container)
+	provideKnowledgeExecutors(container)
 	provideReasoningExecutors(container)
 	providePaymentExecutors(container)
 	provideCommonExecutors(container)
@@ -92,6 +97,22 @@ func provideIdentityExecutors(container *dig.Container) {
 	provideExecutor(container, asListAgentCollections)
 	provideExecutor(container, asCheckAgentMint)
 	provideExecutor(container, asCheckAgentEns)
+}
+
+func provideKnowledgeExecutors(container *dig.Container) {
+	asListConversations := func(u *knowledge_use_cases.ListConversations) tool_interfaces.ListConversationsExecutorInterface {
+		return u
+	}
+	asCreateConversation := func(u *knowledge_use_cases.CreateConversation) tool_interfaces.CreateConversationExecutorInterface {
+		return u
+	}
+	asUpdateConversation := func(u *knowledge_use_cases.UpdateConversation) tool_interfaces.UpdateConversationExecutorInterface {
+		return u
+	}
+
+	provideExecutor(container, asListConversations)
+	provideExecutor(container, asCreateConversation)
+	provideExecutor(container, asUpdateConversation)
 }
 
 func provideReasoningExecutors(container *dig.Container) {

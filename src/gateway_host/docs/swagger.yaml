@@ -10,6 +10,13 @@ definitions:
     - MessageRoleUser
     - MessageRoleAssistant
     - MessageRoleSystem
+  errors.ConflictError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
   errors.NotFoundError:
     properties:
       code:
@@ -110,6 +117,11 @@ definitions:
       id:
         type: string
     type: object
+  requests.CreateConversationRequest:
+    properties:
+      name:
+        type: string
+    type: object
   requests.CreateMcpConnectionRequest:
     properties:
       allowedToolPatterns:
@@ -205,6 +217,11 @@ definitions:
       model:
         type: string
       provider:
+        type: string
+    type: object
+  requests.UpdateConversationRequest:
+    properties:
+      name:
         type: string
     type: object
   requests.UpdateMcpConnectionRequest:
@@ -415,16 +432,18 @@ definitions:
       id:
         type: string
     type: object
-  responses.ConversationSummary:
+  responses.ConversationResponse:
     properties:
       conversationId:
         type: string
-      firstMessageAt:
-        type: string
-      lastMessageAt:
+      createdAt:
         type: string
       messageCount:
         type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
     type: object
   responses.EnsInfoResponse:
     properties:
@@ -514,8 +533,14 @@ definitions:
     properties:
       conversations:
         items:
-          $ref: '#/definitions/responses.ConversationSummary'
+          $ref: '#/definitions/responses.ConversationResponse'
         type: array
+      elementsPerPage:
+        type: integer
+      page:
+        type: integer
+      totalElements:
+        type: integer
     type: object
   responses.ListMcpConnectionsResponse:
     properties:
@@ -1650,6 +1675,15 @@ paths:
       - Config
   /conversations:
     get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Elements per page (default 10, max 100)
+        in: query
+        name: elementsPerPage
+        type: integer
       produces:
       - application/json
       responses:
@@ -1664,6 +1698,84 @@ paths:
       security:
       - BearerAuth: []
       summary: List conversations
+      tags:
+      - Conversations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.ConversationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Create conversation
+      tags:
+      - Conversations
+  /conversations/{conversationId}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        type: string
+      - description: Conversation name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ConversationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update conversation
       tags:
       - Conversations
   /conversations/{conversationId}/messages:

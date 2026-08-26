@@ -28,12 +28,12 @@ import ChatTranscript from "@/components/dashboard/playground/chat-transcript"
 import NotMintedState from "@/components/dashboard/not-minted-state"
 import { usePlaygroundChat } from "@/components/dashboard/playground/use-playground-chat"
 import { formatRelativeTime } from "@/lib/format"
-import type { ConversationSummary } from "@/models/conversation"
+import { conversationLabel, type Conversation } from "@/models/conversation"
 
-const conversationLabel = (conversation: ConversationSummary) => {
+const conversationOption = (conversation: Conversation) => {
   const count = conversation.messageCount
   const messages = `${count} message${count === 1 ? "" : "s"}`
-  return `${messages} · ${formatRelativeTime(conversation.lastMessageAt)}`
+  return `${conversationLabel(conversation)} · ${messages} · ${formatRelativeTime(conversation.updatedAt)}`
 }
 
 export default function PlaygroundSection() {
@@ -123,7 +123,7 @@ export default function PlaygroundSection() {
                     key={conversation.conversationId}
                     value={conversation.conversationId}
                   >
-                    {conversationLabel(conversation)}
+                    {conversationOption(conversation)}
                   </SelectItem>
                 ))}
               </SelectContent>

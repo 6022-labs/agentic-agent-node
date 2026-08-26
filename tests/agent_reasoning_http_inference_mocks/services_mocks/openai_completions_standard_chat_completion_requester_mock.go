@@ -42,18 +42,18 @@ func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) EXPECT()
 }
 
 // ChatCompletion mocks base method.
-func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) ChatCompletion(baseUrl, apiKey string, llmConnection *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+func (m *MockOpenAICompletionsStandardChatCompletionRequesterInterface) ChatCompletion(baseUrl, apiKey string, llmConnection *models.LLMConnection, selfTools []*models.Tool, mcpTools map[*models.MCPConnection][]*models.Tool, messages []*interfaces.ChatCompletionMessage, maxOutputTokens *int) (*interfaces.LLMCompletion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChatCompletion", baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages)
+	ret := m.ctrl.Call(m, "ChatCompletion", baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages, maxOutputTokens)
 	ret0, _ := ret[0].(*interfaces.LLMCompletion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ChatCompletion indicates an expected call of ChatCompletion.
-func (mr *MockOpenAICompletionsStandardChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages any) *gomock.Call {
+func (mr *MockOpenAICompletionsStandardChatCompletionRequesterInterfaceMockRecorder) ChatCompletion(baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages, maxOutputTokens any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockOpenAICompletionsStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockOpenAICompletionsStandardChatCompletionRequesterInterface)(nil).ChatCompletion), baseUrl, apiKey, llmConnection, selfTools, mcpTools, messages, maxOutputTokens)
 }
 
 // Probe mocks base method.

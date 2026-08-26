@@ -41,6 +41,18 @@ func (m *MockReasoningMetricsInterface) EXPECT() *MockReasoningMetricsInterfaceM
 	return m.recorder
 }
 
+// RecordConversationTitled mocks base method.
+func (m *MockReasoningMetricsInterface) RecordConversationTitled(ctx context.Context, outcome string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordConversationTitled", ctx, outcome)
+}
+
+// RecordConversationTitled indicates an expected call of RecordConversationTitled.
+func (mr *MockReasoningMetricsInterfaceMockRecorder) RecordConversationTitled(ctx, outcome any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordConversationTitled", reflect.TypeOf((*MockReasoningMetricsInterface)(nil).RecordConversationTitled), ctx, outcome)
+}
+
 // RecordLoopAborted mocks base method.
 func (m *MockReasoningMetricsInterface) RecordLoopAborted(ctx context.Context, reason string, duration time.Duration, iterations int64) {
 	m.ctrl.T.Helper()

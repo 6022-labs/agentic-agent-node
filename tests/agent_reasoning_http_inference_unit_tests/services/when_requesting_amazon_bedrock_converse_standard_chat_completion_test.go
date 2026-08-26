@@ -90,7 +90,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -128,7 +128,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{"first", "second"}, result.Texts)
@@ -162,7 +162,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Empty(t, result.Texts)
@@ -221,7 +221,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, mcpTools, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
 				assert.Equal(t, "call_1", result.ToolCalls[0].Id)

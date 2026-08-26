@@ -13,22 +13,29 @@ import (
 
 const (
 	ConversationsEndpoint        = "/conversations"
+	ConversationByIdEndpoint     = "/conversations/:conversationId"
 	ConversationMessagesEndpoint = "/conversations/:conversationId/messages"
 )
 
 type ConversationsController struct {
 	listConversations          *use_cases.ListConversations
+	createConversation         *use_cases.CreateConversation
+	updateConversation         *use_cases.UpdateConversation
 	listConversationMessages   *use_cases.ListConversationMessages
 	appendConversationMessages *use_cases.AppendConversationMessages
 }
 
 func NewConversationsController(
 	listConversations *use_cases.ListConversations,
+	createConversation *use_cases.CreateConversation,
+	updateConversation *use_cases.UpdateConversation,
 	listConversationMessages *use_cases.ListConversationMessages,
 	appendConversationMessages *use_cases.AppendConversationMessages,
 ) *ConversationsController {
 	return &ConversationsController{
 		listConversations:          listConversations,
+		createConversation:         createConversation,
+		updateConversation:         updateConversation,
 		listConversationMessages:   listConversationMessages,
 		appendConversationMessages: appendConversationMessages,
 	}
@@ -38,20 +45,84 @@ func (c *ConversationsController) RegisterUnauthenticatedRoutes(_ fiber.Router) 
 
 func (c *ConversationsController) RegisterAuthenticatedRoutes(app fiber.Router) {
 	app.Get(ConversationsEndpoint, c.List)
+	app.Post(ConversationsEndpoint, c.Create)
+	app.Put(ConversationByIdEndpoint, c.Update)
 	app.Get(ConversationMessagesEndpoint, c.ListMessages)
 	app.Post(ConversationMessagesEndpoint, c.AppendMessages)
 }
 
-// List returns the agent's past conversations (most recent first).
+// List returns one page of the agent's memory sessions (most recent activity first).
 // @Summary List conversations
 // @Tags Conversations
 // @Produce json
+// @Param page query int false "Page (default 1)"
+// @Param elementsPerPage query int false "Elements per page (default 10, max 100)"
 // @Success 200 {object} responses.ListConversationsResponse
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations [get]
 func (c *ConversationsController) List(ctx fiber.Ctx) error {
-	resp, err := c.listConversations.Execute(ctx.Context())
+	req := &requests.ListConversationsRequest{}
+	if err := ctx.Bind().Query(req); err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+
+	resp, err := c.listConversations.Execute(ctx.Context(), req)
+	if err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.JSON(resp)
+}
+
+// Create opens an empty named memory session.
+// @Summary Create conversation
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Param request body requests.CreateConversationRequest true "Conversation name"
+// @Success 201 {object} responses.ConversationResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 409 {object} errors.ConflictError
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Security BearerAuth
+// @Router /conversations [post]
+func (c *ConversationsController) Create(ctx fiber.Ctx) error {
+	body := new(requests.CreateConversationRequest)
+	if err := ctx.Bind().Body(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+
+	resp, err := c.createConversation.Execute(ctx.Context(), body)
+	if err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(resp)
+}
+
+// Update relabels a memory session.
+// @Summary Update conversation
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Param conversationId path string true "Conversation id"
+// @Param request body requests.UpdateConversationRequest true "Conversation name"
+// @Success 200 {object} responses.ConversationResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 404 {object} errors.NotFoundError
+// @Failure 409 {object} errors.ConflictError
+// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Security BearerAuth
+// @Router /conversations/{conversationId} [put]
+func (c *ConversationsController) Update(ctx fiber.Ctx) error {
+	request := new(requests.UpdateConversationRequest)
+	if err := ctx.Bind().URI(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+	}
+	if err := ctx.Bind().Body(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+
+	resp, err := c.updateConversation.Execute(ctx.Context(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

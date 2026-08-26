@@ -19,6 +19,7 @@ type OllamaChatMessageStandardChatCompletionRequesterInterface interface {
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
+		maxOutputTokens *int,
 	) (*interfaces.LLMCompletion, error)
 
 	Probe(baseUrl string, llmConnection *models.LLMConnection) error
@@ -45,6 +46,7 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	extMessages, err := r.buildRequestMessages(messages)
 	if err != nil {
@@ -52,6 +54,11 @@ func (r *OllamaChatMessageStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	externalRequest := external_models.NewExternalOllamaChatMessageStandardRequest(llmConnection.Model, extMessages)
+	if maxOutputTokens != nil {
+		externalRequest.Options = &external_models.ExternalOllamaChatMessageStandardRequestOptions{
+			NumPredict: maxOutputTokens,
+		}
+	}
 
 	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
 		tools := mcpTools[mcpConnection]

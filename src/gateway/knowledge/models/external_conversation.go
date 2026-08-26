@@ -4,15 +4,27 @@ import "time"
 
 // Mirrors the runtime's conversation list/messages wire shapes.
 
-type ExternalConversationSummary struct {
+type ExternalConversationPayload struct {
 	ConversationId string    `json:"conversationId"`
+	Name           *string   `json:"name,omitempty"`
 	MessageCount   int64     `json:"messageCount"`
-	FirstMessageAt time.Time `json:"firstMessageAt"`
-	LastMessageAt  time.Time `json:"lastMessageAt"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
 type ExternalListConversationsPayload struct {
-	Conversations []ExternalConversationSummary `json:"conversations"`
+	Page            uint                          `json:"page"`
+	ElementsPerPage uint                          `json:"elementsPerPage"`
+	TotalElements   uint                          `json:"totalElements"`
+	Conversations   []ExternalConversationPayload `json:"conversations"`
+}
+
+type ExternalCreateConversationPayload struct {
+	Name string `json:"name"`
+}
+
+type ExternalUpdateConversationPayload struct {
+	Name string `json:"name"`
 }
 
 type ExternalConversationMessage struct {

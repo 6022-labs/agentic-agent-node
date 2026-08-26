@@ -19,7 +19,7 @@ import (
 )
 
 type WhenAppendingConversationMessagesTestingSuite struct {
-	sut *services.HttpConversationHistoryClient
+	sut *services.HttpConversationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
@@ -30,7 +30,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
 	return &WhenAppendingConversationMessagesTestingSuite{
-		sut:        services.NewHttpConversationHistoryClient(mockClient),
+		sut:        services.NewHttpConversationClient(mockClient),
 		mockClient: mockClient,
 	}
 }

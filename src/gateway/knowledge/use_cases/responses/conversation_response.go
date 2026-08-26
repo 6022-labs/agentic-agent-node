@@ -2,15 +2,19 @@ package responses
 
 import "time"
 
-type ConversationSummary struct {
+type ConversationResponse struct {
 	ConversationId string    `json:"conversationId"`
+	Name           *string   `json:"name,omitempty"`
 	MessageCount   int64     `json:"messageCount"`
-	FirstMessageAt time.Time `json:"firstMessageAt"`
-	LastMessageAt  time.Time `json:"lastMessageAt"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
 type ListConversationsResponse struct {
-	Conversations []ConversationSummary `json:"conversations"`
+	Page            uint                   `json:"page"`
+	ElementsPerPage uint                   `json:"elementsPerPage"`
+	TotalElements   uint                   `json:"totalElements"`
+	Conversations   []ConversationResponse `json:"conversations"`
 }
 
 type ConversationMessage struct {

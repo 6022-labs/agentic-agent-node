@@ -139,6 +139,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -154,7 +155,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -177,6 +178,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -192,7 +194,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -212,6 +214,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -228,7 +231,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -250,6 +253,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -265,7 +269,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -287,6 +291,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -302,7 +307,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -324,6 +329,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -339,7 +345,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -362,6 +368,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -377,7 +384,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -398,6 +405,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).
 				Return(completion, nil)
 		}
@@ -413,7 +421,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, completion, result)
 		})
@@ -436,8 +444,8 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 
 			suite.mockOpenAICompletionsStandardChatCompletionRequester.
 				EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_, _ string, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) (*interfaces.LLMCompletion, error) {
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_, _ string, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage, _ *int) (*interfaces.LLMCompletion, error) {
 					*captured = msgs
 					return completion, nil
 				})
@@ -455,7 +463,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			var captured []*interfaces.ChatCompletionMessage
 			initSuite(suite, llmConnection, &captured)
 
-			_, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, overLimitMessages)
+			_, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, overLimitMessages, nil)
 
 			assert.NoError(t, err)
 			if assert.NotEmpty(t, captured) {
@@ -485,7 +493,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 				Build()
 			initSuite(suite, llmConnection)
 
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
 			assert.Error(t, err)
 			assert.Nil(t, result)
 		})

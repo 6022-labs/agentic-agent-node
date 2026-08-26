@@ -19,6 +19,7 @@ type ReasoningMetrics struct {
 	toolCallCounter         metric.Int64Counter
 	maxIterationsCounter    metric.Int64Counter
 	abortedCounter          metric.Int64Counter
+	conversationTitledCount metric.Int64Counter
 }
 
 func NewReasoningMetrics() *ReasoningMetrics {
@@ -72,12 +73,22 @@ func NewReasoningMetrics() *ReasoningMetrics {
 		abortedCounter, _ = noopMeter.Int64Counter("reasoning.loop.aborted")
 	}
 
+	conversationTitledCount, err := meter.Int64Counter(
+		"reasoning.conversation.titled",
+		metric.WithUnit("{attempt}"),
+		metric.WithDescription("Number of background conversation-title attempts by outcome"),
+	)
+	if err != nil {
+		conversationTitledCount, _ = noopMeter.Int64Counter("reasoning.conversation.titled")
+	}
+
 	return &ReasoningMetrics{
 		loopDurationHistogram:   loopDurationHistogram,
 		loopIterationsHistogram: loopIterationsHistogram,
 		toolCallCounter:         toolCallCounter,
 		maxIterationsCounter:    maxIterationsCounter,
 		abortedCounter:          abortedCounter,
+		conversationTitledCount: conversationTitledCount,
 	}
 }
 
@@ -110,4 +121,8 @@ func (m *ReasoningMetrics) RecordLoopAborted(
 
 func (m *ReasoningMetrics) RecordToolCalls(ctx context.Context, count int64) {
 	m.toolCallCounter.Add(ctx, count)
+}
+
+func (m *ReasoningMetrics) RecordConversationTitled(ctx context.Context, outcome string) {
+	m.conversationTitledCount.Add(ctx, 1, metric.WithAttributes(attribute.String("reasoning.outcome", outcome)))
 }

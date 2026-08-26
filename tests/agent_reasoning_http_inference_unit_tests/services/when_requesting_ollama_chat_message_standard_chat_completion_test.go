@@ -85,7 +85,7 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
 				assert.Equal(t, []string{expectedContent}, result.Texts)
@@ -117,7 +117,7 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages, nil)
 			assert.Nil(t, result)
 			assert.Error(t, err)
 			assert.ErrorContains(t, err, "ollama returned empty content")
@@ -158,7 +158,7 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, selfTools, nil, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, selfTools, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 		})
@@ -204,7 +204,7 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, mcpTools, messages)
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, mcpTools, messages, nil)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
 				assert.Equal(t, functionName, result.ToolCalls[0].Id)

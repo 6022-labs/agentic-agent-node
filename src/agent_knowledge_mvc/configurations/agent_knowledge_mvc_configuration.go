@@ -8,6 +8,7 @@ import (
 
 func AddAgentKnowledgeMvcConfiguration(container *dig.Container) {
 	provideController(container, agent_knowledge_mvc.NewConversationMessagesController)
+	provideController(container, agent_knowledge_mvc.NewConversationsController)
 }
 
 func provideController(container *dig.Container, ctor any) {

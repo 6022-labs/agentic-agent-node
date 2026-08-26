@@ -30,6 +30,16 @@ func (r *ConversationRepository) Ensure(ctx context.Context, conversation *model
 	return result.RowsAffected > 0, nil
 }
 
+func (r *ConversationRepository) Create(
+	ctx context.Context,
+	conversation *models.Conversation,
+) (*models.Conversation, error) {
+	if err := r.client.GetDB().WithContext(ctx).Create(conversation).Error; err != nil {
+		return nil, err
+	}
+	return conversation, nil
+}
+
 func (r *ConversationRepository) GetById(ctx context.Context, id string) (*models.Conversation, error) {
 	var entity models.Conversation
 	err := r.client.GetDB().WithContext(ctx).First(&entity, "id = ?", id).Error
@@ -42,14 +52,71 @@ func (r *ConversationRepository) GetById(ctx context.Context, id string) (*model
 	return &entity, nil
 }
 
-func (r *ConversationRepository) ListByAgentId(ctx context.Context, agentId uuid.UUID) ([]models.Conversation, error) {
-	var entities []models.Conversation
-	if err := r.client.GetDB().
+func (r *ConversationRepository) ExistsByAgentIdAndName(
+	ctx context.Context,
+	agentId uuid.UUID,
+	name string,
+	excludedId *string,
+) (bool, error) {
+	query := r.client.GetDB().
+		WithContext(ctx).
+		Model(&models.Conversation{}).
+		Where("agent_id = ? AND name = ?", agentId, name)
+
+	if excludedId != nil {
+		query = query.Where("id <> ?", *excludedId)
+	}
+
+	var total int64
+	if err := query.Limit(1).Count(&total).Error; err != nil {
+		return false, err
+	}
+	return total > 0, nil
+}
+
+func (r *ConversationRepository) Update(
+	ctx context.Context,
+	conversation *models.Conversation,
+) (*models.Conversation, error) {
+	if err := r.client.GetDB().WithContext(ctx).Save(conversation).Error; err != nil {
+		return nil, err
+	}
+	return conversation, nil
+}
+
+func (r *ConversationRepository) ListByAgentId(
+	ctx context.Context,
+	agentId uuid.UUID,
+	offset *int,
+	limit *int,
+) ([]models.Conversation, error) {
+	query := r.client.GetDB().
 		WithContext(ctx).
 		Where("agent_id = ?", agentId).
-		Order("created_at DESC").
-		Find(&entities).Error; err != nil {
+		Order("created_at DESC")
+
+	if limit != nil {
+		query = query.Limit(*limit)
+	}
+	if offset != nil {
+		query = query.Offset(*offset)
+	}
+
+	var entities []models.Conversation
+	if err := query.Find(&entities).Error; err != nil {
 		return nil, err
 	}
 	return entities, nil
+}
+
+func (r *ConversationRepository) CountByAgentId(ctx context.Context, agentId uuid.UUID) (uint, error) {
+	var total int64
+	if err := r.client.GetDB().
+		WithContext(ctx).
+		Model(&models.Conversation{}).
+		Where("agent_id = ?", agentId).
+		Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return uint(total), nil
 }

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { ConversationSummary } from "@/models/conversation"
+import { conversationLabel, type Conversation } from "@/models/conversation"
 import type { ConversationMessageRole } from "@/models/enums/conversation-message-role"
 import { formatRelativeTime } from "@/lib/format"
 import { newId } from "@/lib/utils"
@@ -23,7 +23,7 @@ const ROLES: ConversationMessageRole[] = ["user", "assistant"]
 type Props = {
   conversationId: string
   onConversationIdChange: (id: string) => void
-  conversations: ConversationSummary[]
+  conversations: Conversation[]
   messages: DraftMessage[]
   onMessagesChange: (messages: DraftMessage[]) => void
 }
@@ -73,9 +73,9 @@ export default function AppendMemoryForm({
                   key={conversation.conversationId}
                   value={conversation.conversationId}
                 >
-                  {conversation.messageCount} message
-                  {conversation.messageCount === 1 ? "" : "s"} ·{" "}
-                  {formatRelativeTime(conversation.lastMessageAt)}
+                  {conversationLabel(conversation)} · {conversation.messageCount}{" "}
+                  message{conversation.messageCount === 1 ? "" : "s"} ·{" "}
+                  {formatRelativeTime(conversation.updatedAt)}
                 </SelectItem>
               ))}
             </SelectContent>
