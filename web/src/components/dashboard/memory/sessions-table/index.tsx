@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import EmptyState from "@/components/dashboard/empty-state"
-import SaveSessionDialog from "@/components/dashboard/memory/dialogs/save-session-dialog"
+import SessionDialog from "@/components/dashboard/memory/dialogs/session-dialog"
 import { extractErrorMessage } from "@/lib/api-errors"
 import { formatRelativeTime } from "@/lib/format"
 import type { Conversation } from "@/models/conversation"
@@ -53,7 +53,7 @@ export default function SessionsTable() {
     setDialogOpen(true)
   }
 
-  const openRename = (conversation: Conversation) => {
+  const openEdit = (conversation: Conversation) => {
     setEditing(conversation)
     setDialogOpen(true)
   }
@@ -107,8 +107,8 @@ export default function SessionsTable() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    title="Rename"
-                    onClick={() => openRename(conversation)}
+                    title="Edit"
+                    onClick={() => openEdit(conversation)}
                   >
                     <Pencil />
                   </Button>
@@ -146,7 +146,7 @@ export default function SessionsTable() {
         </div>
       </div>
 
-      <SaveSessionDialog
+      <SessionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         conversation={editing}
