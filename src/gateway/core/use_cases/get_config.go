@@ -5,21 +5,28 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/responses"
 )
 
-// GetBlockchainConfig proxies the runtime's chain config.
-type GetBlockchainConfig struct {
+// GetConfig assembles the public node config: the runtime's chain config plus the
+// IPFS gateways the console resolves CIDs with.
+type GetConfig struct {
 	blockchainConfigClient gateway_interfaces.BlockchainConfigClientInterface
+	ipfsGatewaysSettings   *settings.IPFSGatewaysSettings
 }
 
-func NewGetBlockchainConfig(
+func NewGetConfig(
 	blockchainConfigClient gateway_interfaces.BlockchainConfigClientInterface,
-) *GetBlockchainConfig {
-	return &GetBlockchainConfig{blockchainConfigClient: blockchainConfigClient}
+	ipfsGatewaysSettings *settings.IPFSGatewaysSettings,
+) *GetConfig {
+	return &GetConfig{
+		blockchainConfigClient: blockchainConfigClient,
+		ipfsGatewaysSettings:   ipfsGatewaysSettings,
+	}
 }
 
-func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.BlockchainConfigResponse, error) {
+func (u *GetConfig) Execute(ctx context.Context) (*responses.ConfigResponse, error) {
 	payload, err := u.blockchainConfigClient.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -27,9 +34,9 @@ func (u *GetBlockchainConfig) Execute(ctx context.Context) (*responses.Blockchai
 	return u.toResponse(payload), nil
 }
 
-func (u *GetBlockchainConfig) toResponse(
+func (u *GetConfig) toResponse(
 	p *models.ExternalBlockchainConfigPayload,
-) *responses.BlockchainConfigResponse {
+) *responses.ConfigResponse {
 	evmChains := make(map[string]responses.EvmChainConfig, len(p.EvmChains))
 	for chainId, c := range p.EvmChains {
 		evmChains[chainId] = responses.EvmChainConfig{
@@ -41,5 +48,8 @@ func (u *GetBlockchainConfig) toResponse(
 			FacilitatorNetwork:        c.FacilitatorNetwork,
 		}
 	}
-	return &responses.BlockchainConfigResponse{EvmChains: evmChains}
+	return &responses.ConfigResponse{
+		EvmChains:               evmChains,
+		IpfsGatewayUrlTemplates: u.ipfsGatewaysSettings.GatewayUrlTemplates,
+	}
 }

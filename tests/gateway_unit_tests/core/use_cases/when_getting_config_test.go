@@ -6,40 +6,45 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models"
+	core_settings "github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-type WhenGettingBlockchainConfigTestingSuite struct {
-	sut *use_cases.GetBlockchainConfig
+type WhenGettingConfigTestingSuite struct {
+	sut *use_cases.GetConfig
 
 	mockClient *interfaces_mocks.MockBlockchainConfigClientInterface
 }
 
-func WhenGettingBlockchainConfigBeforeEach(t *testing.T) *WhenGettingBlockchainConfigTestingSuite {
+func WhenGettingConfigBeforeEach(t *testing.T) *WhenGettingConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockClient := interfaces_mocks.NewMockBlockchainConfigClientInterface(mockController)
 
-	sut := use_cases.NewGetBlockchainConfig(mockClient)
+	ipfsGatewaysSettings := &core_settings.IPFSGatewaysSettings{
+		GatewayUrlTemplates: []string{"https://{cid}.ipfs.example.com"},
+	}
 
-	return &WhenGettingBlockchainConfigTestingSuite{
+	sut := use_cases.NewGetConfig(mockClient, ipfsGatewaysSettings)
+
+	return &WhenGettingConfigTestingSuite{
 		sut: sut,
 
 		mockClient: mockClient,
 	}
 }
 
-func TestWhenGettingBlockchainConfig(t *testing.T) {
+func TestWhenGettingConfig(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Given the runtime returns the config", func(t *testing.T) {
 		t.Parallel()
 
 		facilitatorNetwork := "eip155:80002"
-		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
+		initSuite := func(suite *WhenGettingConfigTestingSuite) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalBlockchainConfigPayload{
 				EvmChains: map[string]models.ExternalEvmChainConfig{
 					"80002": {
@@ -57,7 +62,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		t.Run("Should map every field", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingBlockchainConfigBeforeEach(t)
+			suite := WhenGettingConfigBeforeEach(t)
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background())
@@ -74,13 +79,14 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 					assert.Equal(t, "eip155:80002", *chain.FacilitatorNetwork)
 				}
 			}
+			assert.Equal(t, []string{"https://{cid}.ipfs.example.com"}, resp.IpfsGatewayUrlTemplates)
 		})
 	})
 
 	t.Run("Given the runtime is unreachable", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
+		initSuite := func(suite *WhenGettingConfigTestingSuite) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).
 				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
 		}
@@ -88,7 +94,7 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 		t.Run("Should propagate the UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenGettingBlockchainConfigBeforeEach(t)
+			suite := WhenGettingConfigBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background())

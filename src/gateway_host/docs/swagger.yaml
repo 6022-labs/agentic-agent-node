@@ -403,12 +403,16 @@ definitions:
           $ref: '#/definitions/responses.ConversationMessage'
         type: array
     type: object
-  responses.BlockchainConfigResponse:
+  responses.ConfigResponse:
     properties:
       evmChains:
         additionalProperties:
           $ref: '#/definitions/responses.EvmChainConfig'
         type: object
+      ipfsGatewayUrlTemplates:
+        items:
+          type: string
+        type: array
     type: object
   responses.ConversationMessage:
     properties:
@@ -1223,8 +1227,8 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.BlockchainConfigResponse'
-      summary: Public chain config
+            $ref: '#/definitions/responses.ConfigResponse'
+      summary: Public node config
       tags:
       - Config
   /config/llm:

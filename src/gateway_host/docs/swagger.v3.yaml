@@ -415,12 +415,17 @@ components:
           type: array
           uniqueItems: false
       type: object
-    responses.BlockchainConfigResponse:
+    responses.ConfigResponse:
       properties:
         evmChains:
           additionalProperties:
             $ref: '#/components/schemas/responses.EvmChainConfig'
           type: object
+        ipfsGatewayUrlTemplates:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
       type: object
     responses.ConversationMessage:
       properties:
@@ -1309,9 +1314,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.BlockchainConfigResponse'
+                $ref: '#/components/schemas/responses.ConfigResponse'
           description: OK
-      summary: Public chain config
+      summary: Public node config
       tags:
       - Config
   /config/llm:

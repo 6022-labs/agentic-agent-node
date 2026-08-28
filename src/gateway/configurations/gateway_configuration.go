@@ -38,6 +38,10 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(core_settings.NewIPFSGatewaysSettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(
 		newNonceStore,
 		dig.As(new(core_interfaces.NonceStoreInterface)),
@@ -76,7 +80,7 @@ func addCoreConfiguration(container *dig.Container) {
 	useCaseProviders := []any{
 		core_use_cases.NewGetAuthChallenge,
 		core_use_cases.NewVerifyAuth,
-		core_use_cases.NewGetBlockchainConfig,
+		core_use_cases.NewGetConfig,
 		core_use_cases.NewGetWellKnownAgentCard,
 		core_use_cases.NewGetWellKnownAgent6022,
 	}

@@ -614,12 +614,12 @@ const docTemplate = `{
                 "tags": [
                     "Config"
                 ],
-                "summary": "Public chain config",
+                "summary": "Public node config",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.BlockchainConfigResponse"
+                            "$ref": "#/definitions/responses.ConfigResponse"
                         }
                     }
                 }
@@ -2313,13 +2313,19 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.BlockchainConfigResponse": {
+        "responses.ConfigResponse": {
             "type": "object",
             "properties": {
                 "evmChains": {
                     "type": "object",
                     "additionalProperties": {
                         "$ref": "#/definitions/responses.EvmChainConfig"
+                    }
+                },
+                "ipfsGatewayUrlTemplates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }

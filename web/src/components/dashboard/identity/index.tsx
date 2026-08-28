@@ -39,7 +39,7 @@ import {
   checkAgentMint,
 } from "@/queries/api/registration.queries"
 import { extractErrorMessage } from "@/lib/api-errors"
-import { ipfsImageUrl } from "@/lib/ipfs"
+import IpfsImage from "@/components/ipfs-image"
 
 const statusVariant = (status: string) => {
   if (status === "confirmed") return "default"
@@ -146,7 +146,7 @@ export default function IdentitySection() {
     )
   }
 
-  const imageUrl = ipfsImageUrl(draft.images?.default)
+  const imageValue = draft.images?.default
   const openSeaUrl = getOpenSeaUrl(
     draft.chainId,
     draft.collectionAddress,
@@ -193,15 +193,13 @@ export default function IdentitySection() {
       <CardContent className="space-y-5">
         <EnsDriftAlert />
         <div className="flex flex-col gap-6 sm:flex-row sm:items-stretch">
-          {imageUrl || openSeaUrl || raribleUrl ? (
+          {imageValue || openSeaUrl || raribleUrl ? (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:w-64">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={draft.name}
-                  className="w-full rounded-lg border"
-                />
-              ) : null}
+              <IpfsImage
+                value={imageValue}
+                alt={draft.name}
+                className="w-full rounded-lg border"
+              />
               {openSeaUrl || raribleUrl ? (
                 <div className="grid grid-cols-2 gap-2">
                   {openSeaUrl ? (

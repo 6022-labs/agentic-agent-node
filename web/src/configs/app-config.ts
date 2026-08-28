@@ -11,9 +11,11 @@ export type EvmChainConfig = {
   facilitatorNetwork: string | null
 }
 
-// Config served by the gateway's GET /config at boot; evmChains keyed by chain id.
+// Config served by the gateway's GET /config at boot; evmChains keyed by chain id,
+// ipfsGatewayUrlTemplates tried in order to resolve a CID ({cid} substituted).
 export type AppConfig = {
   evmChains: Record<string, EvmChainConfig>
+  ipfsGatewayUrlTemplates: string[]
 }
 
 let appConfig: AppConfig | null = null
