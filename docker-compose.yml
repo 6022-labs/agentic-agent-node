@@ -80,7 +80,7 @@ services:
     networks:
       agent-node-network:
     volumes:
-      - agent-node-db-data:/var/lib/postgresql/data
+      - agent-node-db-data:/var/lib/postgresql
 
   agent-node-pgadmin:
     image: "dpage/pgadmin4:9.17"
