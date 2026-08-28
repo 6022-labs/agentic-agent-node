@@ -56,6 +56,21 @@ func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) AppendMessages
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendMessages", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).AppendMessages), ctx, messages)
 }
 
+// CountByConversationIds mocks base method.
+func (m *MockConversationMessageRepositoryInterface) CountByConversationIds(ctx context.Context, conversationIds []string) (map[string]int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountByConversationIds", ctx, conversationIds)
+	ret0, _ := ret[0].(map[string]int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountByConversationIds indicates an expected call of CountByConversationIds.
+func (mr *MockConversationMessageRepositoryInterfaceMockRecorder) CountByConversationIds(ctx, conversationIds any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountByConversationIds", reflect.TypeOf((*MockConversationMessageRepositoryInterface)(nil).CountByConversationIds), ctx, conversationIds)
+}
+
 // ListByConversationId mocks base method.
 func (m *MockConversationMessageRepositoryInterface) ListByConversationId(ctx context.Context, conversationId string) ([]models.ConversationMessage, error) {
 	m.ctrl.T.Helper()

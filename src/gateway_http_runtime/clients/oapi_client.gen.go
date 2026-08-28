@@ -77,6 +77,11 @@ type RequestsConversationRef struct {
 	Id *string `json:"id,omitempty"`
 }
 
+// RequestsCreateConversationRequest defines model for requests.CreateConversationRequest.
+type RequestsCreateConversationRequest struct {
+	Name *string `json:"name,omitempty"`
+}
+
 // RequestsCreateMCPConnectionRequest defines model for requests.CreateMCPConnectionRequest.
 type RequestsCreateMCPConnectionRequest struct {
 	AllowedToolPatterns *[]string          `json:"allowedToolPatterns,omitempty"`
@@ -138,6 +143,11 @@ type RequestsSetupLLMConnectionRequest struct {
 // RequestsSignAgentCardRequest defines model for requests.SignAgentCardRequest.
 type RequestsSignAgentCardRequest struct {
 	Card *map[string]interface{} `json:"card,omitempty"`
+}
+
+// RequestsUpdateConversationRequest defines model for requests.UpdateConversationRequest.
+type RequestsUpdateConversationRequest struct {
+	Name *string `json:"name,omitempty"`
 }
 
 // RequestsUpdateMCPConnectionRequest defines model for requests.UpdateMCPConnectionRequest.
@@ -231,12 +241,13 @@ type ResponsesConversationRef struct {
 	Id *string `json:"id,omitempty"`
 }
 
-// ResponsesConversationSummary defines model for responses.ConversationSummary.
-type ResponsesConversationSummary struct {
+// ResponsesConversationResponse defines model for responses.ConversationResponse.
+type ResponsesConversationResponse struct {
 	ConversationId *string `json:"conversationId,omitempty"`
-	FirstMessageAt *string `json:"firstMessageAt,omitempty"`
-	LastMessageAt  *string `json:"lastMessageAt,omitempty"`
+	CreatedAt      *string `json:"createdAt,omitempty"`
 	MessageCount   *int    `json:"messageCount,omitempty"`
+	Name           *string `json:"name,omitempty"`
+	UpdatedAt      *string `json:"updatedAt,omitempty"`
 }
 
 // ResponsesCreateResponseResponse defines model for responses.CreateResponseResponse.
@@ -302,7 +313,10 @@ type ResponsesListConversationMessagesResponse struct {
 
 // ResponsesListConversationsResponse defines model for responses.ListConversationsResponse.
 type ResponsesListConversationsResponse struct {
-	Conversations *[]ResponsesConversationSummary `json:"conversations,omitempty"`
+	Conversations   *[]ResponsesConversationResponse `json:"conversations,omitempty"`
+	ElementsPerPage *int                             `json:"elementsPerPage,omitempty"`
+	Page            *int                             `json:"page,omitempty"`
+	TotalElements   *int                             `json:"totalElements,omitempty"`
 }
 
 // ResponsesListPaymentRulesResponse defines model for responses.ListPaymentRulesResponse.
@@ -548,6 +562,31 @@ type PutInternalConfigSelfToolsIdJSONBody struct {
 // PutInternalConfigSelfToolsIdJSONBody0 defines parameters for PutInternalConfigSelfToolsId.
 type PutInternalConfigSelfToolsIdJSONBody0 = map[string]interface{}
 
+// GetInternalConversationsParams defines parameters for GetInternalConversations.
+type GetInternalConversationsParams struct {
+	// Page Page (default 1)
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// ElementsPerPage Elements per page (default 10, max 100)
+	ElementsPerPage *int `form:"elementsPerPage,omitempty" json:"elementsPerPage,omitempty"`
+}
+
+// PostInternalConversationsJSONBody defines parameters for PostInternalConversations.
+type PostInternalConversationsJSONBody struct {
+	union json.RawMessage
+}
+
+// PostInternalConversationsJSONBody0 defines parameters for PostInternalConversations.
+type PostInternalConversationsJSONBody0 = map[string]interface{}
+
+// PutInternalConversationsConversationIdJSONBody defines parameters for PutInternalConversationsConversationId.
+type PutInternalConversationsConversationIdJSONBody struct {
+	union json.RawMessage
+}
+
+// PutInternalConversationsConversationIdJSONBody0 defines parameters for PutInternalConversationsConversationId.
+type PutInternalConversationsConversationIdJSONBody0 = map[string]interface{}
+
 // PostInternalConversationsConversationIdMessagesJSONBody defines parameters for PostInternalConversationsConversationIdMessages.
 type PostInternalConversationsConversationIdMessagesJSONBody struct {
 	union json.RawMessage
@@ -607,6 +646,12 @@ type PutInternalConfigPaymentPolicyRulesIdJSONRequestBody PutInternalConfigPayme
 
 // PutInternalConfigSelfToolsIdJSONRequestBody defines body for PutInternalConfigSelfToolsId for application/json ContentType.
 type PutInternalConfigSelfToolsIdJSONRequestBody PutInternalConfigSelfToolsIdJSONBody
+
+// PostInternalConversationsJSONRequestBody defines body for PostInternalConversations for application/json ContentType.
+type PostInternalConversationsJSONRequestBody PostInternalConversationsJSONBody
+
+// PutInternalConversationsConversationIdJSONRequestBody defines body for PutInternalConversationsConversationId for application/json ContentType.
+type PutInternalConversationsConversationIdJSONRequestBody PutInternalConversationsConversationIdJSONBody
 
 // PostInternalConversationsConversationIdMessagesJSONRequestBody defines body for PostInternalConversationsConversationIdMessages for application/json ContentType.
 type PostInternalConversationsConversationIdMessagesJSONRequestBody PostInternalConversationsConversationIdMessagesJSONBody
@@ -809,7 +854,17 @@ type ClientInterface interface {
 	PutInternalConfigSelfToolsId(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConversations request
-	GetInternalConversations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetInternalConversations(ctx context.Context, params *GetInternalConversationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInternalConversationsWithBody request with any body
+	PostInternalConversationsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInternalConversations(ctx context.Context, body PostInternalConversationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutInternalConversationsConversationIdWithBody request with any body
+	PutInternalConversationsConversationIdWithBody(ctx context.Context, conversationId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutInternalConversationsConversationId(ctx context.Context, conversationId string, body PutInternalConversationsConversationIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConversationsConversationIdMessages request
 	GetInternalConversationsConversationIdMessages(ctx context.Context, conversationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1352,8 +1407,56 @@ func (c *Client) PutInternalConfigSelfToolsId(ctx context.Context, id string, bo
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInternalConversations(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInternalConversationsRequest(c.Server)
+func (c *Client) GetInternalConversations(ctx context.Context, params *GetInternalConversationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConversationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConversationsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConversationsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalConversations(ctx context.Context, body PostInternalConversationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConversationsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConversationsConversationIdWithBody(ctx context.Context, conversationId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConversationsConversationIdRequestWithBody(c.Server, conversationId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConversationsConversationId(ctx context.Context, conversationId string, body PutInternalConversationsConversationIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConversationsConversationIdRequest(c.Server, conversationId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2540,7 +2643,7 @@ func NewPutInternalConfigSelfToolsIdRequestWithBody(server string, id string, co
 }
 
 // NewGetInternalConversationsRequest generates requests for GetInternalConversations
-func NewGetInternalConversationsRequest(server string) (*http.Request, error) {
+func NewGetInternalConversationsRequest(server string, params *GetInternalConversationsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2558,10 +2661,135 @@ func NewGetInternalConversationsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ElementsPerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "elementsPerPage", runtime.ParamLocationQuery, *params.ElementsPerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostInternalConversationsRequest calls the generic PostInternalConversations builder with application/json body
+func NewPostInternalConversationsRequest(server string, body PostInternalConversationsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInternalConversationsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostInternalConversationsRequestWithBody generates requests for PostInternalConversations with any type of body
+func NewPostInternalConversationsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/conversations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPutInternalConversationsConversationIdRequest calls the generic PutInternalConversationsConversationId builder with application/json body
+func NewPutInternalConversationsConversationIdRequest(server string, conversationId string, body PutInternalConversationsConversationIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutInternalConversationsConversationIdRequestWithBody(server, conversationId, "application/json", bodyReader)
+}
+
+// NewPutInternalConversationsConversationIdRequestWithBody generates requests for PutInternalConversationsConversationId with any type of body
+func NewPutInternalConversationsConversationIdRequestWithBody(server string, conversationId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "conversationId", runtime.ParamLocationPath, conversationId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/conversations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -2943,7 +3171,17 @@ type ClientWithResponsesInterface interface {
 	PutInternalConfigSelfToolsIdWithResponse(ctx context.Context, id string, body PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigSelfToolsIdResponse, error)
 
 	// GetInternalConversationsWithResponse request
-	GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error)
+	GetInternalConversationsWithResponse(ctx context.Context, params *GetInternalConversationsParams, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error)
+
+	// PostInternalConversationsWithBodyWithResponse request with any body
+	PostInternalConversationsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConversationsResponse, error)
+
+	PostInternalConversationsWithResponse(ctx context.Context, body PostInternalConversationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConversationsResponse, error)
+
+	// PutInternalConversationsConversationIdWithBodyWithResponse request with any body
+	PutInternalConversationsConversationIdWithBodyWithResponse(ctx context.Context, conversationId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConversationsConversationIdResponse, error)
+
+	PutInternalConversationsConversationIdWithResponse(ctx context.Context, conversationId string, body PutInternalConversationsConversationIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConversationsConversationIdResponse, error)
 
 	// GetInternalConversationsConversationIdMessagesWithResponse request
 	GetInternalConversationsConversationIdMessagesWithResponse(ctx context.Context, conversationId string, reqEditors ...RequestEditorFn) (*GetInternalConversationsConversationIdMessagesResponse, error)
@@ -3742,6 +3980,57 @@ func (r GetInternalConversationsResponse) StatusCode() int {
 	return 0
 }
 
+type PostInternalConversationsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *ResponsesConversationResponse
+	JSON400      *ErrorsValidationError
+	JSON409      *FiberMap
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInternalConversationsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInternalConversationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutInternalConversationsConversationIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesConversationResponse
+	JSON400      *ErrorsValidationError
+	JSON404      *FiberMap
+	JSON409      *FiberMap
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PutInternalConversationsConversationIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutInternalConversationsConversationIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInternalConversationsConversationIdMessagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4262,12 +4551,46 @@ func (c *ClientWithResponses) PutInternalConfigSelfToolsIdWithResponse(ctx conte
 }
 
 // GetInternalConversationsWithResponse request returning *GetInternalConversationsResponse
-func (c *ClientWithResponses) GetInternalConversationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error) {
-	rsp, err := c.GetInternalConversations(ctx, reqEditors...)
+func (c *ClientWithResponses) GetInternalConversationsWithResponse(ctx context.Context, params *GetInternalConversationsParams, reqEditors ...RequestEditorFn) (*GetInternalConversationsResponse, error) {
+	rsp, err := c.GetInternalConversations(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseGetInternalConversationsResponse(rsp)
+}
+
+// PostInternalConversationsWithBodyWithResponse request with arbitrary body returning *PostInternalConversationsResponse
+func (c *ClientWithResponses) PostInternalConversationsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConversationsResponse, error) {
+	rsp, err := c.PostInternalConversationsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConversationsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostInternalConversationsWithResponse(ctx context.Context, body PostInternalConversationsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConversationsResponse, error) {
+	rsp, err := c.PostInternalConversations(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalConversationsResponse(rsp)
+}
+
+// PutInternalConversationsConversationIdWithBodyWithResponse request with arbitrary body returning *PutInternalConversationsConversationIdResponse
+func (c *ClientWithResponses) PutInternalConversationsConversationIdWithBodyWithResponse(ctx context.Context, conversationId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConversationsConversationIdResponse, error) {
+	rsp, err := c.PutInternalConversationsConversationIdWithBody(ctx, conversationId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConversationsConversationIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutInternalConversationsConversationIdWithResponse(ctx context.Context, conversationId string, body PutInternalConversationsConversationIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConversationsConversationIdResponse, error) {
+	rsp, err := c.PutInternalConversationsConversationId(ctx, conversationId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConversationsConversationIdResponse(rsp)
 }
 
 // GetInternalConversationsConversationIdMessagesWithResponse request returning *GetInternalConversationsConversationIdMessagesResponse
@@ -5515,6 +5838,107 @@ func ParseGetInternalConversationsResponse(rsp *http.Response) (*GetInternalConv
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInternalConversationsResponse parses an HTTP response from a PostInternalConversationsWithResponse call
+func ParsePostInternalConversationsResponse(rsp *http.Response) (*PostInternalConversationsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInternalConversationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ResponsesConversationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutInternalConversationsConversationIdResponse parses an HTTP response from a PutInternalConversationsConversationIdWithResponse call
+func ParsePutInternalConversationsConversationIdResponse(rsp *http.Response) (*PutInternalConversationsConversationIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutInternalConversationsConversationIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesConversationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest FiberMap

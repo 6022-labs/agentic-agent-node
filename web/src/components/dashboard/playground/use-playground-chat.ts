@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import type { ChatMessage } from "@/components/dashboard/playground/chat-transcript"
 import type { MessageRole } from "@/models/enums/message-role"
-import type { ConversationSummary } from "@/models/conversation"
+import type { Conversation } from "@/models/conversation"
 import { createResponse } from "@/queries/api/responses.queries"
 import { listPaymentRules } from "@/queries/api/payment-rule.queries"
 import {
@@ -22,14 +22,14 @@ export function usePlaygroundChat() {
   const [messages, setMessages] = React.useState<ChatMessage[]>([])
   const [sending, setSending] = React.useState(false)
   const [conversations, setConversations] = React.useState<
-    ConversationSummary[]
+    Conversation[]
   >([])
   const [conversationId, setConversationId] = React.useState(() => newId())
   const [loadingHistory, setLoadingHistory] = React.useState(false)
 
   const loadConversations = React.useCallback(async () => {
     try {
-      const { data } = await listConversations()
+      const { data } = await listConversations(1, 100)
       setConversations(data.conversations ?? [])
     } catch {
       // History is best-effort; the playground still works without it.

@@ -9,12 +9,14 @@ import (
 // ChatCompletionRequesterInterface — single LLM round-trip. No tool-loop;
 // tool resolution is the InferenceLoop's job.
 type ChatCompletionRequesterInterface interface {
+	// A nil maxOutputTokens leaves the ceiling to the provider; callers that expect a short answer should set one.
 	ChatCompletion(
 		ctx context.Context,
 		llmConnection *models.LLMConnection,
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*ChatCompletionMessage,
+		maxOutputTokens *int,
 	) (*LLMCompletion, error)
 
 	// ProbeConnection performs a minimal completion to verify credentials, model

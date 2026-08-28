@@ -15,7 +15,7 @@ import (
 )
 
 type WhenListingConversationMessagesTestingSuite struct {
-	sut *services.HttpConversationHistoryClient
+	sut *services.HttpConversationClient
 
 	mockClient *clients_mocks.MockClientWithResponsesInterface
 }
@@ -26,7 +26,7 @@ func WhenListingConversationMessagesBeforeEach(t *testing.T) *WhenListingConvers
 	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
 
 	return &WhenListingConversationMessagesTestingSuite{
-		sut:        services.NewHttpConversationHistoryClient(mockClient),
+		sut:        services.NewHttpConversationClient(mockClient),
 		mockClient: mockClient,
 	}
 }

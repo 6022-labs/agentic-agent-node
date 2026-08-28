@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -12,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/settings"
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	reasoning_utils "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/utils"
 	runtime_services_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
@@ -40,6 +42,8 @@ type ResponseDriver struct {
 	selfToolRepository         repositories.SelfToolRepositoryInterface
 	reasoningTracer            traces_interfaces.ReasoningTracerInterface
 	emojiDecoder               runtime_services_interfaces.EmojiDecoderInterface
+	conversationTitler         interfaces.ConversationTitlerInterface
+	conversationTitlerSettings *settings.ConversationTitlerSettings
 }
 
 func NewResponseDriver(
@@ -58,6 +62,8 @@ func NewResponseDriver(
 	selfToolRepository repositories.SelfToolRepositoryInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
+	conversationTitler interfaces.ConversationTitlerInterface,
+	conversationTitlerSettings *settings.ConversationTitlerSettings,
 ) *ResponseDriver {
 	return &ResponseDriver{
 		logger:                     logger,
@@ -75,6 +81,8 @@ func NewResponseDriver(
 		selfToolRepository:         selfToolRepository,
 		reasoningTracer:            reasoningTracer,
 		emojiDecoder:               emojiDecoder,
+		conversationTitler:         conversationTitler,
+		conversationTitlerSettings: conversationTitlerSettings,
 	}
 }
 
@@ -170,7 +178,39 @@ func (d *ResponseDriver) Drive(
 		return nil, fmt.Errorf("failed to persist conversation: %w", err)
 	}
 
+	// Labelling is best-effort and must not extend the turn; ctx dies the moment we return.
+	go d.titleConversation(context.WithoutCancel(ctx), conversationId, llmConnection, d.firstUserContent(combined))
+
 	return finalAssistant, nil
+}
+
+func (d *ResponseDriver) titleConversation(
+	ctx context.Context,
+	conversationId string,
+	llmConnection *models.LLMConnection,
+	firstUserMessage string,
+) {
+	ctx, cancel := context.WithTimeout(
+		ctx,
+		time.Duration(d.conversationTitlerSettings.TimeoutSeconds)*time.Second,
+	)
+	defer cancel()
+
+	if err := d.conversationTitler.TitleIfUnnamed(ctx, conversationId, llmConnection, firstUserMessage); err != nil {
+		d.logger.Warn("failed to title conversation",
+			zap.String("conversationId", conversationId),
+			zap.Error(err),
+		)
+	}
+}
+
+func (d *ResponseDriver) firstUserContent(messages []knowledge_interfaces.ConversationMessage) string {
+	for _, m := range messages {
+		if m.Role == "user" && len(strings.TrimSpace(m.Content)) != 0 {
+			return m.Content
+		}
+	}
+	return ""
 }
 
 // assembleToPersist stamps strictly increasing timestamps so order and tool-call pairing survive timestamp-asc reload.

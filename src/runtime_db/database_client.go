@@ -80,6 +80,14 @@ func (c *DatabaseClient) GetDriver() enums.DatabaseDriver {
 	return c.driver
 }
 
+func (c *DatabaseClient) Close() error {
+	sqlDB, err := c.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
+}
+
 func (c *DatabaseClient) HealthCheck() error {
 	sqlDB, err := c.db.DB()
 	if err != nil {

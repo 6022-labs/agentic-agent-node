@@ -1,15 +1,23 @@
 import type { ConversationMessageRole } from "@/models/enums/conversation-message-role"
 
-export type ConversationSummary = {
+export type Conversation = {
   conversationId: string
+  name?: string
   messageCount: number
-  firstMessageAt: string
-  lastMessageAt: string
+  createdAt: string
+  updatedAt: string
 }
 
 export type ListConversationsResponse = {
-  conversations: ConversationSummary[]
+  page: number
+  elementsPerPage: number
+  totalElements: number
+  conversations: Conversation[]
 }
+
+// conversationLabel prefers the session name; the id is the fallback the wire actually keys on.
+export const conversationLabel = (conversation: Conversation) =>
+  conversation.name ?? conversation.conversationId
 
 export type ConversationMessage = {
   id: string

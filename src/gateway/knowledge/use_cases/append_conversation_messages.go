@@ -10,10 +10,10 @@ import (
 )
 
 type AppendConversationMessages struct {
-	client interfaces.ConversationHistoryClientInterface
+	client interfaces.ConversationClientInterface
 }
 
-func NewAppendConversationMessages(client interfaces.ConversationHistoryClientInterface) *AppendConversationMessages {
+func NewAppendConversationMessages(client interfaces.ConversationClientInterface) *AppendConversationMessages {
 	return &AppendConversationMessages{client: client}
 }
 

@@ -13,7 +13,8 @@ import (
 // Schema owned by runtime_db/migrations/.
 type Conversation struct {
 	Id        string    `gorm:"primaryKey;size:128"`
-	AgentId   uuid.UUID `gorm:"not null;size:36;index"`
+	AgentId   uuid.UUID `gorm:"not null;size:36;index;uniqueIndex:uq_conversations_agent_name,priority:1"`
+	Name      *string   `gorm:"size:128;uniqueIndex:uq_conversations_agent_name,priority:2"`
 	CreatedAt time.Time `gorm:"not null"`
 	UpdatedAt time.Time `gorm:"not null"`
 }

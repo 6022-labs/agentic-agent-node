@@ -7,4 +7,5 @@ const (
 	GroupPayments      = "Payments"
 	GroupMachine       = "Machine"
 	GroupConfiguration = "Configuration"
+	GroupMemory        = "Memory"
 )

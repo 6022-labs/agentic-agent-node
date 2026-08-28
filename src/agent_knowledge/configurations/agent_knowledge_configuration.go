@@ -31,10 +31,19 @@ func AddAgentKnowledgeConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewConversationLabeler,
+		dig.As(new(interfaces.ConversationLabelerInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	useCaseProviders := []any{
 		use_cases.NewListConversationMessages,
 		use_cases.NewListConversations,
 		use_cases.NewAppendConversationMessages,
+		use_cases.NewCreateConversation,
+		use_cases.NewUpdateConversation,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

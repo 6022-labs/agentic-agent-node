@@ -42,6 +42,36 @@ func (m *MockConversationRepositoryInterface) EXPECT() *MockConversationReposito
 	return m.recorder
 }
 
+// CountByAgentId mocks base method.
+func (m *MockConversationRepositoryInterface) CountByAgentId(ctx context.Context, agentId uuid.UUID) (uint, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountByAgentId", ctx, agentId)
+	ret0, _ := ret[0].(uint)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountByAgentId indicates an expected call of CountByAgentId.
+func (mr *MockConversationRepositoryInterfaceMockRecorder) CountByAgentId(ctx, agentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountByAgentId", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).CountByAgentId), ctx, agentId)
+}
+
+// Create mocks base method.
+func (m *MockConversationRepositoryInterface) Create(ctx context.Context, conversation *models.Conversation) (*models.Conversation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, conversation)
+	ret0, _ := ret[0].(*models.Conversation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockConversationRepositoryInterfaceMockRecorder) Create(ctx, conversation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).Create), ctx, conversation)
+}
+
 // Ensure mocks base method.
 func (m *MockConversationRepositoryInterface) Ensure(ctx context.Context, conversation *models.Conversation) (bool, error) {
 	m.ctrl.T.Helper()
@@ -55,6 +85,21 @@ func (m *MockConversationRepositoryInterface) Ensure(ctx context.Context, conver
 func (mr *MockConversationRepositoryInterfaceMockRecorder) Ensure(ctx, conversation any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ensure", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).Ensure), ctx, conversation)
+}
+
+// ExistsByAgentIdAndName mocks base method.
+func (m *MockConversationRepositoryInterface) ExistsByAgentIdAndName(ctx context.Context, agentId uuid.UUID, name string, excludedId *string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsByAgentIdAndName", ctx, agentId, name, excludedId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsByAgentIdAndName indicates an expected call of ExistsByAgentIdAndName.
+func (mr *MockConversationRepositoryInterfaceMockRecorder) ExistsByAgentIdAndName(ctx, agentId, name, excludedId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsByAgentIdAndName", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).ExistsByAgentIdAndName), ctx, agentId, name, excludedId)
 }
 
 // GetById mocks base method.
@@ -73,16 +118,31 @@ func (mr *MockConversationRepositoryInterfaceMockRecorder) GetById(ctx, id any) 
 }
 
 // ListByAgentId mocks base method.
-func (m *MockConversationRepositoryInterface) ListByAgentId(ctx context.Context, agentId uuid.UUID) ([]models.Conversation, error) {
+func (m *MockConversationRepositoryInterface) ListByAgentId(ctx context.Context, agentId uuid.UUID, offset, limit *int) ([]models.Conversation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByAgentId", ctx, agentId)
+	ret := m.ctrl.Call(m, "ListByAgentId", ctx, agentId, offset, limit)
 	ret0, _ := ret[0].([]models.Conversation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListByAgentId indicates an expected call of ListByAgentId.
-func (mr *MockConversationRepositoryInterfaceMockRecorder) ListByAgentId(ctx, agentId any) *gomock.Call {
+func (mr *MockConversationRepositoryInterfaceMockRecorder) ListByAgentId(ctx, agentId, offset, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByAgentId", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).ListByAgentId), ctx, agentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByAgentId", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).ListByAgentId), ctx, agentId, offset, limit)
+}
+
+// Update mocks base method.
+func (m *MockConversationRepositoryInterface) Update(ctx context.Context, conversation *models.Conversation) (*models.Conversation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, conversation)
+	ret0, _ := ret[0].(*models.Conversation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockConversationRepositoryInterfaceMockRecorder) Update(ctx, conversation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockConversationRepositoryInterface)(nil).Update), ctx, conversation)
 }

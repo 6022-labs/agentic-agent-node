@@ -1127,6 +1127,20 @@ const docTemplate = `{
                     "Internal"
                 ],
                 "summary": "Internal list conversations",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Elements per page (default 10, max 100)",
+                        "name": "elementsPerPage",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1136,6 +1150,119 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "list_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal create conversation",
+                "parameters": [
+                    {
+                        "description": "Conversation name",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CreateConversationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ConversationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "409": {
+                        "description": "conversation_name_taken",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "create_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/conversations/{conversationId}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update conversation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Conversation id",
+                        "name": "conversationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Conversation name",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateConversationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ConversationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "conversation_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "409": {
+                        "description": "conversation_name_taken",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "update_failed",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -1487,6 +1614,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.CreateConversationRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.CreateMCPConnectionRequest": {
             "type": "object",
             "properties": {
@@ -1632,6 +1767,14 @@ const docTemplate = `{
             "properties": {
                 "card": {
                     "type": "object"
+                }
+            }
+        },
+        "requests.UpdateConversationRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -1841,20 +1984,23 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.ConversationSummary": {
+        "responses.ConversationResponse": {
             "type": "object",
             "properties": {
                 "conversationId": {
                     "type": "string"
                 },
-                "firstMessageAt": {
-                    "type": "string"
-                },
-                "lastMessageAt": {
+                "createdAt": {
                     "type": "string"
                 },
                 "messageCount": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },
@@ -2010,8 +2156,17 @@ const docTemplate = `{
                 "conversations": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/responses.ConversationSummary"
+                        "$ref": "#/definitions/responses.ConversationResponse"
                     }
+                },
+                "elementsPerPage": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "totalElements": {
+                    "type": "integer"
                 }
             }
         },

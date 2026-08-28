@@ -13,6 +13,10 @@ import (
 )
 
 func AddAgentReasoningConfiguration(container *dig.Container) {
+	if err := container.Provide(settings.NewConversationTitlerSettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(settings.NewInferenceLoopSettings); err != nil {
 		panic(err)
 	}
@@ -55,6 +59,13 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		services.NewSystemPromptBuilder,
 		dig.As(new(interfaces.SystemPromptBuilderInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewConversationTitler,
+		dig.As(new(interfaces.ConversationTitlerInterface)),
 	); err != nil {
 		panic(err)
 	}

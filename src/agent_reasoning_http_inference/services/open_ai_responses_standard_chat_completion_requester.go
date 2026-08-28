@@ -22,6 +22,7 @@ type OpenAIResponsesStandardChatCompletionRequesterInterface interface {
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
+		maxOutputTokens *int,
 	) (*interfaces.LLMCompletion, error)
 
 	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
@@ -49,6 +50,7 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	inputs, err := r.buildRequestInputs(messages)
 	if err != nil {
@@ -56,6 +58,7 @@ func (r *OpenAIResponsesStandardChatCompletionRequester) ChatCompletion(
 	}
 
 	externalRequest := external_models.NewExternalOpenAIResponsesStandardRequest(llmConnection.Model, inputs, nil)
+	externalRequest.MaxOutputTokens = maxOutputTokens
 
 	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
 		tools := mcpTools[mcpConnection]

@@ -23,6 +23,7 @@ type AnthropicMessagesStandardChatCompletionRequesterInterface interface {
 		selfTools []*models.Tool,
 		mcpTools map[*models.MCPConnection][]*models.Tool,
 		messages []*interfaces.ChatCompletionMessage,
+		maxOutputTokens *int,
 	) (*interfaces.LLMCompletion, error)
 
 	Probe(baseUrl, apiKey string, llmConnection *models.LLMConnection) error
@@ -50,6 +51,7 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	systems := r.buildSystems(messages)
 	extMessages, err := r.buildRequestMessages(messages)
@@ -62,6 +64,9 @@ func (r *AnthropicMessagesStandardChatCompletionRequester) ChatCompletion(
 		extMessages,
 		systems,
 	)
+	if maxOutputTokens != nil {
+		externalRequest.MaxTokens = uint(*maxOutputTokens)
+	}
 
 	for _, mcpConnection := range utils.SortedMcpConnections(mcpTools) {
 		tools := mcpTools[mcpConnection]

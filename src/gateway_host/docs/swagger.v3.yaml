@@ -10,6 +10,13 @@ components:
       - MessageRoleUser
       - MessageRoleAssistant
       - MessageRoleSystem
+    errors.ConflictError:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      type: object
     errors.NotFoundError:
       properties:
         code:
@@ -113,6 +120,11 @@ components:
         id:
           type: string
       type: object
+    requests.CreateConversationRequest:
+      properties:
+        name:
+          type: string
+      type: object
     requests.CreateMcpConnectionRequest:
       properties:
         allowedToolPatterns:
@@ -209,6 +221,11 @@ components:
         model:
           type: string
         provider:
+          type: string
+      type: object
+    requests.UpdateConversationRequest:
+      properties:
+        name:
           type: string
       type: object
     requests.UpdateMcpConnectionRequest:
@@ -427,16 +444,18 @@ components:
         id:
           type: string
       type: object
-    responses.ConversationSummary:
+    responses.ConversationResponse:
       properties:
         conversationId:
           type: string
-        firstMessageAt:
-          type: string
-        lastMessageAt:
+        createdAt:
           type: string
         messageCount:
           type: integer
+        name:
+          type: string
+        updatedAt:
+          type: string
       type: object
     responses.EnsInfoResponse:
       properties:
@@ -528,9 +547,15 @@ components:
       properties:
         conversations:
           items:
-            $ref: '#/components/schemas/responses.ConversationSummary'
+            $ref: '#/components/schemas/responses.ConversationResponse'
           type: array
           uniqueItems: false
+        elementsPerPage:
+          type: integer
+        page:
+          type: integer
+        totalElements:
+          type: integer
       type: object
     responses.ListMcpConnectionsResponse:
       properties:
@@ -1812,6 +1837,17 @@ paths:
       - Config
   /conversations:
     get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        schema:
+          type: integer
+      - description: Elements per page (default 10, max 100)
+        in: query
+        name: elementsPerPage
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -1828,6 +1864,104 @@ paths:
       security:
       - BearerAuth: []
       summary: List conversations
+      tags:
+      - Conversations
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.CreateConversationRequest'
+                description: Conversation name
+                summary: request
+        description: Conversation name
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ConversationResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: Conflict
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Create conversation
+      tags:
+      - Conversations
+  /conversations/{conversationId}:
+    put:
+      parameters:
+      - description: Conversation id
+        in: path
+        name: conversationId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.UpdateConversationRequest'
+                description: Conversation name
+                summary: request
+        description: Conversation name
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ConversationResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: Conflict
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Update conversation
       tags:
       - Conversations
   /conversations/{conversationId}/messages:

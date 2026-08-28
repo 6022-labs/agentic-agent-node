@@ -96,8 +96,8 @@ func addIdentityConfiguration(container *dig.Container) {
 
 func addKnowledgeConfiguration(container *dig.Container) {
 	if err := container.Provide(
-		knowledge_services.NewHttpConversationHistoryClient,
-		dig.As(new(knowledge_interfaces.ConversationHistoryClientInterface)),
+		knowledge_services.NewHttpConversationClient,
+		dig.As(new(knowledge_interfaces.ConversationClientInterface)),
 	); err != nil {
 		panic(err)
 	}

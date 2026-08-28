@@ -10,6 +10,7 @@ import (
 
 type ConversationBuilder struct {
 	id        string
+	name      *string
 	agentId   uuid.UUID
 	createdAt time.Time
 	updatedAt time.Time
@@ -26,6 +27,11 @@ func NewConversationBuilder() *ConversationBuilder {
 
 func (b *ConversationBuilder) WithId(id string) *ConversationBuilder {
 	b.id = id
+	return b
+}
+
+func (b *ConversationBuilder) WithName(name string) *ConversationBuilder {
+	b.name = &name
 	return b
 }
 
@@ -47,6 +53,7 @@ func (b *ConversationBuilder) WithUpdatedAt(updatedAt time.Time) *ConversationBu
 func (b *ConversationBuilder) Build() *models.Conversation {
 	return &models.Conversation{
 		Id:        b.id,
+		Name:      b.name,
 		AgentId:   b.agentId,
 		CreatedAt: b.createdAt,
 		UpdatedAt: b.updatedAt,

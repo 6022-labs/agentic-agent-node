@@ -61,3 +61,33 @@ func (r *ConversationMessageRepository) ListExistingHashes(ctx context.Context, 
 	}
 	return existing, nil
 }
+
+// CountByConversationIds groups on its own table; ids without a message are simply absent from the map.
+func (r *ConversationMessageRepository) CountByConversationIds(
+	ctx context.Context,
+	conversationIds []string,
+) (map[string]int64, error) {
+	counts := make(map[string]int64, len(conversationIds))
+	if len(conversationIds) == 0 {
+		return counts, nil
+	}
+
+	var rows []struct {
+		ConversationId string
+		Total          int64
+	}
+	if err := r.client.GetDB().
+		WithContext(ctx).
+		Model(&models.ConversationMessage{}).
+		Select("conversation_id, COUNT(id) AS total").
+		Where("conversation_id IN ?", conversationIds).
+		Group("conversation_id").
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows {
+		counts[row.ConversationId] = row.Total
+	}
+	return counts, nil
+}

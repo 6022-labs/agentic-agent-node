@@ -101,6 +101,7 @@ func (r *ChatCompletionRequester) ChatCompletion(
 	selfTools []*models.Tool,
 	mcpTools map[*models.MCPConnection][]*models.Tool,
 	messages []*interfaces.ChatCompletionMessage,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	trimmedMessages, err := r.trimMessagesToTokenLimit(messages, r.tokenSettings.MaxTokensPerRequest)
 	if err != nil {
@@ -137,6 +138,7 @@ func (r *ChatCompletionRequester) ChatCompletion(
 		trimmedMessages,
 		platformSettings,
 		apiKey,
+		maxOutputTokens,
 	)
 	duration := time.Since(start)
 
@@ -342,6 +344,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 	messages []*interfaces.ChatCompletionMessage,
 	platformSettings settings.StandardSettingsInterface,
 	apiKey *string,
+	maxOutputTokens *int,
 ) (*interfaces.LLMCompletion, error) {
 	switch platformSettings.PlatformAPI() {
 	case settings.PlatformAPIOpenAIResponsesStandard:
@@ -356,6 +359,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			selfTools,
 			mcpTools,
 			messages,
+			maxOutputTokens,
 		)
 
 	case settings.PlatformAPIOpenAICompletionsStandard:
@@ -369,6 +373,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			selfTools,
 			mcpTools,
 			messages,
+			maxOutputTokens,
 		)
 
 	case settings.PlatformAPIOllamaChatMessageStandard:
@@ -378,6 +383,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			selfTools,
 			mcpTools,
 			messages,
+			maxOutputTokens,
 		)
 
 	case settings.PlatformAPIAnthropicMessagesStandard:
@@ -392,6 +398,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			selfTools,
 			mcpTools,
 			messages,
+			maxOutputTokens,
 		)
 
 	case settings.PlatformAPIAmazonBedrockConverseStandard:
@@ -405,6 +412,7 @@ func (r *ChatCompletionRequester) completeUsingAppropriateStandard(
 			selfTools,
 			mcpTools,
 			messages,
+			maxOutputTokens,
 		)
 
 	default:

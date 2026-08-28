@@ -1,4 +1,5 @@
-h1:NrItNXLM4stq9UWjOAwuua20ib7x9O7nTj0Y2okqtko=
+h1:CYqZZQj/ShUwCgSiBVPeM2TuoiYe8kEW2HMqAg0rMUc=
 20260721111609_initial.sql h1:JRHKmxyEwO4QaMYk4sEl579eUAihTC6wcChWNVIrRsU=
 20260725141200_add_mcp_connection_allowed_tool_patterns.sql h1:uDTchsmM2ZQX9sdwcI7GsHS1yVO8AHE8MmyMRP//JOk=
 20260807004810_add_self_tools.sql h1:Kbj4/sOH9PkLvRCwjA1uz7gvk1hB8j+Sj2ObLFlczWc=
+20260823221119_add_conversation_name.sql h1:IJDatqUnR18dXYoIHdj223lTC+npkP8ZSlRFIXP0Ndo=

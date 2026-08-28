@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useAgentIdentity } from "@/contexts/agent-identity-context"
-import AppendMemoryDialog from "@/components/dashboard/memory/dialogs/append-memory-dialog"
+import SessionsTable from "@/components/dashboard/memory/sessions-table"
 import NotMintedState from "@/components/dashboard/not-minted-state"
 
 export default function MemorySection() {
@@ -15,17 +15,18 @@ export default function MemorySection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Conversation memory</CardTitle>
+        <CardTitle>Memory sessions</CardTitle>
         <CardDescription>
-          Seed a conversation with messages out-of-band — useful for testing how
-          the agent reacts to a given history ("false memory").
+          Named buckets the agent keeps its history in. It picks one per
+          conversation and titles new ones itself; you can add, rename and seed
+          them here.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {!identityLoading && !isMinted ? (
-          <NotMintedState description="Mint the agent's on-chain identity before seeding conversation memory." />
+          <NotMintedState description="Mint the agent's on-chain identity before managing conversation memory." />
         ) : (
-          <AppendMemoryDialog />
+          <SessionsTable />
         )}
       </CardContent>
     </Card>

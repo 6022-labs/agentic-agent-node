@@ -3,6 +3,7 @@ package repositories_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
@@ -11,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -54,6 +56,7 @@ func WhenListingConversationsByAgentIdBeforeEach(
 }
 
 func WhenListingConversationsByAgentIdAfterEach(suite *WhenListingConversationsByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -81,12 +84,140 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 						model_builders.NewConversationBuilder().WithId("a-2").WithAgentId(agentId).Build())
 					assert.NoError(t, ensureErr)
 
-					list, err := suite.sut.ListByAgentId(context.Background(), agentId)
+					list, err := suite.sut.ListByAgentId(context.Background(), agentId, nil, nil)
 					assert.NoError(t, err)
 					assert.Len(t, list, 2)
-					for _, conversation := range list {
-						assert.Equal(t, agentId, conversation.AgentId)
+
+					ids := []string{list[0].Id, list[1].Id}
+					assert.ElementsMatch(t, []string{"a-1", "a-2"}, ids)
+				})
+
+				t.Run("Should exclude another agent's conversations", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					otherAgentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seedAgent(suite.dbClient, otherAgentId)
+
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("mine").
+						WithAgentId(agentId).
+						Build())
+					assert.NoError(t, err)
+					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("theirs").
+						WithAgentId(otherAgentId).
+						Build())
+					assert.NoError(t, err)
+
+					list, err := suite.sut.ListByAgentId(ctx, agentId, nil, nil)
+
+					assert.NoError(t, err)
+					assert.Len(t, list, 1)
+					assert.Equal(t, "mine", list[0].Id)
+				})
+
+				t.Run("Should return the newest first", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					createdAt := time.Now().UTC().Truncate(time.Second)
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("older").
+						WithAgentId(agentId).
+						WithCreatedAt(createdAt.Add(-time.Hour)).
+						Build())
+					assert.NoError(t, err)
+					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("newer").
+						WithAgentId(agentId).
+						WithCreatedAt(createdAt).
+						Build())
+					assert.NoError(t, err)
+
+					list, err := suite.sut.ListByAgentId(ctx, agentId, nil, nil)
+
+					assert.NoError(t, err)
+					assert.Equal(t, []string{"newer", "older"}, []string{list[0].Id, list[1].Id})
+				})
+			})
+
+			t.Run("Given an offset and a limit", func(t *testing.T) {
+				t.Parallel()
+
+				seed := func(suite *WhenListingConversationsByAgentIdTestingSuite, agentId uuid.UUID) {
+					createdAt := time.Now().UTC().Truncate(time.Second)
+					// Distinct creation times so the newest-first order is deterministic across drivers.
+					for index, id := range []string{"a", "b", "c"} {
+						_, err := suite.sut.Create(context.Background(), model_builders.NewConversationBuilder().
+							WithId(id).
+							WithAgentId(agentId).
+							WithCreatedAt(createdAt.Add(-time.Duration(index)*time.Minute)).
+							Build())
+						assert.NoError(t, err)
 					}
+				}
+
+				t.Run("Should window the result", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seed(suite, agentId)
+
+					firstPage, err := suite.sut.ListByAgentId(ctx, agentId, lo.ToPtr(0), lo.ToPtr(2))
+					assert.NoError(t, err)
+					assert.Equal(t, []string{"a", "b"}, []string{firstPage[0].Id, firstPage[1].Id})
+
+					secondPage, err := suite.sut.ListByAgentId(ctx, agentId, lo.ToPtr(2), lo.ToPtr(2))
+					assert.NoError(t, err)
+					assert.Len(t, secondPage, 1)
+					assert.Equal(t, "c", secondPage[0].Id)
+				})
+
+				t.Run("Should return nothing past the end", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seed(suite, agentId)
+
+					list, err := suite.sut.ListByAgentId(ctx, agentId, lo.ToPtr(99), lo.ToPtr(2))
+
+					assert.NoError(t, err)
+					assert.Empty(t, list)
+				})
+
+				t.Run("Should apply a limit on its own", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seed(suite, agentId)
+
+					list, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(1))
+
+					assert.NoError(t, err)
+					assert.Len(t, list, 1)
+					assert.Equal(t, "a", list[0].Id)
 				})
 			})
 		})

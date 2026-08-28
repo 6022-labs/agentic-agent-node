@@ -68,7 +68,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
 			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages).
+				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages, gomock.Any()).
 				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
 		}
 
@@ -100,7 +100,7 @@ func TestWhenExecutingLLM(t *testing.T) {
 
 		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
 			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), llmConnection, gomock.Nil(), mcpTools, messages).
+				ChatCompletion(gomock.Any(), llmConnection, gomock.Nil(), mcpTools, messages, gomock.Any()).
 				Return(nil, errors.New("upstream broke"))
 		}
 

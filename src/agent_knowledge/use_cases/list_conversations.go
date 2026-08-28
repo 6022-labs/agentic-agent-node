@@ -2,67 +2,88 @@ package use_cases
 
 import (
 	"context"
-	"sort"
 
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/samber/lo"
 )
 
 type ListConversations struct {
-	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 	conversationRepository        repositories.ConversationRepositoryInterface
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 	agentRepository               identity_repositories.AgentRepositoryInterface
 }
 
 func NewListConversations(
-	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
 	conversationRepository repositories.ConversationRepositoryInterface,
+	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *ListConversations {
 	return &ListConversations{
-		conversationMessageRepository: conversationMessageRepository,
 		conversationRepository:        conversationRepository,
+		conversationMessageRepository: conversationMessageRepository,
 		agentRepository:               agentRepository,
 	}
 }
 
-// Execute lists the agent's conversation heads, summarises each via
-// ListByConversation, and orders by most recent activity.
-func (u *ListConversations) Execute(ctx context.Context) (*responses.ListConversationsResponse, error) {
+// Execute returns one page of the agent's memory sessions, newest first, decorated with their message counts.
+func (u *ListConversations) Execute(
+	ctx context.Context,
+	request *requests.ListConversationsRequest,
+) (*responses.ListConversationsResponse, error) {
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
 	if agent == nil {
-		return &responses.ListConversationsResponse{Conversations: []responses.ConversationSummary{}}, nil
+		return &responses.ListConversationsResponse{
+			Page:            *request.Page,
+			ElementsPerPage: *request.ElementsPerPage,
+			Conversations:   []responses.ConversationResponse{},
+		}, nil
 	}
 
-	conversations, err := u.conversationRepository.ListByAgentId(ctx, agent.Id)
+	total, err := u.conversationRepository.CountByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
 
-	out := make([]responses.ConversationSummary, 0, len(conversations))
-	for _, conversation := range conversations {
-		messages, err := u.conversationMessageRepository.ListByConversationId(ctx, conversation.Id)
-		if err != nil {
-			return nil, errors.NewInternalError("list_failed", err.Error())
-		}
-		if len(messages) == 0 {
-			continue
-		}
-		// ListByConversation returns messages ordered by timestamp ascending.
-		out = append(out, responses.ConversationSummary{
-			ConversationId: conversation.Id,
-			MessageCount:   int64(len(messages)),
-			FirstMessageAt: messages[0].Timestamp,
-			LastMessageAt:  messages[len(messages)-1].Timestamp,
-		})
+	limit := int(*request.ElementsPerPage)
+	offset := int(*request.Page-1) * limit
+
+	conversations, err := u.conversationRepository.ListByAgentId(ctx, agent.Id, &offset, &limit)
+	if err != nil {
+		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
-	sort.SliceStable(out, func(i, j int) bool {
-		return out[i].LastMessageAt.After(out[j].LastMessageAt)
-	})
-	return &responses.ListConversationsResponse{Conversations: out}, nil
+
+	counts, err := u.conversationMessageRepository.CountByConversationIds(ctx, lo.Map(
+		conversations,
+		func(conversation models.Conversation, _ int) string { return conversation.Id },
+	))
+	if err != nil {
+		return nil, errors.NewInternalError("list_failed", err.Error())
+	}
+
+	out := make([]responses.ConversationResponse, 0, len(conversations))
+	for _, conversation := range conversations {
+		var wire responses.ConversationResponse
+		wire.FromModel(conversation)
+		wire.MessageCount = counts[conversation.Id]
+		out = append(out, wire)
+	}
+
+	return &responses.ListConversationsResponse{
+		Page:            *request.Page,
+		ElementsPerPage: *request.ElementsPerPage,
+		TotalElements:   total,
+		Conversations:   out,
+	}, nil
 }

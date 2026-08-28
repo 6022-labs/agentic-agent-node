@@ -41,6 +41,7 @@ func (e *LLMExecutor) Complete(
 		selfTools,
 		mcpTools,
 		messages,
+		nil,
 	)
 	if err != nil {
 		span.Fail(err)
