@@ -1,6 +1,12 @@
 import React from "react"
 import { toast } from "sonner"
-import { ChevronLeft, ChevronRight, MessagesSquare, Pencil, Plus } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  MessagesSquare,
+  Pencil,
+  Plus,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -102,7 +108,9 @@ export default function SessionsTable() {
                   {conversation.conversationId}
                 </TableCell>
                 <TableCell>{conversation.messageCount}</TableCell>
-                <TableCell>{formatRelativeTime(conversation.updatedAt)}</TableCell>
+                <TableCell>
+                  {formatRelativeTime(conversation.updatedAt)}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

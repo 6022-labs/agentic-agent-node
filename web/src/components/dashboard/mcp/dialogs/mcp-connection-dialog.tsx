@@ -59,9 +59,8 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
   const [saving, setSaving] = React.useState(false)
   const [loadingTools, setLoadingTools] = React.useState(false)
   const [tools, setTools] = React.useState<McpServerTool[] | null>(null)
-  const [values, setValues] = React.useState<McpConnectionFormSchemaType | null>(
-    null
-  )
+  const [values, setValues] =
+    React.useState<McpConnectionFormSchemaType | null>(null)
   const editing = connection !== undefined
 
   // A different server (or credential) exposes different tools, so the loaded

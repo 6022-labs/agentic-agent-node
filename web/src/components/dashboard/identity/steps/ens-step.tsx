@@ -52,7 +52,8 @@ export default function EnsStep({ draft, onClose }: Props) {
     setChecking(true)
     try {
       const { data: status } = await checkAgentMint()
-      if (status.mintStatus === TRANSACTION_STATUS.confirmed) await checkAgentEns()
+      if (status.mintStatus === TRANSACTION_STATUS.confirmed)
+        await checkAgentEns()
       await refresh()
     } catch (error) {
       toast.error(extractErrorMessage(error, "Failed to refresh status"))
@@ -220,7 +221,11 @@ export default function EnsStep({ draft, onClose }: Props) {
             transaction from your wallet.
           </p>
           <div className="flex gap-2">
-            <Button onClick={handleBrowserEns} loading={busy} className="flex-1">
+            <Button
+              onClick={handleBrowserEns}
+              loading={busy}
+              className="flex-1"
+            >
               {!busy ? <Wallet /> : null}
               Register ENS
             </Button>

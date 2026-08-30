@@ -3,367 +3,367 @@ export const AgentCollectionABI = [
   {
     inputs: [],
     stateMutability: "nonpayable",
-    type: "constructor"
+    type: "constructor",
   },
   {
     inputs: [],
     name: "AccessControlBadConfirmation",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "bytes32",
         name: "neededRole",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "AccessControlUnauthorizedAccount",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentAddressNotFound",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "DuplicateKey",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "sender",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "address",
         name: "owner",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721IncorrectOwner",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "operator",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "ERC721InsufficientApproval",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "approver",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721InvalidApprover",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "operator",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721InvalidOperator",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "owner",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721InvalidOwner",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "receiver",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721InvalidReceiver",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ERC721InvalidSender",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "ERC721NonexistentToken",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "EmptyAddressValue",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "InvalidAddressType",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "cloneOf",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "InvalidCloneOf",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "name",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "InvalidCollectionName",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "InvalidEvmAddressValue",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "InvalidInitialization",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "name",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "InvalidName",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "MissingDefaultImage",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "MissingEvmAddress",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "MissingRequiredKey",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "NoModerators",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "NotInitializing",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "NotModerator",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "sender",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "OwnableUnauthorizedAccount",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "ProposalNotFound",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "value",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "uint256",
         name: "length",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "StringsInsufficientHexLength",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "UsedAgentAddress",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "name",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "UsedName",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "parameter",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "ZeroAddress",
-    type: "error"
+    type: "error",
   },
   {
     anonymous: false,
@@ -372,23 +372,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: false,
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentAddressAdded",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -397,23 +397,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: false,
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentAddressRemoved",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -422,29 +422,29 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "oldValue",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "newValue",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentAttributeUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -453,23 +453,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "AgentImageProposalCreated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -478,23 +478,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "AgentImageProposalRemoved",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -503,17 +503,17 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentImageRemoved",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -522,29 +522,29 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "oldValue",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "newValue",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentImageUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -553,23 +553,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "owner",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "approved",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "Approval",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -578,23 +578,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "owner",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "operator",
-        type: "address"
+        type: "address",
       },
       {
         indexed: false,
         internalType: "bool",
         name: "approved",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     name: "ApprovalForAll",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -603,17 +603,17 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "oldCollectionsDescriptor",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "newCollectionsDescriptor",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "CollectionsDescriptorUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -622,17 +622,17 @@ export const AgentCollectionABI = [
         indexed: false,
         internalType: "string",
         name: "oldDescription",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "newDescription",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "DescriptionUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -641,11 +641,11 @@ export const AgentCollectionABI = [
         indexed: false,
         internalType: "uint64",
         name: "version",
-        type: "uint64"
-      }
+        type: "uint64",
+      },
     ],
     name: "Initialized",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -654,17 +654,17 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "from",
-        type: "address"
+        type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "MintProposalCreated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -673,17 +673,17 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "owner",
-        type: "address"
+        type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "MintProposalRemoved",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -692,17 +692,17 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "Minted",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -711,23 +711,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "previousAdminRole",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "newAdminRole",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "RoleAdminChanged",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -736,23 +736,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "RoleGranted",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -761,23 +761,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "RoleRevoked",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -786,23 +786,23 @@ export const AgentCollectionABI = [
         indexed: true,
         internalType: "address",
         name: "from",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "Transfer",
-    type: "event"
+    type: "event",
   },
   {
     inputs: [],
@@ -811,11 +811,11 @@ export const AgentCollectionABI = [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -824,108 +824,108 @@ export const AgentCollectionABI = [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "addAgentAddress",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "addOrUpdateAgentAttribute",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue",
         name: "image",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     name: "addOrUpdateAgentImage",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "addOrUpdateAgentImageFromProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalIndex",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "addOrUpdateAgentImageProposal",
     outputs: [
@@ -934,38 +934,38 @@ export const AgentCollectionABI = [
           {
             internalType: "uint256",
             name: "id",
-            type: "uint256"
+            type: "uint256",
           },
           {
             internalType: "uint256",
             name: "tokenId",
-            type: "uint256"
+            type: "uint256",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "key",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct KeyValue",
             name: "image",
-            type: "tuple"
-          }
+            type: "tuple",
+          },
         ],
         internalType: "struct AddOrUpdateAgentImageProposal",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -974,24 +974,24 @@ export const AgentCollectionABI = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "uint256",
         name: "index",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "addressOfByIndex",
     outputs: [
@@ -1000,95 +1000,95 @@ export const AgentCollectionABI = [
           {
             internalType: "string",
             name: "addressType",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct AgentAddress",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "addressToTokenId",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "addressesCountOf",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "approve",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "uint256",
         name: "index",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "attributeOfByIndex",
     outputs: [
@@ -1097,83 +1097,83 @@ export const AgentCollectionABI = [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "attributeOfByKey",
     outputs: [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "attributesCountOf",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "owner",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "balanceOf",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1182,146 +1182,146 @@ export const AgentCollectionABI = [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue",
         name: "image",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     name: "createAddOrUpdateAgentImageProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "string",
         name: "agentName",
-        type: "string"
+        type: "string",
       },
       {
         components: [
           {
             internalType: "string",
             name: "addressType",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct AgentAddress[]",
         name: "addresses",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue[]",
         name: "images",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue[]",
         name: "attributes",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "bool",
             name: "isSet",
-            type: "bool"
+            type: "bool",
           },
           {
             internalType: "uint256",
             name: "value",
-            type: "uint256"
-          }
+            type: "uint256",
+          },
         ],
         internalType: "struct NullableUint256",
         name: "cloneOf",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     name: "createMintProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "creatorOf",
     outputs: [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1330,104 +1330,104 @@ export const AgentCollectionABI = [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "getApproved",
     outputs: [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "getRoleAdmin",
     outputs: [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "grantRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "hasRole",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "uint256",
         name: "index",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "imageOfByIndex",
     outputs: [
@@ -1436,48 +1436,48 @@ export const AgentCollectionABI = [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "imagesCountOf",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "informationOf",
     outputs: [
@@ -1486,277 +1486,277 @@ export const AgentCollectionABI = [
           {
             internalType: "string",
             name: "name",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "address",
             name: "creator",
-            type: "address"
+            type: "address",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "key",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct KeyValue[]",
             name: "images",
-            type: "tuple[]"
+            type: "tuple[]",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "key",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct KeyValue[]",
             name: "attributes",
-            type: "tuple[]"
+            type: "tuple[]",
           },
           {
             components: [
               {
                 internalType: "bool",
                 name: "isSet",
-                type: "bool"
+                type: "bool",
               },
               {
                 internalType: "uint256",
                 name: "value",
-                type: "uint256"
-              }
+                type: "uint256",
+              },
             ],
             internalType: "struct NullableUint256",
             name: "cloneOf",
-            type: "tuple"
+            type: "tuple",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "addressType",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct AgentAddress[]",
             name: "addresses",
-            type: "tuple[]"
-          }
+            type: "tuple[]",
+          },
         ],
         internalType: "struct AgentInformation",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "name_",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "symbol_",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "initialDescription",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "address",
         name: "admin",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "moderator",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "initialCollectionsDescriptor",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "initialize",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "owner",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "operator",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "isApprovedForAll",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "isModerator",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "string",
         name: "agentName",
-        type: "string"
+        type: "string",
       },
       {
         components: [
           {
             internalType: "string",
             name: "addressType",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct AgentAddress[]",
         name: "addresses",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue[]",
         name: "images",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue[]",
         name: "attributes",
-        type: "tuple[]"
+        type: "tuple[]",
       },
       {
         components: [
           {
             internalType: "bool",
             name: "isSet",
-            type: "bool"
+            type: "bool",
           },
           {
             internalType: "uint256",
             name: "value",
-            type: "uint256"
-          }
+            type: "uint256",
+          },
         ],
         internalType: "struct NullableUint256",
         name: "cloneOf",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     name: "mint",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "mintFromProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalIndex",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "mintProposal",
     outputs: [
@@ -1765,99 +1765,99 @@ export const AgentCollectionABI = [
           {
             internalType: "uint256",
             name: "id",
-            type: "uint256"
+            type: "uint256",
           },
           {
             internalType: "string",
             name: "name",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "address",
             name: "owner",
-            type: "address"
+            type: "address",
           },
           {
             internalType: "address",
             name: "creator",
-            type: "address"
+            type: "address",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "key",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct KeyValue[]",
             name: "images",
-            type: "tuple[]"
+            type: "tuple[]",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "key",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct KeyValue[]",
             name: "attributes",
-            type: "tuple[]"
+            type: "tuple[]",
           },
           {
             components: [
               {
                 internalType: "bool",
                 name: "isSet",
-                type: "bool"
+                type: "bool",
               },
               {
                 internalType: "uint256",
                 name: "value",
-                type: "uint256"
-              }
+                type: "uint256",
+              },
             ],
             internalType: "struct NullableUint256",
             name: "cloneOf",
-            type: "tuple"
+            type: "tuple",
           },
           {
             components: [
               {
                 internalType: "string",
                 name: "addressType",
-                type: "string"
+                type: "string",
               },
               {
                 internalType: "string",
                 name: "value",
-                type: "string"
-              }
+                type: "string",
+              },
             ],
             internalType: "struct AgentAddress[]",
             name: "addresses",
-            type: "tuple[]"
-          }
+            type: "tuple[]",
+          },
         ],
         internalType: "struct MintProposal",
         name: "",
-        type: "tuple"
-      }
+        type: "tuple",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1866,11 +1866,11 @@ export const AgentCollectionABI = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1879,11 +1879,11 @@ export const AgentCollectionABI = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1892,49 +1892,49 @@ export const AgentCollectionABI = [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "nameOf",
     outputs: [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "agentName",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "nameToTokenId",
     outputs: [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -1943,221 +1943,221 @@ export const AgentCollectionABI = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "ownerOf",
     outputs: [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "refuseAddOrUpdateAgentImageProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "proposalId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "refuseMintProposal",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "addressType",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "removeAgentAddress",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "removeAgentImage",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "callerConfirmation",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "renounceRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "revokeRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "from",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "safeTransferFrom",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "from",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "bytes",
         name: "data",
-        type: "bytes"
-      }
+        type: "bytes",
+      },
     ],
     name: "safeTransferFrom",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "operator",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "bool",
         name: "approved",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     name: "setApprovalForAll",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes4",
         name: "interfaceId",
-        type: "bytes4"
-      }
+        type: "bytes4",
+      },
     ],
     name: "supportsInterface",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -2166,78 +2166,78 @@ export const AgentCollectionABI = [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "tokenURI",
     outputs: [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "from",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "address",
         name: "to",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "transferFrom",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "newCollectionsDescriptor",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "updateCollectionsDescriptor",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "newDescription",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "updateDescription",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
-  }
+    type: "function",
+  },
 ] as const

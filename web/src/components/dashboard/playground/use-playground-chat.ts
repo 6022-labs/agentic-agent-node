@@ -21,9 +21,7 @@ export function usePlaygroundChat() {
   const { wallet, address } = useWallet()
   const [messages, setMessages] = React.useState<ChatMessage[]>([])
   const [sending, setSending] = React.useState(false)
-  const [conversations, setConversations] = React.useState<
-    Conversation[]
-  >([])
+  const [conversations, setConversations] = React.useState<Conversation[]>([])
   const [conversationId, setConversationId] = React.useState(() => newId())
   const [loadingHistory, setLoadingHistory] = React.useState(false)
 

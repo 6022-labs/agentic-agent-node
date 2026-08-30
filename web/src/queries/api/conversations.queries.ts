@@ -21,8 +21,13 @@ export const createConversation = async (name: string) => {
 }
 
 // PUT /conversations/{id} — rename a memory session.
-export const updateConversation = async (conversationId: string, name: string) => {
-  return await axios.put<Conversation>(`/conversations/${conversationId}`, { name })
+export const updateConversation = async (
+  conversationId: string,
+  name: string
+) => {
+  return await axios.put<Conversation>(`/conversations/${conversationId}`, {
+    name,
+  })
 }
 
 // GET /conversations/{id}/messages — one conversation's transcript.

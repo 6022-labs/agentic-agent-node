@@ -44,13 +44,10 @@ export default function LlmConfigSection() {
   // Bumped on delete to remount the form with empty fields.
   const [formEpoch, setFormEpoch] = React.useState(0)
 
-  const onValueChange = React.useCallback(
-    (next: LlmConfigFormSchemaType) => {
-      setValues(next)
-      setTested(false)
-    },
-    []
-  )
+  const onValueChange = React.useCallback((next: LlmConfigFormSchemaType) => {
+    setValues(next)
+    setTested(false)
+  }, [])
 
   const load = React.useCallback(async () => {
     setLoading(true)

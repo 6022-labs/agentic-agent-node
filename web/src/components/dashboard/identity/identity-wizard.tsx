@@ -50,9 +50,7 @@ export default function IdentityWizard({
 
   const onDraftComplete = async (
     values: RegistrationDraftFormSchemaType
-  ): Promise<
-    FormCompletionResult<keyof RegistrationDraftFormSchemaType>
-  > => {
+  ): Promise<FormCompletionResult<keyof RegistrationDraftFormSchemaType>> => {
     setSavingDraft(true)
     try {
       const { data } = await saveAgentRegistration({

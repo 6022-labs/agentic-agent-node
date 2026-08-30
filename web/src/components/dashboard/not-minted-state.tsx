@@ -4,7 +4,11 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import EmptyState from "@/components/dashboard/empty-state"
 
-export default function NotMintedState({ description }: { description: string }) {
+export default function NotMintedState({
+  description,
+}: {
+  description: string
+}) {
   return (
     <EmptyState
       icon={Fingerprint}

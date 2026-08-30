@@ -64,7 +64,9 @@ export function MultiSelect({
           disabled={disabled}
           className={cn("w-full justify-between font-normal", className)}
         >
-          <span className={cn(selected.length === 0 && "text-muted-foreground")}>
+          <span
+            className={cn(selected.length === 0 && "text-muted-foreground")}
+          >
             {summary()}
           </span>
           <ChevronDown className="opacity-50" />
@@ -101,7 +103,9 @@ export function MultiSelect({
             onCheckedChange={(checked) => toggle(option.value, checked)}
           >
             <span className="min-w-0">
-              <span className="block truncate">{option.label ?? option.value}</span>
+              <span className="block truncate">
+                {option.label ?? option.value}
+              </span>
               {option.description ? (
                 <span className="block truncate text-xs text-muted-foreground">
                   {option.description}

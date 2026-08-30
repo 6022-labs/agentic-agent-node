@@ -5,166 +5,166 @@ export const AgentEnsRegistryABI = [
       {
         internalType: "address",
         name: "managerAddress",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "bytes32",
         name: "parentNode_",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "nonpayable",
-    type: "constructor"
+    type: "constructor",
   },
   {
     inputs: [],
     name: "AccessControlBadConfirmation",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "bytes32",
         name: "neededRole",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "AccessControlUnauthorizedAccount",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "AlreadyProvisioned",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "DuplicateKey",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "MissingRequiredKey",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "address",
         name: "caller",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "NotAgentOwnerOrWallet",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "NotProvisioned",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "ReservedKey",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "uint256",
         name: "value",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "uint256",
         name: "length",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     name: "StringsInsufficientHexLength",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [],
     name: "StringsInvalidAddressFormat",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "UnknownCollection",
-    type: "error"
+    type: "error",
   },
   {
     inputs: [
       {
         internalType: "string",
         name: "parameter",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "ZeroAddress",
-    type: "error"
+    type: "error",
   },
   {
     anonymous: false,
@@ -173,29 +173,29 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: false,
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         indexed: false,
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "AgentTextUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -204,11 +204,11 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "address",
         name: "newManager",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "ManagerUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -217,11 +217,11 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "bytes32",
         name: "newParentNode",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "ParentNodeUpdated",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -230,23 +230,23 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "previousAdminRole",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "newAdminRole",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "RoleAdminChanged",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -255,23 +255,23 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "RoleGranted",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -280,23 +280,23 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: true,
         internalType: "address",
         name: "account",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "address",
         name: "sender",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "RoleRevoked",
-    type: "event"
+    type: "event",
   },
   {
     anonymous: false,
@@ -305,29 +305,29 @@ export const AgentEnsRegistryABI = [
         indexed: true,
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         indexed: true,
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         indexed: true,
         internalType: "bytes32",
         name: "node",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         indexed: false,
         internalType: "string",
         name: "label",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "SubnodeProvisioned",
-    type: "event"
+    type: "event",
   },
   {
     inputs: [],
@@ -336,150 +336,150 @@ export const AgentEnsRegistryABI = [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "node",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "addr",
     outputs: [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "agentRef",
     outputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
-      }
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "getRoleAdmin",
     outputs: [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "grantRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "hasRole",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         components: [
           {
             internalType: "string",
             name: "key",
-            type: "string"
+            type: "string",
           },
           {
             internalType: "string",
             name: "value",
-            type: "string"
-          }
+            type: "string",
+          },
         ],
         internalType: "struct KeyValue[]",
         name: "records",
-        type: "tuple[]"
-      }
+        type: "tuple[]",
+      },
     ],
     name: "initAgentTexts",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -488,11 +488,11 @@ export const AgentEnsRegistryABI = [
       {
         internalType: "address",
         name: "",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
@@ -501,162 +501,162 @@ export const AgentEnsRegistryABI = [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "provisioned",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "callerConfirmation",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "renounceRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "role",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "address",
         name: "account",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "revokeRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "collection",
-        type: "address"
+        type: "address",
       },
       {
         internalType: "uint256",
         name: "tokenId",
-        type: "uint256"
+        type: "uint256",
       },
       {
         internalType: "string",
         name: "key",
-        type: "string"
+        type: "string",
       },
       {
         internalType: "string",
         name: "value",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "setAgentText",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
         name: "newManager",
-        type: "address"
-      }
+        type: "address",
+      },
     ],
     name: "setManager",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "newParentNode",
-        type: "bytes32"
-      }
+        type: "bytes32",
+      },
     ],
     name: "setParentNode",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes4",
         name: "interfaceId",
-        type: "bytes4"
-      }
+        type: "bytes4",
+      },
     ],
     name: "supportsInterface",
     outputs: [
       {
         internalType: "bool",
         name: "",
-        type: "bool"
-      }
+        type: "bool",
+      },
     ],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       {
         internalType: "bytes32",
         name: "node",
-        type: "bytes32"
+        type: "bytes32",
       },
       {
         internalType: "string",
         name: "key",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     name: "text",
     outputs: [
       {
         internalType: "string",
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
-  }
+    type: "function",
+  },
 ] as const

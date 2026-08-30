@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { getAgentGuidance, setAgentGuidance } from "@/queries/api/guidance.queries"
+import {
+  getAgentGuidance,
+  setAgentGuidance,
+} from "@/queries/api/guidance.queries"
 import { extractErrorMessage } from "@/lib/api-errors"
 
 // Guidance = the owner-editable layer of the system prompt (soul stays immutable).

@@ -35,7 +35,9 @@ export default function CollectionField({
   collections,
   onReloadCollections,
 }: Props) {
-  const canCreate = Boolean(getEvmChainConfig(chainId)?.collectionCreatorAddress)
+  const canCreate = Boolean(
+    getEvmChainConfig(chainId)?.collectionCreatorAddress
+  )
   return (
     <FormField
       control={form.control}

@@ -43,13 +43,14 @@ export const getScannerAddressUrl = (
 // Marketplace path slugs per chain id. Only chains actually listed on the
 // marketplace appear here; others return null so the link is simply hidden.
 // Testnets resolve via a separate marketplace host (see helpers below).
-const MARKETPLACE_SLUGS: Record<string, { openSea: string; rarible: string }> = {
-  "1": { openSea: "ethereum", rarible: "ethereum" },
-  "137": { openSea: "matic", rarible: "polygon" },
-  "8453": { openSea: "base", rarible: "base" },
-  "42161": { openSea: "arbitrum", rarible: "arbitrum" },
-  "80002": { openSea: "amoy", rarible: "polygon" }, // Polygon Amoy (testnet)
-}
+const MARKETPLACE_SLUGS: Record<string, { openSea: string; rarible: string }> =
+  {
+    "1": { openSea: "ethereum", rarible: "ethereum" },
+    "137": { openSea: "matic", rarible: "polygon" },
+    "8453": { openSea: "base", rarible: "base" },
+    "42161": { openSea: "arbitrum", rarible: "arbitrum" },
+    "80002": { openSea: "amoy", rarible: "polygon" }, // Polygon Amoy (testnet)
+  }
 
 // OpenSea item URL for a minted agent, or null if the chain isn't on OpenSea or
 // the agent isn't minted. chainId is the plain id the identity lives on.

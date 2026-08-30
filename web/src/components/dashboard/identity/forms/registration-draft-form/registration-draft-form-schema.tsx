@@ -12,7 +12,9 @@ export const registrationDraftFormSchema = z.object({
   // The base image file the node frames into the NFT set, uploaded as multipart.
   // Optional on re-edit (omitting it keeps the stored image); the backend
   // enforces it on first save.
-  image: z.instanceof(File, { message: "Please choose an image file" }).optional(),
+  image: z
+    .instanceof(File, { message: "Please choose an image file" })
+    .optional(),
   attributes: z
     .array(
       z.object({

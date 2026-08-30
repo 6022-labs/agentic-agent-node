@@ -87,10 +87,10 @@ export default function TransferIdentityDialog({
         <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-500">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <span>
-            Sign-in to this console is restricted to the identity NFT owner. Once
-            the transfer confirms, this wallet is signed out and can no longer
-            sign in — only the new owner can configure this agent, and only they
-            can transfer it back.
+            Sign-in to this console is restricted to the identity NFT owner.
+            Once the transfer confirms, this wallet is signed out and can no
+            longer sign in — only the new owner can configure this agent, and
+            only they can transfer it back.
           </span>
         </div>
 

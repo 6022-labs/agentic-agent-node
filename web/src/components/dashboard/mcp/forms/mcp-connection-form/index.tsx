@@ -63,14 +63,20 @@ export default function McpConnectionForm({
       allowedTools: [],
       // A stored header keeps its name; its value stays in the vault, so the input starts blank.
       headerAuth: (connection?.headerAuthKeys ?? []).map((name) => ({
-        type: name === BEARER_HEADER_NAME ? ("bearer" as const) : ("custom" as const),
+        type:
+          name === BEARER_HEADER_NAME
+            ? ("bearer" as const)
+            : ("custom" as const),
         name,
         value: "",
       })),
     },
   })
 
-  const headerRows = useFieldArray({ control: form.control, name: "headerAuth" })
+  const headerRows = useFieldArray({
+    control: form.control,
+    name: "headerAuth",
+  })
   const headerTypes = form.watch("headerAuth").map((row) => row.type)
 
   React.useEffect(() => {
