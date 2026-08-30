@@ -12,20 +12,6 @@ import (
 func TestWhenValidatingUpdateConversationRequest(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a conversation id and a name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should trim both and pass", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.UpdateConversationRequest{ConversationId: " c1 ", Name: "  Solidity   audits "}
-
-			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, "c1", req.ConversationId)
-			assert.Equal(t, "Solidity audits", req.Name)
-		})
-	})
-
 	t.Run("Given the route id is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -75,6 +61,20 @@ func TestWhenValidatingUpdateConversationRequest(t *testing.T) {
 
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "uuid")
+		})
+	})
+
+	t.Run("Given a conversation id and a name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should trim both and pass", func(t *testing.T) {
+			t.Parallel()
+
+			req := &requests.UpdateConversationRequest{ConversationId: " c1 ", Name: "  Solidity   audits "}
+
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, "c1", req.ConversationId)
+			assert.Equal(t, "Solidity audits", req.Name)
 		})
 	})
 }

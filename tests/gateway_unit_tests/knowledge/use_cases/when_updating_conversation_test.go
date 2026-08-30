@@ -37,44 +37,6 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given the runtime renames the session", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockClient.EXPECT().
-				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					_ string,
-					body *models.ExternalUpdateConversationPayload,
-				) (*models.ExternalConversationPayload, error) {
-					assert.Equal(t, "Solidity audits", body.Name)
-					return &models.ExternalConversationPayload{
-						ConversationId: "c1",
-						Name:           lo.ToPtr("Solidity audits"),
-						CreatedAt:      now,
-						UpdatedAt:      now,
-					}, nil
-				})
-		}
-
-		t.Run("Should trim the route id and map the payload onto the wire response", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: " c1 ",
-				Name:           "  Solidity   audits ",
-			})
-
-			assert.NoError(t, err)
-			assert.Equal(t, "Solidity audits", *resp.Name)
-			assert.Equal(t, now, resp.UpdatedAt)
-		})
-	})
-
 	t.Run("Given the route id is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -116,6 +78,44 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
+	t.Run("Given the runtime renames the session", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					_ string,
+					body *models.ExternalUpdateConversationPayload,
+				) (*models.ExternalConversationPayload, error) {
+					assert.Equal(t, "Solidity audits", body.Name)
+					return &models.ExternalConversationPayload{
+						ConversationId: "c1",
+						Name:           lo.ToPtr("Solidity audits"),
+						CreatedAt:      now,
+						UpdatedAt:      now,
+					}, nil
+				})
+		}
+
+		t.Run("Should trim the route id and map the payload onto the wire response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationId: " c1 ",
+				Name:           "  Solidity   audits ",
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "Solidity audits", *resp.Name)
+			assert.Equal(t, now, resp.UpdatedAt)
 		})
 	})
 }

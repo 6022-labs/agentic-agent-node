@@ -47,59 +47,6 @@ func WhenUpdatingConversationBeforeEach(t *testing.T) *WhenUpdatingConversationT
 func TestWhenUpdatingConversation(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the agent owns the conversation", func(t *testing.T) {
-		t.Parallel()
-
-		agent := model_builders.NewAgentBuilder().Build()
-		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
-
-		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-		}
-
-		t.Run("Should rename it", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockConversationLabeler.EXPECT().
-				SetName(gomock.Any(), "c1", "Solidity audits").
-				Return(model_builders.NewConversationBuilder().
-					WithId("c1").
-					WithAgentId(agent.Id).
-					WithName("Solidity audits").
-					Build(), nil)
-
-			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "Solidity audits",
-			})
-
-			assert.NoError(t, err)
-			assert.Equal(t, "Solidity audits", *resp.Name)
-		})
-
-		t.Run("Should accept renaming a session to the name it already holds", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockConversationLabeler.EXPECT().
-				SetName(gomock.Any(), "c1", "same").
-				Return(conversation, nil)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "same",
-			})
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the conversation is not the agent's", func(t *testing.T) {
 		t.Parallel()
 
@@ -174,6 +121,59 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
+		})
+	})
+
+	t.Run("Given the agent owns the conversation", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+		}
+
+		t.Run("Should rename it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockConversationLabeler.EXPECT().
+				SetName(gomock.Any(), "c1", "Solidity audits").
+				Return(model_builders.NewConversationBuilder().
+					WithId("c1").
+					WithAgentId(agent.Id).
+					WithName("Solidity audits").
+					Build(), nil)
+
+			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationId: "c1",
+				Name:           "Solidity audits",
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "Solidity audits", *resp.Name)
+		})
+
+		t.Run("Should accept renaming a session to the name it already holds", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockConversationLabeler.EXPECT().
+				SetName(gomock.Any(), "c1", "same").
+				Return(conversation, nil)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationId: "c1",
+				Name:           "same",
+			})
+
+			assert.NoError(t, err)
 		})
 	})
 }

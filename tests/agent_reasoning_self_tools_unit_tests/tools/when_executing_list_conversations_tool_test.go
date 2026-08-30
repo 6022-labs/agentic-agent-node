@@ -36,6 +36,23 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the use case fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingListConversationsToolBeforeEach(t)
+			suite.mockListConversationsExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				Return(nil, errors.New("db blew"))
+
+			_, err := suite.sut.Execute(ctx, nil)
+
+			assert.ErrorContains(t, err, "db blew")
+		})
+	})
+
 	t.Run("Given the model asks for a page", func(t *testing.T) {
 		t.Parallel()
 
@@ -80,23 +97,6 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"page": "2", "elementsPerPage": float64(50)})
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the use case fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingListConversationsToolBeforeEach(t)
-			suite.mockListConversationsExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				Return(nil, errors.New("db blew"))
-
-			_, err := suite.sut.Execute(ctx, nil)
-
-			assert.ErrorContains(t, err, "db blew")
 		})
 	})
 }

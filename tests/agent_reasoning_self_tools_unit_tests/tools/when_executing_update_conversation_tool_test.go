@@ -36,37 +36,6 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given both arguments", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should rename the session", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
-			suite.mockUpdateConversationExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					request *knowledge_requests.UpdateConversationRequest,
-				) (*knowledge_responses.ConversationResponse, error) {
-					assert.Equal(t, "c1", request.ConversationId)
-					assert.Equal(t, "Solidity audits", request.Name)
-					return &knowledge_responses.ConversationResponse{
-						ConversationId: "c1",
-						Name:           lo.ToPtr("Solidity audits"),
-					}, nil
-				})
-
-			out, err := suite.sut.Execute(ctx, map[string]any{
-				"conversationId": "c1",
-				"name":           "Solidity audits",
-			})
-
-			assert.NoError(t, err)
-			assert.Equal(t, "Solidity audits", out["name"])
-		})
-	})
-
 	t.Run("Given the conversation id is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -95,6 +64,37 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1", "name": "x"})
 
 			assert.ErrorContains(t, err, "not found")
+		})
+	})
+
+	t.Run("Given both arguments", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should rename the session", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
+			suite.mockUpdateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *knowledge_requests.UpdateConversationRequest,
+				) (*knowledge_responses.ConversationResponse, error) {
+					assert.Equal(t, "c1", request.ConversationId)
+					assert.Equal(t, "Solidity audits", request.Name)
+					return &knowledge_responses.ConversationResponse{
+						ConversationId: "c1",
+						Name:           lo.ToPtr("Solidity audits"),
+					}, nil
+				})
+
+			out, err := suite.sut.Execute(ctx, map[string]any{
+				"conversationId": "c1",
+				"name":           "Solidity audits",
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "Solidity audits", out["name"])
 		})
 	})
 }

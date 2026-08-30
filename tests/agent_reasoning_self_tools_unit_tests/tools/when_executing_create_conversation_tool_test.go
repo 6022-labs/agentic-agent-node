@@ -36,33 +36,6 @@ func TestWhenExecutingCreateConversationTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given a name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return the generated conversation id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreateConversationToolBeforeEach(t)
-			suite.mockCreateConversationExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					request *knowledge_requests.CreateConversationRequest,
-				) (*knowledge_responses.ConversationResponse, error) {
-					assert.Equal(t, "ERC20 mint audit", request.Name)
-					return &knowledge_responses.ConversationResponse{
-						ConversationId: "c1",
-						Name:           lo.ToPtr("ERC20 mint audit"),
-					}, nil
-				})
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"name": "ERC20 mint audit"})
-
-			assert.NoError(t, err)
-			assert.Equal(t, "c1", out["conversationId"])
-		})
-	})
-
 	t.Run("Given the name argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -91,6 +64,33 @@ func TestWhenExecutingCreateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"name": "dup"})
 
 			assert.ErrorContains(t, err, "name taken")
+		})
+	})
+
+	t.Run("Given a name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the generated conversation id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreateConversationToolBeforeEach(t)
+			suite.mockCreateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *knowledge_requests.CreateConversationRequest,
+				) (*knowledge_responses.ConversationResponse, error) {
+					assert.Equal(t, "ERC20 mint audit", request.Name)
+					return &knowledge_responses.ConversationResponse{
+						ConversationId: "c1",
+						Name:           lo.ToPtr("ERC20 mint audit"),
+					}, nil
+				})
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"name": "ERC20 mint audit"})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "c1", out["conversationId"])
 		})
 	})
 }

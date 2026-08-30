@@ -37,43 +37,6 @@ func TestWhenCreatingConversation(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given the runtime creates the session", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockClient.EXPECT().
-				CreateConversation(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					body *models.ExternalCreateConversationPayload,
-				) (*models.ExternalConversationPayload, error) {
-					assert.Equal(t, "ERC20 mint audit", body.Name)
-					return &models.ExternalConversationPayload{
-						ConversationId: "c1",
-						Name:           lo.ToPtr("ERC20 mint audit"),
-						CreatedAt:      now,
-						UpdatedAt:      now,
-					}, nil
-				})
-		}
-
-		t.Run("Should sanitize the name and map the payload onto the wire response", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{
-				Name: "  ERC20   mint audit ",
-			})
-
-			assert.NoError(t, err)
-			assert.Equal(t, "c1", resp.ConversationId)
-			assert.Equal(t, "ERC20 mint audit", *resp.Name)
-			assert.Equal(t, now, resp.CreatedAt)
-		})
-	})
-
 	t.Run("Given a request that fails validation", func(t *testing.T) {
 		t.Parallel()
 
@@ -109,6 +72,43 @@ func TestWhenCreatingConversation(t *testing.T) {
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
 			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime creates the session", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				CreateConversation(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					body *models.ExternalCreateConversationPayload,
+				) (*models.ExternalConversationPayload, error) {
+					assert.Equal(t, "ERC20 mint audit", body.Name)
+					return &models.ExternalConversationPayload{
+						ConversationId: "c1",
+						Name:           lo.ToPtr("ERC20 mint audit"),
+						CreatedAt:      now,
+						UpdatedAt:      now,
+					}, nil
+				})
+		}
+
+		t.Run("Should sanitize the name and map the payload onto the wire response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{
+				Name: "  ERC20   mint audit ",
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "c1", resp.ConversationId)
+			assert.Equal(t, "ERC20 mint audit", *resp.Name)
+			assert.Equal(t, now, resp.CreatedAt)
 		})
 	})
 }

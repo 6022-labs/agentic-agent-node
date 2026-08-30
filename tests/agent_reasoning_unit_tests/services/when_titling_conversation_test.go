@@ -54,6 +54,47 @@ func llmConnectionForTitling() *models.LLMConnection {
 func TestWhenTitlingConversation(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given there is no opening message", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
+		}
+
+		t.Run("Should skip without touching the labeler", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "   ")
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the conversation is already named", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(lo.ToPtr("Already named"), nil)
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
+		}
+
+		t.Run("Should never call the model", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Given the conversation has no name", func(t *testing.T) {
 		t.Parallel()
 
@@ -156,47 +197,6 @@ func TestWhenTitlingConversation(t *testing.T) {
 			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
 
 			assert.ErrorContains(t, err, "provider down")
-		})
-	})
-
-	t.Run("Given the conversation is already named", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
-			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(lo.ToPtr("Already named"), nil)
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
-		}
-
-		t.Run("Should never call the model", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given there is no opening message", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
-		}
-
-		t.Run("Should skip without touching the labeler", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "   ")
-
-			assert.NoError(t, err)
 		})
 	})
 }
