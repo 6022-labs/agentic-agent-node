@@ -53,6 +53,7 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+
 	if err := container.Provide(
 		services.NewX402PaymentReceiveMethodStrategy,
 		dig.Group(paymentReceiveMethodStrategiesGroup),
@@ -86,6 +87,7 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+
 	if err := container.Provide(
 		services.NewX402PaymentSpendMethodStrategy,
 		dig.Group(paymentSpendMethodStrategiesGroup),
@@ -93,9 +95,17 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+
 	if err := container.Provide(
 		services.NewPaymentSpendPolicyProvider,
 		dig.As(new(payment_interfaces.PaymentSpendPolicyProviderInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewX402PaymentSpendPolicyEvaluator,
+		dig.As(new(payment_interfaces.X402PaymentSpendPolicyEvaluatorInterface)),
 	); err != nil {
 		panic(err)
 	}

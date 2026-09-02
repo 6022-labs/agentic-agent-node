@@ -23,20 +23,23 @@ const nonceLength = 32
 
 // X402PaymentSigner signs an x402 payment, only ever for the quoted payee and amount.
 type X402PaymentSigner struct {
-	typedDataSigner        identity_interfaces.TypedDataSignerInterface
-	permit2ApprovalEnsurer interfaces.Permit2ApprovalEnsurerInterface
-	paymentSpendSettings   *settings.PaymentSpendSettings
+	typedDataSigner                 identity_interfaces.TypedDataSignerInterface
+	permit2ApprovalEnsurer          interfaces.Permit2ApprovalEnsurerInterface
+	x402PaymentSpendPolicyEvaluator interfaces.X402PaymentSpendPolicyEvaluatorInterface
+	paymentSpendSettings            *settings.PaymentSpendSettings
 }
 
 func NewX402PaymentSigner(
 	typedDataSigner identity_interfaces.TypedDataSignerInterface,
 	permit2ApprovalEnsurer interfaces.Permit2ApprovalEnsurerInterface,
+	x402PaymentSpendPolicyEvaluator interfaces.X402PaymentSpendPolicyEvaluatorInterface,
 	paymentSpendSettings *settings.PaymentSpendSettings,
 ) *X402PaymentSigner {
 	return &X402PaymentSigner{
-		typedDataSigner:        typedDataSigner,
-		permit2ApprovalEnsurer: permit2ApprovalEnsurer,
-		paymentSpendSettings:   paymentSpendSettings,
+		typedDataSigner:                 typedDataSigner,
+		permit2ApprovalEnsurer:          permit2ApprovalEnsurer,
+		x402PaymentSpendPolicyEvaluator: x402PaymentSpendPolicyEvaluator,
+		paymentSpendSettings:            paymentSpendSettings,
 	}
 }
 
@@ -53,6 +56,14 @@ func (s *X402PaymentSigner) Sign(
 	if !ok || amount.Sign() < 0 {
 		return nil, errors.NewValidationError("amount", "must be a non-negative atomic amount")
 	}
+	authorized, err := s.x402PaymentSpendPolicyEvaluator.IsAuthorized(ctx, quote, amount)
+	if err != nil {
+		return nil, err
+	}
+	if !authorized {
+		return nil, errors.NewUnauthorizedError("spend_refused", "the agent's spend policy does not cover this quote")
+	}
+
 	payer, err := s.typedDataSigner.WalletAddress(ctx)
 	if err != nil {
 		return nil, err
