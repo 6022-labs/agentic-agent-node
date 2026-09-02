@@ -1160,6 +1160,206 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/config/payment-spend-policy": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal get payment spend policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendPolicyResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "get_payment_spend_policy_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete payment spend policy",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "delete_payment_spend_policy_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/payment-spend-policy/rules": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal list payment spend rules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListPaymentSpendRulesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "list_payment_spend_rules_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal create payment spend rule",
+                "parameters": [
+                    {
+                        "description": "payment spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "create_payment_spend_rule_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/payment-spend-policy/rules/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "payment spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "update_payment_spend_rule_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "delete_payment_spend_rule_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/config/self-tools": {
             "get": {
                 "produces": [
@@ -2089,6 +2289,23 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SavePaymentSpendRuleRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "maxAmount": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SetAgentGuidanceRequest": {
             "type": "object",
             "properties": {
@@ -2564,6 +2781,17 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.ListPaymentSpendRulesResponse": {
+            "type": "object",
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                    }
+                }
+            }
+        },
         "responses.MCPConnectionListResponse": {
             "type": "object",
             "properties": {
@@ -2782,6 +3010,49 @@ const docTemplate = `{
                 },
                 "requirements": {
                     "$ref": "#/definitions/x402.PaymentRequirements"
+                }
+            }
+        },
+        "responses.PaymentSpendPolicyResponse": {
+            "type": "object",
+            "properties": {
+                "agentId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.PaymentSpendRuleResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxAmount": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },

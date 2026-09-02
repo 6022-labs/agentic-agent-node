@@ -1415,7 +1415,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
+                            "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
                         }
                     },
                     "400": {
@@ -1484,7 +1484,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
+                            "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
                         }
                     },
                     "400": {
@@ -1564,6 +1564,245 @@ const docTemplate = `{
                         "description": "runtime_unavailable",
                         "schema": {
                             "$ref": "#/definitions/errors.UnavailableError"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/payment-spend-policy": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Get payment spend policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetPaymentSpendPolicyResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Delete payment spend policy",
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/payment-spend-policy/rules": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "List payment spend rules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListPaymentSpendRulesResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Create payment spend rule",
+                "parameters": [
+                    {
+                        "description": "spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/payment-spend-policy/rules/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Update payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Delete payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
                         }
                     }
                 }
@@ -2178,42 +2417,9 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ExternalPaymentReceiveRule": {
+        "fiber.Map": {
             "type": "object",
-            "properties": {
-                "config": {
-                    "type": "object"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "method": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "prices": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExternalPaymentReceiveRulePrice"
-                    }
-                }
-            }
-        },
-        "models.ExternalPaymentReceiveRulePrice": {
-            "type": "object",
-            "properties": {
-                "addressPatterns": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "price": {
-                    "type": "string"
-                }
-            }
+            "additionalProperties": {}
         },
         "requests.A2AMessage": {
             "type": "object",
@@ -2455,6 +2661,23 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/requests.SavePaymentReceiveRulePriceRequest"
                     }
+                }
+            }
+        },
+        "requests.SavePaymentSpendRuleRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "maxAmount": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -2951,6 +3174,23 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.GetPaymentSpendPolicyResponse": {
+            "type": "object",
+            "properties": {
+                "agentId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.KeyValue": {
             "type": "object",
             "properties": {
@@ -3010,7 +3250,18 @@ const docTemplate = `{
                 "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
+                        "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
+                    }
+                }
+            }
+        },
+        "responses.ListPaymentSpendRulesResponse": {
+            "type": "object",
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
                     }
                 }
             }
@@ -3155,6 +3406,46 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.PaymentReceiveRuleResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.PaymentSpendRuleResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxAmount": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }

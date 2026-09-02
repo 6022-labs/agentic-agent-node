@@ -212,6 +212,17 @@ components:
           type: array
           uniqueItems: false
       type: object
+    requests.SavePaymentSpendRuleRequest:
+      properties:
+        config:
+          type: object
+        maxAmount:
+          type: string
+        method:
+          type: string
+        name:
+          type: string
+      type: object
     requests.SetAgentGuidanceRequest:
       properties:
         content:
@@ -527,6 +538,14 @@ components:
           type: array
           uniqueItems: false
       type: object
+    responses.ListPaymentSpendRulesResponse:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
+          type: array
+          uniqueItems: false
+      type: object
     responses.MCPConnectionListResponse:
       properties:
         connections:
@@ -681,6 +700,34 @@ components:
           type: string
         requirements:
           $ref: '#/components/schemas/x402.PaymentRequirements'
+      type: object
+    responses.PaymentSpendPolicyResponse:
+      properties:
+        agentId:
+          type: string
+        createdAt:
+          type: string
+        id:
+          type: string
+        updatedAt:
+          type: string
+      type: object
+    responses.PaymentSpendRuleResponse:
+      properties:
+        config:
+          type: object
+        createdAt:
+          type: string
+        id:
+          type: string
+        maxAmount:
+          type: string
+        method:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          type: string
       type: object
     responses.RegistrationStatusResponse:
       properties:
@@ -1679,6 +1726,163 @@ paths:
                 $ref: '#/components/schemas/errors.InternalError'
           description: policy_failed, rule_lookup_failed or update_failed
       summary: Internal update payment rule
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: delete_payment_spend_policy_failed
+      summary: Internal delete payment spend policy
+      tags:
+      - Internal
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentSpendPolicyResponse'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: get_payment_spend_policy_failed
+      summary: Internal get payment spend policy
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy/rules:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListPaymentSpendRulesResponse'
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: list_payment_spend_rules_failed
+      summary: Internal list payment spend rules
+      tags:
+      - Internal
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentSpendRuleRequest'
+                description: payment spend rule
+                summary: request
+        description: payment spend rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: create_payment_spend_rule_failed
+      summary: Internal create payment spend rule
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: delete_payment_spend_rule_failed
+      summary: Internal delete payment spend rule
+      tags:
+      - Internal
+    put:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentSpendRuleRequest'
+                description: payment spend rule
+                summary: request
+        description: payment spend rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: update_payment_spend_rule_failed
+      summary: Internal update payment spend rule
       tags:
       - Internal
   /internal/config/self-tools:

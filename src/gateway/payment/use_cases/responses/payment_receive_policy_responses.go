@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
@@ -28,8 +29,40 @@ func ToGetPaymentReceivePolicyResponse(p *models.ExternalPaymentReceivePolicyPay
 	}
 }
 
+// PaymentReceiveRuleResponse is the published rule shape; the external model doubles as a request body.
+type PaymentReceiveRuleResponse struct {
+	Id     string          `json:"id"`
+	Name   string          `json:"name"`
+	Price  string          `json:"price"`
+	Method string          `json:"method"`
+	Config json.RawMessage `json:"config" swaggertype:"object"`
+}
+
+func ToPaymentReceiveRuleResponse(rule *models.ExternalPaymentReceiveRule) *PaymentReceiveRuleResponse {
+	if rule == nil {
+		return nil
+	}
+	return &PaymentReceiveRuleResponse{
+		Id:     rule.Id,
+		Name:   rule.Name,
+		Price:  rule.Price,
+		Method: rule.Method,
+		Config: rule.Config,
+	}
+}
+
 // ListPaymentReceiveRulesResponse is the wire shape of /config/payment-receive-policy/rules.
 // Rules carry no facilitator URL, so the model is returned directly.
 type ListPaymentReceiveRulesResponse struct {
-	Rules []models.ExternalPaymentReceiveRule `json:"rules"`
+	Rules []PaymentReceiveRuleResponse `json:"rules"`
+}
+
+func ToListPaymentReceiveRulesResponse(
+	rules []models.ExternalPaymentReceiveRule,
+) *ListPaymentReceiveRulesResponse {
+	out := make([]PaymentReceiveRuleResponse, 0, len(rules))
+	for i := range rules {
+		out = append(out, *ToPaymentReceiveRuleResponse(&rules[i]))
+	}
+	return &ListPaymentReceiveRulesResponse{Rules: out}
 }

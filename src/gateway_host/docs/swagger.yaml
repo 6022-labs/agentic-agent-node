@@ -52,29 +52,8 @@ definitions:
       message:
         type: string
     type: object
-  models.ExternalPaymentReceiveRule:
-    properties:
-      config:
-        type: object
-      id:
-        type: string
-      method:
-        type: string
-      name:
-        type: string
-      prices:
-        items:
-          $ref: '#/definitions/models.ExternalPaymentReceiveRulePrice'
-        type: array
-    type: object
-  models.ExternalPaymentReceiveRulePrice:
-    properties:
-      addressPatterns:
-        items:
-          type: string
-        type: array
-      price:
-        type: string
+  fiber.Map:
+    additionalProperties: {}
     type: object
   requests.A2AMessage:
     properties:
@@ -232,6 +211,17 @@ definitions:
         items:
           $ref: '#/definitions/requests.SavePaymentReceiveRulePriceRequest'
         type: array
+    type: object
+  requests.SavePaymentSpendRuleRequest:
+    properties:
+      config:
+        type: object
+      maxAmount:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
     type: object
   requests.SetAgentGuidanceRequest:
     properties:
@@ -552,6 +542,17 @@ definitions:
       updatedAt:
         type: string
     type: object
+  responses.GetPaymentSpendPolicyResponse:
+    properties:
+      agentId:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   responses.KeyValue:
     properties:
       key:
@@ -590,7 +591,14 @@ definitions:
     properties:
       rules:
         items:
-          $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+          $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
+        type: array
+    type: object
+  responses.ListPaymentSpendRulesResponse:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleResponse'
         type: array
     type: object
   responses.ListSelfToolsResponse:
@@ -685,6 +693,32 @@ definitions:
       status:
         type: string
       type:
+        type: string
+    type: object
+  responses.PaymentReceiveRuleResponse:
+    properties:
+      config:
+        type: object
+      id:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      price:
+        type: string
+    type: object
+  responses.PaymentSpendRuleResponse:
+    properties:
+      config:
+        type: object
+      id:
+        type: string
+      maxAmount:
+        type: string
+      method:
+        type: string
+      name:
         type: string
     type: object
   responses.RegistrationStatusResponse:
@@ -1763,7 +1797,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:
@@ -1838,7 +1872,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:
@@ -1862,6 +1896,154 @@ paths:
       security:
       - BearerAuth: []
       summary: Update payment rule
+      tags:
+      - Config
+  /config/payment-spend-policy:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend policy
+      tags:
+      - Config
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetPaymentSpendPolicyResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Get payment spend policy
+      tags:
+      - Config
+  /config/payment-spend-policy/rules:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListPaymentSpendRulesResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: List payment spend rules
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Create payment spend rule
+      tags:
+      - Config
+  /config/payment-spend-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend rule
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update payment spend rule
       tags:
       - Config
   /config/self-tools:

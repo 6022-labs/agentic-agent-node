@@ -63,7 +63,7 @@ func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param request body requests.SavePaymentReceiveRuleRequest true "payment rule"
-// @Success 200 {object} models.ExternalPaymentReceiveRule
+// @Success 200 {object} responses.PaymentReceiveRuleResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
 // @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
@@ -89,7 +89,7 @@ func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "rule id"
 // @Param request body requests.SavePaymentReceiveRuleRequest true "payment rule"
-// @Success 200 {object} models.ExternalPaymentReceiveRule
+// @Success 200 {object} responses.PaymentReceiveRuleResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
 // @Failure 404 {object} errors.NotFoundError "rule_not_found"

@@ -3,9 +3,9 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/responses"
 )
 
 type UpdatePaymentReceiveRule struct {
@@ -21,6 +21,10 @@ func NewUpdatePaymentReceiveRule(
 func (u *UpdatePaymentReceiveRule) Execute(
 	ctx context.Context,
 	request *requests.UpdatePaymentReceiveRuleRequest,
-) (*models.ExternalPaymentReceiveRule, error) {
-	return u.paymentReceiveRuleClient.Update(ctx, request.Id.String(), request.ToExternalPaymentReceiveRule())
+) (*responses.PaymentReceiveRuleResponse, error) {
+	rule, err := u.paymentReceiveRuleClient.Update(ctx, request.Id.String(), request.ToExternalPaymentReceiveRule())
+	if err != nil {
+		return nil, err
+	}
+	return responses.ToPaymentReceiveRuleResponse(rule), nil
 }

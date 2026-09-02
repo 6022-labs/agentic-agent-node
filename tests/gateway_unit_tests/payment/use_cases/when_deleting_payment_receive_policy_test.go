@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -39,11 +38,11 @@ func TestWhenDeletingPaymentReceivePolicy(t *testing.T) {
 		initSuite := func(suite *WhenDeletingPaymentReceivePolicyTestingSuite) {
 			suite.mockPaymentReceivePolicyClient.EXPECT().
 				Delete(gomock.Any()).
-				Return(errors.New("connection refused")).
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down")).
 				Times(1)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingPaymentReceivePolicyBeforeEach(t)
@@ -53,6 +52,31 @@ func TestWhenDeletingPaymentReceivePolicy(t *testing.T) {
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers with a semantic status", func(t *testing.T) {
+		t.Parallel()
+
+		// The adapter maps the status; the use case must not flatten it into a 502.
+		initSuite := func(suite *WhenDeletingPaymentReceivePolicyTestingSuite) {
+			suite.mockPaymentReceivePolicyClient.EXPECT().
+				Delete(gomock.Any()).
+				Return(apperrors.NewConflictError("agent_not_minted", "")).
+				Times(1)
+		}
+
+		t.Run("Should pass the conflict through", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
 		})
 	})
 

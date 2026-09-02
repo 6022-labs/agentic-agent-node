@@ -207,6 +207,17 @@ definitions:
           $ref: '#/definitions/requests.SavePaymentReceiveRulePriceRequest'
         type: array
     type: object
+  requests.SavePaymentSpendRuleRequest:
+    properties:
+      config:
+        type: object
+      maxAmount:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+    type: object
   requests.SetAgentGuidanceRequest:
     properties:
       content:
@@ -515,6 +526,13 @@ definitions:
           $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         type: array
     type: object
+  responses.ListPaymentSpendRulesResponse:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        type: array
+    type: object
   responses.MCPConnectionListResponse:
     properties:
       connections:
@@ -658,6 +676,34 @@ definitions:
         type: string
       requirements:
         $ref: '#/definitions/x402.PaymentRequirements'
+    type: object
+  responses.PaymentSpendPolicyResponse:
+    properties:
+      agentId:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  responses.PaymentSpendRuleResponse:
+    properties:
+      config:
+        type: object
+      createdAt:
+        type: string
+      id:
+        type: string
+      maxAmount:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -1488,6 +1534,136 @@ paths:
           schema:
             $ref: '#/definitions/errors.InternalError'
       summary: Internal update payment rule
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: delete_payment_spend_policy_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete payment spend policy
+      tags:
+      - Internal
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendPolicyResponse'
+        "500":
+          description: get_payment_spend_policy_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal get payment spend policy
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy/rules:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListPaymentSpendRulesResponse'
+        "500":
+          description: list_payment_spend_rules_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal list payment spend rules
+      tags:
+      - Internal
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payment spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: create_payment_spend_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal create payment spend rule
+      tags:
+      - Internal
+  /internal/config/payment-spend-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: delete_payment_spend_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal delete payment spend rule
+      tags:
+      - Internal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: payment spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "500":
+          description: update_payment_spend_rule_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal update payment spend rule
       tags:
       - Internal
   /internal/config/self-tools:

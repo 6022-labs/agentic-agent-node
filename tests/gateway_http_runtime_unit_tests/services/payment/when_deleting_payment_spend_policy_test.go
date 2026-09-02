@@ -1,0 +1,81 @@
+package services_test
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
+	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/payment"
+	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+)
+
+type WhenDeletingPaymentSpendPolicyTestingSuite struct {
+	sut *services.HttpPaymentSpendPolicyClient
+
+	mockClient *clients_mocks.MockClientWithResponsesInterface
+}
+
+func WhenDeletingPaymentSpendPolicyBeforeEach(t *testing.T) *WhenDeletingPaymentSpendPolicyTestingSuite {
+	mockController := gomock.NewController(t)
+
+	mockClient := clients_mocks.NewMockClientWithResponsesInterface(mockController)
+
+	return &WhenDeletingPaymentSpendPolicyTestingSuite{
+		sut:        services.NewHttpPaymentSpendPolicyClient(mockClient),
+		mockClient: mockClient,
+	}
+}
+
+func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Given the runtime deletes the configuration", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigPaymentSpendPolicyWithResponse(gomock.Any()).
+				Return(&clients.DeleteInternalConfigPaymentSpendPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNoContent},
+				}, nil)
+		}
+
+		t.Run("Should delete the configuration without error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Delete(context.Background())
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the delete fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
+			suite.mockClient.EXPECT().
+				DeleteInternalConfigPaymentSpendPolicyWithResponse(gomock.Any()).
+				Return(&clients.DeleteInternalConfigPaymentSpendPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Delete(context.Background())
+
+			assert.Error(t, err)
+		})
+	})
+}
