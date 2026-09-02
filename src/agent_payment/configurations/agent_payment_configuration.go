@@ -10,6 +10,8 @@ import (
 
 const paymentReceiveMethodStrategiesGroup = "payment_receive_method_strategies"
 
+const paymentSpendMethodStrategiesGroup = "payment_spend_method_strategies"
+
 func AddAgentPaymentConfiguration(container *dig.Container) {
 	useCases := []any{
 		use_cases.NewGetPaymentReceivePolicy,
@@ -21,6 +23,12 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 		use_cases.NewDeletePaymentReceiveRule,
 		use_cases.NewSignX402Payment,
 		use_cases.NewAuthorizePaymentReceiveAccess,
+		use_cases.NewGetPaymentSpendPolicy,
+		use_cases.NewListPaymentSpendRules,
+		use_cases.NewCreatePaymentSpendRule,
+		use_cases.NewUpdatePaymentSpendRule,
+		use_cases.NewDeletePaymentSpendRule,
+		use_cases.NewDeletePaymentSpendPolicy,
 	}
 	for _, useCase := range useCases {
 		if err := container.Provide(useCase); err != nil {
@@ -68,6 +76,26 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	if err := container.Provide(
 		services.NewX402PaymentVerifier,
 		dig.As(new(payment_interfaces.X402PaymentVerifierInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewPaymentSpendMethodStrategies,
+		dig.As(new(payment_interfaces.PaymentSpendMethodStrategiesInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		services.NewX402PaymentSpendMethodStrategy,
+		dig.Group(paymentSpendMethodStrategiesGroup),
+		dig.As(new(payment_interfaces.PaymentSpendMethodStrategyInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		services.NewPaymentSpendPolicyProvider,
+		dig.As(new(payment_interfaces.PaymentSpendPolicyProviderInterface)),
 	); err != nil {
 		panic(err)
 	}

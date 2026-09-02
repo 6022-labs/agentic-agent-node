@@ -22,3 +22,13 @@ func newUnsupportedMethodStrategies(
 	mockStrategies.EXPECT().For(gomock.Any()).Return(nil, false).Times(1)
 	return mockStrategies
 }
+
+// newMockSpendStrategies is the spend twin of newMockStrategies.
+func newMockSpendStrategies(
+	mockController *gomock.Controller,
+) (*payment_interfaces_mocks.MockPaymentSpendMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentSpendMethodStrategyInterface) {
+	mockStrategy := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategyInterface(mockController)
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategiesInterface(mockController)
+	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
+	return mockStrategies, mockStrategy
+}
