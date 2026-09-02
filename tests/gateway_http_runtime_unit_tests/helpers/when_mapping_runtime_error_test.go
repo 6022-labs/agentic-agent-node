@@ -97,20 +97,41 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 		})
+
+		// The message of a 500 is the runtime's own err.Error() — driver and schema detail.
+		t.Run("Should surface the code without the response body", func(t *testing.T) {
+			t.Parallel()
+
+			err := helpers.MapRuntimeError(&helpers.RuntimeStatusError{
+				StatusCode: http.StatusInternalServerError,
+				Code:       "inference_failed",
+				Message:    "dial tcp 10.0.0.5:5432: connect: refused",
+				Body:       `{"code":"inference_failed","message":"dial tcp 10.0.0.5:5432: connect: refused"}`,
+			})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.NotContains(t, unavailableErr.Message, "10.0.0.5")
+			assert.Contains(t, unavailableErr.Message, "inference_failed")
+		})
 	})
 
 	t.Run("Given an error that is not a runtime status error", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should map it to unavailable carrying its message", func(t *testing.T) {
+		// A transport error names the loopback address the runtime binds to.
+		t.Run("Should not disclose the runtime's address", func(t *testing.T) {
 			t.Parallel()
 
-			err := helpers.MapRuntimeError(errors.New("dial tcp: connection refused"))
+			err := helpers.MapRuntimeError(
+				errors.New("Post \"http://127.0.0.1:5400/internal/responses\": dial tcp: connect: refused"),
+			)
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
-			assert.Contains(t, unavailableErr.Message, "connection refused")
+			assert.NotContains(t, unavailableErr.Message, "127.0.0.1")
+			assert.NotContains(t, unavailableErr.Message, "5400")
 		})
 	})
 }

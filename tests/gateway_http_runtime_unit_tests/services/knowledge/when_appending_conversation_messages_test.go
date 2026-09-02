@@ -73,7 +73,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
-			assert.Contains(t, unavailableErr.Message, "runtime down")
+			assert.NotContains(t, unavailableErr.Message, "runtime down")
 		})
 	})
 

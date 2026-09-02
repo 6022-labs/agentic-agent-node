@@ -23,7 +23,10 @@ type RuntimeStatusError struct {
 }
 
 func (e *RuntimeStatusError) Error() string {
-	return fmt.Sprintf("runtime returned %d: %s", e.StatusCode, e.Body)
+	if len(e.Code) != 0 {
+		return fmt.Sprintf("runtime returned %d: %s", e.StatusCode, e.Code)
+	}
+	return fmt.Sprintf("runtime returned %d", e.StatusCode)
 }
 
 // DecodeRuntimeResponse reproduces the legacy transport's handling for a generated
@@ -80,5 +83,8 @@ func MapRuntimeError(err error) error {
 			return apperrors.NewConflictError(statusErr.Code, statusErr.Message)
 		}
 	}
-	return apperrors.NewUnavailableError("runtime_unavailable", err.Error())
+	if statusErr != nil {
+		return apperrors.NewUnavailableError("runtime_unavailable", statusErr.Error())
+	}
+	return apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable")
 }
