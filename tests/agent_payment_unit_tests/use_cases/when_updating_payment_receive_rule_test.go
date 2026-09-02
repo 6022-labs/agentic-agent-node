@@ -8,12 +8,9 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -22,45 +19,33 @@ import (
 type WhenUpdatingPaymentReceiveRuleTestingSuite struct {
 	sut *use_cases.UpdatePaymentReceiveRule
 
-	mockAgentRepository                *identity_repositories_mocks.MockAgentRepositoryInterface
-	mockAgentAddressRepository         *identity_repositories_mocks.MockAgentAddressRepositoryInterface
-	mockPaymentReceivePolicyRepository *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
-	mockPaymentReceiveRuleRepository   *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
-	mockStrategy                       *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
+	mockPaymentReceivePolicyProvider *payment_interfaces_mocks.MockPaymentReceivePolicyProviderInterface
+	mockPaymentReceiveRuleRepository *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
+	mockStrategy                     *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
 }
 
 func WhenUpdatingPaymentReceiveRuleBeforeEach(t *testing.T) *WhenUpdatingPaymentReceiveRuleTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
-	mockAgentAddressRepository := identity_repositories_mocks.NewMockAgentAddressRepositoryInterface(mockController)
-	mockPaymentReceivePolicyRepository := payment_repositories_mocks.NewMockPaymentReceivePolicyRepositoryInterface(
+	mockPaymentReceivePolicyProvider := payment_interfaces_mocks.NewMockPaymentReceivePolicyProviderInterface(
 		mockController,
 	)
 	mockPaymentReceiveRuleRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleRepositoryInterface(
 		mockController,
 	)
 
-	token6022Settings := &runtime_common_settings.Token6022Settings{
-		"80002": common.HexToAddress("0x4242424242424242424242424242424242424242"),
-	}
 	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenUpdatingPaymentReceiveRuleTestingSuite{
 		sut: use_cases.NewUpdatePaymentReceiveRule(
-			mockAgentRepository,
-			mockAgentAddressRepository,
-			mockPaymentReceivePolicyRepository,
+			mockPaymentReceivePolicyProvider,
 			mockPaymentReceiveRuleRepository,
 			strategies,
-			token6022Settings,
 		),
 
-		mockAgentRepository:                mockAgentRepository,
-		mockAgentAddressRepository:         mockAgentAddressRepository,
-		mockPaymentReceivePolicyRepository: mockPaymentReceivePolicyRepository,
-		mockPaymentReceiveRuleRepository:   mockPaymentReceiveRuleRepository,
-		mockStrategy:                       mockStrategy,
+		mockPaymentReceivePolicyProvider: mockPaymentReceivePolicyProvider,
+		mockPaymentReceiveRuleRepository: mockPaymentReceiveRuleRepository,
+		mockStrategy:                     mockStrategy,
 	}
 }
 
@@ -95,12 +80,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 			suite := WhenUpdatingPaymentReceiveRuleBeforeEach(t)
 			sut := use_cases.NewUpdatePaymentReceiveRule(
-				suite.mockAgentRepository,
-				suite.mockAgentAddressRepository,
-				suite.mockPaymentReceivePolicyRepository,
+				suite.mockPaymentReceivePolicyProvider,
 				suite.mockPaymentReceiveRuleRepository,
 				newUnsupportedMethodStrategies(gomock.NewController(t)),
-				&runtime_common_settings.Token6022Settings{},
 			)
 
 			rule, err := sut.Execute(

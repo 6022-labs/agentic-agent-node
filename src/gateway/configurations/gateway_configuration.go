@@ -9,8 +9,6 @@ import (
 	identity_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	knowledge_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	payment_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
-	x402_services "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services"
-	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	reasoning_use_cases "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"go.uber.org/dig"
 )
@@ -130,13 +128,6 @@ func addKnowledgeConfiguration(container *dig.Container) {
 }
 
 func addPaymentConfiguration(container *dig.Container) {
-	if err := container.Provide(
-		x402_services.NewX402PaymentVerifier,
-		dig.As(new(x402_interfaces.X402PaymentVerifierInterface)),
-	); err != nil {
-		panic(err)
-	}
-
 	useCaseProviders := []any{
 		payment_use_cases.NewGetPaymentReceivePolicy,
 		payment_use_cases.NewDeletePaymentReceivePolicy,

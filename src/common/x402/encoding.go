@@ -30,5 +30,9 @@ func DecodePaymentPayload(header string) (*PaymentPayload, error) {
 	if payload.X402Version != Version {
 		return nil, fmt.Errorf("unsupported x402 version %d (only %d is supported)", payload.X402Version, Version)
 	}
+	// A second, unsigned authorization would hijack the method-neutral readers.
+	if payload.Payload.Authorization != nil && payload.Payload.Permit2Authorization != nil {
+		return nil, fmt.Errorf("payment payload carries both an eip3009 and a permit2 authorization")
+	}
 	return &payload, nil
 }

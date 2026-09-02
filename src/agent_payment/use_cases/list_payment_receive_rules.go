@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
 
 type ListPaymentReceiveRules struct {
@@ -17,21 +15,15 @@ type ListPaymentReceiveRules struct {
 }
 
 func NewListPaymentReceiveRules(
-	agentRepository identity_repositories.AgentRepositoryInterface,
-	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
-	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
+	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
 	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
-	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *ListPaymentReceiveRules {
 	return &ListPaymentReceiveRules{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
-			agentRepository,
-			agentAddressRepository,
-			paymentReceivePolicyRepository,
+			paymentReceivePolicyProvider,
 			paymentReceiveRuleRepository,
 			paymentReceiveMethodStrategies,
-			token6022Settings,
 		),
 	}
 }

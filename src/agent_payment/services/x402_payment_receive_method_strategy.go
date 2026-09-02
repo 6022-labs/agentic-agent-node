@@ -98,6 +98,9 @@ func (s *X402PaymentReceiveMethodStrategy) Validate(
 				"must be valid regexes matched against the lowercase 0x address",
 			)
 		}
+		if common.IsHexAddress(trimmed) {
+			trimmed = strings.ToLower(trimmed)
+		}
 		config.AddressPatterns[i] = trimmed
 	}
 

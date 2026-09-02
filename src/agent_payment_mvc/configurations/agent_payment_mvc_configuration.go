@@ -8,8 +8,8 @@ import (
 
 func AddAgentPaymentMvcConfiguration(container *dig.Container) {
 	provideController(container, agent_payment_mvc.NewPaymentReceivePolicyController)
+	provideController(container, agent_payment_mvc.NewPaymentReceiveAccessController)
 	provideController(container, agent_payment_mvc.NewPaymentReceiveRuleController)
-	provideController(container, agent_payment_mvc.NewPaymentFacilitatorController)
 }
 
 func provideController(container *dig.Container, ctor any) {

@@ -65,13 +65,17 @@ func (p *PaymentPayload) RecipientAddress() string {
 	return ""
 }
 
-// Amount is the atomic-unit amount, method-neutral: EIP-3009 `value` or Permit2 `permitted.amount`.
-func (p *PaymentPayload) Amount() string {
-	if p.Payload.Permit2Authorization != nil {
-		return p.Payload.Permit2Authorization.Permitted.Amount
-	}
-	if p.Payload.Authorization != nil {
-		return p.Payload.Authorization.Value
+// AmountFor reads only the field the given method signs, never the other one.
+func (p *PaymentPayload) AmountFor(assetTransferMethod string) string {
+	switch assetTransferMethod {
+	case AssetTransferMethodPermit2:
+		if p.Payload.Permit2Authorization != nil {
+			return p.Payload.Permit2Authorization.Permitted.Amount
+		}
+	case AssetTransferMethodEip3009:
+		if p.Payload.Authorization != nil {
+			return p.Payload.Authorization.Value
+		}
 	}
 	return ""
 }

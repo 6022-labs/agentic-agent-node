@@ -26,6 +26,16 @@ definitions:
     type: string
     x-enum-varnames:
     - LLMConnectionSetupStatusEstablished
+  enums.PaymentReceiveAccessOutcome:
+    enum:
+    - free
+    - payable
+    - payment_required
+    type: string
+    x-enum-varnames:
+    - PaymentReceiveAccessOutcomeFree
+    - PaymentReceiveAccessOutcomePayable
+    - PaymentReceiveAccessOutcomePaymentRequired
   errors.ConflictError:
     properties:
       code:
@@ -68,12 +78,24 @@ definitions:
       message:
         type: string
     type: object
+  fiber.Map:
+    additionalProperties: {}
+    type: object
   requests.AppendConversationMessagesRequest:
     properties:
       messages:
         items:
           $ref: '#/definitions/requests.ConversationMessageInput'
         type: array
+    type: object
+  requests.AuthorizePaymentReceiveAccessRequest:
+    properties:
+      address:
+        description: Address is a caller the gateway already proved (JWT); it grants
+          free access only.
+        type: string
+      paymentSignature:
+        type: string
     type: object
   requests.AuthorizeRequest:
     properties:
@@ -298,6 +320,27 @@ definitions:
         items:
           $ref: '#/definitions/responses.ConversationMessage'
         type: array
+    type: object
+  responses.AuthorizePaymentReceiveAccessResponse:
+    properties:
+      accepts:
+        description: Accepts carries public rules only; scoped ones would leak their
+          patterns.
+        items:
+          $ref: '#/definitions/x402.PaymentRequirements'
+        type: array
+      errorCode:
+        description: ErrorCode lands in the x402 body's `error` field.
+        type: string
+      outcome:
+        $ref: '#/definitions/enums.PaymentReceiveAccessOutcome'
+      payer:
+        description: Payer is empty when the outcome refuses.
+        type: string
+      settlement:
+        allOf:
+        - $ref: '#/definitions/responses.PaymentReceiveSettlementResponse'
+        description: Settlement is set only when the outcome is payable.
     type: object
   responses.AuthorizeResponse:
     properties:
@@ -555,22 +598,6 @@ definitions:
       type:
         type: string
     type: object
-  responses.PaymentFacilitatorResponse:
-    properties:
-      baseUrl:
-        type: string
-      maxTimeoutSeconds:
-        type: integer
-      network:
-        type: string
-    type: object
-  responses.PaymentFacilitatorsResponse:
-    properties:
-      facilitators:
-        items:
-          $ref: '#/definitions/responses.PaymentFacilitatorResponse'
-        type: array
-    type: object
   responses.PaymentReceivePolicyResponse:
     properties:
       agentId:
@@ -600,6 +627,15 @@ definitions:
         type: string
       updatedAt:
         type: string
+    type: object
+  responses.PaymentReceiveSettlementResponse:
+    properties:
+      facilitatorBaseUrl:
+        type: string
+      network:
+        type: string
+      requirements:
+        $ref: '#/definitions/x402.PaymentRequirements'
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -655,6 +691,24 @@ definitions:
         type: integer
       total_tokens:
         type: integer
+    type: object
+  x402.PaymentRequirements:
+    properties:
+      amount:
+        type: string
+      asset:
+        type: string
+      extra:
+        additionalProperties: {}
+        type: object
+      maxTimeoutSeconds:
+        type: integer
+      network:
+        type: string
+      payTo:
+        type: string
+      scheme:
+        type: string
     type: object
 info:
   contact: {}
@@ -1264,18 +1318,6 @@ paths:
       summary: Internal discover MCP server tools
       tags:
       - Internal
-  /internal/config/payment-facilitators:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/responses.PaymentFacilitatorsResponse'
-      summary: Internal get payment facilitators
-      tags:
-      - Internal
   /internal/config/payment-receive-policy:
     delete:
       responses:
@@ -1757,6 +1799,35 @@ paths:
           schema:
             $ref: '#/definitions/errors.InternalError'
       summary: Re-publish ENS runtime records
+      tags:
+      - Internal
+  /internal/payment/receive/access:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Caller credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.AuthorizePaymentReceiveAccessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AuthorizePaymentReceiveAccessResponse'
+        "400":
+          description: validation_error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: authorize_payment_receive_access_failed
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Internal authorize payment receive access
       tags:
       - Internal
   /internal/responses:
