@@ -8,17 +8,17 @@ import (
 // newMockStrategies returns a registry resolving every method to one mock strategy.
 func newMockStrategies(
 	mockController *gomock.Controller,
-) (*payment_interfaces_mocks.MockPaymentMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentMethodStrategyInterface) {
-	mockStrategy := payment_interfaces_mocks.NewMockPaymentMethodStrategyInterface(mockController)
-	mockStrategies := payment_interfaces_mocks.NewMockPaymentMethodStrategiesInterface(mockController)
+) (*payment_interfaces_mocks.MockPaymentReceiveMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface) {
+	mockStrategy := payment_interfaces_mocks.NewMockPaymentReceiveMethodStrategyInterface(mockController)
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentReceiveMethodStrategiesInterface(mockController)
 	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
 	return mockStrategies, mockStrategy
 }
 
 func newUnsupportedMethodStrategies(
 	mockController *gomock.Controller,
-) *payment_interfaces_mocks.MockPaymentMethodStrategiesInterface {
-	mockStrategies := payment_interfaces_mocks.NewMockPaymentMethodStrategiesInterface(mockController)
+) *payment_interfaces_mocks.MockPaymentReceiveMethodStrategiesInterface {
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentReceiveMethodStrategiesInterface(mockController)
 	mockStrategies.EXPECT().For(gomock.Any()).Return(nil, false).Times(1)
 	return mockStrategies
 }

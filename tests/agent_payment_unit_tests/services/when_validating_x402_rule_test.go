@@ -16,7 +16,7 @@ import (
 )
 
 type WhenValidatingX402RuleTestingSuite struct {
-	sut *services.X402PaymentMethodStrategy
+	sut *services.X402PaymentReceiveMethodStrategy
 
 	mockErc20Validator *payment_interfaces_mocks.MockErc20ValidatorInterface
 }
@@ -45,7 +45,7 @@ func validatingX402RuleSuite(
 	}
 
 	return &WhenValidatingX402RuleTestingSuite{
-		sut: services.NewX402PaymentMethodStrategy(
+		sut: services.NewX402PaymentReceiveMethodStrategy(
 			facilitators,
 			evmChainsSettings,
 			mockErc20Validator,

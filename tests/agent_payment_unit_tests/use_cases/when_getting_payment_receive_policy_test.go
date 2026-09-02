@@ -29,7 +29,7 @@ type WhenGettingPaymentReceivePolicyTestingSuite struct {
 	mockAgentAddressRepository         *identity_repositories_mocks.MockAgentAddressRepositoryInterface
 	mockPaymentReceivePolicyRepository *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
 	mockPaymentReceiveRuleRepository   *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
-	mockStrategy                       *payment_interfaces_mocks.MockPaymentMethodStrategyInterface
+	mockStrategy                       *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
 }
 
 func WhenGettingPaymentReceivePolicyBeforeEach(t *testing.T) *WhenGettingPaymentReceivePolicyTestingSuite {

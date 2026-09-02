@@ -22,7 +22,7 @@ func NewUpdatePaymentReceiveRule(
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
-	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
+	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *UpdatePaymentReceiveRule {
 	return &UpdatePaymentReceiveRule{
@@ -31,7 +31,7 @@ func NewUpdatePaymentReceiveRule(
 			agentAddressRepository,
 			paymentReceivePolicyRepository,
 			paymentReceiveRuleRepository,
-			paymentMethodStrategies,
+			paymentReceiveMethodStrategies,
 			token6022Settings,
 		),
 	}
@@ -46,7 +46,7 @@ func (u *UpdatePaymentReceiveRule) Execute(
 	if err := request.ValidateAndSanitize(); err != nil {
 		return nil, err
 	}
-	strategy, ok := u.paymentMethodStrategies.For(enums.PaymentMethod(request.Method))
+	strategy, ok := u.paymentReceiveMethodStrategies.For(enums.PaymentMethod(request.Method))
 	if !ok {
 		return nil, errors.NewValidationError("method", "unsupported payment method")
 	}

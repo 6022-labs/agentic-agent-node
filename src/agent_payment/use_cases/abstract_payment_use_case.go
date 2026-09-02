@@ -28,7 +28,7 @@ type AbstractPaymentUseCase struct {
 	agentAddressRepository         identity_repositories.AgentAddressRepositoryInterface
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface
 	paymentReceiveRuleRepository   repositories.PaymentReceiveRuleRepositoryInterface
-	paymentMethodStrategies        payment_interfaces.PaymentMethodStrategiesInterface
+	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface
 	token6022Settings              *runtime_common_settings.Token6022Settings
 }
 
@@ -37,7 +37,7 @@ func NewAbstractPaymentUseCase(
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
-	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
+	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *AbstractPaymentUseCase {
 	return &AbstractPaymentUseCase{
@@ -45,7 +45,7 @@ func NewAbstractPaymentUseCase(
 		agentAddressRepository:         agentAddressRepository,
 		paymentReceivePolicyRepository: paymentReceivePolicyRepository,
 		paymentReceiveRuleRepository:   paymentReceiveRuleRepository,
-		paymentMethodStrategies:        paymentMethodStrategies,
+		paymentReceiveMethodStrategies: paymentReceiveMethodStrategies,
 		token6022Settings:              token6022Settings,
 	}
 }
@@ -93,7 +93,7 @@ func (u *AbstractPaymentUseCase) ensurePaymentReceivePolicy(
 		if err != nil {
 			return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 		}
-		if strategy, ok := u.paymentMethodStrategies.For(created.Method); ok {
+		if strategy, ok := u.paymentReceiveMethodStrategies.For(created.Method); ok {
 			if err := strategy.SaveConfig(ctx, created.Id, config); err != nil {
 				return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 			}

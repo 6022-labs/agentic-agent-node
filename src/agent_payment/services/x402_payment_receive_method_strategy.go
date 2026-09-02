@@ -21,44 +21,38 @@ import (
 )
 
 const (
-	// DefaultEip712Name/Version are the placeholder domain for the seeded free
-	// rule, which never settles — operator rules derive the real domain
-	// on-chain.
+	// DefaultEip712Name/Version are the placeholder domain for the seeded free rule, which never settles.
 	DefaultEip712Name    = "USDC"
 	DefaultEip712Version = "2"
 )
 
-// X402PaymentMethodStrategy is the x402 payment method: it validates a rule's
-// config (must target a reachable chain, hex asset/payTo, address patterns, a
-// real ERC-20 asset whose EIP-712 domain is derived on-chain, a facilitator for
-// paid rules) and persists/loads it in the typed payment_receive_rule_x402_configs
-// table. The settlement timeout is network-level (facilitator config), not here.
-type X402PaymentMethodStrategy struct {
-	paymentReceiveSettings                 *runtime_common_settings.PaymentReceiveSettings
+// X402PaymentReceiveMethodStrategy validates a rule's config and persists it in payment_receive_rule_x402_configs.
+type X402PaymentReceiveMethodStrategy struct {
+	paymentFacilitatorsSettings            *runtime_common_settings.PaymentReceiveSettings
 	evmChainsSettings                      *runtime_common_settings.EvmChainsSettings
 	erc20Validator                         payment_interfaces.Erc20ValidatorInterface
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface
 }
 
-func NewX402PaymentMethodStrategy(
-	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings,
+func NewX402PaymentReceiveMethodStrategy(
+	paymentFacilitatorsSettings *runtime_common_settings.PaymentReceiveSettings,
 	evmChainsSettings *runtime_common_settings.EvmChainsSettings,
 	erc20Validator payment_interfaces.Erc20ValidatorInterface,
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface,
-) *X402PaymentMethodStrategy {
-	return &X402PaymentMethodStrategy{
-		paymentReceiveSettings:                 paymentReceiveSettings,
+) *X402PaymentReceiveMethodStrategy {
+	return &X402PaymentReceiveMethodStrategy{
+		paymentFacilitatorsSettings:            paymentFacilitatorsSettings,
 		evmChainsSettings:                      evmChainsSettings,
 		erc20Validator:                         erc20Validator,
 		paymentReceiveRuleX402ConfigRepository: paymentReceiveRuleX402ConfigRepository,
 	}
 }
 
-func (s *X402PaymentMethodStrategy) Method() enums.PaymentMethod {
+func (s *X402PaymentReceiveMethodStrategy) Method() enums.PaymentMethod {
 	return enums.PaymentMethodX402
 }
 
-func (s *X402PaymentMethodStrategy) Validate(
+func (s *X402PaymentReceiveMethodStrategy) Validate(
 	ctx context.Context,
 	request *requests.SavePaymentReceiveRuleRequest,
 ) error {
@@ -107,9 +101,7 @@ func (s *X402PaymentMethodStrategy) Validate(
 		config.AddressPatterns[i] = trimmed
 	}
 
-	// The transfer method + EIP-712 domain belong to the token, so detect them
-	// on-chain rather than trust the operator — a wrong domain would silently
-	// fail settlement.
+	// Detect the transfer method + domain on-chain; a wrong domain silently fails settlement.
 	method, eip712Name, eip712Version, err := s.erc20Validator.ValidateErc20(ctx, chainId, config.Asset)
 	if err != nil {
 		return errors.NewValidationError("config.asset", err.Error())
@@ -136,7 +128,11 @@ func (s *X402PaymentMethodStrategy) Validate(
 	return nil
 }
 
-func (s *X402PaymentMethodStrategy) SaveConfig(ctx context.Context, ruleId uuid.UUID, raw json.RawMessage) error {
+func (s *X402PaymentReceiveMethodStrategy) SaveConfig(
+	ctx context.Context,
+	ruleId uuid.UUID,
+	raw json.RawMessage,
+) error {
 	config := &models.PaymentReceiveRuleX402Config{}
 	if err := config.Parse(raw); err != nil {
 		return err
@@ -145,7 +141,7 @@ func (s *X402PaymentMethodStrategy) SaveConfig(ctx context.Context, ruleId uuid.
 	return s.paymentReceiveRuleX402ConfigRepository.Upsert(ctx, config)
 }
 
-func (s *X402PaymentMethodStrategy) LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error) {
+func (s *X402PaymentReceiveMethodStrategy) LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error) {
 	row, err := s.paymentReceiveRuleX402ConfigRepository.GetByRuleId(ctx, ruleId)
 	if err != nil {
 		return nil, err
@@ -156,14 +152,13 @@ func (s *X402PaymentMethodStrategy) LoadConfig(ctx context.Context, ruleId uuid.
 	return row.Marshal()
 }
 
-// requireFacilitatorForPaidRule rejects a paid rule whose network has no
-// configured facilitator. Free rules never settle, so they're exempt.
-func (s *X402PaymentMethodStrategy) requireFacilitatorForPaidRule(price string, network string) error {
+// requireFacilitatorForPaidRule rejects a paid rule with no facilitator; free rules never settle.
+func (s *X402PaymentReceiveMethodStrategy) requireFacilitatorForPaidRule(price string, network string) error {
 	parsed, ok := new(big.Int).SetString(price, 10)
 	if !ok || parsed.Sign() == 0 {
 		return nil
 	}
-	if _, configured := s.paymentReceiveSettings.BaseUrlFor(network); !configured {
+	if _, configured := s.paymentFacilitatorsSettings.BaseUrlFor(network); !configured {
 		return errors.NewValidationError("config.network", "no facilitator configured for this network")
 	}
 	return nil

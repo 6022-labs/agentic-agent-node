@@ -9,12 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// PaymentMethodStrategyInterface owns one payment method: it validates the
+// PaymentReceiveMethodStrategyInterface owns one payment method: it validates the
 // request's Config blob and persists/loads that method's typed config row. The
 // generic payment domain dispatches to it by the rule's Method discriminator,
 // so adding a method (e.g. Lightning) is a new strategy + its own config table,
 // nothing in the generic layer.
-type PaymentMethodStrategyInterface interface {
+type PaymentReceiveMethodStrategyInterface interface {
 	Method() enums.PaymentMethod
 	// Validate checks and sanitizes the request's Config blob in place.
 	Validate(ctx context.Context, request *requests.SavePaymentReceiveRuleRequest) error

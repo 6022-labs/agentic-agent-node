@@ -21,7 +21,7 @@ func NewListPaymentReceiveRules(
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
-	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
+	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *ListPaymentReceiveRules {
 	return &ListPaymentReceiveRules{
@@ -30,7 +30,7 @@ func NewListPaymentReceiveRules(
 			agentAddressRepository,
 			paymentReceivePolicyRepository,
 			paymentReceiveRuleRepository,
-			paymentMethodStrategies,
+			paymentReceiveMethodStrategies,
 			token6022Settings,
 		),
 	}
@@ -50,7 +50,7 @@ func (u *ListPaymentReceiveRules) Execute(ctx context.Context) (*responses.ListP
 	out := make([]responses.PaymentReceiveRuleResponse, 0, len(rules))
 	for i := range rules {
 		var config json.RawMessage
-		if strategy, ok := u.paymentMethodStrategies.For(rules[i].Method); ok {
+		if strategy, ok := u.paymentReceiveMethodStrategies.For(rules[i].Method); ok {
 			config, err = strategy.LoadConfig(ctx, rules[i].Id)
 			if err != nil {
 				return nil, errors.NewInternalError("list_failed", err.Error())

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/dig"
 )
 
-const paymentMethodStrategiesGroup = "payment_method_strategies"
+const paymentReceiveMethodStrategiesGroup = "payment_receive_method_strategies"
 
 func AddAgentPaymentConfiguration(container *dig.Container) {
 	useCases := []any{
@@ -26,15 +26,15 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
-		services.NewPaymentMethodStrategies,
-		dig.As(new(payment_interfaces.PaymentMethodStrategiesInterface)),
+		services.NewPaymentReceiveMethodStrategies,
+		dig.As(new(payment_interfaces.PaymentReceiveMethodStrategiesInterface)),
 	); err != nil {
 		panic(err)
 	}
 	if err := container.Provide(
-		services.NewX402PaymentMethodStrategy,
-		dig.Group(paymentMethodStrategiesGroup),
-		dig.As(new(payment_interfaces.PaymentMethodStrategyInterface)),
+		services.NewX402PaymentReceiveMethodStrategy,
+		dig.Group(paymentReceiveMethodStrategiesGroup),
+		dig.As(new(payment_interfaces.PaymentReceiveMethodStrategyInterface)),
 	); err != nil {
 		panic(err)
 	}
