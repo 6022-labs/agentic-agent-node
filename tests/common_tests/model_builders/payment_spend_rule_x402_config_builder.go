@@ -6,7 +6,7 @@ import (
 )
 
 type PaymentSpendRuleX402ConfigBuilder struct {
-	spendRuleId                 uuid.UUID
+	paymentSpendRuleId          uuid.UUID
 	networkPatterns             []string
 	assetPatterns               []string
 	payToPatterns               []string
@@ -16,7 +16,7 @@ type PaymentSpendRuleX402ConfigBuilder struct {
 // NewPaymentSpendRuleX402ConfigBuilder defaults to the seeded catch-all: every facet open.
 func NewPaymentSpendRuleX402ConfigBuilder() *PaymentSpendRuleX402ConfigBuilder {
 	return &PaymentSpendRuleX402ConfigBuilder{
-		spendRuleId:                 uuid.New(),
+		paymentSpendRuleId:          uuid.New(),
 		networkPatterns:             []string{".*"},
 		assetPatterns:               []string{".*"},
 		payToPatterns:               []string{".*"},
@@ -27,7 +27,7 @@ func NewPaymentSpendRuleX402ConfigBuilder() *PaymentSpendRuleX402ConfigBuilder {
 func (b *PaymentSpendRuleX402ConfigBuilder) WithPaymentSpendRuleId(
 	id uuid.UUID,
 ) *PaymentSpendRuleX402ConfigBuilder {
-	b.spendRuleId = id
+	b.paymentSpendRuleId = id
 	return b
 }
 
@@ -61,7 +61,7 @@ func (b *PaymentSpendRuleX402ConfigBuilder) WithAssetTransferMethodPatterns(
 
 func (b *PaymentSpendRuleX402ConfigBuilder) Build() *models.PaymentSpendRuleX402Config {
 	return &models.PaymentSpendRuleX402Config{
-		PaymentSpendRuleId:          b.spendRuleId,
+		PaymentSpendRuleId:          b.paymentSpendRuleId,
 		NetworkPatterns:             b.networkPatterns,
 		AssetPatterns:               b.assetPatterns,
 		PayToPatterns:               b.payToPatterns,
