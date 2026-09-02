@@ -38,6 +38,8 @@ type WhenSigningX402PaymentTestingSuite struct {
 
 	mockTypedDataSigner        *identity_mocks.MockTypedDataSignerInterface
 	mockPermit2ApprovalEnsurer *interfaces_mocks.MockPermit2ApprovalEnsurerInterface
+	mockSpendPolicyEvaluator   *interfaces_mocks.MockX402PaymentSpendPolicyEvaluatorInterface
+	spendAuthorized            bool
 	walletKey                  *ecdsa.PrivateKey
 	walletAddress              common.Address
 }
@@ -51,6 +53,7 @@ func WhenSigningX402PaymentBeforeEach(t *testing.T) *WhenSigningX402PaymentTesti
 
 	mockTypedDataSigner := identity_mocks.NewMockTypedDataSignerInterface(mockController)
 	mockPermit2ApprovalEnsurer := interfaces_mocks.NewMockPermit2ApprovalEnsurerInterface(mockController)
+	mockSpendPolicyEvaluator := interfaces_mocks.NewMockX402PaymentSpendPolicyEvaluatorInterface(mockController)
 
 	mockTypedDataSigner.EXPECT().WalletAddress(gomock.Any()).Return(walletAddress, nil).AnyTimes()
 	// Sign the real digest so the gateway verifier can be pointed at the result.
@@ -66,17 +69,30 @@ func WhenSigningX402PaymentBeforeEach(t *testing.T) *WhenSigningX402PaymentTesti
 		}).
 		AnyTimes()
 
-	return &WhenSigningX402PaymentTestingSuite{
+	suite := &WhenSigningX402PaymentTestingSuite{
 		sut: services.NewX402PaymentSigner(
 			mockTypedDataSigner,
 			mockPermit2ApprovalEnsurer,
+			mockSpendPolicyEvaluator,
 			newSpendSettings(),
 		),
 		mockTypedDataSigner:        mockTypedDataSigner,
 		mockPermit2ApprovalEnsurer: mockPermit2ApprovalEnsurer,
+		mockSpendPolicyEvaluator:   mockSpendPolicyEvaluator,
 		walletKey:                  walletKey,
 		walletAddress:              walletAddress,
 	}
+
+	// The gate has its own suite; here it authorizes unless a Given clears spendAuthorized.
+	suite.spendAuthorized = true
+	mockSpendPolicyEvaluator.EXPECT().
+		IsAuthorized(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ *payment_interfaces.X402PaymentQuote, _ *big.Int) (bool, error) {
+			return suite.spendAuthorized, nil
+		}).
+		AnyTimes()
+
+	return suite
 }
 
 // newSpendSettings builds the settings through koanf the way the app parses them.
@@ -261,6 +277,57 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			var validationError *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationError)
 			assert.Equal(t, "assetTransferMethod", validationError.Field)
+		})
+	})
+
+	t.Run("Given the spend policy refuses the quote", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.spendAuthorized = false
+		}
+
+		t.Run("Should return the refusal instead of a signature", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodEip3009,
+				Eip712Name:          "USDC",
+				Eip712Version:       "2",
+			})
+
+			assert.Nil(t, signed)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+		})
+
+		// The gate runs before EnsureApproval so a refusal never costs gas.
+		t.Run("Should not grant permit2 an allowance", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockPermit2ApprovalEnsurer.EXPECT().
+				EnsureApproval(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Times(0)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+
+			assert.Nil(t, signed)
+			assert.Error(t, err)
 		})
 	})
 }
