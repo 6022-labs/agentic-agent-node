@@ -48,6 +48,12 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewUpdatePaymentReceiveRuleTool)
 	provideSelfTool(container, tools.NewDeletePaymentReceiveRuleTool)
 	provideSelfTool(container, tools.NewDeletePaymentReceivePolicyTool)
+	provideSelfTool(container, tools.NewGetPaymentSpendPolicyTool)
+	provideSelfTool(container, tools.NewListPaymentSpendRulesTool)
+	provideSelfTool(container, tools.NewCreatePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewUpdatePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentSpendPolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
 	provideSelfTool(container, tools.NewSignX402PaymentTool)
@@ -170,6 +176,24 @@ func providePaymentExecutors(container *dig.Container) {
 	asSignX402Payment := func(u *payment_use_cases.SignX402Payment) tool_interfaces.SignX402PaymentExecutorInterface {
 		return u
 	}
+	asGetPaymentSpendPolicy := func(u *payment_use_cases.GetPaymentSpendPolicy) tool_interfaces.GetPaymentSpendPolicyExecutorInterface {
+		return u
+	}
+	asListPaymentSpendRules := func(u *payment_use_cases.ListPaymentSpendRules) tool_interfaces.ListPaymentSpendRulesExecutorInterface {
+		return u
+	}
+	asCreatePaymentSpendRule := func(u *payment_use_cases.CreatePaymentSpendRule) tool_interfaces.CreatePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asUpdatePaymentSpendRule := func(u *payment_use_cases.UpdatePaymentSpendRule) tool_interfaces.UpdatePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asDeletePaymentSpendRule := func(u *payment_use_cases.DeletePaymentSpendRule) tool_interfaces.DeletePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asDeletePaymentSpendPolicy := func(u *payment_use_cases.DeletePaymentSpendPolicy) tool_interfaces.DeletePaymentSpendPolicyExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetPaymentReceivePolicy)
 	provideExecutor(container, asListPaymentReceiveRules)
@@ -178,6 +202,12 @@ func providePaymentExecutors(container *dig.Container) {
 	provideExecutor(container, asUpdatePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceivePolicy)
+	provideExecutor(container, asGetPaymentSpendPolicy)
+	provideExecutor(container, asListPaymentSpendRules)
+	provideExecutor(container, asCreatePaymentSpendRule)
+	provideExecutor(container, asUpdatePaymentSpendRule)
+	provideExecutor(container, asDeletePaymentSpendRule)
+	provideExecutor(container, asDeletePaymentSpendPolicy)
 	provideExecutor(container, asSignX402Payment)
 }
 

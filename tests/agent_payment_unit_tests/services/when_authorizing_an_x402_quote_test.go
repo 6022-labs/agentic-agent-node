@@ -441,4 +441,38 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			assert.ErrorAs(t, err, &internalError)
 		})
 	})
+
+	t.Run("Given a matching rule carries a negative cap", func(t *testing.T) {
+		t.Parallel()
+
+		// It parses, unlike "not-a-number", so only the sign check catches it.
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+			rule.MaxAmount = "-1"
+
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				ListByPolicyId(ctx, policy.Id).
+				Return([]models.PaymentSpendRule{*rule}, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleId(ctx, rule.Id).
+				Return(model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPaymentSpendRuleId(rule.Id).Build(), nil).
+				Times(1)
+		}
+
+		t.Run("Should fail rather than treat it as a cap", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+
+			assert.False(t, authorized)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+		})
+	})
 }
