@@ -32,6 +32,8 @@ const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
   maxAmountPerPayment: wire.maxAmountPerPayment,
   windowSeconds: wire.windowSeconds ?? 0,
   maxAmountPerWindow: wire.maxAmountPerWindow ?? "0",
+  windowSpent: wire.windowSpent ?? "0",
+  windowResetsAt: wire.windowResetsAt,
   method: wire.method,
   networkPatterns: wire.config?.networkPatterns ?? [],
   assetPatterns: wire.config?.assetPatterns ?? [],

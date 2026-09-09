@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"context"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -59,7 +60,7 @@ func (u *CreatePaymentSpendRule) Execute(
 		_ = u.paymentSpendRuleRepository.DeleteById(ctx, rule.Id)
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
-	return responses.ToPaymentSpendRuleResponse(rule, request.Config), nil
+	return responses.ToPaymentSpendRuleResponse(rule, request.Config, time.Now()), nil
 }
 
 func (u *CreatePaymentSpendRule) toPaymentSpendRule(

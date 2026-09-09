@@ -513,7 +513,9 @@ type ResponsesPaymentSpendRuleResponse struct {
 	Method              *string                 `json:"method,omitempty"`
 	Name                *string                 `json:"name,omitempty"`
 	UpdatedAt           *string                 `json:"updatedAt,omitempty"`
+	WindowResetsAt      *string                 `json:"windowResetsAt,omitempty"`
 	WindowSeconds       *int                    `json:"windowSeconds,omitempty"`
+	WindowSpent         *string                 `json:"windowSpent,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.

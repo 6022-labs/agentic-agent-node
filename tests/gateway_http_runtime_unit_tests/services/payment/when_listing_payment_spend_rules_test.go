@@ -43,7 +43,8 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
 						`{"rules":[{"id":"r1","name":"Anything, unbounded","maxAmountPerPayment":"1000",` +
-							`"windowSeconds":86400,"maxAmountPerWindow":"50000","method":"x402",` +
+							`"windowSeconds":86400,"maxAmountPerWindow":"50000","windowSpent":"4000",` +
+							`"windowResetsAt":"2026-09-10T12:00:00Z","method":"x402",` +
 							`"config":{"networkPatterns":[".*"],"assetPatterns":[".*"]}}]}`,
 					),
 				}, nil)
@@ -63,6 +64,10 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 				assert.Equal(t, "1000", rules[0].MaxAmountPerPayment)
 				assert.Equal(t, 86400, rules[0].WindowSeconds)
 				assert.Equal(t, "50000", rules[0].MaxAmountPerWindow)
+				assert.Equal(t, "4000", rules[0].WindowSpent)
+				if assert.NotNil(t, rules[0].WindowResetsAt) {
+					assert.Equal(t, 2026, rules[0].WindowResetsAt.Year())
+				}
 				assert.Contains(t, string(rules[0].Config), "networkPatterns")
 			}
 		})

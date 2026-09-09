@@ -27,16 +27,17 @@ func ToGetPaymentSpendPolicyResponse(p *models.ExternalPaymentSpendPolicyPayload
 	}
 }
 
-// PaymentSpendRuleResponse is one spend rule as the gateway publishes it; the
-// external model doubles as a request body, so it is not the response shape.
+// PaymentSpendRuleResponse is the published rule shape; the external model doubles as a request body.
 type PaymentSpendRuleResponse struct {
 	Id                  string          `json:"id"`
 	Name                string          `json:"name"`
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
 	WindowSeconds       int             `json:"windowSeconds"`
 	MaxAmountPerWindow  string          `json:"maxAmountPerWindow"`
+	WindowSpent         string          `json:"windowSpent"`
+	WindowResetsAt      *time.Time      `json:"windowResetsAt,omitempty"`
 	Method              string          `json:"method"`
-	Config              json.RawMessage `json:"config"              swaggertype:"object"`
+	Config              json.RawMessage `json:"config"                   swaggertype:"object"`
 }
 
 func ToPaymentSpendRuleResponse(rule *models.ExternalPaymentSpendRule) *PaymentSpendRuleResponse {
@@ -49,6 +50,8 @@ func ToPaymentSpendRuleResponse(rule *models.ExternalPaymentSpendRule) *PaymentS
 		MaxAmountPerPayment: rule.MaxAmountPerPayment,
 		WindowSeconds:       rule.WindowSeconds,
 		MaxAmountPerWindow:  rule.MaxAmountPerWindow,
+		WindowSpent:         rule.WindowSpent,
+		WindowResetsAt:      rule.WindowResetsAt,
 		Method:              rule.Method,
 		Config:              rule.Config,
 	}

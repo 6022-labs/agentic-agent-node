@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"context"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -66,11 +67,10 @@ func (u *UpdatePaymentSpendRule) Execute(
 	if err := strategy.SaveConfig(ctx, updated.Id, request.Config); err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
-	return responses.ToPaymentSpendRuleResponse(updated, request.Config), nil
+	return responses.ToPaymentSpendRuleResponse(updated, request.Config, time.Now()), nil
 }
 
-// applyWindow restarts the period when its length or budget changes, so an owner who
-// tightens a rule cannot be held to spend already recorded against the looser one.
+// applyWindow restarts the period when its length or budget changes, dropping spend recorded under the old terms.
 func (u *UpdatePaymentSpendRule) applyWindow(
 	rule *models.PaymentSpendRule,
 	request *requests.UpdatePaymentSpendRuleRequest,

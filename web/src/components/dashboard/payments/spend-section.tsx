@@ -49,6 +49,34 @@ import { truncateEthAddress } from "@/lib/utils"
 
 const MAX_PATTERN_CHIPS = 2
 
+// formatResetsIn is coarse on purpose: the exact second the period rolls is not actionable.
+const formatResetsIn = (resetsAt: string): string => {
+  const seconds = Math.max(
+    0,
+    (new Date(resetsAt).getTime() - Date.now()) / 1000
+  )
+  if (seconds >= 86400) {
+    return `${Math.round(seconds / 86400)}d`
+  }
+  if (seconds >= 3600) {
+    return `${Math.round(seconds / 3600)}h`
+  }
+  return `${Math.max(1, Math.round(seconds / 60))}m`
+}
+
+// spentPercent stays in BigInt until the last step; atomic amounts overflow Number.
+const spentPercent = (spent: string, budget: string): number => {
+  try {
+    const total = BigInt(budget)
+    if (total === 0n) {
+      return 100
+    }
+    return Math.min(100, Number((BigInt(spent) * 100n) / total))
+  } catch {
+    return 0
+  }
+}
+
 // formatPeriod names the common periods and falls back to raw seconds.
 const formatPeriod = (seconds: number): string => {
   if (seconds % 86400 === 0) {
@@ -130,6 +158,7 @@ export default function PaymentSpendPolicySection() {
       values.windowSeconds.length === 0 ? 0 : Number(values.windowSeconds),
     maxAmountPerWindow:
       values.maxAmountPerWindow.length === 0 ? "0" : values.maxAmountPerWindow,
+    windowSpent: "0",
     networkPatterns: splitPatterns(values.networkPatterns),
     assetPatterns: splitPatterns(values.assetPatterns),
     payToPatterns: splitPatterns(values.payToPatterns),
@@ -283,7 +312,7 @@ export default function PaymentSpendPolicySection() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Cap (atomic units)</TableHead>
-                    <TableHead>Budget per period</TableHead>
+                    <TableHead>Spent this period</TableHead>
                     <TableHead>Networks</TableHead>
                     <TableHead>Assets</TableHead>
                     <TableHead>Recipients</TableHead>
@@ -313,13 +342,31 @@ export default function PaymentSpendPolicySection() {
                       </TableCell>
                       <TableCell>
                         {rule.windowSeconds > 0 ? (
-                          <span
-                            className="font-mono text-xs"
-                            title={`${rule.maxAmountPerWindow} per ${rule.windowSeconds}s`}
-                          >
-                            {rule.maxAmountPerWindow} /{" "}
-                            {formatPeriod(rule.windowSeconds)}
-                          </span>
+                          <div className="min-w-36 space-y-1">
+                            <div
+                              className="font-mono text-xs"
+                              title={`${rule.windowSpent} of ${rule.maxAmountPerWindow} atomic units this period`}
+                            >
+                              {rule.windowSpent} / {rule.maxAmountPerWindow}
+                              <span className="text-muted-foreground">
+                                {" "}
+                                per {formatPeriod(rule.windowSeconds)}
+                              </span>
+                            </div>
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full bg-primary"
+                                style={{
+                                  width: `${spentPercent(rule.windowSpent, rule.maxAmountPerWindow)}%`,
+                                }}
+                              />
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {rule.windowResetsAt
+                                ? `resets in ${formatResetsIn(rule.windowResetsAt)}`
+                                : "nothing spent yet"}
+                            </div>
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             per payment only

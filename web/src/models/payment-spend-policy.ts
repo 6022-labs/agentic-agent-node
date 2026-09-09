@@ -14,6 +14,10 @@ export type PaymentSpendRule = {
   // A recurring budget: 0 seconds leaves the rule bounded per payment only.
   windowSeconds: number
   maxAmountPerWindow: string
+  // Read-only: what the next payment is measured against. The runtime reports a lapsed
+  // period as nothing spent, since it only rolls over on the next payment.
+  windowSpent: string
+  windowResetsAt?: string
   // Regexes full-matched against the quote's facets. A rule authorizes a quote
   // only when all four match, and the effective cap is the smallest maxAmountPerPayment
   // among the rules that do.
@@ -43,6 +47,8 @@ export type PaymentSpendRuleWire = {
   maxAmountPerPayment: string
   windowSeconds?: number
   maxAmountPerWindow?: string
+  windowSpent?: string
+  windowResetsAt?: string
   method: string
   config: PaymentSpendRuleConfig
 }

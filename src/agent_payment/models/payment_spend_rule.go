@@ -31,8 +31,24 @@ type PaymentSpendRule struct {
 	UpdatedAt time.Time `gorm:"not null"`
 }
 
-// RecordWindowSpend rolls an elapsed period and adds the amount, reporting false when the
-// period cannot absorb it. A rule without a window is bounded per payment only.
+// SpentInWindow is what the next payment is measured against; an elapsed period reads as nothing spent.
+func (m *PaymentSpendRule) SpentInWindow(now time.Time) string {
+	if m.WindowSeconds <= 0 || m.windowExpiredAt(now) {
+		return "0"
+	}
+	return m.WindowSpent
+}
+
+// WindowResetsAt is nil while no period is running; an elapsed one restarts on first use.
+func (m *PaymentSpendRule) WindowResetsAt(now time.Time) *time.Time {
+	if m.WindowSeconds <= 0 || m.WindowStartedAt == nil || m.windowExpiredAt(now) {
+		return nil
+	}
+	resetsAt := m.WindowStartedAt.Add(time.Duration(m.WindowSeconds) * time.Second)
+	return &resetsAt
+}
+
+// RecordWindowSpend rolls an elapsed period and adds the amount, reporting false when it cannot absorb it.
 func (m *PaymentSpendRule) RecordWindowSpend(amount *big.Int, now time.Time) (bool, error) {
 	if m.WindowSeconds <= 0 {
 		return true, nil

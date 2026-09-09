@@ -710,8 +710,12 @@ definitions:
         type: string
       updatedAt:
         type: string
+      windowResetsAt:
+        type: string
       windowSeconds:
         type: integer
+      windowSpent:
+        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:

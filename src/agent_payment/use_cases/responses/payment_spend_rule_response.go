@@ -15,15 +15,20 @@ type PaymentSpendRuleResponse struct {
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
 	WindowSeconds       int             `json:"windowSeconds"`
 	MaxAmountPerWindow  string          `json:"maxAmountPerWindow"`
+	WindowSpent         string          `json:"windowSpent"`
+	WindowResetsAt      *time.Time      `json:"windowResetsAt,omitempty"`
 	Method              string          `json:"method"`
-	Config              json.RawMessage `json:"config"              swaggertype:"object"`
+	Config              json.RawMessage `json:"config"                   swaggertype:"object"`
 	CreatedAt           time.Time       `json:"createdAt"`
 	UpdatedAt           time.Time       `json:"updatedAt"`
 }
 
-// ToPaymentSpendRuleResponse joins the rule with its method config blob (loaded by
-// the method's strategy), since the config lives in its own table now.
-func ToPaymentSpendRuleResponse(m *models.PaymentSpendRule, config json.RawMessage) *PaymentSpendRuleResponse {
+// ToPaymentSpendRuleResponse joins the rule with its method config and reports the period as of now.
+func ToPaymentSpendRuleResponse(
+	m *models.PaymentSpendRule,
+	config json.RawMessage,
+	now time.Time,
+) *PaymentSpendRuleResponse {
 	if m == nil {
 		return nil
 	}
@@ -33,6 +38,8 @@ func ToPaymentSpendRuleResponse(m *models.PaymentSpendRule, config json.RawMessa
 		MaxAmountPerPayment: m.MaxAmountPerPayment,
 		WindowSeconds:       m.WindowSeconds,
 		MaxAmountPerWindow:  m.MaxAmountPerWindow,
+		WindowSpent:         m.SpentInWindow(now),
+		WindowResetsAt:      m.WindowResetsAt(now),
 		Method:              m.Method.String(),
 		Config:              config,
 		CreatedAt:           m.CreatedAt,

@@ -3063,8 +3063,14 @@ const docTemplate = `{
                 "updatedAt": {
                     "type": "string"
                 },
+                "windowResetsAt": {
+                    "type": "string"
+                },
                 "windowSeconds": {
                     "type": "integer"
+                },
+                "windowSpent": {
+                    "type": "string"
                 }
             }
         },

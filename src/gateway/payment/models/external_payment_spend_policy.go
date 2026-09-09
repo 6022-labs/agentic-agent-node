@@ -12,6 +12,8 @@ type ExternalPaymentSpendRule struct {
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
 	WindowSeconds       int             `json:"windowSeconds,omitempty"`
 	MaxAmountPerWindow  string          `json:"maxAmountPerWindow,omitempty"`
+	WindowSpent         string          `json:"windowSpent,omitempty"`
+	WindowResetsAt      *time.Time      `json:"windowResetsAt,omitempty"`
 	Method              string          `json:"method"`
 	Config              json.RawMessage `json:"config"                       swaggertype:"object"`
 }

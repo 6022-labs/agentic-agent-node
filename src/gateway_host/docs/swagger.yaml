@@ -726,8 +726,12 @@ definitions:
         type: string
       name:
         type: string
+      windowResetsAt:
+        type: string
       windowSeconds:
         type: integer
+      windowSpent:
+        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:

@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
@@ -40,6 +41,7 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 
 	// The matcher lives in each method's own table, so join it back per rule.
 	out := make([]responses.PaymentSpendRuleResponse, 0, len(rules))
+	now := time.Now()
 	for i := range rules {
 		var config json.RawMessage
 		if strategy, ok := u.paymentSpendMethodStrategies.For(rules[i].Method); ok {
@@ -48,7 +50,7 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 				return nil, errors.NewInternalError("list_failed", err.Error())
 			}
 		}
-		out = append(out, *responses.ToPaymentSpendRuleResponse(&rules[i], config))
+		out = append(out, *responses.ToPaymentSpendRuleResponse(&rules[i], config, now))
 	}
 	return &responses.ListPaymentSpendRulesResponse{Rules: out}, nil
 }
