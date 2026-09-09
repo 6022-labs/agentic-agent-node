@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+	"math/big"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -8,17 +10,71 @@ import (
 	"gorm.io/gorm"
 )
 
-// PaymentSpendRule caps one payment in atomic units; "0" denies, and there is no unlimited sentinel.
+// PaymentSpendRule bounds a spend in atomic units; "0" denies, and there is no unlimited sentinel.
 type PaymentSpendRule struct {
-	Id        uuid.UUID           `gorm:"primaryKey;size:36"`
-	PolicyId  uuid.UUID           `gorm:"not null;size:36;index"`
-	Policy    PaymentSpendPolicy  `gorm:"foreignKey:PolicyId"`
-	Position  int                 `gorm:"not null"`
-	Name      string              `gorm:"not null;size:64"`
-	MaxAmount string              `gorm:"not null;size:78"`
-	Method    enums.PaymentMethod `gorm:"not null;size:32"`
-	CreatedAt time.Time           `gorm:"not null"`
-	UpdatedAt time.Time           `gorm:"not null"`
+	Id       uuid.UUID           `gorm:"primaryKey;size:36"`
+	PolicyId uuid.UUID           `gorm:"not null;size:36;index"`
+	Policy   PaymentSpendPolicy  `gorm:"foreignKey:PolicyId"`
+	Position int                 `gorm:"not null"`
+	Name     string              `gorm:"not null;size:64"`
+	Method   enums.PaymentMethod `gorm:"not null;size:32"`
+
+	MaxAmountPerPayment string `gorm:"not null;size:78"`
+	// 0 seconds leaves the rule bounded per payment only.
+	WindowSeconds      int    `gorm:"not null;default:0"`
+	MaxAmountPerWindow string `gorm:"not null;size:78;default:0"`
+	// Runtime state, never operator input; the period rolls over on first use after it expires.
+	WindowSpent     string     `gorm:"not null;size:78;default:0"`
+	WindowStartedAt *time.Time `gorm:""`
+
+	CreatedAt time.Time `gorm:"not null"`
+	UpdatedAt time.Time `gorm:"not null"`
+}
+
+// RecordWindowSpend rolls an elapsed period and adds the amount, reporting false when the
+// period cannot absorb it. A rule without a window is bounded per payment only.
+func (m *PaymentSpendRule) RecordWindowSpend(amount *big.Int, now time.Time) (bool, error) {
+	if m.WindowSeconds <= 0 {
+		return true, nil
+	}
+
+	budget, ok := new(big.Int).SetString(m.MaxAmountPerWindow, 10)
+	if !ok || budget.Sign() < 0 {
+		return false, errors.New("window budget is not a usable amount")
+	}
+
+	spent := new(big.Int)
+	if !m.windowExpiredAt(now) {
+		if spent, ok = new(big.Int).SetString(m.WindowSpent, 10); !ok || spent.Sign() < 0 {
+			return false, errors.New("window spend is not a usable amount")
+		}
+	} else {
+		started := now
+		m.WindowStartedAt = &started
+	}
+
+	after := new(big.Int).Add(spent, amount)
+	if after.Cmp(budget) > 0 {
+		return false, nil
+	}
+	m.WindowSpent = after.String()
+	return true, nil
+}
+
+// CoversPayment reports whether the rule's per-payment cap allows the amount.
+func (m *PaymentSpendRule) CoversPayment(amount *big.Int) (bool, error) {
+	cap, ok := new(big.Int).SetString(m.MaxAmountPerPayment, 10)
+	if !ok || cap.Sign() < 0 {
+		return false, errors.New("cap is not a usable amount")
+	}
+	return amount.Cmp(cap) <= 0, nil
+}
+
+func (m *PaymentSpendRule) windowExpiredAt(now time.Time) bool {
+	if m.WindowStartedAt == nil {
+		return true
+	}
+	return !now.Before(m.WindowStartedAt.Add(time.Duration(m.WindowSeconds) * time.Second))
 }
 
 func (PaymentSpendRule) TableName() string {

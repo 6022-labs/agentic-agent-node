@@ -13,6 +13,7 @@ import (
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -23,6 +24,7 @@ type WhenAuthorizingAnX402QuoteTestingSuite struct {
 	mockPaymentSpendPolicyProvider           *payment_interfaces_mocks.MockPaymentSpendPolicyProviderInterface
 	mockPaymentSpendRuleRepository           *payment_repositories_mocks.MockPaymentSpendRuleRepositoryInterface
 	mockPaymentSpendRuleX402ConfigRepository *payment_repositories_mocks.MockPaymentSpendRuleX402ConfigRepositoryInterface
+	mockUnitOfWorkFactory                    *runtime_common_mocks.MockUnitOfWorkFactoryInterface
 }
 
 func WhenAuthorizingAnX402QuoteBeforeEach(t *testing.T) *WhenAuthorizingAnX402QuoteTestingSuite {
@@ -36,17 +38,26 @@ func WhenAuthorizingAnX402QuoteBeforeEach(t *testing.T) *WhenAuthorizingAnX402Qu
 	)
 	mockPaymentSpendRuleX402ConfigRepository :=
 		payment_repositories_mocks.NewMockPaymentSpendRuleX402ConfigRepositoryInterface(mockController)
+	mockUnitOfWorkFactory := runtime_common_mocks.NewMockUnitOfWorkFactoryInterface(mockController)
+	// The real factory opens a transaction; here the scope just carries the context.
+	mockUnitOfWork := runtime_common_mocks.NewMockUnitOfWorkInterface(mockController)
+	mockUnitOfWork.EXPECT().Context().DoAndReturn(context.Background).AnyTimes()
+	mockUnitOfWork.EXPECT().Commit().Return(nil).AnyTimes()
+	mockUnitOfWork.EXPECT().Rollback().Return(nil).AnyTimes()
+	mockUnitOfWorkFactory.EXPECT().Start(gomock.Any()).Return(mockUnitOfWork, nil).AnyTimes()
 
 	return &WhenAuthorizingAnX402QuoteTestingSuite{
 		sut: services.NewX402PaymentSpendPolicyEvaluator(
 			mockPaymentSpendPolicyProvider,
 			mockPaymentSpendRuleRepository,
 			mockPaymentSpendRuleX402ConfigRepository,
+			mockUnitOfWorkFactory,
 		),
 
 		mockPaymentSpendPolicyProvider:           mockPaymentSpendPolicyProvider,
 		mockPaymentSpendRuleRepository:           mockPaymentSpendRuleRepository,
 		mockPaymentSpendRuleX402ConfigRepository: mockPaymentSpendRuleX402ConfigRepository,
+		mockUnitOfWorkFactory:                    mockUnitOfWorkFactory,
 	}
 }
 
@@ -71,16 +82,20 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			rule.MaxAmount = "10000"
+			rule.MaxAmountPerPayment = "10000"
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
 				GetByRuleId(ctx, rule.Id).
 				Return(model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPaymentSpendRuleId(rule.Id).Build(), nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				Return(rule, nil).
 				Times(1)
 		}
 
@@ -91,39 +106,60 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(10000))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
 			assert.NoError(t, err)
 			assert.True(t, authorized)
 		})
+	})
 
-		t.Run("Should refuse an amount above the cap", func(t *testing.T) {
+	t.Run("Given a catch-all rule whose cap is below the amount", func(t *testing.T) {
+		t.Parallel()
+
+		// No Update expectation: a refusal must record no spend.
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+			rule.MaxAmountPerPayment = "10000"
+
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				ListByPolicyIdForUpdate(ctx, policy.Id).
+				Return([]models.PaymentSpendRule{*rule}, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleId(ctx, rule.Id).
+				Return(model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPaymentSpendRuleId(rule.Id).Build(), nil).
+				Times(1)
+		}
+
+		t.Run("Should refuse the amount", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(10001))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10001))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
 		})
 	})
 
-	t.Run("Given two rules match the quote", func(t *testing.T) {
+	t.Run("Given two rules match and the strictest does not cover the amount", func(t *testing.T) {
 		t.Parallel()
 
 		// The effective cap is the minimum, so a narrow rule cannot be widened by adding a broad one.
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 			generous := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			generous.MaxAmount = "1000000"
+			generous.MaxAmountPerPayment = "1000000"
 			strict := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			strict.MaxAmount = "500"
+			strict.MaxAmountPerPayment = "500"
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*generous, *strict}, nil).
 				Times(1)
 			for _, rule := range []*models.PaymentSpendRule{generous, strict} {
@@ -137,25 +173,57 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			}
 		}
 
-		t.Run("Should refuse an amount the strictest rule does not cover", func(t *testing.T) {
+		t.Run("Should refuse the amount", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(501))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(501))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
 		})
+	})
 
-		t.Run("Should authorize an amount the strictest rule covers", func(t *testing.T) {
+	t.Run("Given two rules match and the strictest covers the amount", func(t *testing.T) {
+		t.Parallel()
+
+		// Every match is charged, so each rule's budget stays its own rather than only the binding one.
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+			generous := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+			generous.MaxAmountPerPayment = "1000000"
+			strict := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+			strict.MaxAmountPerPayment = "500"
+
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				ListByPolicyIdForUpdate(ctx, policy.Id).
+				Return([]models.PaymentSpendRule{*generous, *strict}, nil).
+				Times(1)
+			for _, rule := range []*models.PaymentSpendRule{generous, strict} {
+				suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+					GetByRuleId(ctx, rule.Id).
+					Return(
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPaymentSpendRuleId(rule.Id).Build(),
+						nil,
+					).
+					Times(1)
+			}
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				Times(2)
+		}
+
+		t.Run("Should authorize the amount and record it against both rules", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(500))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(500))
 
 			assert.NoError(t, err)
 			assert.True(t, authorized)
@@ -171,7 +239,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
@@ -193,7 +261,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
@@ -207,7 +275,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
-			suite.mockPaymentSpendRuleRepository.EXPECT().ListByPolicyId(ctx, policy.Id).Return(nil, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				ListByPolicyIdForUpdate(ctx, policy.Id).
+				Return(nil, nil).
+				Times(1)
 		}
 
 		t.Run("Should refuse", func(t *testing.T) {
@@ -216,25 +287,25 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
 		})
 	})
 
-	t.Run("Given the matching rule caps at zero", func(t *testing.T) {
+	t.Run("Given the matching rule caps at zero and the quote is priced", func(t *testing.T) {
 		t.Parallel()
 
-		// "0" is the deny idiom: it still matches, so a free quote passes and any priced one does not.
+		// "0" is the deny idiom: the rule still matches, so nothing priced gets through it.
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			rule.MaxAmount = "0"
+			rule.MaxAmountPerPayment = "0"
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
@@ -243,25 +314,49 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should refuse any priced quote", func(t *testing.T) {
+		t.Run("Should refuse it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
 		})
+	})
 
-		t.Run("Should still authorize a free quote", func(t *testing.T) {
+	t.Run("Given the matching rule caps at zero and the quote is free", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+			rule.MaxAmountPerPayment = "0"
+
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				ListByPolicyIdForUpdate(ctx, policy.Id).
+				Return([]models.PaymentSpendRule{*rule}, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleId(ctx, rule.Id).
+				Return(model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPaymentSpendRuleId(rule.Id).Build(), nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				Return(rule, nil).
+				Times(1)
+		}
+
+		t.Run("Should still authorize it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(0))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(0))
 
 			assert.NoError(t, err)
 			assert.True(t, authorized)
@@ -278,7 +373,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 		}
@@ -289,7 +384,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
@@ -305,7 +400,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().GetByRuleId(ctx, rule.Id).Return(nil, nil).Times(1)
@@ -318,7 +413,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
@@ -331,11 +426,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			rule.MaxAmount = "not-a-number"
+			rule.MaxAmountPerPayment = "not-a-number"
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
@@ -351,7 +446,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.False(t, authorized)
 			var internalError *apperrors.InternalError
@@ -375,7 +470,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.False(t, authorized)
 			var internalError *apperrors.InternalError
@@ -391,7 +486,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
@@ -402,7 +497,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.False(t, authorized)
 			var internalError *apperrors.InternalError
@@ -419,7 +514,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
@@ -434,7 +529,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.False(t, authorized)
 			var internalError *apperrors.InternalError
@@ -449,11 +544,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
-			rule.MaxAmount = "-1"
+			rule.MaxAmountPerPayment = "-1"
 
 			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				ListByPolicyId(ctx, policy.Id).
+				ListByPolicyIdForUpdate(ctx, policy.Id).
 				Return([]models.PaymentSpendRule{*rule}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
@@ -468,7 +563,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
 			initSuite(suite)
 
-			authorized, err := suite.sut.IsAuthorized(ctx, authorizedQuote(), big.NewInt(1))
+			authorized, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(1))
 
 			assert.False(t, authorized)
 			var internalError *apperrors.InternalError

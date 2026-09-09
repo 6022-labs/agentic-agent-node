@@ -101,6 +101,21 @@ func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) ListByPolicyId(ct
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByPolicyId", reflect.TypeOf((*MockPaymentSpendRuleRepositoryInterface)(nil).ListByPolicyId), ctx, policyId)
 }
 
+// ListByPolicyIdForUpdate mocks base method.
+func (m *MockPaymentSpendRuleRepositoryInterface) ListByPolicyIdForUpdate(ctx context.Context, policyId uuid.UUID) ([]models.PaymentSpendRule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByPolicyIdForUpdate", ctx, policyId)
+	ret0, _ := ret[0].([]models.PaymentSpendRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByPolicyIdForUpdate indicates an expected call of ListByPolicyIdForUpdate.
+func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) ListByPolicyIdForUpdate(ctx, policyId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByPolicyIdForUpdate", reflect.TypeOf((*MockPaymentSpendRuleRepositoryInterface)(nil).ListByPolicyIdForUpdate), ctx, policyId)
+}
+
 // Update mocks base method.
 func (m *MockPaymentSpendRuleRepositoryInterface) Update(ctx context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
 	m.ctrl.T.Helper()

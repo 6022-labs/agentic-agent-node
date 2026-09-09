@@ -54,7 +54,7 @@ func (u *UpdatePaymentSpendRule) Execute(
 	}
 
 	rule.Name = request.Name
-	rule.MaxAmount = request.MaxAmount
+	rule.MaxAmountPerPayment = request.MaxAmountPerPayment
 	rule.Method = enums.PaymentMethod(request.Method)
 
 	updated, err := u.paymentSpendRuleRepository.Update(ctx, rule)

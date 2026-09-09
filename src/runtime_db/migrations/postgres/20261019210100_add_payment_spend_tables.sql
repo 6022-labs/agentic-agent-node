@@ -16,8 +16,12 @@ CREATE TABLE "public"."payment_spend_rules" (
   "policy_id" character varying(36) NOT NULL,
   "position" bigint NOT NULL,
   "name" character varying(64) NOT NULL,
-  "max_amount" character varying(78) NOT NULL,
+  "max_amount_per_payment" character varying(78) NOT NULL,
   "method" character varying(32) NOT NULL,
+  "window_seconds" bigint NOT NULL DEFAULT 0,
+  "max_amount_per_window" character varying(78) NOT NULL DEFAULT '0',
+  "window_spent" character varying(78) NOT NULL DEFAULT '0',
+  "window_started_at" timestamptz NULL,
   "created_at" timestamptz NOT NULL,
   "updated_at" timestamptz NOT NULL,
   PRIMARY KEY ("id"),
@@ -28,10 +32,10 @@ CREATE INDEX "idx_payment_spend_rules_policy_id" ON "public"."payment_spend_rule
 -- create "payment_spend_rule_x402_configs" table
 CREATE TABLE "public"."payment_spend_rule_x402_configs" (
   "payment_spend_rule_id" character varying(36) NOT NULL,
-  "network_patterns" text NOT NULL,
-  "asset_patterns" text NOT NULL,
+  "network" character varying(64) NOT NULL,
+  "asset" character varying(42) NOT NULL,
+  "asset_transfer_method" character varying(16) NULL,
   "pay_to_patterns" text NOT NULL,
-  "asset_transfer_method_patterns" text NOT NULL,
   PRIMARY KEY ("payment_spend_rule_id"),
   CONSTRAINT "fk_payment_spend_rule_x402_configs_payment_spend_rule" FOREIGN KEY ("payment_spend_rule_id") REFERENCES "public"."payment_spend_rules" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );

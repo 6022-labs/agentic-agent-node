@@ -222,7 +222,7 @@ components:
       properties:
         config:
           type: object
-        maxAmount:
+        maxAmountPerPayment:
           type: string
         method:
           type: string
@@ -743,7 +743,7 @@ components:
           type: object
         id:
           type: string
-        maxAmount:
+        maxAmountPerPayment:
           type: string
         method:
           type: string

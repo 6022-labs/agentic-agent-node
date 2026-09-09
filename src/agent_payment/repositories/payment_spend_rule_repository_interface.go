@@ -18,4 +18,6 @@ type PaymentSpendRuleRepositoryInterface interface {
 	Create(ctx context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error)
 	Update(ctx context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error)
 	DeleteById(ctx context.Context, id uuid.UUID) error
+	// ListByPolicyIdForUpdate reads the rules locked for a caller that will change them.
+	ListByPolicyIdForUpdate(ctx context.Context, policyId uuid.UUID) ([]models.PaymentSpendRule, error)
 }

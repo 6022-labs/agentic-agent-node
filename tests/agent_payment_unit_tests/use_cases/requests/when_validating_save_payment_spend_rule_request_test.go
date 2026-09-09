@@ -15,9 +15,9 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 
 	generateSavePaymentSpendRuleRequest := func() *requests.SavePaymentSpendRuleRequest {
 		return &requests.SavePaymentSpendRuleRequest{
-			Name:      "  Anything, unbounded  ",
-			MaxAmount: "10000",
-			Config:    json.RawMessage(`{"networkPatterns":[".*"]}`),
+			Name:                "  Anything, unbounded  ",
+			MaxAmountPerPayment: "10000",
+			Config:              json.RawMessage(`{"networkPatterns":[".*"]}`),
 		}
 	}
 
@@ -99,7 +99,7 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 			t.Parallel()
 
 			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmount = "0"
+			request.MaxAmountPerPayment = "0"
 
 			assert.NoError(t, request.ValidateAndSanitize())
 		})
@@ -112,7 +112,7 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 			t.Parallel()
 
 			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmount = "-1"
+			request.MaxAmountPerPayment = "-1"
 
 			assert.Error(t, request.ValidateAndSanitize())
 		})
@@ -125,7 +125,7 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 			t.Parallel()
 
 			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmount = "1.5"
+			request.MaxAmountPerPayment = "1.5"
 
 			assert.Error(t, request.ValidateAndSanitize())
 		})
@@ -138,7 +138,7 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 			t.Parallel()
 
 			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmount = "  "
+			request.MaxAmountPerPayment = "  "
 
 			assert.Error(t, request.ValidateAndSanitize())
 		})

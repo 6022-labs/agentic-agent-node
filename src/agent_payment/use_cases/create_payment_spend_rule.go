@@ -67,9 +67,9 @@ func (u *CreatePaymentSpendRule) toPaymentSpendRule(
 	request *requests.SavePaymentSpendRuleRequest,
 ) *models.PaymentSpendRule {
 	return &models.PaymentSpendRule{
-		PolicyId:  policy.Id,
-		Name:      request.Name,
-		MaxAmount: request.MaxAmount,
-		Method:    enums.PaymentMethod(request.Method),
+		PolicyId:            policy.Id,
+		Name:                request.Name,
+		MaxAmountPerPayment: request.MaxAmountPerPayment,
+		Method:              enums.PaymentMethod(request.Method),
 	}
 }

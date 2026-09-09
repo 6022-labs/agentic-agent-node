@@ -41,10 +41,10 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 		initSuite := func(suite *WhenCreatingPaymentSpendRuleTestingSuite) {
 			suite.mockPaymentSpendRuleClient.EXPECT().
 				Create(gomock.Any(), &models.ExternalPaymentSpendRule{
-					Name:      "Only base, small",
-					MaxAmount: "1000",
-					Method:    "x402",
-					Config:    json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
+					Name:                "Only base, small",
+					MaxAmountPerPayment: "1000",
+					Method:              "x402",
+					Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
 				}).
 				Return(&models.ExternalPaymentSpendRule{Id: "rule-id", Name: "Only base, small"}, nil).
 				Times(1)
@@ -57,10 +57,10 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			initSuite(suite)
 
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentSpendRuleRequest{
-				Name:      "Only base, small",
-				MaxAmount: "1000",
-				Method:    "x402",
-				Config:    json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
+				Name:                "Only base, small",
+				MaxAmountPerPayment: "1000",
+				Method:              "x402",
+				Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
 			})
 
 			assert.NoError(t, err)

@@ -15,8 +15,12 @@ CREATE TABLE `payment_spend_rules` (
   `policy_id` varchar(36) NOT NULL,
   `position` bigint NOT NULL,
   `name` varchar(64) NOT NULL,
-  `max_amount` varchar(78) NOT NULL,
+  `max_amount_per_payment` varchar(78) NOT NULL,
   `method` varchar(32) NOT NULL,
+  `window_seconds` bigint NOT NULL DEFAULT 0,
+  `max_amount_per_window` varchar(78) NOT NULL DEFAULT "0",
+  `window_spent` varchar(78) NOT NULL DEFAULT "0",
+  `window_started_at` datetime(3) NULL,
   `created_at` datetime(3) NOT NULL,
   `updated_at` datetime(3) NOT NULL,
   PRIMARY KEY (`id`),
@@ -26,10 +30,10 @@ CREATE TABLE `payment_spend_rules` (
 -- create "payment_spend_rule_x402_configs" table
 CREATE TABLE `payment_spend_rule_x402_configs` (
   `payment_spend_rule_id` varchar(36) NOT NULL,
-  `network_patterns` longtext NOT NULL,
-  `asset_patterns` longtext NOT NULL,
+  `network` varchar(64) NOT NULL,
+  `asset` varchar(42) NOT NULL,
+  `asset_transfer_method` varchar(16) NULL,
   `pay_to_patterns` longtext NOT NULL,
-  `asset_transfer_method_patterns` longtext NOT NULL,
   PRIMARY KEY (`payment_spend_rule_id`),
   CONSTRAINT `fk_payment_spend_rule_x402_configs_payment_spend_rule` FOREIGN KEY (`payment_spend_rule_id`) REFERENCES `payment_spend_rules` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;

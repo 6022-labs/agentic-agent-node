@@ -1,7 +1,7 @@
 import { X402_METHOD } from "@/models/payment-receive-policy"
 
 // PaymentSpendRule is the flat view model the UI works with. The wire format is
-// method-neutral (name/maxAmount/method + a per-method config blob); the query
+// method-neutral (name/maxAmountPerPayment/method + a per-method config blob); the query
 // layer maps between the two so the table and form keep flat fields.
 export type PaymentSpendRule = {
   id?: string
@@ -10,9 +10,9 @@ export type PaymentSpendRule = {
   method: string
   // The most this rule will ever sign for, in the asset's atomic units.
   // "0" denies every priced quote it matches; there is no unlimited sentinel.
-  maxAmount: string
+  maxAmountPerPayment: string
   // Regexes full-matched against the quote's facets. A rule authorizes a quote
-  // only when all four match, and the effective cap is the smallest maxAmount
+  // only when all four match, and the effective cap is the smallest maxAmountPerPayment
   // among the rules that do.
   networkPatterns: string[]
   assetPatterns: string[]
@@ -37,7 +37,7 @@ export type PaymentSpendRuleConfig = {
 export type PaymentSpendRuleWire = {
   id?: string
   name: string
-  maxAmount: string
+  maxAmountPerPayment: string
   method: string
   config: PaymentSpendRuleConfig
 }
@@ -64,15 +64,15 @@ export const UNBOUNDED_MAX_AMOUNT =
   "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 // isUnbounded reports whether a cap leaves the agent effectively unlimited.
-export function isUnbounded(maxAmount: string): boolean {
-  return maxAmount === UNBOUNDED_MAX_AMOUNT
+export function isUnbounded(maxAmountPerPayment: string): boolean {
+  return maxAmountPerPayment === UNBOUNDED_MAX_AMOUNT
 }
 
 // isOpenToEverything reports whether a rule constrains nothing at all — the
 // state a freshly seeded agent starts in.
 export function isOpenToEverything(rule: PaymentSpendRule): boolean {
   return (
-    isUnbounded(rule.maxAmount) &&
+    isUnbounded(rule.maxAmountPerPayment) &&
     [
       rule.networkPatterns,
       rule.assetPatterns,

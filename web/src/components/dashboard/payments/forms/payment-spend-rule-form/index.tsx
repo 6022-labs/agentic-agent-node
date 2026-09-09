@@ -47,7 +47,7 @@ export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Pr
     defaultValues: {
       name: initialRule?.name ?? "",
       method: initialRule?.method || X402_METHOD,
-      maxAmount: initialRule?.maxAmount ?? "",
+      maxAmountPerPayment: initialRule?.maxAmountPerPayment ?? "",
       networkPatterns: toLines(initialRule?.networkPatterns),
       assetPatterns: toLines(initialRule?.assetPatterns),
       payToPatterns: toLines(initialRule?.payToPatterns),
@@ -128,7 +128,7 @@ export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Pr
 
         <FormField
           control={form.control}
-          name="maxAmount"
+          name="maxAmountPerPayment"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cap per payment</FormLabel>

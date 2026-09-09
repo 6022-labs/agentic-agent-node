@@ -23,7 +23,7 @@ func (t *ListPaymentSpendRulesTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "list_payment_spend_rules",
 		Description: "List your own spend rules. A quote you are asked to sign must match a rule on every facet, " +
-			"and is capped by the smallest matching maxAmount.",
+			"and is capped by the smallest matching maxAmountPerPayment.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{}, nil),
 	}
 }

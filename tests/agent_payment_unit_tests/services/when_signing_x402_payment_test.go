@@ -39,7 +39,6 @@ type WhenSigningX402PaymentTestingSuite struct {
 	mockTypedDataSigner        *identity_mocks.MockTypedDataSignerInterface
 	mockPermit2ApprovalEnsurer *interfaces_mocks.MockPermit2ApprovalEnsurerInterface
 	mockSpendPolicyEvaluator   *interfaces_mocks.MockX402PaymentSpendPolicyEvaluatorInterface
-	spendAuthorized            bool
 	walletKey                  *ecdsa.PrivateKey
 	walletAddress              common.Address
 }
@@ -83,15 +82,6 @@ func WhenSigningX402PaymentBeforeEach(t *testing.T) *WhenSigningX402PaymentTesti
 		walletAddress:              walletAddress,
 	}
 
-	// The gate has its own suite; here it authorizes unless a Given clears spendAuthorized.
-	suite.spendAuthorized = true
-	mockSpendPolicyEvaluator.EXPECT().
-		IsAuthorized(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _ *payment_interfaces.X402PaymentQuote, _ *big.Int) (bool, error) {
-			return suite.spendAuthorized, nil
-		}).
-		AnyTimes()
-
 	return suite
 }
 
@@ -126,10 +116,18 @@ func TestWhenSigningX402Payment(t *testing.T) {
 	t.Run("Given an eip3009 quote", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+		}
+
 		t.Run("Should build an authorization bound to the payee and a bounded validity window", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
@@ -163,10 +161,23 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.Equal(t, signed.ValidBefore, validBefore.Int64())
 		})
 
+	})
+
+	t.Run("Given the same eip3009 quote is signed twice", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(2)
+		}
+
 		t.Run("Should draw a fresh nonce every time", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
 			quote := &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
 				Asset:               signingAsset,
@@ -192,13 +203,22 @@ func TestWhenSigningX402Payment(t *testing.T) {
 	t.Run("Given a permit2 quote", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+			suite.mockPermit2ApprovalEnsurer.EXPECT().
+				EnsureApproval(ctx, signingNetwork, signingAsset, big.NewInt(10000)).
+				Return(nil).
+				Times(1)
+		}
+
 		t.Run("Should approve permit2 first and sign over its fixed spender", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
-			suite.mockPermit2ApprovalEnsurer.EXPECT().
-				EnsureApproval(ctx, signingNetwork, signingAsset, big.NewInt(10000)).
-				Return(nil)
+			initSuite(suite)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
@@ -219,10 +239,23 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.Equal(t, signingPayTo, authorization.Witness.To)
 		})
 
-		t.Run("Should skip the approval for a zero-price quote", func(t *testing.T) {
+	})
+
+	t.Run("Given a zero-price permit2 quote", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+		}
+
+		t.Run("Should skip the approval", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
@@ -236,13 +269,27 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.NotEmpty(t, signed.PaymentSignature)
 		})
 
+	})
+
+	t.Run("Given the permit2 approval fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+			suite.mockPermit2ApprovalEnsurer.EXPECT().
+				EnsureApproval(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(errors.New("insufficient gas")).
+				Times(1)
+		}
+
 		t.Run("Should fail rather than return a signature that can never settle", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
-			suite.mockPermit2ApprovalEnsurer.EXPECT().
-				EnsureApproval(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(errors.New("insufficient gas"))
+			initSuite(suite)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
@@ -260,7 +307,8 @@ func TestWhenSigningX402Payment(t *testing.T) {
 	t.Run("Given an unsupported transfer method", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should refuse to sign", func(t *testing.T) {
+		// No spend expectation: a malformed quote must be rejected before the gate, or it burns budget.
+		t.Run("Should refuse to sign without consulting the spend policy", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
@@ -284,7 +332,10 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
-			suite.spendAuthorized = false
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(false, nil).
+				Times(1)
 		}
 
 		t.Run("Should return the refusal instead of a signature", func(t *testing.T) {
@@ -314,9 +365,6 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
 			initSuite(suite)
-			suite.mockPermit2ApprovalEnsurer.EXPECT().
-				EnsureApproval(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Times(0)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,

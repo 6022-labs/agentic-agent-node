@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
-
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -94,17 +94,17 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 
 					config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
 						WithPaymentSpendRuleId(suite.rule.Id).
-						WithNetworkPatterns([]string{"eip155:80002"}).
-						WithAssetTransferMethodPatterns([]string{"eip3009"}).
+						WithNetwork("eip155:80002").
+						WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
 						Build()
 
 					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
 
 					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
 					assert.NoError(t, err)
-					assert.Equal(t, []string{"eip155:80002"}, stored.NetworkPatterns)
-					assert.Equal(t, []string{"eip3009"}, stored.AssetTransferMethodPatterns)
-					assert.Equal(t, config.AssetPatterns, stored.AssetPatterns)
+					assert.Equal(t, "eip155:80002", stored.Network)
+					assert.Equal(t, enums.AssetTransferMethodEip3009, *stored.AssetTransferMethod)
+					assert.Equal(t, config.Asset, stored.Asset)
 					assert.Equal(t, config.PayToPatterns, stored.PayToPatterns)
 				})
 			})

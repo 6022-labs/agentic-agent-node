@@ -1,9 +1,9 @@
-h1:w+AxkTpvxnEth+7N2sii02Tq+vQ1JU0cEf3MoHuozbU=
+h1:SyIH5WpSwFHsdMsUpO8zpBlSjffmA2L/et8ONZFXVAE=
 20260721111609_initial.sql h1:80U83ZR47qC1ZpTyOuFNQZYLQif/kyJIspbaUmDyAfs=
 20260725141200_add_mcp_connection_allowed_tool_patterns.sql h1:DmBqvGk6AhrxJxLZxp8U/jeU12Ef8NbO3vUKRdQZaQw=
 20260807004810_add_self_tools.sql h1:TCDLT1WIgf76G1I4rQK5t1VH1FLp9b8u4Vkz4V4IE/o=
 20260823221119_add_conversation_name.sql h1:LCh9M9+eDMI5tU2oKg+Zz8cIhwH6Lw6LC8Txe1QsaYI=
 20260930204116_add_conversation_caller_id.sql h1:tAwnkACf6oxpXKzE5VN5Mp2D/TTaNKURabESx25YNVk=
 20261019210000_rename_payment_tables_to_receive.sql h1:q62AHCQ1nYMA/0ZGgMBfYF/YrAFdC/AeACPjbRut+/Y=
-20261019210100_add_payment_spend_tables.sql h1:rqzQduyd3X5P3OCUqNNVkY4S7PnasyEgNGA/qKDrRKI=
-20261102185118_receive_rule_per_token.sql h1:BRL2SEdkRsEvWytOc7img44UdMU/iOp2pHlvqVeeJUo=
+20261019210100_add_payment_spend_tables.sql h1:HsXLq+/ukZdJ0Vi/IV5CNg9vtTOX5salWJn//qnjsb0=
+20261102185118_receive_rule_per_token.sql h1:j5+9NynkduQHkugnvVwEpFV89L/uagWpf0AJHIy71oU=

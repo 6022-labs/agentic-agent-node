@@ -41,9 +41,9 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 
 	validArgs := func() map[string]any {
 		return map[string]any{
-			"name":      "Only base, small",
-			"maxAmount": "1000",
-			"config":    map[string]any{"networkPatterns": []any{"eip155:8453"}},
+			"name":                "Only base, small",
+			"maxAmountPerPayment": "1000",
+			"config":              map[string]any{"networkPatterns": []any{"eip155:8453"}},
 		}
 	}
 
@@ -75,7 +75,7 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 					request *payment_requests.SavePaymentSpendRuleRequest,
 				) (*payment_responses.PaymentSpendRuleResponse, error) {
 					assert.Equal(t, "Only base, small", request.Name)
-					assert.Equal(t, "1000", request.MaxAmount)
+					assert.Equal(t, "1000", request.MaxAmountPerPayment)
 					assert.Contains(t, string(request.Config), "eip155:8453")
 					return &payment_responses.PaymentSpendRuleResponse{}, nil
 				})
@@ -84,6 +84,17 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, out)
+		})
+
+		t.Run("Should read every argument the tool asks for", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+
+			for _, name := range suite.sut.Definition().InputScheme.Required {
+				_, ok := validArgs()[name]
+				assert.True(t, ok, "the schema requires %q but Execute never reads it", name)
+			}
 		})
 	})
 
@@ -96,7 +107,7 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
 
 			args := validArgs()
-			delete(args, "maxAmount")
+			delete(args, "maxAmountPerPayment")
 			out, err := suite.sut.Execute(ctx, args)
 
 			assert.Nil(t, out)

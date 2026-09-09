@@ -26,7 +26,7 @@ export const paymentSpendRuleFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(64, "Max 64 characters"),
   method: z.string().min(1),
   // Atomic units, matching the runtime: "0" denies every priced quote in scope.
-  maxAmount: z
+  maxAmountPerPayment: z
     .string()
     .trim()
     .regex(/^\d+$/, "Whole atomic units, e.g. 1000000 (0 = deny)"),

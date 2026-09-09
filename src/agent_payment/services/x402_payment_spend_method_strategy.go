@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	"github.com/ethereum/go-ethereum/common"
 	"regexp"
 	"strings"
 
@@ -40,22 +42,35 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 		return err
 	}
 
-	facets := []struct {
-		field    string
-		patterns *[]string
-	}{
-		{"networkPatterns", &config.NetworkPatterns},
-		{"assetPatterns", &config.AssetPatterns},
-		{"payToPatterns", &config.PayToPatterns},
-		{"assetTransferMethodPatterns", &config.AssetTransferMethodPatterns},
+	config.Network = strings.TrimSpace(config.Network)
+	config.Asset = strings.TrimSpace(config.Asset)
+
+	// The x402 network is CAIP-2.
+	if _, err := helpers.ParseCaip2(config.Network); err != nil {
+		return errors.NewValidationError("config.network", err.Error())
 	}
-	for _, facet := range facets {
-		sanitized, err := s.sanitizePatterns(facet.field, *facet.patterns)
-		if err != nil {
-			return err
+	if !common.IsHexAddress(config.Asset) {
+		return errors.NewValidationError("config.asset", "must be the token contract address")
+	}
+	// Lowercased so the stored value reads the same whatever case was pasted.
+	config.Asset = strings.ToLower(config.Asset)
+
+	if config.AssetTransferMethod != nil {
+		var method enums.AssetTransferMethod
+		if err := method.Set(config.AssetTransferMethod.String()); err != nil {
+			return errors.NewValidationError(
+				"config.assetTransferMethod",
+				"must be one of eip3009, permit2, or omitted",
+			)
 		}
-		*facet.patterns = sanitized
+		config.AssetTransferMethod = &method
 	}
+
+	sanitized, err := s.sanitizePayToPatterns(config.PayToPatterns)
+	if err != nil {
+		return err
+	}
+	config.PayToPatterns = sanitized
 
 	raw, err := config.Marshal()
 	if err != nil {
@@ -65,12 +80,12 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 	return nil
 }
 
-// sanitizePatterns trims and compiles each pattern; an empty array would match nothing, denying the facet outright.
-func (s *X402PaymentSpendMethodStrategy) sanitizePatterns(field string, patterns []string) ([]string, error) {
+// sanitizePayToPatterns rejects an empty array, which would match nobody.
+func (s *X402PaymentSpendMethodStrategy) sanitizePayToPatterns(patterns []string) ([]string, error) {
 	if len(patterns) == 0 {
 		return nil, errors.NewValidationError(
-			"config."+field,
-			"at least one pattern is required (\".*\" allows every value)",
+			"config.payToPatterns",
+			"at least one pattern is required (\".*\" allows every payee)",
 		)
 	}
 
@@ -78,10 +93,17 @@ func (s *X402PaymentSpendMethodStrategy) sanitizePatterns(field string, patterns
 	for _, pattern := range patterns {
 		trimmed := strings.TrimSpace(pattern)
 		if len(trimmed) == 0 {
-			return nil, errors.NewValidationError("config."+field, "patterns cannot be empty")
+			return nil, errors.NewValidationError("config.payToPatterns", "patterns cannot be empty")
 		}
 		if _, err := regexp.Compile(trimmed); err != nil {
-			return nil, errors.NewValidationError("config."+field, "must be valid regexes")
+			return nil, errors.NewValidationError(
+				"config.payToPatterns",
+				"must be valid regexes matched against the payee address",
+			)
+		}
+		// A pasted checksummed address would compile and then never match the lowercased payee.
+		if common.IsHexAddress(trimmed) {
+			trimmed = strings.ToLower(trimmed)
 		}
 		sanitized = append(sanitized, trimmed)
 	}

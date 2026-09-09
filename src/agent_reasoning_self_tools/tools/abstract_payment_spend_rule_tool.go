@@ -20,7 +20,7 @@ func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequestFromArgs(
 	if err != nil {
 		return nil, err
 	}
-	maxAmount, err := utils.StringArg(args, "maxAmount")
+	maxAmountPerPayment, err := utils.StringArg(args, "maxAmountPerPayment")
 	if err != nil {
 		return nil, err
 	}
@@ -29,9 +29,9 @@ func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequestFromArgs(
 		return nil, err
 	}
 	return &payment_requests.SavePaymentSpendRuleRequest{
-		Name:      name,
-		MaxAmount: maxAmount,
-		Method:    utils.OptionalStringArg(args, "method"),
-		Config:    config,
+		Name:                name,
+		MaxAmountPerPayment: maxAmountPerPayment,
+		Method:              utils.OptionalStringArg(args, "method"),
+		Config:              config,
 	}, nil
 }

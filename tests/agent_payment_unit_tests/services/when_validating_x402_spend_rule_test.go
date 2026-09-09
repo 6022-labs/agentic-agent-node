@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -50,90 +51,108 @@ func TestWhenValidatingX402SpendRule(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given every facet carries a valid pattern", func(t *testing.T) {
+	t.Run("Given a concrete network and asset with a payee pattern", func(t *testing.T) {
 		t.Parallel()
 
-		initRequest := func(t *testing.T) *requests.SavePaymentSpendRuleRequest {
-			t.Helper()
-
-			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
-				WithNetworkPatterns([]string{"  eip155:80002  "}).
-				WithAssetTransferMethodPatterns([]string{"eip3009"}).
-				Build()
-			return &requests.SavePaymentSpendRuleRequest{Config: spendConfigJson(t, config)}
-		}
-
-		t.Run("Should accept it and trim each pattern", func(t *testing.T) {
+		t.Run("Should accept it and lowercase the asset", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402SpendRuleBeforeEach(t)
-			request := initRequest(t)
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+				WithAsset("0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				Build()
 
+			request := &requests.SavePaymentSpendRuleRequest{Config: spendConfigJson(t, config)}
 			assert.NoError(t, suite.sut.Validate(ctx, request))
 
 			var sanitized models.PaymentSpendRuleX402Config
 			assert.NoError(t, sanitized.Parse(request.Config))
-			assert.Equal(t, []string{"eip155:80002"}, sanitized.NetworkPatterns)
+			assert.Equal(t, "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582", sanitized.Asset)
+			assert.Equal(t, "eip155:80002", sanitized.Network)
 		})
 
-		// The receive strategy probes the chain for the asset's EIP-712 domain;
-		// a matcher has no concrete asset, so this one must stay offline.
+		// Unlike receive, a spend rule only names the token, so validation never probes the chain.
 		t.Run("Should not persist anything while validating", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402SpendRuleBeforeEach(t)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Times(0)
 
-			assert.NoError(t, suite.sut.Validate(ctx, initRequest(t)))
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().Build()
+			assert.NoError(t, suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
+				Config: spendConfigJson(t, config),
+			}))
 		})
 	})
 
-	t.Run("Given a facet is empty", func(t *testing.T) {
+	t.Run("Given the network is not a CAIP-2 id", func(t *testing.T) {
 		t.Parallel()
 
-		// An empty array matches nothing, so it would deny the facet outright
-		// rather than open it — refuse instead of storing a silent deny.
-		emptyFacets := []struct {
-			field  string
-			mutate func(*models.PaymentSpendRuleX402Config)
-		}{
-			{"config.networkPatterns", func(c *models.PaymentSpendRuleX402Config) { c.NetworkPatterns = nil }},
-			{"config.assetPatterns", func(c *models.PaymentSpendRuleX402Config) { c.AssetPatterns = nil }},
-			{"config.payToPatterns", func(c *models.PaymentSpendRuleX402Config) { c.PayToPatterns = nil }},
-			{
-				"config.assetTransferMethodPatterns",
-				func(c *models.PaymentSpendRuleX402Config) { c.AssetTransferMethodPatterns = nil },
-			},
-		}
+		// The amounts are atomic units of one token on one chain, so neither may be a pattern.
+		t.Run("Should refuse it", func(t *testing.T) {
+			t.Parallel()
 
-		for _, emptyFacet := range emptyFacets {
-			t.Run("Should refuse when "+emptyFacet.field+" is missing", func(t *testing.T) {
-				t.Parallel()
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithNetwork(".*").Build()
 
-				suite := WhenValidatingX402SpendRuleBeforeEach(t)
-				config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().Build()
-				emptyFacet.mutate(config)
-
-				err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
-					Config: spendConfigJson(t, config),
-				})
-
-				var validationError *apperrors.ValidationError
-				assert.ErrorAs(t, err, &validationError)
-				assert.Equal(t, emptyFacet.field, validationError.Field)
+			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
+				Config: spendConfigJson(t, config),
 			})
-		}
+
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "config.network", validationError.Field)
+		})
 	})
 
-	t.Run("Given a pattern that cannot compile", func(t *testing.T) {
+	t.Run("Given the asset is not a contract address", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should refuse it rather than store a rule that never matches", func(t *testing.T) {
+		t.Run("Should refuse it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithAsset(".*").Build()
+
+			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
+				Config: spendConfigJson(t, config),
+			})
+
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "config.asset", validationError.Field)
+		})
+	})
+
+	t.Run("Given no payee pattern", func(t *testing.T) {
+		t.Parallel()
+
+		// An empty array matches nobody, so the rule could never authorize anything.
+		t.Run("Should refuse rather than store a rule that never fires", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithPayToPatterns(nil).Build()
+
+			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
+				Config: spendConfigJson(t, config),
+			})
+
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "config.payToPatterns", validationError.Field)
+		})
+	})
+
+	t.Run("Given a payee pattern that cannot compile", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should refuse it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402SpendRuleBeforeEach(t)
 			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
-				WithNetworkPatterns([]string{"0x[("}).
+				WithPayToPatterns([]string{"0x[("}).
 				Build()
 
 			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
@@ -142,26 +161,48 @@ func TestWhenValidatingX402SpendRule(t *testing.T) {
 
 			var validationError *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "config.networkPatterns", validationError.Field)
+			assert.Equal(t, "config.payToPatterns", validationError.Field)
 		})
 	})
 
-	t.Run("Given a blank pattern", func(t *testing.T) {
+	t.Run("Given a payee pattern spelled as a checksummed address", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should be stored lowercased", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+				WithPayToPatterns([]string{"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}).
+				Build()
+
+			request := &requests.SavePaymentSpendRuleRequest{Config: spendConfigJson(t, config)}
+			assert.NoError(t, suite.sut.Validate(ctx, request))
+
+			var sanitized models.PaymentSpendRuleX402Config
+			assert.NoError(t, sanitized.Parse(request.Config))
+			assert.Equal(t, []string{"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"}, sanitized.PayToPatterns)
+		})
+	})
+
+	t.Run("Given an unsupported transfer-method constraint", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should refuse it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402SpendRuleBeforeEach(t)
-			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
-				WithAssetPatterns([]string{"   "}).
-				Build()
+			unsupported := enums.AssetTransferMethod("swap")
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().Build()
+			config.AssetTransferMethod = &unsupported
 
 			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
 				Config: spendConfigJson(t, config),
 			})
 
-			assert.ErrorContains(t, err, "cannot be empty")
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "config.assetTransferMethod", validationError.Field)
 		})
 	})
 

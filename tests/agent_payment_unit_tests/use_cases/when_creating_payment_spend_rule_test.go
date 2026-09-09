@@ -55,9 +55,9 @@ func generateSavePaymentSpendRuleRequest(t *testing.T) *requests.SavePaymentSpen
 	assert.NoError(t, err)
 
 	return &requests.SavePaymentSpendRuleRequest{
-		Name:      "Anything, unbounded",
-		MaxAmount: "10000",
-		Config:    config,
+		Name:                "Anything, unbounded",
+		MaxAmountPerPayment: "10000",
+		Config:              config,
 	}
 }
 
@@ -77,7 +77,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				DoAndReturn(func(_ context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
 					assert.Equal(t, policy.Id, rule.PolicyId)
 					assert.Equal(t, "Anything, unbounded", rule.Name)
-					assert.Equal(t, "10000", rule.MaxAmount)
+					assert.Equal(t, "10000", rule.MaxAmountPerPayment)
 					assert.Equal(t, enums.PaymentMethodX402, rule.Method)
 					return rule, nil
 				}).
@@ -97,7 +97,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Anything, unbounded", rule.Name)
-			assert.Equal(t, "10000", rule.MaxAmount)
+			assert.Equal(t, "10000", rule.MaxAmountPerPayment)
 		})
 	})
 

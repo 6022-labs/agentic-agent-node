@@ -42,17 +42,17 @@ func (m *MockX402PaymentSpendPolicyEvaluatorInterface) EXPECT() *MockX402Payment
 	return m.recorder
 }
 
-// IsAuthorized mocks base method.
-func (m *MockX402PaymentSpendPolicyEvaluatorInterface) IsAuthorized(ctx context.Context, quote *interfaces.X402PaymentQuote, amount *big.Int) (bool, error) {
+// Authorize mocks base method.
+func (m *MockX402PaymentSpendPolicyEvaluatorInterface) Authorize(ctx context.Context, quote *interfaces.X402PaymentQuote, amount *big.Int) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAuthorized", ctx, quote, amount)
+	ret := m.ctrl.Call(m, "Authorize", ctx, quote, amount)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IsAuthorized indicates an expected call of IsAuthorized.
-func (mr *MockX402PaymentSpendPolicyEvaluatorInterfaceMockRecorder) IsAuthorized(ctx, quote, amount any) *gomock.Call {
+// Authorize indicates an expected call of Authorize.
+func (mr *MockX402PaymentSpendPolicyEvaluatorInterfaceMockRecorder) Authorize(ctx, quote, amount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAuthorized", reflect.TypeOf((*MockX402PaymentSpendPolicyEvaluatorInterface)(nil).IsAuthorized), ctx, quote, amount)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authorize", reflect.TypeOf((*MockX402PaymentSpendPolicyEvaluatorInterface)(nil).Authorize), ctx, quote, amount)
 }

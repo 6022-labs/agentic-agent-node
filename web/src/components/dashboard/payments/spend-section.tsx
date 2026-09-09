@@ -53,7 +53,7 @@ const MAX_PATTERN_CHIPS = 2
 const FORM_FIELDS: Array<keyof PaymentSpendRuleFormSchemaType> = [
   "name",
   "method",
-  "maxAmount",
+  "maxAmountPerPayment",
   "networkPatterns",
   "assetPatterns",
   "payToPatterns",
@@ -100,7 +100,7 @@ export default function PaymentSpendPolicySection() {
   const toRule = (values: PaymentSpendRuleFormSchemaType): PaymentSpendRule => ({
     name: values.name,
     method: values.method,
-    maxAmount: values.maxAmount,
+    maxAmountPerPayment: values.maxAmountPerPayment,
     networkPatterns: splitPatterns(values.networkPatterns),
     assetPatterns: splitPatterns(values.assetPatterns),
     payToPatterns: splitPatterns(values.payToPatterns),
@@ -246,15 +246,15 @@ export default function PaymentSpendPolicySection() {
                     <TableRow key={rule.id ?? rule.name}>
                       <TableCell className="font-medium">{rule.name}</TableCell>
                       <TableCell>
-                        {isUnbounded(rule.maxAmount) ? (
+                        {isUnbounded(rule.maxAmountPerPayment) ? (
                           <Badge variant="destructive">unbounded</Badge>
-                        ) : rule.maxAmount === "0" ? (
+                        ) : rule.maxAmountPerPayment === "0" ? (
                           <Badge variant="secondary">denies</Badge>
                         ) : (
-                          <span className="font-mono text-xs" title={rule.maxAmount}>
-                            {rule.maxAmount.length > 12
-                              ? `${rule.maxAmount.slice(0, 12)}…`
-                              : rule.maxAmount}
+                          <span className="font-mono text-xs" title={rule.maxAmountPerPayment}>
+                            {rule.maxAmountPerPayment.length > 12
+                              ? `${rule.maxAmountPerPayment.slice(0, 12)}…`
+                              : rule.maxAmountPerPayment}
                           </span>
                         )}
                       </TableCell>

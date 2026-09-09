@@ -7,11 +7,11 @@ import (
 
 // ExternalPaymentSpendRule mirrors a runtime spend rule; Id is empty in create/update bodies.
 type ExternalPaymentSpendRule struct {
-	Id        string          `json:"id,omitempty"`
-	Name      string          `json:"name"`
-	MaxAmount string          `json:"maxAmount"`
-	Method    string          `json:"method"`
-	Config    json.RawMessage `json:"config"       swaggertype:"object"`
+	Id                  string          `json:"id,omitempty"`
+	Name                string          `json:"name"`
+	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
+	Method              string          `json:"method"`
+	Config              json.RawMessage `json:"config"              swaggertype:"object"`
 }
 
 // ExternalPaymentSpendPolicyPayload mirrors the runtime's spend policy head.

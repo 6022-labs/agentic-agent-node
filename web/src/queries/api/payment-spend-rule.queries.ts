@@ -13,7 +13,7 @@ import {
 const toWire = (rule: PaymentSpendRule): PaymentSpendRuleWire => ({
   id: rule.id,
   name: rule.name,
-  maxAmount: rule.maxAmount,
+  maxAmountPerPayment: rule.maxAmountPerPayment,
   method: rule.method || X402_METHOD,
   config: {
     networkPatterns: rule.networkPatterns,
@@ -27,7 +27,7 @@ const toWire = (rule: PaymentSpendRule): PaymentSpendRuleWire => ({
 const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
   id: wire.id,
   name: wire.name,
-  maxAmount: wire.maxAmount,
+  maxAmountPerPayment: wire.maxAmountPerPayment,
   method: wire.method,
   networkPatterns: wire.config?.networkPatterns ?? [],
   assetPatterns: wire.config?.assetPatterns ?? [],

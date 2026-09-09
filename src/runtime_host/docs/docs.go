@@ -2295,7 +2295,7 @@ const docTemplate = `{
                 "config": {
                     "type": "object"
                 },
-                "maxAmount": {
+                "maxAmountPerPayment": {
                     "type": "string"
                 },
                 "method": {
@@ -3042,7 +3042,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "maxAmount": {
+                "maxAmountPerPayment": {
                     "type": "string"
                 },
                 "method": {

@@ -180,10 +180,10 @@ type RequestsSavePaymentReceiveRuleRequest struct {
 
 // RequestsSavePaymentSpendRuleRequest defines model for requests.SavePaymentSpendRuleRequest.
 type RequestsSavePaymentSpendRuleRequest struct {
-	Config    *map[string]interface{} `json:"config,omitempty"`
-	MaxAmount *string                 `json:"maxAmount,omitempty"`
-	Method    *string                 `json:"method,omitempty"`
-	Name      *string                 `json:"name,omitempty"`
+	Config              *map[string]interface{} `json:"config,omitempty"`
+	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
+	Method              *string                 `json:"method,omitempty"`
+	Name                *string                 `json:"name,omitempty"`
 }
 
 // RequestsSetAgentGuidanceRequest defines model for requests.SetAgentGuidanceRequest.
@@ -503,13 +503,13 @@ type ResponsesPaymentSpendPolicyResponse struct {
 
 // ResponsesPaymentSpendRuleResponse defines model for responses.PaymentSpendRuleResponse.
 type ResponsesPaymentSpendRuleResponse struct {
-	Config    *map[string]interface{} `json:"config,omitempty"`
-	CreatedAt *string                 `json:"createdAt,omitempty"`
-	Id        *string                 `json:"id,omitempty"`
-	MaxAmount *string                 `json:"maxAmount,omitempty"`
-	Method    *string                 `json:"method,omitempty"`
-	Name      *string                 `json:"name,omitempty"`
-	UpdatedAt *string                 `json:"updatedAt,omitempty"`
+	Config              *map[string]interface{} `json:"config,omitempty"`
+	CreatedAt           *string                 `json:"createdAt,omitempty"`
+	Id                  *string                 `json:"id,omitempty"`
+	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
+	Method              *string                 `json:"method,omitempty"`
+	Name                *string                 `json:"name,omitempty"`
+	UpdatedAt           *string                 `json:"updatedAt,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.

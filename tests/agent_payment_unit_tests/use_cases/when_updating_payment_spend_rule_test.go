@@ -73,7 +73,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Update(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, updated *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
 					assert.Equal(t, "Anything, unbounded", updated.Name)
-					assert.Equal(t, "10000", updated.MaxAmount)
+					assert.Equal(t, "10000", updated.MaxAmountPerPayment)
 					assert.Equal(t, enums.PaymentMethodX402, updated.Method)
 					return updated, nil
 				}).
@@ -244,7 +244,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
 
 			request := generateUpdatePaymentSpendRuleRequest(t, uuid.New())
-			request.MaxAmount = "-1"
+			request.MaxAmountPerPayment = "-1"
 			updated, err := suite.sut.Execute(context.Background(), request)
 
 			assert.Nil(t, updated)

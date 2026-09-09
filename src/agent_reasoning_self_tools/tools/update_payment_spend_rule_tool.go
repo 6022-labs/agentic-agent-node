@@ -32,7 +32,7 @@ func (t *UpdatePaymentSpendRuleTool) Definition() *models.Tool {
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"id":   utils.StringProperty("The rule id."),
 			"name": utils.StringProperty("Rule name (1-64 characters)."),
-			"maxAmount": utils.StringProperty(
+			"maxAmountPerPayment": utils.StringProperty(
 				"Non-negative integer cap in the asset's atomic units (0 denies anything priced).",
 			),
 			"method": utils.StringProperty("Payment method; defaults to x402."),
@@ -40,7 +40,7 @@ func (t *UpdatePaymentSpendRuleTool) Definition() *models.Tool {
 				"Method-specific matcher. For x402: {networkPatterns, assetPatterns, payToPatterns, " +
 					"assetTransferMethodPatterns}, each a non-empty array of regexes.",
 			),
-		}, []string{"id", "name", "maxAmount", "config"}),
+		}, []string{"id", "name", "maxAmountPerPayment", "config"}),
 	}
 }
 

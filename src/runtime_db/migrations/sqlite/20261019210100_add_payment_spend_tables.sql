@@ -18,8 +18,12 @@ CREATE TABLE `payment_spend_rules` (
   `policy_id` text NOT NULL,
   `position` integer NOT NULL,
   `name` text NOT NULL,
-  `max_amount` text NOT NULL,
+  `max_amount_per_payment` text NOT NULL,
   `method` text NOT NULL,
+  `window_seconds` integer NOT NULL DEFAULT 0,
+  `max_amount_per_window` text NOT NULL DEFAULT '0',
+  `window_spent` text NOT NULL DEFAULT '0',
+  `window_started_at` datetime NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
@@ -30,10 +34,10 @@ CREATE INDEX `idx_payment_spend_rules_policy_id` ON `payment_spend_rules` (`poli
 -- create "payment_spend_rule_x402_configs" table
 CREATE TABLE `payment_spend_rule_x402_configs` (
   `payment_spend_rule_id` text NULL,
-  `network_patterns` text NOT NULL,
-  `asset_patterns` text NOT NULL,
+  `network` text NOT NULL,
+  `asset` text NOT NULL,
+  `asset_transfer_method` text NULL,
   `pay_to_patterns` text NOT NULL,
-  `asset_transfer_method_patterns` text NOT NULL,
   PRIMARY KEY (`payment_spend_rule_id`),
   CONSTRAINT `fk_payment_spend_rule_x402_configs_payment_spend_rule` FOREIGN KEY (`payment_spend_rule_id`) REFERENCES `payment_spend_rules` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 );

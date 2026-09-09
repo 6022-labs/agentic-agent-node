@@ -42,7 +42,7 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 				Return(&clients.GetInternalConfigPaymentSpendPolicyRulesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body: []byte(
-						`{"rules":[{"id":"r1","name":"Anything, unbounded","maxAmount":"1000","method":"x402",` +
+						`{"rules":[{"id":"r1","name":"Anything, unbounded","maxAmountPerPayment":"1000","method":"x402",` +
 							`"config":{"networkPatterns":[".*"],"assetPatterns":[".*"]}}]}`,
 					),
 				}, nil)
@@ -59,7 +59,7 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.Len(t, rules, 1) {
 				assert.Equal(t, "r1", rules[0].Id)
-				assert.Equal(t, "1000", rules[0].MaxAmount)
+				assert.Equal(t, "1000", rules[0].MaxAmountPerPayment)
 				assert.Contains(t, string(rules[0].Config), "networkPatterns")
 			}
 		})

@@ -10,11 +10,10 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
-// The contract between the two halves of x402: a payment the signer produced must
-// recover to the very same wallet. Both sides hash through src/common/x402, so a
-// drift here means the shared digest builders moved under one of them.
+// A payment the signer produced must recover to the same wallet the verifier checks against.
 func TestWhenRecoveringASelfSignedPayer(t *testing.T) {
 	t.Parallel()
 
@@ -23,10 +22,18 @@ func TestWhenRecoveringASelfSignedPayer(t *testing.T) {
 	t.Run("Given an eip3009 payment signed by the agent wallet", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+		}
+
 		t.Run("Should recover as that same wallet", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
 
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
@@ -59,10 +66,18 @@ func TestWhenRecoveringASelfSignedPayer(t *testing.T) {
 	t.Run("Given a permit2 payment signed by the agent wallet", func(t *testing.T) {
 		t.Parallel()
 
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(true, nil).
+				Times(1)
+		}
+
 		t.Run("Should recover as that same wallet", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
 
 			// Zero-price keeps the on-chain approval out of a unit test.
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{

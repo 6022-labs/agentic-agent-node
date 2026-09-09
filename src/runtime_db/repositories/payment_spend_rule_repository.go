@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 	"errors"
+	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
+	"gorm.io/gorm/clause"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -78,4 +80,21 @@ func (r *PaymentSpendRuleRepository) Update(
 
 func (r *PaymentSpendRuleRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	return r.client.GetDB(ctx).Delete(&models.PaymentSpendRule{}, "id = ?", id).Error
+}
+
+func (r *PaymentSpendRuleRepository) ListByPolicyIdForUpdate(
+	ctx context.Context,
+	policyId uuid.UUID,
+) ([]models.PaymentSpendRule, error) {
+	query := r.client.GetDB(ctx).Where("policy_id = ?", policyId).Order("id ASC")
+	// sqlite has no row locks; DatabaseClient caps it at one connection instead.
+	if r.client.GetDriver() != enums.DatabaseDriverSqlite {
+		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+
+	var rules []models.PaymentSpendRule
+	if err := query.Find(&rules).Error; err != nil {
+		return nil, err
+	}
+	return rules, nil
 }

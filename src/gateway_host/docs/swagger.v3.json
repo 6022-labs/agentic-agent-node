@@ -338,7 +338,7 @@
                     "config": {
                         "type": "object"
                     },
-                    "maxAmount": {
+                    "maxAmountPerPayment": {
                         "type": "string"
                     },
                     "method": {
@@ -1130,7 +1130,7 @@
                     "id": {
                         "type": "string"
                     },
-                    "maxAmount": {
+                    "maxAmountPerPayment": {
                         "type": "string"
                     },
                     "method": {

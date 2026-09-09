@@ -56,7 +56,13 @@ func (s *X402PaymentSigner) Sign(
 	if !ok || amount.Sign() < 0 {
 		return nil, errors.NewValidationError("amount", "must be a non-negative atomic amount")
 	}
-	authorized, err := s.x402PaymentSpendPolicyEvaluator.IsAuthorized(ctx, quote, amount)
+	// Every rejection must come before the spend is recorded, or a malformed quote burns budget.
+	if quote.AssetTransferMethod != enums.AssetTransferMethodEip3009 &&
+		quote.AssetTransferMethod != enums.AssetTransferMethodPermit2 {
+		return nil, errors.NewValidationError("assetTransferMethod", "must be one of eip3009, permit2")
+	}
+
+	authorized, err := s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +88,8 @@ func (s *X402PaymentSigner) Sign(
 	switch quote.AssetTransferMethod {
 	case enums.AssetTransferMethodEip3009:
 		payload, err = s.signEip3009(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, int64(chainId))
-	case enums.AssetTransferMethodPermit2:
-		payload, err = s.signPermit2(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, int64(chainId))
 	default:
-		return nil, errors.NewValidationError("assetTransferMethod", "must be one of eip3009, permit2")
+		payload, err = s.signPermit2(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, int64(chainId))
 	}
 	if err != nil {
 		return nil, err

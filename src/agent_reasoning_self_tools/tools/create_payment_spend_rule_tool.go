@@ -28,10 +28,10 @@ func (t *CreatePaymentSpendRuleTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "create_payment_spend_rule",
 		Description: "Create a rule allowing yourself to pay. Every facet of config must match a quote for it " +
-			"to be authorized, and the smallest matching maxAmount is the cap.",
+			"to be authorized, and the smallest matching maxAmountPerPayment is the cap.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"name": utils.StringProperty("Rule name (1-64 characters)."),
-			"maxAmount": utils.StringProperty(
+			"maxAmountPerPayment": utils.StringProperty(
 				"Non-negative integer cap in the asset's atomic units (0 denies anything priced).",
 			),
 			"method": utils.StringProperty("Payment method; defaults to x402."),
@@ -39,7 +39,7 @@ func (t *CreatePaymentSpendRuleTool) Definition() *models.Tool {
 				"Method-specific matcher. For x402: {networkPatterns, assetPatterns, payToPatterns, " +
 					"assetTransferMethodPatterns}, each a non-empty array of regexes (\".*\" matches everything).",
 			),
-		}, []string{"name", "maxAmount", "config"}),
+		}, []string{"name", "maxAmountPerPayment", "config"}),
 	}
 }
 

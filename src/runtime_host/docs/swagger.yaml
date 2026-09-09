@@ -211,7 +211,7 @@ definitions:
     properties:
       config:
         type: object
-      maxAmount:
+      maxAmountPerPayment:
         type: string
       method:
         type: string
@@ -696,7 +696,7 @@ definitions:
         type: string
       id:
         type: string
-      maxAmount:
+      maxAmountPerPayment:
         type: string
       method:
         type: string

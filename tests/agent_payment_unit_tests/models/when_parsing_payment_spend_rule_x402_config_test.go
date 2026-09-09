@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -19,8 +20,8 @@ func TestWhenParsingPaymentSpendRuleX402Config(t *testing.T) {
 			t.Parallel()
 
 			original := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
-				WithNetworkPatterns([]string{"eip155:80002"}).
-				WithAssetTransferMethodPatterns([]string{"eip3009"}).
+				WithNetwork("eip155:80002").
+				WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
 				Build()
 
 			raw, err := original.Marshal()
@@ -29,10 +30,10 @@ func TestWhenParsingPaymentSpendRuleX402Config(t *testing.T) {
 			var parsed models.PaymentSpendRuleX402Config
 			assert.NoError(t, parsed.Parse(raw))
 
-			assert.Equal(t, original.NetworkPatterns, parsed.NetworkPatterns)
-			assert.Equal(t, original.AssetPatterns, parsed.AssetPatterns)
+			assert.Equal(t, original.Network, parsed.Network)
+			assert.Equal(t, original.Asset, parsed.Asset)
 			assert.Equal(t, original.PayToPatterns, parsed.PayToPatterns)
-			assert.Equal(t, original.AssetTransferMethodPatterns, parsed.AssetTransferMethodPatterns)
+			assert.Equal(t, original.AssetTransferMethod, parsed.AssetTransferMethod)
 		})
 
 		t.Run("Should not carry the persistence fields onto the wire", func(t *testing.T) {
