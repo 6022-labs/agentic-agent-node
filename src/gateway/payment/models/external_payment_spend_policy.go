@@ -10,8 +10,10 @@ type ExternalPaymentSpendRule struct {
 	Id                  string          `json:"id,omitempty"`
 	Name                string          `json:"name"`
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
+	WindowSeconds       int             `json:"windowSeconds,omitempty"`
+	MaxAmountPerWindow  string          `json:"maxAmountPerWindow,omitempty"`
 	Method              string          `json:"method"`
-	Config              json.RawMessage `json:"config"              swaggertype:"object"`
+	Config              json.RawMessage `json:"config"                       swaggertype:"object"`
 }
 
 // ExternalPaymentSpendPolicyPayload mirrors the runtime's spend policy head.

@@ -2666,11 +2666,17 @@
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
+                "maxAmountPerWindow": {
+                    "type": "string"
+                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
                 }
             }
         },
@@ -3435,11 +3441,17 @@
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
+                "maxAmountPerWindow": {
+                    "type": "string"
+                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
                 }
             }
         },

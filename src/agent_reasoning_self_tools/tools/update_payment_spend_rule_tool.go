@@ -9,8 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
 
-// UpdatePaymentSpendRuleTool exposes the UpdatePaymentSpendRule use case as a built-in self tool.
-// Enabling it lets the agent raise its own cap, so it is off unless an owner turns it on.
+// UpdatePaymentSpendRuleTool is off by default: enabling it lets the agent raise its own caps.
 type UpdatePaymentSpendRuleTool struct {
 	*AbstractPaymentSpendRuleTool
 	updatePaymentSpendRuleExecutor tool_interfaces.UpdatePaymentSpendRuleExecutorInterface
@@ -29,19 +28,18 @@ func (t *UpdatePaymentSpendRuleTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "update_payment_spend_rule",
 		Description: "Replace one of your spend rules by id.",
-		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
-			"id":   utils.StringProperty("The rule id."),
-			"name": utils.StringProperty("Rule name (1-64 characters)."),
-			"maxAmountPerPayment": utils.StringProperty(
-				"Non-negative integer cap in the asset's atomic units (0 denies anything priced).",
-			),
-			"method": utils.StringProperty("Payment method; defaults to x402."),
-			"config": utils.ObjectProperty(
-				"Method-specific matcher. For x402: {networkPatterns, assetPatterns, payToPatterns, " +
-					"assetTransferMethodPatterns}, each a non-empty array of regexes.",
-			),
-		}, []string{"id", "name", "maxAmountPerPayment", "config"}),
+		InputScheme: utils.ObjectScheme(
+			t.propertiesWithId(),
+			append([]string{"id"}, t.savePaymentSpendRuleRequired()...),
+		),
 	}
+}
+
+// propertiesWithId adds the route id the update tool needs on top of the shared rule scheme.
+func (t *UpdatePaymentSpendRuleTool) propertiesWithId() map[string]models.ToolInputSchemeProperty {
+	properties := t.savePaymentSpendRuleProperties()
+	properties["id"] = utils.StringProperty("The rule id.")
+	return properties
 }
 
 func (t *UpdatePaymentSpendRuleTool) Execute(ctx context.Context, args map[string]any) (map[string]any, error) {

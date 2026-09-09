@@ -2673,11 +2673,17 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
+                "maxAmountPerWindow": {
+                    "type": "string"
+                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
                 }
             }
         },
@@ -3442,11 +3448,17 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
+                "maxAmountPerWindow": {
+                    "type": "string"
+                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
                 }
             }
         },

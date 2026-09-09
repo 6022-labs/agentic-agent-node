@@ -70,6 +70,8 @@ func (u *CreatePaymentSpendRule) toPaymentSpendRule(
 		PolicyId:            policy.Id,
 		Name:                request.Name,
 		MaxAmountPerPayment: request.MaxAmountPerPayment,
+		WindowSeconds:       request.WindowSeconds,
+		MaxAmountPerWindow:  request.MaxAmountPerWindow,
 		Method:              enums.PaymentMethod(request.Method),
 	}
 }

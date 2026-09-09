@@ -98,6 +98,41 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the optional window arguments", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenExecutingCreatePaymentSpendRuleToolTestingSuite) {
+			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *payment_requests.SavePaymentSpendRuleRequest,
+				) (*payment_responses.PaymentSpendRuleResponse, error) {
+					assert.Equal(t, 86400, request.WindowSeconds)
+					assert.Equal(t, "50000", request.MaxAmountPerWindow)
+					return &payment_responses.PaymentSpendRuleResponse{}, nil
+				}).
+				Times(1)
+		}
+
+		// The model passes numbers as strings, so the period has to survive that round trip.
+		t.Run("Should carry the period and its budget onto the request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+			initSuite(suite)
+
+			args := validArgs()
+			args["windowSeconds"] = "86400"
+			args["maxAmountPerWindow"] = "50000"
+
+			out, err := suite.sut.Execute(ctx, args)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
+		})
+	})
+
 	t.Run("Given a required argument is missing", func(t *testing.T) {
 		t.Parallel()
 

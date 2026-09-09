@@ -16,24 +16,78 @@ const patternList = (label: string) =>
         try {
           new RegExp(`^(?:${pattern})$`)
         } catch {
-          ctx.addIssue({ code: "custom", message: `"${pattern}" is not a valid regex` })
+          ctx.addIssue({
+            code: "custom",
+            message: `"${pattern}" is not a valid regex`,
+          })
           return
         }
       }
     })
 
-export const paymentSpendRuleFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(64, "Max 64 characters"),
-  method: z.string().min(1),
-  // Atomic units, matching the runtime: "0" denies every priced quote in scope.
-  maxAmountPerPayment: z
-    .string()
-    .trim()
-    .regex(/^\d+$/, "Whole atomic units, e.g. 1000000 (0 = deny)"),
-  networkPatterns: patternList("Networks"),
-  assetPatterns: patternList("Assets"),
-  payToPatterns: patternList("Recipients"),
-  assetTransferMethodPatterns: patternList("Transfer methods"),
-})
+export const paymentSpendRuleFormSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name is required")
+      .max(64, "Max 64 characters"),
+    method: z.string().min(1),
+    // Atomic units, matching the runtime: "0" denies every priced quote in scope.
+    maxAmountPerPayment: z
+      .string()
+      .trim()
+      .regex(/^\d+$/, "Whole atomic units, e.g. 1000000 (0 = deny)"),
+    // A period needs a budget and a budget needs a period; the runtime rejects either alone.
+    windowSeconds: z
+      .string()
+      .trim()
+      .regex(
+        /^\d*$/,
+        "Whole seconds, e.g. 86400 for a day (empty = no recurring budget)"
+      ),
+    maxAmountPerWindow: z
+      .string()
+      .trim()
+      .regex(/^\d*$/, "Whole atomic units (empty = no recurring budget)"),
+    networkPatterns: patternList("Networks"),
+    assetPatterns: patternList("Assets"),
+    payToPatterns: patternList("Recipients"),
+    assetTransferMethodPatterns: patternList("Transfer methods"),
+  })
+  .superRefine((values, ctx) => {
+    const period =
+      values.windowSeconds.length === 0 ? 0 : Number(values.windowSeconds)
+    const budget = values.maxAmountPerWindow
 
-export type PaymentSpendRuleFormSchemaType = z.infer<typeof paymentSpendRuleFormSchema>
+    if (period === 0) {
+      if (budget.length !== 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["windowSeconds"],
+          message: "A recurring budget needs a period to be spent over",
+        })
+      }
+      return
+    }
+    if (budget.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxAmountPerWindow"],
+        message: "A period needs a budget",
+      })
+      return
+    }
+    // Atomic amounts run to 78 digits, past Number's exact range.
+    if (BigInt(values.maxAmountPerPayment || "0") > BigInt(budget)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxAmountPerPayment"],
+        message: "Cannot exceed the budget for one period",
+      })
+    }
+  })
+
+export type PaymentSpendRuleFormSchemaType = z.infer<
+  typeof paymentSpendRuleFormSchema
+>

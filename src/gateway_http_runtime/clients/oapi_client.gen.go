@@ -182,8 +182,10 @@ type RequestsSavePaymentReceiveRuleRequest struct {
 type RequestsSavePaymentSpendRuleRequest struct {
 	Config              *map[string]interface{} `json:"config,omitempty"`
 	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
+	MaxAmountPerWindow  *string                 `json:"maxAmountPerWindow,omitempty"`
 	Method              *string                 `json:"method,omitempty"`
 	Name                *string                 `json:"name,omitempty"`
+	WindowSeconds       *int                    `json:"windowSeconds,omitempty"`
 }
 
 // RequestsSetAgentGuidanceRequest defines model for requests.SetAgentGuidanceRequest.
@@ -507,9 +509,11 @@ type ResponsesPaymentSpendRuleResponse struct {
 	CreatedAt           *string                 `json:"createdAt,omitempty"`
 	Id                  *string                 `json:"id,omitempty"`
 	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
+	MaxAmountPerWindow  *string                 `json:"maxAmountPerWindow,omitempty"`
 	Method              *string                 `json:"method,omitempty"`
 	Name                *string                 `json:"name,omitempty"`
 	UpdatedAt           *string                 `json:"updatedAt,omitempty"`
+	WindowSeconds       *int                    `json:"windowSeconds,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.

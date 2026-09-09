@@ -3,6 +3,7 @@ package use_cases_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -92,6 +93,92 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Anything, unbounded", updated.Name)
+		})
+	})
+
+	t.Run("Given the period and its budget are unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		// Editing a rule's name must not hand the agent back budget it already spent.
+		initSuite := func(suite *WhenUpdatingPaymentSpendRuleTestingSuite) *models.PaymentSpendRule {
+			startedAt := time.Now().Add(-time.Hour)
+			rule := model_builders.NewPaymentSpendRuleBuilder().
+				WithWindowSeconds(86400).
+				WithMaxAmountPerWindow("50000").
+				WithWindowSpent("4000").
+				WithWindowStartedAt(startedAt).
+				Build()
+
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
+					assert.Equal(t, "4000", updated.WindowSpent)
+					assert.Equal(t, startedAt.Unix(), updated.WindowStartedAt.Unix())
+					return updated, nil
+				}).
+				Times(1)
+			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), rule.Id, gomock.Any()).Return(nil).Times(1)
+			return rule
+		}
+
+		t.Run("Should keep the spend already recorded against the period", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
+			rule := initSuite(suite)
+
+			request := generateUpdatePaymentSpendRuleRequest(t, rule.Id)
+			request.WindowSeconds = 86400
+			request.MaxAmountPerWindow = "50000"
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the period budget changes", func(t *testing.T) {
+		t.Parallel()
+
+		// Spend recorded against the looser budget must not bind the tighter one.
+		initSuite := func(suite *WhenUpdatingPaymentSpendRuleTestingSuite) *models.PaymentSpendRule {
+			rule := model_builders.NewPaymentSpendRuleBuilder().
+				WithWindowSeconds(86400).
+				WithMaxAmountPerWindow("50000").
+				WithWindowSpent("4000").
+				WithWindowStartedAt(time.Now().Add(-time.Hour)).
+				Build()
+
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
+					assert.Equal(t, "20000", updated.MaxAmountPerWindow)
+					assert.Equal(t, "0", updated.WindowSpent)
+					assert.Nil(t, updated.WindowStartedAt)
+					return updated, nil
+				}).
+				Times(1)
+			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), rule.Id, gomock.Any()).Return(nil).Times(1)
+			return rule
+		}
+
+		t.Run("Should restart the period", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
+			rule := initSuite(suite)
+
+			request := generateUpdatePaymentSpendRuleRequest(t, rule.Id)
+			request.WindowSeconds = 86400
+			request.MaxAmountPerWindow = "20000"
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
 		})
 	})
 

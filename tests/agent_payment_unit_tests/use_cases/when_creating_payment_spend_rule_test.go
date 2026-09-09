@@ -101,6 +101,43 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the rule carries a recurring budget", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingPaymentSpendRuleTestingSuite) {
+			policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+
+			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(gomock.Any()).Return(policy, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error) {
+					assert.Equal(t, 86400, rule.WindowSeconds)
+					assert.Equal(t, "50000", rule.MaxAmountPerWindow)
+					return rule, nil
+				}).
+				Times(1)
+			suite.mockStrategy.EXPECT().SaveConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+		}
+
+		t.Run("Should carry the period and its budget onto the rule", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
+			initSuite(suite)
+
+			request := generateSavePaymentSpendRuleRequest(t)
+			request.WindowSeconds = 86400
+			request.MaxAmountPerWindow = "50000"
+
+			rule, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+			assert.Equal(t, 86400, rule.WindowSeconds)
+			assert.Equal(t, "50000", rule.MaxAmountPerWindow)
+		})
+	})
+
 	t.Run("Given the repository fails to persist the rule", func(t *testing.T) {
 		t.Parallel()
 

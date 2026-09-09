@@ -43,6 +43,8 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Create(gomock.Any(), &models.ExternalPaymentSpendRule{
 					Name:                "Only base, small",
 					MaxAmountPerPayment: "1000",
+					WindowSeconds:       86400,
+					MaxAmountPerWindow:  "50000",
 					Method:              "x402",
 					Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
 				}).
@@ -59,6 +61,8 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentSpendRuleRequest{
 				Name:                "Only base, small",
 				MaxAmountPerPayment: "1000",
+				WindowSeconds:       86400,
+				MaxAmountPerWindow:  "50000",
 				Method:              "x402",
 				Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
 			})

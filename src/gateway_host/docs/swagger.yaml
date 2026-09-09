@@ -218,10 +218,14 @@ definitions:
         type: object
       maxAmountPerPayment:
         type: string
+      maxAmountPerWindow:
+        type: string
       method:
         type: string
       name:
         type: string
+      windowSeconds:
+        type: integer
     type: object
   requests.SetAgentGuidanceRequest:
     properties:
@@ -716,10 +720,14 @@ definitions:
         type: string
       maxAmountPerPayment:
         type: string
+      maxAmountPerWindow:
+        type: string
       method:
         type: string
       name:
         type: string
+      windowSeconds:
+        type: integer
     type: object
   responses.RegistrationStatusResponse:
     properties:

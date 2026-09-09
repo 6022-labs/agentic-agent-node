@@ -39,19 +39,33 @@ type Props = {
 }
 
 // toLines renders a stored facet for editing, one pattern per line.
-const toLines = (patterns: string[] | undefined) => (patterns ?? [ANY_PATTERN]).join("\n")
+const toLines = (patterns: string[] | undefined) =>
+  (patterns ?? [ANY_PATTERN]).join("\n")
 
-export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Props) {
+export default function PaymentSpendRuleForm({
+  initialRule,
+  onFormComplete,
+}: Props) {
   const form = useForm<PaymentSpendRuleFormSchemaType>({
     resolver: zodResolver(paymentSpendRuleFormSchema),
     defaultValues: {
       name: initialRule?.name ?? "",
       method: initialRule?.method || X402_METHOD,
       maxAmountPerPayment: initialRule?.maxAmountPerPayment ?? "",
+      windowSeconds: initialRule?.windowSeconds
+        ? String(initialRule.windowSeconds)
+        : "",
+      maxAmountPerWindow:
+        initialRule?.maxAmountPerWindow &&
+        initialRule.maxAmountPerWindow !== "0"
+          ? initialRule.maxAmountPerWindow
+          : "",
       networkPatterns: toLines(initialRule?.networkPatterns),
       assetPatterns: toLines(initialRule?.assetPatterns),
       payToPatterns: toLines(initialRule?.payToPatterns),
-      assetTransferMethodPatterns: toLines(initialRule?.assetTransferMethodPatterns),
+      assetTransferMethodPatterns: toLines(
+        initialRule?.assetTransferMethodPatterns
+      ),
     },
   })
 
@@ -63,7 +77,11 @@ export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Pr
   }
 
   const facet = (
-    name: "networkPatterns" | "assetPatterns" | "payToPatterns" | "assetTransferMethodPatterns",
+    name:
+      | "networkPatterns"
+      | "assetPatterns"
+      | "payToPatterns"
+      | "assetTransferMethodPatterns",
     label: string,
     description: string
   ) => (
@@ -110,7 +128,11 @@ export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Pr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Method</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange} disabled>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -136,8 +158,48 @@ export default function PaymentSpendRuleForm({ initialRule, onFormComplete }: Pr
                 <Input className="font-mono text-xs" {...field} />
               </FormControl>
               <FormDescription>
-                Atomic units of the quoted asset. When several rules match a quote, the
-                smallest cap wins — 0 refuses anything priced.
+                Atomic units of the quoted asset. When several rules match a
+                quote, the smallest cap wins — 0 refuses anything priced.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="windowSeconds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Recurring period (seconds)</FormLabel>
+              <FormControl>
+                <Input
+                  className="font-mono text-xs"
+                  placeholder="86400"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Leave empty to bound this rule per payment only. 86400 is a day,
+                604800 a week.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="maxAmountPerWindow"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Budget per period</FormLabel>
+              <FormControl>
+                <Input className="font-mono text-xs" {...field} />
+              </FormControl>
+              <FormDescription>
+                Atomic units the rule may spend before the period rolls over.
+                Changing it restarts the period.
               </FormDescription>
               <FormMessage />
             </FormItem>

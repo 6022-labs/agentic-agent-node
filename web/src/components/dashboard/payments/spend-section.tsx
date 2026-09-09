@@ -49,11 +49,34 @@ import { truncateEthAddress } from "@/lib/utils"
 
 const MAX_PATTERN_CHIPS = 2
 
+// formatPeriod names the common periods and falls back to raw seconds.
+const formatPeriod = (seconds: number): string => {
+  if (seconds % 86400 === 0) {
+    const days = seconds / 86400
+    if (days === 1) {
+      return "day"
+    }
+    if (days === 7) {
+      return "week"
+    }
+    if (days === 30) {
+      return "month"
+    }
+    return `${days}d`
+  }
+  if (seconds % 3600 === 0) {
+    return `${seconds / 3600}h`
+  }
+  return `${seconds}s`
+}
+
 // The fields the rule form renders; errors on anything else are toasted.
 const FORM_FIELDS: Array<keyof PaymentSpendRuleFormSchemaType> = [
   "name",
   "method",
   "maxAmountPerPayment",
+  "windowSeconds",
+  "maxAmountPerWindow",
   "networkPatterns",
   "assetPatterns",
   "payToPatterns",
@@ -97,14 +120,22 @@ export default function PaymentSpendPolicySection() {
     setRules(rules)
   }
 
-  const toRule = (values: PaymentSpendRuleFormSchemaType): PaymentSpendRule => ({
+  const toRule = (
+    values: PaymentSpendRuleFormSchemaType
+  ): PaymentSpendRule => ({
     name: values.name,
     method: values.method,
     maxAmountPerPayment: values.maxAmountPerPayment,
+    windowSeconds:
+      values.windowSeconds.length === 0 ? 0 : Number(values.windowSeconds),
+    maxAmountPerWindow:
+      values.maxAmountPerWindow.length === 0 ? "0" : values.maxAmountPerWindow,
     networkPatterns: splitPatterns(values.networkPatterns),
     assetPatterns: splitPatterns(values.assetPatterns),
     payToPatterns: splitPatterns(values.payToPatterns),
-    assetTransferMethodPatterns: splitPatterns(values.assetTransferMethodPatterns),
+    assetTransferMethodPatterns: splitPatterns(
+      values.assetTransferMethodPatterns
+    ),
   })
 
   const onSaveRule =
@@ -129,7 +160,9 @@ export default function PaymentSpendPolicySection() {
           // Runtime errors on the x402 matcher come back prefixed (e.g.
           // "config.networkPatterns"); strip it to reach the form control.
           const field = validation.field.replace(/^config\./, "")
-          if (FORM_FIELDS.includes(field as keyof PaymentSpendRuleFormSchemaType)) {
+          if (
+            FORM_FIELDS.includes(field as keyof PaymentSpendRuleFormSchemaType)
+          ) {
             return {
               error: {
                 field: field as keyof PaymentSpendRuleFormSchemaType,
@@ -171,7 +204,9 @@ export default function PaymentSpendPolicySection() {
       await load()
       toast.success("Spend policy reset")
     } catch (error) {
-      toast.error(extractErrorMessage(error, "Failed to reset the spend policy"))
+      toast.error(
+        extractErrorMessage(error, "Failed to reset the spend policy")
+      )
     } finally {
       setMutating(false)
     }
@@ -188,12 +223,25 @@ export default function PaymentSpendPolicySection() {
           <div>
             <CardTitle>Spending policy</CardTitle>
             <CardDescription>
-              What the agent may pay for. Every x402 quote it is asked to sign must match
-              a rule on all four facets, and is capped by the smallest matching rule.
+              What the agent may pay for. Every x402 quote it is asked to sign
+              must match a rule on all four facets, and is capped by the
+              smallest matching rule.
             </CardDescription>
           </div>
-          <Badge variant={unrestricted ? "destructive" : cannotSpend ? "secondary" : "default"}>
-            {unrestricted ? "unrestricted" : cannotSpend ? "cannot spend" : "restricted"}
+          <Badge
+            variant={
+              unrestricted
+                ? "destructive"
+                : cannotSpend
+                  ? "secondary"
+                  : "default"
+            }
+          >
+            {unrestricted
+              ? "unrestricted"
+              : cannotSpend
+                ? "cannot spend"
+                : "restricted"}
           </Badge>
         </div>
       </CardHeader>
@@ -210,15 +258,16 @@ export default function PaymentSpendPolicySection() {
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <p className="text-muted-foreground">
-                  A seeded rule allows any amount, to any recipient, on any network. Narrow
-                  or remove it before the agent holds funds worth taking.
+                  A seeded rule allows any amount, to any recipient, on any
+                  network. Narrow or remove it before the agent holds funds
+                  worth taking.
                 </p>
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground">
-                A quote no rule matches is refused, so removing every rule stops the agent
-                paying entirely.
+                A quote no rule matches is refused, so removing every rule stops
+                the agent paying entirely.
               </p>
               <PaymentSpendRuleDialog onSave={onSaveRule()} />
             </div>
@@ -234,6 +283,7 @@ export default function PaymentSpendPolicySection() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Cap (atomic units)</TableHead>
+                    <TableHead>Budget per period</TableHead>
                     <TableHead>Networks</TableHead>
                     <TableHead>Assets</TableHead>
                     <TableHead>Recipients</TableHead>
@@ -251,10 +301,28 @@ export default function PaymentSpendPolicySection() {
                         ) : rule.maxAmountPerPayment === "0" ? (
                           <Badge variant="secondary">denies</Badge>
                         ) : (
-                          <span className="font-mono text-xs" title={rule.maxAmountPerPayment}>
+                          <span
+                            className="font-mono text-xs"
+                            title={rule.maxAmountPerPayment}
+                          >
                             {rule.maxAmountPerPayment.length > 12
                               ? `${rule.maxAmountPerPayment.slice(0, 12)}…`
                               : rule.maxAmountPerPayment}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {rule.windowSeconds > 0 ? (
+                          <span
+                            className="font-mono text-xs"
+                            title={`${rule.maxAmountPerWindow} per ${rule.windowSeconds}s`}
+                          >
+                            {rule.maxAmountPerWindow} /{" "}
+                            {formatPeriod(rule.windowSeconds)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            per payment only
                           </span>
                         )}
                       </TableCell>
@@ -268,7 +336,9 @@ export default function PaymentSpendPolicySection() {
                         <PatternsCell patterns={rule.payToPatterns} />
                       </TableCell>
                       <TableCell>
-                        <PatternsCell patterns={rule.assetTransferMethodPatterns} />
+                        <PatternsCell
+                          patterns={rule.assetTransferMethodPatterns}
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">

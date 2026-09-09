@@ -14,6 +14,8 @@ const toWire = (rule: PaymentSpendRule): PaymentSpendRuleWire => ({
   id: rule.id,
   name: rule.name,
   maxAmountPerPayment: rule.maxAmountPerPayment,
+  windowSeconds: rule.windowSeconds,
+  maxAmountPerWindow: rule.maxAmountPerWindow,
   method: rule.method || X402_METHOD,
   config: {
     networkPatterns: rule.networkPatterns,
@@ -28,6 +30,8 @@ const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
   id: wire.id,
   name: wire.name,
   maxAmountPerPayment: wire.maxAmountPerPayment,
+  windowSeconds: wire.windowSeconds ?? 0,
+  maxAmountPerWindow: wire.maxAmountPerWindow ?? "0",
   method: wire.method,
   networkPatterns: wire.config?.networkPatterns ?? [],
   assetPatterns: wire.config?.assetPatterns ?? [],
@@ -36,20 +40,27 @@ const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
 })
 
 // GET /config/payment-spend-policy/rules — the spend rules in table order.
-export const listPaymentSpendRules = async (): Promise<ListPaymentSpendRulesResponse> => {
-  const response = await axios.get<ListPaymentSpendRulesResponseWire>(
-    "/config/payment-spend-policy/rules"
-  )
-  return { rules: (response.data.rules ?? []).map(fromWire) }
-}
+export const listPaymentSpendRules =
+  async (): Promise<ListPaymentSpendRulesResponse> => {
+    const response = await axios.get<ListPaymentSpendRulesResponseWire>(
+      "/config/payment-spend-policy/rules"
+    )
+    return { rules: (response.data.rules ?? []).map(fromWire) }
+  }
 
 // POST /config/payment-spend-policy/rules — appends a rule.
 export const createPaymentSpendRule = async (rule: PaymentSpendRule) => {
-  return await axios.post<PaymentSpendRuleWire>("/config/payment-spend-policy/rules", toWire(rule))
+  return await axios.post<PaymentSpendRuleWire>(
+    "/config/payment-spend-policy/rules",
+    toWire(rule)
+  )
 }
 
 // PUT /config/payment-spend-policy/rules/:id — replaces a rule's fields.
-export const updatePaymentSpendRule = async (id: string, rule: PaymentSpendRule) => {
+export const updatePaymentSpendRule = async (
+  id: string,
+  rule: PaymentSpendRule
+) => {
   return await axios.put<PaymentSpendRuleWire>(
     `/config/payment-spend-policy/rules/${id}`,
     toWire(rule)

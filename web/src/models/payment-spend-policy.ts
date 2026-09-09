@@ -11,6 +11,9 @@ export type PaymentSpendRule = {
   // The most this rule will ever sign for, in the asset's atomic units.
   // "0" denies every priced quote it matches; there is no unlimited sentinel.
   maxAmountPerPayment: string
+  // A recurring budget: 0 seconds leaves the rule bounded per payment only.
+  windowSeconds: number
+  maxAmountPerWindow: string
   // Regexes full-matched against the quote's facets. A rule authorizes a quote
   // only when all four match, and the effective cap is the smallest maxAmountPerPayment
   // among the rules that do.
@@ -38,6 +41,8 @@ export type PaymentSpendRuleWire = {
   id?: string
   name: string
   maxAmountPerPayment: string
+  windowSeconds?: number
+  maxAmountPerWindow?: string
   method: string
   config: PaymentSpendRuleConfig
 }

@@ -13,6 +13,8 @@ type PaymentSpendRuleResponse struct {
 	Id                  uuid.UUID       `json:"id"`
 	Name                string          `json:"name"`
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
+	WindowSeconds       int             `json:"windowSeconds"`
+	MaxAmountPerWindow  string          `json:"maxAmountPerWindow"`
 	Method              string          `json:"method"`
 	Config              json.RawMessage `json:"config"              swaggertype:"object"`
 	CreatedAt           time.Time       `json:"createdAt"`
@@ -29,6 +31,8 @@ func ToPaymentSpendRuleResponse(m *models.PaymentSpendRule, config json.RawMessa
 		Id:                  m.Id,
 		Name:                m.Name,
 		MaxAmountPerPayment: m.MaxAmountPerPayment,
+		WindowSeconds:       m.WindowSeconds,
+		MaxAmountPerWindow:  m.MaxAmountPerWindow,
 		Method:              m.Method.String(),
 		Config:              config,
 		CreatedAt:           m.CreatedAt,

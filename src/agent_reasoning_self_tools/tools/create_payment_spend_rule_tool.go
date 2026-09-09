@@ -8,8 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
 
-// CreatePaymentSpendRuleTool exposes the CreatePaymentSpendRule use case as a built-in self tool.
-// Enabling it lets the agent widen its own spending cap, so it is off unless an owner turns it on.
+// CreatePaymentSpendRuleTool is off by default: enabling it lets the agent widen its own spending.
 type CreatePaymentSpendRuleTool struct {
 	*AbstractPaymentSpendRuleTool
 	createPaymentSpendRuleExecutor tool_interfaces.CreatePaymentSpendRuleExecutorInterface
@@ -29,17 +28,10 @@ func (t *CreatePaymentSpendRuleTool) Definition() *models.Tool {
 		Name: "create_payment_spend_rule",
 		Description: "Create a rule allowing yourself to pay. Every facet of config must match a quote for it " +
 			"to be authorized, and the smallest matching maxAmountPerPayment is the cap.",
-		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
-			"name": utils.StringProperty("Rule name (1-64 characters)."),
-			"maxAmountPerPayment": utils.StringProperty(
-				"Non-negative integer cap in the asset's atomic units (0 denies anything priced).",
-			),
-			"method": utils.StringProperty("Payment method; defaults to x402."),
-			"config": utils.ObjectProperty(
-				"Method-specific matcher. For x402: {networkPatterns, assetPatterns, payToPatterns, " +
-					"assetTransferMethodPatterns}, each a non-empty array of regexes (\".*\" matches everything).",
-			),
-		}, []string{"name", "maxAmountPerPayment", "config"}),
+		InputScheme: utils.ObjectScheme(
+			t.savePaymentSpendRuleProperties(),
+			t.savePaymentSpendRuleRequired(),
+		),
 	}
 }
 

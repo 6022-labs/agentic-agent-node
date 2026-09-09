@@ -322,11 +322,17 @@
                     "maxAmountPerPayment": {
                         "type": "string"
                     },
+                    "maxAmountPerWindow": {
+                        "type": "string"
+                    },
                     "method": {
                         "type": "string"
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "windowSeconds": {
+                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -1085,6 +1091,9 @@
                     "maxAmountPerPayment": {
                         "type": "string"
                     },
+                    "maxAmountPerWindow": {
+                        "type": "string"
+                    },
                     "method": {
                         "type": "string"
                     },
@@ -1093,6 +1102,9 @@
                     },
                     "updatedAt": {
                         "type": "string"
+                    },
+                    "windowSeconds": {
+                        "type": "integer"
                     }
                 },
                 "type": "object"

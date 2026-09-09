@@ -9,12 +9,14 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-// SavePaymentSpendRuleRequest is method-neutral: Name/MaxAmountPerPayment/Method are generic.
+// SavePaymentSpendRuleRequest is method-neutral: the bounds, name and method are generic.
 type SavePaymentSpendRuleRequest struct {
 	Name                string          `json:"name"`
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
+	WindowSeconds       int             `json:"windowSeconds,omitempty"`
+	MaxAmountPerWindow  string          `json:"maxAmountPerWindow,omitempty"`
 	Method              string          `json:"method,omitempty"`
-	Config              json.RawMessage `json:"config"              swaggertype:"object"`
+	Config              json.RawMessage `json:"config"                       swaggertype:"object"`
 }
 
 // ValidateAndSanitize checks the method-agnostic fields and defaults the method to x402.
@@ -34,6 +36,10 @@ func (a *SavePaymentSpendRuleRequest) ValidateAndSanitize() error {
 		)
 	}
 
+	if err := a.validateWindow(maxAmountPerPayment); err != nil {
+		return err
+	}
+
 	var method enums.PaymentMethod
 	if len(strings.TrimSpace(a.Method)) == 0 {
 		method = enums.PaymentMethodX402
@@ -42,5 +48,39 @@ func (a *SavePaymentSpendRuleRequest) ValidateAndSanitize() error {
 	}
 	a.Method = method.String()
 
+	return nil
+}
+
+// validateWindow requires a period and a budget together, with the per-payment cap within the budget.
+func (a *SavePaymentSpendRuleRequest) validateWindow(maxAmountPerPayment *big.Int) error {
+	a.MaxAmountPerWindow = strings.TrimSpace(a.MaxAmountPerWindow)
+
+	if a.WindowSeconds < 0 {
+		return errors.NewValidationError("windowSeconds", "must not be negative")
+	}
+	if a.WindowSeconds == 0 {
+		if len(a.MaxAmountPerWindow) != 0 {
+			return errors.NewValidationError(
+				"maxAmountPerWindow",
+				"needs a windowSeconds period to be spent over",
+			)
+		}
+		a.MaxAmountPerWindow = "0"
+		return nil
+	}
+
+	maxAmountPerWindow, ok := new(big.Int).SetString(a.MaxAmountPerWindow, 10)
+	if !ok || maxAmountPerWindow.Sign() < 0 {
+		return errors.NewValidationError(
+			"maxAmountPerWindow",
+			"must be a non-negative integer in the asset's atomic units (0 = deny)",
+		)
+	}
+	if maxAmountPerPayment.Cmp(maxAmountPerWindow) > 0 {
+		return errors.NewValidationError(
+			"maxAmountPerPayment",
+			"must not exceed maxAmountPerWindow, or no payment could ever fit the period",
+		)
+	}
 	return nil
 }

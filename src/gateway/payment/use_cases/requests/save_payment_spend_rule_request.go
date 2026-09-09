@@ -10,8 +10,10 @@ import (
 type SavePaymentSpendRuleRequest struct {
 	Name                string          `json:"name"`
 	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
+	WindowSeconds       int             `json:"windowSeconds,omitempty"`
+	MaxAmountPerWindow  string          `json:"maxAmountPerWindow,omitempty"`
 	Method              string          `json:"method,omitempty"`
-	Config              json.RawMessage `json:"config"              swaggertype:"object"`
+	Config              json.RawMessage `json:"config"                       swaggertype:"object"`
 }
 
 // ToExternalPaymentSpendRule maps the request onto the runtime's spend-rule payload.
@@ -19,6 +21,8 @@ func (r *SavePaymentSpendRuleRequest) ToExternalPaymentSpendRule() *models.Exter
 	return &models.ExternalPaymentSpendRule{
 		Name:                r.Name,
 		MaxAmountPerPayment: r.MaxAmountPerPayment,
+		WindowSeconds:       r.WindowSeconds,
+		MaxAmountPerWindow:  r.MaxAmountPerWindow,
 		Method:              r.Method,
 		Config:              r.Config,
 	}

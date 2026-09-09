@@ -60,18 +60,27 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit spend rule" : "Add spend rule"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Edit spend rule" : "Add spend rule"}
+          </DialogTitle>
           <DialogDescription>
-            What the agent may pay for. A quote is authorized only when every facet
-            matches a rule, and the smallest matching cap applies.
+            What the agent may pay for. A quote is authorized only when every
+            facet matches a rule, and the smallest matching cap applies.
           </DialogDescription>
         </DialogHeader>
         {/* Remount per open so an edited rule's values are re-derived fresh. */}
         {open ? (
-          <PaymentSpendRuleForm initialRule={initialRule} onFormComplete={onFormComplete} />
+          <PaymentSpendRuleForm
+            initialRule={initialRule}
+            onFormComplete={onFormComplete}
+          />
         ) : null}
         <DialogFooter>
-          <Button type="submit" form="payment-spend-rule-form" disabled={saving}>
+          <Button
+            type="submit"
+            form="payment-spend-rule-form"
+            disabled={saving}
+          >
             {saving ? <Loader2 className="animate-spin" /> : null}
             {editing ? "Save" : "Add"}
           </Button>

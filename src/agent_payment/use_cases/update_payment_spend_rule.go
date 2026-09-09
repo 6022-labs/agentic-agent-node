@@ -3,6 +3,7 @@ package use_cases
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
@@ -56,6 +57,7 @@ func (u *UpdatePaymentSpendRule) Execute(
 	rule.Name = request.Name
 	rule.MaxAmountPerPayment = request.MaxAmountPerPayment
 	rule.Method = enums.PaymentMethod(request.Method)
+	u.applyWindow(rule, request)
 
 	updated, err := u.paymentSpendRuleRepository.Update(ctx, rule)
 	if err != nil {
@@ -65,4 +67,19 @@ func (u *UpdatePaymentSpendRule) Execute(
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
 	return responses.ToPaymentSpendRuleResponse(updated, request.Config), nil
+}
+
+// applyWindow restarts the period when its length or budget changes, so an owner who
+// tightens a rule cannot be held to spend already recorded against the looser one.
+func (u *UpdatePaymentSpendRule) applyWindow(
+	rule *models.PaymentSpendRule,
+	request *requests.UpdatePaymentSpendRuleRequest,
+) {
+	if rule.WindowSeconds == request.WindowSeconds && rule.MaxAmountPerWindow == request.MaxAmountPerWindow {
+		return
+	}
+	rule.WindowSeconds = request.WindowSeconds
+	rule.MaxAmountPerWindow = request.MaxAmountPerWindow
+	rule.WindowSpent = "0"
+	rule.WindowStartedAt = nil
 }
