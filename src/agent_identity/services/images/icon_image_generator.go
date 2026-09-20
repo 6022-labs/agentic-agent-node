@@ -15,6 +15,7 @@ import (
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
+	"github.com/samber/lo"
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/gomonobold"
@@ -148,7 +149,7 @@ func (c *iconCanvas) drawFadeOverlay() {
 
 func (c *iconCanvas) drawAgentInformation(p identity_interfaces.GenerateImageParams) {
 	if p.OriginEnsDomain != nil {
-		origin := fmt.Sprintf("%s (%d)", *p.OriginEnsDomain, *p.OriginGeneration)
+		origin := fmt.Sprintf("%s (%d)", *p.OriginEnsDomain, lo.FromPtr(p.OriginGeneration))
 		c.drawMultiLineBadge(50, 522, fmt.Sprintf("Origin: %s", origin), *p.OriginEnsDomain)
 	}
 

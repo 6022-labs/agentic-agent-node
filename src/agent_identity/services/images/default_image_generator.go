@@ -3,11 +3,13 @@ package images
 import (
 	"encoding/base64"
 	"fmt"
+	"html"
 	"os"
 	"strings"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/settings"
+	"github.com/samber/lo"
 )
 
 type DefaultImageGenerator struct {
@@ -172,7 +174,7 @@ func (g *DefaultImageGenerator) renderNameAndEnsDomain(name string, ensDomain st
 				backgroundWith/2,
 				48,
 				int(nameFontSize),
-				name,
+				html.EscapeString(name),
 			),
 		)
 	}
@@ -197,7 +199,7 @@ func (g *DefaultImageGenerator) renderNameAndEnsDomain(name string, ensDomain st
 				backgroundWith/2,
 				80,
 				int(ensFontSize),
-				ensDomain,
+				html.EscapeString(ensDomain),
 			),
 		)
 	}
@@ -249,7 +251,7 @@ func (g *DefaultImageGenerator) renderCarousel(
 				`</textPath>`,
 			carouselPathId,
 			offsetStart,
-			value,
+			html.EscapeString(value),
 			offsetStart,
 			offsetEnd,
 			duration,
@@ -288,7 +290,7 @@ func (g *DefaultImageGenerator) renderAgentInformation(p identity_interfaces.Gen
 	padding := 24
 
 	if p.OriginEnsDomain != nil {
-		origin := fmt.Sprintf("%s (%d)", *p.OriginEnsDomain, *p.OriginGeneration)
+		origin := fmt.Sprintf("%s (%d)", *p.OriginEnsDomain, lo.FromPtr(p.OriginGeneration))
 
 		originEstimatedWidth := g.estimateStrLen(fmt.Sprintf("Origin: %s", origin), fontSize) + padding
 		ensOriginNameEstimatedWidth := g.estimateStrLen(*p.OriginEnsDomain, fontSize) + padding
@@ -319,7 +321,7 @@ func (g *DefaultImageGenerator) renderAgentInformation(p identity_interfaces.Gen
 			660,
 			"Creator",
 			p.Creator,
-			g.estimateStrLen(fmt.Sprintf("Creator %s", p.Creator), fontSize)+padding,
+			g.estimateStrLen(fmt.Sprintf("Creator: %s", p.Creator), fontSize)+padding,
 		),
 	)
 
@@ -384,7 +386,7 @@ func (g *DefaultImageGenerator) estimateStrLen(value string, fontSize float32) i
 }
 
 func (g *DefaultImageGenerator) renderBadge(x, y int, label, value string, width int) string {
-	text := fmt.Sprintf("%s: %s", label, value)
+	text := html.EscapeString(fmt.Sprintf("%s: %s", label, value))
 	return fmt.Sprintf(
 		`<g transform="translate(%d,%d)">`+
 			`<rect width="%d" height="32" rx="8" ry="8" fill="rgba(0,0,0,0.6)" />`+
@@ -395,7 +397,8 @@ func (g *DefaultImageGenerator) renderBadge(x, y int, label, value string, width
 }
 
 func (g *DefaultImageGenerator) renderMultiLineBadge(x, y int, label, value, subtext string, width int) string {
-	main := fmt.Sprintf("%s: %s", label, value)
+	main := html.EscapeString(fmt.Sprintf("%s: %s", label, value))
+	subtext = html.EscapeString(subtext)
 	return fmt.Sprintf(
 		`<g transform="translate(%d,%d)">`+
 			`<rect width="%d" height="48" rx="8" ry="8" fill="rgba(0,0,0,0.6)" />`+
