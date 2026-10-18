@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"context"
+	goerrors "errors"
 	"time"
 
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
@@ -11,32 +12,36 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/google/uuid"
 )
 
 type CreateResponseInterface interface {
+	// Execute runs the turn in the caller's session and echoes the key it sent, never the scoped storage id.
 	Execute(ctx context.Context, request *requests.CreateResponseRequest) (*responses.CreateResponseResponse, error)
 }
 
 type CreateResponse struct {
-	responseDriver  interfaces.ResponseDriverInterface
-	responseMetrics metrics_interfaces.ResponseMetricsInterface
-	reasoningTracer traces_interfaces.ReasoningTracerInterface
+	responseDriver       interfaces.ResponseDriverInterface
+	conversationResolver knowledge_interfaces.ConversationResolverInterface
+	responseMetrics      metrics_interfaces.ResponseMetricsInterface
+	reasoningTracer      traces_interfaces.ReasoningTracerInterface
 }
 
 func NewCreateResponse(
 	responseDriver interfaces.ResponseDriverInterface,
+	conversationResolver knowledge_interfaces.ConversationResolverInterface,
 	responseMetrics metrics_interfaces.ResponseMetricsInterface,
 	reasoningTracer traces_interfaces.ReasoningTracerInterface,
 ) *CreateResponse {
 	return &CreateResponse{
-		responseDriver:  responseDriver,
-		responseMetrics: responseMetrics,
-		reasoningTracer: reasoningTracer,
+		responseDriver:       responseDriver,
+		conversationResolver: conversationResolver,
+		responseMetrics:      responseMetrics,
+		reasoningTracer:      reasoningTracer,
 	}
 }
 
-// Execute resolves the conversation key, drives the turn (instructions feed the per-turn overlay), builds the Response.
 func (u *CreateResponse) Execute(
 	ctx context.Context,
 	request *requests.CreateResponseRequest,
@@ -45,9 +50,19 @@ func (u *CreateResponse) Execute(
 		return nil, err
 	}
 
-	conversationId := request.ConversationKey()
-	if conversationId == "" {
-		conversationId = uuid.NewString()
+	callerId, err := helpers.RequireCallerId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	conversationId, err := u.conversationResolver.Resolve(ctx, request.ConversationKey(), callerId)
+	if err != nil {
+		u.responseMetrics.RecordResponseFailed(ctx)
+		return nil, u.resolveError(err)
+	}
+	echoedId := request.ConversationKey()
+	if echoedId == "" {
+		echoedId = conversationId
 	}
 
 	ctx, span := u.reasoningTracer.StartInference(ctx, conversationId, request.Model)
@@ -70,7 +85,19 @@ func (u *CreateResponse) Execute(
 	}
 
 	u.responseMetrics.RecordResponseSucceeded(ctx)
-	return u.buildResponse(request, conversationId, persisted), nil
+	return u.buildResponse(request, echoedId, persisted), nil
+}
+
+// resolveError maps caller-caused outcomes to 409; anything else is a 500.
+func (u *CreateResponse) resolveError(err error) error {
+	switch {
+	case goerrors.Is(err, knowledge_interfaces.ErrConversationUnavailable):
+		return errors.NewConflictError("conversation_unavailable", err.Error())
+	case goerrors.Is(err, knowledge_interfaces.ErrAgentNotMinted):
+		return errors.NewConflictError("agent_not_minted", err.Error())
+	default:
+		return errors.NewInternalError("create_response_failed", err.Error())
+	}
 }
 
 func (u *CreateResponse) buildResponse(

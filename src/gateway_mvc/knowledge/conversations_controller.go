@@ -1,11 +1,8 @@
 package knowledge
 
 import (
-	"strings"
-
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
 	"github.com/gofiber/fiber/v3"
@@ -58,7 +55,9 @@ func (c *ConversationsController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Param page query int false "Page (default 1)"
 // @Param elementsPerPage query int false "Elements per page (default 10, max 100)"
 // @Success 200 {object} responses.ListConversationsResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations [get]
 func (c *ConversationsController) List(ctx fiber.Ctx) error {
@@ -82,8 +81,9 @@ func (c *ConversationsController) List(ctx fiber.Ctx) error {
 // @Param request body requests.CreateConversationRequest true "Conversation name"
 // @Success 201 {object} responses.ConversationResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
 // @Failure 409 {object} errors.ConflictError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations [post]
 func (c *ConversationsController) Create(ctx fiber.Ctx) error {
@@ -108,9 +108,10 @@ func (c *ConversationsController) Create(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateConversationRequest true "Conversation name"
 // @Success 200 {object} responses.ConversationResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
 // @Failure 404 {object} errors.NotFoundError
 // @Failure 409 {object} errors.ConflictError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations/{conversationId} [put]
 func (c *ConversationsController) Update(ctx fiber.Ctx) error {
@@ -136,16 +137,18 @@ func (c *ConversationsController) Update(ctx fiber.Ctx) error {
 // @Param conversationId path string true "Conversation id"
 // @Success 200 {object} responses.ListConversationMessagesResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 404 {object} errors.NotFoundError
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations/{conversationId}/messages [get]
 func (c *ConversationsController) ListMessages(ctx fiber.Ctx) error {
-	conversationId := strings.TrimSpace(ctx.Params("conversationId"))
-	if len(conversationId) == 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
+	request := new(requests.ListConversationMessagesRequest)
+	if err := ctx.Bind().URI(request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
 	}
 
-	resp, err := c.listConversationMessages.Execute(ctx.Context(), conversationId)
+	resp, err := c.listConversationMessages.Execute(ctx.Context(), request)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -162,21 +165,22 @@ func (c *ConversationsController) ListMessages(ctx fiber.Ctx) error {
 // @Param request body requests.AppendConversationMessagesRequest true "Messages"
 // @Success 201 {object} responses.AppendConversationMessagesResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 404 {object} errors.NotFoundError
+// @Failure 409 {object} errors.ConflictError
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /conversations/{conversationId}/messages [post]
 func (c *ConversationsController) AppendMessages(ctx fiber.Ctx) error {
-	conversationId := strings.TrimSpace(ctx.Params("conversationId"))
-	if len(conversationId) == 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errors.NewValidationError("conversationId", "cannot be empty"))
-	}
-
 	body := new(requests.AppendConversationMessagesRequest)
+	if err := ctx.Bind().URI(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+	}
 	if err := ctx.Bind().Body(body); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
 	}
 
-	resp, err := c.appendConversationMessages.Execute(ctx.Context(), conversationId, body)
+	resp, err := c.appendConversationMessages.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -46,6 +47,161 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			{Role: "user", Content: "fake memory", Timestamp: now},
 		},
 	}
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"conversation_not_found","message":"conversation not found"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime rejects the append", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom","message":"runtime down"}`),
+				}, nil)
+		}
+
+		t.Run("Should collapse the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
 
 	t.Run("Given the runtime accepts the messages", func(t *testing.T) {
 		t.Parallel()
@@ -91,66 +247,6 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				assert.Equal(t, "m1", payload.Inserted[0].Id)
 				assert.Equal(t, "fake memory", lo.FromPtr(payload.Inserted[0].Content))
 			}
-		})
-	})
-
-	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
-					gomock.Any(),
-					conversationId,
-					"application/json",
-					gomock.Any(),
-				).
-				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
-				}, nil)
-		}
-
-		t.Run("Should map the 409 to a ConflictError keeping the code", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
-
-			var conflictErr *apperrors.ConflictError
-			assert.ErrorAs(t, err, &conflictErr)
-			assert.Equal(t, "agent_not_minted", conflictErr.Code)
-		})
-	})
-
-	t.Run("Given the runtime rejects the append", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
-					gomock.Any(),
-					conversationId,
-					"application/json",
-					gomock.Any(),
-				).
-				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"boom","message":"runtime down"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
-
-			assert.Error(t, err)
 		})
 	})
 }

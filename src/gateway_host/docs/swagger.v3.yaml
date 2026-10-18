@@ -24,6 +24,13 @@ components:
         message:
           type: string
       type: object
+    errors.UnauthorizedError:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      type: object
     errors.UnavailableError:
       properties:
         code:
@@ -971,12 +978,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
         "402":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/x402.PaymentRequired'
           description: Payment Required
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: Conflict
         "502":
           content:
             application/json:
@@ -1112,6 +1131,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: Bad Gateway
       security:
       - BearerAuth: []
       summary: Save agent registration draft
@@ -1860,11 +1891,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.ListConversationsResponse'
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -1896,6 +1939,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
         "409":
           content:
             application/json:
@@ -1906,7 +1955,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -1946,6 +1995,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
         "404":
           content:
             application/json:
@@ -1962,7 +2017,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -1991,11 +2046,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2034,11 +2101,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: Conflict
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2093,18 +2178,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: Unauthorized
         "402":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/x402.PaymentRequired'
           description: Payment Required
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: Conflict
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: runtime_failed
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
       summary: Create response
       tags:
       - Responses

@@ -3,11 +3,10 @@ package middlewares
 import (
 	"strings"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	"github.com/gofiber/fiber/v3"
 )
-
-const AuthAddressLocalKey = "auth.address"
 
 type JwtAuthMiddleware struct {
 	validator gateway_interfaces.JwtValidatorInterface
@@ -36,7 +35,7 @@ func (m *JwtAuthMiddleware) Handle(ctx fiber.Ctx) error {
 		return unauthorized(ctx, "invalid_token", err.Error())
 	}
 
-	ctx.Locals(AuthAddressLocalKey, address.Hex())
+	ctx.SetContext(helpers.ContextWithCallerId(ctx.Context(), address.Hex()))
 	return ctx.Next()
 }
 

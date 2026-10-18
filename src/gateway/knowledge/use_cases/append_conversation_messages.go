@@ -19,7 +19,6 @@ func NewAppendConversationMessages(client interfaces.ConversationClientInterface
 
 func (u *AppendConversationMessages) Execute(
 	ctx context.Context,
-	conversationId string,
 	request *requests.AppendConversationMessagesRequest,
 ) (*responses.AppendConversationMessagesResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
@@ -37,7 +36,7 @@ func (u *AppendConversationMessages) Execute(
 		})
 	}
 
-	result, err := u.client.AppendMessages(ctx, conversationId, payload)
+	result, err := u.client.AppendMessages(ctx, request.ConversationId, payload)
 	if err != nil {
 		return nil, err
 	}

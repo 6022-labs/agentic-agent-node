@@ -2,6 +2,7 @@ package repositories_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -66,7 +67,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 			t.Run("Given a free name", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should insert the head and read it back", func(t *testing.T) {
+				t.Run("Should persist the head", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingConversationBeforeEach(tc)
 					defer WhenCreatingConversationAfterEach(suite)
@@ -89,8 +90,12 @@ func TestWhenCreatingConversation(t *testing.T) {
 					assert.Equal(t, "ERC20 mint audit", *stored.Name)
 					assert.Equal(t, agentId, stored.AgentId)
 				})
+			})
 
-				t.Run("Should insert an unnamed head", func(t *testing.T) {
+			t.Run("Given no name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should persist a nil name", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingConversationBeforeEach(tc)
 					defer WhenCreatingConversationAfterEach(suite)
@@ -111,10 +116,10 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 			})
 
-			t.Run("Given the agent already uses that name", func(t *testing.T) {
+			t.Run("Given a caller id", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should be rejected by the unique index", func(t *testing.T) {
+				t.Run("Should persist the caller id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingConversationBeforeEach(tc)
 					defer WhenCreatingConversationAfterEach(suite)
@@ -122,10 +127,40 @@ func TestWhenCreatingConversation(t *testing.T) {
 					ctx := context.Background()
 					agentId := uuid.New()
 					seedAgent(suite.dbClient, agentId)
+					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
+
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("c1").
+						WithAgentId(agentId).
+						WithCallerId(alice).
+						Build())
+					assert.NoError(t, err)
+
+					stored, err := suite.sut.GetById(ctx, "c1")
+					assert.NoError(t, err)
+					if assert.NotNil(t, stored) && assert.NotNil(t, stored.CallerId) {
+						assert.Equal(t, alice, *stored.CallerId)
+					}
+				})
+			})
+
+			t.Run("Given the caller already uses that name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should reject the insert", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingConversationBeforeEach(tc)
+					defer WhenCreatingConversationAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("first").
 						WithAgentId(agentId).
+						WithCallerId(alice).
 						WithName("Audit").
 						Build())
 					assert.NoError(t, err)
@@ -133,13 +168,18 @@ func TestWhenCreatingConversation(t *testing.T) {
 					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("second").
 						WithAgentId(agentId).
+						WithCallerId(alice).
 						WithName("Audit").
 						Build())
 
 					assert.Error(t, err)
 				})
+			})
 
-				t.Run("Should still allow several unnamed heads", func(t *testing.T) {
+			t.Run("Given several unnamed heads", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should insert them all", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingConversationBeforeEach(tc)
 					defer WhenCreatingConversationAfterEach(suite)
@@ -159,10 +199,104 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 			})
 
+			t.Run("Given another caller already uses that name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should accept the insert", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingConversationBeforeEach(tc)
+					defer WhenCreatingConversationAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
+					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
+
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("first").
+						WithAgentId(agentId).
+						WithCallerId(alice).
+						WithName("Audit").
+						Build())
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("second").
+						WithAgentId(agentId).
+						WithCallerId(bob).
+						WithName("Audit").
+						Build())
+
+					assert.NoError(t, err)
+				})
+			})
+
+			t.Run("Given a caller-less conversation uses that name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should accept the insert", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingConversationBeforeEach(tc)
+					defer WhenCreatingConversationAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
+
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("first").
+						WithAgentId(agentId).
+						WithName("Audit").
+						Build())
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("second").
+						WithAgentId(agentId).
+						WithCallerId(alice).
+						WithName("Audit").
+						Build())
+
+					assert.NoError(t, err)
+				})
+			})
+
+			t.Run("Given two caller-less conversations share a name", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should accept the insert", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingConversationBeforeEach(tc)
+					defer WhenCreatingConversationAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("first").
+						WithAgentId(agentId).
+						WithName("Audit").
+						Build())
+					assert.NoError(t, err)
+
+					// NULL caller ids stay distinct under the unique index; the use case guards this namespace.
+					_, err = suite.sut.Create(ctx, model_builders.NewConversationBuilder().
+						WithId("second").
+						WithAgentId(agentId).
+						WithName("Audit").
+						Build())
+
+					assert.NoError(t, err)
+				})
+			})
+
 			t.Run("Given another agent uses that name", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should be accepted, since the index is agent-scoped", func(t *testing.T) {
+				t.Run("Should accept the insert", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingConversationBeforeEach(tc)
 					defer WhenCreatingConversationAfterEach(suite)

@@ -88,7 +88,7 @@ func (l *ConversationLabeler) apply(
 	return updated, nil
 }
 
-// resolveName excludes the conversation itself, so renaming a session to the name it already holds is a no-op.
+// resolveName excludes the conversation itself so a same-name rename is a no-op.
 func (l *ConversationLabeler) resolveName(
 	ctx context.Context,
 	conversation *models.Conversation,
@@ -106,9 +106,10 @@ func (l *ConversationLabeler) resolveName(
 			candidate = fmt.Sprintf("%s %d", name, attempt)
 		}
 
-		taken, err := l.conversationRepository.ExistsByAgentIdAndName(
+		taken, err := l.conversationRepository.ExistsByAgentIdAndCallerIdAndName(
 			ctx,
 			conversation.AgentId,
+			conversation.CallerId,
 			candidate,
 			&conversation.Id,
 		)

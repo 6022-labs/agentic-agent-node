@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	core_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
@@ -38,9 +39,7 @@ func WhenGrantingJwtFreeAccessBeforeEach(t *testing.T) *WhenGrantingJwtFreeAcces
 	}
 }
 
-// build wires the link over the given matchers. The first handler calls
-// TryHandle; a deferral (handled=false) answers 418 so the downstream handler
-// only runs when the link grants access.
+// build wires the link over matchers; a deferral answers 418, so downstream runs only on a grant.
 func (s *WhenGrantingJwtFreeAccessTestingSuite) build(matchers ...middleware_interfaces.FreeRuleMatcherInterface) {
 	sut := middlewares.NewJwtFreeAccessMethod(middlewares.NewJwtFreeAccessMethodParams{
 		JwtValidator:     s.mockJwtValidator,
@@ -57,7 +56,7 @@ func (s *WhenGrantingJwtFreeAccessTestingSuite) build(matchers ...middleware_int
 		},
 		func(ctx fiber.Ctx) error {
 			s.downstreamRan = true
-			s.seenAddress, _ = ctx.Locals(core_middlewares.AuthAddressLocalKey).(string)
+			s.seenAddress, _ = helpers.CallerIdFromContext(ctx.Context())
 			return ctx.JSON(fiber.Map{"ok": true})
 		},
 	)
@@ -172,10 +171,7 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 	t.Run("Given a valid token the matcher deems free-entitled", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should grant access and run downstream with the JWT address", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
+		initSuite := func(suite *WhenGrantingJwtFreeAccessTestingSuite) {
 			suite.mockJwtValidator.EXPECT().
 				Verify(jwtTestToken).
 				Return(common.HexToAddress(x402TestPayerHex), nil).
@@ -185,20 +181,38 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 				Return(true).
 				Times(1)
 			suite.build(suite.matcherA)
+		}
+
+		t.Run("Should run the downstream handler", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
+			initSuite(suite)
 
 			resp, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
 
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.downstreamRan)
-			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenAddress)
+		})
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
 		})
 	})
 
-	t.Run("Given a second matcher grants when the first declines", func(t *testing.T) {
+	t.Run("Given the first matcher declines and the second grants", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should grant — any matcher suffices", func(t *testing.T) {
+		t.Run("Should grant access", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGrantingJwtFreeAccessBeforeEach(t)

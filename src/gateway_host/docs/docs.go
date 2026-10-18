@@ -122,10 +122,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "402": {
                         "description": "Payment Required",
                         "schema": {
                             "$ref": "#/definitions/x402.PaymentRequired"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "502": {
@@ -333,6 +345,18 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1379,10 +1403,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListConversationsResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1427,6 +1463,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {
@@ -1436,7 +1478,7 @@ const docTemplate = `{
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1490,6 +1532,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -1505,7 +1553,7 @@ const docTemplate = `{
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1547,10 +1595,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1602,10 +1662,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1675,16 +1753,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "402": {
                         "description": "Payment Required",
                         "schema": {
                             "$ref": "#/definitions/x402.PaymentRequired"
                         }
                     },
-                    "502": {
-                        "description": "runtime_failed",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1717,6 +1807,17 @@ const docTemplate = `{
             }
         },
         "errors.NotFoundError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "errors.UnauthorizedError": {
             "type": "object",
             "properties": {
                 "code": {

@@ -43,7 +43,10 @@ func (c *ConversationsController) RegisterRoutes(app fiber.Router) {
 // @Param page query int false "Page (default 1)"
 // @Param elementsPerPage query int false "Elements per page (default 10, max 100)"
 // @Success 200 {object} responses.ListConversationsResponse
-// @Failure 500 {object} fiber.Map "list_failed"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 500 {object} errors.InternalError "list_failed"
+// @Security CallerId
 // @Router /internal/conversations [get]
 func (c *ConversationsController) List(ctx fiber.Ctx) error {
 	req := &requests.ListConversationsRequest{}
@@ -66,8 +69,10 @@ func (c *ConversationsController) List(ctx fiber.Ctx) error {
 // @Param request body requests.CreateConversationRequest true "Conversation name"
 // @Success 201 {object} responses.ConversationResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 409 {object} fiber.Map "conversation_name_taken"
-// @Failure 500 {object} fiber.Map "create_failed"
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 409 {object} errors.ConflictError "conversation_name_taken or agent_not_minted"
+// @Failure 500 {object} errors.InternalError "create_failed"
+// @Security CallerId
 // @Router /internal/conversations [post]
 func (c *ConversationsController) Create(ctx fiber.Ctx) error {
 	body := new(requests.CreateConversationRequest)
@@ -91,9 +96,11 @@ func (c *ConversationsController) Create(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateConversationRequest true "Conversation name"
 // @Success 200 {object} responses.ConversationResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} fiber.Map "conversation_not_found"
-// @Failure 409 {object} fiber.Map "conversation_name_taken"
-// @Failure 500 {object} fiber.Map "update_failed"
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 404 {object} errors.NotFoundError "conversation_not_found"
+// @Failure 409 {object} errors.ConflictError "conversation_name_taken"
+// @Failure 500 {object} errors.InternalError "update_failed"
+// @Security CallerId
 // @Router /internal/conversations/{conversationId} [put]
 func (c *ConversationsController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateConversationRequest)

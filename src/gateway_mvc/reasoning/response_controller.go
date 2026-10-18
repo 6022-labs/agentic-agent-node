@@ -42,8 +42,10 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Param request body requests.CreateResponseRequest true "Conversation turn"
 // @Success 200 {object} responses.Response
 // @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
 // @Failure 402 {object} x402.PaymentRequired
-// @Failure 502 {object} fiber.Map "runtime_failed"
+// @Failure 409 {object} errors.ConflictError
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Router /responses [post]
 func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)

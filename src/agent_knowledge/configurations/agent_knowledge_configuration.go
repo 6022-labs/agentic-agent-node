@@ -38,6 +38,13 @@ func AddAgentKnowledgeConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewConversationResolver,
+		dig.As(new(interfaces.ConversationResolverInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	useCaseProviders := []any{
 		use_cases.NewListConversationMessages,
 		use_cases.NewListConversations,

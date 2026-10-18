@@ -12,69 +12,100 @@ import (
 func TestWhenValidatingUpdateConversationRequest(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the route id is missing", func(t *testing.T) {
+	validUpdateConversationRequest := func() *requests.UpdateConversationRequest {
+		return &requests.UpdateConversationRequest{
+			ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+			Name:                "Solidity audits",
+		}
+	}
+
+	t.Run("Given a fully populated request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			assert.NoError(t, validUpdateConversationRequest().ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given a blank conversation id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should reject on the conversationId field", func(t *testing.T) {
 			t.Parallel()
 
-			req := &requests.UpdateConversationRequest{ConversationId: "  ", Name: "Solidity audits"}
+			req := validUpdateConversationRequest()
+			req.ConversationId = "  "
 
-			err := req.ValidateAndSanitize()
-
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "conversationId")
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "conversationId")
 		})
 	})
 
-	t.Run("Given an unusable name", func(t *testing.T) {
+	t.Run("Given a name padded with whitespace", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should reject an empty one", func(t *testing.T) {
+		t.Run("Should collapse it", func(t *testing.T) {
 			t.Parallel()
 
-			req := &requests.UpdateConversationRequest{ConversationId: "c1", Name: " "}
-
-			err := req.ValidateAndSanitize()
-
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "name")
-		})
-
-		t.Run("Should reject one longer than the column", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           strings.Repeat("a", requests.ConversationNameMaxLength+1),
-			}
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-
-		t.Run("Should reject a uuid-shaped one, so it cannot pass for a session id", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.UpdateConversationRequest{ConversationId: "c1", Name: uuid.NewString()}
-
-			err := req.ValidateAndSanitize()
-
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "uuid")
-		})
-	})
-
-	t.Run("Given a conversation id and a name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should trim both and pass", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.UpdateConversationRequest{ConversationId: " c1 ", Name: "  Solidity   audits "}
+			req := validUpdateConversationRequest()
+			req.Name = "  Solidity   audits "
 
 			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, "c1", req.ConversationId)
 			assert.Equal(t, "Solidity audits", req.Name)
 		})
 	})
+
+	t.Run("Given an empty name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject on the name field", func(t *testing.T) {
+			t.Parallel()
+
+			req := validUpdateConversationRequest()
+			req.Name = " "
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "name")
+		})
+	})
+
+	t.Run("Given a name longer than the column", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject on the name field", func(t *testing.T) {
+			t.Parallel()
+
+			req := validUpdateConversationRequest()
+			req.Name = strings.Repeat("a", requests.ConversationNameMaxLength+1)
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "name")
+		})
+	})
+
+	t.Run("Given a name of exactly the maximum length", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			req := validUpdateConversationRequest()
+			req.Name = strings.Repeat("a", requests.ConversationNameMaxLength)
+
+			assert.NoError(t, req.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given a uuid-shaped name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject on the uuid rule", func(t *testing.T) {
+			t.Parallel()
+
+			req := validUpdateConversationRequest()
+			req.Name = uuid.NewString()
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "uuid")
+		})
+	})
+
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/samber/lo"
 )
 
@@ -30,12 +31,16 @@ func NewListConversations(
 	}
 }
 
-// Execute returns one page of the agent's memory sessions, newest first, decorated with their message counts.
+// Execute pages sessions newest first with message counts; the agent owner sees every caller's.
 func (u *ListConversations) Execute(
 	ctx context.Context,
 	request *requests.ListConversationsRequest,
 ) (*responses.ListConversationsResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+	callerId, err := helpers.RequireCallerId(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -51,7 +56,12 @@ func (u *ListConversations) Execute(
 		}, nil
 	}
 
-	total, err := u.conversationRepository.CountByAgentId(ctx, agent.Id)
+	scope := &callerId
+	if agent.IsOwnedBy(callerId) {
+		scope = nil
+	}
+
+	total, err := u.conversationRepository.CountByAgentId(ctx, agent.Id, scope)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
@@ -59,7 +69,7 @@ func (u *ListConversations) Execute(
 	limit := int(*request.ElementsPerPage)
 	offset := int(*request.Page-1) * limit
 
-	conversations, err := u.conversationRepository.ListByAgentId(ctx, agent.Id, &offset, &limit)
+	conversations, err := u.conversationRepository.ListByAgentId(ctx, agent.Id, scope, &offset, &limit)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}

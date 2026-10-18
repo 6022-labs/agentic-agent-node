@@ -33,7 +33,40 @@
                     "LLMConnectionSetupStatusEstablished"
                 ]
             },
+            "errors.ConflictError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "errors.InternalError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "errors.NotFoundError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "errors.UnauthorizedError": {
                 "properties": {
                     "code": {
                         "type": "string"
@@ -987,6 +1020,14 @@
                     }
                 },
                 "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "CallerId": {
+                "description": "Caller identity stamped by gateway_host.",
+                "in": "header",
+                "name": "X-Caller-Id",
+                "type": "apiKey"
             }
         }
     },
@@ -2436,17 +2477,42 @@
                         },
                         "description": "OK"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "list_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal list conversations",
                 "tags": [
                     "Internal"
@@ -2494,27 +2560,42 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
                     "409": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
-                        "description": "conversation_name_taken"
+                        "description": "conversation_name_taken or agent_not_minted"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "create_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal create conversation",
                 "tags": [
                     "Internal"
@@ -2575,11 +2656,21 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
@@ -2589,7 +2680,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
@@ -2599,13 +2690,18 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "update_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal update conversation",
                 "tags": [
                     "Internal"
@@ -2646,17 +2742,42 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "list_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal list messages",
                 "tags": [
                     "Internal"
@@ -2716,17 +2837,52 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "append_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal append messages",
                 "tags": [
                     "Internal"
@@ -2912,17 +3068,42 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
                         "description": "create_response_failed"
                     }
                 },
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "summary": "Internal create response",
                 "tags": [
                     "Internal"

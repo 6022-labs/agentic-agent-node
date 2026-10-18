@@ -14,30 +14,28 @@ if ! command -v atlas >/dev/null 2>&1; then
     exit 1
 fi
 
-for DB in mariadb mysql postgres sqlite; do
-    DIR="$MIGRATIONS_ROOT/$DB"
-    echo "Generating migration for $DB..."
-    atlas migrate diff "$MIGRATION_NAME" --env gorm-"$DB"
-    echo "Generated migration for $DB in directory: $DIR"
-    echo
-done
-
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 
-for DB in mariadb mysql postgres sqlite sqlserver; do
+# Only files atlas creates in this run are renamed: renaming an existing migration would replay it as a new version.
+for DB in mariadb mysql postgres sqlite; do
     DIR="$MIGRATIONS_ROOT/$DB"
+    BEFORE=$(ls -1 "$DIR"/*.sql 2>/dev/null || true)
 
-    LATEST_FILE=$(ls -1t "$DIR"/*.sql 2>/dev/null | head -n 1)
-    if [ -z "$LATEST_FILE" ]; then
-        echo "No SQL file found in $DIR, skipping."
+    echo "Generating migration for $DB..."
+    atlas migrate diff "$MIGRATION_NAME" --env gorm-"$DB"
+
+    NEW_FILE=$(comm -13 <(echo "$BEFORE") <(ls -1 "$DIR"/*.sql 2>/dev/null || true))
+    if [ -z "$NEW_FILE" ]; then
+        echo "No schema change for $DB, skipping."
+        echo
         continue
     fi
 
-    NAME_PART=$(basename "$LATEST_FILE" | cut -d'_' -f2-)
-    NEW_NAME="${TIMESTAMP}_${NAME_PART}"
-    NEW_PATH="$DIR/$NEW_NAME"
-    mv "$LATEST_FILE" "$NEW_PATH"
-    echo "Renamed $LATEST_FILE to $NEW_PATH"
+    NAME_PART=$(basename "$NEW_FILE" | cut -d'_' -f2-)
+    NEW_PATH="$DIR/${TIMESTAMP}_${NAME_PART}"
+    mv "$NEW_FILE" "$NEW_PATH"
+    echo "Generated $NEW_PATH"
 
     atlas migrate hash --dir file://"$DB"
+    echo
 done

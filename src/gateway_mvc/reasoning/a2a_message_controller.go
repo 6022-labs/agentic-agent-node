@@ -42,7 +42,9 @@ func (c *A2AMessageController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Param request body requests.A2ARequest true "JSON-RPC SendMessage request"
 // @Success 200 {object} responses.A2AResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
 // @Failure 402 {object} x402.PaymentRequired
+// @Failure 409 {object} errors.ConflictError
 // @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Router /a2a [post]
 func (c *A2AMessageController) Handle(ctx fiber.Ctx) error {

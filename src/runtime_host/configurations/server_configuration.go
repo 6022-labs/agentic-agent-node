@@ -5,6 +5,7 @@ import (
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
+	runtime_common_mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc/middlewares"
 	_ "github.com/6022-labs/agentic-agent-node/src/runtime_host/docs"
 	fiberotel "github.com/gofiber/contrib/v3/otel"
 	"github.com/gofiber/contrib/v3/swaggo"
@@ -39,6 +40,7 @@ type registerRoutesParams struct {
 	Logger         *zap.Logger
 	AgentTelemetry *identity_middlewares.AgentTelemetryContextMiddleware
 	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
+	CallerContext  *runtime_common_mvc_middlewares.CallerContextMiddleware
 	Controllers    []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 
@@ -51,6 +53,8 @@ func registerRoutes(p registerRoutesParams) {
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
 	}))
+
+	p.App.Use(p.CallerContext.Handle)
 
 	p.App.Use(func(ctx fiber.Ctx) error {
 		err := ctx.Next()

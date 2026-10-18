@@ -2,19 +2,28 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	knowledge_services_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+)
+
+var (
+	updatingCallerId  = strings.ToLower(common_tests.RandomEthAddress().Hex())
+	updatingCallerCtx = helpers.ContextWithCallerId(context.Background(), updatingCallerId)
 )
 
 type WhenUpdatingConversationTestingSuite struct {
@@ -47,50 +56,218 @@ func WhenUpdatingConversationBeforeEach(t *testing.T) *WhenUpdatingConversationT
 func TestWhenUpdatingConversation(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the conversation is not the agent's", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "   ",
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return Unauthorized without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Audit",
+			})
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
+		}
+
+		t.Run("Should return InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Audit",
+			})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "update_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should return InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Audit",
+			})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "update_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the caller does not own the agent", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
-		foreign := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(uuid.New()).Build()
+		conversation := model_builders.NewConversationBuilder().
+			WithId("c1").
+			WithAgentId(agent.Id).
+			WithCallerId(updatingCallerId).
+			Build()
 
-		initForeignSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(foreign, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(conversation, nil)
+			suite.mockConversationLabeler.EXPECT().
+				SetName(gomock.Any(), "c1", "Audit").
+				Return(model_builders.NewConversationBuilder().WithId("c1").WithName("Audit").Build(), nil)
 		}
 
-		initMissingSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "ghost").Return(nil, nil)
-		}
-
-		t.Run("Should report it as not found rather than forbidden", func(t *testing.T) {
+		t.Run("Should look the conversation up within the caller's scope", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
-			initForeignSuite(suite)
+			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "mine",
+			resp, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Audit",
 			})
 
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
+			assert.NoError(t, err)
+			assert.Equal(t, "Audit", *resp.Name)
 		})
+	})
 
-		t.Run("Should report an unknown id as not found", func(t *testing.T) {
+	t.Run("Given the caller owns the agent", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(updatingCallerId)).Build()
+		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, gomock.Nil()).
+				Return(conversation, nil)
+			suite.mockConversationLabeler.EXPECT().
+				SetName(gomock.Any(), "c1", "Solidity audits").
+				Return(model_builders.NewConversationBuilder().
+					WithId("c1").
+					WithAgentId(agent.Id).
+					WithName("Solidity audits").
+					Build(), nil)
+		}
+
+		t.Run("Should look the conversation up unscoped", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
-			initMissingSuite(suite)
+			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "ghost",
-				Name:           "x y",
+			resp, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Solidity audits",
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "Solidity audits", *resp.Name)
+		})
+	})
+
+	t.Run("Given the conversation lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(nil, errors.New("db blew"))
+		}
+
+		t.Run("Should return InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "mine",
+			})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "update_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the conversation is not found", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(nil, nil)
+		}
+
+		t.Run("Should return NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "mine",
 			})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -102,7 +279,9 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(conversation, nil)
 			suite.mockConversationLabeler.EXPECT().
 				SetName(gomock.Any(), "c1", "taken").
 				Return(nil, interfaces.ErrConversationNameTaken)
@@ -114,17 +293,18 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "taken",
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "taken",
 			})
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
 		})
 	})
 
-	t.Run("Given the agent owns the conversation", func(t *testing.T) {
+	t.Run("Given renaming fails", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -132,45 +312,60 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(conversation, nil)
+			suite.mockConversationLabeler.EXPECT().
+				SetName(gomock.Any(), "c1", "Audit").
+				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should rename it", func(t *testing.T) {
+		t.Run("Should return InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			suite.mockConversationLabeler.EXPECT().
-				SetName(gomock.Any(), "c1", "Solidity audits").
-				Return(model_builders.NewConversationBuilder().
-					WithId("c1").
-					WithAgentId(agent.Id).
-					WithName("Solidity audits").
-					Build(), nil)
-
-			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "Solidity audits",
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Audit",
 			})
 
-			assert.NoError(t, err)
-			assert.Equal(t, "Solidity audits", *resp.Name)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "update_failed", internalErr.Code)
 		})
+	})
 
-		t.Run("Should accept renaming a session to the name it already holds", func(t *testing.T) {
-			t.Parallel()
+	t.Run("Given the new name is the current one", func(t *testing.T) {
+		t.Parallel()
 
-			suite := WhenUpdatingConversationBeforeEach(t)
-			initSuite(suite)
+		agent := model_builders.NewAgentBuilder().Build()
+		conversation := model_builders.NewConversationBuilder().
+			WithId("c1").
+			WithAgentId(agent.Id).
+			WithName("same").
+			Build()
 
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
+				Return(conversation, nil)
 			suite.mockConversationLabeler.EXPECT().
 				SetName(gomock.Any(), "c1", "same").
 				Return(conversation, nil)
+		}
 
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "c1",
-				Name:           "same",
+		t.Run("Should accept it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "same",
 			})
 
 			assert.NoError(t, err)

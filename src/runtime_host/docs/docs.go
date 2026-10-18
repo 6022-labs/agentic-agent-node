@@ -1120,6 +1120,11 @@ const docTemplate = `{
         },
         "/internal/conversations": {
             "get": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1148,15 +1153,32 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListConversationsResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "500": {
                         "description": "list_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1191,16 +1213,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
-                    "409": {
-                        "description": "conversation_name_taken",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "conversation_name_taken or agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
                         "description": "create_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1208,6 +1236,11 @@ const docTemplate = `{
         },
         "/internal/conversations/{conversationId}": {
             "put": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1249,22 +1282,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "conversation_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "409": {
                         "description": "conversation_name_taken",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
                         "description": "update_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1272,6 +1311,11 @@ const docTemplate = `{
         },
         "/internal/conversations/{conversationId}/messages": {
             "get": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1301,15 +1345,32 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
                     "500": {
                         "description": "list_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "description": "Idempotent batch append to the transcript. Dedup by SHA-512 hash of (role, content, conversationId).",
                 "consumes": [
                     "application/json"
@@ -1352,10 +1413,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "500": {
                         "description": "append_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1470,6 +1549,11 @@ const docTemplate = `{
         },
         "/internal/responses": {
             "post": {
+                "security": [
+                    {
+                        "CallerId": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1504,10 +1588,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "500": {
                         "description": "create_response_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1547,7 +1643,40 @@ const docTemplate = `{
                 "LLMConnectionSetupStatusEstablished"
             ]
         },
+        "errors.ConflictError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "errors.InternalError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "errors.NotFoundError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "errors.UnauthorizedError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2480,6 +2609,14 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "CallerId": {
+            "description": "Caller identity stamped by gateway_host.",
+            "type": "apiKey",
+            "name": "X-Caller-Id",
+            "in": "header"
         }
     }
 }`

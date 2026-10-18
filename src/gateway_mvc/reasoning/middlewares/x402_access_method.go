@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
-	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/metrics/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v3"
@@ -120,7 +120,7 @@ func (m *X402AccessMethod) handle(ctx fiber.Ctx, rules []models.ExternalPaymentR
 
 	// The payer takes the identity role the JWT fills on other routes.
 	ctx.Locals(X402PayerLocalKey, payer.Hex())
-	ctx.Locals(core_middlewares.AuthAddressLocalKey, payer.Hex())
+	ctx.SetContext(helpers.ContextWithCallerId(ctx.Context(), payer.Hex()))
 
 	entitled := m.cheapestEntitledRule(recovered, payer, facilitators)
 	if entitled == nil {

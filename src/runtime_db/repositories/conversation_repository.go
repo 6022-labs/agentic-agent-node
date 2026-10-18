@@ -52,9 +52,28 @@ func (r *ConversationRepository) GetById(ctx context.Context, id string) (*model
 	return &entity, nil
 }
 
-func (r *ConversationRepository) ExistsByAgentIdAndName(
+func (r *ConversationRepository) GetByIdAndAgentIdAndCallerId(
+	ctx context.Context,
+	id string,
+	agentId uuid.UUID,
+	callerId *string,
+) (*models.Conversation, error) {
+	var entity models.Conversation
+	query := r.client.GetDB().WithContext(ctx).Where("id = ? AND agent_id = ?", id, agentId)
+	err := r.scopeToCallerId(query, callerId).First(&entity).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *ConversationRepository) ExistsByAgentIdAndCallerIdAndName(
 	ctx context.Context,
 	agentId uuid.UUID,
+	callerId *string,
 	name string,
 	excludedId *string,
 ) (bool, error) {
@@ -62,6 +81,12 @@ func (r *ConversationRepository) ExistsByAgentIdAndName(
 		WithContext(ctx).
 		Model(&models.Conversation{}).
 		Where("agent_id = ? AND name = ?", agentId, name)
+
+	if callerId != nil {
+		query = query.Where("caller_id = ?", *callerId)
+	} else {
+		query = query.Where("caller_id IS NULL")
+	}
 
 	if excludedId != nil {
 		query = query.Where("id <> ?", *excludedId)
@@ -87,12 +112,11 @@ func (r *ConversationRepository) Update(
 func (r *ConversationRepository) ListByAgentId(
 	ctx context.Context,
 	agentId uuid.UUID,
+	callerId *string,
 	offset *int,
 	limit *int,
 ) ([]models.Conversation, error) {
-	query := r.client.GetDB().
-		WithContext(ctx).
-		Where("agent_id = ?", agentId).
+	query := r.scopeToCallerId(r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId), callerId).
 		Order("created_at DESC")
 
 	if limit != nil {
@@ -109,14 +133,23 @@ func (r *ConversationRepository) ListByAgentId(
 	return entities, nil
 }
 
-func (r *ConversationRepository) CountByAgentId(ctx context.Context, agentId uuid.UUID) (uint, error) {
+func (r *ConversationRepository) CountByAgentId(
+	ctx context.Context,
+	agentId uuid.UUID,
+	callerId *string,
+) (uint, error) {
 	var total int64
-	if err := r.client.GetDB().
-		WithContext(ctx).
-		Model(&models.Conversation{}).
-		Where("agent_id = ?", agentId).
-		Count(&total).Error; err != nil {
+	query := r.client.GetDB().WithContext(ctx).Model(&models.Conversation{}).Where("agent_id = ?", agentId)
+	if err := r.scopeToCallerId(query, callerId).Count(&total).Error; err != nil {
 		return 0, err
 	}
 	return uint(total), nil
+}
+
+// scopeToCallerId: nil leaves the query unscoped.
+func (r *ConversationRepository) scopeToCallerId(query *gorm.DB, callerId *string) *gorm.DB {
+	if callerId == nil {
+		return query
+	}
+	return query.Where("caller_id = ?", *callerId)
 }

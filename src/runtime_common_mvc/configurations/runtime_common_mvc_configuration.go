@@ -6,6 +6,7 @@ import (
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc"
+	runtime_common_mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc/middlewares"
 	"go.uber.org/dig"
 )
 
@@ -16,6 +17,9 @@ func AddRuntimeCommonMvcConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(mvc_middlewares.NewApiRequestMetricsMiddleware); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(runtime_common_mvc_middlewares.NewCallerContextMiddleware); err != nil {
 		panic(err)
 	}
 

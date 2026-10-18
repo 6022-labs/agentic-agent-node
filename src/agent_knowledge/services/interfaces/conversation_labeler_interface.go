@@ -7,10 +7,10 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 )
 
-// ErrConversationNameTaken — another conversation of the same agent already holds the name.
+// ErrConversationNameTaken — the caller already has a conversation with that name.
 var ErrConversationNameTaken = errors.New("conversation name taken")
 
-// ConversationLabelerInterface owns naming a conversation and the per-agent uniqueness it implies.
+// ConversationLabelerInterface owns conversation naming and its per-caller uniqueness.
 type ConversationLabelerInterface interface {
 	// GetName returns the current label, or nil when the conversation is untitled or absent.
 	GetName(ctx context.Context, conversationId string) (*string, error)

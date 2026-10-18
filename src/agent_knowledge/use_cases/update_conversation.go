@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
 type UpdateConversation struct {
@@ -30,12 +31,16 @@ func NewUpdateConversation(
 	}
 }
 
-// Execute relabels a memory session; another agent's conversation is reported as absent, never as forbidden.
+// Execute relabels a session; one out of the caller's view is reported absent, never forbidden.
 func (u *UpdateConversation) Execute(
 	ctx context.Context,
 	request *requests.UpdateConversationRequest,
 ) (*responses.ConversationResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+	callerId, err := helpers.RequireCallerId(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -47,11 +52,20 @@ func (u *UpdateConversation) Execute(
 		return nil, errors.NewInternalError("update_failed", "agent identity is not initialized yet")
 	}
 
-	conversation, err := u.conversationRepository.GetById(ctx, request.ConversationId)
+	scope := &callerId
+	if agent.IsOwnedBy(callerId) {
+		scope = nil
+	}
+	conversation, err := u.conversationRepository.GetByIdAndAgentIdAndCallerId(
+		ctx,
+		request.ConversationId,
+		agent.Id,
+		scope,
+	)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
-	if conversation == nil || conversation.AgentId != agent.Id {
+	if conversation == nil {
 		return nil, errors.NewNotFoundError("conversation_not_found", "conversation not found")
 	}
 

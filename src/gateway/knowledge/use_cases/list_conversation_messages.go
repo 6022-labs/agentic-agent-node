@@ -3,8 +3,8 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/responses"
 )
 
@@ -18,11 +18,15 @@ func NewListConversationMessages(client interfaces.ConversationClientInterface) 
 
 func (u *ListConversationMessages) Execute(
 	ctx context.Context,
-	conversationId string,
+	request *requests.ListConversationMessagesRequest,
 ) (*responses.ListConversationMessagesResponse, error) {
-	payload, err := u.client.ListMessages(ctx, conversationId)
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+
+	payload, err := u.client.ListMessages(ctx, request.ConversationId)
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 
 	out := make([]responses.ConversationMessage, 0, len(payload.Messages))

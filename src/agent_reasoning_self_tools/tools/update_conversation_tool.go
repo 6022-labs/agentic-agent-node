@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
 
-// UpdateConversationTool exposes the UpdateConversation use case as a built-in self tool.
+// UpdateConversationTool renames one of the caller's sessions (all of them for the agent owner).
 type UpdateConversationTool struct {
 	updateConversationExecutor tool_interfaces.UpdateConversationExecutorInterface
 }
@@ -23,7 +23,7 @@ func NewUpdateConversationTool(
 func (t *UpdateConversationTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "update_conversation",
-		Description: "Rename one of your memory sessions.",
+		Description: "Rename one of the caller's memory sessions (all of them for the agent owner).",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"conversationId": utils.StringProperty("Id of the session to rename."),
 			"name":           utils.StringProperty("Short title for the session, 3 to 6 words. Must not be a uuid."),
@@ -42,8 +42,8 @@ func (t *UpdateConversationTool) Execute(ctx context.Context, args map[string]an
 	}
 	return utils.ToToolResult(
 		t.updateConversationExecutor.Execute(ctx, &knowledge_requests.UpdateConversationRequest{
-			ConversationId: conversationId,
-			Name:           name,
+			ConversationRequest: knowledge_requests.ConversationRequest{ConversationId: conversationId},
+			Name:                name,
 		}),
 	)
 }

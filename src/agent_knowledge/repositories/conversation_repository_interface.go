@@ -15,17 +15,33 @@ type ConversationRepositoryInterface interface {
 	Ensure(ctx context.Context, conversation *models.Conversation) (bool, error)
 	// Create inserts a new head; the caller owns id generation and name uniqueness.
 	Create(ctx context.Context, conversation *models.Conversation) (*models.Conversation, error)
-	// GetById returns the conversation by its (globally unique) id, or (nil, nil)
-	// if absent. Ownership is the caller's to enforce via the row's AgentId.
+	// GetById returns (nil, nil) when absent; ownership checks are the caller's job.
 	GetById(ctx context.Context, id string) (*models.Conversation, error)
-	// ExistsByAgentIdAndName reports whether the agent already uses that name; excludedId lets a rename ignore
-	// the conversation being renamed.
-	ExistsByAgentIdAndName(ctx context.Context, agentId uuid.UUID, name string, excludedId *string) (bool, error)
+	// GetByIdAndAgentIdAndCallerId returns (nil, nil) when absent or out of scope; nil callerId is unscoped.
+	GetByIdAndAgentIdAndCallerId(
+		ctx context.Context,
+		id string,
+		agentId uuid.UUID,
+		callerId *string,
+	) (*models.Conversation, error)
+	// ExistsByAgentIdAndCallerIdAndName: nil callerId means caller-less heads; excludedId skips the renamed one.
+	ExistsByAgentIdAndCallerIdAndName(
+		ctx context.Context,
+		agentId uuid.UUID,
+		callerId *string,
+		name string,
+		excludedId *string,
+	) (bool, error)
 	// Update persists the whole head.
 	Update(ctx context.Context, conversation *models.Conversation) (*models.Conversation, error)
-	// ListByAgentId returns the agent's conversations, newest first; a nil offset or limit means that bound is
-	// not applied.
-	ListByAgentId(ctx context.Context, agentId uuid.UUID, offset *int, limit *int) ([]models.Conversation, error)
-	// CountByAgentId totals the agent's heads for pagination.
-	CountByAgentId(ctx context.Context, agentId uuid.UUID) (uint, error)
+	// ListByAgentId lists newest first; nil callerId, offset or limit means unscoped/unbounded.
+	ListByAgentId(
+		ctx context.Context,
+		agentId uuid.UUID,
+		callerId *string,
+		offset *int,
+		limit *int,
+	) ([]models.Conversation, error)
+	// CountByAgentId counts heads; nil callerId means unscoped.
+	CountByAgentId(ctx context.Context, agentId uuid.UUID, callerId *string) (uint, error)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
@@ -91,6 +92,9 @@ func (c *inputContent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ConversationKeyMaxLength matches the runtime's conversations.id column.
+const ConversationKeyMaxLength = 128
+
 type ConversationRef struct {
 	Id string `json:"id"`
 }
@@ -133,6 +137,12 @@ func (r *CreateResponseRequest) ValidateAndSanitize() error {
 				"message content cannot be empty, check input at index "+strconv.Itoa(index),
 			)
 		}
+	}
+	if utf8.RuneCountInString(r.ConversationKey()) > ConversationKeyMaxLength {
+		return errors.NewValidationError(
+			"conversation",
+			"key must be at most "+strconv.Itoa(ConversationKeyMaxLength)+" characters",
+		)
 	}
 	return nil
 }

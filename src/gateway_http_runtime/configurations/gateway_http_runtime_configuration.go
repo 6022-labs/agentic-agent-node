@@ -11,6 +11,7 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
+	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/helpers"
 	core_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/core"
 	identity_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/identity"
 	knowledge_services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
@@ -32,7 +33,11 @@ func newRuntimeClient(s *settings.RuntimeClientSettings) (clients.ClientWithResp
 			otelhttp.WithMeterProvider(metricnoop.NewMeterProvider()),
 		),
 	}
-	return clients.NewClientWithResponses(s.BaseUrl, clients.WithHTTPClient(httpClient))
+	return clients.NewClientWithResponses(
+		s.BaseUrl,
+		clients.WithHTTPClient(httpClient),
+		clients.WithRequestEditorFn(helpers.ForwardCallerId),
+	)
 }
 
 // AddGatewayHttpRuntimeConfiguration wires the shared runtime client plus each

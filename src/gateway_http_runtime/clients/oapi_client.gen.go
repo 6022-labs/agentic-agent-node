@@ -17,6 +17,10 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const (
+	CallerIdScopes = "CallerId.Scopes"
+)
+
 // Defines values for EnumsLLMConnectionPlatform.
 const (
 	LLMConnectionPlatformAnthropic  EnumsLLMConnectionPlatform = "anthropic"
@@ -40,8 +44,26 @@ type EnumsLLMConnectionPlatform string
 // EnumsLLMConnectionSetupStatus defines model for enums.LLMConnectionSetupStatus.
 type EnumsLLMConnectionSetupStatus string
 
+// ErrorsConflictError defines model for errors.ConflictError.
+type ErrorsConflictError struct {
+	Code    *string `json:"code,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
+// ErrorsInternalError defines model for errors.InternalError.
+type ErrorsInternalError struct {
+	Code    *string `json:"code,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
 // ErrorsNotFoundError defines model for errors.NotFoundError.
 type ErrorsNotFoundError struct {
+	Code    *string `json:"code,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
+// ErrorsUnauthorizedError defines model for errors.UnauthorizedError.
+type ErrorsUnauthorizedError struct {
 	Code    *string `json:"code,omitempty"`
 	Message *string `json:"message,omitempty"`
 }
@@ -3961,7 +3983,9 @@ type GetInternalConversationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesListConversationsResponse
-	JSON500      *FiberMap
+	JSON400      *ErrorsValidationError
+	JSON401      *ErrorsUnauthorizedError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -3985,8 +4009,9 @@ type PostInternalConversationsResponse struct {
 	HTTPResponse *http.Response
 	JSON201      *ResponsesConversationResponse
 	JSON400      *ErrorsValidationError
-	JSON409      *FiberMap
-	JSON500      *FiberMap
+	JSON401      *ErrorsUnauthorizedError
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4010,9 +4035,10 @@ type PutInternalConversationsConversationIdResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesConversationResponse
 	JSON400      *ErrorsValidationError
-	JSON404      *FiberMap
-	JSON409      *FiberMap
-	JSON500      *FiberMap
+	JSON401      *ErrorsUnauthorizedError
+	JSON404      *ErrorsNotFoundError
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4036,7 +4062,9 @@ type GetInternalConversationsConversationIdMessagesResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesListConversationMessagesResponse
 	JSON400      *ErrorsValidationError
-	JSON500      *FiberMap
+	JSON401      *ErrorsUnauthorizedError
+	JSON404      *ErrorsNotFoundError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4060,7 +4088,10 @@ type PostInternalConversationsConversationIdMessagesResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesAppendConversationMessagesResponse
 	JSON400      *ErrorsValidationError
-	JSON500      *FiberMap
+	JSON401      *ErrorsUnauthorizedError
+	JSON404      *ErrorsNotFoundError
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4155,7 +4186,9 @@ type PostInternalResponsesResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesCreateResponseResponse
 	JSON400      *ErrorsValidationError
-	JSON500      *FiberMap
+	JSON401      *ErrorsUnauthorizedError
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -5839,8 +5872,22 @@ func ParseGetInternalConversationsResponse(rsp *http.Response) (*GetInternalConv
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5879,15 +5926,22 @@ func ParsePostInternalConversationsResponse(rsp *http.Response) (*PostInternalCo
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest FiberMap
+		var dest ErrorsConflictError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5926,22 +5980,29 @@ func ParsePutInternalConversationsConversationIdResponse(rsp *http.Response) (*P
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest FiberMap
+		var dest ErrorsNotFoundError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
-		var dest FiberMap
+		var dest ErrorsConflictError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5980,8 +6041,22 @@ func ParseGetInternalConversationsConversationIdMessagesResponse(rsp *http.Respo
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorsNotFoundError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6020,8 +6095,29 @@ func ParsePostInternalConversationsConversationIdMessagesResponse(rsp *http.Resp
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorsNotFoundError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6173,8 +6269,22 @@ func ParsePostInternalResponsesResponse(rsp *http.Response) (*PostInternalRespon
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorsUnauthorizedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

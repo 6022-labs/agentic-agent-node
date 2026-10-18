@@ -3,9 +3,9 @@ package middlewares
 import (
 	"strings"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	core_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v3"
@@ -45,7 +45,7 @@ func (m *JwtFreeAccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPa
 	if !ok {
 		return false, nil
 	}
-	ctx.Locals(core_middlewares.AuthAddressLocalKey, address.Hex())
+	ctx.SetContext(helpers.ContextWithCallerId(ctx.Context(), address.Hex()))
 	return true, ctx.Next()
 }
 

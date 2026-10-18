@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
@@ -32,6 +33,84 @@ func WhenListingConversationsBeforeEach(t *testing.T) *WhenListingConversationsT
 
 func TestWhenListingConversations(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
+				Return(&clients.GetInternalConversationsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
+				Return(&clients.GetInternalConversationsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"callerId","message":"too long"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "callerId", validationErr.Field)
+		})
+	})
 
 	t.Run("Given the runtime returns the conversations", func(t *testing.T) {
 		t.Parallel()
@@ -74,27 +153,6 @@ func TestWhenListingConversations(t *testing.T) {
 				assert.Equal(t, "ERC20 mint audit", *payload.Conversations[0].Name)
 				assert.Equal(t, int64(2), payload.Conversations[0].MessageCount)
 			}
-		})
-	})
-
-	t.Run("Given listing fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should propagate the transport error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
-
-			assert.ErrorContains(t, err, "runtime down")
 		})
 	})
 }

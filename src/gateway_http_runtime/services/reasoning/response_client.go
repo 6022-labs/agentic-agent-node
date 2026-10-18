@@ -32,11 +32,11 @@ func (c *HttpResponseClient) Create(
 		bytes.NewReader(encoded),
 	)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalCreateResponseResultPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }

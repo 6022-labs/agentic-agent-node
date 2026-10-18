@@ -3,15 +3,22 @@ package tools_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	knowledge_requests "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	knowledge_responses "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/tools_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+)
+
+var (
+	updateToolCallerId = strings.ToLower(common_tests.RandomEthAddress().Hex())
 )
 
 type WhenExecutingUpdateConversationToolTestingSuite struct {
@@ -34,9 +41,9 @@ func WhenExecutingUpdateConversationToolBeforeEach(t *testing.T) *WhenExecutingU
 func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := helpers.ContextWithCallerId(context.Background(), updateToolCallerId)
 
-	t.Run("Given the conversation id is missing", func(t *testing.T) {
+	t.Run("Given the conversationId argument is missing", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return an argument error without calling the use case", func(t *testing.T) {
@@ -47,6 +54,45 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"name": "Solidity audits"})
 
 			assert.ErrorContains(t, err, "conversationId")
+		})
+	})
+
+	t.Run("Given the name argument is missing", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return an argument error without calling the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
+
+			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1"})
+
+			assert.ErrorContains(t, err, "name")
+		})
+	})
+
+	t.Run("Given the turn carries a caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
+			suite.mockUpdateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					callCtx context.Context,
+					_ *knowledge_requests.UpdateConversationRequest,
+				) (*knowledge_responses.ConversationResponse, error) {
+					carried, _ := helpers.CallerIdFromContext(callCtx)
+					assert.Equal(t, updateToolCallerId, carried)
+					return &knowledge_responses.ConversationResponse{ConversationId: "c1"}, nil
+				}).
+				Times(1)
+
+			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1", "name": "Audit"})
+
+			assert.NoError(t, err)
 		})
 	})
 

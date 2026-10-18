@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/knowledge/use_cases/responses"
@@ -27,7 +26,7 @@ func (u *ListConversations) Execute(
 
 	payload, err := u.client.ListConversations(ctx, *request.Page, *request.ElementsPerPage)
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 
 	out := make([]responses.ConversationResponse, 0, len(payload.Conversations))
