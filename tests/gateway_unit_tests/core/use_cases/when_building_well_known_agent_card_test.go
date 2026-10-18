@@ -139,7 +139,7 @@ func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
-		t.Run("Should propagate the error instead of serving a placeholder card", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")

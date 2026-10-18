@@ -37,7 +37,7 @@ func TestWhenGettingLLMSecret(t *testing.T) {
 
 	const scopedKey = "scope/llm_secret"
 
-	t.Run("Given no api key has been saved", func(t *testing.T) {
+	t.Run("Given no api key exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMSecretTestingSuite) {
@@ -60,7 +60,7 @@ func TestWhenGettingLLMSecret(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an api key has been saved", func(t *testing.T) {
+	t.Run("Given an api key exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMSecretTestingSuite) {

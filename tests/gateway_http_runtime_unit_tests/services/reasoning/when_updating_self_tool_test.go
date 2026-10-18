@@ -50,6 +50,120 @@ func WhenUpdatingSelfToolAfterEach(suite *WhenUpdatingSelfToolTestingSuite) {
 func TestWhenUpdatingSelfTool(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.server.Close()
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			defer WhenUpdatingSelfToolAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"field":"enabled","message":"enabled is required"}`))
+			}
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			defer WhenUpdatingSelfToolAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "enabled", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the tool does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"code":"not_found"}`))
+			}
+		}
+
+		t.Run("Should return ErrSelfToolNotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			defer WhenUpdatingSelfToolAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrSelfToolNotFound)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			defer WhenUpdatingSelfToolAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime accepts the update", func(t *testing.T) {
 		t.Parallel()
 
@@ -93,64 +207,6 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 				assert.Equal(t, id.String(), payload.Id)
 				assert.False(t, payload.Enabled)
 			}
-		})
-	})
-
-	t.Run("Given updating a missing tool", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusNotFound)
-				_, _ = w.Write([]byte(`{"code":"not_found"}`))
-			}
-		}
-
-		t.Run("Should return ErrSelfToolNotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			defer WhenUpdatingSelfToolAfterEach(suite)
-			initSuite(suite)
-
-			_, err := suite.sut.Update(
-				context.Background(),
-				uuid.New(),
-				&models.ExternalUpdateSelfToolPayload{Enabled: true},
-			)
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrSelfToolNotFound)
-		})
-	})
-
-	t.Run("Given the runtime rejects the body", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusBadRequest)
-				_, _ = w.Write([]byte(`{"field":"enabled","message":"enabled is required"}`))
-			}
-		}
-
-		t.Run("Should return a ValidationError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			defer WhenUpdatingSelfToolAfterEach(suite)
-			initSuite(suite)
-
-			_, err := suite.sut.Update(
-				context.Background(),
-				uuid.New(),
-				&models.ExternalUpdateSelfToolPayload{Enabled: true},
-			)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "enabled", validationErr.Field)
 		})
 	})
 }

@@ -77,7 +77,7 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, accept)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "recovered signer does not match authorization from")
 		})
 	})
 
@@ -97,7 +97,7 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, accept)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "authorization recipient does not match payTo")
 		})
 	})
 
@@ -122,10 +122,10 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the authorization is outside its validity window", func(t *testing.T) {
+	t.Run("Given the authorization has expired", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return the expired sentinel when validBefore has passed", func(t *testing.T) {
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402PayerBeforeEach()
@@ -140,8 +140,12 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 
 			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
 		})
+	})
 
-		t.Run("Should return the expired sentinel when validAfter is in the future", func(t *testing.T) {
+	t.Run("Given the authorization is not yet valid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402PayerBeforeEach()
@@ -172,7 +176,7 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, accept)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "recovered signer does not match authorization from")
 		})
 	})
 
@@ -191,7 +195,7 @@ func TestWhenRecoveringX402Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, accept)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "signature length must be 65 bytes")
 		})
 	})
 

@@ -28,10 +28,10 @@ func TestWhenConvertingToToolResult(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the use case failed", func(t *testing.T) {
+	t.Run("Given the use case fails", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should propagate the error without encoding", func(t *testing.T) {
+		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			out, err := utils.ToToolResult(nil, errors.New("boom"))

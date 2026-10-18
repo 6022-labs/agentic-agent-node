@@ -61,7 +61,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime client fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
@@ -70,7 +70,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate the client error unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -84,30 +84,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().
-				Create(ctx, gomock.Any()).
-				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
-		}
-
-		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(ctx, userInputRequest("conv-1", "hi"))
-
-			var unauthorizedErr *apperrors.UnauthorizedError
-			assert.ErrorAs(t, err, &unauthorizedErr)
-			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
-		})
-	})
-
-	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
@@ -116,7 +93,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, apperrors.NewValidationError("input", "cannot be empty"))
 		}
 
-		t.Run("Should surface the validation error unchanged", func(t *testing.T) {
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -130,7 +107,30 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation is unavailable to the caller", func(t *testing.T) {
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				Create(ctx, gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
+		}
+
+		t.Run("Should surface the UnauthorizedError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(ctx, userInputRequest("conv-1", "hi"))
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
@@ -139,7 +139,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 				Return(nil, apperrors.NewConflictError("conversation_unavailable", "taken"))
 		}
 
-		t.Run("Should surface the conflict unchanged", func(t *testing.T) {
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -150,6 +150,29 @@ func TestWhenCreatingResponse(t *testing.T) {
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
 			assert.Equal(t, "conversation_unavailable", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				Create(ctx, gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(ctx, userInputRequest("conv-1", "hi"))
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 

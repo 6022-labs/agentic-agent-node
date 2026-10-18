@@ -85,7 +85,7 @@ func TestWhenLoadingDatabaseSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given values have surrounding whitespace", func(t *testing.T) {
+	t.Run("Given padded values", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")

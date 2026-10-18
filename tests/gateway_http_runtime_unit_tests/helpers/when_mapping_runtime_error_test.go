@@ -13,7 +13,7 @@ import (
 func TestWhenMappingRuntimeError(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime answered 400", func(t *testing.T) {
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should map it to a validation error with the runtime field", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime answered 401", func(t *testing.T) {
+	t.Run("Given the runtime answers 401", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should map it to an unauthorized error with the runtime code", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime answered 404", func(t *testing.T) {
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should map it to a not-found error with the runtime code", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime answered 409", func(t *testing.T) {
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should map it to a conflict error with the runtime code", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime answered 500", func(t *testing.T) {
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should collapse it to unavailable", func(t *testing.T) {

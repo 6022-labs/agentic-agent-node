@@ -20,16 +20,6 @@ func validCreateResponseRequest() *requests.CreateResponseRequest {
 func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a fully populated request", func(t *testing.T) {
-		t.Parallel()
-		req := validCreateResponseRequest()
-
-		t.Run("Should pass validation", func(t *testing.T) {
-			t.Parallel()
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
 	t.Run("Given input has no messages", func(t *testing.T) {
 		t.Parallel()
 		req := validCreateResponseRequest()
@@ -41,7 +31,7 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an input message has empty content", func(t *testing.T) {
+	t.Run("Given an input message with blank content", func(t *testing.T) {
 		t.Parallel()
 		req := validCreateResponseRequest()
 		req.Input.Messages[0].Content = "  "
@@ -51,6 +41,29 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 			err := req.ValidateAndSanitize()
 			assert.ErrorContains(t, err, "input")
 			assert.ErrorContains(t, err, "index 0")
+		})
+	})
+
+	t.Run("Given a previous_response_id longer than the column", func(t *testing.T) {
+		t.Parallel()
+		req := validCreateResponseRequest()
+		req.PreviousResponseId = strings.Repeat("k", requests.ConversationKeyMaxLength+1)
+
+		t.Run("Should reject on the conversation field", func(t *testing.T) {
+			t.Parallel()
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "conversation")
+		})
+	})
+
+	t.Run("Given a conversation.id longer than the column", func(t *testing.T) {
+		t.Parallel()
+		req := validCreateResponseRequest()
+		req.PreviousResponseId = ""
+		req.Conversation = &requests.ConversationRef{Id: strings.Repeat("k", requests.ConversationKeyMaxLength+1)}
+
+		t.Run("Should reject on the conversation field", func(t *testing.T) {
+			t.Parallel()
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "conversation")
 		})
 	})
 
@@ -76,26 +89,13 @@ func TestWhenValidatingCreateResponseRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given previous_response_id longer than the column", func(t *testing.T) {
+	t.Run("Given a fully populated request", func(t *testing.T) {
 		t.Parallel()
 		req := validCreateResponseRequest()
-		req.PreviousResponseId = strings.Repeat("k", requests.ConversationKeyMaxLength+1)
 
-		t.Run("Should reject on the conversation field", func(t *testing.T) {
+		t.Run("Should pass validation", func(t *testing.T) {
 			t.Parallel()
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "conversation")
-		})
-	})
-
-	t.Run("Given conversation.id longer than the column", func(t *testing.T) {
-		t.Parallel()
-		req := validCreateResponseRequest()
-		req.PreviousResponseId = ""
-		req.Conversation = &requests.ConversationRef{Id: strings.Repeat("k", requests.ConversationKeyMaxLength+1)}
-
-		t.Run("Should reject on the conversation field", func(t *testing.T) {
-			t.Parallel()
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "conversation")
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 

@@ -106,7 +106,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -134,85 +134,92 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the resolver fails", func(t *testing.T) {
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenCreatingResponseTestingSuite, resolveErr error) {
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockConversationResolver.EXPECT().
 				Resolve(gomock.Any(), conversationId, responseCallerId).
-				Return("", resolveErr)
+				Return("", knowledge_interfaces.ErrConversationUnavailable)
+			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
 		}
+
+		t.Run("Should return the conversation_unavailable conflict", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
+
+			var conflictErr *apperrors.ConflictError
+			if assert.ErrorAs(t, err, &conflictErr) {
+				assert.Equal(t, "conversation_unavailable", conflictErr.Code)
+			}
+		})
+	})
+
+	t.Run("Given the agent is not minted yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockConversationResolver.EXPECT().
+				Resolve(gomock.Any(), conversationId, responseCallerId).
+				Return("", knowledge_interfaces.ErrAgentNotMinted)
+			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
+		}
+
+		t.Run("Should return the agent_not_minted conflict", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
+
+			var conflictErr *apperrors.ConflictError
+			if assert.ErrorAs(t, err, &conflictErr) {
+				assert.Equal(t, "agent_not_minted", conflictErr.Code)
+			}
+		})
+	})
+
+	t.Run("Given the conversation resolver fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockConversationResolver.EXPECT().
+				Resolve(gomock.Any(), conversationId, responseCallerId).
+				Return("", errors.New("db blew"))
+		}
+
+		t.Run("Should return an InternalError with create_response_failed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
+
+			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
+
+			var internalErr *apperrors.InternalError
+			if assert.ErrorAs(t, err, &internalErr) {
+				assert.Equal(t, "create_response_failed", internalErr.Code)
+			}
+		})
 
 		t.Run("Should record a failed response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite, errors.New("db blew"))
+			initSuite(suite)
 			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).Times(1)
 
-			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
-
-			assert.Error(t, err)
-		})
-
-		t.Run("Given ErrConversationUnavailable", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should return the conversation_unavailable conflict", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenCreatingResponseBeforeEach(t)
-				initSuite(suite, knowledge_interfaces.ErrConversationUnavailable)
-				suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
-
-				_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
-
-				var conflictErr *apperrors.ConflictError
-				if assert.ErrorAs(t, err, &conflictErr) {
-					assert.Equal(t, "conversation_unavailable", conflictErr.Code)
-				}
-			})
-		})
-
-		t.Run("Given ErrAgentNotMinted", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should return the agent_not_minted conflict", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenCreatingResponseBeforeEach(t)
-				initSuite(suite, knowledge_interfaces.ErrAgentNotMinted)
-				suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
-
-				_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
-
-				var conflictErr *apperrors.ConflictError
-				if assert.ErrorAs(t, err, &conflictErr) {
-					assert.Equal(t, "agent_not_minted", conflictErr.Code)
-				}
-			})
-		})
-
-		t.Run("Given any other error", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should return InternalError", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenCreatingResponseBeforeEach(t)
-				initSuite(suite, errors.New("db blew"))
-				suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
-
-				_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
-
-				var internalErr *apperrors.InternalError
-				assert.ErrorAs(t, err, &internalErr)
-				assert.Equal(t, "create_response_failed", internalErr.Code)
-			})
+			_, _ = suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
 		})
 	})
 
-	t.Run("Given no conversation key is provided", func(t *testing.T) {
+	t.Run("Given no conversation key", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {

@@ -25,8 +25,7 @@ type WhenValidatingErc20TestingSuite struct {
 	sut *services.Erc20Validator
 }
 
-// WhenValidatingErc20BeforeEach points the validator at a fake RPC scripted with
-// the given per-method answers (hasCode backs the binding's no-code check).
+// WhenValidatingErc20BeforeEach points the validator at a fake RPC scripted with the given answers.
 func WhenValidatingErc20BeforeEach(
 	t *testing.T,
 	methods map[string]erc20Method,
@@ -181,7 +180,7 @@ func TestWhenValidatingErc20(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the asset is not an ERC-20", func(t *testing.T) {
+	t.Run("Given the asset is not an ERC-20 contract", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should reject the asset", func(t *testing.T) {
@@ -198,8 +197,7 @@ func TestWhenValidatingErc20(t *testing.T) {
 	t.Run("Given the address is not a contract", func(t *testing.T) {
 		t.Parallel()
 
-		// An EOA answers eth_call with empty data; the binding then checks the
-		// code at the address and finds none.
+		// An EOA answers eth_call with empty data and has no code.
 		methods := map[string]erc20Method{"decimals": {empty: true}}
 
 		t.Run("Should reject the address as not deployed", func(t *testing.T) {

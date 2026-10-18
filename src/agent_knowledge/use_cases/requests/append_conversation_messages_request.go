@@ -9,7 +9,7 @@ import (
 )
 
 type AppendConversationMessagesRequest struct {
-	ConversationRequest
+	ConversationIdRequest
 	Messages []ConversationMessageInput `json:"messages"`
 }
 
@@ -29,7 +29,7 @@ var appendableRoles = enums.ConversationMessageRoleList{
 }
 
 func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
-	if err := r.ConversationRequest.ValidateAndSanitize(); err != nil {
+	if err := r.ConversationIdRequest.ValidateAndSanitize(); err != nil {
 		return err
 	}
 	if len(r.Messages) == 0 {

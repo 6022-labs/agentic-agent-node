@@ -43,6 +43,47 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 	conversationId := "conv-1"
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
+	t.Run("Given listing the messages fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
+			suite.mockRepository.EXPECT().
+				ListByConversationId(gomock.Any(), conversationId).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReadingConversationHistoryBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Read(context.Background(), conversationId)
+			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given the repository returns an empty slice", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
+			suite.mockRepository.EXPECT().
+				ListByConversationId(gomock.Any(), conversationId).
+				Return([]models.ConversationMessage{}, nil)
+		}
+
+		t.Run("Should return an empty DTO slice", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReadingConversationHistoryBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Read(context.Background(), conversationId)
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+		})
+	})
+
 	t.Run("Given the repository returns persistence rows", func(t *testing.T) {
 		t.Parallel()
 
@@ -72,47 +113,6 @@ func TestWhenReadingConversationHistory(t *testing.T) {
 				assert.Equal(t, "hi :fire:", result[0].Content)
 				assert.Equal(t, now, result[0].Timestamp)
 			}
-		})
-	})
-
-	t.Run("Given the repository returns an empty slice", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListByConversationId(gomock.Any(), conversationId).
-				Return([]models.ConversationMessage{}, nil)
-		}
-
-		t.Run("Should return an empty DTO slice", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReadingConversationHistoryBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Read(context.Background(), conversationId)
-			assert.NoError(t, err)
-			assert.Empty(t, result)
-		})
-	})
-
-	t.Run("Given the repository fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReadingConversationHistoryTestingSuite) {
-			suite.mockRepository.EXPECT().
-				ListByConversationId(gomock.Any(), conversationId).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReadingConversationHistoryBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Read(context.Background(), conversationId)
-			assert.ErrorContains(t, err, "db down")
 		})
 	})
 }

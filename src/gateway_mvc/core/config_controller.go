@@ -31,6 +31,7 @@ func (c *ConfigController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.ConfigResponse
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Router /config [get]
 func (c *ConfigController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getConfig.Execute(ctx.Context())

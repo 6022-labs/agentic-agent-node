@@ -18,7 +18,7 @@ var forwardedCallerId = strings.ToLower(common_tests.RandomEthAddress().Hex())
 func TestWhenForwardingCallerId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the context carries a caller id", func(t *testing.T) {
+	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := common_helpers.ContextWithCallerId(context.Background(), strings.ToUpper(forwardedCallerId))
@@ -35,7 +35,7 @@ func TestWhenForwardingCallerId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the context carries no caller id", func(t *testing.T) {
+	t.Run("Given no caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should set no caller id header", func(t *testing.T) {

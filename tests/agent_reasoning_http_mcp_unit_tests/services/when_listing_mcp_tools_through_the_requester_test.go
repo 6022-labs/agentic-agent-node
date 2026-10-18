@@ -90,12 +90,21 @@ func TestWhenListingMcpToolsThroughTheRequester(t *testing.T) {
 
 			_, err := suite.sut.ListTools(context.Background(), suite.testMcpConnection)
 
-			assert.Error(t, err)
 			assert.NotErrorIs(t, err, reasoning_interfaces.ErrMCPUnauthorized)
+		})
+
+		t.Run("Should keep the status error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingMcpToolsThroughTheRequesterBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListTools(context.Background(), suite.testMcpConnection)
 
 			var statusErr *clients.McpStatusError
-			assert.ErrorAs(t, err, &statusErr)
-			assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
+			if assert.ErrorAs(t, err, &statusErr) {
+				assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
+			}
 		})
 	})
 

@@ -16,7 +16,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 
 	generateSaveAgentRegistrationRequest := func(t *testing.T) *requests.SaveAgentRegistrationRequest {
 		return &requests.SaveAgentRegistrationRequest{
-			ChainId:           "80002",
+			ChainIdRequest:    requests.ChainIdRequest{ChainId: "80002"},
 			CollectionAddress: "  " + common_tests.RandomEthAddress().Hex() + "  ",
 			Owner:             common_tests.RandomEthAddress().Hex(),
 			Name:              "my-agent",
@@ -25,99 +25,122 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 		}
 	}
 
-	t.Run("Given the request is valid", func(t *testing.T) {
+	t.Run("Given a blank chain id", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should sanitize the fields and parse the attributes", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSaveAgentRegistrationRequest(t)
-			err := req.ValidateAndSanitize()
-
-			assert.NoError(t, err)
-			assert.Equal(t, "my-agent", req.Name)
-			assert.NotContains(t, req.CollectionAddress, " ")
-			assert.Equal(t, map[string]string{"role": "expert", "specialty": "defi"}, req.Attributes)
-		})
-	})
-
-	t.Run("Given the attributes are absent", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error for the missing role", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSaveAgentRegistrationRequest(t)
-			req.AttributesRaw = "   "
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the chain id is empty", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should reject it on the chainId field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.ChainId = "   "
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "chainId")
 		})
 	})
 
-	t.Run("Given the collection address is not a hex address", func(t *testing.T) {
+	t.Run("Given a malformed collection address", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should reject it on the collectionAddress field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.CollectionAddress = "not-an-address"
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "collectionAddress")
 		})
 	})
 
-	t.Run("Given the owner is not a hex address", func(t *testing.T) {
+	t.Run("Given a malformed owner", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should reject it on the owner field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.Owner = "0x123"
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "owner")
 		})
 	})
 
-	t.Run("Given the name is empty", func(t *testing.T) {
+	t.Run("Given a blank name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should reject it on the name field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
 			req.Name = "   "
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "name")
 		})
 	})
 
-	t.Run("Given the name is not a valid ENS label", func(t *testing.T) {
+	t.Run("Given a malformed ENS label", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should reject it on the name field", func(t *testing.T) {
 			t.Parallel()
 
 			for _, name := range []string{"my_agent", "foo--bar", "-foo", "foo-"} {
 				req := generateSaveAgentRegistrationRequest(t)
 				req.Name = name
 
-				assert.Error(t, req.ValidateAndSanitize(), name)
+				assert.ErrorContains(t, req.ValidateAndSanitize(), "name", name)
 			}
+		})
+	})
+
+	t.Run("Given an image larger than 5MB", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it on the image field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.Image.Size = 5*1024*1024 + 1
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "image")
+		})
+	})
+
+	t.Run("Given malformed attributes", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it on the attributes field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.AttributesRaw = `{"specialty": 42}`
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "attributes")
+		})
+	})
+
+	t.Run("Given the attributes carry no role", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it on the attributes field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.AttributesRaw = `{"specialty":"defi"}`
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "attributes")
+		})
+	})
+
+	t.Run("Given a blank role attribute", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it on the attributes field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSaveAgentRegistrationRequest(t)
+			req.AttributesRaw = `{"role":"  "}`
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "attributes")
 		})
 	})
 
@@ -134,33 +157,7 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the attributes carry no role", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSaveAgentRegistrationRequest(t)
-			req.AttributesRaw = `{"specialty":"defi"}`
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the role attribute is empty", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSaveAgentRegistrationRequest(t)
-			req.AttributesRaw = `{"role":"  "}`
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the image is missing", func(t *testing.T) {
+	t.Run("Given no image", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should pass validation", func(t *testing.T) {
@@ -173,31 +170,29 @@ func TestWhenValidatingSaveAgentRegistrationRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the image exceeds 5MB", func(t *testing.T) {
+	t.Run("Given a fully populated request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should sanitize the fields", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
-			req.Image.Size = 5*1024*1024 + 1
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, "my-agent", req.Name)
+			assert.NotContains(t, req.CollectionAddress, " ")
 		})
-	})
 
-	t.Run("Given the attributes are not a JSON object of strings", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should parse the attributes", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSaveAgentRegistrationRequest(t)
-			req.AttributesRaw = `{"specialty": 42}`
 
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, map[string]string{"role": "expert", "specialty": "defi"}, req.Attributes)
 		})
 	})
+
 }
 
 // newImageFileHeader builds a *multipart.FileHeader carrying raw bytes.

@@ -71,7 +71,7 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the turn carries a caller id", func(t *testing.T) {
+	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {

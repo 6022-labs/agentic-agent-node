@@ -7,6 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
@@ -42,6 +43,45 @@ func WhenSavingX402ConfigBeforeEach(t *testing.T) *WhenSavingX402ConfigTestingSu
 func TestWhenSavingX402Config(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a malformed config blob", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return an error without touching the repository", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingX402ConfigBeforeEach(t)
+
+			err := suite.sut.SaveConfig(context.Background(), uuid.New(), json.RawMessage("{not-json"))
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "config", validationErr.Field)
+		})
+	})
+
+	t.Run("Given saving the config fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(assert.AnError).Times(1)
+		}
+
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingX402ConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.SaveConfig(
+				context.Background(),
+				uuid.New(),
+				json.RawMessage(`{"network":"eip155:80002","addressPatterns":[".*"]}`),
+			)
+
+			assert.ErrorIs(t, err, assert.AnError)
+		})
+	})
+
 	t.Run("Given a valid config blob", func(t *testing.T) {
 		t.Parallel()
 
@@ -75,43 +115,6 @@ func TestWhenSavingX402Config(t *testing.T) {
 			)
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given a malformed config blob", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return an error without touching the repository", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingX402ConfigBeforeEach(t)
-
-			err := suite.sut.SaveConfig(context.Background(), uuid.New(), json.RawMessage("{not-json"))
-
-			assert.Error(t, err)
-		})
-	})
-
-	t.Run("Given the repository fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
-			suite.mockConfigRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(assert.AnError).Times(1)
-		}
-
-		t.Run("Should return the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingX402ConfigBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.SaveConfig(
-				context.Background(),
-				uuid.New(),
-				json.RawMessage(`{"network":"eip155:80002","addressPatterns":[".*"]}`),
-			)
-
-			assert.Error(t, err)
 		})
 	})
 }

@@ -39,7 +39,8 @@ func (c *SelfToolConfigController) RegisterAuthenticatedRoutes(app fiber.Router)
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.ListSelfToolsResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/self-tools [get]
 func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
@@ -59,8 +60,9 @@ func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateSelfToolRequest true "self tool"
 // @Success 200 {object} responses.SelfToolResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "self_tool_not_found"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/self-tools/{id} [put]
 func (c *SelfToolConfigController) Update(ctx fiber.Ctx) error {

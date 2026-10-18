@@ -20,7 +20,7 @@ var ensLabelCharsPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 // node's). Image is the single base image the node frames into the NFT set;
 // Attributes arrives as a JSON object string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {
-	ChainId           string                `form:"chainId"`
+	ChainIdRequest
 	CollectionAddress string                `form:"collectionAddress"`
 	Owner             string                `form:"owner"`
 	Name              string                `form:"name"`
@@ -32,9 +32,8 @@ type SaveAgentRegistrationRequest struct {
 }
 
 func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
-	r.ChainId = strings.TrimSpace(r.ChainId)
-	if len(r.ChainId) == 0 {
-		return errors.NewValidationError("chainId", "is required")
+	if err := r.ChainIdRequest.ValidateAndSanitize(); err != nil {
+		return err
 	}
 
 	r.CollectionAddress = strings.TrimSpace(r.CollectionAddress)

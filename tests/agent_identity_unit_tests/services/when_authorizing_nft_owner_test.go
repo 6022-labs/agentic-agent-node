@@ -73,7 +73,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 				Return(state, nil)
 		}
 
-		t.Run("Should authorize while unclaimed", func(t *testing.T) {
+		t.Run("Should authorize the owner", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingNftOwnerBeforeEach(t)
@@ -86,7 +86,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the state read fails", func(t *testing.T) {
+	t.Run("Given the registration state lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
@@ -110,7 +110,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the mint is confirmed and the requested address is the NFT owner", func(t *testing.T) {
+	t.Run("Given the owner lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
@@ -124,10 +124,10 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				OwnerOf(gomock.Any(), collectionAddr, uint64(42)).
-				Return(owner, nil)
+				Return(common.Address{}, errors.New("rpc"))
 		}
 
-		t.Run("Should authorize", func(t *testing.T) {
+		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingNftOwnerBeforeEach(t)
@@ -135,8 +135,8 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 
 			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
 
-			assert.NoError(t, err)
-			assert.True(t, ok)
+			assert.False(t, ok)
+			assert.ErrorContains(t, err, "rpc")
 		})
 	})
 
@@ -170,7 +170,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given OwnerOf RPC fails", func(t *testing.T) {
+	t.Run("Given the mint is confirmed and the requested address is the NFT owner", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
@@ -184,10 +184,10 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				OwnerOf(gomock.Any(), collectionAddr, uint64(42)).
-				Return(common.Address{}, errors.New("rpc"))
+				Return(owner, nil)
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should authorize", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingNftOwnerBeforeEach(t)
@@ -195,8 +195,8 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 
 			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
 
-			assert.False(t, ok)
-			assert.ErrorContains(t, err, "rpc")
+			assert.NoError(t, err)
+			assert.True(t, ok)
 		})
 	})
 }

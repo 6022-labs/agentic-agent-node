@@ -36,6 +36,20 @@ func TestWhenSavingLLMSecret(t *testing.T) {
 
 	const scopedKey = "scope/llm_secret"
 
+	t.Run("Given a blank api key", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject without writing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingLLMSecretBeforeEach(t)
+
+			err := suite.sut.Save(context.Background(), "")
+
+			assert.ErrorContains(t, err, "apiKey cannot be empty")
+		})
+	})
+
 	t.Run("Given a valid api key", func(t *testing.T) {
 		t.Parallel()
 
@@ -54,20 +68,6 @@ func TestWhenSavingLLMSecret(t *testing.T) {
 			err := suite.sut.Save(context.Background(), "sk-secret")
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given an empty api key", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject without writing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingLLMSecretBeforeEach(t)
-
-			err := suite.sut.Save(context.Background(), "")
-
-			assert.Error(t, err)
 		})
 	})
 }

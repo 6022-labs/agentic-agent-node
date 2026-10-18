@@ -20,9 +20,7 @@ import (
 //go:embed artifacts/*.json
 var artifactFiles embed.FS
 
-// EnsParentNode is the registry's parent node (the contract's own term) for the
-// production base domain, computed rather than hardcoded so the fixture and the
-// production node derivation cross-check each other.
+// EnsParentNode is the registry's parent node, computed so fixture and production derivation cross-check each other.
 var EnsParentNode = Namehash(settings.DefaultEnsBaseDomain)
 
 // Namehash derives an ENS node the same way the contracts do.
@@ -58,8 +56,7 @@ type nullableUint256 struct {
 	Value *big.Int `abi:"value"`
 }
 
-// AgentContractStack is a freshly deployed 6022 stack: one collection created
-// through the creator, governed by the manager.
+// AgentContractStack is a freshly deployed 6022 stack: one collection made through the creator, governed by the manager.
 type AgentContractStack struct {
 	Manager        common.Address
 	Descriptor     common.Address
@@ -71,8 +68,7 @@ type AgentContractStack struct {
 	ParentNode     [32]byte
 }
 
-// DeployAgentStack mirrors the smart-contracts fixture deployCollectionWithCreator;
-// the anvil account ends up admin and moderator of the created collection.
+// DeployAgentStack mirrors the smart-contracts deployCollectionWithCreator; the anvil account ends up admin and moderator.
 func DeployAgentStack(
 	ctx context.Context,
 	client *ethclient.Client,
@@ -153,8 +149,7 @@ func DeployAgentStack(
 	}, nil
 }
 
-// CreateCollection adds one more collection to an existing stack, so tests can
-// assert on the manager's creation event and on multi-collection listings.
+// CreateCollection adds one more collection so tests can assert on creation events and multi-collection listings.
 func CreateCollection(
 	ctx context.Context,
 	client *ethclient.Client,
@@ -209,9 +204,7 @@ func CreateCollection(
 	return collection, nil
 }
 
-// MintAgent mints straight through the collection contract; the anvil account is
-// its moderator, so mint() needs no proposal. evmAddress must be unique per
-// collection — the contract rejects a second agent claiming the same address.
+// MintAgent mints via the collection as moderator (no proposal); evmAddress must be unique per collection.
 func MintAgent(
 	ctx context.Context,
 	client *ethclient.Client,
@@ -237,8 +230,7 @@ func MintAgent(
 	)
 }
 
-// TokenIdOf reads a minted agent's token id straight off the collection, so test
-// setup never leans on the requester it is arranging a test for.
+// TokenIdOf reads a minted token id straight off the collection so setup never leans on the requester under test.
 func TokenIdOf(
 	ctx context.Context,
 	client *ethclient.Client,
@@ -258,8 +250,7 @@ func TokenIdOf(
 	return tokenId.Uint64(), nil
 }
 
-// CreateMintProposal proposes a mint instead of minting outright, so proposal
-// reads have something to find.
+// CreateMintProposal proposes a mint instead of minting, so proposal reads have something to find.
 func CreateMintProposal(
 	ctx context.Context,
 	client *ethclient.Client,

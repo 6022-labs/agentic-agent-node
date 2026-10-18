@@ -72,8 +72,8 @@ func (c *AgentRegistrationController) RegisterAuthenticatedRoutes(app fiber.Rout
 // @Param image formData file true "Base image to frame"
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 401 {object} errors.UnauthorizedError
-// @Failure 502 {object} errors.UnavailableError
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization, invalid_token or missing_owner"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration [post]
 func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
@@ -96,7 +96,9 @@ func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.AgentRegistrationResponse
-// @Failure 404 {object} fiber.Map "draft_not_found"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "draft_not_found"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration [get]
 func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
@@ -112,6 +114,10 @@ func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.MintInfoResponse
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "draft_not_found"
+// @Failure 409 {object} errors.ConflictError "owner_missing"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration/mint-info [get]
 func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
@@ -127,6 +133,9 @@ func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.RegistrationStatusResponse
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "draft_not_found"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration/mint/check [post]
 func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
@@ -142,7 +151,10 @@ func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.EnsInfoResponse
-// @Failure 409 {object} fiber.Map "not_minted"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "draft_not_found"
+// @Failure 409 {object} errors.ConflictError "not_minted"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration/ens-info [get]
 func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
@@ -158,6 +170,9 @@ func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.RegistrationStatusResponse
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 409 {object} errors.ConflictError "not_minted"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration/ens/check [post]
 func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
@@ -173,7 +188,10 @@ func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
 // @Tags AgentRegistration
 // @Produce json
 // @Success 200 {object} responses.RegistrationStatusResponse
-// @Failure 404 {object} fiber.Map "draft_not_found"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "draft_not_found"
+// @Failure 409 {object} errors.ConflictError "owner_missing"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/registration/self [post]
 func (c *AgentRegistrationController) Self(ctx fiber.Ctx) error {

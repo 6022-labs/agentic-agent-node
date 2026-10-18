@@ -50,7 +50,7 @@ func TestWhenExecutingUpdatePaymentRuleTool(t *testing.T) {
 	t.Run("Given a full update payload", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should forward id and request to the use case", func(t *testing.T) {
+		t.Run("Should forward the id and the request to the use case", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingUpdatePaymentRuleToolBeforeEach(t)

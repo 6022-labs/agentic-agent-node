@@ -90,7 +90,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.expectCardSignature(ctx)
 		}
 
-		t.Run("Should build the document with responses url and the distinct rule methods", func(t *testing.T) {
+		t.Run("Should describe the agent from its registration", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
@@ -103,7 +103,29 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			assert.Equal(t, "0.1", document.ProtocolVersion)
 			assert.Equal(t, "hermes", document.Name)
 			assert.Equal(t, "hermes.agents6022.eth", document.EnsDomain)
+		})
+
+		t.Run("Should expose the responses url under the public prefix", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
 			assert.Equal(t, "https://agent.example.com/api/responses", document.Endpoints.Responses)
+		})
+
+		t.Run("Should list the distinct rule methods", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
 			assert.Equal(t, []string{"l402", "x402"}, document.PaymentMethods)
 		})
 
@@ -167,7 +189,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no payment rules are configured", func(t *testing.T) {
+	t.Run("Given no payment rules exist", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
@@ -258,7 +280,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
@@ -281,7 +303,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
-		t.Run("Should propagate the error instead of serving a placeholder document", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")

@@ -54,6 +54,7 @@ func WhenGettingAgentGuidanceByAgentIdBeforeEach(
 }
 
 func WhenGettingAgentGuidanceByAgentIdAfterEach(suite *WhenGettingAgentGuidanceByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -64,7 +65,7 @@ func TestWhenGettingAgentGuidanceByAgentId(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no guidance has been set", func(t *testing.T) {
+			t.Run("Given no guidance row exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
@@ -78,7 +79,7 @@ func TestWhenGettingAgentGuidanceByAgentId(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a guidance has been set", func(t *testing.T) {
+			t.Run("Given a guidance row exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return the persisted row", func(t *testing.T) {

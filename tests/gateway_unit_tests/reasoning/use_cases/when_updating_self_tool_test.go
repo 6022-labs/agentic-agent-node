@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -40,7 +39,127 @@ func WhenUpdatingSelfToolBeforeEach(t *testing.T) *WhenUpdatingSelfToolTestingSu
 func TestWhenUpdatingSelfTool(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime accepts the toggle", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateSelfToolRequest{Id: uuid.New()})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewValidationError("enabled", "enabled is invalid"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "enabled", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the tool does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, gateway_interfaces.ErrSelfToolNotFound)
+		}
+
+		t.Run("Should return a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "self_tool_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime accepts the update", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -71,73 +190,6 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, id.String(), resp.Id)
 			assert.False(t, resp.Enabled)
-		})
-	})
-
-	t.Run("Given a request without the enabled field", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.UpdateSelfToolRequest{Id: uuid.New()})
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "enabled", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the runtime does not know the tool", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockClient.EXPECT().
-				Update(gomock.Any(), id, gomock.Any()).
-				Return(nil, gateway_interfaces.ErrSelfToolNotFound)
-		}
-
-		t.Run("Should return a NotFoundError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(
-				context.Background(),
-				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
-			)
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "self_tool_not_found", notFoundErr.Code)
-		})
-	})
-
-	t.Run("Given the client fails with another error", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		clientErr := errors.New("runtime down")
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).Return(nil, clientErr)
-		}
-
-		t.Run("Should surface the client error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(
-				context.Background(),
-				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
-			)
-
-			assert.ErrorIs(t, err, clientErr)
 		})
 	})
 }

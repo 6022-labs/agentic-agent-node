@@ -7,6 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,18 +22,91 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 		}
 	}
 
-	t.Run("Given the request is valid", func(t *testing.T) {
+	t.Run("Given a blank rule name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should trim the name and default the method to x402", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the name field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
-			err := req.ValidateAndSanitize()
+			req.Name = "   "
 
-			assert.NoError(t, err)
-			assert.Equal(t, "Public price", req.Name)
-			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a rule name longer than 64 characters", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the name field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Name = strings.Repeat("a", 65)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the rule has a non-numeric price", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the price field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Price = "abc"
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "price", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the rule has a negative price", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the price field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Price = "-1"
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "price", validationErr.Field)
+		})
+	})
+
+	t.Run("Given an unsupported method", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the method field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Method = "lightning"
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "method", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the rule is free", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should accept a zero price", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Price = "0"
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 
@@ -50,81 +124,29 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unsupported method", func(t *testing.T) {
+	t.Run("Given a padded rule name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should trim the name", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
-			req.Method = "lightning"
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the rule has no name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Name = "   "
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the rule name exceeds 64 characters", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Name = strings.Repeat("a", 65)
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the rule is free", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should accept a zero price", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Price = "0"
 
 			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, "Public price", req.Name)
 		})
 	})
 
-	t.Run("Given the rule has a negative price", func(t *testing.T) {
+	t.Run("Given no method", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should default the method to x402", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentRuleRequest()
-			req.Price = "-1"
 
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the rule has a non-numeric price", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Price = "abc"
-
-			assert.Error(t, req.ValidateAndSanitize())
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
 		})
 	})
 }

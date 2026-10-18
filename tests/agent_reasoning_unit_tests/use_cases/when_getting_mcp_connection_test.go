@@ -45,7 +45,7 @@ func WhenGettingMCPConnectionBeforeEach(t *testing.T) *WhenGettingMCPConnectionT
 func TestWhenGettingMCPConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an unknown id", func(t *testing.T) {
+	t.Run("Given the connection does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -113,7 +113,7 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
 		}
 
-		t.Run("Should still return Ok with the wire response", func(t *testing.T) {
+		t.Run("Should return Ok with the wire response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingMCPConnectionBeforeEach(t)

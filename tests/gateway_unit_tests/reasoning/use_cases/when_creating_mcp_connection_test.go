@@ -36,20 +36,24 @@ func WhenCreatingMcpConnectionBeforeEach(t *testing.T) *WhenCreatingMcpConnectio
 
 func generateValidGatewayCreateMcpConnectionRequest() *requests.CreateMcpConnectionRequest {
 	return &requests.CreateMcpConnectionRequest{
-		Name:                "github",
-		Url:                 "https://mcp.github.example",
-		AllowedToolPatterns: []string{"search_issues"},
-		HeaderAuth:          map[string]string{"Authorization": "Bearer abc"},
+		McpConnectionRequest: requests.McpConnectionRequest{
+			Name:                "github",
+			Url:                 "https://mcp.github.example",
+			AllowedToolPatterns: []string{"search_issues"},
+		},
+		McpHeaderAuthRequest: requests.McpHeaderAuthRequest{
+			HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
+		},
 	}
 }
 
 func TestWhenCreatingMcpConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingMcpConnectionBeforeEach(t)

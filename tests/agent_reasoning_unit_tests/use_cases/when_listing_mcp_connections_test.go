@@ -39,7 +39,7 @@ func WhenListingMCPConnectionsBeforeEach(t *testing.T) *WhenListingMCPConnection
 func TestWhenListingMCPConnections(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the repository returns rows", func(t *testing.T) {
+	t.Run("Given MCP connections exist", func(t *testing.T) {
 		t.Parallel()
 
 		stored := []models.MCPConnection{

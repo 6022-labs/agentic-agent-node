@@ -40,7 +40,7 @@ func WhenGettingConfigBeforeEach(t *testing.T) *WhenGettingConfigTestingSuite {
 func TestWhenGettingConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns the config", func(t *testing.T) {
+	t.Run("Given the runtime returns the chain config", func(t *testing.T) {
 		t.Parallel()
 
 		facilitatorNetwork := "eip155:80002"
@@ -83,7 +83,7 @@ func TestWhenGettingConfig(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingConfigTestingSuite) {
@@ -91,7 +91,7 @@ func TestWhenGettingConfig(t *testing.T) {
 				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
 		}
 
-		t.Run("Should propagate the UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingConfigBeforeEach(t)

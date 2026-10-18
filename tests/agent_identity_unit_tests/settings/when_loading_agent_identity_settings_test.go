@@ -31,7 +31,7 @@ func TestWhenLoadingAgentIdentitySettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a runtime url padded with whitespace", func(t *testing.T) {
+	t.Run("Given a padded runtime url", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")
@@ -66,7 +66,7 @@ func TestWhenLoadingAgentIdentitySettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a custom ens base domain padded with whitespace", func(t *testing.T) {
+	t.Run("Given a padded custom ens base domain", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")

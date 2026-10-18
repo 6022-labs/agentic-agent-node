@@ -10,7 +10,7 @@ import (
 func TestWhenBuildingSuccessResult(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an error-only use case succeeded", func(t *testing.T) {
+	t.Run("Given the use case succeeds", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return the success payload", func(t *testing.T) {

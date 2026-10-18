@@ -34,6 +34,29 @@ func WhenSettingAgentGuidanceBeforeEach(t *testing.T) *WhenSettingAgentGuidanceT
 func TestWhenSettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
+			suite.mockAgentGuidanceClient.EXPECT().
+				Set(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "x"})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime accepts the update", func(t *testing.T) {
 		t.Parallel()
 
@@ -56,29 +79,6 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "be concise", resp.Content)
-		})
-	})
-
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().
-				Set(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run("Should return runtime_unavailable", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingAgentGuidanceBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "x"})
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 }

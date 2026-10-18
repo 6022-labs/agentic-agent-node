@@ -22,8 +22,8 @@ func (c *HttpPaymentPolicyClient) Get(ctx context.Context) (*models.ExternalPaym
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentPolicyPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -31,7 +31,7 @@ func (c *HttpPaymentPolicyClient) Get(ctx context.Context) (*models.ExternalPaym
 func (c *HttpPaymentPolicyClient) Delete(ctx context.Context) error {
 	resp, err := c.client.DeleteInternalConfigPaymentPolicyWithResponse(ctx)
 	if err != nil {
-		return err
+		return helpers.MapRuntimeError(err)
 	}
-	return helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
+	return helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
 }

@@ -96,7 +96,7 @@ func TestWhenCallingSelfTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the tool name is unknown", func(t *testing.T) {
+	t.Run("Given the self tool does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail", func(t *testing.T) {

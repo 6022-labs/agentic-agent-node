@@ -53,6 +53,7 @@ func WhenUpdatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenUpdatingMC
 }
 
 func WhenUpdatingMCPConnectionAfterEach(suite *WhenUpdatingMCPConnectionTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -63,7 +64,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given an existing connection", func(t *testing.T) {
+			t.Run("Given a connection exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should overwrite the persisted fields", func(t *testing.T) {

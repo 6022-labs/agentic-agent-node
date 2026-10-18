@@ -52,6 +52,7 @@ func WhenListingExistingSelfToolNamesBeforeEach(tc *repositoryTestCase) *WhenLis
 }
 
 func WhenListingExistingSelfToolNamesAfterEach(suite *WhenListingExistingSelfToolNamesTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

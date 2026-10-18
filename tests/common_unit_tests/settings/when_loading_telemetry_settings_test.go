@@ -26,7 +26,7 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			"telemetry.environment": " staging ",
 		}, "."), nil)
 
-		t.Run("Should load and trim the values", func(t *testing.T) {
+		t.Run("Should load the trimmed values", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewTelemetrySettings(zap.NewNop(), k)
@@ -81,12 +81,18 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			"telemetry.auth_token":  " a-token ",
 		}, "."), nil)
 
-		t.Run("Should resolve bearer and send a bearer header", func(t *testing.T) {
+		t.Run("Should resolve the bearer scheme", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewTelemetrySettings(zap.NewNop(), k)
 
 			assert.Equal(t, settings.TelemetryAuthSchemeBearer, result.AuthScheme)
+		})
+
+		t.Run("Should send a bearer header", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
 
 			header, ok := result.AuthorizationHeader()
 
@@ -108,13 +114,19 @@ func TestWhenLoadingTelemetrySettings(t *testing.T) {
 			"telemetry.auth_password": " a-password ",
 		}, "."), nil)
 
-		t.Run("Should resolve basic and build the header from the credential, not the instance id", func(t *testing.T) {
+		t.Run("Should resolve the basic scheme", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewTelemetrySettings(zap.NewNop(), k)
 
 			assert.Equal(t, settings.TelemetryAuthSchemeBasic, result.AuthScheme)
 			assert.Equal(t, "ingest-user", result.AuthUsername)
+		})
+
+		t.Run("Should build the header from the credential, not the instance id", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewTelemetrySettings(zap.NewNop(), k)
 
 			header, ok := result.AuthorizationHeader()
 

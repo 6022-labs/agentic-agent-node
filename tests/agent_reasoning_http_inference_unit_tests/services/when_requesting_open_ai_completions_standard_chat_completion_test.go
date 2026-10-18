@@ -125,7 +125,6 @@ func TestWhenRequestingOpenAICompletionsStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
 			assert.Nil(t, result)
-			assert.Error(t, err)
 			assert.ErrorContains(t, err, "openai completions returned no choices")
 		})
 	})

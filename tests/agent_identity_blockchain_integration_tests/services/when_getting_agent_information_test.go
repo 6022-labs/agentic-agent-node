@@ -28,7 +28,7 @@ func TestWhenGettingAgentInformation(t *testing.T) {
 
 		agentName := "described-agent"
 
-		t.Run("Should return its name, creator, images and attributes", func(t *testing.T) {
+		t.Run("Should return its name", func(t *testing.T) {
 			t.Parallel()
 			suite := WhenGettingAgentInformationBeforeEach(t)
 			tokenId := suite.fixture.mintAgent(t, agentName)
@@ -37,9 +37,49 @@ func TestWhenGettingAgentInformation(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, agentName, info.Name)
+		})
+
+		t.Run("Should return its creator", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenGettingAgentInformationBeforeEach(t)
+			tokenId := suite.fixture.mintAgent(t, agentName)
+
+			info, err := suite.sut.InformationOf(suite.fixture.chainId(), suite.fixture.stack.Collection, tokenId)
+
+			assert.NoError(t, err)
 			assert.Equal(t, suite.fixture.anvilAccountSettings.Address, info.Creator)
+		})
+
+		t.Run("Should return no clone origin", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenGettingAgentInformationBeforeEach(t)
+			tokenId := suite.fixture.mintAgent(t, agentName)
+
+			info, err := suite.sut.InformationOf(suite.fixture.chainId(), suite.fixture.stack.Collection, tokenId)
+
+			assert.NoError(t, err)
 			assert.Nil(t, info.CloneOf)
+		})
+
+		t.Run("Should return its images", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenGettingAgentInformationBeforeEach(t)
+			tokenId := suite.fixture.mintAgent(t, agentName)
+
+			info, err := suite.sut.InformationOf(suite.fixture.chainId(), suite.fixture.stack.Collection, tokenId)
+
+			assert.NoError(t, err)
 			assert.Equal(t, "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i", info.Images["default"])
+		})
+
+		t.Run("Should return its attributes", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenGettingAgentInformationBeforeEach(t)
+			tokenId := suite.fixture.mintAgent(t, agentName)
+
+			info, err := suite.sut.InformationOf(suite.fixture.chainId(), suite.fixture.stack.Collection, tokenId)
+
+			assert.NoError(t, err)
 			assert.Equal(t, "facilitator", info.Attributes["role"])
 			assert.Equal(t, "integration testing", info.Attributes["mission"])
 		})

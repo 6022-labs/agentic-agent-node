@@ -7,9 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// expectedDomainSeparator recomputes the EIP-712 domain separator straight from
-// the spec, independent of the apitypes path the helper uses, to pin the hash:
-// keccak256(typeHash || keccak256(name) || keccak256(version) || chainId || verifyingContract).
+// expectedDomainSeparator recomputes the EIP-712 domain separator from the spec, independent of apitypes.
 func expectedDomainSeparator(name, version string, chainId int64, asset string) [32]byte {
 	typeHash := crypto.Keccak256(
 		[]byte("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"))

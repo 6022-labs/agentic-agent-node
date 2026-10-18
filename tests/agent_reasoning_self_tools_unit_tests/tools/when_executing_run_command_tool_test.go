@@ -61,7 +61,7 @@ func TestWhenExecutingRunCommandTool(t *testing.T) {
 	t.Run("Given every argument", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should forward them all, and report the session id of a detached command", func(t *testing.T) {
+		t.Run("Should report the session id of a detached command", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingRunCommandToolBeforeEach(t)

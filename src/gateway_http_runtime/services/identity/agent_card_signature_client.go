@@ -41,8 +41,8 @@ func (c *HttpAgentCardSignatureClient) Sign(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentCardSignaturePayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

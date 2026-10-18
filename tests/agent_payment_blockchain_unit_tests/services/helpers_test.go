@@ -16,9 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// erc20Method is one method's canned eth_call answer: packed return data, or an
-// empty answer (the binding then checks code). A method absent from the script
-// reverts.
+// erc20Method is one canned eth_call answer; a method absent from the script reverts.
 type erc20Method struct {
 	data  []byte
 	empty bool
@@ -35,8 +33,7 @@ func packErc20Output(t *testing.T, method string, values ...any) []byte {
 	return packed
 }
 
-// newErc20RpcServer answers the validator's eth_call probes from a per-method
-// script and eth_getCode from hasCode, so a real ethclient drives the test.
+// newErc20RpcServer answers eth_call from a per-method script and eth_getCode from hasCode.
 func newErc20RpcServer(t *testing.T, methods map[string]erc20Method, hasCode bool) *httptest.Server {
 	t.Helper()
 
@@ -101,8 +98,7 @@ func writeRpcRevert(t *testing.T, w http.ResponseWriter, id json.RawMessage) {
 	}))
 }
 
-// erc20ProbeMethods are the three decode-checked reads (decimals/symbol/
-// totalSupply) every successful validation answers before domain resolution.
+// erc20ProbeMethods are the decimals/symbol/totalSupply reads every successful validation answers.
 func erc20ProbeMethods(t *testing.T) map[string]erc20Method {
 	t.Helper()
 	return map[string]erc20Method{
@@ -112,8 +108,7 @@ func erc20ProbeMethods(t *testing.T) map[string]erc20Method {
 	}
 }
 
-// eip712DomainSeparator hashes the domain the way the token does — repeated
-// here so a name()/version() fallback can be verified against it.
+// eip712DomainSeparator hashes the domain the way the token does, to verify the name()/version() fallback.
 func eip712DomainSeparator(t *testing.T, name, version string) [32]byte {
 	t.Helper()
 	domain := apitypes.TypedDataDomain{

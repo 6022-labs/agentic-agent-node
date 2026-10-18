@@ -72,6 +72,7 @@ func WhenUpsertingPaymentRuleX402ConfigBeforeEach(
 }
 
 func WhenUpsertingPaymentRuleX402ConfigAfterEach(suite *WhenUpsertingPaymentRuleX402ConfigTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -85,7 +86,7 @@ func TestWhenUpsertingPaymentRuleX402Config(t *testing.T) {
 			t.Run("Given the rule has no config yet", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should upsert and read it back with the patterns decoded", func(t *testing.T) {
+				t.Run("Should read back its network", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingPaymentRuleX402ConfigBeforeEach(tc)
 					defer WhenUpsertingPaymentRuleX402ConfigAfterEach(suite)
@@ -100,8 +101,39 @@ func TestWhenUpsertingPaymentRuleX402Config(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, config.Network, stored.Network)
+				})
+
+				t.Run("Should read back the patterns decoded", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentRuleX402ConfigAfterEach(suite)
+
+					config := model_builders.NewPaymentRuleX402ConfigBuilder().
+						WithPaymentRuleId(suite.rule.Id).
+						WithAddressPatterns([]string{".*"}).
+						Build()
+					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
+
+					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+
+					assert.NoError(t, err)
 					assert.Equal(t, []string{".*"}, stored.AddressPatterns)
-					// eip3009 keeps the token's EIP-712 domain.
+				})
+
+				t.Run("Should read back the EIP-712 domain", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentRuleX402ConfigAfterEach(suite)
+
+					config := model_builders.NewPaymentRuleX402ConfigBuilder().
+						WithPaymentRuleId(suite.rule.Id).
+						WithAddressPatterns([]string{".*"}).
+						Build()
+					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
+
+					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+
+					assert.NoError(t, err)
 					assert.Equal(t, config.Eip712Name, stored.Eip712Name)
 					assert.Equal(t, config.Eip712Version, stored.Eip712Version)
 				})
@@ -130,7 +162,7 @@ func TestWhenUpsertingPaymentRuleX402Config(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an existing config", func(t *testing.T) {
+			t.Run("Given a config already exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should replace it on upsert", func(t *testing.T) {

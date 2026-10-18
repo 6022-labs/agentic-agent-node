@@ -47,7 +47,7 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Param chainId query int true "chain id of the connected wallet"
 // @Success 200 {object} responses.GetAuthChallengeResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map
+// @Failure 500 {object} errors.InternalError "challenge_failed"
 // @Router /auth/challenge [get]
 func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 	request := new(requests.GetAuthChallengeRequest)
@@ -70,8 +70,9 @@ func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 // @Param request body requests.VerifyAuthRequest true "Address + signature"
 // @Success 200 {object} responses.VerifyAuthResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 401 {object} fiber.Map "challenge_not_found | signature_mismatch | not_authorized"
-// @Failure 502 {object} fiber.Map "identity_not_found"
+// @Failure 401 {object} errors.UnauthorizedError "challenge_not_found, signature_mismatch or not_authorized"
+// @Failure 500 {object} errors.InternalError "verify_failed"
+// @Failure 502 {object} errors.UnavailableError "identity_not_found"
 // @Router /auth/verify [post]
 func (c *AuthController) Verify(ctx fiber.Ctx) error {
 	body := new(requests.VerifyAuthRequest)

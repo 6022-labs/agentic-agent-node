@@ -36,7 +36,7 @@ func WhenGettingConversationNameBeforeEach(t *testing.T) *WhenGettingConversatio
 func TestWhenGettingConversationName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given loading the conversation fails", func(t *testing.T) {
+	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingConversationNameTestingSuite) {

@@ -27,8 +27,8 @@ func (c *HttpAgentCollectionsClient) List(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentCollectionsPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

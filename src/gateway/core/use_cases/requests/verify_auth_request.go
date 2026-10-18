@@ -8,17 +8,15 @@ import (
 )
 
 type VerifyAuthRequest struct {
-	Address   string `json:"address"`
+	WalletAddressRequest
 	Signature string `json:"signature"`
 }
 
 func (r *VerifyAuthRequest) ValidateAndSanitize() error {
-	r.Address = strings.TrimSpace(r.Address)
-	r.Signature = strings.TrimSpace(r.Signature)
-
-	if !helpers.IsEthAddress(r.Address) {
-		return errors.NewValidationError("address", "must be a 0x-prefixed 20-byte hex address")
+	if err := r.WalletAddressRequest.ValidateAndSanitize(); err != nil {
+		return err
 	}
+	r.Signature = strings.TrimSpace(r.Signature)
 	if !helpers.IsEthSignature(r.Signature) {
 		return errors.NewValidationError("signature", "must be a 0x-prefixed 65-byte hex signature")
 	}

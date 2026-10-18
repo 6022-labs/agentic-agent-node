@@ -4,14 +4,21 @@ import (
 	"context"
 	"time"
 
+	knowledge_enums "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/noop"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 )
 
 const meterName = "agentic_runtime_db"
+
+// DbSystemName returns the db.system.name attribute stamped on every query metric.
+func (m *DbQueryMetrics) DbSystemName() attribute.KeyValue {
+	return m.dbSystem
+}
 
 type DbQueryMetrics struct {
 	dbSystem          attribute.KeyValue
@@ -19,9 +26,19 @@ type DbQueryMetrics struct {
 	rowsHistogram     metric.Int64Histogram
 }
 
-// NewDbQueryMetrics stamps db.system.name from the driver actually in use; the adapter may back
-// more than one engine.
-func NewDbQueryMetrics(dbSystem attribute.KeyValue) *DbQueryMetrics {
+var dbSystemNames = map[knowledge_enums.DatabaseDriver]attribute.KeyValue{
+	knowledge_enums.DatabaseDriverMySQL:   semconv.DBSystemNameMySQL,
+	knowledge_enums.DatabaseDriverMariaDB: semconv.DBSystemNameMariaDB,
+	knowledge_enums.DatabaseDriverSqlite:  semconv.DBSystemNameSQLite,
+}
+
+// NewDbQueryMetrics stamps db.system.name from the driver actually in use (postgres when unmapped).
+func NewDbQueryMetrics(driver knowledge_enums.DatabaseDriver) *DbQueryMetrics {
+	dbSystem, ok := dbSystemNames[driver]
+	if !ok {
+		dbSystem = semconv.DBSystemNamePostgreSQL
+	}
+
 	noopMeter := noop.NewMeterProvider().Meter(meterName)
 	meter := otel.GetMeterProvider().Meter(meterName)
 

@@ -58,6 +58,7 @@ func WhenAppendingConversationMessagesBeforeEach(
 }
 
 func WhenAppendingConversationMessagesAfterEach(suite *WhenAppendingConversationMessagesTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -70,8 +71,7 @@ func newMessage(conversationId, content string) models.ConversationMessage {
 		Build()
 }
 
-// ensureConversations seeds the conversation heads that messages reference,
-// satisfying the conversation_messages.conversation_id FK.
+// ensureConversations seeds the heads that messages reference, satisfying the conversation_id FK.
 func ensureConversations(
 	dbClient *runtime_db.DatabaseClient,
 	conversationRepository *repositories.ConversationRepository,

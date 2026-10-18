@@ -12,10 +12,10 @@ import (
 func TestWhenMappingMcpToolToFunctionName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an mcp connection and one of its tools", func(t *testing.T) {
+	t.Run("Given an MCP connection and one of its tools", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should prefix the function name with the mcp namespace and connection name", func(t *testing.T) {
+		t.Run("Should prefix the function name with the mcp namespace", func(t *testing.T) {
 			t.Parallel()
 
 			mcpConnection := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()

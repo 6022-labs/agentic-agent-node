@@ -41,25 +41,6 @@ func WhenPublishingEnsRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingEnsR
 func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the publisher succeeds", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
-			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
-		}
-
-		t.Run("Should return NoContent", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the publisher reports ErrIdentityNotFound", func(t *testing.T) {
 		t.Parallel()
 
@@ -90,7 +71,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(errors.New("ens registry down"))
 		}
 
-		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the cause", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
@@ -101,6 +82,25 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Contains(t, internalErr.Message, "ens registry down")
+		})
+	})
+
+	t.Run("Given the publisher succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
+			suite.mockEnsPublisher.EXPECT().PublishRuntimeRecords(gomock.Any()).Return(nil)
+		}
+
+		t.Run("Should return NoContent", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenPublishingEnsRuntimeRecordsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
 		})
 	})
 }

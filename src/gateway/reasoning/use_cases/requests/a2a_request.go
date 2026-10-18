@@ -3,6 +3,8 @@ package requests
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 // A2ARequest is the JSON-RPC 2.0 envelope for an A2A call; only SendMessage is handled.
@@ -36,4 +38,15 @@ func (m *A2AMessage) Text() string {
 		builder.WriteString(part.Text)
 	}
 	return builder.String()
+}
+
+func (r *A2ARequest) ValidateAndSanitize() error {
+	if r.Method != A2AMethodSendMessage {
+		return errors.NewValidationError("method", "unsupported method, expected "+A2AMethodSendMessage.String())
+	}
+	if strings.TrimSpace(r.Params.Message.Text()) == "" {
+		return errors.NewValidationError("params.message", "message must contain non-empty text")
+	}
+	r.Params.Message.ContextId = strings.TrimSpace(r.Params.Message.ContextId)
+	return nil
 }

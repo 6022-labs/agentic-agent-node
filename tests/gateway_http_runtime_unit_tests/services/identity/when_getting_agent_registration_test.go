@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,79 @@ func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegis
 func TestWhenGettingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Get(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given no registration draft exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found","message":"no draft"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Get(context.Background())
+
+			var target *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Get(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime returns the registration draft", func(t *testing.T) {
 		t.Parallel()
 
@@ -57,31 +131,6 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 			if assert.NotNil(t, payload) {
 				assert.Equal(t, "bob", payload.Name)
 			}
-		})
-	})
-
-	t.Run("Given no registration draft exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalAgentRegistrationWithResponse(gomock.Any()).
-				Return(&clients.GetInternalAgentRegistrationResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-					Body:         []byte(`{"code":"not_found","message":"no draft"}`),
-				}, nil)
-		}
-
-		t.Run("Should return a NotFoundError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentRegistrationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Get(context.Background())
-
-			var target *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

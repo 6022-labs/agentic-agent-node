@@ -56,6 +56,7 @@ func WhenDeletingLLMConnectionByAgentIdBeforeEach(
 }
 
 func WhenDeletingLLMConnectionByAgentIdAfterEach(suite *WhenDeletingLLMConnectionByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

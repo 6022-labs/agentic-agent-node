@@ -10,35 +10,21 @@ import (
 func TestWhenParsingCompletionsToolCallArguments(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an empty arguments string", func(t *testing.T) {
+	t.Run("Given a blank arguments string", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a non-nil empty map without error", func(t *testing.T) {
 			t.Parallel()
 
-			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: ""}
+			for _, value := range []string{"", "   "} {
+				function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: value}
 
-			args, err := function.ParsedArguments()
+				args, err := function.ParsedArguments()
 
-			assert.NoError(t, err)
-			assert.NotNil(t, args)
-			assert.Empty(t, args)
-		})
-	})
-
-	t.Run("Given a whitespace-only arguments string", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a non-nil empty map without error", func(t *testing.T) {
-			t.Parallel()
-
-			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "   "}
-
-			args, err := function.ParsedArguments()
-
-			assert.NoError(t, err)
-			assert.NotNil(t, args)
-			assert.Empty(t, args)
+				assert.NoError(t, err)
+				assert.NotNil(t, args)
+				assert.Empty(t, args)
+			}
 		})
 	})
 
@@ -76,15 +62,24 @@ func TestWhenParsingCompletionsToolCallArguments(t *testing.T) {
 	t.Run("Given a malformed JSON object", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a nil map and an error", func(t *testing.T) {
+		t.Run("Should return a nil map", func(t *testing.T) {
 			t.Parallel()
 
 			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
 
-			args, err := function.ParsedArguments()
+			args, _ := function.ParsedArguments()
 
-			assert.Error(t, err)
 			assert.Nil(t, args)
+		})
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
+
+			_, err := function.ParsedArguments()
+
+			assert.ErrorContains(t, err, "invalid character")
 		})
 	})
 }

@@ -39,8 +39,7 @@ func x402GateFreeRule(patterns ...string) models.ExternalPaymentRule {
 	return x402GateRule("0", x402TestAgentWalletHex, patterns)
 }
 
-// x402GatePermit2Rule is a public paid rule whose token resolves to the
-// permit2 transfer method — it carries no EIP-712 domain.
+// x402GatePermit2Rule is a public paid rule on the permit2 method, with no EIP-712 domain.
 func x402GatePermit2Rule() models.ExternalPaymentRule {
 	config, _ := json.Marshal(x402.X402Config{
 		Network:             "eip155:80002",
@@ -56,8 +55,7 @@ func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPay
 	return rules
 }
 
-// x402GateFacilitators is the network → facilitator mapping for a node whose
-// chain can settle. The "no facilitator" scenarios return an empty map.
+// x402GateFacilitators maps the network to a facilitator for a node whose chain can settle.
 func x402GateFacilitators() map[string]models.ExternalPaymentFacilitator {
 	return map[string]models.ExternalPaymentFacilitator{
 		"eip155:80002": {
@@ -68,8 +66,7 @@ func x402GateFacilitators() map[string]models.ExternalPaymentFacilitator {
 	}
 }
 
-// x402GatePaymentHeader builds a PAYMENT-SIGNATURE header aimed at `to` with
-// the given value on the given network.
+// x402GatePaymentHeader builds a PAYMENT-SIGNATURE header for `to` with the given value and network.
 func x402GatePaymentHeader(t *testing.T, network string, to string, value string) string {
 	t.Helper()
 
@@ -102,8 +99,7 @@ func x402GateRequest(paymentHeader string) *http.Request {
 	return req
 }
 
-// x402GateBearerRequest builds a /responses request carrying an Authorization
-// bearer (and optionally a payment header) — the JWT free-access path.
+// x402GateBearerRequest builds a /responses request with a bearer and optional payment header.
 func x402GateBearerRequest(bearer string, paymentHeader string) *http.Request {
 	req := x402GateRequest(paymentHeader)
 	if len(bearer) != 0 {

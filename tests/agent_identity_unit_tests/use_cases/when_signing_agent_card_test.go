@@ -37,35 +37,10 @@ func TestWhenSigningAgentCard(t *testing.T) {
 	ctx := context.Background()
 	const card = `{"name":"hermes","protocol":"6022"}`
 
-	t.Run("Given a card without a signatures member", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockAgentCardSigner.EXPECT().
-				Sign(ctx, []byte(card)).
-				Return(&identity_interfaces.AgentCardSignature{Protected: "protected", Signature: "signature"}, nil)
-		}
-
-		t.Run("Should return the detached JWS", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
-
-			response, err := suite.sut.Execute(ctx, &requests.SignAgentCardRequest{Card: []byte(card)})
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, response) {
-				assert.Equal(t, "protected", response.Protected)
-				assert.Equal(t, "signature", response.Signature)
-			}
-		})
-	})
-
-	t.Run("Given the request fails validation", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should surface it without calling the signer", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningAgentCardBeforeEach(t)
@@ -89,7 +64,7 @@ func TestWhenSigningAgentCard(t *testing.T) {
 				Return(nil, errors.New("vault unreachable"))
 		}
 
-		t.Run("Should surface an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningAgentCardBeforeEach(t)
@@ -100,6 +75,31 @@ func TestWhenSigningAgentCard(t *testing.T) {
 			assert.Nil(t, response)
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given a card without a signatures member", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockAgentCardSigner.EXPECT().
+				Sign(ctx, []byte(card)).
+				Return(&identity_interfaces.AgentCardSignature{Protected: "protected", Signature: "signature"}, nil)
+		}
+
+		t.Run("Should return the detached JWS", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			response, err := suite.sut.Execute(ctx, &requests.SignAgentCardRequest{Card: []byte(card)})
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, response) {
+				assert.Equal(t, "protected", response.Protected)
+				assert.Equal(t, "signature", response.Signature)
+			}
 		})
 	})
 }

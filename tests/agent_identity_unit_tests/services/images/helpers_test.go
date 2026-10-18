@@ -11,8 +11,7 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 )
 
-// sampleImageParams builds the params shared by the image tests. The base image
-// is a real PNG so tests that decode it (the icon) get valid input.
+// sampleImageParams builds the shared image params with a real PNG base.
 func sampleImageParams(t *testing.T) identity_interfaces.GenerateImageParams {
 	t.Helper()
 
@@ -29,8 +28,7 @@ func sampleImageParams(t *testing.T) identity_interfaces.GenerateImageParams {
 	}
 }
 
-// sampleBasePNG builds a throwaway gradient PNG so the embedded base image shows
-// something recognisable without committing a binary fixture.
+// sampleBasePNG builds a throwaway gradient PNG, avoiding a binary fixture.
 func sampleBasePNG(t *testing.T) []byte {
 	t.Helper()
 

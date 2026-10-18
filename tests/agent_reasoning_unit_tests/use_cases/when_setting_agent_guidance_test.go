@@ -39,38 +39,7 @@ func WhenSettingAgentGuidanceBeforeEach(t *testing.T) *WhenSettingAgentGuidanceT
 func TestWhenSettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the agent exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
-			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentGuidanceRepository.EXPECT().
-				Upsert(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, g *models.AgentGuidance) (*models.AgentGuidance, error) {
-					assert.Equal(t, agent.Id, g.AgentId)
-					assert.Equal(t, "answer concisely", g.Content)
-					return g, nil
-				})
-		}
-
-		t.Run("Should upsert the guidance scoped to the agent and echo it", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingAgentGuidanceBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(
-				context.Background(),
-				&requests.SetAgentGuidanceRequest{Content: "answer concisely"},
-			)
-
-			assert.NoError(t, err)
-			assert.Equal(t, "answer concisely", resp.Content)
-		})
-	})
-
-	t.Run("Given the upsert fails", func(t *testing.T) {
+	t.Run("Given saving the agent guidance fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
@@ -92,6 +61,51 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "guidance_update_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the agent exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
+			agent := model_builders.NewAgentBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().
+				Upsert(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, g *models.AgentGuidance) (*models.AgentGuidance, error) {
+					assert.Equal(t, agent.Id, g.AgentId)
+					assert.Equal(t, "answer concisely", g.Content)
+					return g, nil
+				})
+		}
+
+		t.Run("Should upsert the guidance for the agent", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetAgentGuidanceRequest{Content: "answer concisely"},
+			)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should echo the guidance", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetAgentGuidanceRequest{Content: "answer concisely"},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "answer concisely", resp.Content)
 		})
 	})
 }

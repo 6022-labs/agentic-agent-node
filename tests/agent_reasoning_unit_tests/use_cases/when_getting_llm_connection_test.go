@@ -40,7 +40,7 @@ func WhenGettingLLMConnectionBeforeEach(t *testing.T) *WhenGettingLLMConnectionT
 func TestWhenGettingLLMConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the repository returns nil", func(t *testing.T) {
+	t.Run("Given no LLM connection exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLLMConnectionTestingSuite) {
@@ -62,7 +62,7 @@ func TestWhenGettingLLMConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the repository returns a connection", func(t *testing.T) {
+	t.Run("Given an LLM connection exists", func(t *testing.T) {
 		t.Parallel()
 
 		stored := model_builders.NewLLMConnectionBuilder().

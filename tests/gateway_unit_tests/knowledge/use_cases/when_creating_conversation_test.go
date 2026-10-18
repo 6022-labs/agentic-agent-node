@@ -45,14 +45,19 @@ func TestWhenCreatingConversation(t *testing.T) {
 
 			suite := WhenCreatingConversationBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "   "})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "   "},
+				},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 		})
 	})
 
-	t.Run("Given the client fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
@@ -61,17 +66,50 @@ func TestWhenCreatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate the client error", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "Trip"})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Trip"},
+				},
+			)
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				CreateConversation(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewValidationError("name", "cannot be empty"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Trip"},
+				},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
 		})
 	})
 
@@ -84,13 +122,18 @@ func TestWhenCreatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
 		}
 
-		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnauthorizedError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "Trip"})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Trip"},
+				},
+			)
 
 			var unauthorizedErr *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedErr)
@@ -98,7 +141,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime reports the name taken", func(t *testing.T) {
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
@@ -107,19 +150,47 @@ func TestWhenCreatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewConflictError("conversation_name_taken", "already used"))
 		}
 
-		t.Run("Should surface the conflict unchanged", func(t *testing.T) {
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{
-				Name: "taken",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "taken"},
 			})
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
 			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				CreateConversation(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Trip"},
+				},
+			)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 
@@ -150,7 +221,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{
-				Name: "  ERC20   mint audit ",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "  ERC20   mint audit "},
 			})
 
 			assert.NoError(t, err)

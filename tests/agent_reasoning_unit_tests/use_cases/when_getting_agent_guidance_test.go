@@ -38,7 +38,7 @@ func WhenGettingAgentGuidanceBeforeEach(t *testing.T) *WhenGettingAgentGuidanceT
 func TestWhenGettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a guidance row exists", func(t *testing.T) {
+	t.Run("Given the agent guidance lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
@@ -46,19 +46,20 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().
 				GetByAgentId(gomock.Any(), agent.Id).
-				Return(&models.AgentGuidance{AgentId: agent.Id, Content: "answer concisely"}, nil)
+				Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return the content", func(t *testing.T) {
+		t.Run("Should return InternalError with guidance_lookup_failed", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentGuidanceBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "answer concisely", resp.Content)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "guidance_lookup_failed", internalErr.Code)
 		})
 	})
 
@@ -84,7 +85,7 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the guidance read fails", func(t *testing.T) {
+	t.Run("Given a guidance row exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
@@ -92,20 +93,19 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().
 				GetByAgentId(gomock.Any(), agent.Id).
-				Return(nil, errors.New("db down"))
+				Return(&models.AgentGuidance{AgentId: agent.Id, Content: "answer concisely"}, nil)
 		}
 
-		t.Run("Should return InternalError with guidance_lookup_failed", func(t *testing.T) {
+		t.Run("Should return the content", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentGuidanceBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "guidance_lookup_failed", internalErr.Code)
+			assert.NoError(t, err)
+			assert.Equal(t, "answer concisely", resp.Content)
 		})
 	})
 }

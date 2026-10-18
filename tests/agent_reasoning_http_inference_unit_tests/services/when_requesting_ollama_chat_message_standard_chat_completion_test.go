@@ -93,7 +93,7 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the response has empty content", func(t *testing.T) {
+	t.Run("Given a blank response content", func(t *testing.T) {
 		t.Parallel()
 
 		doneReason := "length"
@@ -119,7 +119,6 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 
 			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages, nil)
 			assert.Nil(t, result)
-			assert.Error(t, err)
 			assert.ErrorContains(t, err, "ollama returned empty content")
 			assert.ErrorContains(t, err, doneReason)
 		})

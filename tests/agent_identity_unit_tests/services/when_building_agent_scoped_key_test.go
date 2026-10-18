@@ -33,7 +33,7 @@ func WhenBuildingAgentScopedKeyBeforeEach(t *testing.T) *WhenBuildingAgentScoped
 func TestWhenBuildingAgentScopedKey(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an agent record exists", func(t *testing.T) {
+	t.Run("Given an agent row exists", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -72,7 +72,7 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no agent record exists yet", func(t *testing.T) {
+	t.Run("Given no agent row exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
@@ -87,11 +87,11 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 
 			_, err := suite.sut.ScopedKey(context.Background(), "wallet")
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "no agent record exists yet")
 		})
 	})
 
-	t.Run("Given the repository lookup fails", func(t *testing.T) {
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {

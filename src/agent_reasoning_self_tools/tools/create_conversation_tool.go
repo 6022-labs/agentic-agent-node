@@ -37,7 +37,9 @@ func (t *CreateConversationTool) Execute(ctx context.Context, args map[string]an
 		return nil, err
 	}
 	return utils.ToToolResult(
-		t.createConversationExecutor.Execute(ctx, &knowledge_requests.CreateConversationRequest{Name: name}),
+		t.createConversationExecutor.Execute(ctx, &knowledge_requests.CreateConversationRequest{
+			ConversationNameRequest: knowledge_requests.ConversationNameRequest{Name: name},
+		}),
 	)
 }
 

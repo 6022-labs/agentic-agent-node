@@ -87,53 +87,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a policy with rules exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) *models.PaymentRule {
-			agent := model_builders.NewAgentBuilder().Build()
-			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
-			rule := model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build()
-
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
-				Return(nil, nil).
-				AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(policy, nil).
-				Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().
-				ListByPolicyId(gomock.Any(), gomock.Any()).
-				Return([]models.PaymentRule{*rule}, nil).
-				Times(1)
-			// Each rule's config is joined back from its method's table.
-			suite.mockStrategy.EXPECT().
-				LoadConfig(gomock.Any(), rule.Id).
-				Return(json.RawMessage(`{"network":"eip155:80002"}`), nil).
-				Times(1)
-			return rule
-		}
-
-		t.Run("Should return the rules with their config", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingPaymentRulesBeforeEach(t)
-			rule := initSuite(suite)
-
-			result, err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-			if assert.Len(t, result.Rules, 1) {
-				assert.Equal(t, rule.Id, result.Rules[0].Id)
-				assert.Equal(t, rule.Name, result.Rules[0].Name)
-				assert.JSONEq(t, `{"network":"eip155:80002"}`, string(result.Rules[0].Config))
-			}
-		})
-	})
-
-	t.Run("Given no policy exists yet", func(t *testing.T) {
+	t.Run("Given no policy exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
@@ -150,8 +104,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 				Return(nil, nil).
 				Times(1)
 			suite.mockPaymentPolicyRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(policy, nil).Times(1)
-			// Seeding the default rule persists its config, then the empty list
-			// is returned.
+			// Seeding the default rule persists its config, then the empty list is returned.
 			suite.mockPaymentRuleRepository.EXPECT().
 				Create(gomock.Any(), gomock.Any()).
 				Return(model_builders.NewPaymentRuleBuilder().Build(), nil).
@@ -198,7 +151,7 @@ func TestWhenListingPaymentRules(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingPaymentRulesBeforeEach(t)
@@ -209,6 +162,52 @@ func TestWhenListingPaymentRules(t *testing.T) {
 			assert.Nil(t, result)
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given a policy with rules exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) *models.PaymentRule {
+			agent := model_builders.NewAgentBuilder().Build()
+			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
+			rule := model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(policy, nil).
+				Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), gomock.Any()).
+				Return([]models.PaymentRule{*rule}, nil).
+				Times(1)
+			// Each rule's config is joined back from its method's table.
+			suite.mockStrategy.EXPECT().
+				LoadConfig(gomock.Any(), rule.Id).
+				Return(json.RawMessage(`{"network":"eip155:80002"}`), nil).
+				Times(1)
+			return rule
+		}
+
+		t.Run("Should return the rules with their config", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			rule := initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			if assert.Len(t, result.Rules, 1) {
+				assert.Equal(t, rule.Id, result.Rules[0].Id)
+				assert.Equal(t, rule.Name, result.Rules[0].Name)
+				assert.JSONEq(t, `{"network":"eip155:80002"}`, string(result.Rules[0].Config))
+			}
 		})
 	})
 }

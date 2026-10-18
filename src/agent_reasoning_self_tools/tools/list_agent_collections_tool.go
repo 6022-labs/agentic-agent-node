@@ -37,7 +37,12 @@ func (t *ListAgentCollectionsTool) Execute(ctx context.Context, args map[string]
 		return nil, err
 	}
 	return utils.ToToolResult(
-		t.listAgentCollectionsExecutor.Execute(ctx, &identity_requests.ListAgentCollectionsRequest{ChainId: chainId}),
+		t.listAgentCollectionsExecutor.Execute(
+			ctx,
+			&identity_requests.ListAgentCollectionsRequest{
+				ChainIdRequest: identity_requests.ChainIdRequest{ChainId: chainId},
+			},
+		),
 	)
 }
 

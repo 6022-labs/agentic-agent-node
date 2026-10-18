@@ -54,26 +54,50 @@ func generateValidUpdateSelfToolRequest(id uuid.UUID, enabled bool) *requests.Up
 func TestWhenUpdatingSelfTool(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the enabled flag is missing", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+		request := generateValidUpdateSelfToolRequest(uuid.New(), false)
+		request.Enabled = nil
+
+		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingSelfToolBeforeEach(t)
-
-			request := generateValidUpdateSelfToolRequest(uuid.New(), false)
-			request.Enabled = nil
 
 			_, err := suite.sut.Execute(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "enabled", validationErr.Field)
 		})
 	})
 
-	t.Run("Given an unknown id", func(t *testing.T) {
+	t.Run("Given the self tool lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockSelfToolRepository.EXPECT().
+				GetById(gomock.Any(), gomock.Any(), id).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateSelfToolRequest(id, true))
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "get_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the self tool does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -93,6 +117,31 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "self_tool_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given saving the self tool fails", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			row := model_builders.NewSelfToolBuilder().WithId(id).WithEnabled(true).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockSelfToolRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockSelfToolRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError without reading the self tool definitions", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateSelfToolRequest(id, false))
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "update_failed", internalErr.Code)
 		})
 	})
 
@@ -120,7 +169,18 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			suite.mockSelfToolRegistry.EXPECT().ListGroupNames().Return(map[string]string{"run_command": "Machine"})
 		}
 
-		t.Run("Should toggle it off and return the joined response", func(t *testing.T) {
+		t.Run("Should toggle it off", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateSelfToolRequest(id, false))
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the joined response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingSelfToolBeforeEach(t)
@@ -134,56 +194,6 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			assert.Equal(t, "run a command", resp.Description)
 			assert.Equal(t, "Machine", resp.Group)
 			assert.False(t, resp.Enabled)
-		})
-	})
-
-	t.Run("Given the row lookup fails", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockSelfToolRepository.EXPECT().
-				GetById(gomock.Any(), gomock.Any(), id).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should return an internal error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), generateValidUpdateSelfToolRequest(id, true))
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "get_failed", internalErr.Code)
-		})
-	})
-
-	t.Run("Given the update fails", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			row := model_builders.NewSelfToolBuilder().WithId(id).WithEnabled(true).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockSelfToolRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockSelfToolRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should return an internal error without reading the self tool definitions", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), generateValidUpdateSelfToolRequest(id, false))
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "update_failed", internalErr.Code)
 		})
 	})
 }

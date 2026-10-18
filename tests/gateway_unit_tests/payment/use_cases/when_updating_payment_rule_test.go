@@ -38,6 +38,122 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 	ruleId := uuid.New()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
+				Return(nil, apperrors.NewValidationError("name", "name is invalid"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the rule does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
+				Return(nil, apperrors.NewNotFoundError("rule_not_found", "no such rule")).
+				Times(1)
+		}
+
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			rule, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
+
+			assert.Nil(t, rule)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
+				Return(nil, apperrors.NewConflictError("rule_conflict", "rule already exists"))
+		}
+
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "rule_conflict", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Update(gomock.Any(), ruleId.String(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime accepts the updated rule", func(t *testing.T) {
 		t.Parallel()
 
@@ -69,30 +185,6 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, ruleId.String(), rule.Id)
-		})
-	})
-
-	t.Run("Given the rule does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				Update(gomock.Any(), ruleId.String(), gomock.Any()).
-				Return(nil, apperrors.NewNotFoundError("rule_not_found", "no such rule")).
-				Times(1)
-		}
-
-		t.Run("Should pass the not found error through", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingPaymentRuleBeforeEach(t)
-			initSuite(suite)
-
-			rule, err := suite.sut.Execute(context.Background(), &requests.UpdatePaymentRuleRequest{Id: ruleId})
-
-			assert.Nil(t, rule)
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 }

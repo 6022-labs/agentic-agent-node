@@ -58,8 +58,8 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 // @Param request body requests.DiscoverMCPServerToolsRequest true "MCP server"
 // @Success 200 {object} responses.MCPServerToolsResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "list_mcp_server_tools_failed"
+// @Failure 404 {object} errors.NotFoundError "mcp_connection_not_found"
+// @Failure 500 {object} errors.InternalError "list_mcp_server_tools_failed or agent_lookup_failed"
 // @Router /internal/config/mcp/tools [post]
 func (c *MCPConfigController) DiscoverTools(ctx fiber.Ctx) error {
 	body := new(requests.DiscoverMCPServerToolsRequest)
@@ -78,7 +78,7 @@ func (c *MCPConfigController) DiscoverTools(ctx fiber.Ctx) error {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.MCPConnectionListResponse
-// @Failure 500 {object} fiber.Map "list_mcp_connections_failed"
+// @Failure 500 {object} errors.InternalError "list_failed or agent_lookup_failed"
 // @Router /internal/config/mcp [get]
 func (c *MCPConfigController) List(ctx fiber.Ctx) error {
 	resp, err := c.listMCPConnections.Execute(ctx.Context())
@@ -96,7 +96,8 @@ func (c *MCPConfigController) List(ctx fiber.Ctx) error {
 // @Param request body requests.CreateMCPConnectionRequest true "MCP connection"
 // @Success 201 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "create_mcp_connection_failed"
+// @Failure 409 {object} errors.ConflictError "mcp_connection_name_taken"
+// @Failure 500 {object} errors.InternalError "create_failed, mcp_connection_lookup_failed or agent_lookup_failed"
 // @Router /internal/config/mcp [post]
 func (c *MCPConfigController) Create(ctx fiber.Ctx) error {
 	body := new(requests.CreateMCPConnectionRequest)
@@ -117,8 +118,8 @@ func (c *MCPConfigController) Create(ctx fiber.Ctx) error {
 // @Param id path string true "connection id"
 // @Success 200 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "get_mcp_connection_failed"
+// @Failure 404 {object} errors.NotFoundError "mcp_connection_not_found"
+// @Failure 500 {object} errors.InternalError "get_failed or agent_lookup_failed"
 // @Router /internal/config/mcp/{id} [get]
 func (c *MCPConfigController) GetById(ctx fiber.Ctx) error {
 	request := new(requests.GetMCPConnectionRequest)
@@ -141,8 +142,9 @@ func (c *MCPConfigController) GetById(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateMCPConnectionRequest true "MCP connection"
 // @Success 200 {object} responses.MCPConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "update_mcp_connection_failed"
+// @Failure 404 {object} errors.NotFoundError "mcp_connection_not_found"
+// @Failure 409 {object} errors.ConflictError "mcp_connection_name_taken"
+// @Failure 500 {object} errors.InternalError "update_failed, mcp_connection_lookup_failed or agent_lookup_failed"
 // @Router /internal/config/mcp/{id} [put]
 func (c *MCPConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateMCPConnectionRequest)
@@ -165,7 +167,7 @@ func (c *MCPConfigController) Update(ctx fiber.Ctx) error {
 // @Param id path string true "connection id"
 // @Success 204
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "delete_mcp_connection_failed"
+// @Failure 500 {object} errors.InternalError "delete_failed or agent_lookup_failed"
 // @Router /internal/config/mcp/{id} [delete]
 func (c *MCPConfigController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeleteMCPConnectionRequest)

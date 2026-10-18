@@ -14,8 +14,7 @@ import (
 
 const vaultDevToken = "root"
 
-// VaultMountSettings is what the builder hands back to a test: a fresh KV v1
-// mount inside the shared dev-mode Vault, plus the address+token to talk to it.
+// VaultMountSettings is what the builder hands a test: a fresh KV v1 mount in the shared Vault plus address and token.
 type VaultMountSettings struct {
 	Address       string
 	Token         string
@@ -96,9 +95,7 @@ func (b *VaultContainerBuilder) stop() {
 	vaultContainer = nil
 }
 
-// Create mounts a fresh KV v1 secrets engine at a unique path so parallel tests
-// don't trample each other, and returns the address/token/mount needed to wire
-// up KvV1SecretStorage.
+// Create mounts a fresh KV v1 engine at a unique path so parallel tests don't trample each other.
 func (b *VaultContainerBuilder) Create() VaultMountSettings {
 	client := b.start()
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,22 +57,26 @@ func TestWhenParsingPaymentRuleX402Config(t *testing.T) {
 	t.Run("Given empty input", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
 			t.Parallel()
 
 			config := &models.PaymentRuleX402Config{}
-			assert.Error(t, config.Parse(nil))
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, config.Parse(nil), &validationErr)
+			assert.Equal(t, "config", validationErr.Field)
 		})
 	})
 
 	t.Run("Given malformed JSON", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
 			t.Parallel()
 
 			config := &models.PaymentRuleX402Config{}
-			assert.Error(t, config.Parse([]byte("{not-json")))
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, config.Parse([]byte("{not-json")), &validationErr)
+			assert.Equal(t, "config", validationErr.Field)
 		})
 	})
 }

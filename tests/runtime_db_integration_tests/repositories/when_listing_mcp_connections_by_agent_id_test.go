@@ -55,6 +55,7 @@ func WhenListingMCPConnectionsByAgentIdBeforeEach(
 }
 
 func WhenListingMCPConnectionsByAgentIdAfterEach(suite *WhenListingMCPConnectionsByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -79,7 +80,7 @@ func TestWhenListingMCPConnectionsByAgentId(t *testing.T) {
 				})
 			})
 
-			t.Run("Given multiple connections were created", func(t *testing.T) {
+			t.Run("Given multiple connections exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return them ordered by created_at ASC", func(t *testing.T) {

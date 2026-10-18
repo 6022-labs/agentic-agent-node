@@ -38,7 +38,49 @@ func WhenGettingLlmConfigBeforeEach(t *testing.T) *WhenGettingLlmConfigTestingSu
 func TestWhenGettingLlmConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the client returns a payload with a non-nil BaseUrl", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("boom"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "boom")
+		})
+	})
+
+	t.Run("Given no LLM connection exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, gateway_interfaces.ErrLLMConnectionNotFound)
+		}
+
+		t.Run("Should return NotFound with not_configured", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "not_configured", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime returns the configured connection", func(t *testing.T) {
 		t.Parallel()
 
 		baseUrl := "https://api.openai.com/v1"
@@ -68,48 +110,6 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			assert.Equal(t, "gpt-4o", resp.Model)
 			assert.Equal(t, baseUrl, resp.BaseUrl)
 			assert.Equal(t, "established", resp.SetupStatus)
-		})
-	})
-
-	t.Run("Given the client returns ErrLLMConnectionNotFound", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, gateway_interfaces.ErrLLMConnectionNotFound)
-		}
-
-		t.Run("Should return NotFound with not_configured", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingLlmConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "not_configured", notFoundErr.Code)
-		})
-	})
-
-	t.Run("Given the client returns a transport error", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("boom"))
-		}
-
-		t.Run("Should return Unavailable with the message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingLlmConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Contains(t, unavailableErr.Message, "boom")
 		})
 	})
 

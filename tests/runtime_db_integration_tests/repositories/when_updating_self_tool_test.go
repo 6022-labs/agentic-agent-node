@@ -53,6 +53,7 @@ func WhenUpdatingSelfToolBeforeEach(tc *repositoryTestCase) *WhenUpdatingSelfToo
 }
 
 func WhenUpdatingSelfToolAfterEach(suite *WhenUpdatingSelfToolTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -63,7 +64,7 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given the tool does not exist in database", func(t *testing.T) {
+			t.Run("Given the tool does not exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should insert the row", func(t *testing.T) {
@@ -89,10 +90,41 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an existing tool", func(t *testing.T) {
+			t.Run("Given a tool exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should persist the toggled Enabled flag and bump UpdatedAt", func(t *testing.T) {
+				t.Run("Should persist the toggled Enabled flag", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpdatingSelfToolBeforeEach(tc)
+					defer WhenUpdatingSelfToolAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					inserted, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					inserted.Enabled = false
+					updated, err := suite.sut.Update(context.Background(), inserted)
+					assert.NoError(t, err)
+					assert.False(t, updated.Enabled)
+
+					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
+
+					assert.NoError(t, err)
+					if assert.NotNil(t, got) {
+						assert.False(t, got.Enabled)
+					}
+				})
+
+				t.Run("Should bump UpdatedAt", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpdatingSelfToolBeforeEach(tc)
 					defer WhenUpdatingSelfToolAfterEach(suite)
@@ -114,15 +146,15 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 					time.Sleep(50 * time.Millisecond)
 
 					inserted.Enabled = false
-					updated, err := suite.sut.Update(context.Background(), inserted)
+					_, err = suite.sut.Update(context.Background(), inserted)
 					assert.NoError(t, err)
-					assert.False(t, updated.Enabled)
 
 					got, err := suite.sut.GetById(context.Background(), inserted.AgentId, inserted.Id)
+
 					assert.NoError(t, err)
-					assert.NotNil(t, got)
-					assert.False(t, got.Enabled)
-					assert.True(t, got.UpdatedAt.After(originalUpdatedAt))
+					if assert.NotNil(t, got) {
+						assert.True(t, got.UpdatedAt.After(originalUpdatedAt))
+					}
 				})
 			})
 		})

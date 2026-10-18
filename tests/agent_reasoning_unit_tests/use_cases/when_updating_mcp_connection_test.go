@@ -50,7 +50,7 @@ func WhenUpdatingMCPConnectionBeforeEach(t *testing.T) *WhenUpdatingMCPConnectio
 func generateValidUpdateMCPConnectionRequest(id uuid.UUID) *requests.UpdateMCPConnectionRequest {
 	return &requests.UpdateMCPConnectionRequest{
 		Id: id,
-		CreateMCPConnectionRequest: requests.CreateMCPConnectionRequest{
+		MCPConnectionRequest: requests.MCPConnectionRequest{
 			Name:                "new-name",
 			Url:                 "https://new",
 			AllowedToolPatterns: []string{"search_issues"},
@@ -61,16 +61,16 @@ func generateValidUpdateMCPConnectionRequest(id uuid.UUID) *requests.UpdateMCPCo
 func TestWhenUpdatingMCPConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the request is invalid", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+		request := generateValidUpdateMCPConnectionRequest(uuid.New())
+		request.Name = ""
+
+		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-
-			request := generateValidUpdateMCPConnectionRequest(uuid.New())
-			request.Name = ""
 
 			_, err := suite.sut.Execute(context.Background(), request)
 
@@ -79,7 +79,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unknown id", func(t *testing.T) {
+	t.Run("Given the connection does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -100,6 +100,99 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "mcp_connection_not_found", notFoundErr.Code)
 		})
+	})
+
+	t.Run("Given another connection holds that name", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
+			row := model_builders.NewMCPConnectionBuilder().WithId(id).WithName("old-name").Build()
+			other := model_builders.NewMCPConnectionBuilder().WithName("taken").Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{*row, *other}, nil)
+		}
+
+		t.Run("Should return a conflict without updating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.Name = "taken"
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+		})
+	})
+
+	t.Run("Given a blank header value with nothing stored for it", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
+			row := model_builders.NewMCPConnectionBuilder().WithId(id).WithName("new-name").Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
+		}
+
+		t.Run("Should return a ValidationError without probing or updating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.HeaderAuth = map[string]string{"Authorization": ""}
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "headerAuth", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the server cannot list its tools", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
+			row := model_builders.NewMCPConnectionBuilder().
+				WithId(id).
+				WithName("new-name").
+				WithHeaderAuthKeys([]string{}).
+				Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run(
+			"Should return a validation error without touching the row or the vault",
+			func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenUpdatingMCPConnectionBeforeEach(t)
+				initSuite(suite)
+
+				_, err := suite.sut.Execute(context.Background(), generateValidUpdateMCPConnectionRequest(id))
+
+				var validationErr *apperrors.ValidationError
+				assert.ErrorAs(t, err, &validationErr)
+				assert.Equal(t, "url", validationErr.Field)
+				assert.Contains(t, validationErr.Message, "connection refused")
+			},
+		)
 	})
 
 	t.Run("Given an existing connection with two headers", func(t *testing.T) {
@@ -135,7 +228,21 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer new").Return(nil)
 		}
 
-		t.Run("Should drop removed header secrets, update the row, and return Ok", func(t *testing.T) {
+		t.Run("Should update the row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.HeaderAuth = map[string]string{"Authorization": "Bearer new"}
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the updated connection", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)
@@ -151,7 +258,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a header sent with a blank value", func(t *testing.T) {
+	t.Run("Given a blank header value", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -195,99 +302,6 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a blank header value with nothing stored for it", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			row := model_builders.NewMCPConnectionBuilder().WithId(id).WithName("new-name").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
-		}
-
-		t.Run("Should return a validation error without probing or updating", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-			initSuite(suite)
-
-			request := generateValidUpdateMCPConnectionRequest(id)
-			request.HeaderAuth = map[string]string{"Authorization": ""}
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "headerAuth", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the server cannot list its tools", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			row := model_builders.NewMCPConnectionBuilder().
-				WithId(id).
-				WithName("new-name").
-				WithHeaderAuthKeys([]string{}).
-				Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run(
-			"Should reject the save with a validation error, leaving the row and vault untouched",
-			func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenUpdatingMCPConnectionBeforeEach(t)
-				initSuite(suite)
-
-				_, err := suite.sut.Execute(context.Background(), generateValidUpdateMCPConnectionRequest(id))
-
-				var validationErr *apperrors.ValidationError
-				assert.ErrorAs(t, err, &validationErr)
-				assert.Equal(t, "url", validationErr.Field)
-				assert.Contains(t, validationErr.Message, "connection refused")
-			},
-		)
-	})
-
-	t.Run("Given the new name collides with another connection", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			row := model_builders.NewMCPConnectionBuilder().WithId(id).WithName("old-name").Build()
-			other := model_builders.NewMCPConnectionBuilder().WithName("taken").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any()).
-				Return([]models.MCPConnection{*row, *other}, nil)
-		}
-
-		t.Run("Should return a conflict without updating", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-			initSuite(suite)
-
-			request := generateValidUpdateMCPConnectionRequest(id)
-			request.Name = "taken"
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var conflictErr *apperrors.ConflictError
-			assert.ErrorAs(t, err, &conflictErr)
-		})
-	})
-
 	t.Run("Given the request drops every header", func(t *testing.T) {
 		t.Parallel()
 
@@ -316,7 +330,21 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 				})
 		}
 
-		t.Run("Should delete every stored secret and leave the row without header keys", func(t *testing.T) {
+		t.Run("Should delete every stored secret", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.HeaderAuth = nil
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return a connection without header keys", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMCPConnectionBeforeEach(t)

@@ -53,6 +53,48 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 	ctx := context.Background()
 	agent := model_builders.NewAgentBuilder().Build()
 
+	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should fail without touching the repository", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Reconcile(ctx)
+
+			assert.ErrorContains(t, err, "not initialized")
+		})
+	})
+
+	t.Run("Given listing the self tool names fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should wrap the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Reconcile(ctx)
+
+			assert.ErrorContains(t, err, "failed to list existing self tool names")
+		})
+	})
+
 	t.Run("Given declared self tools have no rows yet", func(t *testing.T) {
 		t.Parallel()
 
@@ -89,33 +131,6 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		})
 	})
 
-	t.Run("Given stale rows exist in the database", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().
-				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return([]string{"get_identity"}, nil)
-			// No Create expectation — the stale cleanup happens set-based, without fetching rows.
-			suite.mockSelfToolRepository.EXPECT().
-				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return(int64(1), nil)
-		}
-
-		t.Run("Should delete them with a single set-based call", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReconcilingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Reconcile(ctx)
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given every row matches a declared self tool", func(t *testing.T) {
 		t.Parallel()
 
@@ -143,51 +158,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the agent is not initialized yet", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-		}
-
-		t.Run("Should fail without touching the repository", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReconcilingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Reconcile(ctx)
-
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "not initialized")
-		})
-	})
-
-	t.Run("Given listing the existing names fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().
-				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should wrap the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReconcilingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Reconcile(ctx)
-
-			assert.Error(t, err)
-			assert.ErrorContains(t, err, "failed to list existing self tool names")
-		})
-	})
-
-	t.Run("Given the stale cleanup fails", func(t *testing.T) {
+	t.Run("Given deleting the stale rows fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
@@ -209,8 +180,34 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 
 			err := suite.sut.Reconcile(ctx)
 
-			assert.Error(t, err)
 			assert.ErrorContains(t, err, "failed to delete stale self tool rows")
+		})
+	})
+
+	t.Run("Given stale rows exist in the database", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
+			// No Create expectation — the stale cleanup happens set-based, without fetching rows.
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(1), nil)
+		}
+
+		t.Run("Should delete them with a single set-based call", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Reconcile(ctx)
+
+			assert.NoError(t, err)
 		})
 	})
 }

@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -35,6 +36,93 @@ func WhenValidatingLLMConfigBeforeEach(t *testing.T) *WhenValidatingLLMConfigTes
 
 func TestWhenValidatingLLMConfig(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLLMConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConfigLlmValidateWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLLMConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Validate(context.Background(), &models.ExternalSetupLLMConnectionPayload{
+				Platform: "openai",
+				Model:    "gpt-4o",
+				ApiKey:   "secret",
+			})
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLLMConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConfigLlmValidateWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigLlmValidateResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body: []byte(
+						`{"code":"validation_error","field":"connection","message":"401 unauthorized"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLLMConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Validate(context.Background(), &models.ExternalSetupLLMConnectionPayload{
+				Platform: "openai",
+				Model:    "gpt-4o",
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "connection", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the runtime answers 502", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLLMConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConfigLlmValidateWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigLlmValidateResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
+					Body:         []byte(`{"code":"boom","message":"runtime down"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLLMConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Validate(
+				context.Background(),
+				&models.ExternalSetupLLMConnectionPayload{Platform: "openai", Model: "gpt-4o"},
+			)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
 
 	t.Run("Given the runtime accepts the connection", func(t *testing.T) {
 		t.Parallel()
@@ -71,65 +159,6 @@ func TestWhenValidatingLLMConfig(t *testing.T) {
 			})
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the runtime rejects the connection", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingLLMConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConfigLlmValidateWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalConfigLlmValidateResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-					Body: []byte(
-						`{"code":"validation_error","field":"connection","message":"401 unauthorized"}`,
-					),
-				}, nil)
-		}
-
-		t.Run("Should map it to a ValidationError preserving the field", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingLLMConfigBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Validate(context.Background(), &models.ExternalSetupLLMConnectionPayload{
-				Platform: "openai",
-				Model:    "gpt-4o",
-			})
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "connection", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingLLMConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConfigLlmValidateWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalConfigLlmValidateResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
-					Body:         []byte(`{"code":"boom","message":"runtime down"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingLLMConfigBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Validate(
-				context.Background(),
-				&models.ExternalSetupLLMConnectionPayload{Platform: "openai", Model: "gpt-4o"},
-			)
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
 		})
 	})
 }

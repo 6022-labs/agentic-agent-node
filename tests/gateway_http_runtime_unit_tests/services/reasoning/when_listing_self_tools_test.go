@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/reasoning"
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,54 @@ func WhenListingSelfToolsAfterEach(suite *WhenListingSelfToolsTestingSuite) {
 func TestWhenListingSelfTools(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
+			suite.server.Close()
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingSelfToolsBeforeEach(t)
+			defer WhenListingSelfToolsAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
+			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingSelfToolsBeforeEach(t)
+			defer WhenListingSelfToolsAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime returns the configured tools", func(t *testing.T) {
 		t.Parallel()
 
@@ -81,28 +130,6 @@ func TestWhenListingSelfTools(t *testing.T) {
 				assert.Equal(t, "run_command", payload.Tools[0].Name)
 				assert.True(t, payload.Tools[0].Enabled)
 			}
-		})
-	})
-
-	t.Run("Given the runtime returns non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
-			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingSelfToolsBeforeEach(t)
-			defer WhenListingSelfToolsAfterEach(suite)
-			initSuite(suite)
-
-			_, err := suite.sut.List(context.Background())
-
-			assert.ErrorContains(t, err, "500")
 		})
 	})
 }

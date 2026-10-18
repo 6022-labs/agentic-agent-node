@@ -35,6 +35,99 @@ func WhenCreatingPaymentRuleBeforeEach(t *testing.T) *WhenCreatingPaymentRuleTes
 func TestWhenCreatingPaymentRule(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewValidationError("asset", "no ERC-20 token answers")).
+				Times(1)
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{})
+
+			assert.Nil(t, rule)
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewConflictError("rule_conflict", "rule already exists"))
+		}
+
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{})
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "rule_conflict", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime accepts the rule", func(t *testing.T) {
 		t.Parallel()
 
@@ -65,30 +158,6 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "rule-id", rule.Id)
-		})
-	})
-
-	t.Run("Given the runtime rejects the rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				Create(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewValidationError("asset", "no ERC-20 token answers")).
-				Times(1)
-		}
-
-		t.Run("Should pass the validation error through", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingPaymentRuleBeforeEach(t)
-			initSuite(suite)
-
-			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentRuleRequest{})
-
-			assert.Nil(t, rule)
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
 		})
 	})
 }

@@ -82,6 +82,29 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the registration state lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenPublishingRuntimeRecordsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.PublishRuntimeRecords(context.Background())
+
+			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
 	t.Run("Given a minted agent whose subnode is not provisioned", func(t *testing.T) {
 		t.Parallel()
 
@@ -188,29 +211,6 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 			err := suite.sut.PublishRuntimeRecords(context.Background())
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given loading the registration state fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenPublishingRuntimeRecordsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.PublishRuntimeRecords(context.Background())
-
-			assert.Error(t, err)
 		})
 	})
 }

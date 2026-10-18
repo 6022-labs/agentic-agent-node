@@ -23,7 +23,7 @@ func (c *HttpAgentSoulClient) Get(ctx context.Context) (*models.ExternalAgentSou
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentSoulPayload
-	if err := helpers.DecodeRuntimeResponse(
+	if err := helpers.DecodeAndMapRuntimeResponse(
 		resp.HTTPResponse,
 		resp.Body,
 		&payload,

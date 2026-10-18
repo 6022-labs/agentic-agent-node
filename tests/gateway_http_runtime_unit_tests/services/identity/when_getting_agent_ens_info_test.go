@@ -34,6 +34,96 @@ func WhenGettingAgentEnsInfoBeforeEach(t *testing.T) *WhenGettingAgentEnsInfoTes
 func TestWhenGettingAgentEnsInfo(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentEnsInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.EnsInfo(context.Background())
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationEnsInfoResponse{HTTPResponse: &http.Response{StatusCode: http.StatusNotFound}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentEnsInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.EnsInfo(context.Background())
+
+			var target *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationEnsInfoResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentEnsInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.EnsInfo(context.Background())
+
+			var target *apperrors.ConflictError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationEnsInfoResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentEnsInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.EnsInfo(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime returns the ENS calldata", func(t *testing.T) {
 		t.Parallel()
 
@@ -59,28 +149,6 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 				assert.Equal(t, "0xabc", payload.CollectionAddress)
 				assert.Equal(t, uint64(7), payload.TokenId)
 			}
-		})
-	})
-
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalAgentRegistrationEnsInfoWithResponse(gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentEnsInfoBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.EnsInfo(context.Background())
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

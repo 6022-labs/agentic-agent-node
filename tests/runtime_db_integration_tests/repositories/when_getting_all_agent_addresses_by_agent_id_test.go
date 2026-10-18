@@ -59,6 +59,7 @@ func WhenGettingAllAgentAddressesByAgentIdBeforeEach(
 }
 
 func WhenGettingAllAgentAddressesByAgentIdAfterEach(suite *WhenGettingAllAgentAddressesByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

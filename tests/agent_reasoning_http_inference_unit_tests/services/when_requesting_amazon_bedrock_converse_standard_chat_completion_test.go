@@ -156,7 +156,7 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 				}, nil)
 		}
 
-		t.Run("Should return an empty completion and let the loop decide", func(t *testing.T) {
+		t.Run("Should return an empty completion", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)

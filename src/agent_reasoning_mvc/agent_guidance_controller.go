@@ -34,7 +34,7 @@ func (c *AgentGuidanceController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.AgentGuidanceResponse
-// @Failure 500 {object} fiber.Map "guidance_lookup_failed"
+// @Failure 500 {object} errors.InternalError "guidance_lookup_failed or agent_lookup_failed"
 // @Router /internal/agent/guidance [get]
 func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentGuidance.Execute(ctx.Context())
@@ -51,7 +51,8 @@ func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
 // @Produce json
 // @Param request body requests.SetAgentGuidanceRequest true "Agent guidance"
 // @Success 200 {object} responses.AgentGuidanceResponse
-// @Failure 500 {object} fiber.Map "guidance_update_failed"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} errors.InternalError "guidance_update_failed or agent_lookup_failed"
 // @Router /internal/agent/guidance [put]
 func (c *AgentGuidanceController) Set(ctx fiber.Ctx) error {
 	body := new(requests.SetAgentGuidanceRequest)

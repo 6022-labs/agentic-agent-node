@@ -27,8 +27,9 @@ func (c *AgentSoulController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Tags Identity
 // @Produce json
 // @Success 200 {object} responses.AgentSoulResponse
-// @Failure 404 {object} fiber.Map "identity_not_found"
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "identity_not_found"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/soul [get]
 func (c *AgentSoulController) Get(ctx fiber.Ctx) error {

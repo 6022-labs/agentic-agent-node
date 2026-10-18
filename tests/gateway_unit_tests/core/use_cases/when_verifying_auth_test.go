@@ -61,8 +61,8 @@ var testSignature = "0x" + strings.Repeat("ab", 65)
 
 func generateValidVerifyAuthRequest(address common.Address) *requests.VerifyAuthRequest {
 	return &requests.VerifyAuthRequest{
-		Address:   address.Hex(),
-		Signature: testSignature,
+		WalletAddressRequest: requests.WalletAddressRequest{Address: address.Hex()},
+		Signature:            testSignature,
 	}
 }
 
@@ -83,10 +83,10 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			Return(siweMessage)
 	}
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
@@ -120,6 +120,32 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the signature verifier fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().
+				Recover(siweMessage, testSignature).
+				Return(common.Address{}, errors.New("malformed"))
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingAuthBeforeEach(t)
+			request := generateValidVerifyAuthRequest(address)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "malformed")
+		})
+	})
+
 	t.Run("Given the recovered signer differs from the claimed address", func(t *testing.T) {
 		t.Parallel()
 
@@ -143,57 +169,6 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			var unauthorizedErr *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedErr)
 			assert.Equal(t, "signature_mismatch", unauthorizedErr.Code)
-		})
-	})
-
-	t.Run("Given the signature verifier fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
-			expectSiweMessage(suite)
-			suite.mockSignatureVerifier.EXPECT().
-				Recover(siweMessage, testSignature).
-				Return(common.Address{}, errors.New("malformed"))
-		}
-
-		t.Run("Should return InternalError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenVerifyingAuthBeforeEach(t)
-			request := generateValidVerifyAuthRequest(address)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "malformed")
-		})
-	})
-
-	t.Run("Given the authorizer rejects the address", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
-			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
-			expectSiweMessage(suite)
-			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
-			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, nil)
-		}
-
-		t.Run("Should return Unauthorized with not_authorized", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenVerifyingAuthBeforeEach(t)
-			request := generateValidVerifyAuthRequest(address)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var unauthorizedErr *apperrors.UnauthorizedError
-			assert.ErrorAs(t, err, &unauthorizedErr)
-			assert.Equal(t, "not_authorized", unauthorizedErr.Code)
 		})
 	})
 
@@ -224,7 +199,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the authorizer errors with an unexpected failure", func(t *testing.T) {
+	t.Run("Given the authorizer fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
@@ -234,7 +209,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)
@@ -246,6 +221,31 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Contains(t, internalErr.Message, "rpc down")
+		})
+	})
+
+	t.Run("Given the authorizer rejects the address", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
+			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, nil)
+		}
+
+		t.Run("Should return Unauthorized with not_authorized", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingAuthBeforeEach(t)
+			request := generateValidVerifyAuthRequest(address)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "not_authorized", unauthorizedErr.Code)
 		})
 	})
 

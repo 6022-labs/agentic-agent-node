@@ -45,8 +45,8 @@ func (c *LLMConfigController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.LLMConnectionResponse
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "get_llm_connection_failed"
+// @Failure 404 {object} errors.NotFoundError "not_configured"
+// @Failure 500 {object} errors.InternalError "get_failed or agent_lookup_failed"
 // @Router /internal/config/llm [get]
 func (c *LLMConfigController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getLLMConnection.Execute(ctx.Context())
@@ -64,7 +64,7 @@ func (c *LLMConfigController) Get(ctx fiber.Ctx) error {
 // @Param request body requests.SetupLLMConnectionRequest true "LLM connection"
 // @Success 200 {object} responses.LLMConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "setup_llm_connection_failed"
+// @Failure 500 {object} errors.InternalError "setup_failed or agent_lookup_failed"
 // @Router /internal/config/llm [post]
 func (c *LLMConfigController) Setup(ctx fiber.Ctx) error {
 	body := new(requests.SetupLLMConnectionRequest)
@@ -85,7 +85,6 @@ func (c *LLMConfigController) Setup(ctx fiber.Ctx) error {
 // @Param request body requests.SetupLLMConnectionRequest true "LLM connection"
 // @Success 204
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "validate_llm_connection_failed"
 // @Router /internal/config/llm/validate [post]
 func (c *LLMConfigController) Validate(ctx fiber.Ctx) error {
 	body := new(requests.SetupLLMConnectionRequest)
@@ -102,7 +101,7 @@ func (c *LLMConfigController) Validate(ctx fiber.Ctx) error {
 // @Summary Internal delete LLM connection
 // @Tags Internal
 // @Success 204
-// @Failure 500 {object} fiber.Map "delete_llm_connection_failed"
+// @Failure 500 {object} errors.InternalError "delete_failed or agent_lookup_failed"
 // @Router /internal/config/llm [delete]
 func (c *LLMConfigController) Delete(ctx fiber.Ctx) error {
 	if err := c.deleteLLMConnection.Execute(ctx.Context()); err != nil {

@@ -45,37 +45,26 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 	conversationId := "conv-1"
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given DTO inputs", func(t *testing.T) {
+	t.Run("Given the message appender fails", func(t *testing.T) {
 		t.Parallel()
-
-		inputs := []interfaces.ConversationMessage{
-			{Role: "user", Content: "hi", Timestamp: now},
-			{Role: "assistant", Content: "hello", Timestamp: now},
-		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
 			suite.mockMessageAppender.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
-					if assert.Len(t, msgs, 2) {
-						assert.Equal(t, "user", msgs[0].Role.String())
-						assert.Equal(t, "hi", lo.FromPtr(msgs[0].Content))
-						assert.Equal(t, now, msgs[0].Timestamp)
-						assert.Equal(t, "assistant", msgs[1].Role.String())
-					}
-					return msgs, nil
-				})
+				Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should map DTOs to persistence models and delegate to the message appender", func(t *testing.T) {
+		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenWritingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			result, err := suite.sut.Write(context.Background(), conversationId, inputs)
-			assert.NoError(t, err)
-			assert.Len(t, result, 2)
+			_, err := suite.sut.Write(context.Background(), conversationId, []interfaces.ConversationMessage{
+				{Role: "user", Content: "hi"},
+			})
+
+			assert.ErrorContains(t, err, "db down")
 		})
 	})
 
@@ -115,26 +104,37 @@ func TestWhenWritingConversationHistory(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the message appender fails", func(t *testing.T) {
+	t.Run("Given DTO inputs", func(t *testing.T) {
 		t.Parallel()
+
+		inputs := []interfaces.ConversationMessage{
+			{Role: "user", Content: "hi", Timestamp: now},
+			{Role: "assistant", Content: "hello", Timestamp: now},
+		}
 
 		initSuite := func(suite *WhenWritingConversationHistoryTestingSuite) {
 			suite.mockMessageAppender.EXPECT().Append(gomock.Any(),
 				conversationId, gomock.Any()).
-				Return(nil, errors.New("db down"))
+				DoAndReturn(func(_ context.Context, _ string, msgs []models.ConversationMessage) ([]models.ConversationMessage, error) {
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "user", msgs[0].Role.String())
+						assert.Equal(t, "hi", lo.FromPtr(msgs[0].Content))
+						assert.Equal(t, now, msgs[0].Timestamp)
+						assert.Equal(t, "assistant", msgs[1].Role.String())
+					}
+					return msgs, nil
+				})
 		}
 
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should delegate the persistence models to the message appender", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenWritingConversationHistoryBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Write(context.Background(), conversationId, []interfaces.ConversationMessage{
-				{Role: "user", Content: "hi"},
-			})
-
-			assert.ErrorContains(t, err, "db down")
+			result, err := suite.sut.Write(context.Background(), conversationId, inputs)
+			assert.NoError(t, err)
+			assert.Len(t, result, 2)
 		})
 	})
 }

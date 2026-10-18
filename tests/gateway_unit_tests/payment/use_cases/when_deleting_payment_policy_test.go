@@ -33,7 +33,30 @@ func WhenDeletingPaymentPolicyBeforeEach(t *testing.T) *WhenDeletingPaymentPolic
 func TestWhenDeletingPaymentPolicy(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the delete succeeds", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
+			suite.mockPaymentPolicyClient.EXPECT().
+				Delete(gomock.Any()).
+				Return(errors.New("connection refused")).
+				Times(1)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+
+	t.Run("Given the runtime deletes the configuration", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
@@ -52,29 +75,6 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 			err := suite.sut.Execute(context.Background())
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the delete fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
-			suite.mockPaymentPolicyClient.EXPECT().
-				Delete(gomock.Any()).
-				Return(errors.New("connection refused")).
-				Times(1)
-		}
-
-		t.Run("Should return an unavailable error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDeletingPaymentPolicyBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(context.Background())
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
 		})
 	})
 }

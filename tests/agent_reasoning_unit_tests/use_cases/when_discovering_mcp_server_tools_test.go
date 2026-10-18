@@ -54,19 +54,99 @@ func WhenDiscoveringMCPServerToolsBeforeEach(t *testing.T) *WhenDiscoveringMCPSe
 func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the url is missing", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+		request := &requests.DiscoverMCPServerToolsRequest{}
+
+		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{})
+			_, err := suite.sut.Execute(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "url", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the connection does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, nil)
+		}
+
+		t.Run("Should return NotFound without probing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
+				Url:          lo.ToPtr("https://mcp.github.example"),
+				ConnectionId: &id,
+			})
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
+	t.Run("Given the server cannot list its tools", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should return a ValidationError carrying the reason", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.DiscoverMCPServerToolsRequest{Url: lo.ToPtr("https://mcp.github.example")},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Contains(t, validationErr.Message, "connection refused")
+		})
+	})
+
+	t.Run("Given the server refuses the credentials", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, fmt.Errorf("failed to list MCP tools: %w", reasoning_interfaces.ErrMCPUnauthorized))
+		}
+
+		t.Run("Should blame the headers instead of leaking the status code", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
+				Url: lo.ToPtr("https://mcp.github.example"),
+				MCPHeaderAuthRequest: requests.MCPHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": "Bearer wrong"},
+				},
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "headerAuth", validationErr.Field)
+			assert.Equal(t, "the server rejected these credentials — check the API key", validationErr.Message)
 		})
 	})
 
@@ -86,15 +166,33 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 				})
 		}
 
-		t.Run("Should probe with the request headers and return the tool names", func(t *testing.T) {
+		t.Run("Should probe with the request headers", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
+				Url: lo.ToPtr("https://mcp.github.example"),
+				MCPHeaderAuthRequest: requests.MCPHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
+				},
+			})
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the tool names", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
-				Url:        lo.ToPtr("https://mcp.github.example"),
-				HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
+				Url: lo.ToPtr("https://mcp.github.example"),
+				MCPHeaderAuthRequest: requests.MCPHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": "Bearer abc"},
+				},
 			})
 
 			assert.NoError(t, err)
@@ -144,83 +242,6 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Tools, 1)
-		})
-	})
-
-	t.Run("Given an unknown connection id", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, nil)
-		}
-
-		t.Run("Should return NotFound without probing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
-				Url:          lo.ToPtr("https://mcp.github.example"),
-				ConnectionId: &id,
-			})
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-		})
-	})
-
-	t.Run("Given the server cannot list its tools", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run("Should return a validation error carrying the reason", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(
-				context.Background(),
-				&requests.DiscoverMCPServerToolsRequest{Url: lo.ToPtr("https://mcp.github.example")},
-			)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Contains(t, validationErr.Message, "connection refused")
-		})
-	})
-
-	t.Run("Given the server refuses the credentials", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockMcpRequester.EXPECT().ListTools(gomock.Any(), gomock.Any()).
-				Return(nil, fmt.Errorf("failed to list MCP tools: %w", reasoning_interfaces.ErrMCPUnauthorized))
-		}
-
-		t.Run("Should blame the headers instead of leaking the status code", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMCPServerToolsRequest{
-				Url:        lo.ToPtr("https://mcp.github.example"),
-				HeaderAuth: map[string]string{"Authorization": "Bearer wrong"},
-			})
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "headerAuth", validationErr.Field)
-			assert.Equal(t, "the server rejected these credentials — check the API key", validationErr.Message)
 		})
 	})
 

@@ -143,7 +143,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the response has no actionable output", func(t *testing.T) {
+	t.Run("Given the response has no actionable content", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
@@ -156,7 +156,7 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should return an empty completion and let the loop decide", func(t *testing.T) {
+		t.Run("Should return an empty completion", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
@@ -379,52 +379,60 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				})
 		}
 
-		t.Run("Should rebuild the local name when the server is a known connection", func(t *testing.T) {
+		t.Run("Given the server is a known connection", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite, "weather")
+			t.Run("Should rebuild the local name", func(t *testing.T) {
+				t.Parallel()
 
-			result, err := suite.sut.ChatCompletion(
-				baseUrl,
-				apiKey,
-				true,
-				llmConnection,
-				nil,
-				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
-				messages,
-				nil,
-			)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
-				assert.Equal(t, "mcp_1", result.ExecutedToolCalls[0].Id)
-				assert.Equal(t, "mcp_weather_get", result.ExecutedToolCalls[0].Name)
-				assert.Equal(t, toolArgs, result.ExecutedToolCalls[0].Arguments)
-				assert.Equal(t, `{"temp":"20"}`, result.ExecutedToolCalls[0].Output)
-				assert.False(t, result.ExecutedToolCalls[0].IsError)
-			}
+				suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+				initSuite(suite, "weather")
+
+				result, err := suite.sut.ChatCompletion(
+					baseUrl,
+					apiKey,
+					true,
+					llmConnection,
+					nil,
+					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+					messages,
+					nil,
+				)
+				assert.NoError(t, err)
+				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+					assert.Equal(t, "mcp_1", result.ExecutedToolCalls[0].Id)
+					assert.Equal(t, "mcp_weather_get", result.ExecutedToolCalls[0].Name)
+					assert.Equal(t, toolArgs, result.ExecutedToolCalls[0].Arguments)
+					assert.Equal(t, `{"temp":"20"}`, result.ExecutedToolCalls[0].Output)
+					assert.False(t, result.ExecutedToolCalls[0].IsError)
+				}
+			})
 		})
 
-		t.Run("Should keep the provider's raw name when the server is unknown", func(t *testing.T) {
+		t.Run("Given the server is unknown", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite, "normalized-weather")
+			t.Run("Should keep the provider's raw name", func(t *testing.T) {
+				t.Parallel()
 
-			result, err := suite.sut.ChatCompletion(
-				baseUrl,
-				apiKey,
-				true,
-				llmConnection,
-				nil,
-				map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
-				messages,
-				nil,
-			)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
-				assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
-			}
+				suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+				initSuite(suite, "normalized-weather")
+
+				result, err := suite.sut.ChatCompletion(
+					baseUrl,
+					apiKey,
+					true,
+					llmConnection,
+					nil,
+					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+					messages,
+					nil,
+				)
+				assert.NoError(t, err)
+				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+					assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
+				}
+			})
 		})
 	})
 }

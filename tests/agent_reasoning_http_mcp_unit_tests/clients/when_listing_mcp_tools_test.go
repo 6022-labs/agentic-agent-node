@@ -53,7 +53,7 @@ func TestWhenListingMcpTools(t *testing.T) {
 			)
 		}
 
-		t.Run("Should POST jsonrpc list tools and forward custom headers", func(t *testing.T) {
+		t.Run("Should send a jsonrpc list tools request with the custom headers", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
@@ -81,14 +81,16 @@ func TestWhenListingMcpTools(t *testing.T) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a McpStatusError with the 500", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
 			defer WhenListingMcpToolsAfterEach(suite)
 
 			_, err := suite.sut.ListTools(context.Background(), suite.server.URL, nil)
-			assert.Error(t, err)
+			var statusErr *clients.McpStatusError
+			assert.ErrorAs(t, err, &statusErr)
+			assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
 		})
 	})
 
@@ -154,7 +156,7 @@ func TestWhenListingMcpTools(t *testing.T) {
 			_, _ = w.Write([]byte("data: {}\n\n"))
 		}
 
-		t.Run("Should return the tools, not the empty trailing frame", func(t *testing.T) {
+		t.Run("Should return the tools", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
@@ -206,7 +208,7 @@ func TestWhenListingMcpTools(t *testing.T) {
 			_, _ = w.Write([]byte("data: {}\n\n"))
 		}
 
-		t.Run("Should still return a non-nil frame without crashing", func(t *testing.T) {
+		t.Run("Should return a non-nil frame", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
