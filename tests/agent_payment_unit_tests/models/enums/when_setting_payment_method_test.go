@@ -36,7 +36,7 @@ func TestWhenSettingPaymentMethod(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unknown method", func(t *testing.T) {
+	t.Run("Given an unsupported method", func(t *testing.T) {
 		t.Parallel()
 		var method enums.PaymentMethod
 
@@ -44,8 +44,7 @@ func TestWhenSettingPaymentMethod(t *testing.T) {
 			t.Parallel()
 
 			err := method.Set("lightning")
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "lightning")
+			assert.ErrorContains(t, err, "invalid PaymentMethod: lightning")
 		})
 	})
 

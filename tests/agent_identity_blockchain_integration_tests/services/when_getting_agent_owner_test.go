@@ -47,7 +47,7 @@ func TestWhenGettingAgentOwner(t *testing.T) {
 
 			_, err := suite.sut.OwnerOf(suite.fixture.chainId(), suite.fixture.stack.Collection, 999)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "custom error 0x7e273289")
 		})
 	})
 }

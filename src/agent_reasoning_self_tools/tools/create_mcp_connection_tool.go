@@ -41,10 +41,12 @@ func (t *CreateMCPConnectionTool) Execute(ctx context.Context, args map[string]a
 		return nil, err
 	}
 	return utils.ToToolResult(t.createMCPConnectionExecutor.Execute(ctx, &reasoning_requests.CreateMCPConnectionRequest{
-		Name: name,
-		Url:  url,
-		// The agent picks the server, not a tool subset — the owner narrows it from the console.
-		AllowedToolPatterns: []string{".*"},
+		MCPConnectionRequest: reasoning_requests.MCPConnectionRequest{
+			Name: name,
+			Url:  url,
+			// The agent picks the server, not a tool subset — the owner narrows it from the console.
+			AllowedToolPatterns: []string{".*"},
+		},
 	}))
 }
 

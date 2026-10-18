@@ -66,66 +66,20 @@ func facilitatorTestPayload() (*x402.PaymentPayload, *x402.PaymentRequirements) 
 func TestWhenVerifyingPayment(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the facilitator validates the payment", func(t *testing.T) {
+	t.Run("Given the facilitator call fails", func(t *testing.T) {
 		t.Parallel()
 
-		var seenMethod, seenPath, seenContentType string
-		var seenBody []byte
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenMethod = r.Method
-			seenPath = r.URL.Path
-			seenContentType = r.Header.Get("Content-Type")
-			seenBody, _ = io.ReadAll(r.Body)
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"isValid":true,"payer":"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"}`))
-		}
-
-		t.Run("Should POST the v2 envelope to /verify and decode the result", func(t *testing.T) {
+		t.Run("Should return a transport error", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenVerifyingPaymentBeforeEach(t, handler)
-			defer WhenVerifyingPaymentAfterEach(suite)
+			suite := WhenVerifyingPaymentBeforeEach(t, func(http.ResponseWriter, *http.Request) {})
+			WhenVerifyingPaymentAfterEach(suite)
 
 			payload, requirements := facilitatorTestPayload()
 			resp, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, resp) {
-				assert.True(t, resp.IsValid)
-				assert.Equal(t, "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", resp.Payer)
-			}
-			assert.Equal(t, http.MethodPost, seenMethod)
-			assert.Equal(t, "/verify", seenPath)
-			assert.Equal(t, "application/json", seenContentType)
-
-			var envelope map[string]json.RawMessage
-			assert.NoError(t, json.Unmarshal(seenBody, &envelope))
-			assert.Equal(t, "2", string(envelope["x402Version"]))
-			assert.Contains(t, string(envelope["paymentPayload"]), "eip155:80002")
-			assert.Contains(t, string(envelope["paymentRequirements"]), "10000")
-		})
-	})
-
-	t.Run("Given the facilitator rejects the payment", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"isValid":false,"invalidReason":"insufficient_funds"}`))
-		}
-
-		t.Run("Should return the invalid reason without error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenVerifyingPaymentBeforeEach(t, handler)
-			defer WhenVerifyingPaymentAfterEach(suite)
-
-			payload, requirements := facilitatorTestPayload()
-			resp, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
-
-			assert.NoError(t, err)
-			assert.False(t, resp.IsValid)
-			assert.Equal(t, "insufficient_funds", resp.InvalidReason)
+			assert.Nil(t, resp)
+			assert.ErrorContains(t, err, "failed to send HTTP request")
 		})
 	})
 
@@ -168,7 +122,100 @@ func TestWhenVerifyingPayment(t *testing.T) {
 			resp, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
 
 			assert.Nil(t, resp)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "failed to decode facilitator response")
+		})
+	})
+
+	t.Run("Given the facilitator validates the payment", func(t *testing.T) {
+		t.Parallel()
+
+		type seenRequest struct {
+			method string
+			path   string
+			body   []byte
+		}
+
+		// serve returns a handler that records the request for the Should to assert on.
+		serve := func(seen *seenRequest) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				seen.method = r.Method
+				seen.path = r.URL.Path
+				seen.body, _ = io.ReadAll(r.Body)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"isValid":true,"payer":"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"}`))
+			}
+		}
+
+		t.Run("Should POST to /verify", func(t *testing.T) {
+			t.Parallel()
+
+			seen := &seenRequest{}
+			suite := WhenVerifyingPaymentBeforeEach(t, serve(seen))
+			defer WhenVerifyingPaymentAfterEach(suite)
+
+			payload, requirements := facilitatorTestPayload()
+			_, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.MethodPost, seen.method)
+			assert.Equal(t, "/verify", seen.path)
+		})
+
+		t.Run("Should send the v2 envelope", func(t *testing.T) {
+			t.Parallel()
+
+			seen := &seenRequest{}
+			suite := WhenVerifyingPaymentBeforeEach(t, serve(seen))
+			defer WhenVerifyingPaymentAfterEach(suite)
+
+			payload, requirements := facilitatorTestPayload()
+			_, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
+
+			assert.NoError(t, err)
+
+			var envelope map[string]json.RawMessage
+			assert.NoError(t, json.Unmarshal(seen.body, &envelope))
+			assert.Equal(t, "2", string(envelope["x402Version"]))
+			assert.Contains(t, string(envelope["paymentPayload"]), "eip155:80002")
+			assert.Contains(t, string(envelope["paymentRequirements"]), "10000")
+		})
+
+		t.Run("Should decode the result", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingPaymentBeforeEach(t, serve(&seenRequest{}))
+			defer WhenVerifyingPaymentAfterEach(suite)
+
+			payload, requirements := facilitatorTestPayload()
+			resp, err := suite.sut.Verify(context.Background(), suite.server.URL+"/", payload, requirements)
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, resp) {
+				assert.True(t, resp.IsValid)
+				assert.Equal(t, "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", resp.Payer)
+			}
+		})
+	})
+	t.Run("Given the facilitator rejects the payment", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"isValid":false,"invalidReason":"insufficient_funds"}`))
+		}
+
+		t.Run("Should return the invalid reason without error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingPaymentBeforeEach(t, handler)
+			defer WhenVerifyingPaymentAfterEach(suite)
+
+			payload, requirements := facilitatorTestPayload()
+			resp, err := suite.sut.Verify(context.Background(), suite.server.URL, payload, requirements)
+
+			assert.NoError(t, err)
+			assert.False(t, resp.IsValid)
+			assert.Equal(t, "insufficient_funds", resp.InvalidReason)
 		})
 	})
 }

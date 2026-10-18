@@ -1,0 +1,31 @@
+package requests
+
+import (
+	"strings"
+
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+)
+
+// MCPHeaderAuthRequest is embedded by every request carrying MCP auth headers; a present map fully replaces the set.
+type MCPHeaderAuthRequest struct {
+	HeaderAuth map[string]string `json:"headerAuth,omitempty"`
+}
+
+func (r *MCPHeaderAuthRequest) ValidateAndSanitize() error {
+	for name := range r.HeaderAuth {
+		if len(strings.TrimSpace(name)) == 0 {
+			return errors.NewValidationError("headerAuth", "header name cannot be empty")
+		}
+	}
+	return nil
+}
+
+// ValidateValues rejects blank values, for callers with no stored value to fall back to.
+func (r *MCPHeaderAuthRequest) ValidateValues() error {
+	for name, value := range r.HeaderAuth {
+		if len(strings.TrimSpace(value)) == 0 {
+			return errors.NewValidationError("headerAuth", "value for "+name+" cannot be empty")
+		}
+	}
+	return nil
+}

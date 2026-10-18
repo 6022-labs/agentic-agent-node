@@ -107,7 +107,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "witness recipient does not match payTo")
 		})
 	})
 
@@ -127,7 +127,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "permitted token does not match asset")
 		})
 	})
 
@@ -147,7 +147,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "spender is not the x402 permit2 proxy")
 		})
 	})
 
@@ -166,7 +166,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "recovered signer does not match permit2 from")
 		})
 	})
 
@@ -191,10 +191,10 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the authorization is outside its validity window", func(t *testing.T) {
+	t.Run("Given the authorization has expired", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return the expired sentinel when the deadline has passed", func(t *testing.T) {
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402Permit2PayerBeforeEach()
@@ -209,8 +209,12 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
 		})
+	})
 
-		t.Run("Should return the expired sentinel when validAfter is in the future", func(t *testing.T) {
+	t.Run("Given the authorization is not yet valid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402Permit2PayerBeforeEach()
@@ -241,7 +245,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "recovered signer does not match permit2 from")
 		})
 	})
 
@@ -262,7 +266,7 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "missing permit2 authorization")
 		})
 	})
 }

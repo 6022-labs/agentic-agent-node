@@ -37,21 +37,23 @@ func WhenUpdatingMcpConnectionBeforeEach(t *testing.T) *WhenUpdatingMcpConnectio
 
 func generateValidUpdateMcpConnectionRequest(id uuid.UUID) *requests.UpdateMcpConnectionRequest {
 	return &requests.UpdateMcpConnectionRequest{
-		Id:                  id,
-		Name:                "github",
-		Url:                 "https://mcp.github.example",
-		AllowedToolPatterns: []string{"search_issues"},
-		HeaderAuth:          map[string]string{"Authorization": ""},
+		Id: id,
+		McpConnectionRequest: requests.McpConnectionRequest{
+			Name:                "github",
+			Url:                 "https://mcp.github.example",
+			AllowedToolPatterns: []string{"search_issues"},
+		},
+		McpHeaderAuthRequest: requests.McpHeaderAuthRequest{HeaderAuth: map[string]string{"Authorization": ""}},
 	}
 }
 
 func TestWhenUpdatingMcpConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingMcpConnectionBeforeEach(t)
@@ -63,7 +65,121 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a header sent without a value", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMcpConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewValidationError("name", "name is invalid"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMcpConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the connection does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, gateway_interfaces.ErrMCPConnectionNotFound)
+		}
+
+		t.Run("Should surface the client error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMcpConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewConflictError("connection_conflict", "connection already exists"))
+		}
+
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMcpConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "connection_conflict", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
+			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMcpConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given a blank header value", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -91,7 +207,7 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no header at all", func(t *testing.T) {
+	t.Run("Given no header auth", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -115,47 +231,6 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 			_, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the runtime does not know the connection", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
-			suite.mockClient.EXPECT().
-				Update(gomock.Any(), id, gomock.Any()).
-				Return(nil, gateway_interfaces.ErrMCPConnectionNotFound)
-		}
-
-		t.Run("Should surface the client error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMcpConnectionBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), generateValidUpdateMcpConnectionRequest(id))
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
-		})
-	})
-
-	t.Run("Given a header with an empty name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError rather than silently dropping the value", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMcpConnectionBeforeEach(t)
-
-			request := generateValidUpdateMcpConnectionRequest(uuid.New())
-			request.HeaderAuth = map[string]string{"  ": "Bearer xyz"}
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "headerAuth", validationErr.Field)
 		})
 	})
 }

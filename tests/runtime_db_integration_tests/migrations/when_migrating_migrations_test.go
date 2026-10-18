@@ -81,6 +81,7 @@ func WhenMigratingMigrationsBeforeEach(testCase *WhenMigratingMigrationsTestCase
 }
 
 func WhenMigratingMigrationsAfterEach(suite *WhenMigratingMigrationsTestingSuite) {
+	_ = suite.sut.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

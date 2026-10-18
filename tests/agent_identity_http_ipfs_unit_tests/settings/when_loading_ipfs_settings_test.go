@@ -50,7 +50,7 @@ func TestWhenLoadingIpfsSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a url padded with whitespace", func(t *testing.T) {
+	t.Run("Given a padded url", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")

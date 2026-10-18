@@ -35,8 +35,8 @@ func (c *HttpResponseClient) Create(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalCreateResponseResultPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

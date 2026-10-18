@@ -55,6 +55,7 @@ func WhenGettingLLMConnectionByAgentIdBeforeEach(
 }
 
 func WhenGettingLLMConnectionByAgentIdAfterEach(suite *WhenGettingLLMConnectionByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -65,7 +66,7 @@ func TestWhenGettingLLMConnectionByAgentId(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no connection has been configured", func(t *testing.T) {
+			t.Run("Given no connection exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
@@ -79,7 +80,7 @@ func TestWhenGettingLLMConnectionByAgentId(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a connection has been configured", func(t *testing.T) {
+			t.Run("Given a connection exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return the persisted row", func(t *testing.T) {

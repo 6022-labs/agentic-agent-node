@@ -48,31 +48,23 @@ func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegis
 func TestWhenGettingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a saved draft", func(t *testing.T) {
+	t.Run("Given no registration draft exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
-			state := model_builders.NewAgentRegistrationStateBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(state, nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
-		t.Run("Should return the stored draft and status", func(t *testing.T) {
+		t.Run("Should return a NotFound", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.NotNil(t, resp)
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 
@@ -100,23 +92,31 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no draft has been saved", func(t *testing.T) {
+	t.Run("Given a registration draft exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
+			state := model_builders.NewAgentRegistrationStateBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(state, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
 		}
 
-		t.Run("Should return a NotFound", func(t *testing.T) {
+		t.Run("Should return the stored draft and status", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentRegistrationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
 		})
 	})
 }

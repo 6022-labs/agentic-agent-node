@@ -41,8 +41,8 @@ func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.AppendConversationMessagesResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 409 {object} errors.ConflictError
+// @Failure 404 {object} errors.NotFoundError "conversation_not_found"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
 // @Failure 500 {object} errors.InternalError "append_failed"
 // @Security CallerId
 // @Router /internal/conversations/{conversationId}/messages [post]
@@ -70,7 +70,7 @@ func (c *ConversationMessagesController) Append(ctx fiber.Ctx) error {
 // @Success 200 {object} responses.ListConversationMessagesResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError
-// @Failure 404 {object} errors.NotFoundError
+// @Failure 404 {object} errors.NotFoundError "conversation_not_found"
 // @Failure 500 {object} errors.InternalError "list_failed"
 // @Security CallerId
 // @Router /internal/conversations/{conversationId}/messages [get]

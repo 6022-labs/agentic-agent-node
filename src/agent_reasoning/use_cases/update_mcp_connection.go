@@ -77,7 +77,7 @@ func (u *UpdateMCPConnection) Execute(
 	existing.Name = request.Name
 	existing.Url = request.Url
 	existing.AllowedToolPatterns = request.AllowedToolPatterns
-	existing.HeaderAuthKeys = u.headerAuthKeys(&request.CreateMCPConnectionRequest)
+	existing.HeaderAuthKeys = u.headerAuthKeys(&request.MCPHeaderAuthRequest)
 	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())

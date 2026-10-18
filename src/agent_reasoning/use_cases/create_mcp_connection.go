@@ -62,7 +62,7 @@ func (u *CreateMCPConnection) Execute(
 		Name:                request.Name,
 		Url:                 request.Url,
 		AllowedToolPatterns: request.AllowedToolPatterns,
-		HeaderAuthKeys:      u.headerAuthKeys(request),
+		HeaderAuthKeys:      u.headerAuthKeys(&request.MCPHeaderAuthRequest),
 	})
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())

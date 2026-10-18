@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,105 @@ func WhenGettingAgentMintInfoBeforeEach(t *testing.T) *WhenGettingAgentMintInfoT
 func TestWhenGettingAgentMintInfo(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.MintInfo(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.MintInfo(context.Background())
+
+			var target *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.MintInfo(context.Background())
+
+			var target *apperrors.ConflictError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.MintInfo(context.Background())
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime returns the mint calldata", func(t *testing.T) {
 		t.Parallel()
 
@@ -60,31 +160,6 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 				assert.Equal(t, "0xowner", payload.To)
 				assert.Equal(t, "bob", payload.Name)
 			}
-		})
-	})
-
-	t.Run("Given the runtime fails to compute the mint calldata", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
-				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"boom"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentMintInfoBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.MintInfo(context.Background())
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

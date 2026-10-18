@@ -28,9 +28,7 @@ func WhenValidatingX402RuleBeforeEach(t *testing.T) *WhenValidatingX402RuleTesti
 	})
 }
 
-// validatingX402RuleSuite builds the suite with a given facilitator config so the
-// facilitator-gate cases can run with no facilitator configured. Chains 80002
-// and 84532 are reachable; any other chain (e.g. eip155:1) is not.
+// validatingX402RuleSuite builds the suite with a given facilitator config; only chains 80002 and 84532 are reachable.
 func validatingX402RuleSuite(
 	t *testing.T,
 	facilitators *runtime_common_settings.PaymentFacilitatorsSettings,
@@ -61,65 +59,6 @@ const validConfig = `{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9
 
 func TestWhenValidatingX402Rule(t *testing.T) {
 	t.Parallel()
-
-	t.Run("Given the config is valid", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			// Distinct from the seed defaults to prove the derived domain wins.
-			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
-				Return(enums.AssetTransferMethodEip3009, "USD Coin", "7", nil).
-				Times(1)
-		}
-
-		t.Run("Should sanitize and set the derived EIP-712 domain", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			initSuite(suite)
-
-			request := generateSaveRequest(validConfig, "10000")
-			err := suite.sut.Validate(context.Background(), request)
-
-			assert.NoError(t, err)
-			config := &models.PaymentRuleX402Config{}
-			assert.NoError(t, config.Parse(request.Config))
-			assert.Equal(t, ".*", config.AddressPatterns[0])
-			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", config.AddressPatterns[1])
-			assert.Equal(t, enums.AssetTransferMethodEip3009, config.AssetTransferMethod)
-			assert.Equal(t, "USD Coin", *config.Eip712Name)
-			assert.Equal(t, "7", *config.Eip712Version)
-		})
-	})
-
-	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
-				Return(enums.AssetTransferMethodPermit2, "", "", nil).
-				Times(1)
-		}
-
-		t.Run("Should set permit2 with an empty domain", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			initSuite(suite)
-
-			request := generateSaveRequest(validConfig, "10000")
-			err := suite.sut.Validate(context.Background(), request)
-
-			assert.NoError(t, err)
-			config := &models.PaymentRuleX402Config{}
-			assert.NoError(t, config.Parse(request.Config))
-			assert.Equal(t, enums.AssetTransferMethodPermit2, config.AssetTransferMethod)
-			assert.Nil(t, config.Eip712Name)
-			assert.Nil(t, config.Eip712Version)
-		})
-	})
 
 	t.Run("Given the network is not eip155", func(t *testing.T) {
 		t.Parallel()
@@ -186,29 +125,6 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a paid rule on a reachable chain other than the identity chain", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be allowed — payments are decoupled from identity", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "84532", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
-				Return(enums.AssetTransferMethodEip3009, "USD Coin", "2", nil).
-				Times(1)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
-				"10000",
-			)
-			err := suite.sut.Validate(context.Background(), request)
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the asset is not a hex address", func(t *testing.T) {
 		t.Parallel()
 
@@ -251,27 +167,6 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty address pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on config.addressPatterns", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
-				"10000",
-			)
-			err := suite.sut.Validate(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.addressPatterns", validationErr.Field)
-		})
-	})
-
 	t.Run("Given no address patterns", func(t *testing.T) {
 		t.Parallel()
 
@@ -283,6 +178,27 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			request := generateSaveRequest(
 				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
 					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`,
+				"10000",
+			)
+			err := suite.sut.Validate(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "config.addressPatterns", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a blank address pattern", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on config.addressPatterns", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -311,6 +227,59 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "config.addressPatterns", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the asset is not an ERC-20 contract", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethod(""), "", "", assert.AnError).
+				Times(1)
+		}
+
+		t.Run("Should return a validation error on config.asset", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			initSuite(suite)
+
+			request := generateSaveRequest(validConfig, "10000")
+			err := suite.sut.Validate(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "config.asset", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				Return(enums.AssetTransferMethodPermit2, "", "", nil).
+				Times(1)
+		}
+
+		t.Run("Should set permit2 with an empty domain", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			initSuite(suite)
+
+			request := generateSaveRequest(validConfig, "10000")
+			err := suite.sut.Validate(context.Background(), request)
+
+			assert.NoError(t, err)
+			config := &models.PaymentRuleX402Config{}
+			assert.NoError(t, config.Parse(request.Config))
+			assert.Equal(t, enums.AssetTransferMethodPermit2, config.AssetTransferMethod)
+			assert.Nil(t, config.Eip712Name)
+			assert.Nil(t, config.Eip712Version)
 		})
 	})
 
@@ -362,17 +331,41 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the asset is not an ERC-20 contract", func(t *testing.T) {
+	t.Run("Given a paid rule on a reachable chain other than the identity chain", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should be allowed — payments are decoupled from identity", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), "84532", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				Return(enums.AssetTransferMethodEip3009, "USD Coin", "2", nil).
+				Times(1)
+
+			request := generateSaveRequest(
+				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+				"10000",
+			)
+			err := suite.sut.Validate(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the config is valid", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
+			// Distinct from the seed defaults to prove the derived domain wins.
 			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(enums.AssetTransferMethod(""), "", "", assert.AnError).
+				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				Return(enums.AssetTransferMethodEip3009, "USD Coin", "7", nil).
 				Times(1)
 		}
 
-		t.Run("Should return a validation error on config.asset", func(t *testing.T) {
+		t.Run("Should sanitize and set the derived EIP-712 domain", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
@@ -381,9 +374,14 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			request := generateSaveRequest(validConfig, "10000")
 			err := suite.sut.Validate(context.Background(), request)
 
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.asset", validationErr.Field)
+			assert.NoError(t, err)
+			config := &models.PaymentRuleX402Config{}
+			assert.NoError(t, config.Parse(request.Config))
+			assert.Equal(t, ".*", config.AddressPatterns[0])
+			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", config.AddressPatterns[1])
+			assert.Equal(t, enums.AssetTransferMethodEip3009, config.AssetTransferMethod)
+			assert.Equal(t, "USD Coin", *config.Eip712Name)
+			assert.Equal(t, "7", *config.Eip712Version)
 		})
 	})
 }

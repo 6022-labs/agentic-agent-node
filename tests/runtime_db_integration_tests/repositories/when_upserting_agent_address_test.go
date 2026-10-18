@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -58,6 +59,7 @@ func WhenUpsertingAgentAddressBeforeEach(tc *repositoryTestCase) *WhenUpsertingA
 }
 
 func WhenUpsertingAgentAddressAfterEach(suite *WhenUpsertingAgentAddressTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -79,12 +81,24 @@ func TestWhenUpsertingAgentAddress(t *testing.T) {
 			t.Run("Given no address of the type yet", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should upsert and read it back by agent id and type", func(t *testing.T) {
+				t.Run("Should upsert without error", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentAddressBeforeEach(tc)
 					defer WhenUpsertingAgentAddressAfterEach(suite)
 
-					assert.NoError(
+					err := suite.sut.Upsert(
+						context.Background(),
+						agentAddress(suite.agentId, identity_enums.AddressTypeEvm, "0xabc"),
+					)
+
+					assert.NoError(t, err)
+				})
+
+				t.Run("Should read it back by agent id and type", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentAddressBeforeEach(tc)
+					defer WhenUpsertingAgentAddressAfterEach(suite)
+					require.NoError(
 						t,
 						suite.sut.Upsert(
 							context.Background(),
@@ -103,7 +117,7 @@ func TestWhenUpsertingAgentAddress(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an existing address for the type", func(t *testing.T) {
+			t.Run("Given an address of the type already exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should replace it on upsert", func(t *testing.T) {

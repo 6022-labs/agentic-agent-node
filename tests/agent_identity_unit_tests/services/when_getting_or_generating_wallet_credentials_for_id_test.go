@@ -73,7 +73,7 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no wallet exists yet", func(t *testing.T) {
+	t.Run("Given no wallet exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
@@ -125,7 +125,7 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given persisting the generated wallet fails", func(t *testing.T) {
+	t.Run("Given saving the wallet fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {

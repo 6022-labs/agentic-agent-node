@@ -40,15 +40,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "chain_id_required",
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal_error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     },
                     "502": {
                         "description": "collections_read_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -71,9 +77,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "guidance_lookup_failed",
+                        "description": "guidance_lookup_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -107,10 +113,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.AgentGuidanceResponse"
                         }
                     },
-                    "500": {
-                        "description": "guidance_update_failed",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "guidance_update_failed or agent_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -135,7 +147,13 @@ const docTemplate = `{
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed, state_lookup_failed, agent_addresses_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -207,6 +225,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/errors.ValidationError"
                         }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed, agent_save_failed or image_generation_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "collection_check_failed, wallet_not_ready or image_upload_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
                     }
                 }
             }
@@ -227,10 +257,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.EnsInfoResponse"
                         }
                     },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
                     "409": {
                         "description": "not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -255,7 +297,19 @@ const docTemplate = `{
                     "409": {
                         "description": "not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed, state_lookup_failed or ens_reconcile_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "ens_read_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -280,7 +334,25 @@ const docTemplate = `{
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "owner_missing",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed or agent_addresses_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "collection_read_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -305,7 +377,19 @@ const docTemplate = `{
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "agent_lookup_failed, state_lookup_failed or mint_reconcile_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "chain_read_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -331,7 +415,25 @@ const docTemplate = `{
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "owner_missing",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "self_mint_failed, self_ens_failed or mint_reconcile_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "chain_read_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -356,13 +458,13 @@ const docTemplate = `{
                     "404": {
                         "description": "identity_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
                         "description": "soul_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -408,7 +510,7 @@ const docTemplate = `{
                     "500": {
                         "description": "authorize_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -450,15 +552,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "not_configured",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
-                        "description": "get_llm_connection_failed",
+                        "description": "get_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -499,9 +601,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "setup_llm_connection_failed",
+                        "description": "setup_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -516,9 +618,9 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "500": {
-                        "description": "delete_llm_connection_failed",
+                        "description": "delete_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -553,12 +655,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/errors.ValidationError"
                         }
-                    },
-                    "500": {
-                        "description": "validate_llm_connection_failed",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
                     }
                 }
             }
@@ -580,9 +676,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "list_mcp_connections_failed",
+                        "description": "list_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -622,10 +718,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
-                    "500": {
-                        "description": "create_mcp_connection_failed",
+                    "409": {
+                        "description": "mcp_connection_name_taken",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "create_failed, mcp_connection_lookup_failed or agent_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -668,15 +770,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "mcp_connection_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
-                        "description": "list_mcp_server_tools_failed",
+                        "description": "list_mcp_server_tools_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -714,15 +816,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "mcp_connection_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
-                        "description": "get_mcp_connection_failed",
+                        "description": "get_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -770,15 +872,21 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "mcp_connection_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
-                    "500": {
-                        "description": "update_mcp_connection_failed",
+                    "409": {
+                        "description": "mcp_connection_name_taken",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "update_failed, mcp_connection_lookup_failed or agent_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -808,9 +916,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "delete_mcp_connection_failed",
+                        "description": "delete_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -851,10 +959,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.PaymentPolicyResponse"
                         }
                     },
-                    "500": {
-                        "description": "get_payment_policy_failed",
+                    "409": {
+                        "description": "agent_not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "policy_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -869,9 +983,9 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "500": {
-                        "description": "delete_payment_policy_failed",
+                        "description": "delete_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -893,10 +1007,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListPaymentRulesResponse"
                         }
                     },
-                    "500": {
-                        "description": "list_payment_rules_failed",
+                    "409": {
+                        "description": "agent_not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "policy_failed or list_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -936,10 +1056,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
-                    "500": {
-                        "description": "create_payment_rule_failed",
+                    "409": {
+                        "description": "agent_not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "policy_failed or create_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -989,15 +1115,21 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
-                    "500": {
-                        "description": "update_payment_rule_failed",
+                    "409": {
+                        "description": "agent_not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "policy_failed or update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1020,16 +1152,22 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
-                        "description": "delete_payment_rule_failed",
+                        "description": "delete_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1052,9 +1190,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "list_self_tools_failed",
+                        "description": "list_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1104,15 +1242,15 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "self_tool_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
-                        "description": "update_self_tool_failed",
+                        "description": "get_failed, update_failed or agent_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1166,7 +1304,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "list_failed",
+                        "description": "list_failed or internal_error",
                         "schema": {
                             "$ref": "#/definitions/errors.InternalError"
                         }
@@ -1352,7 +1490,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "conversation_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -1420,13 +1558,13 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "conversation_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1460,13 +1598,13 @@ const docTemplate = `{
                     "404": {
                         "description": "identity_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "500": {
                         "description": "identity_lookup_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1504,15 +1642,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "card",
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
                     "500": {
                         "description": "agent_card_signing_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1535,13 +1673,13 @@ const docTemplate = `{
                     "409": {
                         "description": "identity_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
                         "description": "ens_publish_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1595,7 +1733,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "conversation_unavailable or agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1687,6 +1825,17 @@ const docTemplate = `{
                 }
             }
         },
+        "errors.UnavailableError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "errors.ValidationError": {
             "type": "object",
             "properties": {
@@ -1697,10 +1846,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "fiber.Map": {
-            "type": "object",
-            "additionalProperties": {}
         },
         "requests.AppendConversationMessagesRequest": {
             "type": "object",

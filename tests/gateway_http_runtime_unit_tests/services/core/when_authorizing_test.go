@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/core"
@@ -38,6 +39,82 @@ func TestWhenAuthorizing(t *testing.T) {
 	t.Parallel()
 
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.IsAuthorized(context.Background(), address)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalAuthorizeResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"address","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should return a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.IsAuthorized(context.Background(), address)
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalAuthorizeResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"address","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.IsAuthorized(context.Background(), address)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
 
 	t.Run("Given the runtime authorizes the address", func(t *testing.T) {
 		t.Parallel()
@@ -92,27 +169,6 @@ func TestWhenAuthorizing(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.False(t, authorized)
-		})
-	})
-
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAuthorizingTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAuthorizingBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.IsAuthorized(context.Background(), address)
-
-			assert.ErrorContains(t, err, "runtime down")
 		})
 	})
 }

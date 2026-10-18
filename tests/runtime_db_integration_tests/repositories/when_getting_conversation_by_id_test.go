@@ -129,7 +129,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an unknown id", func(t *testing.T) {
+			t.Run("Given the conversation does not exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil", func(t *testing.T) {

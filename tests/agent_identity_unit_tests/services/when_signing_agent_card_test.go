@@ -19,8 +19,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// The cross-repo contract vector. agentic-orchestrator's when_verifying_agent_card_signature_test.go
-// pins these exact literals — if either side changes, signed cards stop verifying in production.
+// Cross-repo contract vector: agentic-orchestrator pins these literals; both sides must change together.
 const (
 	// Anvil account 0, a publicly known test key.
 	vectorPrivateKeyHex = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
@@ -74,6 +73,62 @@ func TestWhenSigningAgentCard(t *testing.T) {
 			GetForId(ctx, agentId.String(), enums.AddressTypeEvm).
 			Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: vectorPrivateKeyHex, Address: vectorAddress}, true, nil)
 	}
+
+	t.Run("Given the card is not valid JSON", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail rather than sign unparsed bytes", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+
+			signature, err := suite.sut.Sign(ctx, []byte(`{"protocol":`))
+
+			assert.ErrorContains(t, err, "canonicalize agent card")
+			assert.Nil(t, signature)
+		})
+	})
+
+	t.Run("Given no agent row exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, nil)
+		}
+
+		t.Run("Should fail rather than sign with no identity", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(ctx, []byte(vectorCard))
+
+			assert.ErrorContains(t, err, "agent not registered")
+		})
+	})
+
+	t.Run("Given the node wallet is not bootstrapped", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(ctx, agentId.String(), enums.AddressTypeEvm).
+				Return(nil, false, nil)
+		}
+
+		t.Run("Should fail rather than serve an unsigned card silently", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(ctx, []byte(vectorCard))
+
+			assert.ErrorContains(t, err, "node wallet not bootstrapped")
+		})
+	})
 
 	t.Run("Given the node wallet is bootstrapped", func(t *testing.T) {
 		t.Parallel()
@@ -146,62 +201,6 @@ func TestWhenSigningAgentCard(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, vectorSignature, signature.Signature)
-		})
-	})
-
-	t.Run("Given the card is not valid JSON", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail rather than sign unparsed bytes", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-
-			signature, err := suite.sut.Sign(ctx, []byte(`{"protocol":`))
-
-			assert.Error(t, err)
-			assert.Nil(t, signature)
-		})
-	})
-
-	t.Run("Given no agent row exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, nil)
-		}
-
-		t.Run("Should fail rather than sign with no identity", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Sign(ctx, []byte(vectorCard))
-
-			assert.Error(t, err)
-		})
-	})
-
-	t.Run("Given the node wallet is not bootstrapped", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetForId(ctx, agentId.String(), enums.AddressTypeEvm).
-				Return(nil, false, nil)
-		}
-
-		t.Run("Should fail rather than serve an unsigned card silently", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Sign(ctx, []byte(vectorCard))
-
-			assert.Error(t, err)
 		})
 	})
 }

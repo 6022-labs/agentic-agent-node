@@ -50,7 +50,7 @@ func TestWhenFilteringToolsByPatterns(t *testing.T) {
 	t.Run("Given a pattern that only matches part of a name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should not keep the tool, since patterns are full matches", func(t *testing.T) {
+		t.Run("Should not keep the tool", func(t *testing.T) {
 			t.Parallel()
 
 			filtered, _ := utils.FilterToolsByPatterns(tools, []string{"issue"})
@@ -86,12 +86,19 @@ func TestWhenFilteringToolsByPatterns(t *testing.T) {
 	t.Run("Given an invalid pattern alongside a valid one", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should ignore the invalid pattern, report it, and keep what the valid one matches", func(t *testing.T) {
+		t.Run("Should keep what the valid pattern matches", func(t *testing.T) {
 			t.Parallel()
 
-			filtered, invalid := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
+			filtered, _ := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
 
 			assert.Equal(t, []string{"create_issue"}, names(filtered))
+		})
+
+		t.Run("Should report the invalid pattern", func(t *testing.T) {
+			t.Parallel()
+
+			_, invalid := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
+
 			assert.Equal(t, []string{"create_[issue"}, invalid)
 		})
 	})

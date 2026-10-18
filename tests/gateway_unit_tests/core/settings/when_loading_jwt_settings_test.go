@@ -54,7 +54,7 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given signing_key has surrounding whitespace", func(t *testing.T) {
+	t.Run("Given a padded signing_key", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")

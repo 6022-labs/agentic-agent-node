@@ -40,7 +40,7 @@ func TestWhenExecutingDeletePaymentRuleTool(t *testing.T) {
 
 		id := uuid.New()
 
-		t.Run("Should delete and return a success payload", func(t *testing.T) {
+		t.Run("Should return a success payload", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingDeletePaymentRuleToolBeforeEach(t)
@@ -55,7 +55,7 @@ func TestWhenExecutingDeletePaymentRuleTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the id argument is not a uuid", func(t *testing.T) {
+	t.Run("Given a malformed id argument", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail without calling the use case", func(t *testing.T) {

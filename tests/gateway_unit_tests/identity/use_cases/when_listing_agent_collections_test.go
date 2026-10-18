@@ -36,7 +36,57 @@ func WhenListingAgentCollectionsBeforeEach(t *testing.T) *WhenListingAgentCollec
 func TestWhenListingAgentCollections(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns two collections", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
+			suite.mockClient.EXPECT().List(gomock.Any(), "80002").
+				Return(nil, errors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
+			)
+
+			var unavailableErr *errors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
+			suite.mockClient.EXPECT().List(gomock.Any(), "80002").
+				Return(nil, errors.NewValidationError("chain_id", "chain id is invalid"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
+			)
+
+			var validationErr *errors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "chain_id", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the runtime returns the collections catalog", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
@@ -56,7 +106,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 
 			resp, err := suite.sut.Execute(
 				context.Background(),
-				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
 			)
 
 			assert.NoError(t, err)
@@ -64,27 +114,6 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			assert.Equal(t, "alpha", resp.Collections[0].Name)
 			assert.Equal(t, uint64(2), resp.Collections[0].ModeratorCount)
 			assert.Equal(t, "0xbbb", resp.Collections[1].Address)
-		})
-	})
-
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any(), "80002").
-				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
-		}
-
-		t.Run("Should propagate the UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingAgentCollectionsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
-
-			var target *errors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

@@ -48,7 +48,7 @@ func TestWhenLoadingCommandSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given nothing configured", func(t *testing.T) {
+	t.Run("Given no configuration", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fall back to the defaults", func(t *testing.T) {

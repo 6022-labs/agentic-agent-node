@@ -33,8 +33,7 @@ func WhenRunningAccessChainBeforeEach(t *testing.T) *WhenRunningAccessChainTesti
 	}
 }
 
-// build wires the gate over the given links and exposes /responses; the inner
-// handler records that the request reached past the chain.
+// build wires the gate over the given links and exposes /responses.
 func (s *WhenRunningAccessChainTestingSuite) build(links ...middleware_interfaces.AccessMethodInterface) *fiber.App {
 	sut := middlewares.NewResponseAccessGateMiddleware(middlewares.NewResponseAccessGateMiddlewareParams{
 		PaymentRuleClient: s.mockPaymentRuleClient,
@@ -57,7 +56,7 @@ func accessChainBody(t *testing.T, resp *http.Response) string {
 func TestWhenRunningAccessChain(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given fetching the rules fails", func(t *testing.T) {
+	t.Run("Given listing the rules fails", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return 502 without consulting any link", func(t *testing.T) {
@@ -75,10 +74,10 @@ func TestWhenRunningAccessChain(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime refuses the rules because the agent is not minted", func(t *testing.T) {
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should run the chain with no rules", func(t *testing.T) {
+		t.Run("Should serve the request through the chain", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
@@ -184,7 +183,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty chain", func(t *testing.T) {
+	t.Run("Given the chain is empty", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return 502", func(t *testing.T) {

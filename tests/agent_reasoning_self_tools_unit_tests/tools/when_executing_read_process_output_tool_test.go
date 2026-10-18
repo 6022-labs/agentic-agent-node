@@ -57,7 +57,7 @@ func TestWhenExecutingReadProcessOutputTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a session id that is not a uuid", func(t *testing.T) {
+	t.Run("Given a malformed session id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail without calling the executor", func(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/responses"
 )
@@ -25,18 +24,11 @@ func NewSendA2AMessage(createResponse CreateResponseInterface) *SendA2AMessage {
 }
 
 func (u *SendA2AMessage) Execute(ctx context.Context, request *requests.A2ARequest) (*responses.A2AResponse, error) {
-	if request.Method != requests.A2AMethodSendMessage {
-		return nil, errors.NewValidationError(
-			"method",
-			"unsupported method, expected "+requests.A2AMethodSendMessage.String(),
-		)
+	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
 	}
 
 	text := strings.TrimSpace(request.Params.Message.Text())
-	if text == "" {
-		return nil, errors.NewValidationError("params.message", "message must contain non-empty text")
-	}
-
 	createRequest := &requests.CreateResponseRequest{
 		Input: requests.ResponseInput{
 			Messages: []requests.InputMessage{{
@@ -45,7 +37,7 @@ func (u *SendA2AMessage) Execute(ctx context.Context, request *requests.A2AReque
 			}},
 		},
 	}
-	contextId := strings.TrimSpace(request.Params.Message.ContextId)
+	contextId := request.Params.Message.ContextId
 	if contextId != "" {
 		createRequest.Conversation = &requests.ConversationRef{
 			Id: contextId,

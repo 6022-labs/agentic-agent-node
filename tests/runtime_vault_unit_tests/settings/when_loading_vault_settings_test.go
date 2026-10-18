@@ -13,6 +13,45 @@ import (
 func TestWhenLoadingVaultSettings(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given kv_v1_mount_path is missing", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"vault.address": "http://localhost:8200",
+			"vault.token":   "token-123",
+		}, "."), nil)
+
+		t.Run("Should default kv_v1_mount_path to 'secret'", func(t *testing.T) {
+			t.Parallel()
+
+			result := vault_settings.NewVaultSettings(zap.NewNop(), k)
+
+			assert.Equal(t, "secret", result.KvV1MountPath)
+		})
+	})
+
+	t.Run("Given padded values", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"vault.address":          "  http://vault:8200  ",
+			"vault.token":            "  token  ",
+			"vault.kv_v1_mount_path": "  custom  ",
+		}, "."), nil)
+
+		t.Run("Should trim every value", func(t *testing.T) {
+			t.Parallel()
+
+			result := vault_settings.NewVaultSettings(zap.NewNop(), k)
+
+			assert.Equal(t, "http://vault:8200", result.Address)
+			assert.Equal(t, "token", result.Token)
+			assert.Equal(t, "custom", result.KvV1MountPath)
+		})
+	})
+
 	t.Run("Given a complete configuration", func(t *testing.T) {
 		t.Parallel()
 
@@ -32,45 +71,6 @@ func TestWhenLoadingVaultSettings(t *testing.T) {
 			assert.Equal(t, "http://localhost:8200", result.Address)
 			assert.Equal(t, "token-123", result.Token)
 			assert.Equal(t, "secret", result.KvV1MountPath)
-		})
-	})
-
-	t.Run("Given kv_v1_mount_path is missing", func(t *testing.T) {
-		t.Parallel()
-
-		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"vault.address": "http://localhost:8200",
-			"vault.token":   "token-123",
-		}, "."), nil)
-
-		t.Run("Should default kv_v1_mount_path to 'secret'", func(t *testing.T) {
-			t.Parallel()
-
-			result := vault_settings.NewVaultSettings(zap.NewNop(), k)
-
-			assert.Equal(t, "secret", result.KvV1MountPath)
-		})
-	})
-
-	t.Run("Given values have surrounding whitespace", func(t *testing.T) {
-		t.Parallel()
-
-		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"vault.address":          "  http://vault:8200  ",
-			"vault.token":            "  token  ",
-			"vault.kv_v1_mount_path": "  custom  ",
-		}, "."), nil)
-
-		t.Run("Should trim every value", func(t *testing.T) {
-			t.Parallel()
-
-			result := vault_settings.NewVaultSettings(zap.NewNop(), k)
-
-			assert.Equal(t, "http://vault:8200", result.Address)
-			assert.Equal(t, "token", result.Token)
-			assert.Equal(t, "custom", result.KvV1MountPath)
 		})
 	})
 }

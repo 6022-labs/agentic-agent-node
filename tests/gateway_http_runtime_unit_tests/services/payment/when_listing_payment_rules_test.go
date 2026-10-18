@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,85 @@ func WhenListingPaymentRulesBeforeEach(t *testing.T) *WhenListingPaymentRulesTes
 func TestWhenListingPaymentRules(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			rules, err := suite.sut.List(context.Background())
+
+			assert.Nil(t, rules)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			rules, err := suite.sut.List(context.Background())
+
+			assert.Nil(t, rules)
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime lists rules", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,58 +142,6 @@ func TestWhenListingPaymentRules(t *testing.T) {
 				assert.Equal(t, "x402", rules[0].Method)
 				assert.JSONEq(t, `{"network":"eip155:80002","addressPatterns":[".*"]}`, string(rules[0].Config))
 			}
-		})
-	})
-
-	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
-				}, nil)
-		}
-
-		t.Run("Should return a conflict error carrying the runtime code", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingPaymentRulesBeforeEach(t)
-			initSuite(suite)
-
-			rules, err := suite.sut.List(context.Background())
-
-			assert.Nil(t, rules)
-			var conflictErr *apperrors.ConflictError
-			assert.ErrorAs(t, err, &conflictErr)
-			assert.Equal(t, "agent_not_minted", conflictErr.Code)
-		})
-	})
-
-	t.Run("Given the listing fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConfigPaymentPolicyRulesWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigPaymentPolicyRulesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"boom"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingPaymentRulesBeforeEach(t)
-			initSuite(suite)
-
-			rules, err := suite.sut.List(context.Background())
-
-			assert.Nil(t, rules)
-			assert.Error(t, err)
 		})
 	})
 }

@@ -23,10 +23,10 @@ func NewHttpMCPConfigClient(client clients.ClientWithResponsesInterface) *HttpMC
 func (c *HttpMCPConfigClient) List(ctx context.Context) (*models.ExternalMCPConnectionListPayload, error) {
 	resp, err := c.client.GetInternalConfigMcpWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPConnectionListPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
 	return &payload, nil
@@ -86,10 +86,10 @@ func (c *HttpMCPConfigClient) DiscoverTools(
 func (c *HttpMCPConfigClient) GetById(ctx context.Context, id uuid.UUID) (*models.ExternalMCPConnectionPayload, error) {
 	resp, err := c.client.GetInternalConfigMcpIdWithResponse(ctx, id.String())
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMCPConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(
+	if err := helpers.DecodeAndMapRuntimeResponse(
 		resp.HTTPResponse,
 		resp.Body,
 		&payload,
@@ -133,7 +133,7 @@ func (c *HttpMCPConfigClient) Update(
 func (c *HttpMCPConfigClient) Delete(ctx context.Context, id uuid.UUID) error {
 	resp, err := c.client.DeleteInternalConfigMcpIdWithResponse(ctx, id.String())
 	if err != nil {
-		return err
+		return helpers.MapRuntimeError(err)
 	}
-	return helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
+	return helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
 }

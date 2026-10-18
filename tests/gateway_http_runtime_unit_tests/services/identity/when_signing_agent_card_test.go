@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -37,6 +38,82 @@ func TestWhenSigningAgentCard(t *testing.T) {
 	t.Parallel()
 
 	const card = `{"name":"hermes","protocol":"6022"}`
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalIdentityCardSignatureWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(context.Background(), []byte(card))
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalIdentityCardSignatureWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalIdentityCardSignatureResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"card","message":"agent card must not carry a signatures member"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(context.Background(), []byte(card))
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalIdentityCardSignatureWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalIdentityCardSignatureResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(context.Background(), []byte(card))
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
 
 	t.Run("Given the runtime signs the card", func(t *testing.T) {
 		t.Parallel()
@@ -89,30 +166,5 @@ func TestWhenSigningAgentCard(t *testing.T) {
 				assert.JSONEq(t, card, string(sent.Card))
 			},
 		)
-	})
-
-	t.Run("Given the runtime rejects the card", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalIdentityCardSignatureWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalIdentityCardSignatureResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-					Body:         []byte(`{"field":"card","message":"agent card must not carry a signatures member"}`),
-				}, nil)
-		}
-
-		t.Run("Should return a ValidationError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Sign(context.Background(), []byte(card))
-
-			var target *apperrors.ValidationError
-			assert.ErrorAs(t, err, &target)
-		})
 	})
 }

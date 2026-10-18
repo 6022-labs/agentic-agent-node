@@ -38,28 +38,6 @@ func TestWhenGeneratingAgentImages(t *testing.T) {
 
 	params := identity_interfaces.GenerateImageParams{Name: "my-agent"}
 
-	t.Run("Given both generators succeed", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGeneratingAgentImagesTestingSuite) {
-			suite.mockDefaultImageGenerator.EXPECT().Generate(params).Return([]byte("default-svg"), nil)
-			suite.mockIconImageGenerator.EXPECT().Generate(params).Return([]byte("icon-png"), nil)
-		}
-
-		t.Run("Should key the default and icon bytes the way the collection expects", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGeneratingAgentImagesBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Generate(params)
-
-			assert.NoError(t, err)
-			assert.Equal(t, []byte("default-svg"), result["default"])
-			assert.Equal(t, []byte("icon-png"), result["icon"])
-		})
-	})
-
 	t.Run("Given the default generator fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -75,7 +53,7 @@ func TestWhenGeneratingAgentImages(t *testing.T) {
 
 			_, err := suite.sut.Generate(params)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "default boom")
 		})
 	})
 
@@ -95,7 +73,29 @@ func TestWhenGeneratingAgentImages(t *testing.T) {
 
 			_, err := suite.sut.Generate(params)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "icon boom")
+		})
+	})
+
+	t.Run("Given both generators succeed", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGeneratingAgentImagesTestingSuite) {
+			suite.mockDefaultImageGenerator.EXPECT().Generate(params).Return([]byte("default-svg"), nil)
+			suite.mockIconImageGenerator.EXPECT().Generate(params).Return([]byte("icon-png"), nil)
+		}
+
+		t.Run("Should key the default and icon bytes the way the collection expects", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGeneratingAgentImagesBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Generate(params)
+
+			assert.NoError(t, err)
+			assert.Equal(t, []byte("default-svg"), result["default"])
+			assert.Equal(t, []byte("icon-png"), result["icon"])
 		})
 	})
 }

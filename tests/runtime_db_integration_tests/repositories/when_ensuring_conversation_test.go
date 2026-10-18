@@ -94,7 +94,7 @@ func TestWhenEnsuringConversation(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a caller id at the column limit", func(t *testing.T) {
+			t.Run("Given a caller id of exactly the maximum length", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should store it intact", func(t *testing.T) {

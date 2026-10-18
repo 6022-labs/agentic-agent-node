@@ -21,9 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// chainFixture is a throwaway chain plus a freshly deployed contract stack; the
-// anvil account is the collection's admin, moderator and the node's own wallet,
-// so mint and ENS writes all authorize against it.
+// chainFixture is a throwaway chain plus deployed stack; the anvil account is admin, moderator and the node wallet.
 type chainFixture struct {
 	anvilAccountSettings container_builders.AnvilAccountSettings
 	client               *ethclient.Client
@@ -104,8 +102,7 @@ func (f *chainFixture) agentMinter() *services.AgentMinter {
 	return services.NewAgentMinter(zap.NewNop(), f.ethClientFactory, f.transactorFactory)
 }
 
-// mintAgent arranges a minted agent through the contract directly; the minter is
-// exercised where it is the subject, not while setting up other tests.
+// mintAgent arranges a minted agent via the contract directly; the minter is only exercised where it is the subject.
 func (f *chainFixture) mintAgent(t *testing.T, agentName string) uint64 {
 	if err := fixtures.MintAgent(
 		context.Background(),

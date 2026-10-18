@@ -61,6 +61,32 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"conversationId","message":"cannot be empty"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "conversationId", validationErr.Field)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -89,32 +115,6 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime rejects the request", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
-				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-					Body:         []byte(`{"field":"conversationId","message":"cannot be empty"}`),
-				}, nil)
-		}
-
-		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.ListMessages(context.Background(), conversationId)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "conversationId", validationErr.Field)
-		})
-	})
-
 	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
 		t.Parallel()
 
@@ -138,6 +138,33 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), gomock.Any()).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
 		})
 	})
 

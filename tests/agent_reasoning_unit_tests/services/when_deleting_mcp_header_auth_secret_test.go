@@ -36,7 +36,7 @@ func WhenDeletingMCPHeaderAuthSecretBeforeEach(t *testing.T) *WhenDeletingMCPHea
 func TestWhenDeletingMCPHeaderAuthSecret(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given DeleteValue is called", func(t *testing.T) {
+	t.Run("Given a header value exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingMCPHeaderAuthSecretTestingSuite, connectionId uuid.UUID) {

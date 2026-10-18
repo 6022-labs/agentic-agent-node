@@ -32,8 +32,8 @@ func (c *HttpConversationClient) ListConversations(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListConversationsPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -55,8 +55,8 @@ func (c *HttpConversationClient) CreateConversation(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalConversationPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -80,8 +80,8 @@ func (c *HttpConversationClient) UpdateConversation(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalConversationPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -95,8 +95,8 @@ func (c *HttpConversationClient) ListMessages(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListConversationMessagesPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -120,8 +120,8 @@ func (c *HttpConversationClient) AppendMessages(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAppendConversationMessagesResultPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

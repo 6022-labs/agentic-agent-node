@@ -47,8 +47,8 @@ func (c *HttpAgentRegistrationClient) Save(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentRegistrationPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -112,8 +112,8 @@ func (c *HttpAgentRegistrationClient) Get(ctx context.Context) (*models.External
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentRegistrationPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -124,8 +124,8 @@ func (c *HttpAgentRegistrationClient) MintInfo(ctx context.Context) (*models.Ext
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalMintInfoPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -138,8 +138,8 @@ func (c *HttpAgentRegistrationClient) CheckMint(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalRegistrationStatusPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -150,8 +150,8 @@ func (c *HttpAgentRegistrationClient) EnsInfo(ctx context.Context) (*models.Exte
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalEnsInfoPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -162,8 +162,8 @@ func (c *HttpAgentRegistrationClient) CheckEns(ctx context.Context) (*models.Ext
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalRegistrationStatusPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -174,8 +174,8 @@ func (c *HttpAgentRegistrationClient) Self(ctx context.Context) (*models.Externa
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalRegistrationStatusPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

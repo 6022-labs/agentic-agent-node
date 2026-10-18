@@ -77,6 +77,36 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsConversationIdMessagesWithBodyWithResponse(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(&clients.PostInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.AppendMessages(context.Background(), conversationId, request)
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -172,7 +202,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime rejects the append", func(t *testing.T) {
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
@@ -189,7 +219,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should collapse the 500 onto an UnavailableError", func(t *testing.T) {
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)

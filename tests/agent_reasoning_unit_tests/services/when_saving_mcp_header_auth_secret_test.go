@@ -36,6 +36,34 @@ func WhenSavingMCPHeaderAuthSecretBeforeEach(t *testing.T) *WhenSavingMCPHeaderA
 func TestWhenSavingMCPHeaderAuthSecret(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a blank header name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject without writing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingMCPHeaderAuthSecretBeforeEach(t)
+
+			err := suite.sut.SaveValue(context.Background(), uuid.New(), "", "value")
+
+			assert.ErrorContains(t, err, "header key cannot be empty")
+		})
+	})
+
+	t.Run("Given a blank header value", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject without writing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingMCPHeaderAuthSecretBeforeEach(t)
+
+			err := suite.sut.SaveValue(context.Background(), uuid.New(), "Authorization", "")
+
+			assert.ErrorContains(t, err, "header value cannot be empty")
+		})
+	})
+
 	t.Run("Given two connections share a header name", func(t *testing.T) {
 		t.Parallel()
 
@@ -56,34 +84,6 @@ func TestWhenSavingMCPHeaderAuthSecret(t *testing.T) {
 
 			assert.NoError(t, suite.sut.SaveValue(context.Background(), a, "Authorization", "Bearer aaa"))
 			assert.NoError(t, suite.sut.SaveValue(context.Background(), b, "Authorization", "Bearer bbb"))
-		})
-	})
-
-	t.Run("Given an empty header key", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject without writing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingMCPHeaderAuthSecretBeforeEach(t)
-
-			err := suite.sut.SaveValue(context.Background(), uuid.New(), "", "value")
-
-			assert.Error(t, err)
-		})
-	})
-
-	t.Run("Given an empty header value", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject without writing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingMCPHeaderAuthSecretBeforeEach(t)
-
-			err := suite.sut.SaveValue(context.Background(), uuid.New(), "Authorization", "")
-
-			assert.Error(t, err)
 		})
 	})
 }

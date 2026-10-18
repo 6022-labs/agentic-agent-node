@@ -45,7 +45,7 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 
 	const scopedKey = "scope/wallet/evm"
 
-	t.Run("Given no wallet has been persisted", func(t *testing.T) {
+	t.Run("Given no wallet exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
@@ -68,7 +68,28 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a complete wallet has been persisted", func(t *testing.T) {
+	t.Run("Given the persisted secret is missing the privateKey field", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
+			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{
+				"address": "0xABCD",
+			}, nil)
+		}
+
+		t.Run("Should error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
+			initSuite(suite)
+
+			_, _, err := suite.sut.GetForId(context.Background(), "agent-1", enums.AddressTypeEvm)
+
+			assert.ErrorContains(t, err, "privateKey")
+		})
+	})
+
+	t.Run("Given a complete wallet exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
@@ -90,27 +111,6 @@ func TestWhenGettingWalletCredentialsForId(t *testing.T) {
 			assert.True(t, found)
 			assert.Equal(t, "0xdeadbeef", cred.PrivateKeyHex)
 			assert.Equal(t, "0xABCD", cred.Address)
-		})
-	})
-
-	t.Run("Given the persisted secret is missing the privateKey field", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().Read(gomock.Any(), scopedKey).Return(map[string]string{
-				"address": "0xABCD",
-			}, nil)
-		}
-
-		t.Run("Should error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingWalletCredentialsForIdBeforeEach(t)
-			initSuite(suite)
-
-			_, _, err := suite.sut.GetForId(context.Background(), "agent-1", enums.AddressTypeEvm)
-
-			assert.Error(t, err)
 		})
 	})
 }

@@ -29,7 +29,7 @@ func TestWhenBuildingMintAddresses(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty value for a type", func(t *testing.T) {
+	t.Run("Given a blank value for a type", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should drop the empty entry", func(t *testing.T) {

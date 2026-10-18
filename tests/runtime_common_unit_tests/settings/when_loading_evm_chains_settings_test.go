@@ -27,7 +27,7 @@ func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 			},
 		}, "."), nil)
 
-		t.Run("Should resolve http urls and list the chain ids in order", func(t *testing.T) {
+		t.Run("Should resolve the http urls", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
@@ -44,6 +44,12 @@ func TestWhenLoadingEvmChainsSettings(t *testing.T) {
 			base, ok := result.ChainFor("84532")
 			assert.True(t, ok)
 			assert.Equal(t, "https://sepolia.base.org", base.HttpUrl)
+		})
+
+		t.Run("Should list the chain ids in order", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewEvmChainsSettings(zap.NewNop(), k)
 
 			assert.Equal(t, []string{"80002", "84532"}, result.ChainIds())
 		})

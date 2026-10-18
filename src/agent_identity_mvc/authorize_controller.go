@@ -30,7 +30,7 @@ func (c *AuthorizeController) RegisterRoutes(app fiber.Router) {
 // @Param request body requests.AuthorizeRequest true "Address to check"
 // @Success 200 {object} responses.AuthorizeResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "authorize_failed"
+// @Failure 500 {object} errors.InternalError "authorize_failed"
 // @Router /internal/authorize [post]
 func (c *AuthorizeController) Authorize(ctx fiber.Ctx) error {
 	body := new(requests.AuthorizeRequest)

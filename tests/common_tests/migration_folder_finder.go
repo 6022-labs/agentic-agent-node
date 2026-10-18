@@ -5,9 +5,7 @@ import (
 	"path/filepath"
 )
 
-// findModuleRoot walks up from cwd until it finds the file that anchors the
-// Go module (go.mod), so integration tests can resolve assets from any test
-// package directory without hard-coded relative paths.
+// findModuleRoot walks up from cwd to the go.mod directory so tests resolve assets from any package directory.
 func findModuleRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -36,8 +34,7 @@ func findMigrationFolderPath(subPath string) (*string, error) {
 	return &p, nil
 }
 
-// FindRuntimeMigrationFolderPath returns the absolute path to the
-// runtime_db migrations folder.
+// FindRuntimeMigrationFolderPath returns the absolute path to the runtime_db migrations folder.
 func FindRuntimeMigrationFolderPath() (*string, error) {
 	return findMigrationFolderPath("src/runtime_db/migrations")
 }

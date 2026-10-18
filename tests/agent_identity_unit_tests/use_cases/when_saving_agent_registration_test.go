@@ -56,8 +56,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 		RuntimeUrl:    "https://agent.example.com",
 		EnsBaseDomain: "6022.eth",
 	}
-	// 84532 is reachable but has no creator, so it's a payable/rating chain but
-	// not identity-capable.
+	// 84532 is reachable but has no creator, so it is not identity-capable.
 	evmChainsSettings := &runtime_common_settings.EvmChainsSettings{
 		"80002": {ChainId: "80002", HttpUrl: "http://localhost:8545"},
 		"84532": {ChainId: "84532", HttpUrl: "http://localhost:8546"},
@@ -97,7 +96,7 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 
 func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 	return &requests.SaveAgentRegistrationRequest{
-		ChainId:           "80002",
+		ChainIdRequest:    requests.ChainIdRequest{ChainId: "80002"},
 		CollectionAddress: common_tests.RandomEthAddress().Hex(),
 		Owner:             common_tests.RandomEthAddress().Hex(),
 		Name:              "alice",
@@ -109,7 +108,7 @@ func validSaveRequest(t *testing.T) *requests.SaveAgentRegistrationRequest {
 func TestWhenSavingAgentRegistration(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the request is invalid", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
@@ -124,150 +123,6 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-		})
-	})
-
-	t.Run("Given the collection is known and the wallet is ready", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				IsKnownCollection("80002", gomock.Any()).
-				Return(true, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
-			suite.mockToken6022Requester.EXPECT().BalanceOf("80002", gomock.Any()).Return(big.NewInt(1_000_000), nil)
-			// $6022 balance is summed across every reachable chain; a chain the
-			// creator can't be read on is skipped (best-effort).
-			suite.mockToken6022Requester.EXPECT().BalanceOf("84532", gomock.Any()).Return(nil, assert.AnError)
-			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(18), nil)
-			cid := "QmCid"
-			suite.mockGenerateAgentImages.EXPECT().
-				Generate(gomock.Any()).
-				Return(map[string][]byte{"default": []byte("a"), "icon": []byte("b")}, nil)
-			suite.mockIPFSFileStorage.EXPECT().UploadFile(gomock.Any(), gomock.Any()).Return(&cid, nil).Times(2)
-			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
-					return s, nil
-				})
-		}
-
-		t.Run("Should return Ok with the stored draft", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingAgentRegistrationBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
-
-			assert.NoError(t, err)
-			assert.Equal(t, "alice", resp.Name)
-			assert.Equal(t, "alice.squad.80002.6022.eth", resp.EnsDomain)
-			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.MintStatus)
-			assert.Equal(t, "QmCid", resp.Images["default"])
-			assert.Equal(t, "QmCid", resp.Images["icon"])
-		})
-	})
-
-	t.Run("Given an existing draft with images and no new image is uploaded", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should keep the stored images without regenerating them", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingAgentRegistrationBeforeEach(t)
-
-			kept := map[string]string{"default": "QmKept", "icon": "QmKeptIcon"}
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				IsKnownCollection("80002", gomock.Any()).
-				Return(true, nil)
-			suite.mockAgentRepository.EXPECT().
-				Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().WithImages(kept).Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
-			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
-				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
-					return s, nil
-				})
-
-			request := validSaveRequest(t)
-			request.Image = nil
-
-			resp, err := suite.sut.Execute(context.Background(), request)
-
-			// Image generation / IPFS upload mocks are intentionally absent: a
-			// call would fail the unexpected-invocation check.
-			assert.NoError(t, err)
-			assert.Equal(t, kept, resp.Images)
-		})
-	})
-
-	t.Run("Given no stored images and no new image is uploaded", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on image", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingAgentRegistrationBeforeEach(t)
-
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				IsKnownCollection("80002", gomock.Any()).
-				Return(true, nil)
-			suite.mockAgentRepository.EXPECT().
-				Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().WithImages(map[string]string{}).Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
-
-			request := validSaveRequest(t)
-			request.Image = nil
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "image", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the collection is not governed by the manager", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				IsKnownCollection("80002", gomock.Any()).
-				Return(false, nil)
-		}
-
-		t.Run("Should return a validation error on collectionAddress", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingAgentRegistrationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "collectionAddress", validationErr.Field)
 		})
 	})
 
@@ -306,6 +161,148 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "chainId", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the collection is not governed by the manager", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(false, nil)
+		}
+
+		t.Run("Should return a validation error on collectionAddress", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "collectionAddress", validationErr.Field)
+		})
+	})
+
+	t.Run("Given no stored images and no new image is uploaded", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on image", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().WithImages(map[string]string{}).Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+
+			request := validSaveRequest(t)
+			request.Image = nil
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "image", validationErr.Field)
+		})
+	})
+
+	t.Run("Given an existing draft with images and no new image is uploaded", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should keep the stored images without regenerating them", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+
+			kept := map[string]string{"default": "QmKept", "icon": "QmKeptIcon"}
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().WithImages(kept).Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+					return s, nil
+				})
+
+			request := validSaveRequest(t)
+			request.Image = nil
+
+			resp, err := suite.sut.Execute(context.Background(), request)
+
+			// Image generation and IPFS upload mocks are absent on purpose: a call fails the test.
+			assert.NoError(t, err)
+			assert.Equal(t, kept, resp.Images)
+		})
+	})
+
+	t.Run("Given the collection is known and the wallet is ready", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+			suite.mockToken6022Requester.EXPECT().BalanceOf("80002", gomock.Any()).Return(big.NewInt(1_000_000), nil)
+			// $6022 balance is summed across reachable chains; unreadable ones are skipped.
+			suite.mockToken6022Requester.EXPECT().BalanceOf("84532", gomock.Any()).Return(nil, assert.AnError)
+			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(18), nil)
+			cid := "QmCid"
+			suite.mockGenerateAgentImages.EXPECT().
+				Generate(gomock.Any()).
+				Return(map[string][]byte{"default": []byte("a"), "icon": []byte("b")}, nil)
+			suite.mockIPFSFileStorage.EXPECT().UploadFile(gomock.Any(), gomock.Any()).Return(&cid, nil).Times(2)
+			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, a *models.Agent) (*models.Agent, error) { return a, nil })
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, s *models.AgentRegistrationState) (*models.AgentRegistrationState, error) {
+					return s, nil
+				})
+		}
+
+		t.Run("Should return Ok with the stored draft", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background(), validSaveRequest(t))
+
+			assert.NoError(t, err)
+			assert.Equal(t, "alice", resp.Name)
+			assert.Equal(t, "alice.squad.80002.6022.eth", resp.EnsDomain)
+			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.MintStatus)
+			assert.Equal(t, "QmCid", resp.Images["default"])
+			assert.Equal(t, "QmCid", resp.Images["icon"])
 		})
 	})
 }

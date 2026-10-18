@@ -53,6 +53,7 @@ func WhenDeletingSelfToolsExceptNamesBeforeEach(tc *repositoryTestCase) *WhenDel
 }
 
 func WhenDeletingSelfToolsExceptNamesAfterEach(suite *WhenDeletingSelfToolsExceptNamesTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -66,7 +67,50 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 			t.Run("Given rows outside the kept set", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should delete only those, only for that agent", func(t *testing.T) {
+				t.Run("Should delete only the rows outside the kept set", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenDeletingSelfToolsExceptNamesBeforeEach(tc)
+					defer WhenDeletingSelfToolsExceptNamesAfterEach(suite)
+
+					agentId := uuid.New()
+					otherAgentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seedAgent(suite.dbClient, otherAgentId)
+
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(otherAgentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					deleted, err := suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash"})
+					assert.NoError(t, err)
+					assert.Equal(t, int64(1), deleted)
+				})
+
+				t.Run("Should keep the rows in the kept set", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenDeletingSelfToolsExceptNamesBeforeEach(tc)
 					defer WhenDeletingSelfToolsExceptNamesAfterEach(suite)
@@ -94,6 +138,53 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 							Build(),
 					)
 					assert.NoError(t, err)
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(otherAgentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					_, err = suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash"})
+					assert.NoError(t, err)
+
+					got, err := suite.sut.GetById(context.Background(), agentId, kept.Id)
+
+					assert.NoError(t, err)
+					assert.NotNil(t, got)
+				})
+
+				t.Run("Should leave other agents rows untouched", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenDeletingSelfToolsExceptNamesBeforeEach(tc)
+					defer WhenDeletingSelfToolsExceptNamesAfterEach(suite)
+
+					agentId := uuid.New()
+					otherAgentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seedAgent(suite.dbClient, otherAgentId)
+
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+					_, err = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithAgentId(agentId).
+							WithName("stale").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
 					otherAgentRow, err := suite.sut.Create(
 						context.Background(),
 						model_builders.NewSelfToolBuilder().
@@ -104,21 +195,13 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					)
 					assert.NoError(t, err)
 
-					deleted, err := suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash"})
+					_, err = suite.sut.DeleteAllExceptNames(context.Background(), agentId, []string{"bash"})
 					assert.NoError(t, err)
-					assert.Equal(t, int64(1), deleted)
-
-					got, err := suite.sut.GetById(context.Background(), agentId, kept.Id)
-					assert.NoError(t, err)
-					assert.NotNil(t, got)
 
 					otherGot, err := suite.sut.GetById(context.Background(), otherAgentId, otherAgentRow.Id)
+
 					assert.NoError(t, err)
 					assert.NotNil(t, otherGot)
-
-					var count int64
-					suite.dbClient.GetDB().Model(&models.SelfTool{}).Count(&count)
-					assert.Equal(t, int64(2), count)
 				})
 			})
 

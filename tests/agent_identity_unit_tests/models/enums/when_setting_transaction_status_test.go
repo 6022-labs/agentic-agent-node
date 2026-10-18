@@ -31,8 +31,7 @@ func TestWhenSettingTransactionStatus(t *testing.T) {
 			t.Parallel()
 
 			err := status.Set("published")
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "published")
+			assert.ErrorContains(t, err, "invalid TransactionStatus: published")
 		})
 	})
 

@@ -19,10 +19,10 @@ func NewHttpPaymentFacilitatorClient(client clients.ClientWithResponsesInterface
 func (c *HttpPaymentFacilitatorClient) Get(ctx context.Context) (map[string]models.ExternalPaymentFacilitator, error) {
 	resp, err := c.client.GetInternalConfigPaymentFacilitatorsWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentFacilitatorsPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
 	byNetwork := make(map[string]models.ExternalPaymentFacilitator, len(payload.Facilitators))

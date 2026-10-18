@@ -80,8 +80,7 @@ func waitForEnsRefresh(t *testing.T, done chan struct{}) {
 	}
 }
 
-// expectWalletsReady stubs a generated wallet + persisted address row for every
-// chain family (the bootstrap loop runs once per AddressType).
+// expectWalletsReady stubs a generated wallet and address row per chain family.
 func expectWalletsReady(suite *WhenRunningBootstrapTestingSuite) {
 	cred := &identity_interfaces.WalletCredentials{PrivateKeyHex: "pk", Address: "addr"}
 	suite.mockWalletCredentialsStorage.EXPECT().
@@ -94,7 +93,7 @@ func expectWalletsReady(suite *WhenRunningBootstrapTestingSuite) {
 func TestWhenRunningBootstrap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given no agent record exists yet", func(t *testing.T) {
+	t.Run("Given no agent row exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
@@ -119,7 +118,7 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an agent record already exists", func(t *testing.T) {
+	t.Run("Given an agent row already exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
@@ -143,7 +142,7 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		})
 	})
 
-	t.Run("Given chain recovery errors", func(t *testing.T) {
+	t.Run("Given the chain recovery fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
@@ -154,7 +153,7 @@ func TestWhenRunningBootstrap(t *testing.T) {
 			return expectEnsRefresh(suite)
 		}
 
-		t.Run("Should swallow the error and still boot", func(t *testing.T) {
+		t.Run("Should swallow the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)

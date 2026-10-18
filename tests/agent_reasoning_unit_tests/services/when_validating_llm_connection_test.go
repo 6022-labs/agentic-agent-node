@@ -39,29 +39,6 @@ func TestWhenValidatingLLMConnection(t *testing.T) {
 
 	llmConnection := model_builders.NewLLMConnectionBuilder().Build()
 
-	t.Run("Given the probe succeeds", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingLLMConnectionTestingSuite) {
-			suite.mockChatCompletionRequester.EXPECT().ProbeConnection(gomock.Any(), gomock.Any(), "sk-secret").
-				DoAndReturn(func(_ context.Context, c *models.LLMConnection, _ string) error {
-					assert.Equal(t, llmConnection.Model, c.Model)
-					return nil
-				})
-		}
-
-		t.Run("Should return no error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingLLMConnectionBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Validate(context.Background(), llmConnection, "sk-secret")
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the probe fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -82,6 +59,29 @@ func TestWhenValidatingLLMConnection(t *testing.T) {
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "connection", validationErr.Field)
 			assert.Contains(t, validationErr.Message, "401 invalid api key")
+		})
+	})
+
+	t.Run("Given the probe succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLLMConnectionTestingSuite) {
+			suite.mockChatCompletionRequester.EXPECT().ProbeConnection(gomock.Any(), gomock.Any(), "sk-secret").
+				DoAndReturn(func(_ context.Context, c *models.LLMConnection, _ string) error {
+					assert.Equal(t, llmConnection.Model, c.Model)
+					return nil
+				})
+		}
+
+		t.Run("Should return no error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Validate(context.Background(), llmConnection, "sk-secret")
+
+			assert.NoError(t, err)
 		})
 	})
 }

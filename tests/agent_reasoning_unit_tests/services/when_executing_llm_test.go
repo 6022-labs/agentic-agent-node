@@ -60,33 +60,6 @@ func TestWhenExecutingLLM(t *testing.T) {
 		{Role: "user", Content: userText},
 	}
 
-	t.Run("Given a resolved LLM connection", func(t *testing.T) {
-		t.Parallel()
-
-		llmConnection := model_builders.NewLLMConnectionBuilder().Build()
-		expectedText := "hi there"
-
-		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages, gomock.Any()).
-				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
-		}
-
-		t.Run("Should delegate to the chat completion requester", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingLLMBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Complete(ctx, llmConnection, nil, nil, messages)
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{expectedText}, result.Texts)
-			}
-		})
-	})
-
 	t.Run("Given the requester fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -113,8 +86,34 @@ func TestWhenExecutingLLM(t *testing.T) {
 			result, err := suite.sut.Complete(ctx, llmConnection, nil, mcpTools, messages)
 
 			assert.Nil(t, result)
-			assert.Error(t, err)
 			assert.ErrorContains(t, err, "upstream broke")
+		})
+	})
+
+	t.Run("Given a resolved LLM connection", func(t *testing.T) {
+		t.Parallel()
+
+		llmConnection := model_builders.NewLLMConnectionBuilder().Build()
+		expectedText := "hi there"
+
+		initSuite := func(suite *WhenExecutingLLMTestingSuite) {
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), llmConnection, gomock.Any(), gomock.Any(), messages, gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{expectedText}}, nil)
+		}
+
+		t.Run("Should delegate to the chat completion requester", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingLLMBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Complete(ctx, llmConnection, nil, nil, messages)
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedText}, result.Texts)
+			}
 		})
 	})
 }

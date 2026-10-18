@@ -127,7 +127,7 @@ func TestWhenAddingFile(t *testing.T) {
 
 			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "received non-200 response: 500")
 		})
 	})
 
@@ -147,7 +147,7 @@ func TestWhenAddingFile(t *testing.T) {
 
 			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "failed to decode response")
 		})
 	})
 }

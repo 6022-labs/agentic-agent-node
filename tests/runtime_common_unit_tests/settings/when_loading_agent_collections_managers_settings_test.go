@@ -19,7 +19,7 @@ func TestWhenLoadingAgentCollectionsManagersSettings(t *testing.T) {
 			"80002": {ChainId: "80002", HttpUrl: "http://amoy"},
 		}
 
-		t.Run("Should resolve a manager address and list the chain", func(t *testing.T) {
+		t.Run("Should resolve a manager address", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewAgentCollectionsManagersSettings(zap.NewNop(), &chains)
@@ -27,6 +27,13 @@ func TestWhenLoadingAgentCollectionsManagersSettings(t *testing.T) {
 			addr, ok := result.AddressFor("80002")
 			assert.True(t, ok)
 			assert.NotEqual(t, common.Address{}, addr)
+		})
+
+		t.Run("Should list the chain", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewAgentCollectionsManagersSettings(zap.NewNop(), &chains)
+
 			assert.Equal(t, []string{"80002"}, result.ChainIds())
 		})
 	})

@@ -42,7 +42,8 @@ func (c *PaymentRuleController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.ListPaymentRulesResponse
-// @Failure 500 {object} fiber.Map "list_payment_rules_failed"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 500 {object} errors.InternalError "policy_failed or list_failed"
 // @Router /internal/config/payment-policy/rules [get]
 func (c *PaymentRuleController) List(ctx fiber.Ctx) error {
 	resp, err := c.listPaymentRules.Execute(ctx.Context())
@@ -60,7 +61,8 @@ func (c *PaymentRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentRuleRequest true "payment rule"
 // @Success 200 {object} responses.PaymentRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "create_payment_rule_failed"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 500 {object} errors.InternalError "policy_failed or create_failed"
 // @Router /internal/config/payment-policy/rules [post]
 func (c *PaymentRuleController) Create(ctx fiber.Ctx) error {
 	body := new(requests.SavePaymentRuleRequest)
@@ -83,8 +85,9 @@ func (c *PaymentRuleController) Create(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentRuleRequest true "payment rule"
 // @Success 200 {object} responses.PaymentRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "update_payment_rule_failed"
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 500 {object} errors.InternalError "policy_failed or update_failed"
 // @Router /internal/config/payment-policy/rules/{id} [put]
 func (c *PaymentRuleController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdatePaymentRuleRequest)
@@ -106,8 +109,9 @@ func (c *PaymentRuleController) Update(ctx fiber.Ctx) error {
 // @Tags Internal
 // @Param id path string true "rule id"
 // @Success 204
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "delete_payment_rule_failed"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
+// @Failure 500 {object} errors.InternalError "delete_failed"
 // @Router /internal/config/payment-policy/rules/{id} [delete]
 func (c *PaymentRuleController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeletePaymentRuleRequest)

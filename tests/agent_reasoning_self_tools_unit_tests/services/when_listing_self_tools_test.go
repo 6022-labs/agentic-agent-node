@@ -65,7 +65,7 @@ func TestWhenListingSelfTools(t *testing.T) {
 	t.Run("Given two tools register the same name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should keep the first and list it once", func(t *testing.T) {
+		t.Run("Should list a single entry", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingSelfToolsBeforeEach(t, "get_registration", "get_registration")

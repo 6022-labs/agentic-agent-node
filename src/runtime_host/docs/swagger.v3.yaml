@@ -54,15 +54,19 @@ components:
         message:
           type: string
       type: object
+    errors.UnavailableError:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      type: object
     errors.ValidationError:
       properties:
         field:
           type: string
         message:
           type: string
-      type: object
-    fiber.Map:
-      additionalProperties: {}
       type: object
     requests.AppendConversationMessagesRequest:
       properties:
@@ -696,6 +700,7 @@ paths:
         name: chainId
         required: true
         schema:
+          form: chainId
           type: string
       responses:
         "200":
@@ -708,13 +713,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: chain_id_required
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: internal_error
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: collections_read_failed
       summary: List agent collections
       tags:
@@ -732,8 +743,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: guidance_lookup_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: guidance_lookup_failed or agent_lookup_failed
       summary: Get agent guidance
       tags:
       - Internal
@@ -756,12 +767,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.AgentGuidanceResponse'
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: guidance_update_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: guidance_update_failed or agent_lookup_failed
       summary: Set agent guidance
       tags:
       - Internal
@@ -778,8 +795,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: draft_not_found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed, state_lookup_failed, agent_addresses_lookup_failed
       summary: Get agent registration draft
       tags:
       - Internal
@@ -823,6 +846,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed, agent_save_failed or image_generation_failed
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: collection_check_failed, wallet_not_ready or image_upload_failed
       summary: Save agent registration draft
       tags:
       - Internal
@@ -835,12 +870,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.EnsInfoResponse'
           description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: draft_not_found
         "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.ConflictError'
           description: not_minted
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed
       summary: Get ENS calldata
       tags:
       - Internal
@@ -857,8 +904,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.ConflictError'
           description: not_minted
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed, state_lookup_failed or ens_reconcile_failed
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: ens_read_failed
       summary: Check ENS status
       tags:
       - Internal
@@ -875,8 +934,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: draft_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: owner_missing
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed or agent_addresses_lookup_failed
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: collection_read_failed
       summary: Get mint calldata
       tags:
       - Internal
@@ -893,8 +970,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: draft_not_found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: agent_lookup_failed, state_lookup_failed or mint_reconcile_failed
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: chain_read_failed
       summary: Check mint status
       tags:
       - Internal
@@ -913,8 +1002,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: draft_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: owner_missing
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.InternalError'
+          description: self_mint_failed, self_ens_failed or mint_reconcile_failed
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: chain_read_failed
       summary: Self mint + ENS register
       tags:
       - Internal
@@ -931,13 +1038,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: identity_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.InternalError'
           description: soul_lookup_failed
       summary: Get agent soul
       tags:
@@ -974,7 +1081,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.InternalError'
           description: authorize_failed
       summary: Internal authorize
       tags:
@@ -1000,8 +1107,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: delete_llm_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: delete_failed or agent_lookup_failed
       summary: Internal delete LLM connection
       tags:
       - Internal
@@ -1018,13 +1125,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: not_configured
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: get_llm_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: get_failed or agent_lookup_failed
       summary: Internal get LLM connection
       tags:
       - Internal
@@ -1057,8 +1164,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: setup_llm_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: setup_failed or agent_lookup_failed
       summary: Internal setup LLM connection
       tags:
       - Internal
@@ -1084,12 +1191,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: validate_llm_connection_failed
       summary: Internal validate LLM connection
       tags:
       - Internal
@@ -1106,8 +1207,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: list_mcp_connections_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: list_failed or agent_lookup_failed
       summary: Internal list MCP connections
       tags:
       - Internal
@@ -1136,12 +1237,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: mcp_connection_name_taken
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: create_mcp_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: create_failed, mcp_connection_lookup_failed or agent_lookup_failed
       summary: Internal create MCP connection
       tags:
       - Internal
@@ -1167,8 +1274,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: delete_mcp_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: delete_failed or agent_lookup_failed
       summary: Internal delete MCP connection
       tags:
       - Internal
@@ -1198,13 +1305,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: mcp_connection_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: get_mcp_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: get_failed or agent_lookup_failed
       summary: Internal get MCP connection
       tags:
       - Internal
@@ -1245,13 +1352,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: mcp_connection_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: mcp_connection_name_taken
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: update_mcp_connection_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: update_failed, mcp_connection_lookup_failed or agent_lookup_failed
       summary: Internal update MCP connection
       tags:
       - Internal
@@ -1286,13 +1399,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: mcp_connection_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: list_mcp_server_tools_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: list_mcp_server_tools_failed or agent_lookup_failed
       summary: Internal discover MCP server tools
       tags:
       - Internal
@@ -1317,8 +1430,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: delete_payment_policy_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: delete_failed
       summary: Internal delete payment policy
       tags:
       - Internal
@@ -1330,12 +1443,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.PaymentPolicyResponse'
           description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: get_payment_policy_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: policy_failed
       summary: Internal get payment policy
       tags:
       - Internal
@@ -1348,12 +1467,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.ListPaymentRulesResponse'
           description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: list_payment_rules_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: policy_failed or list_failed
       summary: Internal list payment rules
       tags:
       - Internal
@@ -1382,12 +1507,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: create_payment_rule_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: policy_failed or create_failed
       summary: Internal create payment rule
       tags:
       - Internal
@@ -1403,18 +1534,24 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
         "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: rule_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: delete_payment_rule_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: delete_failed
       summary: Internal delete payment rule
       tags:
       - Internal
@@ -1455,13 +1592,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: rule_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: update_payment_rule_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: policy_failed or update_failed
       summary: Internal update payment rule
       tags:
       - Internal
@@ -1478,8 +1621,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: list_self_tools_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: list_failed or agent_lookup_failed
       summary: Internal list self tools
       tags:
       - Internal
@@ -1521,13 +1664,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: self_tool_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: update_self_tool_failed
+                $ref: '#/components/schemas/errors.InternalError'
+          description: get_failed, update_failed or agent_lookup_failed
       summary: Internal update self tool
       tags:
       - Internal
@@ -1568,7 +1711,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.InternalError'
-          description: list_failed
+          description: list_failed or internal_error
       security:
       - CallerId: []
       summary: Internal list conversations
@@ -1717,7 +1860,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: conversation_not_found
         "500":
           content:
             application/json:
@@ -1774,13 +1917,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: conversation_not_found
         "409":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: Conflict
+          description: agent_not_minted
         "500":
           content:
             application/json:
@@ -1807,13 +1950,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.NotFoundError'
           description: identity_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.InternalError'
           description: identity_lookup_failed
       summary: Internal identity lookup
       tags:
@@ -1844,13 +1987,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
-          description: card
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.InternalError'
           description: agent_card_signing_failed
       summary: Sign an agent card
       tags:
@@ -1866,13 +2009,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.ConflictError'
           description: identity_not_found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.InternalError'
           description: ens_publish_failed
       summary: Re-publish ENS runtime records
       tags:
@@ -1914,7 +2057,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: Conflict
+          description: conversation_unavailable or agent_not_minted
         "500":
           content:
             application/json:

@@ -42,6 +42,49 @@ func WhenLoadingX402ConfigBeforeEach(t *testing.T) *WhenLoadingX402ConfigTesting
 func TestWhenLoadingX402Config(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the config lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().
+				GetByRuleId(gomock.Any(), gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
+		}
+
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenLoadingX402ConfigBeforeEach(t)
+			initSuite(suite)
+
+			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
+
+			assert.ErrorIs(t, err, assert.AnError)
+			assert.Nil(t, raw)
+		})
+	})
+
+	t.Run("Given the rule has no config", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
+			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+		}
+
+		t.Run("Should return nil", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenLoadingX402ConfigBeforeEach(t)
+			initSuite(suite)
+
+			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
+
+			assert.NoError(t, err)
+			assert.Nil(t, raw)
+		})
+	})
+
 	t.Run("Given the rule has a config", func(t *testing.T) {
 		t.Parallel()
 
@@ -66,49 +109,6 @@ func TestWhenLoadingX402Config(t *testing.T) {
 			assert.NoError(t, config.Parse(raw))
 			assert.Equal(t, row.Network, config.Network)
 			assert.Equal(t, []string{".*"}, config.AddressPatterns)
-		})
-	})
-
-	t.Run("Given the rule has no config", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
-		}
-
-		t.Run("Should return nil", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenLoadingX402ConfigBeforeEach(t)
-			initSuite(suite)
-
-			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
-
-			assert.NoError(t, err)
-			assert.Nil(t, raw)
-		})
-	})
-
-	t.Run("Given the repository fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
-			suite.mockConfigRepository.EXPECT().
-				GetByRuleId(gomock.Any(), gomock.Any()).
-				Return(nil, assert.AnError).
-				Times(1)
-		}
-
-		t.Run("Should return the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenLoadingX402ConfigBeforeEach(t)
-			initSuite(suite)
-
-			raw, err := suite.sut.LoadConfig(context.Background(), uuid.New())
-
-			assert.Error(t, err)
-			assert.Nil(t, raw)
 		})
 	})
 }

@@ -2,7 +2,6 @@ package configurations
 
 import (
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
-	knowledge_enums "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	knowledge_repositories "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	payment_repositories "github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
@@ -11,8 +10,6 @@ import (
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_db/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
@@ -26,7 +23,7 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	}
 	if err := container.Provide(
 		func(databaseSettings *settings.DatabaseSettings) *metrics.DbQueryMetrics {
-			return metrics.NewDbQueryMetrics(dbSystemName(databaseSettings.Driver))
+			return metrics.NewDbQueryMetrics(databaseSettings.Driver)
 		},
 		dig.As(new(metrics_interfaces.DbQueryMetricsInterface)),
 	); err != nil {
@@ -128,18 +125,4 @@ func newDatabaseClient(
 		logger.Fatal("failed to migrate runtime database", zap.Error(err))
 	}
 	return client
-}
-
-// dbSystemName maps the configured driver to its semconv db.system.name value.
-func dbSystemName(driver knowledge_enums.DatabaseDriver) attribute.KeyValue {
-	switch driver {
-	case knowledge_enums.DatabaseDriverMySQL:
-		return semconv.DBSystemNameMySQL
-	case knowledge_enums.DatabaseDriverMariaDB:
-		return semconv.DBSystemNameMariaDB
-	case knowledge_enums.DatabaseDriverSqlite:
-		return semconv.DBSystemNameSQLite
-	default:
-		return semconv.DBSystemNamePostgreSQL
-	}
 }

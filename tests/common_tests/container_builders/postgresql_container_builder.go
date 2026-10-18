@@ -81,9 +81,7 @@ func (b *PostgresContainerBuilder) stop() {
 	postgresContainer = nil
 }
 
-// Create returns (dbName, connectionString) for a freshly-created scratch DB
-// inside the shared container. Each test gets its own DB so they can run in
-// parallel without stepping on each other's schema.
+// Create returns (dbName, connectionString) for a scratch DB in the shared container, so tests run in parallel.
 func (b *PostgresContainerBuilder) Create() (string, string) {
 	dnsTemplate := b.start()
 	mainDsn := fmt.Sprintf(dnsTemplate, "postgres")

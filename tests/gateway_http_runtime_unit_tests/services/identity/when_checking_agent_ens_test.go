@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,80 @@ func WhenCheckingAgentEnsBeforeEach(t *testing.T) *WhenCheckingAgentEnsTestingSu
 func TestWhenCheckingAgentEns(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingAgentEnsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CheckEns(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingAgentEnsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CheckEns(context.Background())
+
+			var target *apperrors.ConflictError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingAgentEnsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CheckEns(context.Background())
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime returns the ENS status", func(t *testing.T) {
 		t.Parallel()
 
@@ -57,31 +132,6 @@ func TestWhenCheckingAgentEns(t *testing.T) {
 			if assert.NotNil(t, payload) {
 				assert.Equal(t, "published", payload.EnsStatus)
 			}
-		})
-	})
-
-	t.Run("Given the runtime fails to check the ENS status", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"boom"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCheckingAgentEnsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.CheckEns(context.Background())
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

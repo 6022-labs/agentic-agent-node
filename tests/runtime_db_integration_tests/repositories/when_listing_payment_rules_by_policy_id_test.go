@@ -66,6 +66,7 @@ func WhenListingPaymentRulesByPolicyIdBeforeEach(
 }
 
 func WhenListingPaymentRulesByPolicyIdAfterEach(suite *WhenListingPaymentRulesByPolicyIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

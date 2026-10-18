@@ -55,7 +55,7 @@ func WhenReadingKvV1SecretAfterEach(suite *WhenReadingKvV1SecretTestingSuite) {
 func TestWhenReadingKvV1Secret(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a key that has not been written", func(t *testing.T) {
+	t.Run("Given no key exists", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return ErrSecretNotFound", func(t *testing.T) {

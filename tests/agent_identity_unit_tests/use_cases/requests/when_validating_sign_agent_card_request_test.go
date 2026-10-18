@@ -11,31 +11,15 @@ import (
 func TestWhenValidatingSignAgentCardRequest(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a card object without a signatures member", func(t *testing.T) {
+	t.Run("Given an absent card", func(t *testing.T) {
 		t.Parallel()
-		req := &requests.SignAgentCardRequest{Card: []byte(`{"name":"hermes","protocol":"6022"}`)}
+		req := &requests.SignAgentCardRequest{}
 
-		t.Run("Should pass validation", func(t *testing.T) {
+		t.Run("Should reject it rather than sign nothing", func(t *testing.T) {
 			t.Parallel()
-
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given a card that already carries a signatures member", func(t *testing.T) {
-		t.Parallel()
-		req := &requests.SignAgentCardRequest{
-			Card: []byte(`{"name":"hermes","signatures":[{"protected":"x","signature":"y"}]}`),
-		}
-
-		t.Run("Should reject it, since the spec excludes that member from the signed content", func(t *testing.T) {
-			t.Parallel()
-
-			err := req.ValidateAndSanitize()
 
 			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "card", validationErr.Field)
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
 		})
 	})
 
@@ -43,7 +27,7 @@ func TestWhenValidatingSignAgentCardRequest(t *testing.T) {
 		t.Parallel()
 		req := &requests.SignAgentCardRequest{Card: []byte(`["not","an","object"]`)}
 
-		t.Run("Should reject with a validation error on the card field", func(t *testing.T) {
+		t.Run("Should reject on the card field", func(t *testing.T) {
 			t.Parallel()
 
 			err := req.ValidateAndSanitize()
@@ -66,15 +50,31 @@ func TestWhenValidatingSignAgentCardRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an absent card", func(t *testing.T) {
+	t.Run("Given a card that already carries a signatures member", func(t *testing.T) {
 		t.Parallel()
-		req := &requests.SignAgentCardRequest{}
+		req := &requests.SignAgentCardRequest{
+			Card: []byte(`{"name":"hermes","signatures":[{"protected":"x","signature":"y"}]}`),
+		}
 
-		t.Run("Should reject it rather than sign nothing", func(t *testing.T) {
+		t.Run("Should reject it, since the spec excludes that member from the signed content", func(t *testing.T) {
 			t.Parallel()
 
+			err := req.ValidateAndSanitize()
+
 			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "card", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a card object without a signatures member", func(t *testing.T) {
+		t.Parallel()
+		req := &requests.SignAgentCardRequest{Card: []byte(`{"name":"hermes","protocol":"6022"}`)}
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

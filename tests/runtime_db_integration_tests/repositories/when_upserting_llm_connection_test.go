@@ -54,6 +54,7 @@ func WhenUpsertingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenUpserting
 }
 
 func WhenUpsertingLLMConnectionAfterEach(suite *WhenUpsertingLLMConnectionTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -67,7 +68,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 			t.Run("Given no row exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should insert and return the new connection with a generated Id", func(t *testing.T) {
+				t.Run("Should return the new connection with a generated Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
@@ -84,9 +85,27 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
+				})
+
+				t.Run("Should store a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
+					defer WhenUpsertingLLMConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
+						WithModel("gpt-4o").
+						WithBaseUrl("https://api.openai.com/v1").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)
+
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -94,7 +113,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 			t.Run("Given a row already exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should update the existing row in place and preserve Id", func(t *testing.T) {
+				t.Run("Should preserve its Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
@@ -107,7 +126,6 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 						WithModel("gpt-4o").
 						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
 						Build())
-
 					assert.NoError(t, err)
 
 					second, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
@@ -119,8 +137,83 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
+				})
+
+				t.Run("Should replace its platform", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
+					defer WhenUpsertingLLMConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
+						WithModel("gpt-4o").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformAnthropic).
+						WithModel("claude-opus-4-7").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+
+					assert.NoError(t, err)
 					assert.Equal(t, reasoning_enums.LLMConnectionPlatformAnthropic, second.Platform)
+				})
+
+				t.Run("Should replace its model", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
+					defer WhenUpsertingLLMConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
+						WithModel("gpt-4o").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformAnthropic).
+						WithModel("claude-opus-4-7").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+
+					assert.NoError(t, err)
 					assert.Equal(t, "claude-opus-4-7", second.Model)
+				})
+
+				t.Run("Should keep a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingLLMConnectionBeforeEach(tc)
+					defer WhenUpsertingLLMConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
+						WithModel("gpt-4o").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
+						WithAgentId(agentId).
+						WithPlatform(reasoning_enums.LLMConnectionPlatformAnthropic).
+						WithModel("claude-opus-4-7").
+						WithSetupStatus(reasoning_enums.LLMConnectionSetupStatusEstablished).
+						Build())
+
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)

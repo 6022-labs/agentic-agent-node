@@ -99,7 +99,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			_, err := suite.sut.Execute(
 				appendingCallerCtx,
 				&requests.AppendConversationMessagesRequest{
-					ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+					ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 				},
 			)
 
@@ -119,7 +119,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			_, err := suite.sut.Execute(
 				context.Background(),
 				&requests.AppendConversationMessagesRequest{
-					ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+					ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 					Messages: []requests.ConversationMessageInput{
 						{Role: "user", Content: "hi", Timestamp: now},
 					},
@@ -136,7 +136,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -146,7 +146,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down")).Times(1)
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -164,7 +164,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -174,7 +174,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -192,7 +192,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -221,7 +221,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -234,7 +234,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(false, errors.New("db down"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -248,11 +248,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation does not exist", func(t *testing.T) {
+	t.Run("Given the conversation is new", func(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -282,7 +282,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
 		}
 
-		t.Run("Should create it for the caller before appending", func(t *testing.T) {
+		t.Run("Should create it for the caller", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -298,7 +298,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -326,7 +326,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -340,7 +340,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -354,11 +354,11 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation belongs to another caller", func(t *testing.T) {
+	t.Run("Given another caller owns the conversation", func(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},
@@ -424,7 +424,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Timestamp: now},
 			},
@@ -441,7 +441,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return InternalError carrying the appender message", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the appender message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -459,7 +459,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		t.Parallel()
 
 		req := &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.ConversationMessageInput{
 				{Role: "user", Content: "hi", Timestamp: now},
 			},

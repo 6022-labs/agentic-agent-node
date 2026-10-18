@@ -16,8 +16,7 @@ type CompiledContract struct {
 	Bytecode []byte
 }
 
-// Parse reads a trimmed artifact (`{contractName, abi, bytecode}`); each test tree
-// embeds and owns the artifacts it needs.
+// Parse reads a trimmed artifact (`{contractName, abi, bytecode}`); each test tree embeds its own.
 func Parse(raw []byte) (*CompiledContract, error) {
 	var artifact struct {
 		Abi      json.RawMessage `json:"abi"`

@@ -37,7 +37,7 @@ func WhenGettingMCPHeaderAuthSecretBeforeEach(t *testing.T) *WhenGettingMCPHeade
 func TestWhenGettingMCPHeaderAuthSecret(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given no header value has been saved", func(t *testing.T) {
+	t.Run("Given no header value exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingMCPHeaderAuthSecretTestingSuite, connectionId uuid.UUID) {
@@ -62,7 +62,7 @@ func TestWhenGettingMCPHeaderAuthSecret(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a header value has been saved", func(t *testing.T) {
+	t.Run("Given a header value exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingMCPHeaderAuthSecretTestingSuite, connectionId uuid.UUID) {

@@ -87,7 +87,7 @@ func TestWhenProvidingRouting(t *testing.T) {
 
 			err := suite.sut.RoutingProvideWithoutResponse(&models.ExternalRoutingProvideRequest{Arg: "QmX"})
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "received non-200 response: 500")
 		})
 	})
 }

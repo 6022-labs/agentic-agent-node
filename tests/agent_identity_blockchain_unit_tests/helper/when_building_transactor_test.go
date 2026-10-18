@@ -52,7 +52,7 @@ func TestWhenBuildingTransactor(t *testing.T) {
 
 			_, err := helper.Transactor("not-a-key", 1)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "invalid wallet private key")
 		})
 	})
 }

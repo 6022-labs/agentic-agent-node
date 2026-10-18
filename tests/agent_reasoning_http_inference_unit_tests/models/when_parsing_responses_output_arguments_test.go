@@ -28,35 +28,21 @@ func TestWhenParsingResponsesOutputArguments(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty arguments string", func(t *testing.T) {
+	t.Run("Given a blank arguments string", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return a non-nil empty map without error", func(t *testing.T) {
 			t.Parallel()
 
-			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("")}
+			for _, value := range []string{"", "   "} {
+				output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr(value)}
 
-			args, err := output.ParsedArguments()
+				args, err := output.ParsedArguments()
 
-			assert.NoError(t, err)
-			assert.NotNil(t, args)
-			assert.Empty(t, args)
-		})
-	})
-
-	t.Run("Given a whitespace-only arguments string", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a non-nil empty map without error", func(t *testing.T) {
-			t.Parallel()
-
-			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("   ")}
-
-			args, err := output.ParsedArguments()
-
-			assert.NoError(t, err)
-			assert.NotNil(t, args)
-			assert.Empty(t, args)
+				assert.NoError(t, err)
+				assert.NotNil(t, args)
+				assert.Empty(t, args)
+			}
 		})
 	})
 
@@ -94,15 +80,24 @@ func TestWhenParsingResponsesOutputArguments(t *testing.T) {
 	t.Run("Given a malformed JSON object", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a nil map and an error", func(t *testing.T) {
+		t.Run("Should return a nil map", func(t *testing.T) {
 			t.Parallel()
 
 			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
 
-			args, err := output.ParsedArguments()
+			args, _ := output.ParsedArguments()
 
-			assert.Error(t, err)
 			assert.Nil(t, args)
+		})
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
+
+			_, err := output.ParsedArguments()
+
+			assert.ErrorContains(t, err, "invalid character")
 		})
 	})
 }

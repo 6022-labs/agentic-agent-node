@@ -46,8 +46,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite := WhenUpdatingConversationBeforeEach(t)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "  "},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "  "},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			var validationErr *apperrors.ValidationError
@@ -55,7 +55,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the client fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
@@ -64,20 +64,46 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate the client error", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				Return(nil, apperrors.NewValidationError("name", "cannot be empty"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
+			})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
 		})
 	})
 
@@ -90,15 +116,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
 		}
 
-		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnauthorizedError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			var unauthorizedErr *apperrors.UnauthorizedError
@@ -116,20 +142,72 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(nil, apperrors.NewNotFoundError("conversation_not_found", "conversation not found"))
 		}
 
-		t.Run("Should surface the not-found unchanged", func(t *testing.T) {
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "ghost"},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "ghost"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				Return(nil, apperrors.NewConflictError("conversation_name_taken", "already used"))
+		}
+
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
+			})
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
+			})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 
@@ -161,8 +239,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			assert.NoError(t, err)

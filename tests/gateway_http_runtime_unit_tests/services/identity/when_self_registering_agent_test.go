@@ -34,6 +34,105 @@ func WhenSelfRegisteringAgentBeforeEach(t *testing.T) *WhenSelfRegisteringAgentT
 func TestWhenSelfRegisteringAgent(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Self(context.Background())
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Self(context.Background())
+
+			var target *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Self(context.Background())
+
+			var target *apperrors.ConflictError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Self(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime accepts the self-registration", func(t *testing.T) {
 		t.Parallel()
 
@@ -58,28 +157,6 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 			if assert.NotNil(t, payload) {
 				assert.Equal(t, "submitted", payload.MintStatus)
 			}
-		})
-	})
-
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSelfRegisteringAgentBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Self(context.Background())
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

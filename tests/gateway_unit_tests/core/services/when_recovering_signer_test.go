@@ -107,7 +107,7 @@ func TestWhenRecoveringSigner(t *testing.T) {
 			suite := WhenRecoveringSignerBeforeEach()
 
 			_, err := suite.sut.Recover("msg", "0xnothex")
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "not valid hex")
 		})
 
 		t.Run("Should reject wrong-length signature", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestWhenRecoveringSigner(t *testing.T) {
 			suite := WhenRecoveringSignerBeforeEach()
 
 			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(make([]byte, 10)))
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "signature length must be 65 bytes")
 		})
 
 		t.Run("Should reject invalid recovery id", func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestWhenRecoveringSigner(t *testing.T) {
 			bad := make([]byte, 65)
 			bad[64] = 99
 			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(bad))
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "invalid recovery id")
 		})
 	})
 }

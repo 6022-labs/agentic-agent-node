@@ -94,7 +94,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		Attributes: map[string]string{"role": "expert", "trait": "value"},
 	}
 
-	t.Run("Given no agent exists in the DB", func(t *testing.T) {
+	t.Run("Given no agent row exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
@@ -152,7 +152,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 				Return(savedState, nil)
 		}
 
-		t.Run("Should recover the full identity in place and confirm ENS", func(t *testing.T) {
+		t.Run("Should recover the full identity in place", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringAgentFromChainBeforeEach(t)
@@ -171,6 +171,18 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			assert.Equal(t, "alice.mycollection.80002.6022.eth", lo.FromPtr(capturedAgent.EnsDomain))
 			assert.Equal(t, onChainInfo.Images, capturedAgent.Images)
 			assert.Equal(t, onChainInfo.Attributes, capturedAgent.Attributes)
+		})
+
+		t.Run("Should confirm ENS", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringAgentFromChainBeforeEach(t)
+			initSuite(suite)
+
+			recovered, err := suite.sut.Recover(context.Background())
+
+			assert.NoError(t, err)
+			assert.True(t, recovered)
 		})
 	})
 
@@ -202,7 +214,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 				Return(false, nil)
 		}
 
-		t.Run("Should recover without confirming ENS", func(t *testing.T) {
+		t.Run("Should recover the identity", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringAgentFromChainBeforeEach(t)
@@ -228,7 +240,7 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 				Return(common.Address{}, uint64(0), "", nil)
 		}
 
-		t.Run("Should report nothing recovered without writing the agent", func(t *testing.T) {
+		t.Run("Should report nothing recovered", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringAgentFromChainBeforeEach(t)

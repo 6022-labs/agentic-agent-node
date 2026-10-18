@@ -37,7 +37,7 @@ func (c *SelfToolConfigController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.SelfToolListResponse
-// @Failure 500 {object} fiber.Map "list_self_tools_failed"
+// @Failure 500 {object} errors.InternalError "list_failed or agent_lookup_failed"
 // @Router /internal/config/self-tools [get]
 func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
 	resp, err := c.listSelfTools.Execute(ctx.Context())
@@ -56,8 +56,8 @@ func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateSelfToolRequest true "self tool"
 // @Success 200 {object} responses.SelfToolResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "update_self_tool_failed"
+// @Failure 404 {object} errors.NotFoundError "self_tool_not_found"
+// @Failure 500 {object} errors.InternalError "get_failed, update_failed or agent_lookup_failed"
 // @Router /internal/config/self-tools/{id} [put]
 func (c *SelfToolConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateSelfToolRequest)

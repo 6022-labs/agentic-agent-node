@@ -64,6 +64,7 @@ func WhenUpdatingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenUpdatingPaym
 }
 
 func WhenUpdatingPaymentRuleAfterEach(suite *WhenUpdatingPaymentRuleTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -77,7 +78,7 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 			t.Run("Given the rule exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should replace its fields and keep identity and position", func(t *testing.T) {
+				t.Run("Should replace its fields", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpdatingPaymentRuleBeforeEach(tc)
 					defer WhenUpdatingPaymentRuleAfterEach(suite)
@@ -93,7 +94,41 @@ func TestWhenUpdatingPaymentRule(t *testing.T) {
 					stored, err := suite.sut.GetById(context.Background(), rule.Id)
 					assert.NoError(t, err)
 					assert.Equal(t, "renamed", stored.Name)
+				})
+
+				t.Run("Should keep its position", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpdatingPaymentRuleBeforeEach(tc)
+					defer WhenUpdatingPaymentRuleAfterEach(suite)
+
+					rule, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					assert.NoError(t, err)
+
+					rule.Name = "renamed"
+					_, err = suite.sut.Update(context.Background(), rule)
+					assert.NoError(t, err)
+
+					stored, err := suite.sut.GetById(context.Background(), rule.Id)
+					assert.NoError(t, err)
 					assert.Equal(t, rule.Position, stored.Position)
+				})
+
+				t.Run("Should keep its policy", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpdatingPaymentRuleBeforeEach(tc)
+					defer WhenUpdatingPaymentRuleAfterEach(suite)
+
+					rule, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					assert.NoError(t, err)
+
+					rule.Name = "renamed"
+					_, err = suite.sut.Update(context.Background(), rule)
+					assert.NoError(t, err)
+
+					stored, err := suite.sut.GetById(context.Background(), rule.Id)
+					assert.NoError(t, err)
 					assert.Equal(t, suite.policy.Id, stored.PolicyId)
 				})
 			})

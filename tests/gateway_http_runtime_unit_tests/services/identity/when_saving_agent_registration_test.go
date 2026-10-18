@@ -3,6 +3,7 @@ package services_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -35,6 +36,100 @@ func WhenSavingAgentRegistrationBeforeEach(t *testing.T) *WhenSavingAgentRegistr
 
 func TestWhenSavingAgentRegistration(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{
+				CollectionAddress: "0xabc",
+				Owner:             "0xowner",
+				Name:              "bob",
+				Attributes:        map[string]string{"role": "agent"},
+				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
+			})
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{
+				CollectionAddress: "0xabc",
+				Owner:             "0xowner",
+				Name:              "bob",
+				Attributes:        map[string]string{"role": "agent"},
+				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
+			})
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{
+				CollectionAddress: "0xabc",
+				Owner:             "0xowner",
+				Name:              "bob",
+				Attributes:        map[string]string{"role": "agent"},
+				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
+			})
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
 
 	t.Run("Given the runtime saves the registration draft", func(t *testing.T) {
 		t.Parallel()
@@ -87,37 +182,6 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			if assert.NotNil(t, payload) {
 				assert.Equal(t, "bob", payload.Name)
 			}
-		})
-	})
-
-	t.Run("Given the runtime rejects the registration draft", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-					Body:         []byte(`{"code":"bad","field":"owner","message":"invalid"}`),
-				}, nil)
-		}
-
-		t.Run("Should return a ValidationError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingAgentRegistrationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Save(context.Background(), &models.ExternalSaveAgentRegistrationPayload{
-				CollectionAddress: "0xabc",
-				Owner:             "0xowner",
-				Name:              "bob",
-				Attributes:        map[string]string{"role": "agent"},
-				Image:             httpTestFileHeader(t, []byte("img"), "image/png"),
-			})
-
-			var target *apperrors.ValidationError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

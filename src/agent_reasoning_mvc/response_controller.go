@@ -31,7 +31,7 @@ func (c *ResponseController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.CreateResponseResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError
-// @Failure 409 {object} errors.ConflictError
+// @Failure 409 {object} errors.ConflictError "conversation_unavailable or agent_not_minted"
 // @Failure 500 {object} errors.InternalError "create_response_failed"
 // @Security CallerId
 // @Router /internal/responses [post]

@@ -25,8 +25,8 @@ func (c *AgentSoulController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.AgentSoulResponse
-// @Failure 404 {object} fiber.Map "identity_not_found"
-// @Failure 500 {object} fiber.Map "soul_lookup_failed"
+// @Failure 404 {object} errors.NotFoundError "identity_not_found"
+// @Failure 500 {object} errors.InternalError "soul_lookup_failed"
 // @Router /internal/agent/soul [get]
 func (c *AgentSoulController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentSoul.Execute(ctx.Context())

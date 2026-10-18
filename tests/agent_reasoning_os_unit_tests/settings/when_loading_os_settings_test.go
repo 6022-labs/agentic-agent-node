@@ -25,7 +25,7 @@ func TestWhenLoadingOsSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given nothing configured", func(t *testing.T) {
+	t.Run("Given no configuration", func(t *testing.T) {
 		t.Run("Should fall back to the default", func(t *testing.T) {
 			result := settings.NewOsSettings(zap.NewNop(), koanf.New("."))
 

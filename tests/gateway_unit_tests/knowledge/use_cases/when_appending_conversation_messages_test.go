@@ -41,7 +41,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 	request := func() *requests.AppendConversationMessagesRequest {
 		return &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 			Messages: []requests.AppendConversationMessageInput{
 				{Role: enums.MessageRoleUser, Content: "fake memory", Timestamp: now},
 			},
@@ -59,7 +59,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			_, err := suite.sut.Execute(
 				context.Background(),
 				&requests.AppendConversationMessagesRequest{
-					ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+					ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 				},
 			)
 
@@ -68,7 +68,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the client fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
@@ -77,7 +77,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate the client error", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -91,6 +91,29 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				AppendMessages(gomock.Any(), conversationId, gomock.Any()).
+				Return(nil, apperrors.NewValidationError("messages", "cannot be empty"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request())
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "messages", validationErr.Field)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -100,7 +123,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
 		}
 
-		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnauthorizedError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -123,7 +146,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
 		}
 
-		t.Run("Should surface the conflict unchanged", func(t *testing.T) {
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -146,7 +169,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, apperrors.NewNotFoundError("conversation_not_found", "conversation not found"))
 		}
 
-		t.Run("Should surface the not-found unchanged", func(t *testing.T) {
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -160,7 +183,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime rejects the append", func(t *testing.T) {
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
@@ -169,7 +192,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should surface the unavailable error unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -183,7 +206,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the client accepts the messages", func(t *testing.T) {
+	t.Run("Given the runtime accepts the messages", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
@@ -215,7 +238,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				initSuite(suite)
 
 				resp, err := suite.sut.Execute(context.Background(), &requests.AppendConversationMessagesRequest{
-					ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+					ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 					Messages: []requests.AppendConversationMessageInput{
 						{Role: enums.MessageRoleUser, Content: "fake memory", Timestamp: now},
 					},

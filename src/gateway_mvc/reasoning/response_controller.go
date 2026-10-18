@@ -44,7 +44,7 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError
 // @Failure 402 {object} x402.PaymentRequired
-// @Failure 409 {object} errors.ConflictError
+// @Failure 409 {object} errors.ConflictError "conversation_unavailable or agent_not_minted"
 // @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Router /responses [post]
 func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {

@@ -23,10 +23,10 @@ func NewHttpSelfToolConfigClient(client clients.ClientWithResponsesInterface) *H
 func (c *HttpSelfToolConfigClient) List(ctx context.Context) (*models.ExternalSelfToolListPayload, error) {
 	resp, err := c.client.GetInternalConfigSelfToolsWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalSelfToolListPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return nil, err
 	}
 	return &payload, nil

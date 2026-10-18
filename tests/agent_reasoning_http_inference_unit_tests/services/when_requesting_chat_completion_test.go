@@ -123,310 +123,6 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 	completion := &interfaces.LLMCompletion{Texts: []string{completionText}}
 	messages := []*interfaces.ChatCompletionMessage{{Role: "user", Content: "hello"}}
 
-	t.Run("Given llm connection is LibertAI", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.libertAiSettings.BaseUrl = "http://libertai.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.libertAiSettings.GetBaseUrl(),
-					apiKey,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformLibertAi).
-				WithModel("gpt-4").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is OpenAI", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.openAiSettings.BaseUrl = "http://openai.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAIResponsesStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.openAiSettings.GetBaseUrl(),
-					apiKey,
-					suite.openAiSettings.HasDirectAccessToMcp(),
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use OpenAI responses standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOpenAi).
-				WithModel("gpt-4").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is Ollama", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
-
-			suite.mockOllamaChatMessageStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					*llmConnection.BaseUrl,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use Ollama chat message standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOllama).
-				WithBaseUrl("http://ollama.api").
-				WithModel("ollama-model").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is Mistral", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mistralSettings.BaseUrl = "http://mistral.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.mistralSettings.GetBaseUrl(),
-					apiKey,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformMistralAi).
-				WithModel("mistral-7b").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is DeepSeek", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.deepSeekSettings.BaseUrl = "http://deepseek.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.deepSeekSettings.GetBaseUrl(),
-					apiKey,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformDeepseek).
-				WithModel("deepseek-7b").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is X", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.xSettings.BaseUrl = "http://x.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.xSettings.GetBaseUrl(),
-					apiKey,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformXAi).
-				WithModel("grok").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is Anthropic", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.anthropicSettings.BaseUrl = "http://anthropic.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockAnthropicMessagesStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					suite.anthropicSettings.GetBaseUrl(),
-					apiKey,
-					suite.anthropicSettings.HasDirectAccessToMcp(),
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use Anthropic messages standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformAnthropic).
-				WithModel("claude").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
-	t.Run("Given llm connection is Amazon Bedrock", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockAmazonBedrockConverseStandardChatCompletionRequester.
-				EXPECT().
-				ChatCompletion(
-					*llmConnection.BaseUrl,
-					apiKey,
-					llmConnection,
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(completion, nil)
-		}
-
-		t.Run("Should use Amazon Bedrock converse standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingChatCompletionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformAwsBedrock).
-				WithModel("anthropic.claude").
-				Build()
-			initSuite(suite, llmConnection)
-
-			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			assert.Equal(t, completion, result)
-		})
-	})
-
 	t.Run("Given the conversation exceeds the token limit", func(t *testing.T) {
 		t.Parallel()
 
@@ -477,7 +173,7 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 		})
 	})
 
-	t.Run("Given llm connection is not supported", func(t *testing.T) {
+	t.Run("Given the LLM connection is not supported", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {}
@@ -494,8 +190,312 @@ func TestWhenRequestingChatCompletion(t *testing.T) {
 			initSuite(suite, llmConnection)
 
 			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "unsupported platform")
 			assert.Nil(t, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is LibertAI", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.libertAiSettings.BaseUrl = "http://libertai.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.libertAiSettings.GetBaseUrl(),
+					apiKey,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformLibertAi).
+				WithModel("gpt-4").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is OpenAI", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.openAiSettings.BaseUrl = "http://openai.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAIResponsesStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.openAiSettings.GetBaseUrl(),
+					apiKey,
+					suite.openAiSettings.HasDirectAccessToMcp(),
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use OpenAI responses standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformOpenAi).
+				WithModel("gpt-4").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is Ollama", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
+
+			suite.mockOllamaChatMessageStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					*llmConnection.BaseUrl,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use Ollama chat message standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformOllama).
+				WithBaseUrl("http://ollama.api").
+				WithModel("ollama-model").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is Mistral", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mistralSettings.BaseUrl = "http://mistral.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.mistralSettings.GetBaseUrl(),
+					apiKey,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformMistralAi).
+				WithModel("mistral-7b").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is DeepSeek", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.deepSeekSettings.BaseUrl = "http://deepseek.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.deepSeekSettings.GetBaseUrl(),
+					apiKey,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformDeepseek).
+				WithModel("deepseek-7b").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is X", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.xSettings.BaseUrl = "http://x.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.xSettings.GetBaseUrl(),
+					apiKey,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformXAi).
+				WithModel("grok").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is Anthropic", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.anthropicSettings.BaseUrl = "http://anthropic.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockAnthropicMessagesStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					suite.anthropicSettings.GetBaseUrl(),
+					apiKey,
+					suite.anthropicSettings.HasDirectAccessToMcp(),
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use Anthropic messages standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformAnthropic).
+				WithModel("claude").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
+		})
+	})
+
+	t.Run("Given the LLM connection is Amazon Bedrock", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingChatCompletionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockAmazonBedrockConverseStandardChatCompletionRequester.
+				EXPECT().
+				ChatCompletion(
+					*llmConnection.BaseUrl,
+					apiKey,
+					llmConnection,
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(completion, nil)
+		}
+
+		t.Run("Should use Amazon Bedrock converse standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingChatCompletionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformAwsBedrock).
+				WithModel("anthropic.claude").
+				Build()
+			initSuite(suite, llmConnection)
+
+			result, err := suite.sut.ChatCompletion(context.Background(), llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, completion, result)
 		})
 	})
 }

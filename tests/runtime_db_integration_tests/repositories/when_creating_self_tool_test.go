@@ -53,6 +53,7 @@ func WhenCreatingSelfToolBeforeEach(tc *repositoryTestCase) *WhenCreatingSelfToo
 }
 
 func WhenCreatingSelfToolAfterEach(suite *WhenCreatingSelfToolTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -97,7 +98,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 			t.Run("Given the agent already has a tool with that name", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should reject the duplicate and keep the original row", func(t *testing.T) {
+				t.Run("Should reject the duplicate", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingSelfToolBeforeEach(tc)
 					defer WhenCreatingSelfToolAfterEach(suite)
@@ -125,7 +126,38 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 							WithEnabled(false).
 							Build(),
 					)
-					assert.Error(t, err)
+
+					assertUniqueViolation(t, err)
+				})
+
+				t.Run("Should keep the original row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingSelfToolBeforeEach(tc)
+					defer WhenCreatingSelfToolAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(true).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					_, _ = suite.sut.Create(
+						context.Background(),
+						model_builders.NewSelfToolBuilder().
+							WithId(uuid.Nil).
+							WithAgentId(agentId).
+							WithName("bash").
+							WithEnabled(false).
+							Build(),
+					)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.SelfTool{}).Count(&count)

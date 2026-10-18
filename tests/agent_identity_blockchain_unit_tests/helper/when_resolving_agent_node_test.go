@@ -44,11 +44,18 @@ func TestWhenResolvingAgentNode(t *testing.T) {
 			assert.Equal(t, first, second)
 		})
 
-		t.Run("Should change when the agent label changes", func(t *testing.T) {
+	})
+
+	t.Run("Given a different agent label", func(t *testing.T) {
+		t.Parallel()
+
+		parentNode := crypto.Keccak256Hash([]byte("agents.eth"))
+
+		t.Run("Should resolve another node", func(t *testing.T) {
 			t.Parallel()
 
-			node := helper.ResolveAgentNode(parentNode, chainId, collectionName, agentLabel)
-			other := helper.ResolveAgentNode(parentNode, chainId, collectionName, "other-agent")
+			node := helper.ResolveAgentNode(parentNode, 80002, "my-collection", "my-agent")
+			other := helper.ResolveAgentNode(parentNode, 80002, "my-collection", "other-agent")
 
 			assert.NotEqual(t, node, other)
 		})

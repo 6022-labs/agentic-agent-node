@@ -32,8 +32,9 @@ func (c *AgentCollectionsController) RegisterRoutes(app fiber.Router) {
 // @Produce json
 // @Param request query requests.ListAgentCollectionsRequest true "Chain id, e.g. 80002"
 // @Success 200 {object} responses.AgentCollectionsResponse
-// @Failure 400 {object} fiber.Map "chain_id_required"
-// @Failure 502 {object} fiber.Map "collections_read_failed"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} errors.InternalError "internal_error"
+// @Failure 502 {object} errors.UnavailableError "collections_read_failed"
 // @Router /internal/agent/collections [get]
 func (c *AgentCollectionsController) List(ctx fiber.Ctx) error {
 	req := &requests.ListAgentCollectionsRequest{}

@@ -222,7 +222,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 	t.Run("Given a key the caller already holds", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Given the lookup fails", func(t *testing.T) {
+		t.Run("Given the conversation lookup fails", func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Should propagate the error", func(t *testing.T) {

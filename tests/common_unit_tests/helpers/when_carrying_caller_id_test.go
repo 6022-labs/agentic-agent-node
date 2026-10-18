@@ -13,7 +13,7 @@ import (
 func TestWhenCarryingCallerId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a padded mixed-case caller id has been attached", func(t *testing.T) {
+	t.Run("Given a padded mixed-case caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should read it back trimmed and lowercased", func(t *testing.T) {
@@ -29,7 +29,7 @@ func TestWhenCarryingCallerId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a blank caller id has been attached", func(t *testing.T) {
+	t.Run("Given a blank caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should report no caller", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestWhenCarryingCallerId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no caller id has been attached", func(t *testing.T) {
+	t.Run("Given no caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should report no caller", func(t *testing.T) {

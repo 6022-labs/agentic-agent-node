@@ -75,7 +75,7 @@ func TestWhenWritingKvV1Secret(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a key that has been overwritten", func(t *testing.T) {
+	t.Run("Given a key exists with updated values", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return the latest values on Read", func(t *testing.T) {

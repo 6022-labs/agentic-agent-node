@@ -70,6 +70,31 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), conversationId, request)
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -131,6 +156,58 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"conversation_name_taken","message":"already used"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), conversationId, request)
+
+			var target *apperrors.ConflictError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), conversationId, request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
 		})
 	})
 

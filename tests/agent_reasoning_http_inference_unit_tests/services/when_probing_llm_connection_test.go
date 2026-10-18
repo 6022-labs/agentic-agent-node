@@ -110,262 +110,21 @@ func TestWhenProbingLLMConnection(t *testing.T) {
 
 	apiKey := "api-key"
 
-	t.Run("Given llm connection is LibertAI", func(t *testing.T) {
+	t.Run("Given the LLM connection is not supported", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.libertAiSettings.BaseUrl = "http://libertai.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.libertAiSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
+		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenProbingLLMConnectionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformLibertAi).
-				WithModel("gpt-4").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is OpenAI", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.openAiSettings.BaseUrl = "http://openai.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAIResponsesStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.openAiSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using OpenAI responses standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOpenAi).
-				WithModel("gpt-4").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is Ollama", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
-
-			suite.mockOllamaChatMessageStandardChatCompletionRequester.
-				EXPECT().
-				Probe(*llmConnection.BaseUrl, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using Ollama chat message standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOllama).
-				WithBaseUrl("http://ollama.api").
-				WithModel("ollama-model").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is Mistral", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mistralSettings.BaseUrl = "http://mistral.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.mistralSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformMistralAi).
-				WithModel("mistral-large").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is DeepSeek", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.deepSeekSettings.BaseUrl = "http://deepseek.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.deepSeekSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformDeepseek).
-				WithModel("deepseek-chat").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is X", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.xSettings.BaseUrl = "http://x.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockOpenAICompletionsStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.xSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformXAi).
-				WithModel("grok").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is Anthropic", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.anthropicSettings.BaseUrl = "http://anthropic.api"
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockAnthropicMessagesStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.anthropicSettings.GetBaseUrl(), apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using Anthropic messages standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformAnthropic).
+				WithPlatform("unsupported").
 				WithModel("claude").
 				Build()
-			initSuite(suite, llmConnection)
 
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given llm connection is Amazon Bedrock", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
-
-			suite.mockAmazonBedrockConverseStandardChatCompletionRequester.
-				EXPECT().
-				Probe(*llmConnection.BaseUrl, apiKey, llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe using Amazon Bedrock converse standard", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformAwsBedrock).
-				WithModel("anthropic.claude").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given an api key is provided", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
-			suite.openAiSettings.BaseUrl = "http://openai.api"
-
-			suite.mockOpenAIResponsesStandardChatCompletionRequester.
-				EXPECT().
-				Probe(suite.openAiSettings.GetBaseUrl(), "provided-key", llmConnection).
-				Return(nil)
-		}
-
-		t.Run("Should probe with that key without reading vault", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProbingLLMConnectionBeforeEach(t)
-
-			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform(enums.LLMConnectionPlatformOpenAi).
-				WithModel("gpt-4").
-				Build()
-			initSuite(suite, llmConnection)
-
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "provided-key")
-			assert.NoError(t, err)
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, apiKey)
+			assert.ErrorContains(t, err, "unsupported platform")
 		})
 	})
 
@@ -418,21 +177,262 @@ func TestWhenProbingLLMConnection(t *testing.T) {
 		})
 	})
 
-	t.Run("Given llm connection is not supported", func(t *testing.T) {
+	t.Run("Given an api key is provided", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.openAiSettings.BaseUrl = "http://openai.api"
+
+			suite.mockOpenAIResponsesStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.openAiSettings.GetBaseUrl(), "provided-key", llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe with that key without reading vault", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenProbingLLMConnectionBeforeEach(t)
 
 			llmConnection := model_builders.NewLLMConnectionBuilder().
-				WithPlatform("unsupported").
+				WithPlatform(enums.LLMConnectionPlatformOpenAi).
+				WithModel("gpt-4").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "provided-key")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is LibertAI", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.libertAiSettings.BaseUrl = "http://libertai.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.libertAiSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformLibertAi).
+				WithModel("gpt-4").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is OpenAI", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.openAiSettings.BaseUrl = "http://openai.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAIResponsesStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.openAiSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using OpenAI responses standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformOpenAi).
+				WithModel("gpt-4").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is Ollama", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
+
+			suite.mockOllamaChatMessageStandardChatCompletionRequester.
+				EXPECT().
+				Probe(*llmConnection.BaseUrl, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using Ollama chat message standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformOllama).
+				WithBaseUrl("http://ollama.api").
+				WithModel("ollama-model").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is Mistral", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mistralSettings.BaseUrl = "http://mistral.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.mistralSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformMistralAi).
+				WithModel("mistral-large").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is DeepSeek", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.deepSeekSettings.BaseUrl = "http://deepseek.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.deepSeekSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformDeepseek).
+				WithModel("deepseek-chat").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is X", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.xSettings.BaseUrl = "http://x.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockOpenAICompletionsStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.xSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using OpenAI completions standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformXAi).
+				WithModel("grok").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is Anthropic", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.anthropicSettings.BaseUrl = "http://anthropic.api"
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockAnthropicMessagesStandardChatCompletionRequester.
+				EXPECT().
+				Probe(suite.anthropicSettings.GetBaseUrl(), apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using Anthropic messages standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformAnthropic).
 				WithModel("claude").
 				Build()
+			initSuite(suite, llmConnection)
 
-			err := suite.sut.ProbeConnection(context.Background(), llmConnection, apiKey)
-			assert.ErrorContains(t, err, "unsupported platform")
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the LLM connection is Amazon Bedrock", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenProbingLLMConnectionTestingSuite, llmConnection *models.LLMConnection) {
+			suite.mockLlmSecretStorage.EXPECT().Get(gomock.Any()).Return(apiKey, true, nil)
+
+			suite.mockAmazonBedrockConverseStandardChatCompletionRequester.
+				EXPECT().
+				Probe(*llmConnection.BaseUrl, apiKey, llmConnection).
+				Return(nil)
+		}
+
+		t.Run("Should probe using Amazon Bedrock converse standard", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProbingLLMConnectionBeforeEach(t)
+
+			llmConnection := model_builders.NewLLMConnectionBuilder().
+				WithPlatform(enums.LLMConnectionPlatformAwsBedrock).
+				WithModel("anthropic.claude").
+				Build()
+			initSuite(suite, llmConnection)
+
+			err := suite.sut.ProbeConnection(context.Background(), llmConnection, "")
+			assert.NoError(t, err)
 		})
 	})
 }

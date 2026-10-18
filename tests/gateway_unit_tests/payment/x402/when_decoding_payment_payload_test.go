@@ -50,7 +50,7 @@ func TestWhenDecodingPaymentPayload(t *testing.T) {
 			payload, err := x402.DecodePaymentPayload("not-base64!!")
 
 			assert.Nil(t, payload)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "not valid base64")
 		})
 	})
 
@@ -64,7 +64,7 @@ func TestWhenDecodingPaymentPayload(t *testing.T) {
 			payload, err := x402.DecodePaymentPayload(header)
 
 			assert.Nil(t, payload)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "not valid JSON")
 		})
 	})
 

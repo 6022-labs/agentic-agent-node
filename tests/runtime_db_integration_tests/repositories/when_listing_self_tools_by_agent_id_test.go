@@ -52,6 +52,7 @@ func WhenListingSelfToolsByAgentIdBeforeEach(tc *repositoryTestCase) *WhenListin
 }
 
 func WhenListingSelfToolsByAgentIdAfterEach(suite *WhenListingSelfToolsByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

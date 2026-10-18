@@ -77,6 +77,17 @@
                 },
                 "type": "object"
             },
+            "errors.UnavailableError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "errors.ValidationError": {
                 "properties": {
                     "field": {
@@ -86,10 +97,6 @@
                         "type": "string"
                     }
                 },
-                "type": "object"
-            },
-            "fiber.Map": {
-                "additionalProperties": {},
                 "type": "object"
             },
             "requests.AppendConversationMessagesRequest": {
@@ -1049,6 +1056,7 @@
                         "name": "chainId",
                         "required": true,
                         "schema": {
+                            "form": "chainId",
                             "type": "string"
                         }
                     }
@@ -1068,17 +1076,27 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ValidationError"
                                 }
                             }
                         },
-                        "description": "chain_id_required"
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "internal_error"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -1108,11 +1126,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "guidance_lookup_failed"
+                        "description": "guidance_lookup_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Get agent guidance",
@@ -1152,15 +1170,25 @@
                         },
                         "description": "OK"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "guidance_update_failed"
+                        "description": "guidance_update_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Set agent guidance",
@@ -1186,11 +1214,21 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed, state_lookup_failed, agent_addresses_lookup_failed"
                     }
                 },
                 "summary": "Get agent registration draft",
@@ -1261,6 +1299,26 @@
                             }
                         },
                         "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed, agent_save_failed or image_generation_failed"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "collection_check_failed, wallet_not_ready or image_upload_failed"
                     }
                 },
                 "summary": "Save agent registration draft",
@@ -1282,15 +1340,35 @@
                         },
                         "description": "OK"
                     },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    },
                     "409": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
                         "description": "not_minted"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed"
                     }
                 },
                 "summary": "Get ENS calldata",
@@ -1316,11 +1394,31 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
                         "description": "not_minted"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed, state_lookup_failed or ens_reconcile_failed"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "ens_read_failed"
                     }
                 },
                 "summary": "Check ENS status",
@@ -1346,11 +1444,41 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "owner_missing"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed or agent_addresses_lookup_failed"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "collection_read_failed"
                     }
                 },
                 "summary": "Get mint calldata",
@@ -1376,11 +1504,31 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "agent_lookup_failed, state_lookup_failed or mint_reconcile_failed"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "chain_read_failed"
                     }
                 },
                 "summary": "Check mint status",
@@ -1407,11 +1555,41 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "owner_missing"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "self_mint_failed, self_ens_failed or mint_reconcile_failed"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "chain_read_failed"
                     }
                 },
                 "summary": "Self mint + ENS register",
@@ -1437,7 +1615,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
@@ -1447,7 +1625,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
@@ -1508,7 +1686,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
@@ -1551,11 +1729,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_llm_connection_failed"
+                        "description": "delete_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal delete LLM connection",
@@ -1583,17 +1761,17 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "not_configured"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "get_llm_connection_failed"
+                        "description": "get_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal get LLM connection",
@@ -1647,11 +1825,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "setup_llm_connection_failed"
+                        "description": "setup_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal setup LLM connection",
@@ -1695,16 +1873,6 @@
                             }
                         },
                         "description": "Bad Request"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
-                                }
-                            }
-                        },
-                        "description": "validate_llm_connection_failed"
                     }
                 },
                 "summary": "Internal validate LLM connection",
@@ -1730,11 +1898,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "list_mcp_connections_failed"
+                        "description": "list_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal list MCP connections",
@@ -1784,15 +1952,25 @@
                         },
                         "description": "Bad Request"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "mcp_connection_name_taken"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "create_mcp_connection_failed"
+                        "description": "create_failed, mcp_connection_lookup_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal create MCP connection",
@@ -1852,17 +2030,17 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "mcp_connection_not_found"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "list_mcp_server_tools_failed"
+                        "description": "list_mcp_server_tools_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal discover MCP server tools",
@@ -1902,11 +2080,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_mcp_connection_failed"
+                        "description": "delete_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal delete MCP connection",
@@ -1955,17 +2133,17 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "mcp_connection_not_found"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "get_mcp_connection_failed"
+                        "description": "get_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal get MCP connection",
@@ -2034,17 +2212,27 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "mcp_connection_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "mcp_connection_name_taken"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "update_mcp_connection_failed"
+                        "description": "update_failed, mcp_connection_lookup_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal update MCP connection",
@@ -2083,11 +2271,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_payment_policy_failed"
+                        "description": "delete_failed"
                     }
                 },
                 "summary": "Internal delete payment policy",
@@ -2107,15 +2295,25 @@
                         },
                         "description": "OK"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "get_payment_policy_failed"
+                        "description": "policy_failed"
                     }
                 },
                 "summary": "Internal get payment policy",
@@ -2137,15 +2335,25 @@
                         },
                         "description": "OK"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "list_payment_rules_failed"
+                        "description": "policy_failed or list_failed"
                     }
                 },
                 "summary": "Internal list payment rules",
@@ -2195,15 +2403,25 @@
                         },
                         "description": "Bad Request"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "create_payment_rule_failed"
+                        "description": "policy_failed or create_failed"
                     }
                 },
                 "summary": "Internal create payment rule",
@@ -2229,6 +2447,16 @@
                     "204": {
                         "description": "No Content"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -2237,17 +2465,17 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_payment_rule_failed"
+                        "description": "delete_failed"
                     }
                 },
                 "summary": "Internal delete payment rule",
@@ -2316,17 +2544,27 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "update_payment_rule_failed"
+                        "description": "policy_failed or update_failed"
                     }
                 },
                 "summary": "Internal update payment rule",
@@ -2352,11 +2590,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "list_self_tools_failed"
+                        "description": "list_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal list self tools",
@@ -2427,17 +2665,17 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "self_tool_not_found"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "update_self_tool_failed"
+                        "description": "get_failed, update_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal update self tool",
@@ -2505,7 +2743,7 @@
                                 }
                             }
                         },
-                        "description": "list_failed"
+                        "description": "list_failed or internal_error"
                     }
                 },
                 "security": [
@@ -2760,7 +2998,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "conversation_not_found"
                     },
                     "500": {
                         "content": {
@@ -2855,7 +3093,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "conversation_not_found"
                     },
                     "409": {
                         "content": {
@@ -2865,7 +3103,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "agent_not_minted"
                     },
                     "500": {
                         "content": {
@@ -2907,7 +3145,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
@@ -2917,7 +3155,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
@@ -2968,17 +3206,17 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ValidationError"
                                 }
                             }
                         },
-                        "description": "card"
+                        "description": "Bad Request"
                     },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
@@ -3002,7 +3240,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
@@ -3012,7 +3250,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
@@ -3086,7 +3324,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "conversation_unavailable or agent_not_minted"
                     },
                     "500": {
                         "content": {

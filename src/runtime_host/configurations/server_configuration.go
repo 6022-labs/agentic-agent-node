@@ -36,12 +36,13 @@ func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 type registerRoutesParams struct {
 	dig.In
 
-	App            *fiber.App
-	Logger         *zap.Logger
-	AgentTelemetry *identity_middlewares.AgentTelemetryContextMiddleware
-	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
-	CallerContext  *runtime_common_mvc_middlewares.CallerContextMiddleware
-	Controllers    []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
+	App               *fiber.App
+	Logger            *zap.Logger
+	AgentTelemetry    *identity_middlewares.AgentTelemetryContextMiddleware
+	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
+	CallerContext     *runtime_common_mvc_middlewares.CallerContextMiddleware
+	RequestFailureLog *runtime_common_mvc_middlewares.RequestFailureLogMiddleware
+	Controllers       []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -56,29 +57,7 @@ func registerRoutes(p registerRoutesParams) {
 
 	p.App.Use(p.CallerContext.Handle)
 
-	p.App.Use(func(ctx fiber.Ctx) error {
-		err := ctx.Next()
-		status := ctx.Response().StatusCode()
-
-		if status < fiber.StatusBadRequest || status == fiber.StatusNotFound {
-			return err
-		}
-		fields := []zap.Field{
-			zap.String("method", ctx.Method()),
-			zap.String("path", ctx.OriginalURL()),
-			zap.Int("status", status),
-			zap.ByteString("response", ctx.Response().Body()),
-		}
-		if err != nil {
-			fields = append(fields, zap.Error(err))
-		}
-		if status >= fiber.StatusInternalServerError {
-			p.Logger.Error("runtime request failed", fields...)
-		} else {
-			p.Logger.Warn("runtime request rejected", fields...)
-		}
-		return err
-	})
+	p.App.Use(p.RequestFailureLog.Handle)
 
 	p.App.Get("/swagger/*", swaggo.New())
 

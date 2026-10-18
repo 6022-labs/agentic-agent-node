@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,6 +34,80 @@ func WhenListingAgentCollectionsBeforeEach(t *testing.T) *WhenListingAgentCollec
 func TestWhenListingAgentCollections(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentCollectionsWithResponse(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background(), "80002")
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentCollectionsWithResponse(gomock.Any(), gomock.Any()).
+				Return(&clients.GetInternalAgentCollectionsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background(), "80002")
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the runtime answers 502", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).
+				Return(&clients.GetInternalAgentCollectionsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
+					Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.List(context.Background(), "80002")
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime returns the collections catalog", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,31 +137,6 @@ func TestWhenListingAgentCollections(t *testing.T) {
 				assert.Equal(t, "alpha", payload.Collections[0].Name)
 				assert.Equal(t, uint64(2), payload.Collections[0].ModeratorCount)
 			}
-		})
-	})
-
-	t.Run("Given the runtime fails to read the chain", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalAgentCollectionsWithResponse(gomock.Any(), &clients.GetInternalAgentCollectionsParams{ChainId: "80002"}).
-				Return(&clients.GetInternalAgentCollectionsResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadGateway},
-					Body:         []byte(`{"code":"collections_read_failed","message":"rpc down"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingAgentCollectionsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.List(context.Background(), "80002")
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

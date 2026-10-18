@@ -38,7 +38,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 	ownerCtx := helpers.ContextWithCallerId(context.Background(), owner)
 	validRequest := func() *requests.SaveAgentRegistrationRequest {
 		return &requests.SaveAgentRegistrationRequest{
-			ChainId:           "80002",
+			ChainIdRequest:    requests.ChainIdRequest{ChainId: "80002"},
 			CollectionAddress: "0x2222222222222222222222222222222222222222",
 			Name:              "Alice",
 			AttributesRaw:     `{"role":"assistant"}`,
@@ -94,15 +94,15 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the client returns a domain error", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewNotFoundError("draft_not_found", "no draft"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate it unchanged", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSavingAgentRegistrationBeforeEach(t)
@@ -110,13 +110,57 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 			_, err := suite.sut.Execute(ownerCtx, validRequest())
 
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "draft_not_found", notFoundErr.Code)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 
-	t.Run("Given the runtime accepts the draft", func(t *testing.T) {
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewValidationError("invalid_name", "name is invalid"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(ownerCtx, validRequest())
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "invalid_name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(ownerCtx, validRequest())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime saves the registration draft", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) *models.ExternalSaveAgentRegistrationPayload {

@@ -144,7 +144,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 			})
 
-			t.Run("Given the caller already uses that name", func(t *testing.T) {
+			t.Run("Given the caller holds that name", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should reject the insert", func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 						WithName("Audit").
 						Build())
 
-					assert.Error(t, err)
+					assertUniqueViolation(t, err)
 				})
 			})
 
@@ -199,7 +199,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 			})
 
-			t.Run("Given another caller already uses that name", func(t *testing.T) {
+			t.Run("Given another caller holds that name", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should accept the insert", func(t *testing.T) {
@@ -293,7 +293,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 			})
 
-			t.Run("Given another agent uses that name", func(t *testing.T) {
+			t.Run("Given another agent holds that name", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should accept the insert", func(t *testing.T) {

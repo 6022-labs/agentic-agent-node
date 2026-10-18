@@ -53,6 +53,7 @@ func WhenDeletingMCPConnectionByIdBeforeEach(tc *repositoryTestCase) *WhenDeleti
 }
 
 func WhenDeletingMCPConnectionByIdAfterEach(suite *WhenDeletingMCPConnectionByIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -63,7 +64,7 @@ func TestWhenDeletingMCPConnectionById(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given a non-existent Id", func(t *testing.T) {
+			t.Run("Given the connection does not exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should be a no-op", func(t *testing.T) {
@@ -75,7 +76,7 @@ func TestWhenDeletingMCPConnectionById(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an existing connection", func(t *testing.T) {
+			t.Run("Given a connection exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should remove the row", func(t *testing.T) {

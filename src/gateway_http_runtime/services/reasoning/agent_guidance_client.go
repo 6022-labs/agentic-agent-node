@@ -24,8 +24,8 @@ func (c *HttpAgentGuidanceClient) Get(ctx context.Context) (*models.ExternalAgen
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentGuidancePayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -47,8 +47,8 @@ func (c *HttpAgentGuidanceClient) Set(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAgentGuidancePayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }

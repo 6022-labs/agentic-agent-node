@@ -36,7 +36,8 @@ func (c *AgentGuidanceController) RegisterAuthenticatedRoutes(app fiber.Router) 
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.AgentGuidanceResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/guidance [get]
 func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
@@ -54,7 +55,9 @@ func (c *AgentGuidanceController) Get(ctx fiber.Ctx) error {
 // @Produce json
 // @Param request body requests.SetAgentGuidanceRequest true "Agent guidance"
 // @Success 200 {object} responses.AgentGuidanceResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/guidance [put]
 func (c *AgentGuidanceController) Set(ctx fiber.Ctx) error {

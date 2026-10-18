@@ -43,7 +43,9 @@ func TestWhenExecutingListAgentCollectionsTool(t *testing.T) {
 
 			suite := WhenExecutingListAgentCollectionsToolBeforeEach(t)
 			suite.mockListAgentCollectionsExecutor.EXPECT().
-				Execute(ctx, &identity_requests.ListAgentCollectionsRequest{ChainId: "80002"}).
+				Execute(ctx, &identity_requests.ListAgentCollectionsRequest{
+					ChainIdRequest: identity_requests.ChainIdRequest{ChainId: "80002"},
+				}).
 				Return(&identity_responses.AgentCollectionsResponse{}, nil)
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"chainId": "80002"})

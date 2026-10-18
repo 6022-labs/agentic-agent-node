@@ -25,6 +25,17 @@
                 },
                 "type": "object"
             },
+            "errors.InternalError": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "errors.NotFoundError": {
                 "properties": {
                     "code": {
@@ -67,10 +78,6 @@
                         "type": "string"
                     }
                 },
-                "type": "object"
-            },
-            "fiber.Map": {
-                "additionalProperties": {},
                 "type": "object"
             },
             "models.ExternalPaymentRule": {
@@ -1515,7 +1522,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "conversation_unavailable or agent_not_minted"
                     },
                     "502": {
                         "content": {
@@ -1542,6 +1549,7 @@
                         "name": "chainId",
                         "required": true,
                         "schema": {
+                            "form": "chainId",
                             "type": "string"
                         }
                     }
@@ -1556,6 +1564,36 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1582,11 +1620,21 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -1635,11 +1683,31 @@
                         },
                         "description": "OK"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -1670,15 +1738,35 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1758,7 +1846,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization, invalid_token or missing_owner"
                     },
                     "502": {
                         "content": {
@@ -1768,7 +1856,7 @@
                                 }
                             }
                         },
-                        "description": "Bad Gateway"
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1795,15 +1883,45 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    },
                     "409": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.ConflictError"
                                 }
                             }
                         },
                         "description": "not_minted"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1829,6 +1947,36 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "not_minted"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1854,6 +2002,46 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "owner_missing"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1879,6 +2067,36 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
+                                }
+                            }
+                        },
+                        "description": "draft_not_found"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1905,15 +2123,45 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "draft_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "owner_missing"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -1940,11 +2188,21 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
@@ -1954,7 +2212,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2020,11 +2278,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "Internal Server Error"
+                        "description": "challenge_failed"
                     }
                 },
                 "summary": "Auth challenge",
@@ -2081,17 +2339,27 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
                                 }
                             }
                         },
-                        "description": "challenge_not_found | signature_mismatch | not_authorized"
+                        "description": "challenge_not_found, signature_mismatch or not_authorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "verify_failed"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2116,6 +2384,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "summary": "Public node config",
@@ -2128,11 +2406,21 @@
             "delete": {
                 "responses": {
                     "204": {},
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2161,15 +2449,35 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.NotFoundError"
                                 }
                             }
                         },
                         "description": "not_configured"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
+                                }
+                            }
+                        },
+                        "description": "runtime_unavailable"
                     }
                 },
                 "security": [
@@ -2224,11 +2532,21 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2280,11 +2598,21 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2315,11 +2643,21 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2378,11 +2716,31 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "mcp_connection_name_taken"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2443,6 +2801,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -2451,13 +2819,13 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "mcp_connection_not_found"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2500,11 +2868,21 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2574,6 +2952,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -2582,13 +2970,23 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "mcp_connection_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "mcp_connection_name_taken"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2610,11 +3008,21 @@
             "delete": {
                 "responses": {
                     "204": {},
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2643,11 +3051,31 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2678,11 +3106,31 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2741,11 +3189,31 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2788,6 +3256,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -2796,13 +3274,13 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2872,6 +3350,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -2880,13 +3368,23 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2917,11 +3415,21 @@
                         },
                         "description": "OK"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -2993,6 +3501,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
+                                }
+                            }
+                        },
+                        "description": "missing_authorization or invalid_token"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -3001,13 +3519,13 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "self_tool_not_found"
                     },
                     "502": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.UnavailableError"
                                 }
                             }
                         },
@@ -3074,7 +3592,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization or invalid_token"
                     },
                     "502": {
                         "content": {
@@ -3147,7 +3665,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization or invalid_token"
                     },
                     "409": {
                         "content": {
@@ -3157,7 +3675,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "conversation_name_taken or agent_not_minted"
                     },
                     "502": {
                         "content": {
@@ -3243,7 +3761,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization or invalid_token"
                     },
                     "404": {
                         "content": {
@@ -3253,7 +3771,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "conversation_not_found"
                     },
                     "409": {
                         "content": {
@@ -3263,7 +3781,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "conversation_name_taken"
                     },
                     "502": {
                         "content": {
@@ -3329,7 +3847,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization or invalid_token"
                     },
                     "404": {
                         "content": {
@@ -3339,7 +3857,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "conversation_not_found"
                     },
                     "502": {
                         "content": {
@@ -3423,7 +3941,7 @@
                                 }
                             }
                         },
-                        "description": "Unauthorized"
+                        "description": "missing_authorization or invalid_token"
                     },
                     "404": {
                         "content": {
@@ -3433,7 +3951,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "conversation_not_found"
                     },
                     "409": {
                         "content": {
@@ -3443,7 +3961,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "agent_not_minted"
                     },
                     "502": {
                         "content": {
@@ -3571,7 +4089,7 @@
                                 }
                             }
                         },
-                        "description": "Conflict"
+                        "description": "conversation_unavailable or agent_not_minted"
                     },
                     "502": {
                         "content": {

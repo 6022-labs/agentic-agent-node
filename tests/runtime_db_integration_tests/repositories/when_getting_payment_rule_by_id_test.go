@@ -64,6 +64,7 @@ func WhenGettingPaymentRuleByIdBeforeEach(tc *repositoryTestCase) *WhenGettingPa
 }
 
 func WhenGettingPaymentRuleByIdAfterEach(suite *WhenGettingPaymentRuleByIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
