@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// ListConversationsTool exposes the ListConversations use case as a built-in self tool.
+// ListConversationsTool lists the caller's sessions (all of them for the agent owner).
 type ListConversationsTool struct {
 	listConversationsExecutor tool_interfaces.ListConversationsExecutorInterface
 }
@@ -24,8 +24,9 @@ func NewListConversationsTool(
 func (t *ListConversationsTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "list_conversations",
-		Description: "List your memory sessions (id, name, message count, last activity), most recent first. " +
-			"Quote a session's conversationId verbatim whenever you are asked which session a conversation belongs to.",
+		Description: "List the caller's memory sessions (all of them for the agent owner): id, name, message " +
+			"count, last activity, most recent first. Quote a session's conversationId verbatim whenever you are asked " +
+			"which session a conversation belongs to.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"page":            utils.IntegerProperty("Page number, 1-based. Defaults to 1."),
 			"elementsPerPage": utils.IntegerProperty("Sessions per page, at most 100. Defaults to 10."),

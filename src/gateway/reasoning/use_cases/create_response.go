@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -35,7 +34,7 @@ func (u *CreateResponse) Execute(
 
 	result, err := u.client.Create(ctx, toExternalPayload(request))
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 
 	return toResponse(result), nil

@@ -30,7 +30,10 @@ func (c *ResponseController) RegisterRoutes(app fiber.Router) {
 // @Param request body requests.CreateResponseRequest true "Inputs"
 // @Success 200 {object} responses.CreateResponseResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "create_response_failed"
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 409 {object} errors.ConflictError
+// @Failure 500 {object} errors.InternalError "create_response_failed"
+// @Security CallerId
 // @Router /internal/responses [post]
 func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)

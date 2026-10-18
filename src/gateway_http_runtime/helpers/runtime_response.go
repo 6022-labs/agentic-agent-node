@@ -65,13 +65,15 @@ func DecodeAndMapRuntimeResponse(httpResponse *http.Response, body []byte, out a
 }
 
 // MapRuntimeError maps the runtime's HTTP-status error to a domain error,
-// preserving 400/404/409 and collapsing the rest to 502.
+// preserving 400/401/404/409 and collapsing the rest to 502.
 func MapRuntimeError(err error) error {
 	var statusErr *RuntimeStatusError
 	if errors.As(err, &statusErr) {
 		switch statusErr.StatusCode {
 		case http.StatusBadRequest:
 			return apperrors.NewValidationError(statusErr.Field, statusErr.Message)
+		case http.StatusUnauthorized:
+			return apperrors.NewUnauthorizedError(statusErr.Code, statusErr.Message)
 		case http.StatusNotFound:
 			return apperrors.NewNotFoundError(statusErr.Code, statusErr.Message)
 		case http.StatusConflict:

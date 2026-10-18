@@ -29,11 +29,11 @@ func (c *HttpConversationClient) ListConversations(
 		ElementsPerPage: lo.ToPtr(int(elementsPerPage)),
 	})
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListConversationsPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }
@@ -92,11 +92,11 @@ func (c *HttpConversationClient) ListMessages(
 ) (*models.ExternalListConversationMessagesPayload, error) {
 	resp, err := c.client.GetInternalConversationsConversationIdMessagesWithResponse(ctx, conversationId)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListConversationMessagesPayload
 	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	return &payload, nil
 }

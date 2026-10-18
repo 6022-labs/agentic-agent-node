@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
 )
 
-// CreateConversationTool exposes the CreateConversation use case as a built-in self tool.
+// CreateConversationTool exposes CreateConversation as a self tool, scoped to the turn's caller.
 type CreateConversationTool struct {
 	createConversationExecutor tool_interfaces.CreateConversationExecutorInterface
 }

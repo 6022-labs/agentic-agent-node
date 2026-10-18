@@ -3,15 +3,22 @@ package tools_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	knowledge_requests "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	knowledge_responses "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/tools_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+)
+
+var (
+	createToolCallerId = strings.ToLower(common_tests.RandomEthAddress().Hex())
 )
 
 type WhenExecutingCreateConversationToolTestingSuite struct {
@@ -34,7 +41,7 @@ func WhenExecutingCreateConversationToolBeforeEach(t *testing.T) *WhenExecutingC
 func TestWhenExecutingCreateConversationTool(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := helpers.ContextWithCallerId(context.Background(), createToolCallerId)
 
 	t.Run("Given the name argument is missing", func(t *testing.T) {
 		t.Parallel()
@@ -47,6 +54,31 @@ func TestWhenExecutingCreateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, nil)
 
 			assert.ErrorContains(t, err, "name")
+		})
+	})
+
+	t.Run("Given the turn carries a caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreateConversationToolBeforeEach(t)
+			suite.mockCreateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					callCtx context.Context,
+					_ *knowledge_requests.CreateConversationRequest,
+				) (*knowledge_responses.ConversationResponse, error) {
+					carried, _ := helpers.CallerIdFromContext(callCtx)
+					assert.Equal(t, createToolCallerId, carried)
+					return &knowledge_responses.ConversationResponse{ConversationId: "c1"}, nil
+				}).
+				Times(1)
+
+			_, err := suite.sut.Execute(ctx, map[string]any{"name": "Audit"})
+
+			assert.NoError(t, err)
 		})
 	})
 

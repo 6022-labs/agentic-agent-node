@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/knowledge"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
@@ -36,6 +37,110 @@ func TestWhenListingConversationMessages(t *testing.T) {
 
 	conversationId := "conv-1"
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"conversationId","message":"cannot be empty"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "conversationId", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
+				Return(&clients.GetInternalConversationsConversationIdMessagesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"conversation_not_found","message":"conversation not found"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListMessages(context.Background(), conversationId)
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime returns the messages", func(t *testing.T) {
 		t.Parallel()
 
@@ -64,27 +169,6 @@ func TestWhenListingConversationMessages(t *testing.T) {
 				assert.Equal(t, "m1", payload.Messages[0].Id)
 				assert.Equal(t, "hi", lo.FromPtr(payload.Messages[0].Content))
 			}
-		})
-	})
-
-	t.Run("Given listing fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConversationsConversationIdMessagesWithResponse(gomock.Any(), conversationId).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should propagate the transport error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.ListMessages(context.Background(), conversationId)
-
-			assert.ErrorContains(t, err, "runtime down")
 		})
 	})
 }

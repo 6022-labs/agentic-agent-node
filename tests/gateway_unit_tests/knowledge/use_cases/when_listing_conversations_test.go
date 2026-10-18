@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -35,6 +34,75 @@ func WhenListingConversationsBeforeEach(t *testing.T) *WhenListingConversationsT
 
 func TestWhenListingConversations(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should propagate the client error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
+		}
+
+		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewValidationError("callerId", "too long"))
+		}
+
+		t.Run("Should surface the validation error unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "callerId", validationErr.Field)
+		})
+	})
 
 	t.Run("Given the client returns conversations", func(t *testing.T) {
 		t.Parallel()
@@ -76,29 +144,6 @@ func TestWhenListingConversations(t *testing.T) {
 			assert.Equal(t, int64(3), resp.Conversations[0].MessageCount)
 			assert.Equal(t, now, resp.Conversations[0].CreatedAt)
 			assert.Equal(t, now.Add(time.Minute), resp.Conversations[0].UpdatedAt)
-		})
-	})
-
-	t.Run("Given the client fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockClient.EXPECT().
-				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return Unavailable carrying the message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Contains(t, unavailableErr.Message, "runtime down")
 		})
 	})
 }

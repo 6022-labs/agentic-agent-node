@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -39,6 +40,99 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 	conversationId := "c1"
 	request := &models.ExternalUpdateConversationPayload{Name: "Solidity audits"}
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), conversationId, request)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(
+					gomock.Any(),
+					conversationId,
+					"application/json",
+					gomock.Any(),
+				).
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), conversationId, request)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConversationsConversationIdWithBodyWithResponse(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"conversation_not_found","message":"conversation not found"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.UpdateConversation(context.Background(), "ghost", request)
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
+		})
+	})
 
 	t.Run("Given the runtime renames the session", func(t *testing.T) {
 		t.Parallel()
@@ -83,37 +177,6 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				assert.Equal(t, "Solidity audits", lo.FromPtr(payload.Name))
 				assert.Equal(t, int64(2), payload.MessageCount)
 			}
-		})
-	})
-
-	t.Run("Given the runtime does not know the conversation", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockClient.EXPECT().
-				PutInternalConversationsConversationIdWithBodyWithResponse(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).
-				Return(&clients.PutInternalConversationsConversationIdResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-					Body:         []byte(`{"code":"conversation_not_found","message":"conversation not found"}`),
-				}, nil)
-		}
-
-		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.UpdateConversation(context.Background(), "ghost", request)
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
 		})
 	})
 }

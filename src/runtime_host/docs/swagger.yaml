@@ -26,7 +26,28 @@ definitions:
     type: string
     x-enum-varnames:
     - LLMConnectionSetupStatusEstablished
+  errors.ConflictError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  errors.InternalError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
   errors.NotFoundError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  errors.UnauthorizedError:
     properties:
       code:
         type: string
@@ -1377,10 +1398,20 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ListConversationsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "500":
           description: list_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal list conversations
       tags:
       - Internal
@@ -1405,14 +1436,20 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
-        "409":
-          description: conversation_name_taken
+        "401":
+          description: Unauthorized
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: conversation_name_taken or agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "500":
           description: create_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal create conversation
       tags:
       - Internal
@@ -1443,18 +1480,24 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
           description: conversation_not_found
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.NotFoundError'
         "409":
           description: conversation_name_taken
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.ConflictError'
         "500":
           description: update_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal update conversation
       tags:
       - Internal
@@ -1477,10 +1520,20 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
         "500":
           description: list_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal list messages
       tags:
       - Internal
@@ -1512,10 +1565,24 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "500":
           description: append_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal append messages
       tags:
       - Internal
@@ -1614,11 +1681,27 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "500":
           description: create_response_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
+      security:
+      - CallerId: []
       summary: Internal create response
       tags:
       - Internal
+securityDefinitions:
+  CallerId:
+    description: Caller identity stamped by gateway_host.
+    in: header
+    name: X-Caller-Id
+    type: apiKey
 swagger: "2.0"

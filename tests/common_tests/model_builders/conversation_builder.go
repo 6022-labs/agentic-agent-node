@@ -11,6 +11,7 @@ import (
 type ConversationBuilder struct {
 	id        string
 	name      *string
+	callerId  *string
 	agentId   uuid.UUID
 	createdAt time.Time
 	updatedAt time.Time
@@ -35,6 +36,11 @@ func (b *ConversationBuilder) WithName(name string) *ConversationBuilder {
 	return b
 }
 
+func (b *ConversationBuilder) WithCallerId(callerId string) *ConversationBuilder {
+	b.callerId = &callerId
+	return b
+}
+
 func (b *ConversationBuilder) WithAgentId(agentId uuid.UUID) *ConversationBuilder {
 	b.agentId = agentId
 	return b
@@ -54,6 +60,7 @@ func (b *ConversationBuilder) Build() *models.Conversation {
 	return &models.Conversation{
 		Id:        b.id,
 		Name:      b.name,
+		CallerId:  b.callerId,
 		AgentId:   b.agentId,
 		CreatedAt: b.createdAt,
 		UpdatedAt: b.updatedAt,

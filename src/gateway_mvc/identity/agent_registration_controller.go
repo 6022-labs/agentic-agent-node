@@ -1,11 +1,9 @@
 package identity
 
 import (
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
-	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -74,6 +72,8 @@ func (c *AgentRegistrationController) RegisterAuthenticatedRoutes(app fiber.Rout
 // @Param image formData file true "Base image to frame"
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError
+// @Failure 502 {object} errors.UnavailableError
 // @Security BearerAuth
 // @Router /agent/registration [post]
 func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
@@ -84,11 +84,7 @@ func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 	if image, err := ctx.FormFile("image"); err == nil {
 		body.Image = image
 	}
-	owner, ok := ctx.Locals(middlewares.AuthAddressLocalKey).(string)
-	if !ok || owner == "" {
-		return mvc.WriteError(ctx, errors.NewUnauthorizedError("missing_owner", "authenticated address is required"))
-	}
-	resp, err := c.saveAgentRegistration.Execute(ctx.Context(), body, owner)
+	resp, err := c.saveAgentRegistration.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}

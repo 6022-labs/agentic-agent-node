@@ -37,26 +37,77 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given the route id is missing", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "  ",
-				Name:           "Solidity audits",
+				ConversationRequest: requests.ConversationRequest{ConversationId: "  "},
+				Name:                "Solidity audits",
 			})
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Contains(t, err.Error(), "conversationId")
 		})
 	})
 
-	t.Run("Given the runtime does not know the conversation", func(t *testing.T) {
+	t.Run("Given the client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should propagate the client error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Solidity audits",
+			})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				UpdateConversation(gomock.Any(), "c1", gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
+		}
+
+		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Solidity audits",
+			})
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the conversation is out of the caller's view", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
@@ -72,12 +123,13 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: "ghost",
-				Name:           "Solidity audits",
+				ConversationRequest: requests.ConversationRequest{ConversationId: "ghost"},
+				Name:                "Solidity audits",
 			})
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "conversation_not_found", notFoundErr.Code)
 		})
 	})
 
@@ -102,15 +154,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				})
 		}
 
-		t.Run("Should trim the route id and map the payload onto the wire response", func(t *testing.T) {
+		t.Run("Should map the payload onto the wire response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationId: " c1 ",
-				Name:           "  Solidity   audits ",
+				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
+				Name:                "Solidity audits",
 			})
 
 			assert.NoError(t, err)

@@ -3,10 +3,13 @@ package use_cases
 import (
 	"context"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/responses"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type SaveAgentRegistration struct {
@@ -17,20 +20,26 @@ func NewSaveAgentRegistration(client gateway_interfaces.AgentRegistrationClientI
 	return &SaveAgentRegistration{client: client}
 }
 
-// Execute forwards the draft to the runtime, injecting the authenticated owner.
+// Execute forwards the draft to the runtime, injecting the authenticated caller as owner.
 func (u *SaveAgentRegistration) Execute(
 	ctx context.Context,
 	req *requests.SaveAgentRegistrationRequest,
-	owner string,
 ) (*responses.AgentRegistrationResponse, error) {
 	if err := req.ValidateAndSanitize(); err != nil {
 		return nil, err
+	}
+	owner, ok := helpers.CallerIdFromContext(ctx)
+	if !ok {
+		return nil, errors.NewUnauthorizedError("missing_owner", "authenticated address is required")
+	}
+	if !common.IsHexAddress(owner) {
+		return nil, errors.NewUnauthorizedError("invalid_owner", "authenticated caller must be a wallet address")
 	}
 
 	payload, err := u.client.Save(ctx, &models.ExternalSaveAgentRegistrationPayload{
 		ChainId:           req.ChainId,
 		CollectionAddress: req.CollectionAddress,
-		Owner:             owner,
+		Owner:             common.HexToAddress(owner).Hex(),
 		Name:              req.Name,
 		CloneOf:           req.CloneOf,
 		Image:             req.Image,

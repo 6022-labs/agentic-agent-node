@@ -8,14 +8,13 @@ import (
 
 // UpdateConversationRequest pairs the route id with the new label.
 type UpdateConversationRequest struct {
-	ConversationId string `uri:"conversationId" json:"-"`
-	Name           string `                     json:"name"`
+	ConversationRequest
+	Name string `json:"name"`
 }
 
 func (r *UpdateConversationRequest) ValidateAndSanitize() error {
-	r.ConversationId = strings.TrimSpace(r.ConversationId)
-	if len(r.ConversationId) == 0 {
-		return errors.NewValidationError("conversationId", "cannot be empty")
+	if err := r.ConversationRequest.ValidateAndSanitize(); err != nil {
+		return err
 	}
 
 	r.Name = strings.Join(strings.Fields(r.Name), " ")

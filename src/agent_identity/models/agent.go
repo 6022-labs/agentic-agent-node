@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -51,4 +52,9 @@ func (m *Agent) BeforeCreate(_ *gorm.DB) error {
 func (m *Agent) BeforeSave(_ *gorm.DB) error {
 	m.UpdatedAt = time.Now()
 	return nil
+}
+
+// IsOwnedBy compares a normalized caller id to the on-chain owner, case-insensitively.
+func (m *Agent) IsOwnedBy(callerId string) bool {
+	return m.Owner != nil && helpers.NormalizeCallerId(*m.Owner) == callerId
 }

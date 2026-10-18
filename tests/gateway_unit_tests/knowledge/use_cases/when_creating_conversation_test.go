@@ -37,10 +37,10 @@ func TestWhenCreatingConversation(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
@@ -52,7 +52,53 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime rejects the name", func(t *testing.T) {
+	t.Run("Given the client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				CreateConversation(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should propagate the client error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "Trip"})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				CreateConversation(gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
+		}
+
+		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "Trip"})
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime reports the name taken", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
@@ -67,7 +113,9 @@ func TestWhenCreatingConversation(t *testing.T) {
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "taken"})
+			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{
+				Name: "taken",
+			})
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
@@ -95,7 +143,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 				})
 		}
 
-		t.Run("Should sanitize the name and map the payload onto the wire response", func(t *testing.T) {
+		t.Run("Should return the created session", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)

@@ -5,7 +5,7 @@ type ListConversationsRequest struct {
 	ElementsPerPage *uint `query:"elementsPerPage" json:"elementsPerPage,omitempty"`
 }
 
-// ValidateAndSanitize only clamps: an out-of-range page or size is corrected rather than refused.
+// ValidateAndSanitize clamps paging instead of refusing it.
 func (r *ListConversationsRequest) ValidateAndSanitize() error {
 	if r.Page == nil || *r.Page < 1 {
 		defaultPage := uint(1)

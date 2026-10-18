@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/google/uuid"
 )
 
@@ -31,12 +32,16 @@ func NewCreateConversation(
 	}
 }
 
-// Execute opens an empty named memory session; the id is server-generated so callers never pick one.
+// Execute opens an empty named session; the id is server-generated.
 func (u *CreateConversation) Execute(
 	ctx context.Context,
 	request *requests.CreateConversationRequest,
 ) (*responses.ConversationResponse, error) {
 	if err := request.ValidateAndSanitize(); err != nil {
+		return nil, err
+	}
+	callerId, err := helpers.RequireCallerId(ctx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -51,7 +56,13 @@ func (u *CreateConversation) Execute(
 		return nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
 	}
 
-	taken, err := u.conversationRepository.ExistsByAgentIdAndName(ctx, agent.Id, request.Name, nil)
+	taken, err := u.conversationRepository.ExistsByAgentIdAndCallerIdAndName(
+		ctx,
+		agent.Id,
+		&callerId,
+		request.Name,
+		nil,
+	)
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
@@ -60,9 +71,10 @@ func (u *CreateConversation) Execute(
 	}
 
 	created, err := u.conversationRepository.Create(ctx, &models.Conversation{
-		Id:      uuid.NewString(),
-		AgentId: agent.Id,
-		Name:    &request.Name,
+		Id:       uuid.NewString(),
+		AgentId:  agent.Id,
+		CallerId: &callerId,
+		Name:     &request.Name,
 	})
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())

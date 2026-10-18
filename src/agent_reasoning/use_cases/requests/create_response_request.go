@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
@@ -30,6 +31,9 @@ type InputMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
+
+// ConversationKeyMaxLength matches the conversations.id column.
+const ConversationKeyMaxLength = 128
 
 type ConversationRef struct {
 	Id string `json:"id"`
@@ -75,6 +79,12 @@ func (r *CreateResponseRequest) ValidateAndSanitize() error {
 				),
 			)
 		}
+	}
+	if utf8.RuneCountInString(r.ConversationKey()) > ConversationKeyMaxLength {
+		return errors.NewValidationError(
+			"conversation",
+			"key must be at most "+strconv.Itoa(ConversationKeyMaxLength)+" characters",
+		)
 	}
 	return nil
 }

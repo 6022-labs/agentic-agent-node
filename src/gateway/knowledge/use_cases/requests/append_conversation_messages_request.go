@@ -16,6 +16,7 @@ type AppendConversationMessageInput struct {
 }
 
 type AppendConversationMessagesRequest struct {
+	ConversationRequest
 	Messages []AppendConversationMessageInput `json:"messages"`
 }
 
@@ -26,6 +27,9 @@ var appendableMessageRoles = enums.MessageRoleList{
 }
 
 func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
+	if err := r.ConversationRequest.ValidateAndSanitize(); err != nil {
+		return err
+	}
 	if len(r.Messages) == 0 {
 		return errors.NewValidationError("messages", "must contain at least one message")
 	}

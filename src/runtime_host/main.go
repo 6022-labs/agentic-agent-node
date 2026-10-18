@@ -21,6 +21,10 @@ import (
 // @version 1.0
 // @description Internal-only runtime + knowledge surface on 127.0.0.1; gateway_host calls it; mounted under /internal.
 // @BasePath /
+// @securityDefinitions.apikey CallerId
+// @in header
+// @name X-Caller-Id
+// @description Caller identity stamped by gateway_host.
 func main() {
 	_ = godotenv.Load(".env")
 

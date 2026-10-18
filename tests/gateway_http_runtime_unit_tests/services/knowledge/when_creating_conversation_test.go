@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -38,6 +39,84 @@ func TestWhenCreatingConversation(t *testing.T) {
 	t.Parallel()
 
 	request := &models.ExternalCreateConversationPayload{Name: "ERC20 mint audit"}
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CreateConversation(context.Background(), request)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalConversationsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CreateConversation(context.Background(), request)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime reports the name taken", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalConversationsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"conversation_name_taken","message":"already used"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CreateConversation(context.Background(), request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
+		})
+	})
 
 	t.Run("Given the runtime creates the session", func(t *testing.T) {
 		t.Parallel()
@@ -77,32 +156,6 @@ func TestWhenCreatingConversation(t *testing.T) {
 				assert.Equal(t, "c1", payload.ConversationId)
 				assert.Equal(t, "ERC20 mint audit", lo.FromPtr(payload.Name))
 			}
-		})
-	})
-
-	t.Run("Given the runtime reports the name taken", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalConversationsResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-					Body:         []byte(`{"code":"conversation_name_taken","message":"already used"}`),
-				}, nil)
-		}
-
-		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.CreateConversation(context.Background(), request)
-
-			var conflictErr *apperrors.ConflictError
-			assert.ErrorAs(t, err, &conflictErr)
-			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
 		})
 	})
 }

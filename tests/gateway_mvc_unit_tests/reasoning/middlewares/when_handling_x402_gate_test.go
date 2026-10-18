@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
-	core_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	core_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
@@ -88,7 +88,7 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 	app.Post("/responses", sut.Handle, func(ctx fiber.Ctx) error {
 		suite.handlerCalled = true
 		suite.seenPayer, _ = ctx.Locals(middlewares.X402PayerLocalKey).(string)
-		suite.seenAddress, _ = ctx.Locals(core_middlewares.AuthAddressLocalKey).(string)
+		suite.seenAddress, _ = helpers.CallerIdFromContext(ctx.Context())
 		return ctx.JSON(fiber.Map{"answer": "42"})
 	})
 	suite.app = app
@@ -240,7 +240,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
 		}
 
-		t.Run("Should return 402 with an empty offer (closed to outsiders)", func(t *testing.T) {
+		t.Run("Should return 402 with an empty offer", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)
@@ -401,8 +401,20 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.handlerCalled)
 			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenPayer)
-			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenAddress)
 			assert.Empty(t, resp.Header.Get(middlewares.PaymentResponseHeader))
+		})
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			_, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
 		})
 	})
 
@@ -553,7 +565,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return 402 — the rule is not theirs to use", func(t *testing.T) {
+		t.Run("Should return 402 with no matching requirements", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)
@@ -778,6 +790,19 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.True(t, settle.Success)
 			assert.Equal(t, "0xtxhash", settle.Transaction)
 		})
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
+			_, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+		})
 	})
 
 	t.Run("Given the handler fails after a verified payment", func(t *testing.T) {
@@ -894,8 +919,19 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.handlerCalled)
 			// Identity comes from the JWT, not a recovered signature.
-			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenAddress)
 			assert.Empty(t, suite.seenPayer)
+		})
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
 		})
 	})
 
@@ -914,7 +950,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
 		}
 
-		t.Run("Should fall through to the 402 so the caller signs", func(t *testing.T) {
+		t.Run("Should return 402", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)

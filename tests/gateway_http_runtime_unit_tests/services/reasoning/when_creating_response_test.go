@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/reasoning"
@@ -43,17 +44,120 @@ func TestWhenCreatingResponse(t *testing.T) {
 		},
 	}
 
-	t.Run("Given the runtime returns a completed response", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), request)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Contains(t, unavailableErr.Message, "runtime down")
+		})
+	})
+
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalResponsesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusUnauthorized},
+					Body: []byte(
+						`{"code":"missing_caller_id","message":"an authenticated caller id is required"}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should map the 401 onto an UnauthorizedError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), request)
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalResponsesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"input","message":"cannot be empty"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "input", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the conversation is unavailable to the caller", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalResponsesResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"conversation_unavailable","message":"taken"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), request)
+
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "conversation_unavailable", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime returns a completed response", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) *models.ExternalCreateResponsePayload {
+			sent := &models.ExternalCreateResponsePayload{}
+			suite.mockClient.EXPECT().
+				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, reader io.Reader, _ ...clients.RequestEditorFn) (*clients.PostInternalResponsesResponse, error) {
-					var sent models.ExternalCreateResponsePayload
 					raw, _ := io.ReadAll(reader)
-					_ = json.Unmarshal(raw, &sent)
-					assert.Equal(t, "conv-1", sent.PreviousResponseId)
+					_ = json.Unmarshal(raw, sent)
 					return &clients.PostInternalResponsesResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 						Body: []byte(
@@ -62,9 +166,22 @@ func TestWhenCreatingResponse(t *testing.T) {
 						),
 					}, nil
 				})
+			return sent
 		}
 
-		t.Run("Should send the request and decode the OpenAI response", func(t *testing.T) {
+		t.Run("Should send the request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			sent := initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), request)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "conv-1", sent.PreviousResponseId)
+		})
+
+		t.Run("Should decode the OpenAI response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
@@ -108,27 +225,6 @@ func TestWhenCreatingResponse(t *testing.T) {
 				assert.Equal(t, "incomplete", result.Status)
 				assert.Empty(t, result.Output)
 			}
-		})
-	})
-
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalResponsesWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Create(context.Background(), request)
-
-			assert.ErrorContains(t, err, "runtime down")
 		})
 	})
 }
