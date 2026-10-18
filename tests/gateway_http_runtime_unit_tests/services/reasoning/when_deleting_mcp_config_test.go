@@ -70,7 +70,10 @@ func TestWhenDeletingMCPConfig(t *testing.T) {
 		initSuite := func(suite *WhenDeletingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().
 				DeleteInternalConfigMcpIdWithResponse(gomock.Any(), gomock.Any()).
-				Return(&clients.DeleteInternalConfigMcpIdResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.DeleteInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {

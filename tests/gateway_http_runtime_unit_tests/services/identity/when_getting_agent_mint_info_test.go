@@ -64,7 +64,10 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
-				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{HTTPResponse: &http.Response{StatusCode: http.StatusNotFound}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
@@ -86,7 +89,10 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalAgentRegistrationMintInfoWithResponse(gomock.Any()).
-				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalAgentRegistrationMintInfoResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {

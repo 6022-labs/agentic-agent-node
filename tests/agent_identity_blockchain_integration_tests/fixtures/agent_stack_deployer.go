@@ -56,7 +56,7 @@ type nullableUint256 struct {
 	Value *big.Int `abi:"value"`
 }
 
-// AgentContractStack is a freshly deployed 6022 stack: one collection made through the creator, governed by the manager.
+// AgentContractStack is a fresh 6022 stack: one collection made through the creator, governed by the manager.
 type AgentContractStack struct {
 	Manager        common.Address
 	Descriptor     common.Address
@@ -68,7 +68,7 @@ type AgentContractStack struct {
 	ParentNode     [32]byte
 }
 
-// DeployAgentStack mirrors the smart-contracts deployCollectionWithCreator; the anvil account ends up admin and moderator.
+// DeployAgentStack mirrors deployCollectionWithCreator; the anvil account ends up admin and moderator.
 func DeployAgentStack(
 	ctx context.Context,
 	client *ethclient.Client,

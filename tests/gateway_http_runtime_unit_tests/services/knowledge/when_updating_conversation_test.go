@@ -76,7 +76,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockClient.EXPECT().
 				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PutInternalConversationsConversationIdResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
@@ -162,7 +165,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockClient.EXPECT().
 				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PutInternalConversationsConversationIdResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"conversation_name_taken","message":"already used"}`)}, nil)
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"conversation_name_taken","message":"already used"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
@@ -184,7 +190,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
 			suite.mockClient.EXPECT().
 				PutInternalConversationsConversationIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PutInternalConversationsConversationIdResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PutInternalConversationsConversationIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

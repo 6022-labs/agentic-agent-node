@@ -72,7 +72,10 @@ func TestWhenCreatingMCPConfig(t *testing.T) {
 		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalConfigMcpResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalConfigMcpResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
@@ -98,7 +101,10 @@ func TestWhenCreatingMCPConfig(t *testing.T) {
 		initSuite := func(suite *WhenCreatingMCPConfigTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalConfigMcpWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalConfigMcpResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalConfigMcpResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {

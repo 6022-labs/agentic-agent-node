@@ -70,7 +70,10 @@ func TestWhenAuthorizing(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalAuthorizeResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"address","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAuthorizeResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"address","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should return a ValidationError", func(t *testing.T) {
@@ -92,7 +95,10 @@ func TestWhenAuthorizing(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAuthorizeWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalAuthorizeResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"address","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAuthorizeResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"address","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

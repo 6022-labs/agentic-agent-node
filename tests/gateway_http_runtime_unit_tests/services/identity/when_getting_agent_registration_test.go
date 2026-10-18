@@ -89,7 +89,10 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalAgentRegistrationWithResponse(gomock.Any()).
-				Return(&clients.GetInternalAgentRegistrationResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

@@ -65,7 +65,10 @@ func TestWhenListingMCPConfigs(t *testing.T) {
 		initSuite := func(suite *WhenListingMCPConfigsTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalConfigMcpWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigMcpResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalConfigMcpResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

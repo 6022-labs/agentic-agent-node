@@ -64,7 +64,10 @@ func TestWhenCheckingAgentEns(t *testing.T) {
 		initSuite := func(suite *WhenCheckingAgentEnsTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAgentRegistrationEnsCheckWithResponse(gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAgentRegistrationEnsCheckResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {

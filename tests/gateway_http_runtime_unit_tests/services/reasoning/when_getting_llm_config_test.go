@@ -90,7 +90,10 @@ func TestWhenGettingLLMConfig(t *testing.T) {
 		initSuite := func(suite *WhenGettingLLMConfigTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalConfigLlmWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigLlmResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalConfigLlmResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

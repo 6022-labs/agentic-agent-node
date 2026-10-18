@@ -71,7 +71,10 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
 			suite.mockClient.EXPECT().
 				PutInternalAgentGuidanceWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PutInternalAgentGuidanceResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PutInternalAgentGuidanceResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
@@ -96,7 +99,10 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
 			suite.mockClient.EXPECT().
 				PutInternalAgentGuidanceWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PutInternalAgentGuidanceResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PutInternalAgentGuidanceResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

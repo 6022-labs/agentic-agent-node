@@ -64,7 +64,10 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalAgentCollectionsWithResponse(gomock.Any(), gomock.Any()).
-				Return(&clients.GetInternalAgentCollectionsResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.GetInternalAgentCollectionsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {

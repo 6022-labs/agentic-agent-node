@@ -151,7 +151,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "agent_lookup_failed, state_lookup_failed or agent_addresses_lookup_failed",
+                        "description": "agent_lookup_failed, state_lookup_failed, agent_addresses_lookup_failed",
                         "schema": {
                             "$ref": "#/definitions/errors.InternalError"
                         }

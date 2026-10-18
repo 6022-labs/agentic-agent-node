@@ -96,7 +96,7 @@ func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 // @Produce json
 // @Success 200 {object} responses.AgentRegistrationResponse
 // @Failure 404 {object} errors.NotFoundError "draft_not_found"
-// @Failure 500 {object} errors.InternalError "agent_lookup_failed, state_lookup_failed or agent_addresses_lookup_failed"
+// @Failure 500 {object} errors.InternalError "agent_lookup_failed, state_lookup_failed, agent_addresses_lookup_failed"
 // @Router /internal/agent/registration [get]
 func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentRegistration.Execute(ctx.Context())

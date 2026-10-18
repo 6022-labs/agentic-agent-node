@@ -62,7 +62,10 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationSelfResponse{HTTPResponse: &http.Response{StatusCode: http.StatusNotFound}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 404 onto a NotFoundError", func(t *testing.T) {
@@ -84,7 +87,10 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationSelfResponse{HTTPResponse: &http.Response{StatusCode: http.StatusConflict}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
@@ -106,7 +112,10 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAgentRegistrationSelfWithResponse(gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationSelfResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAgentRegistrationSelfResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {

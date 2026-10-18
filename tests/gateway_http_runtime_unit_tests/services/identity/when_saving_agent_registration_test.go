@@ -104,7 +104,10 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().
 				PostInternalAgentRegistrationWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalAgentRegistrationResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+				Return(&clients.PostInternalAgentRegistrationResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+				}, nil)
 		}
 
 		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
