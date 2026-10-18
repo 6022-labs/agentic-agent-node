@@ -52,6 +52,7 @@ func WhenGettingSelfToolByIdBeforeEach(tc *repositoryTestCase) *WhenGettingSelfT
 }
 
 func WhenGettingSelfToolByIdAfterEach(suite *WhenGettingSelfToolByIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -62,7 +63,7 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given a non-existent Id", func(t *testing.T) {
+			t.Run("Given the tool does not exist", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
@@ -76,7 +77,7 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a tool has been created", func(t *testing.T) {
+			t.Run("Given a tool exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return the persisted row by Id", func(t *testing.T) {

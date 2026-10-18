@@ -53,6 +53,7 @@ func WhenCreatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenCreatingMC
 }
 
 func WhenCreatingMCPConnectionAfterEach(suite *WhenCreatingMCPConnectionTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -125,7 +126,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 			t.Run("Given the agent already has a connection with that name", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should reject the duplicate and keep the original row", func(t *testing.T) {
+				t.Run("Should reject the duplicate", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingMCPConnectionBeforeEach(tc)
 					defer WhenCreatingMCPConnectionAfterEach(suite)
@@ -153,7 +154,38 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 							WithHeaderAuthKeys(nil).
 							Build(),
 					)
-					assert.Error(t, err)
+
+					assertUniqueViolation(t, err)
+				})
+
+				t.Run("Should keep the original row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingMCPConnectionBeforeEach(tc)
+					defer WhenCreatingMCPConnectionAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewMCPConnectionBuilder().
+							WithAgentId(agentId).
+							WithName("github").
+							WithUrl("https://mcp.github.example").
+							WithHeaderAuthKeys(nil).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					_, _ = suite.sut.Create(
+						context.Background(),
+						model_builders.NewMCPConnectionBuilder().
+							WithAgentId(agentId).
+							WithName("github").
+							WithUrl("https://other.example").
+							WithHeaderAuthKeys(nil).
+							Build(),
+					)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)

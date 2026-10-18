@@ -64,6 +64,28 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalConversationsResponse{HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CreateConversation(context.Background(), request)
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -92,7 +114,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime reports the name taken", func(t *testing.T) {
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
@@ -115,6 +137,30 @@ func TestWhenCreatingConversation(t *testing.T) {
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
 			assert.Equal(t, "conversation_name_taken", conflictErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConversationsWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalConversationsResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
+		}
+
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.CreateConversation(context.Background(), request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
 		})
 	})
 

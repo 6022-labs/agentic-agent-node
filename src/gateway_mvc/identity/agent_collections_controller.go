@@ -33,6 +33,9 @@ func (c *AgentCollectionsController) RegisterAuthenticatedRoutes(app fiber.Route
 // @Produce json
 // @Param request query requests.ListAgentCollectionsRequest true "Chain id, e.g. 80002"
 // @Success 200 {object} responses.AgentCollectionsResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /agent/collections [get]
 func (c *AgentCollectionsController) List(ctx fiber.Ctx) error {

@@ -26,10 +26,10 @@ func (a *HttpAuthorizer) IsAuthorized(ctx context.Context, address common.Addres
 	}
 	resp, err := a.client.PostInternalAuthorizeWithBodyWithResponse(ctx, helpers.JsonContentType, bytes.NewReader(body))
 	if err != nil {
-		return false, err
+		return false, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalAuthorizeResultPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
 		return false, err
 	}
 	return payload.Authorized, nil

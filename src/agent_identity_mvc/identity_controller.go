@@ -43,8 +43,8 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.GetAgentIdentityResponse
-// @Failure 404 {object} fiber.Map "identity_not_found"
-// @Failure 500 {object} fiber.Map "identity_lookup_failed"
+// @Failure 404 {object} errors.NotFoundError "identity_not_found"
+// @Failure 500 {object} errors.InternalError "identity_lookup_failed"
 // @Router /internal/identity [get]
 func (c *IdentityController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentIdentity.Execute(ctx.Context())
@@ -61,8 +61,8 @@ func (c *IdentityController) Get(ctx fiber.Ctx) error {
 // @Tags Internal
 // @Produce json
 // @Success 204
-// @Failure 409 {object} fiber.Map "identity_not_found"
-// @Failure 500 {object} fiber.Map "ens_publish_failed"
+// @Failure 409 {object} errors.ConflictError "identity_not_found"
+// @Failure 500 {object} errors.InternalError "ens_publish_failed"
 // @Router /internal/identity/ens/publish [post]
 func (c *IdentityController) PublishEns(ctx fiber.Ctx) error {
 	if err := c.publishEnsRuntimeRecords.Execute(ctx.Context()); err != nil {
@@ -79,8 +79,8 @@ func (c *IdentityController) PublishEns(ctx fiber.Ctx) error {
 // @Produce json
 // @Param request body requests.SignAgentCardRequest true "Agent card to sign"
 // @Success 200 {object} responses.AgentCardSignatureResponse
-// @Failure 400 {object} fiber.Map "card"
-// @Failure 500 {object} fiber.Map "agent_card_signing_failed"
+// @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} errors.InternalError "agent_card_signing_failed"
 // @Router /internal/identity/card-signature [post]
 func (c *IdentityController) SignCard(ctx fiber.Ctx) error {
 	body := new(requests.SignAgentCardRequest)

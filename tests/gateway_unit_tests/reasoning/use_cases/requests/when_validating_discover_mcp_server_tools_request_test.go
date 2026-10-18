@@ -12,6 +12,35 @@ import (
 func TestWhenValidatingDiscoverMcpServerToolsRequest(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given neither a url nor a connection id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject with a validation error on url", func(t *testing.T) {
+			t.Parallel()
+
+			req := &requests.DiscoverMcpServerToolsRequest{}
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "url")
+		})
+	})
+
+	t.Run("Given a blank header name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject with a validation error on headerAuth", func(t *testing.T) {
+			t.Parallel()
+
+			req := &requests.DiscoverMcpServerToolsRequest{
+				Url: lo.ToPtr("https://mcp.example.com"),
+				McpHeaderAuthRequest: requests.McpHeaderAuthRequest{
+					HeaderAuth: map[string]string{"  ": "Bearer xyz"},
+				},
+			}
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "headerAuth")
+		})
+	})
+
 	t.Run("Given a url only", func(t *testing.T) {
 		t.Parallel()
 
@@ -37,34 +66,7 @@ func TestWhenValidatingDiscoverMcpServerToolsRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given neither a url nor a connection id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject with a validation error on url", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.DiscoverMcpServerToolsRequest{}
-
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "url")
-		})
-	})
-
-	t.Run("Given a header with an empty name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject with a validation error on headerAuth", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.DiscoverMcpServerToolsRequest{
-				Url:        lo.ToPtr("https://mcp.example.com"),
-				HeaderAuth: map[string]string{"  ": "Bearer xyz"},
-			}
-
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "headerAuth")
-		})
-	})
-
-	t.Run("Given headers sent without values", func(t *testing.T) {
+	t.Run("Given blank header values", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should pass validation, since blank falls back to the stored values", func(t *testing.T) {
@@ -72,7 +74,9 @@ func TestWhenValidatingDiscoverMcpServerToolsRequest(t *testing.T) {
 
 			req := &requests.DiscoverMcpServerToolsRequest{
 				ConnectionId: lo.ToPtr(uuid.New()),
-				HeaderAuth:   map[string]string{"Authorization": "", "X-Api-Key": ""},
+				McpHeaderAuthRequest: requests.McpHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": "", "X-Api-Key": ""},
+				},
 			}
 
 			assert.NoError(t, req.ValidateAndSanitize())

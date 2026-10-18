@@ -15,7 +15,7 @@ func TestWhenExtractingMcpInfoFromFunctionName(t *testing.T) {
 	t.Run("Given a namespaced function name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should resolve the connection and its tool", func(t *testing.T) {
+		t.Run("Should resolve the connection name and the tool name", func(t *testing.T) {
 			t.Parallel()
 
 			mcpConnection := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()
@@ -42,7 +42,7 @@ func TestWhenExtractingMcpInfoFromFunctionName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unknown connection or tool", func(t *testing.T) {
+	t.Run("Given the connection or tool does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail", func(t *testing.T) {

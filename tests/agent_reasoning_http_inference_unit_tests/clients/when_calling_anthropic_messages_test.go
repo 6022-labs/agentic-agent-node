@@ -82,7 +82,7 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingAnthropicMessagesBeforeEach(t, handler)
@@ -93,7 +93,11 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 				"sk",
 				&models.ExternalAnthropicMessagesStandardRequest{Model: "claude"},
 			)
-			assert.Error(t, err)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
 		})
 	})
 }

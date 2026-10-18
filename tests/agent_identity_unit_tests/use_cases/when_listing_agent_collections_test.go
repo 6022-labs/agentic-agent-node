@@ -39,35 +39,46 @@ func WhenListingAgentCollectionsBeforeEach(t *testing.T) *WhenListingAgentCollec
 func TestWhenListingAgentCollections(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the manager governs two collections", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingAgentCollectionsBeforeEach(t)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "  "}},
+			)
+
+			var target *apperrors.ValidationError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
+	t.Run("Given the chain read fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().
 				ListCollections(gomock.Any()).
-				Return([]models.AgentCollection{
-					{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
-					{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
-				}, nil)
+				Return(nil, errors.New("rpc down"))
 		}
 
-		t.Run("Should return them in order with their moderator state", func(t *testing.T) {
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(
+			_, err := suite.sut.Execute(
 				context.Background(),
-				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
 			)
 
-			assert.NoError(t, err)
-			assert.Len(t, resp.Collections, 2)
-			assert.Equal(t, "alpha", resp.Collections[0].Name)
-			assert.Equal(t, uint64(2), resp.Collections[0].ModeratorCount)
-			assert.Equal(t, "0xbbb", resp.Collections[1].Address)
-			assert.Equal(t, uint64(1), resp.Collections[1].NextTokenId)
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
 		})
 	})
 
@@ -88,7 +99,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 
 			resp, err := suite.sut.Execute(
 				context.Background(),
-				&requests.ListAgentCollectionsRequest{ChainId: "80002"},
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
 			)
 
 			assert.NoError(t, err)
@@ -97,40 +108,35 @@ func TestWhenListingAgentCollections(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the chain read fails", func(t *testing.T) {
+	t.Run("Given the manager governs two collections", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().
 				ListCollections(gomock.Any()).
-				Return(nil, errors.New("rpc down"))
+				Return([]models.AgentCollection{
+					{Address: "0xaaa", Name: "alpha", Description: "first", ModeratorCount: 2, NextTokenId: 7},
+					{Address: "0xbbb", Name: "beta", Description: "second", ModeratorCount: 0, NextTokenId: 1},
+				}, nil)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should return them in order with their moderator state", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingAgentCollectionsBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "80002"})
+			resp, err := suite.sut.Execute(
+				context.Background(),
+				&requests.ListAgentCollectionsRequest{ChainIdRequest: requests.ChainIdRequest{ChainId: "80002"}},
+			)
 
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
-		})
-	})
-
-	t.Run("Given a blank chain id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError without touching the chain", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingAgentCollectionsBeforeEach(t)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.ListAgentCollectionsRequest{ChainId: "  "})
-
-			var target *apperrors.ValidationError
-			assert.ErrorAs(t, err, &target)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Collections, 2)
+			assert.Equal(t, "alpha", resp.Collections[0].Name)
+			assert.Equal(t, uint64(2), resp.Collections[0].ModeratorCount)
+			assert.Equal(t, "0xbbb", resp.Collections[1].Address)
+			assert.Equal(t, uint64(1), resp.Collections[1].NextTokenId)
 		})
 	})
 }

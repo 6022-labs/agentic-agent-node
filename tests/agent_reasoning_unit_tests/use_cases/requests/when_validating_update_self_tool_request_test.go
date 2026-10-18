@@ -20,22 +20,10 @@ func TestWhenValidatingUpdateSelfToolRequest(t *testing.T) {
 		}
 	}
 
-	t.Run("Given the enabled flag is set", func(t *testing.T) {
+	t.Run("Given enabled is missing", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should pass validation", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateUpdateSelfToolRequest()
-
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the enabled flag is missing", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on the enabled field", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the enabled field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateUpdateSelfToolRequest()
@@ -46,6 +34,18 @@ func TestWhenValidatingUpdateSelfToolRequest(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "enabled", validationErr.Field)
+		})
+	})
+
+	t.Run("Given enabled is set", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateUpdateSelfToolRequest()
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

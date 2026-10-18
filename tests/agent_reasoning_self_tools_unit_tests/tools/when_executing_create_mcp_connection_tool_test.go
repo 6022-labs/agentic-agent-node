@@ -44,9 +44,11 @@ func TestWhenExecutingCreateMCPConnectionTool(t *testing.T) {
 			suite := WhenExecutingCreateMCPConnectionToolBeforeEach(t)
 			suite.mockCreateMCPConnectionExecutor.EXPECT().
 				Execute(ctx, &reasoning_requests.CreateMCPConnectionRequest{
-					Name:                "weather",
-					Url:                 "https://mcp.example.com",
-					AllowedToolPatterns: []string{".*"},
+					MCPConnectionRequest: reasoning_requests.MCPConnectionRequest{
+						Name:                "weather",
+						Url:                 "https://mcp.example.com",
+						AllowedToolPatterns: []string{".*"},
+					},
 				}).
 				Return(&reasoning_responses.MCPConnectionResponse{}, nil)
 

@@ -56,8 +56,9 @@ func (c *McpConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Param request body requests.DiscoverMcpServerToolsRequest true "MCP server"
 // @Success 200 {object} responses.McpServerToolsResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "mcp_connection_not_found"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/tools [post]
 func (c *McpConfigController) DiscoverTools(ctx fiber.Ctx) error {
@@ -81,8 +82,10 @@ func (c *McpConfigController) DiscoverTools(ctx fiber.Ctx) error {
 // @Param request body requests.UpdateMcpConnectionRequest true "MCP connection"
 // @Success 200 {object} responses.McpConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "mcp_connection_not_found"
+// @Failure 409 {object} errors.ConflictError "mcp_connection_name_taken"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/{id} [put]
 func (c *McpConfigController) Update(ctx fiber.Ctx) error {
@@ -105,7 +108,8 @@ func (c *McpConfigController) Update(ctx fiber.Ctx) error {
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.ListMcpConnectionsResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections [get]
 func (c *McpConfigController) List(ctx fiber.Ctx) error {
@@ -124,7 +128,9 @@ func (c *McpConfigController) List(ctx fiber.Ctx) error {
 // @Param request body requests.CreateMcpConnectionRequest true "MCP connection"
 // @Success 201 {object} responses.McpConnectionResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 409 {object} errors.ConflictError "mcp_connection_name_taken"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections [post]
 func (c *McpConfigController) Create(ctx fiber.Ctx) error {
@@ -146,7 +152,8 @@ func (c *McpConfigController) Create(ctx fiber.Ctx) error {
 // @Param id path string true "MCP connection id"
 // @Success 204 ""
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/mcp-connections/{id} [delete]
 func (c *McpConfigController) Delete(ctx fiber.Ctx) error {

@@ -95,14 +95,96 @@ func TestWhenTitlingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation has no name", func(t *testing.T) {
+	t.Run("Given the model call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
 			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
 		}
 
-		t.Run("Should ask the model once, with no tools, and store the title", func(t *testing.T) {
+		t.Run("Should return the provider error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("provider down"))
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeFailed)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.ErrorContains(t, err, "provider down")
+		})
+	})
+
+	t.Run("Given the model answers with a uuid", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
+		}
+
+		t.Run("Should skip titling", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{uuid.NewString()}}, nil)
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the model answers with a title longer than the column", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
+		}
+
+		t.Run("Should truncate it to the column length", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			// The token cap bounds spend, not characters, so an over-long answer is still possible.
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{strings.Repeat("a", 200)}}, nil)
+			suite.mockConversationLabeler.EXPECT().
+				SetAvailableName(gomock.Any(), "c1", gomock.Any()).
+				Do(func(_ context.Context, _ string, name string) {
+					assert.Len(t, []rune(name), 128)
+				}).
+				Return(nil, nil)
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeTitled)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the model answers with a title", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
+		}
+
+		t.Run("Should title the conversation from the model answer", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenTitlingConversationBeforeEach(t)
@@ -139,64 +221,6 @@ func TestWhenTitlingConversation(t *testing.T) {
 			)
 
 			assert.NoError(t, err)
-		})
-
-		t.Run("Should truncate a title the column could not hold", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			// The token cap bounds spend, not characters, so an over-long answer is still possible.
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&interfaces.LLMCompletion{Texts: []string{strings.Repeat("a", 200)}}, nil)
-			suite.mockConversationLabeler.EXPECT().
-				SetAvailableName(gomock.Any(), "c1", gomock.Any()).
-				Do(func(_ context.Context, _ string, name string) {
-					assert.Len(t, []rune(name), 128)
-				}).
-				Return(nil, nil)
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeTitled)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.NoError(t, err)
-		})
-
-		t.Run("Should skip a uuid-shaped title", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&interfaces.LLMCompletion{Texts: []string{uuid.NewString()}}, nil)
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.NoError(t, err)
-		})
-
-		t.Run("Should report a failing model call without panicking", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("provider down"))
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeFailed)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.ErrorContains(t, err, "provider down")
 		})
 	})
 }

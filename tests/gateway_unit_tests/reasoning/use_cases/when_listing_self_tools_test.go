@@ -36,7 +36,28 @@ func WhenListingSelfToolsBeforeEach(t *testing.T) *WhenListingSelfToolsTestingSu
 func TestWhenListingSelfTools(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the client returns two tools", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
+			suite.mockClient.EXPECT().List(gomock.Any()).Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime returns the configured tools", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
@@ -61,27 +82,6 @@ func TestWhenListingSelfTools(t *testing.T) {
 			assert.Equal(t, "run_command", resp.Tools[0].Name)
 			assert.True(t, resp.Tools[0].Enabled)
 			assert.False(t, resp.Tools[1].Enabled)
-		})
-	})
-
-	t.Run("Given the client fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
-			suite.mockClient.EXPECT().List(gomock.Any()).Return(nil, errors.New("runtime down"))
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 }

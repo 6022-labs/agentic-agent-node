@@ -16,20 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Render sample agent frames into <repo-root>/tmp/agent-images. Run with:
-//
-//	go generate ./tests/agent_identity_unit_tests/services/images/
-//
 //go:generate sh -c "AGENT_IMAGE_PREVIEW_DIR=$(git rev-parse --show-toplevel)/tmp/agent-images go test -run TestWhenPreviewingAgentImages -count=1 -v ."
 
-// TestWhenPreviewingAgentImages is a visual-inspection helper, not an assertion test.
-// It is skipped unless AGENT_IMAGE_PREVIEW_DIR is set — `go generate` (above)
-// sets it for you. You can also run it directly with the env var on the same
-// line:
-//
-//	AGENT_IMAGE_PREVIEW_DIR=/tmp/agent-images go test ./tests/.../images -run TestWhenPreviewingAgentImages -count=1
-//
-// It drops default.svg (open in a browser) + icon.png (the rasterized frame).
+// TestWhenPreviewingAgentImages renders preview frames; skipped unless AGENT_IMAGE_PREVIEW_DIR is set.
 func TestWhenPreviewingAgentImages(t *testing.T) {
 	outDir := os.Getenv("AGENT_IMAGE_PREVIEW_DIR")
 	if outDir == "" {
@@ -64,8 +53,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 			baseImageURL: "https://ipfs.io/ipfs/bafybeia25xzo4k4nipuw6cyml4f4x3b3h6lneyvch6a4b3rl2q7e6hpgra",
 		},
 		{
-			// Both the name and the ENS domain are long enough to switch their
-			// labels from static text to the scrolling carousel.
+			// Name and ENS domain are long enough to switch to the scrolling carousel.
 			name:      "long-name-and-ens",
 			agentName: "avogadro-the-incredibly-verbose-research-agent",
 			ensDomain: "avogadro-the-incredibly-verbose-research-agent.sub.agent.6022.eth",
@@ -73,8 +61,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 			stars:     5,
 		},
 		{
-			// Several wallets — a multi-value scrolling carousel on the default
-			// frame; the icon shows only the first.
+			// Several wallets make a multi-value carousel; the icon shows only the first.
 			name:      "multi-wallet",
 			agentName: "avogadro",
 			ensDomain: "avogadro.agent.6022.eth",
@@ -134,8 +121,7 @@ func TestWhenPreviewingAgentImages(t *testing.T) {
 	}
 }
 
-// fetchImage downloads an image and reports its bytes + mime type, so the
-// preview can render a real agent picture instead of the synthetic gradient.
+// fetchImage downloads an image and reports its bytes and mime type.
 func fetchImage(t *testing.T, url string) ([]byte, string) {
 	t.Helper()
 
@@ -157,8 +143,7 @@ func fetchImage(t *testing.T, url string) ([]byte, string) {
 	return data, mime
 }
 
-// repoMarkPath resolves the watermark relative to this test file, so the
-// preview shows the mark regardless of the working directory.
+// repoMarkPath resolves the watermark relative to this test file.
 func repoMarkPath() string {
 	_, thisFile, _, _ := runtime.Caller(0)
 	return filepath.Join(

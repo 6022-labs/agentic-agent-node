@@ -45,6 +45,45 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 
 	wallet := common.HexToAddress(challengeWalletHex)
 
+	t.Run("Given an invalid request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAuthChallengeBeforeEach(t)
+
+			_, err := suite.sut.Execute(&requests.GetAuthChallengeRequest{})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given the nonce store fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAuthChallengeTestingSuite) {
+			suite.mockNonceStore.EXPECT().Generate(wallet, uint64(80002)).Return(nil, errors.New("rng failed"))
+		}
+
+		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAuthChallengeBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(&requests.GetAuthChallengeRequest{
+				WalletAddressRequest: requests.WalletAddressRequest{Address: challengeWalletHex},
+				ChainId:              80002,
+			})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "rng failed")
+		})
+	})
+
 	t.Run("Given the nonce store issues a challenge", func(t *testing.T) {
 		t.Parallel()
 
@@ -68,49 +107,15 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(
-				&requests.GetAuthChallengeRequest{Address: challengeWalletHex, ChainId: 80002},
+				&requests.GetAuthChallengeRequest{
+					WalletAddressRequest: requests.WalletAddressRequest{Address: challengeWalletHex},
+					ChainId:              80002,
+				},
 			)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "siwe message", resp.Message)
 			assert.Equal(t, entry.ExpiresAt, resp.ExpiresAt)
-		})
-	})
-
-	t.Run("Given an invalid address", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error without generating a nonce", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAuthChallengeBeforeEach(t)
-
-			_, err := suite.sut.Execute(&requests.GetAuthChallengeRequest{Address: "not-an-address"})
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "address", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the nonce store fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAuthChallengeTestingSuite) {
-			suite.mockNonceStore.EXPECT().Generate(wallet, uint64(80002)).Return(nil, errors.New("rng failed"))
-		}
-
-		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAuthChallengeBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(&requests.GetAuthChallengeRequest{Address: challengeWalletHex, ChainId: 80002})
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "rng failed")
 		})
 	})
 }

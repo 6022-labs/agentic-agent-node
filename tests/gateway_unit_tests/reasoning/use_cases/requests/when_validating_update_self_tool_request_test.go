@@ -12,6 +12,18 @@ import (
 func TestWhenValidatingUpdateSelfToolRequest(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given enabled is missing", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject with a validation error on enabled", func(t *testing.T) {
+			t.Parallel()
+
+			req := &requests.UpdateSelfToolRequest{Id: uuid.New()}
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "enabled")
+		})
+	})
+
 	t.Run("Given enabled is set", func(t *testing.T) {
 		t.Parallel()
 
@@ -24,15 +36,4 @@ func TestWhenValidatingUpdateSelfToolRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given enabled is absent", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject with a validation error on enabled", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.UpdateSelfToolRequest{Id: uuid.New()}
-
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "enabled")
-		})
-	})
 }

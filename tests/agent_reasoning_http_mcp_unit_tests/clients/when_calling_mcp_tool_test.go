@@ -48,7 +48,7 @@ func TestWhenCallingMcpTool(t *testing.T) {
 			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"echoed"}]}}`))
 		}
 
-		t.Run("Should send the tool name and inputs in the jsonrpc params", func(t *testing.T) {
+		t.Run("Should send the tool call in the jsonrpc params", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
@@ -82,7 +82,7 @@ func TestWhenCallingMcpTool(t *testing.T) {
 			_, _ = w.Write([]byte("data: {}\n\n"))
 		}
 
-		t.Run("Should return the real tool result, not the empty trailing frame", func(t *testing.T) {
+		t.Run("Should return the real tool result", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
@@ -109,14 +109,16 @@ func TestWhenCallingMcpTool(t *testing.T) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a McpStatusError with the 500", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
 			defer WhenCallingMcpToolAfterEach(suite)
 
 			_, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", nil, nil)
-			assert.Error(t, err)
+			var statusErr *clients.McpStatusError
+			assert.ErrorAs(t, err, &statusErr)
+			assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
 		})
 	})
 

@@ -19,7 +19,57 @@ func TestWhenValidatingSetupLLMConnectionRequest(t *testing.T) {
 		}
 	}
 
-	t.Run("Given the request is valid", func(t *testing.T) {
+	t.Run("Given the platform is unknown", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSetupLLMConnectionRequest()
+			req.Platform = "not-a-platform"
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "platform")
+		})
+	})
+
+	t.Run("Given a blank model", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSetupLLMConnectionRequest()
+			req.Model = "   "
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "model")
+		})
+	})
+
+	t.Run("Given a blank api key", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSetupLLMConnectionRequest()
+			req.ApiKey = "   "
+
+			assert.NoError(t, req.ValidateAndSanitize())
+		})
+
+		t.Run("Should sanitize it to an empty string", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSetupLLMConnectionRequest()
+			req.ApiKey = "   "
+
+			_ = req.ValidateAndSanitize()
+
+			assert.Equal(t, "", req.ApiKey)
+		})
+	})
+
+	t.Run("Given a fully populated request", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should sanitize the fields", func(t *testing.T) {
@@ -31,46 +81,6 @@ func TestWhenValidatingSetupLLMConnectionRequest(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "gpt-4o", req.Model)
 			assert.Equal(t, "sk-secret", req.ApiKey)
-		})
-	})
-
-	t.Run("Given the platform is unknown", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSetupLLMConnectionRequest()
-			req.Platform = "not-a-platform"
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the model is empty", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSetupLLMConnectionRequest()
-			req.Model = "   "
-
-			assert.Error(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the api key is empty", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should pass validation and sanitize to an empty string", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSetupLLMConnectionRequest()
-			req.ApiKey = "   "
-
-			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, "", req.ApiKey)
 		})
 	})
 }

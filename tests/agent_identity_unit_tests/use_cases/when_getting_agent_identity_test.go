@@ -41,40 +41,32 @@ func WhenGettingAgentIdentityBeforeEach(t *testing.T) *WhenGettingAgentIdentityT
 func TestWhenGettingAgentIdentity(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the mint is confirmed and the agent is persisted", func(t *testing.T) {
+	t.Run("Given the registration state lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			state := model_builders.NewAgentRegistrationStateBuilder().
-				WithMintStatus(identity_enums.TransactionStatusConfirmed).
-				Build()
-			agent := model_builders.NewAgentBuilder().
-				WithCollectionAddress("0xcoll").
-				WithCollectionTokenId(42).
-				WithName("Alice").
-				Build()
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(state, nil)
+				Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return Ok with the identity on the wire", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the cause", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "0xcoll", resp.CollectionAddress)
-			assert.Equal(t, uint64(42), resp.TokenId)
-			assert.Equal(t, "Alice", resp.Name)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 
-	t.Run("Given no registration state is persisted", func(t *testing.T) {
+	t.Run("Given no registration state exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
@@ -127,28 +119,36 @@ func TestWhenGettingAgentIdentity(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the state read fails", func(t *testing.T) {
+	t.Run("Given the mint is confirmed and the agent exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentIdentityTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
+			state := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
+			agent := model_builders.NewAgentBuilder().
+				WithCollectionAddress("0xcoll").
+				WithCollectionTokenId(42).
+				WithName("Alice").
+				Build()
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db down"))
+				Return(state, nil)
 		}
 
-		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
+		t.Run("Should return Ok with the identity on the wire", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentIdentityBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "db down")
+			assert.NoError(t, err)
+			assert.Equal(t, "0xcoll", resp.CollectionAddress)
+			assert.Equal(t, uint64(42), resp.TokenId)
+			assert.Equal(t, "Alice", resp.Name)
 		})
 	})
 }

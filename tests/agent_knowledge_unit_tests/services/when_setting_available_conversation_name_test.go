@@ -44,7 +44,7 @@ func WhenSettingAvailableConversationNameBeforeEach(t *testing.T) *WhenSettingAv
 func TestWhenSettingAvailableConversationName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given loading the conversation fails", func(t *testing.T) {
+	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
@@ -112,7 +112,7 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the name check fails", func(t *testing.T) {
+	t.Run("Given the name lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
@@ -208,7 +208,7 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given another session already holds the name", func(t *testing.T) {
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
 		t.Parallel()
 
 		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
@@ -269,7 +269,7 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given storing the name fails", func(t *testing.T) {
+	t.Run("Given saving the name fails", func(t *testing.T) {
 		t.Parallel()
 
 		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()

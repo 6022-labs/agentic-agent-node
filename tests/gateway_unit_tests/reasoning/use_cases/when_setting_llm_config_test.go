@@ -46,10 +46,10 @@ func generateValidSetLlmConfigRequest() *requests.SetLlmConfigRequest {
 func TestWhenSettingLlmConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingLlmConfigBeforeEach(t)

@@ -34,25 +34,24 @@ func WhenGettingAgentSoulBeforeEach(t *testing.T) *WhenGettingAgentSoulTestingSu
 func TestWhenGettingAgentSoul(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns the soul", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentSoulClient.EXPECT().
-				Get(gomock.Any()).
-				Return(&models.ExternalAgentSoulPayload{Soul: "persona"}, nil)
+			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
 		}
 
-		t.Run("Should return the soul", func(t *testing.T) {
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentSoulBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "persona", resp.Soul)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 
@@ -77,24 +76,25 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
+	t.Run("Given the runtime returns the soul", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockAgentSoulClient.EXPECT().
+				Get(gomock.Any()).
+				Return(&models.ExternalAgentSoulPayload{Soul: "persona"}, nil)
 		}
 
-		t.Run("Should return runtime_unavailable", func(t *testing.T) {
+		t.Run("Should return the soul", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentSoulBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.NoError(t, err)
+			assert.Equal(t, "persona", resp.Soul)
 		})
 	})
 }

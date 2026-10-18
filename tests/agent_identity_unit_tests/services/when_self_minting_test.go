@@ -106,7 +106,7 @@ func TestWhenSelfMinting(t *testing.T) {
 				Return(mintedAgent, mintedState, nil)
 		}
 
-		t.Run("Should mint directly and reconcile the rows", func(t *testing.T) {
+		t.Run("Should mint directly", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSelfMintingBeforeEach(t)
@@ -116,6 +116,17 @@ func TestWhenSelfMinting(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.False(t, result.ProposalPending)
+		})
+
+		t.Run("Should reconcile the rows", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfMintingBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.SelfMint(context.Background(), draft(), nil)
+
+			assert.NoError(t, err)
 			assert.NotNil(t, result.Agent.CollectionTokenId)
 			assert.Equal(t, uint64(5), *result.Agent.CollectionTokenId)
 		})
@@ -165,7 +176,7 @@ func TestWhenSelfMinting(t *testing.T) {
 				Return(mintedAgent, mintedState, nil)
 		}
 
-		t.Run("Should send the evm node wallet first and the btc address along", func(t *testing.T) {
+		t.Run("Should send the evm node wallet first", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSelfMintingBeforeEach(t)
@@ -175,13 +186,14 @@ func TestWhenSelfMinting(t *testing.T) {
 			_, err := suite.sut.SelfMint(context.Background(), agentWithAddresses(), nil)
 
 			assert.NoError(t, err)
-			assert.Equal(t, []identity_interfaces.MintAddress{
-				{AddressType: identity_enums.AddressTypeEvm, Value: nodeWallet},
-				{AddressType: identity_enums.AddressTypeBtc, Value: btcAddress},
-			}, captured.Addresses)
+			assert.Equal(
+				t,
+				identity_interfaces.MintAddress{AddressType: identity_enums.AddressTypeEvm, Value: nodeWallet},
+				captured.Addresses[0],
+			)
 		})
 
-		t.Run("Should use the Vault credential when agent_addresses disagrees", func(t *testing.T) {
+		t.Run("Should send the btc address along", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSelfMintingBeforeEach(t)
@@ -191,8 +203,29 @@ func TestWhenSelfMinting(t *testing.T) {
 			_, err := suite.sut.SelfMint(context.Background(), agentWithAddresses(), nil)
 
 			assert.NoError(t, err)
-			assert.Equal(t, nodeWallet, captured.Addresses[0].Value)
-			assert.NotEqual(t, staleEvm, captured.Addresses[0].Value)
+			assert.Contains(
+				t,
+				captured.Addresses,
+				identity_interfaces.MintAddress{AddressType: identity_enums.AddressTypeBtc, Value: btcAddress},
+			)
+		})
+
+		t.Run("Given agent_addresses disagrees with the Vault credential", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should use the Vault credential", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenSelfMintingBeforeEach(t)
+				var captured identity_interfaces.MintParams
+				initSuite(suite, &captured)
+
+				_, err := suite.sut.SelfMint(context.Background(), agentWithAddresses(), nil)
+
+				assert.NoError(t, err)
+				assert.Equal(t, nodeWallet, captured.Addresses[0].Value)
+				assert.NotEqual(t, staleEvm, captured.Addresses[0].Value)
+			})
 		})
 	})
 
@@ -266,7 +299,7 @@ func TestWhenSelfMinting(t *testing.T) {
 				})
 		}
 
-		t.Run("Should create a mint proposal and leave the mint submitted", func(t *testing.T) {
+		t.Run("Should create a mint proposal", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSelfMintingBeforeEach(t)
@@ -278,6 +311,17 @@ func TestWhenSelfMinting(t *testing.T) {
 			assert.True(t, result.ProposalPending)
 			assert.NotNil(t, result.Agent.ProposalId)
 			assert.Equal(t, uint64(9), *result.Agent.ProposalId)
+		})
+
+		t.Run("Should leave the mint submitted", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfMintingBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.SelfMint(context.Background(), draft(), nil)
+
+			assert.NoError(t, err)
 			assert.Equal(t, identity_enums.TransactionStatusSubmitted, result.State.MintStatus)
 		})
 	})
@@ -301,7 +345,7 @@ func TestWhenSelfMinting(t *testing.T) {
 				Return(uint64(0), nil)
 		}
 
-		t.Run("Should return an error without reconciling", func(t *testing.T) {
+		t.Run("Should return an error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSelfMintingBeforeEach(t)
@@ -309,7 +353,7 @@ func TestWhenSelfMinting(t *testing.T) {
 
 			_, err := suite.sut.SelfMint(context.Background(), draft(), nil)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "token not found on chain")
 		})
 	})
 }

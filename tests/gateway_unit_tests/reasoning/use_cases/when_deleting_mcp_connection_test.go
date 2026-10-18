@@ -35,7 +35,7 @@ func WhenDeletingMcpConnectionBeforeEach(t *testing.T) *WhenDeletingMcpConnectio
 func TestWhenDeletingMcpConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a valid id", func(t *testing.T) {
+	t.Run("Given the runtime deletes the connection", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()

@@ -45,6 +45,30 @@ func WhenListingSelfToolsBeforeEach(t *testing.T) *WhenListingSelfToolsTestingSu
 func TestWhenListingSelfTools(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given listing the self tool rows fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockSelfToolRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "list_failed", internalErr.Code)
+		})
+	})
+
 	t.Run("Given every row has a matching self tool definition", func(t *testing.T) {
 		t.Parallel()
 
@@ -65,7 +89,7 @@ func TestWhenListingSelfTools(t *testing.T) {
 			})
 		}
 
-		t.Run("Should return the rows joined with their descriptions and groups", func(t *testing.T) {
+		t.Run("Should return the rows joined with their descriptions", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingSelfToolsBeforeEach(t)
@@ -88,29 +112,4 @@ func TestWhenListingSelfTools(t *testing.T) {
 			}
 		})
 	})
-
-	t.Run("Given the repository fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockSelfToolRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should return an internal error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "list_failed", internalErr.Code)
-		})
-	})
-
 }

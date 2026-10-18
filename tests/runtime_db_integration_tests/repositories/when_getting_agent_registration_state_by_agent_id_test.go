@@ -57,6 +57,7 @@ func WhenGettingAgentRegistrationStateByAgentIdBeforeEach(
 func WhenGettingAgentRegistrationStateByAgentIdAfterEach(
 	suite *WhenGettingAgentRegistrationStateByAgentIdTestingSuite,
 ) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -67,7 +68,7 @@ func TestWhenGettingAgentRegistrationStateByAgentId(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no state has been persisted", func(t *testing.T) {
+			t.Run("Given no state exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
@@ -81,7 +82,7 @@ func TestWhenGettingAgentRegistrationStateByAgentId(t *testing.T) {
 				})
 			})
 
-			t.Run("Given a state has been persisted with mint detail", func(t *testing.T) {
+			t.Run("Given a state exists with mint detail", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return the persisted row including nullable chain fields", func(t *testing.T) {

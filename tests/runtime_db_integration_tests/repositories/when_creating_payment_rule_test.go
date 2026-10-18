@@ -64,6 +64,7 @@ func WhenCreatingPaymentRuleBeforeEach(tc *repositoryTestCase) *WhenCreatingPaym
 }
 
 func WhenCreatingPaymentRuleAfterEach(suite *WhenCreatingPaymentRuleTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -74,10 +75,22 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given rules are created one after another", func(t *testing.T) {
+			t.Run("Given rules exist in insertion order", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should generate ids and append positions", func(t *testing.T) {
+				t.Run("Should generate an id", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingPaymentRuleBeforeEach(tc)
+					defer WhenCreatingPaymentRuleAfterEach(suite)
+
+					first, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithId(uuid.Nil).WithPolicyId(suite.policy.Id).Build())
+
+					assert.NoError(t, err)
+					assert.NotEqual(t, uuid.Nil, first.Id)
+				})
+
+				t.Run("Should append the position", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingPaymentRuleBeforeEach(tc)
 					defer WhenCreatingPaymentRuleAfterEach(suite)
@@ -85,10 +98,10 @@ func TestWhenCreatingPaymentRule(t *testing.T) {
 					first, err := suite.sut.Create(context.Background(),
 						model_builders.NewPaymentRuleBuilder().WithId(uuid.Nil).WithPolicyId(suite.policy.Id).Build())
 					assert.NoError(t, err)
-					assert.NotEqual(t, uuid.Nil, first.Id)
 
 					second, err := suite.sut.Create(context.Background(),
 						model_builders.NewPaymentRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+
 					assert.NoError(t, err)
 					assert.Greater(t, second.Position, first.Position)
 				})

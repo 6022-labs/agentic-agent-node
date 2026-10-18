@@ -33,7 +33,8 @@ func (c *PaymentPolicyController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.PaymentPolicyResponse
-// @Failure 500 {object} fiber.Map "get_payment_policy_failed"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 500 {object} errors.InternalError "policy_failed"
 // @Router /internal/config/payment-policy [get]
 func (c *PaymentPolicyController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getPaymentPolicy.Execute(ctx.Context())
@@ -48,7 +49,7 @@ func (c *PaymentPolicyController) Get(ctx fiber.Ctx) error {
 // @Summary Internal delete payment policy
 // @Tags Internal
 // @Success 204
-// @Failure 500 {object} fiber.Map "delete_payment_policy_failed"
+// @Failure 500 {object} errors.InternalError "delete_failed"
 // @Router /internal/config/payment-policy [delete]
 func (c *PaymentPolicyController) Delete(ctx fiber.Ctx) error {
 	if err := c.deletePaymentPolicy.Execute(ctx.Context()); err != nil {

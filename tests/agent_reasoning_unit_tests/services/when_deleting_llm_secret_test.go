@@ -36,7 +36,7 @@ func TestWhenDeletingLLMSecret(t *testing.T) {
 
 	const scopedKey = "scope/llm_secret"
 
-	t.Run("Given Delete is called", func(t *testing.T) {
+	t.Run("Given an api key exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingLLMSecretTestingSuite) {

@@ -50,7 +50,8 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 // @Param request body requests.SetLlmConfigRequest true "LLM config"
 // @Success 204 ""
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm/validate [post]
 func (c *LlmConfigController) Validate(ctx fiber.Ctx) error {
@@ -69,7 +70,9 @@ func (c *LlmConfigController) Validate(ctx fiber.Ctx) error {
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.GetLlmConfigResponse
-// @Failure 404 {object} fiber.Map "not_configured"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 404 {object} errors.NotFoundError "not_configured"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [get]
 func (c *LlmConfigController) Get(ctx fiber.Ctx) error {
@@ -88,7 +91,8 @@ func (c *LlmConfigController) Get(ctx fiber.Ctx) error {
 // @Param request body requests.SetLlmConfigRequest true "LLM config"
 // @Success 200 {object} responses.GetLlmConfigResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [post]
 func (c *LlmConfigController) Set(ctx fiber.Ctx) error {
@@ -108,7 +112,8 @@ func (c *LlmConfigController) Set(ctx fiber.Ctx) error {
 // @Tags Config
 // @Produce json
 // @Success 204 ""
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx fiber.Ctx) error {

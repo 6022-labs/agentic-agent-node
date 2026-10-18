@@ -45,7 +45,7 @@ func (c *ConversationsController) RegisterRoutes(app fiber.Router) {
 // @Success 200 {object} responses.ListConversationsResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError
-// @Failure 500 {object} errors.InternalError "list_failed"
+// @Failure 500 {object} errors.InternalError "list_failed or internal_error"
 // @Security CallerId
 // @Router /internal/conversations [get]
 func (c *ConversationsController) List(ctx fiber.Ctx) error {

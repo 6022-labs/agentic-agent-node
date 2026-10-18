@@ -64,6 +64,7 @@ func WhenDeletingPaymentRuleByIdBeforeEach(tc *repositoryTestCase) *WhenDeleting
 }
 
 func WhenDeletingPaymentRuleByIdAfterEach(suite *WhenDeletingPaymentRuleByIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

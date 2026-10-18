@@ -12,9 +12,9 @@ import (
 // ConnectionId names a stored connection each missing field falls back to — its url, and
 // the vault value of any header sent without one.
 type DiscoverMcpServerToolsRequest struct {
-	ConnectionId *uuid.UUID        `json:"connectionId,omitempty"`
-	Url          *string           `json:"url,omitempty"`
-	HeaderAuth   map[string]string `json:"headerAuth,omitempty"`
+	ConnectionId *uuid.UUID `json:"connectionId,omitempty"`
+	Url          *string    `json:"url,omitempty"`
+	McpHeaderAuthRequest
 }
 
 func (r *DiscoverMcpServerToolsRequest) ValidateAndSanitize() error {
@@ -23,5 +23,5 @@ func (r *DiscoverMcpServerToolsRequest) ValidateAndSanitize() error {
 	if r.ConnectionId == nil && r.Url == nil {
 		return errors.NewValidationError("url", "cannot be empty without a connection id")
 	}
-	return validateHeaderAuth(r.HeaderAuth, true)
+	return r.McpHeaderAuthRequest.ValidateAndSanitize()
 }

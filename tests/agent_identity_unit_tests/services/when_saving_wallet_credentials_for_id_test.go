@@ -71,7 +71,7 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given empty credentials", func(t *testing.T) {
+	t.Run("Given blank credentials", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should reject without writing", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 				&identity_interfaces.WalletCredentials{},
 			)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "must have both privateKey and address")
 		})
 	})
 }

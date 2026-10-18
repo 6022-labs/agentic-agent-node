@@ -60,6 +60,7 @@ func WhenListingConversationMessagesByConversationIdBeforeEach(
 func WhenListingConversationMessagesByConversationIdAfterEach(
 	suite *WhenListingConversationMessagesByConversationIdTestingSuite,
 ) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -87,7 +88,7 @@ func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 			t.Run("Given messages from two conversations", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return only the requested conversation, ordered by timestamp ASC", func(t *testing.T) {
+				t.Run("Should return only the requested conversation", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingConversationMessagesByConversationIdBeforeEach(tc)
 					defer WhenListingConversationMessagesByConversationIdAfterEach(suite)
@@ -115,15 +116,51 @@ func TestWhenListingConversationMessagesByConversationId(t *testing.T) {
 					assert.NoError(t, err)
 
 					messages, err := suite.sut.ListByConversationId(context.Background(), "a")
-					assert.NoError(t, err)
-					assert.Len(t, messages, 2)
-					assert.Equal(t, "a-first", lo.FromPtr(messages[0].Content))
-					assert.Equal(t, "a-second", lo.FromPtr(messages[1].Content))
 
-					otherMessages, err := suite.sut.ListByConversationId(context.Background(), "b")
 					assert.NoError(t, err)
-					assert.Len(t, otherMessages, 1)
-					assert.Equal(t, "b-only", lo.FromPtr(otherMessages[0].Content))
+					assert.ElementsMatch(
+						t,
+						[]string{"a-first", "a-second"},
+						lo.Map(messages, func(m models.ConversationMessage, _ int) string {
+							return lo.FromPtr(m.Content)
+						}),
+					)
+				})
+
+				t.Run("Should order them by timestamp ASC", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationMessagesByConversationIdBeforeEach(tc)
+					defer WhenListingConversationMessagesByConversationIdAfterEach(suite)
+
+					ensureConversations(suite.dbClient, suite.conversationRepository, "a", "b")
+					now := time.Now().UTC().Truncate(time.Microsecond)
+					_, err := suite.sut.AppendMessages(context.Background(), []models.ConversationMessage{
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("a").
+							WithContent("a-second").
+							WithTimestamp(now.Add(time.Second)).
+							Build(),
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("a").
+							WithContent("a-first").
+							WithTimestamp(now).
+							Build(),
+						model_builders.NewConversationMessageBuilder().
+							WithConversationId("b").
+							WithContent("b-only").
+							WithTimestamp(now).
+							Build(),
+					})
+
+					assert.NoError(t, err)
+
+					messages, err := suite.sut.ListByConversationId(context.Background(), "a")
+
+					assert.NoError(t, err)
+					if assert.Len(t, messages, 2) {
+						assert.Equal(t, "a-first", lo.FromPtr(messages[0].Content))
+						assert.Equal(t, "a-second", lo.FromPtr(messages[1].Content))
+					}
 				})
 			})
 		})

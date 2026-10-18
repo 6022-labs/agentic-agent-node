@@ -22,10 +22,10 @@ func NewHttpLLMConfigClient(client clients.ClientWithResponsesInterface) *HttpLL
 func (c *HttpLLMConfigClient) Get(ctx context.Context) (*models.ExternalLLMConnectionPayload, error) {
 	resp, err := c.client.GetInternalConfigLlmWithResponse(ctx)
 	if err != nil {
-		return nil, err
+		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalLLMConnectionPayload
-	if err := helpers.DecodeRuntimeResponse(
+	if err := helpers.DecodeAndMapRuntimeResponse(
 		resp.HTTPResponse,
 		resp.Body,
 		&payload,
@@ -78,7 +78,7 @@ func (c *HttpLLMConfigClient) Validate(ctx context.Context, body *models.Externa
 func (c *HttpLLMConfigClient) Delete(ctx context.Context) error {
 	resp, err := c.client.DeleteInternalConfigLlmWithResponse(ctx)
 	if err != nil {
-		return err
+		return helpers.MapRuntimeError(err)
 	}
-	return helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
+	return helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil)
 }

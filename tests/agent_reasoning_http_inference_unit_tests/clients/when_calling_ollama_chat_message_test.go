@@ -50,7 +50,7 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 			_, _ = w.Write([]byte(`{"model":"llama3","message":{"role":"assistant","content":"hi"}}`))
 		}
 
-		t.Run("Should POST to /api/chat without auth header and decode the response", func(t *testing.T) {
+		t.Run("Should return the decoded response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
@@ -76,7 +76,7 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
@@ -86,7 +86,11 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 				suite.server.URL,
 				&models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"},
 			)
-			assert.Error(t, err)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
 		})
 	})
 }

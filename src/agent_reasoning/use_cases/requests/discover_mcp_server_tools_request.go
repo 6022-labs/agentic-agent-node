@@ -11,9 +11,9 @@ import (
 // DiscoverMCPServerToolsRequest describes the server to probe. Every field is
 // optional: ConnectionId names a stored connection each missing field falls back to.
 type DiscoverMCPServerToolsRequest struct {
-	ConnectionId *uuid.UUID        `json:"connectionId,omitempty"`
-	Url          *string           `json:"url,omitempty"`
-	HeaderAuth   map[string]string `json:"headerAuth,omitempty"`
+	ConnectionId *uuid.UUID `json:"connectionId,omitempty"`
+	Url          *string    `json:"url,omitempty"`
+	MCPHeaderAuthRequest
 }
 
 func (r *DiscoverMCPServerToolsRequest) ValidateAndSanitize() error {
@@ -22,10 +22,5 @@ func (r *DiscoverMCPServerToolsRequest) ValidateAndSanitize() error {
 	if r.ConnectionId == nil && r.Url == nil {
 		return errors.NewValidationError("url", "cannot be empty without a connection id")
 	}
-	for k := range r.HeaderAuth {
-		if len(strings.TrimSpace(k)) == 0 {
-			return errors.NewValidationError("headerAuth", "header name cannot be empty")
-		}
-	}
-	return nil
+	return r.MCPHeaderAuthRequest.ValidateAndSanitize()
 }

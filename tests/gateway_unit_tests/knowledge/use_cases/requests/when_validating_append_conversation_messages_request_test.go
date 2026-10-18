@@ -14,22 +14,12 @@ func TestWhenValidatingAppendConversationMessagesRequest(t *testing.T) {
 
 	validAppendConversationMessagesRequest := func() *requests.AppendConversationMessagesRequest {
 		return &requests.AppendConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: "conv-1"},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: "conv-1"},
 			Messages: []requests.AppendConversationMessageInput{
 				{Role: enums.MessageRoleUser, Content: "hi", Timestamp: time.Now()},
 			},
 		}
 	}
-
-	t.Run("Given a fully populated request", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should pass validation", func(t *testing.T) {
-			t.Parallel()
-
-			assert.NoError(t, validAppendConversationMessagesRequest().ValidateAndSanitize())
-		})
-	})
 
 	t.Run("Given a blank conversation id", func(t *testing.T) {
 		t.Parallel()
@@ -100,6 +90,16 @@ func TestWhenValidatingAppendConversationMessagesRequest(t *testing.T) {
 
 			assert.ErrorContains(t, err, "messages.role")
 			assert.ErrorContains(t, err, "index 1")
+		})
+	})
+
+	t.Run("Given a fully populated request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			assert.NoError(t, validAppendConversationMessagesRequest().ValidateAndSanitize())
 		})
 	})
 

@@ -59,7 +59,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 	conversationId := "conv-1"
 	request := func() *requests.ListConversationMessagesRequest {
 		return &requests.ListConversationMessagesRequest{
-			ConversationRequest: requests.ConversationRequest{ConversationId: conversationId},
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
 		}
 	}
 
@@ -72,7 +72,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite := WhenListingConversationMessagesBeforeEach(t)
 
 			_, err := suite.sut.Execute(listingMessagesCallerCtx, &requests.ListConversationMessagesRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "  "},
+				ConversationIdRequest: requests.ConversationIdRequest{ConversationId: "  "},
 			})
 
 			var validationErr *apperrors.ValidationError
@@ -103,7 +103,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
@@ -124,7 +124,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
@@ -208,7 +208,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)
@@ -222,7 +222,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation is not found", func(t *testing.T) {
+	t.Run("Given the conversation does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -263,7 +263,7 @@ func TestWhenListingConversationMessages(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationMessagesBeforeEach(t)

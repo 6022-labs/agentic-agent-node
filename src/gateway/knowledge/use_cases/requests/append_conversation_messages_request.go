@@ -16,7 +16,7 @@ type AppendConversationMessageInput struct {
 }
 
 type AppendConversationMessagesRequest struct {
-	ConversationRequest
+	ConversationIdRequest
 	Messages []AppendConversationMessageInput `json:"messages"`
 }
 
@@ -27,7 +27,7 @@ var appendableMessageRoles = enums.MessageRoleList{
 }
 
 func (r *AppendConversationMessagesRequest) ValidateAndSanitize() error {
-	if err := r.ConversationRequest.ValidateAndSanitize(); err != nil {
+	if err := r.ConversationIdRequest.ValidateAndSanitize(); err != nil {
 		return err
 	}
 	if len(r.Messages) == 0 {

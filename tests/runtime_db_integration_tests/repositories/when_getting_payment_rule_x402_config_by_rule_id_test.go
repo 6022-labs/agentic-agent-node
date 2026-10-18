@@ -74,6 +74,7 @@ func WhenGettingPaymentRuleX402ConfigByRuleIdBeforeEach(
 }
 
 func WhenGettingPaymentRuleX402ConfigByRuleIdAfterEach(suite *WhenGettingPaymentRuleX402ConfigByRuleIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

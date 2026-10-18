@@ -8,15 +8,15 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
-// ConversationIdMaxLength matches the conversations.id column.
+// ConversationIdMaxLength matches the runtime's conversations.id column.
 const ConversationIdMaxLength = 128
 
-// ConversationRequest is embedded by every request addressing one conversation by route id.
-type ConversationRequest struct {
+// ConversationIdRequest is embedded by every request addressing one conversation by route id.
+type ConversationIdRequest struct {
 	ConversationId string `uri:"conversationId" json:"-"`
 }
 
-func (r *ConversationRequest) ValidateAndSanitize() error {
+func (r *ConversationIdRequest) ValidateAndSanitize() error {
 	r.ConversationId = strings.TrimSpace(r.ConversationId)
 	if len(r.ConversationId) == 0 {
 		return errors.NewValidationError("conversationId", "cannot be empty")

@@ -38,22 +38,24 @@ func WhenValidatingLLMConnectionBeforeEach(t *testing.T) *WhenValidatingLLMConne
 func TestWhenValidatingLLMConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the request is invalid", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error without probing", func(t *testing.T) {
+		request := &requests.SetupLLMConnectionRequest{}
+
+		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingLLMConnectionBeforeEach(t)
 
-			err := suite.sut.Execute(context.Background(), &requests.SetupLLMConnectionRequest{})
+			err := suite.sut.Execute(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 		})
 	})
 
-	t.Run("Given a valid request", func(t *testing.T) {
+	t.Run("Given a fully populated request", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingLLMConnectionTestingSuite) {
@@ -91,7 +93,7 @@ func TestWhenValidatingLLMConnection(t *testing.T) {
 				Return(apperrors.NewValidationError("connection", "model not found"))
 		}
 
-		t.Run("Should return the validation error", func(t *testing.T) {
+		t.Run("Should return a ValidationError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingLLMConnectionBeforeEach(t)

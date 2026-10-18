@@ -38,10 +38,10 @@ func WhenDiscoveringMcpServerToolsBeforeEach(t *testing.T) *WhenDiscoveringMcpSe
 func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a request without a url", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDiscoveringMcpServerToolsBeforeEach(t)
@@ -50,25 +50,6 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-		})
-	})
-
-	t.Run("Given a header with an empty name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError on headerAuth", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMcpServerToolsBeforeEach(t)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMcpServerToolsRequest{
-				Url:        lo.ToPtr("https://mcp.github.example"),
-				HeaderAuth: map[string]string{"  ": "Bearer abc"},
-			})
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "headerAuth", validationErr.Field)
 		})
 	})
 
@@ -97,8 +78,10 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(context.Background(), &requests.DiscoverMcpServerToolsRequest{
-				Url:        lo.ToPtr("https://mcp.github.example"),
-				HeaderAuth: map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"},
+				Url: lo.ToPtr("https://mcp.github.example"),
+				McpHeaderAuthRequest: requests.McpHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": "Bearer abc", "X-Api-Key": "k"},
+				},
 			})
 
 			assert.NoError(t, err)
@@ -130,8 +113,10 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.DiscoverMcpServerToolsRequest{
-				Url:          lo.ToPtr("https://mcp.github.example"),
-				HeaderAuth:   map[string]string{"Authorization": ""},
+				Url: lo.ToPtr("https://mcp.github.example"),
+				McpHeaderAuthRequest: requests.McpHeaderAuthRequest{
+					HeaderAuth: map[string]string{"Authorization": ""},
+				},
 				ConnectionId: &id,
 			})
 
@@ -139,7 +124,7 @@ func TestWhenDiscoveringMcpServerTools(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no auth header at all", func(t *testing.T) {
+	t.Run("Given no header auth", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()

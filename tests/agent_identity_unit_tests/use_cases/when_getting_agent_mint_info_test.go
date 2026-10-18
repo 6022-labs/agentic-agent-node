@@ -46,6 +46,26 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 
 	owner := common_tests.RandomEthAddress().Hex()
 
+	t.Run("Given no registration draft exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should return a NotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
 	t.Run("Given a draft on a non-moderated collection", func(t *testing.T) {
 		t.Parallel()
 
@@ -103,26 +123,6 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, uint64(2), resp.ModeratorCount)
 			assert.True(t, resp.OwnerIsModerator)
-		})
-	})
-
-	t.Run("Given no draft has been saved", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-		}
-
-		t.Run("Should return a NotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentMintInfoBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 }

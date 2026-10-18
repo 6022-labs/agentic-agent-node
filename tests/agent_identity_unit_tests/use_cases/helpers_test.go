@@ -9,8 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// newMultipartFileHeader builds a *multipart.FileHeader from raw bytes so tests
-// can feed the save use case an uploaded image.
+// newMultipartFileHeader builds a *multipart.FileHeader from raw bytes for the save use case.
 func newMultipartFileHeader(t *testing.T, content []byte, contentType string) *multipart.FileHeader {
 	t.Helper()
 

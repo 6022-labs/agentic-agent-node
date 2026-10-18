@@ -79,7 +79,7 @@ func TestWhenListingConversations(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -192,7 +192,7 @@ func TestWhenListingConversations(t *testing.T) {
 				Return(uint(0), errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -219,7 +219,7 @@ func TestWhenListingConversations(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -250,7 +250,7 @@ func TestWhenListingConversations(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError carrying the repository message", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)

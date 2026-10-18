@@ -54,6 +54,7 @@ func WhenGettingPaymentPolicyByAgentIdBeforeEach(
 }
 
 func WhenGettingPaymentPolicyByAgentIdAfterEach(suite *WhenGettingPaymentPolicyByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

@@ -28,7 +28,7 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 	t.Run("Given a DSN with a non-pragma query string", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should keep the query and append all default pragmas", func(t *testing.T) {
+		t.Run("Should append the default pragmas after the query", func(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("file:agent.db?cache=shared")
@@ -43,7 +43,7 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 	t.Run("Given a DSN that overrides one default pragma", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should keep the override and append only the missing defaults", func(t *testing.T) {
+		t.Run("Should append only the missing defaults", func(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=busy_timeout(500)")
@@ -69,7 +69,7 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 	t.Run("Given a DSN with an empty _pragma parameter", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should still append all default pragmas", func(t *testing.T) {
+		t.Run("Should append all default pragmas", func(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=")
@@ -84,7 +84,7 @@ func TestWhenApplyingSqliteDsnDefaults(t *testing.T) {
 	t.Run("Given a pragma using the name=value form", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should recognize the override and skip that default", func(t *testing.T) {
+		t.Run("Should skip that default", func(t *testing.T) {
 			t.Parallel()
 
 			result := utils.ApplySqliteDsnDefaults("/data/agent.db?_pragma=journal_mode%3DDELETE")

@@ -30,7 +30,7 @@ func TestWhenLoadingMigrationsSettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given folder_path has surrounding whitespace", func(t *testing.T) {
+	t.Run("Given a padded folder_path", func(t *testing.T) {
 		t.Parallel()
 		dir := t.TempDir()
 

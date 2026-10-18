@@ -31,7 +31,7 @@ func TestWhenLoadingAgentIdentitySettings(t *testing.T) {
 		})
 	})
 
-	t.Run("Given runtime_url with surrounding whitespace", func(t *testing.T) {
+	t.Run("Given a padded runtime_url", func(t *testing.T) {
 		t.Parallel()
 
 		k := koanf.New(".")

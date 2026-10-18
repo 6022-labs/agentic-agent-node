@@ -107,7 +107,7 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a Bearer scheme with an empty token", func(t *testing.T) {
+	t.Run("Given a Bearer scheme with a blank token", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should defer without touching the validator", func(t *testing.T) {

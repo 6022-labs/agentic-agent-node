@@ -65,7 +65,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the wallet has not been bootstrapped", func(t *testing.T) {
+	t.Run("Given the node wallet is not bootstrapped", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
@@ -82,7 +82,7 @@ func TestWhenCreatingTransactor(t *testing.T) {
 
 			_, err := suite.sut.Create(context.Background(), 1)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "wallet credentials not present")
 		})
 	})
 }

@@ -55,7 +55,7 @@ func WhenDeletingKvV1SecretAfterEach(suite *WhenDeletingKvV1SecretTestingSuite) 
 func TestWhenDeletingKvV1Secret(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a key that has been written", func(t *testing.T) {
+	t.Run("Given a key exists", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should remove it so Read returns ErrSecretNotFound", func(t *testing.T) {

@@ -73,7 +73,7 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentPolicyBeforeEach(t)
@@ -110,40 +110,7 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a policy exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) *models.PaymentPolicy {
-			agent := model_builders.NewAgentBuilder().Build()
-			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
-
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
-				Return(&identity_models.AgentAddress{Address: "0x2f0DDd93040C19863527b0553fECeB696862EA7D"}, nil).
-				AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(policy, nil).
-				Times(1)
-			return policy
-		}
-
-		t.Run("Should return the head without touching the rules", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingPaymentPolicyBeforeEach(t)
-			policy := initSuite(suite)
-
-			result, err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-			assert.Equal(t, policy.Id, result.Id)
-			assert.NotEmpty(t, result.AgentWalletAddress)
-		})
-	})
-
-	t.Run("Given no policy exists yet", func(t *testing.T) {
+	t.Run("Given no policy exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) {
@@ -175,8 +142,7 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 					return rule, nil
 				}).
 				Times(1)
-			// The default rule's x402 config is persisted on the node's chain
-			// with the $6022 token as the signing context.
+			// The default rule's x402 config is persisted on the node's chain with $6022 as the signing context.
 			suite.mockStrategy.EXPECT().
 				SaveConfig(gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ uuid.UUID, raw json.RawMessage) error {
@@ -241,6 +207,39 @@ func TestWhenGettingPaymentPolicy(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, policy.Id, result.Id)
+		})
+	})
+
+	t.Run("Given a policy exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentPolicyTestingSuite) *models.PaymentPolicy {
+			agent := model_builders.NewAgentBuilder().Build()
+			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(&identity_models.AgentAddress{Address: "0x2f0DDd93040C19863527b0553fECeB696862EA7D"}, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(policy, nil).
+				Times(1)
+			return policy
+		}
+
+		t.Run("Should return the head without touching the rules", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentPolicyBeforeEach(t)
+			policy := initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, policy.Id, result.Id)
+			assert.NotEmpty(t, result.AgentWalletAddress)
 		})
 	})
 }

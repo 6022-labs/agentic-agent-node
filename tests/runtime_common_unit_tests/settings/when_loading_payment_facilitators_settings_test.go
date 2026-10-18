@@ -25,7 +25,7 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 			},
 		}, "."), nil)
 
-		t.Run("Should resolve base urls and list the networks in order", func(t *testing.T) {
+		t.Run("Should resolve the base urls", func(t *testing.T) {
 			t.Parallel()
 
 			result := settings.NewPaymentFacilitatorsSettings(zap.NewNop(), k, reachableChains())
@@ -37,6 +37,12 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 			base, ok := result.BaseUrlFor("eip155:84532")
 			assert.True(t, ok)
 			assert.Equal(t, "https://x402.org/facilitator", base)
+		})
+
+		t.Run("Should list the networks in order", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewPaymentFacilitatorsSettings(zap.NewNop(), k, reachableChains())
 
 			assert.Equal(t, []string{"eip155:80002", "eip155:84532"}, result.Networks())
 		})
@@ -53,7 +59,7 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 			},
 		}, "."), nil)
 
-		t.Run("Should keep the explicit timeout and default the missing one", func(t *testing.T) {
+		t.Run("Should keep the explicit timeout", func(t *testing.T) {
 			t.Parallel()
 
 			entries := settings.NewPaymentFacilitatorsSettings(zap.NewNop(), k, reachableChains()).Entries()
@@ -61,6 +67,15 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 			if assert.Len(t, entries, 2) {
 				assert.Equal(t, "eip155:80002", entries[0].Network)
 				assert.Equal(t, 120, entries[0].MaxTimeoutSeconds)
+			}
+		})
+
+		t.Run("Should default the missing timeout", func(t *testing.T) {
+			t.Parallel()
+
+			entries := settings.NewPaymentFacilitatorsSettings(zap.NewNop(), k, reachableChains()).Entries()
+
+			if assert.Len(t, entries, 2) {
 				assert.Equal(t, "eip155:84532", entries[1].Network)
 				assert.Equal(t, 60, entries[1].MaxTimeoutSeconds)
 			}
@@ -98,8 +113,7 @@ func TestWhenLoadingPaymentFacilitatorsSettings(t *testing.T) {
 		t.Run("Should fail fast — the node could never validate its assets", func(t *testing.T) {
 			t.Parallel()
 
-			// WriteThenPanic turns the constructor's logger.Fatal into a panic so
-			// the boot-time guard is assertable without exiting the test process.
+			// WriteThenPanic turns logger.Fatal into a panic so the guard is assertable.
 			logger := zap.NewNop().WithOptions(
 				zap.WithFatalHook(zapcore.WriteThenPanic),
 			)

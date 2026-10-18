@@ -36,8 +36,7 @@ func TestWhenUploadingFile(t *testing.T) {
 	t.Run("Given the client adds the file", func(t *testing.T) {
 		t.Parallel()
 
-		// RoutingProvide runs in a background goroutine — synchronise on it so
-		// the call is recorded before the controller is finished.
+		// RoutingProvide runs in a goroutine; synchronise on it before the controller finishes.
 		initSuite := func(suite *WhenUploadingFileTestingSuite) chan string {
 			provided := make(chan string, 1)
 			suite.mockClient.EXPECT().Add([]byte("image-bytes"), "agent.png", gomock.Any()).DoAndReturn(
@@ -55,7 +54,7 @@ func TestWhenUploadingFile(t *testing.T) {
 			return provided
 		}
 
-		t.Run("Should pin the upload, return the hash, and announce it to the DHT", func(t *testing.T) {
+		t.Run("Should return the hash", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUploadingFileBeforeEach(t)
@@ -67,6 +66,18 @@ func TestWhenUploadingFile(t *testing.T) {
 			if assert.NotNil(t, result) {
 				assert.Equal(t, "QmHashValue", *result)
 			}
+			<-provided
+		})
+
+		t.Run("Should announce the hash to the DHT", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUploadingFileBeforeEach(t)
+			provided := initSuite(suite)
+
+			_, err := suite.sut.UploadFile([]byte("image-bytes"), "agent.png")
+
+			assert.NoError(t, err)
 
 			select {
 			case arg := <-provided:
@@ -84,7 +95,7 @@ func TestWhenUploadingFile(t *testing.T) {
 			suite.mockClient.EXPECT().Add(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("ipfs down"))
 		}
 
-		t.Run("Should return the error without announcing anything", func(t *testing.T) {
+		t.Run("Should return the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUploadingFileBeforeEach(t)
@@ -92,7 +103,7 @@ func TestWhenUploadingFile(t *testing.T) {
 
 			result, err := suite.sut.UploadFile([]byte("x"), "f.png")
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "ipfs down")
 			assert.Nil(t, result)
 		})
 	})

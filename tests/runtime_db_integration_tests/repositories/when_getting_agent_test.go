@@ -52,6 +52,7 @@ func WhenGettingAgentBeforeEach(tc *repositoryTestCase) *WhenGettingAgentTesting
 }
 
 func WhenGettingAgentAfterEach(suite *WhenGettingAgentTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -62,7 +63,7 @@ func TestWhenGettingAgent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given no agent has been persisted", func(t *testing.T) {
+			t.Run("Given no agent exists", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should return nil without error", func(t *testing.T) {
@@ -76,10 +77,10 @@ func TestWhenGettingAgent(t *testing.T) {
 				})
 			})
 
-			t.Run("Given an agent has been persisted", func(t *testing.T) {
+			t.Run("Given an agent exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return the persisted row including its JSON maps", func(t *testing.T) {
+				t.Run("Should return the persisted row", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenGettingAgentBeforeEach(tc)
 					defer WhenGettingAgentAfterEach(suite)
@@ -97,10 +98,46 @@ func TestWhenGettingAgent(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, inserted.Id, got.Id)
 					assert.Equal(t, "Ada", lo.FromPtr(got.Name))
-					assert.Equal(t, "expert", got.Attributes["role"])
 					assert.Equal(t, "ada.agent.eth", lo.FromPtr(got.EnsDomain))
-					assert.Equal(t, "https://example.com/a.png", got.Images["avatar"])
+				})
+
+				t.Run("Should return its attributes JSON map", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenGettingAgentBeforeEach(tc)
+					defer WhenGettingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert", "trait": "curious"}).
+						WithEnsDomain("ada.agent.eth").
+						WithImages(map[string]string{"avatar": "https://example.com/a.png"}).
+						Build())
+
+					assert.NoError(t, err)
+
+					got, err := suite.sut.Get(context.Background())
+					assert.NoError(t, err)
+					assert.Equal(t, "expert", got.Attributes["role"])
 					assert.Equal(t, "curious", got.Attributes["trait"])
+				})
+
+				t.Run("Should return its images JSON map", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenGettingAgentBeforeEach(tc)
+					defer WhenGettingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert", "trait": "curious"}).
+						WithEnsDomain("ada.agent.eth").
+						WithImages(map[string]string{"avatar": "https://example.com/a.png"}).
+						Build())
+
+					assert.NoError(t, err)
+
+					got, err := suite.sut.Get(context.Background())
+					assert.NoError(t, err)
+					assert.Equal(t, "https://example.com/a.png", got.Images["avatar"])
 				})
 			})
 

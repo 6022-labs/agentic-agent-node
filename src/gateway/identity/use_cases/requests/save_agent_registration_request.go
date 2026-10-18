@@ -16,7 +16,7 @@ const maxImageBytes = 5 * 1024 * 1024
 // single base image the runtime frames; Attributes arrives as a JSON object
 // string in the "attributes" form field.
 type SaveAgentRegistrationRequest struct {
-	ChainId           string                `form:"chainId"`
+	ChainIdRequest
 	CollectionAddress string                `form:"collectionAddress"`
 	Name              string                `form:"name"`
 	CloneOf           *uint64               `form:"cloneOf"`
@@ -27,9 +27,8 @@ type SaveAgentRegistrationRequest struct {
 }
 
 func (r *SaveAgentRegistrationRequest) ValidateAndSanitize() error {
-	r.ChainId = strings.TrimSpace(r.ChainId)
-	if len(r.ChainId) == 0 {
-		return errors.NewValidationError("chainId", "is required")
+	if err := r.ChainIdRequest.ValidateAndSanitize(); err != nil {
+		return err
 	}
 
 	r.CollectionAddress = strings.TrimSpace(r.CollectionAddress)

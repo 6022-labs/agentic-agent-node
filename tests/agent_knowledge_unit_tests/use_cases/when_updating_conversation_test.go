@@ -65,8 +65,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite := WhenUpdatingConversationBeforeEach(t)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "   ",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "   "},
 			})
 
 			var validationErr *apperrors.ValidationError
@@ -83,8 +83,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite := WhenUpdatingConversationBeforeEach(t)
 
 			_, err := suite.sut.Execute(context.Background(), &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Audit",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var unauthorizedErr *apperrors.UnauthorizedError
@@ -100,15 +100,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Audit",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -124,15 +124,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Audit",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -168,8 +168,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Audit",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			assert.NoError(t, err)
@@ -204,8 +204,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Solidity audits",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Solidity audits"},
 			})
 
 			assert.NoError(t, err)
@@ -225,15 +225,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "mine",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "mine"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -242,7 +242,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation is not found", func(t *testing.T) {
+	t.Run("Given the conversation does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -261,8 +261,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "mine",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "mine"},
 			})
 
 			var notFoundErr *apperrors.NotFoundError
@@ -271,7 +271,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given another session already holds the name", func(t *testing.T) {
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -294,8 +294,8 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "taken",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "taken"},
 			})
 
 			var conflictErr *apperrors.ConflictError
@@ -304,7 +304,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given renaming fails", func(t *testing.T) {
+	t.Run("Given saving the name fails", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -320,15 +320,15 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "Audit",
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -357,18 +357,19 @@ func TestWhenUpdatingConversation(t *testing.T) {
 				Return(conversation, nil)
 		}
 
-		t.Run("Should accept it", func(t *testing.T) {
+		t.Run("Should return the unchanged name", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingConversationBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
-				ConversationRequest: requests.ConversationRequest{ConversationId: "c1"},
-				Name:                "same",
+			updated, err := suite.sut.Execute(updatingCallerCtx, &requests.UpdateConversationRequest{
+				ConversationIdRequest:   requests.ConversationIdRequest{ConversationId: "c1"},
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "same"},
 			})
 
 			assert.NoError(t, err)
+			assert.Equal(t, "same", lo.FromPtr(updated.Name))
 		})
 	})
 }

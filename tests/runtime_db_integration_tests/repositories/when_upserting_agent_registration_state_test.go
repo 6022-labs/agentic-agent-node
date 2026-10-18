@@ -56,6 +56,7 @@ func WhenUpsertingAgentRegistrationStateBeforeEach(
 }
 
 func WhenUpsertingAgentRegistrationStateAfterEach(suite *WhenUpsertingAgentRegistrationStateTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -69,7 +70,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 			t.Run("Given no state exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should insert and return the new state with a generated Id", func(t *testing.T) {
+				t.Run("Should return the new state with a generated Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
@@ -81,11 +82,28 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 						context.Background(),
 						model_builders.NewAgentRegistrationStateBuilder().WithAgentId(agentId).Build(),
 					)
+
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
+				})
+
+				t.Run("Should store a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
+					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().WithAgentId(agentId).Build(),
+					)
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.AgentRegistrationState{}).Count(&count)
+
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -93,7 +111,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 			t.Run("Given a state already exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should advance the mint lifecycle in place and preserve Id", func(t *testing.T) {
+				t.Run("Should preserve its Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
@@ -108,7 +126,6 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 							WithMintStatus(identity_enums.TransactionStatusPending).
 							Build(),
 					)
-
 					assert.NoError(t, err)
 
 					second, err := suite.sut.Upsert(
@@ -123,9 +140,129 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
+				})
+
+				t.Run("Should advance the mint status", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
+					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+							Build(),
+					)
+
+					assert.NoError(t, err)
 					assert.Equal(t, identity_enums.TransactionStatusConfirmed, second.MintStatus)
+				})
+
+				t.Run("Should record the mint chain id", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
+					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+							Build(),
+					)
+
+					assert.NoError(t, err)
 					assert.Equal(t, uint64(80002), *second.MintChainId)
+				})
+
+				t.Run("Should advance the ENS registry status", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
+					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+							Build(),
+					)
+
+					assert.NoError(t, err)
 					assert.Equal(t, identity_enums.TransactionStatusConfirmed, second.EnsRegistryStatus)
+				})
+
+				t.Run("Should keep a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentRegistrationStateBeforeEach(tc)
+					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					_, err := suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusPending).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Upsert(
+						context.Background(),
+						model_builders.NewAgentRegistrationStateBuilder().
+							WithAgentId(agentId).
+							WithMintStatus(identity_enums.TransactionStatusConfirmed).
+							WithMintChainId(80002).
+							WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
+							Build(),
+					)
+
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.AgentRegistrationState{}).Count(&count)

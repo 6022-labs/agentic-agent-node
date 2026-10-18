@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -32,6 +33,55 @@ func WhenGettingBlockchainConfigBeforeEach(t *testing.T) *WhenGettingBlockchainC
 
 func TestWhenGettingBlockchainConfig(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigBlockchainWithResponse(gomock.Any()).
+				Return(nil, errors.New("runtime down"))
+		}
+
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingBlockchainConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Get(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigBlockchainWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigBlockchainResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"boom"}`),
+				}, nil)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingBlockchainConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Get(context.Background())
+
+			var target *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
 
 	t.Run("Given the runtime returns the chain config", func(t *testing.T) {
 		t.Parallel()
@@ -71,31 +121,6 @@ func TestWhenGettingBlockchainConfig(t *testing.T) {
 					}
 				}
 			}
-		})
-	})
-
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingBlockchainConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConfigBlockchainWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigBlockchainResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"boom"}`),
-				}, nil)
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingBlockchainConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Get(context.Background())
-
-			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

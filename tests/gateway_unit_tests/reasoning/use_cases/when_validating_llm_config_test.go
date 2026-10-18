@@ -36,10 +36,10 @@ func WhenValidatingLlmConfigBeforeEach(t *testing.T) *WhenValidatingLlmConfigTes
 func TestWhenValidatingLlmConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a request that fails validation", func(t *testing.T) {
+	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError without calling the runtime", func(t *testing.T) {
+		t.Run("Should return a validation error without touching dependencies", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingLlmConfigBeforeEach(t)
@@ -51,7 +51,57 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a valid request", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Validate(gomock.Any(), gomock.Any()).
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetLlmConfigRequest{Provider: "openai", Model: "gpt-4o"},
+			)
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				Validate(gomock.Any(), gomock.Any()).
+				Return(apperrors.NewValidationError("connection", "unauthorized"))
+		}
+
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(
+				context.Background(),
+				&requests.SetLlmConfigRequest{Provider: "openai", Model: "gpt-4o"},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+		})
+	})
+
+	t.Run("Given the runtime accepts the connection", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
@@ -80,31 +130,6 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 			})
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the runtime rejects the connection", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				Validate(gomock.Any(), gomock.Any()).
-				Return(apperrors.NewValidationError("connection", "unauthorized"))
-		}
-
-		t.Run("Should surface the runtime error as-is", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingLlmConfigBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(
-				context.Background(),
-				&requests.SetLlmConfigRequest{Provider: "openai", Model: "gpt-4o"},
-			)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
 		})
 	})
 }

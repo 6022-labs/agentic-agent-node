@@ -35,7 +35,7 @@ func WhenListingConversationsBeforeEach(t *testing.T) *WhenListingConversationsT
 func TestWhenListingConversations(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the client fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
@@ -44,7 +44,7 @@ func TestWhenListingConversations(t *testing.T) {
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
 		}
 
-		t.Run("Should propagate the client error", func(t *testing.T) {
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -58,30 +58,7 @@ func TestWhenListingConversations(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockClient.EXPECT().
-				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
-		}
-
-		t.Run("Should surface the refusal unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
-
-			var unauthorizedErr *apperrors.UnauthorizedError
-			assert.ErrorAs(t, err, &unauthorizedErr)
-			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
-		})
-	})
-
-	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
@@ -90,7 +67,7 @@ func TestWhenListingConversations(t *testing.T) {
 				Return(nil, apperrors.NewValidationError("callerId", "too long"))
 		}
 
-		t.Run("Should surface the validation error unchanged", func(t *testing.T) {
+		t.Run("Should surface the ValidationError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -104,7 +81,53 @@ func TestWhenListingConversations(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the client returns conversations", func(t *testing.T) {
+	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("missing_caller_id", "an authenticated caller id is required"))
+		}
+
+		t.Run("Should surface the UnauthorizedError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
+
+			var unauthorizedErr *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedErr)
+			assert.Equal(t, "missing_caller_id", unauthorizedErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.ListConversationsRequest{})
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime returns the conversations", func(t *testing.T) {
 		t.Parallel()
 
 		now := time.Now().UTC().Truncate(time.Microsecond)

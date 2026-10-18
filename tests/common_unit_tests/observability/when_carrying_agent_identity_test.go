@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhenCarryingAgentIdentityInContext(t *testing.T) {
+func TestWhenCarryingAgentIdentity(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a bare context", func(t *testing.T) {
+	t.Run("Given no agent identity", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should report no identity", func(t *testing.T) {
@@ -23,7 +23,7 @@ func TestWhenCarryingAgentIdentityInContext(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an identity has been attached", func(t *testing.T) {
+	t.Run("Given an agent identity", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should read it back from the derived context", func(t *testing.T) {

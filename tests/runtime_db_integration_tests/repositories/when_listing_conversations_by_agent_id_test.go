@@ -281,7 +281,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 					}
 				}
 
-				t.Run("Should window them by offset and limit", func(t *testing.T) {
+				t.Run("Should return the first page", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
 					defer WhenListingConversationsByAgentIdAfterEach(suite)
@@ -292,13 +292,29 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 					seed(suite, agentId)
 
 					firstPage, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(0), lo.ToPtr(2))
+
 					assert.NoError(t, err)
-					assert.Equal(t, []string{"a", "b"}, []string{firstPage[0].Id, firstPage[1].Id})
+					if assert.Len(t, firstPage, 2) {
+						assert.Equal(t, []string{"a", "b"}, []string{firstPage[0].Id, firstPage[1].Id})
+					}
+				})
+
+				t.Run("Should return the remaining rows on the second page", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingConversationsByAgentIdBeforeEach(tc)
+					defer WhenListingConversationsByAgentIdAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					seed(suite, agentId)
 
 					secondPage, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(2), lo.ToPtr(2))
+
 					assert.NoError(t, err)
-					assert.Len(t, secondPage, 1)
-					assert.Equal(t, "c", secondPage[0].Id)
+					if assert.Len(t, secondPage, 1) {
+						assert.Equal(t, "c", secondPage[0].Id)
+					}
 				})
 
 				t.Run("Given an offset past the end", func(t *testing.T) {

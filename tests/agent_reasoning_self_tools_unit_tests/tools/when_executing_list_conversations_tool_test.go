@@ -43,7 +43,7 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 
 	ctx := helpers.ContextWithCallerId(context.Background(), listToolCallerId)
 
-	t.Run("Given the turn carries a caller id", func(t *testing.T) {
+	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {

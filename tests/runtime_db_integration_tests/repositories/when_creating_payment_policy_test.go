@@ -52,6 +52,7 @@ func WhenCreatingPaymentPolicyBeforeEach(tc *repositoryTestCase) *WhenCreatingPa
 }
 
 func WhenCreatingPaymentPolicyAfterEach(suite *WhenCreatingPaymentPolicyTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 

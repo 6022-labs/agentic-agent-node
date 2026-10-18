@@ -20,8 +20,7 @@ const (
 	anvilChainIdUint = uint64(31337)
 )
 
-// AnvilAccountSettings is what the builder hands back to a test: the shared
-// anvil chain plus a freshly generated, pre-funded key of its own.
+// AnvilAccountSettings is what the builder hands a test: the shared anvil chain plus its own pre-funded key.
 type AnvilAccountSettings struct {
 	ChainId       string
 	ChainIdUint   uint64
@@ -42,8 +41,7 @@ type AnvilContainerBuilder struct {
 	containerMu sync.Mutex
 }
 
-// GetAnvilContainerBuilder is called from parallel tests, so the singleton itself
-// needs guarding, not just the container it lazily starts.
+// GetAnvilContainerBuilder is called from parallel tests, so the singleton itself needs guarding.
 func GetAnvilContainerBuilder() *AnvilContainerBuilder {
 	anvilContainerMu.Lock()
 	defer anvilContainerMu.Unlock()
@@ -115,8 +113,7 @@ func (b *AnvilContainerBuilder) stop() {
 	anvilContainerMu.Unlock()
 }
 
-// CreateContractlessAddress plants a single STOP opcode at a fresh address, giving
-// a test deployed code that answers nothing without deploying a real contract.
+// CreateContractlessAddress plants a STOP opcode at a fresh address: deployed code that answers nothing.
 func (b *AnvilContainerBuilder) CreateContractlessAddress() common.Address {
 	rpcClient := b.start()
 
@@ -132,8 +129,7 @@ func (b *AnvilContainerBuilder) CreateContractlessAddress() common.Address {
 	return address
 }
 
-// Create generates a funded key so parallel tests never share a nonce sequence
-// (anvil_setBalance is nonce-free, unlike funding from a faucet account).
+// Create generates a funded key so parallel tests never share a nonce sequence.
 func (b *AnvilContainerBuilder) Create() AnvilAccountSettings {
 	rpcClient := b.start()
 

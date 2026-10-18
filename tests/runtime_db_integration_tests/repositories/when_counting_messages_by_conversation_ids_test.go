@@ -72,7 +72,7 @@ func TestWhenCountingMessagesByConversationIds(t *testing.T) {
 			t.Run("Given conversations holding messages", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should count per conversation and omit the empty ones", func(t *testing.T) {
+				t.Run("Should count per conversation", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCountingMessagesByConversationIdsBeforeEach(tc)
 					defer WhenCountingMessagesByConversationIdsAfterEach(suite)
@@ -100,6 +100,34 @@ func TestWhenCountingMessagesByConversationIds(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, int64(2), counts["busy"])
 					assert.Equal(t, int64(1), counts["quiet"])
+				})
+
+				t.Run("Should omit the empty ones", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCountingMessagesByConversationIdsBeforeEach(tc)
+					defer WhenCountingMessagesByConversationIdsAfterEach(suite)
+
+					ctx := context.Background()
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+					for _, id := range []string{"busy", "quiet", "empty"} {
+						_, err := suite.conversations.Create(ctx, model_builders.NewConversationBuilder().
+							WithId(id).
+							WithAgentId(agentId).
+							Build())
+						assert.NoError(t, err)
+					}
+
+					_, err := suite.sut.AppendMessages(ctx, []models.ConversationMessage{
+						newMessage("busy", "one"),
+						newMessage("busy", "two"),
+						newMessage("quiet", "only"),
+					})
+					assert.NoError(t, err)
+
+					counts, err := suite.sut.CountByConversationIds(ctx, []string{"busy", "quiet", "empty"})
+
+					assert.NoError(t, err)
 					// A conversation with no message is absent, so the caller reads it as zero.
 					_, hasEmpty := counts["empty"]
 					assert.False(t, hasEmpty)

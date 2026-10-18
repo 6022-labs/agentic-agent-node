@@ -33,6 +33,27 @@ func WhenGettingAgentGuidanceBeforeEach(t *testing.T) *WhenGettingAgentGuidanceT
 func TestWhenGettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
+			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime returns the guidance", func(t *testing.T) {
 		t.Parallel()
 
@@ -52,27 +73,6 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "answer concisely", resp.Content)
-		})
-	})
-
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run("Should return runtime_unavailable", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentGuidanceBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 }

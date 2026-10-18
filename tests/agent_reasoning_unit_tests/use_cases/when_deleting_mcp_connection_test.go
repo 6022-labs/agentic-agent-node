@@ -44,7 +44,7 @@ func WhenDeletingMCPConnectionBeforeEach(t *testing.T) *WhenDeletingMCPConnectio
 func TestWhenDeletingMCPConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an unknown id", func(t *testing.T) {
+	t.Run("Given the connection does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -81,7 +81,7 @@ func TestWhenDeletingMCPConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().DeleteById(gomock.Any(), gomock.Any(), id).Return(nil)
 		}
 
-		t.Run("Should clear every header from vault then drop the row, returning NoContent", func(t *testing.T) {
+		t.Run("Should clear every header from vault before dropping the row", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingMCPConnectionBeforeEach(t)

@@ -37,37 +37,59 @@ func TestWhenComputingDomainSeparator(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a different domain field", func(t *testing.T) {
+	t.Run("Given a different name", func(t *testing.T) {
 		t.Parallel()
 
-		base := helper.ComputeDomainSeparator("USD Coin", "2", domainSeparatorChainId, domainSeparatorAsset)
-
-		t.Run("Should change when the name differs", func(t *testing.T) {
+		t.Run("Should produce another separator", func(t *testing.T) {
 			t.Parallel()
 
+			base := helper.ComputeDomainSeparator("USD Coin", "2", domainSeparatorChainId, domainSeparatorAsset)
 			other := helper.ComputeDomainSeparator("USDC", "2", domainSeparatorChainId, domainSeparatorAsset)
+
 			assert.NotEqual(t, base, other)
 		})
+	})
 
-		t.Run("Should change when the version differs", func(t *testing.T) {
+	t.Run("Given a different version", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should produce another separator", func(t *testing.T) {
 			t.Parallel()
 
+			base := helper.ComputeDomainSeparator("USD Coin", "2", domainSeparatorChainId, domainSeparatorAsset)
 			other := helper.ComputeDomainSeparator("USD Coin", "1", domainSeparatorChainId, domainSeparatorAsset)
+
 			assert.NotEqual(t, base, other)
 		})
+	})
 
-		t.Run("Should change when the chain id differs", func(t *testing.T) {
+	t.Run("Given a different chain id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should produce another separator", func(t *testing.T) {
 			t.Parallel()
 
+			base := helper.ComputeDomainSeparator("USD Coin", "2", domainSeparatorChainId, domainSeparatorAsset)
 			other := helper.ComputeDomainSeparator("USD Coin", "2", 1, domainSeparatorAsset)
+
 			assert.NotEqual(t, base, other)
 		})
+	})
 
-		t.Run("Should change when the verifying contract differs", func(t *testing.T) {
+	t.Run("Given a different verifying contract", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should produce another separator", func(t *testing.T) {
 			t.Parallel()
 
+			base := helper.ComputeDomainSeparator("USD Coin", "2", domainSeparatorChainId, domainSeparatorAsset)
 			other := helper.ComputeDomainSeparator(
-				"USD Coin", "2", domainSeparatorChainId, "0x0000000000000000000000000000000000000001")
+				"USD Coin",
+				"2",
+				domainSeparatorChainId,
+				"0x0000000000000000000000000000000000000001",
+			)
+
 			assert.NotEqual(t, base, other)
 		})
 	})

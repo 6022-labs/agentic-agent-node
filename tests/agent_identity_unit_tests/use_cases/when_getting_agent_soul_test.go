@@ -33,24 +33,24 @@ func WhenGettingAgentSoulBeforeEach(t *testing.T) *WhenGettingAgentSoulTestingSu
 func TestWhenGettingAgentSoul(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the agent carries a soul", func(t *testing.T) {
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithSoul("persona text").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
-		t.Run("Should return the soul", func(t *testing.T) {
+		t.Run("Should return an InternalError carrying the cause", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentSoulBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.sut.Execute(context.Background())
+			_, err := suite.sut.Execute(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "persona text", resp.Soul)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db down")
 		})
 	})
 
@@ -75,24 +75,24 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the agent read fails", func(t *testing.T) {
+	t.Run("Given a soul exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			agent := model_builders.NewAgentBuilder().WithSoul("persona text").Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
-		t.Run("Should return InternalError carrying the cause", func(t *testing.T) {
+		t.Run("Should return the soul", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentSoulBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "db down")
+			assert.NoError(t, err)
+			assert.Equal(t, "persona text", resp.Soul)
 		})
 	})
 }

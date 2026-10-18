@@ -92,6 +92,25 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 - **Errors → HTTP**: use cases fail with concrete types from `common/errors`, mapped by `common/mvc.WriteError`: `ValidationError`→400, `UnauthorizedError`→401, `NotFoundError`→404, `ConflictError`→409, `UnavailableError`→502, `InternalError`→500; a plain error → 500. Controllers pick the success status (200/201/204).
 - **Persistence**: `runtime_db` is gorm; migrations are generated per driver (postgres/mysql/mariadb) via atlas+gorm.
 
+## Review rules — apply without being asked
+
+### Source
+
+- **`configurations/` is wiring only.** Any logic found there moves to `helpers/` or `services/` and gets its test there.
+- **One owner per rule.** A rule shared by several requests lives in one base request that the others embed and call first; a single-field base is named after its field. Sibling requests validate the same field the same way.
+- **Code lives in the narrowest module that uses it** (a host-only middleware stays in that host's module).
+- **Docs match behavior.** Swagger declares every header a route reads and every status it can return, with the real error types; regenerate docs and clients after any change.
+- **Adapters pass domain errors through unchanged**; only transport or unexpected failures are remapped.
+- **Prefer a plain error to a clever fallback.**
+
+### Tests
+
+- **Test behavior where it lives, once.** No transport (controller, body binding) or `configurations/` tests; one file and one suite per SUT method; validation rules only in the request test, with the use case keeping a single invalid-request Given.
+- **Structure**: nested `Given…` (conditions) / `Should…` (one outcome, no condition in the title). Given order follows the code: validation first, dependencies in call order, success last. Per-Given `initSuite` closure; request built at Given level.
+- **Assert the outcome the title names** (error type and code, or the field), never a bare `assert.Error`.
+- **One wording per situation, repo-wide.** Before writing a title, reuse the wording existing tests already use for the same situation; similar flows (a use case and the client it forwards to, sibling operations) use the same Givens in the same order.
+- **No duplicate Givens.** Integration tests follow the `tests/runtime_db_integration_tests` style; no data-migration tests for now.
+
 ## Commands
 
 ```bash

@@ -69,7 +69,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	now := time.Now()
 	conversationId := "conv-1"
 
-	t.Run("Given an empty conversationId", func(t *testing.T) {
+	t.Run("Given a blank conversation id", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
@@ -88,7 +88,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty messages slice", func(t *testing.T) {
+	t.Run("Given the messages slice is empty", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
@@ -111,7 +111,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {}
 
-		t.Run("Should fail before resolving the agent or writing anything", func(t *testing.T) {
+		t.Run("Should reject the message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -124,7 +124,6 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			res, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{message})
 
 			assert.Nil(t, res)
-			assert.Error(t, err)
 			assert.ErrorContains(t, err, "system messages must never be persisted")
 		})
 	})
@@ -132,7 +131,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given inputs whose hashes are all new", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite, persisted *[]models.ConversationMessage) {
 			suite.expectAgentResolutionAndEnsure()
 
 			suite.mockEmojiDecoder.EXPECT().DemojizeContent("hi 🔥").Return("hi :fire:")
@@ -145,20 +144,17 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
 				gomock.Any()).
 				DoAndReturn(func(_ context.Context, messages []models.ConversationMessage) ([]models.ConversationMessage, error) {
-					assert.Len(t, messages, 2)
-					for _, m := range messages {
-						assert.Equal(t, conversationId, m.ConversationId)
-						assert.NotEmpty(t, m.Hash)
-					}
+					*persisted = messages
 					return messages, nil
 				})
 		}
 
-		t.Run("Should stamp conversationId, demojize, hash, and insert all", func(t *testing.T) {
+		t.Run("Should return every message", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
+			var persisted []models.ConversationMessage
+			initSuite(suite, &persisted)
 
 			input := []models.ConversationMessage{
 				model_builders.NewConversationMessageBuilder().
@@ -176,8 +172,87 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Len(t, res, 2)
-			// First input had unicode emoji — content is demojized in the persisted row.
+		})
+
+		t.Run("Should demojize the content", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			var persisted []models.ConversationMessage
+			initSuite(suite, &persisted)
+
+			input := []models.ConversationMessage{
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("hi 🔥").
+					WithTimestamp(now).
+					Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("assistant").
+					WithContent("hello").
+					WithTimestamp(now).
+					Build(),
+			}
+			res, err := suite.sut.Append(context.Background(), conversationId, input)
+
+			assert.NoError(t, err)
 			assert.Equal(t, "hi :fire:", lo.FromPtr(res[0].Content))
+		})
+
+		t.Run("Should stamp the conversation id on every row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			var persisted []models.ConversationMessage
+			initSuite(suite, &persisted)
+
+			input := []models.ConversationMessage{
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("hi 🔥").
+					WithTimestamp(now).
+					Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("assistant").
+					WithContent("hello").
+					WithTimestamp(now).
+					Build(),
+			}
+			_, err := suite.sut.Append(context.Background(), conversationId, input)
+
+			assert.NoError(t, err)
+			assert.Len(t, persisted, 2)
+			for _, m := range persisted {
+				assert.Equal(t, conversationId, m.ConversationId)
+			}
+		})
+
+		t.Run("Should hash every row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			var persisted []models.ConversationMessage
+			initSuite(suite, &persisted)
+
+			input := []models.ConversationMessage{
+				model_builders.NewConversationMessageBuilder().
+					WithRole("user").
+					WithContent("hi 🔥").
+					WithTimestamp(now).
+					Build(),
+				model_builders.NewConversationMessageBuilder().
+					WithRole("assistant").
+					WithContent("hello").
+					WithTimestamp(now).
+					Build(),
+			}
+			_, err := suite.sut.Append(context.Background(), conversationId, input)
+
+			assert.NoError(t, err)
+			assert.Len(t, persisted, 2)
+			for _, m := range persisted {
+				assert.NotEmpty(t, m.Hash)
+			}
 		})
 	})
 
@@ -220,7 +295,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				})
 		}
 
-		t.Run("Should drop dupes and only insert fresh rows", func(t *testing.T) {
+		t.Run("Should insert only the fresh rows", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -275,7 +350,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			// no AppendMessages call expected
 		}
 
-		t.Run("Should short-circuit without inserting", func(t *testing.T) {
+		t.Run("Should insert nothing", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -288,7 +363,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given ListExistingHashes fails", func(t *testing.T) {
+	t.Run("Given listing the existing hashes fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
@@ -303,7 +378,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should propagate the error before inserting", func(t *testing.T) {
+		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAppendingConversationMessagesBeforeEach(t)
@@ -316,7 +391,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given AppendMessages fails", func(t *testing.T) {
+	t.Run("Given the message appender fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {

@@ -82,7 +82,7 @@ func TestWhenValidatingErc20(t *testing.T) {
 	t.Run("Given a plain ERC-20 with no EIP-712 domain", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should accept it but route it through permit2", func(t *testing.T) {
+		t.Run("Should accept it", func(t *testing.T) {
 			t.Parallel()
 			suite := WhenValidatingErc20BeforeEach(t)
 			asset, err := fixtures.DeployErc20(
@@ -95,10 +95,44 @@ func TestWhenValidatingErc20(t *testing.T) {
 			)
 			assert.NoError(t, err)
 
-			method, name, version, err := suite.sut.ValidateErc20(ctx, suite.anvilAccountSettings.ChainId, asset.Hex())
+			_, _, _, err = suite.sut.ValidateErc20(ctx, suite.anvilAccountSettings.ChainId, asset.Hex())
 
 			assert.NoError(t, err)
+		})
+
+		t.Run("Should route it through permit2", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenValidatingErc20BeforeEach(t)
+			asset, err := fixtures.DeployErc20(
+				ctx,
+				suite.client,
+				suite.anvilAccountSettings,
+				fixtures.Erc20WithoutDomain,
+				"Plain Token",
+				"PLAIN",
+			)
+			assert.NoError(t, err)
+
+			method, _, _, _ := suite.sut.ValidateErc20(ctx, suite.anvilAccountSettings.ChainId, asset.Hex())
+
 			assert.Equal(t, enums.AssetTransferMethodPermit2, method)
+		})
+
+		t.Run("Should return no EIP-712 domain", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenValidatingErc20BeforeEach(t)
+			asset, err := fixtures.DeployErc20(
+				ctx,
+				suite.client,
+				suite.anvilAccountSettings,
+				fixtures.Erc20WithoutDomain,
+				"Plain Token",
+				"PLAIN",
+			)
+			assert.NoError(t, err)
+
+			_, name, version, _ := suite.sut.ValidateErc20(ctx, suite.anvilAccountSettings.ChainId, asset.Hex())
+
 			assert.Empty(t, name)
 			assert.Empty(t, version)
 		})
@@ -117,7 +151,7 @@ func TestWhenValidatingErc20(t *testing.T) {
 				common.HexToAddress("0x000000000000000000000000000000000000dEaD").Hex(),
 			)
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "no contract deployed at")
 		})
 	})
 
@@ -131,7 +165,7 @@ func TestWhenValidatingErc20(t *testing.T) {
 
 			_, _, _, err := suite.sut.ValidateErc20(ctx, suite.anvilAccountSettings.ChainId, asset.Hex())
 
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "no ERC-20 token answers")
 		})
 	})
 }

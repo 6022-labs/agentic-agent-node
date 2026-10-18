@@ -56,6 +56,7 @@ func WhenDeletingPaymentPolicyByAgentIdBeforeEach(
 }
 
 func WhenDeletingPaymentPolicyByAgentIdAfterEach(suite *WhenDeletingPaymentPolicyByAgentIdTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -81,7 +82,7 @@ func TestWhenDeletingPaymentPolicyByAgentId(t *testing.T) {
 			t.Run("Given a policy with rules exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should remove the head and its rules", func(t *testing.T) {
+				t.Run("Should remove the head", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc)
 					defer WhenDeletingPaymentPolicyByAgentIdAfterEach(suite)
@@ -103,10 +104,34 @@ func TestWhenDeletingPaymentPolicyByAgentId(t *testing.T) {
 					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))
 
 					gone, err := suite.sut.GetByAgentId(context.Background(), policy.AgentId)
+
 					assert.NoError(t, err)
 					assert.Nil(t, gone)
+				})
+
+				t.Run("Should remove its rules", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenDeletingPaymentPolicyByAgentIdBeforeEach(tc)
+					defer WhenDeletingPaymentPolicyByAgentIdAfterEach(suite)
+
+					agentId := uuid.New()
+					seedAgent(suite.dbClient, agentId)
+
+					policy, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentPolicyBuilder().WithAgentId(agentId).Build(),
+					)
+					assert.NoError(t, err)
+					_, err = suite.paymentRuleRepository.Create(
+						context.Background(),
+						model_builders.NewPaymentRuleBuilder().WithPolicyId(policy.Id).Build(),
+					)
+					assert.NoError(t, err)
+
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))
 
 					rules, err := suite.paymentRuleRepository.ListByPolicyId(context.Background(), policy.Id)
+
 					assert.NoError(t, err)
 					assert.Empty(t, rules)
 				})

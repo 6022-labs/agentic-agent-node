@@ -58,6 +58,32 @@ func TestWhenListingConversations(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 400", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
+				Return(&clients.GetInternalConversationsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
+					Body:         []byte(`{"field":"callerId","message":"too long"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "callerId", validationErr.Field)
+		})
+	})
+
 	t.Run("Given the runtime receives no caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -86,19 +112,16 @@ func TestWhenListingConversations(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime rejects the request", func(t *testing.T) {
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalConversationsWithResponse(gomock.Any(), gomock.Any()).
-				Return(&clients.GetInternalConversationsResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
-					Body:         []byte(`{"field":"callerId","message":"too long"}`),
-				}, nil)
+				Return(&clients.GetInternalConversationsResponse{HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError}, Body: []byte(`{"code":"x","field":"f","message":"m"}`)}, nil)
 		}
 
-		t.Run("Should map the 400 onto a ValidationError", func(t *testing.T) {
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingConversationsBeforeEach(t)
@@ -106,9 +129,10 @@ func TestWhenListingConversations(t *testing.T) {
 
 			_, err := suite.sut.ListConversations(context.Background(), 1, 10)
 
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "callerId", validationErr.Field)
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
 		})
 	})
 

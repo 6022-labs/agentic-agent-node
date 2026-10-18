@@ -54,6 +54,7 @@ func WhenUpsertingAgentBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentTes
 }
 
 func WhenUpsertingAgentAfterEach(suite *WhenUpsertingAgentTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -89,7 +90,7 @@ func TestWhenUpsertingAgent(t *testing.T) {
 			t.Run("Given no agent exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should insert and return the new agent with a generated Id", func(t *testing.T) {
+				t.Run("Should return the new agent with a generated Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentBeforeEach(tc)
 					defer WhenUpsertingAgentAfterEach(suite)
@@ -101,9 +102,22 @@ func TestWhenUpsertingAgent(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, inserted.Id)
+				})
+
+				t.Run("Should store a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert"}).
+						Build())
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)
+
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -111,7 +125,7 @@ func TestWhenUpsertingAgent(t *testing.T) {
 			t.Run("Given an agent already exists", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should update the existing row in place and preserve Id", func(t *testing.T) {
+				t.Run("Should preserve its Id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentBeforeEach(tc)
 					defer WhenUpsertingAgentAfterEach(suite)
@@ -120,7 +134,6 @@ func TestWhenUpsertingAgent(t *testing.T) {
 						WithName("Ada").
 						WithAttributes(map[string]string{"role": "expert"}).
 						Build())
-
 					assert.NoError(t, err)
 
 					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
@@ -130,8 +143,65 @@ func TestWhenUpsertingAgent(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Equal(t, first.Id, second.Id)
+				})
+
+				t.Run("Should replace its name", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert"}).
+						Build())
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Babbage").
+						WithAttributes(map[string]string{"role": "facilitator"}).
+						Build())
+
+					assert.NoError(t, err)
 					assert.Equal(t, "Babbage", lo.FromPtr(second.Name))
+				})
+
+				t.Run("Should replace its attributes", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert"}).
+						Build())
+					assert.NoError(t, err)
+
+					second, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Babbage").
+						WithAttributes(map[string]string{"role": "facilitator"}).
+						Build())
+
+					assert.NoError(t, err)
 					assert.Equal(t, "facilitator", second.Attributes["role"])
+				})
+
+				t.Run("Should keep a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Ada").
+						WithAttributes(map[string]string{"role": "expert"}).
+						Build())
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithName("Babbage").
+						WithAttributes(map[string]string{"role": "facilitator"}).
+						Build())
+
+					assert.NoError(t, err)
 
 					var count int64
 					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)

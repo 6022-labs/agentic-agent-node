@@ -26,7 +26,7 @@ func TestWhenParsingUuidArg(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the argument is not a uuid", func(t *testing.T) {
+	t.Run("Given a malformed argument", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail", func(t *testing.T) {

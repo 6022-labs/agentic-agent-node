@@ -135,7 +135,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "conversation_unavailable or agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -177,6 +177,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/responses.AgentCollectionsResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
                     }
                 }
             }
@@ -202,10 +220,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.AgentGuidanceResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -244,10 +268,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.AgentGuidanceResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -274,10 +310,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.AgentRegistrationResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -348,13 +396,13 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization, invalid_token or missing_owner",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
                     },
                     "502": {
-                        "description": "Bad Gateway",
+                        "description": "runtime_unavailable",
                         "schema": {
                             "$ref": "#/definitions/errors.UnavailableError"
                         }
@@ -383,10 +431,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.EnsInfoResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
                     "409": {
                         "description": "not_minted",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -412,6 +478,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/responses.RegistrationStatusResponse"
                         }
+                    },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
                     }
                 }
             }
@@ -436,6 +520,30 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/responses.MintInfoResponse"
                         }
+                    },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "owner_missing",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
                     }
                 }
             }
@@ -459,6 +567,24 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.RegistrationStatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "404": {
+                        "description": "draft_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -485,10 +611,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.RegistrationStatusResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "draft_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "owner_missing",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -515,16 +659,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.AgentSoulResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "identity_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -570,9 +720,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "challenge_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -616,15 +766,21 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "challenge_not_found | signature_mismatch | not_authorized",
+                        "description": "challenge_not_found, signature_mismatch or not_authorized",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "500": {
+                        "description": "verify_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     },
                     "502": {
                         "description": "identity_not_found",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -644,6 +800,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.ConfigResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -670,10 +832,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.GetLlmConfigResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
                         "description": "not_configured",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -718,10 +892,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -743,10 +923,16 @@ const docTemplate = `{
                     "204": {
                         "description": ""
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -790,10 +976,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -820,10 +1012,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListMcpConnectionsResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -868,10 +1066,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "mcp_connection_name_taken",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -918,8 +1128,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "mcp_connection_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -927,7 +1143,7 @@ const docTemplate = `{
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -981,16 +1197,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "mcp_connection_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "mcp_connection_name_taken",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1027,10 +1255,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1057,10 +1291,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.GetPaymentPolicyResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1082,10 +1328,16 @@ const docTemplate = `{
                     "204": {
                         "description": ""
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1112,10 +1364,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListPaymentRulesResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1160,10 +1424,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1217,16 +1493,28 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1260,8 +1548,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -1269,7 +1563,7 @@ const docTemplate = `{
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1296,10 +1590,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ListSelfToolsResponse"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1353,8 +1653,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "401": {
+                        "description": "missing_authorization or invalid_token",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "self_tool_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -1362,7 +1668,7 @@ const docTemplate = `{
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.UnavailableError"
                         }
                     }
                 }
@@ -1410,7 +1716,7 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization or invalid_token",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
@@ -1464,13 +1770,13 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization or invalid_token",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "conversation_name_taken or agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1533,19 +1839,19 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization or invalid_token",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "conversation_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "conversation_name_taken",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1596,13 +1902,13 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization or invalid_token",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "conversation_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -1663,19 +1969,19 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "missing_authorization or invalid_token",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "conversation_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1766,7 +2072,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "conversation_unavailable or agent_not_minted",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1796,6 +2102,17 @@ const docTemplate = `{
             ]
         },
         "errors.ConflictError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "errors.InternalError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1849,10 +2166,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "fiber.Map": {
-            "type": "object",
-            "additionalProperties": {}
         },
         "models.ExternalPaymentRule": {
             "type": "object",

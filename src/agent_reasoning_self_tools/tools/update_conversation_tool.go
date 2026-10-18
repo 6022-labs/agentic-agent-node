@@ -42,8 +42,8 @@ func (t *UpdateConversationTool) Execute(ctx context.Context, args map[string]an
 	}
 	return utils.ToToolResult(
 		t.updateConversationExecutor.Execute(ctx, &knowledge_requests.UpdateConversationRequest{
-			ConversationRequest: knowledge_requests.ConversationRequest{ConversationId: conversationId},
-			Name:                name,
+			ConversationIdRequest:   knowledge_requests.ConversationIdRequest{ConversationId: conversationId},
+			ConversationNameRequest: knowledge_requests.ConversationNameRequest{Name: name},
 		}),
 	)
 }

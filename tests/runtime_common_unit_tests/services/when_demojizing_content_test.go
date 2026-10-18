@@ -22,7 +22,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an empty string", func(t *testing.T) {
+	t.Run("Given a blank string", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return an empty string", func(t *testing.T) {
@@ -37,8 +37,7 @@ func TestWhenDemojizingContent(t *testing.T) {
 	t.Run("Given a unicode emoji glyph from any common category", func(t *testing.T) {
 		t.Parallel()
 
-		// One row per emoji category. Expected shortcode is kyokomi's first
-		// alias for that glyph (deterministic per kyokomi version).
+		// One row per emoji category; the shortcode is kyokomi's first alias for the glyph.
 		cases := []struct {
 			name     string
 			input    string

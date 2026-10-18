@@ -66,7 +66,12 @@ func TestWhenCreatingConversation(t *testing.T) {
 
 			suite := WhenCreatingConversationBeforeEach(t)
 
-			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{Name: "   "})
+			_, err := suite.sut.Execute(
+				creatingCallerCtx,
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "   "},
+				},
+			)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -81,7 +86,12 @@ func TestWhenCreatingConversation(t *testing.T) {
 
 			suite := WhenCreatingConversationBeforeEach(t)
 
-			_, err := suite.sut.Execute(context.Background(), &requests.CreateConversationRequest{Name: "Audit"})
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
+				},
+			)
 
 			var unauthorizedErr *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedErr)
@@ -96,14 +106,14 @@ func TestWhenCreatingConversation(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "Audit",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -119,14 +129,14 @@ func TestWhenCreatingConversation(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "Audit",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -152,7 +162,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "whatever",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "whatever"},
 			})
 
 			var conflictErr *apperrors.ConflictError
@@ -173,14 +183,14 @@ func TestWhenCreatingConversation(t *testing.T) {
 				Return(false, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "Audit",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
@@ -189,7 +199,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the name is already taken", func(t *testing.T) {
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -208,7 +218,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "taken",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "taken"},
 			})
 
 			var conflictErr *apperrors.ConflictError
@@ -217,7 +227,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the store fails", func(t *testing.T) {
+	t.Run("Given saving the conversation fails", func(t *testing.T) {
 		t.Parallel()
 
 		agent := model_builders.NewAgentBuilder().Build()
@@ -232,19 +242,56 @@ func TestWhenCreatingConversation(t *testing.T) {
 				Return(nil, errors.New("db blew"))
 		}
 
-		t.Run("Should return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingConversationBeforeEach(t)
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "Audit",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
 			})
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "create_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the caller owns the agent", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(callerId)).Build()
+
+		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "Audit", nil).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, conversation *models.Conversation) (*models.Conversation, error) {
+					assert.Equal(t, callerId, *conversation.CallerId)
+					return conversation, nil
+				})
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
+		}
+
+		t.Run("Should create the session as its caller", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingConversationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				creatingCallerCtx,
+				&requests.CreateConversationRequest{
+					ConversationNameRequest: requests.ConversationNameRequest{Name: "Audit"},
+				},
+			)
+
+			assert.NoError(t, err)
 		})
 	})
 
@@ -279,44 +326,12 @@ func TestWhenCreatingConversation(t *testing.T) {
 			initSuite(suite)
 
 			resp, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{
-				Name: "  ERC20   mint audit ",
+				ConversationNameRequest: requests.ConversationNameRequest{Name: "  ERC20   mint audit "},
 			})
 
 			assert.NoError(t, err)
 			assert.Equal(t, "ERC20 mint audit", *resp.Name)
 			assert.NotEmpty(t, resp.ConversationId)
-		})
-	})
-
-	t.Run("Given the caller owns the agent", func(t *testing.T) {
-		t.Parallel()
-
-		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(callerId)).Build()
-
-		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "Audit", nil).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Create(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, conversation *models.Conversation) (*models.Conversation, error) {
-					assert.Equal(t, callerId, *conversation.CallerId)
-					return conversation, nil
-				})
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
-		}
-
-		t.Run("Should still own the session as its caller", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingConversationBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(creatingCallerCtx, &requests.CreateConversationRequest{Name: "Audit"})
-
-			assert.NoError(t, err)
 		})
 	})
 }

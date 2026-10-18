@@ -44,30 +44,7 @@ func WhenDeletingLLMConnectionBeforeEach(t *testing.T) *WhenDeletingLLMConnectio
 func TestWhenDeletingLLMConnection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a configured connection", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			gomock.InOrder(
-				suite.mockRepository.EXPECT().DeleteByAgentId(gomock.Any(), gomock.Any()).Return(nil),
-				suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).Return(nil),
-			)
-		}
-
-		t.Run("Should delete the row first then the secret and return NoContent", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDeletingLLMConnectionBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the repository delete fails", func(t *testing.T) {
+	t.Run("Given deleting the LLM connection fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
@@ -75,7 +52,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			suite.mockRepository.EXPECT().DeleteByAgentId(gomock.Any(), gomock.Any()).Return(errors.New("db down"))
 		}
 
-		t.Run("Should not touch the secret storage and return InternalError", func(t *testing.T) {
+		t.Run("Should return an InternalError without touching the secret storage", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLLMConnectionBeforeEach(t)
@@ -86,6 +63,29 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Contains(t, internalErr.Message, "db down")
+		})
+	})
+
+	t.Run("Given an LLM connection exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			gomock.InOrder(
+				suite.mockRepository.EXPECT().DeleteByAgentId(gomock.Any(), gomock.Any()).Return(nil),
+				suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).Return(nil),
+			)
+		}
+
+		t.Run("Should delete the row before the secret", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
 		})
 	})
 }

@@ -68,7 +68,7 @@ func (u *AbstractUpsertMCPConnection) ensureNameAvailable(
 
 // headerAuthKeys derives the persisted header-name set from the request; values stay in Vault.
 func (u *AbstractUpsertMCPConnection) headerAuthKeys(
-	request *requests.CreateMCPConnectionRequest,
+	request *requests.MCPHeaderAuthRequest,
 ) models.MCPConnectionHeaderAuthKeys {
 	names := make([]string, 0, len(request.HeaderAuth))
 	for k := range request.HeaderAuth {

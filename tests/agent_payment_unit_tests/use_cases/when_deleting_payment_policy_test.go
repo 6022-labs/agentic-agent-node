@@ -38,33 +38,7 @@ func WhenDeletingPaymentPolicyBeforeEach(t *testing.T) *WhenDeletingPaymentPolic
 func TestWhenDeletingPaymentPolicy(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the delete succeeds", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().
-				Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil).
-				Times(1)
-			suite.mockPaymentPolicyRepository.EXPECT().
-				DeleteByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil).
-				Times(1)
-		}
-
-		t.Run("Should not return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDeletingPaymentPolicyBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the delete fails", func(t *testing.T) {
+	t.Run("Given deleting the policy fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
@@ -78,7 +52,7 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingPaymentPolicyBeforeEach(t)
@@ -88,6 +62,32 @@ func TestWhenDeletingPaymentPolicy(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given the policy exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentPolicyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil).
+				Times(1)
+			suite.mockPaymentPolicyRepository.EXPECT().
+				DeleteByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil).
+				Times(1)
+		}
+
+		t.Run("Should delete it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
 		})
 	})
 }

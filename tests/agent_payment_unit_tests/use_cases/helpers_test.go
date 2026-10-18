@@ -5,9 +5,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// newMockStrategies returns a mock registry that resolves every method to a
-// single mock strategy — the seam every payment use case dispatches config
-// work through.
+// newMockStrategies returns a registry resolving every method to one mock strategy.
 func newMockStrategies(
 	mockController *gomock.Controller,
 ) (*payment_interfaces_mocks.MockPaymentMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentMethodStrategyInterface) {
@@ -15,4 +13,12 @@ func newMockStrategies(
 	mockStrategies := payment_interfaces_mocks.NewMockPaymentMethodStrategiesInterface(mockController)
 	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
 	return mockStrategies, mockStrategy
+}
+
+func newUnsupportedMethodStrategies(
+	mockController *gomock.Controller,
+) *payment_interfaces_mocks.MockPaymentMethodStrategiesInterface {
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentMethodStrategiesInterface(mockController)
+	mockStrategies.EXPECT().For(gomock.Any()).Return(nil, false).Times(1)
+	return mockStrategies
 }

@@ -55,6 +55,7 @@ func WhenListingExistingHashesBeforeEach(tc *repositoryTestCase) *WhenListingExi
 }
 
 func WhenListingExistingHashesAfterEach(suite *WhenListingExistingHashesTestingSuite) {
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
@@ -155,7 +156,7 @@ func TestWhenListingExistingHashes(t *testing.T) {
 			t.Run("Given the queried hashes belong to other conversations", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should still return them — hashes are globally unique", func(t *testing.T) {
+				t.Run("Should return them regardless of conversation", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingExistingHashesBeforeEach(tc)
 					defer WhenListingExistingHashesAfterEach(suite)

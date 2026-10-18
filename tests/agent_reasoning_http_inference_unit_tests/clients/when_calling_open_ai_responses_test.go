@@ -58,7 +58,7 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			)
 		}
 
-		t.Run("Should POST to /v1/responses with bearer auth and decode the response", func(t *testing.T) {
+		t.Run("Should return the decoded response", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
@@ -88,7 +88,7 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 			_, _ = w.Write([]byte(`{"error":"boom"}`))
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
@@ -99,7 +99,11 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 				"sk",
 				&models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"},
 			)
-			assert.Error(t, err)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
 		})
 	})
 

@@ -105,7 +105,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 			suite := WhenValidatingJwtBeforeEach()
 
 			_, err := suite.sut.Verify("not.a.token.really")
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "invalid number of segments")
 		})
 
 		t.Run("Should reject a non-base64 signature", func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 			suite := WhenValidatingJwtBeforeEach()
 
 			_, err := suite.sut.Verify("aGVhZGVy.cGF5bG9hZA.??not-base64??")
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "token is malformed")
 		})
 	})
 }

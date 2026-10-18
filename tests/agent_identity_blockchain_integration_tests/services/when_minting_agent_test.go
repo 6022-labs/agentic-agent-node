@@ -29,7 +29,7 @@ func TestWhenMintingAgent(t *testing.T) {
 	t.Run("Given the node wallet is a moderator of the collection", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should mint the agent and make it resolvable on chain", func(t *testing.T) {
+		t.Run("Should return the transaction hash", func(t *testing.T) {
 			t.Parallel()
 			suite := WhenMintingAgentBeforeEach(t)
 
@@ -37,7 +37,28 @@ func TestWhenMintingAgent(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, txHash)
+		})
 
+		t.Run("Should make the agent resolvable by name on chain", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenMintingAgentBeforeEach(t)
+			_, err := suite.sut.Mint(ctx, suite.fixture.chainId(), mintParams(suite.fixture, "minted-agent"))
+			assert.NoError(t, err)
+
+			_, err = suite.fixture.agentCollectionRequester().NameToTokenId(
+				suite.fixture.chainId(),
+				suite.fixture.stack.Collection,
+				"minted-agent",
+			)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should make the minting wallet its owner", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenMintingAgentBeforeEach(t)
+			_, err := suite.sut.Mint(ctx, suite.fixture.chainId(), mintParams(suite.fixture, "minted-agent"))
+			assert.NoError(t, err)
 			collectionRequester := suite.fixture.agentCollectionRequester()
 			tokenId, err := collectionRequester.NameToTokenId(
 				suite.fixture.chainId(),
@@ -47,6 +68,7 @@ func TestWhenMintingAgent(t *testing.T) {
 			assert.NoError(t, err)
 
 			owner, err := collectionRequester.OwnerOf(suite.fixture.chainId(), suite.fixture.stack.Collection, tokenId)
+
 			assert.NoError(t, err)
 			assert.Equal(t, suite.fixture.anvilAccountSettings.Address, owner)
 		})
@@ -59,32 +81,7 @@ func TestWhenMintingAgent(t *testing.T) {
 			assert.NoError(t, err)
 
 			_, err = suite.sut.Mint(ctx, suite.fixture.chainId(), mintParams(suite.fixture, "duplicate-agent"))
-			assert.Error(t, err)
-		})
-	})
-
-	t.Run("Given a moderated collection taking mint proposals", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return the proposal id of each created proposal", func(t *testing.T) {
-			t.Parallel()
-			suite := WhenMintingAgentBeforeEach(t)
-
-			txHash, firstProposalId, err := suite.sut.CreateMintProposal(
-				ctx,
-				suite.fixture.chainId(),
-				mintParams(suite.fixture, "proposed-agent"),
-			)
-			assert.NoError(t, err)
-			assert.NotEmpty(t, txHash)
-
-			_, secondProposalId, err := suite.sut.CreateMintProposal(
-				ctx,
-				suite.fixture.chainId(),
-				mintParams(suite.fixture, "second-proposed-agent"),
-			)
-			assert.NoError(t, err)
-			assert.Equal(t, firstProposalId+1, secondProposalId)
+			assert.ErrorContains(t, err, "custom error 0x3fdf29d7")
 		})
 	})
 }

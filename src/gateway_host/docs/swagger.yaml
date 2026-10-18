@@ -17,6 +17,13 @@ definitions:
       message:
         type: string
     type: object
+  errors.InternalError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
   errors.NotFoundError:
     properties:
       code:
@@ -44,9 +51,6 @@ definitions:
         type: string
       message:
         type: string
-    type: object
-  fiber.Map:
-    additionalProperties: {}
     type: object
   models.ExternalPaymentRule:
     properties:
@@ -930,7 +934,7 @@ paths:
           schema:
             $ref: '#/definitions/x402.PaymentRequired'
         "409":
-          description: Conflict
+          description: conversation_unavailable or agent_not_minted
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
@@ -954,6 +958,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentCollectionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: List agent collections
@@ -968,10 +984,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get agent guidance
@@ -994,10 +1014,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentGuidanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Set agent guidance
@@ -1012,10 +1040,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentRegistrationResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
           description: draft_not_found
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get agent registration draft
@@ -1062,11 +1098,11 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization, invalid_token or missing_owner
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "502":
-          description: Bad Gateway
+          description: runtime_unavailable
           schema:
             $ref: '#/definitions/errors.UnavailableError'
       security:
@@ -1083,10 +1119,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.EnsInfoResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
         "409":
           description: not_minted
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get ENS calldata
@@ -1101,6 +1149,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.RegistrationStatusResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Check ENS status
@@ -1115,6 +1175,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.MintInfoResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: owner_missing
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get mint calldata
@@ -1129,6 +1205,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.RegistrationStatusResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: draft_not_found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Check mint status
@@ -1143,10 +1231,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.RegistrationStatusResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
           description: draft_not_found
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: owner_missing
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Self mint + ENS register
@@ -1161,14 +1261,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.AgentSoulResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
           description: identity_not_found
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.NotFoundError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get agent soul
@@ -1201,9 +1305,9 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "500":
-          description: Internal Server Error
+          description: challenge_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
       summary: Auth challenge
       tags:
       - Auth
@@ -1232,13 +1336,17 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: challenge_not_found | signature_mismatch | not_authorized
+          description: challenge_not_found, signature_mismatch or not_authorized
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "500":
+          description: verify_failed
+          schema:
+            $ref: '#/definitions/errors.InternalError'
         "502":
           description: identity_not_found
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       summary: Auth verify
       tags:
       - Auth
@@ -1251,6 +1359,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ConfigResponse'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       summary: Public node config
       tags:
       - Config
@@ -1261,10 +1373,14 @@ paths:
       responses:
         "204":
           description: ""
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete LLM config
@@ -1278,10 +1394,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.GetLlmConfigResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
           description: not_configured
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get LLM config
@@ -1308,10 +1432,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Set LLM config
@@ -1337,10 +1465,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Validate LLM config
@@ -1355,10 +1487,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ListMcpConnectionsResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: List MCP connections
@@ -1385,10 +1521,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: mcp_connection_name_taken
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Create MCP connection
@@ -1411,10 +1555,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete MCP connection
@@ -1446,14 +1594,22 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: mcp_connection_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: mcp_connection_name_taken
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Update MCP connection
@@ -1481,14 +1637,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: mcp_connection_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Discover MCP server tools
@@ -1501,10 +1661,14 @@ paths:
       responses:
         "204":
           description: ""
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete payment policy
@@ -1518,10 +1682,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.GetPaymentPolicyResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get payment policy
@@ -1536,10 +1708,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ListPaymentRulesResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: List payment rules
@@ -1566,10 +1746,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Create payment rule
@@ -1590,14 +1778,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: rule_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete payment rule
@@ -1629,14 +1821,22 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: rule_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Update payment rule
@@ -1651,10 +1851,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ListSelfToolsResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: List self tools
@@ -1687,14 +1891,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: self_tool_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Update self tool
@@ -1723,7 +1931,7 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization or invalid_token
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "502":
@@ -1757,11 +1965,11 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization or invalid_token
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "409":
-          description: Conflict
+          description: conversation_name_taken or agent_not_minted
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
@@ -1801,15 +2009,15 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization or invalid_token
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: conversation_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "409":
-          description: Conflict
+          description: conversation_name_taken
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
@@ -1841,11 +2049,11 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization or invalid_token
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: conversation_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "502":
@@ -1884,15 +2092,15 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "401":
-          description: Unauthorized
+          description: missing_authorization or invalid_token
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: conversation_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "409":
-          description: Conflict
+          description: agent_not_minted
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
@@ -1955,7 +2163,7 @@ paths:
           schema:
             $ref: '#/definitions/x402.PaymentRequired'
         "409":
-          description: Conflict
+          description: conversation_unavailable or agent_not_minted
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":

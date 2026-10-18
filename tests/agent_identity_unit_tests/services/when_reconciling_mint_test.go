@@ -112,7 +112,7 @@ func TestWhenReconcilingMint(t *testing.T) {
 			})
 	}
 
-	t.Run("Given the agent has no soul yet", func(t *testing.T) {
+	t.Run("Given no soul exists", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should compose the soul from the identity facts", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestWhenReconcilingMint(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the agent already carries a soul", func(t *testing.T) {
+	t.Run("Given a soul already exists", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should recompute it from the current facts", func(t *testing.T) {
