@@ -655,6 +655,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/errors.ValidationError"
                         }
+                    },
+                    "500": {
+                        "description": "validate_failed or agent_lookup_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
                     }
                 }
             }

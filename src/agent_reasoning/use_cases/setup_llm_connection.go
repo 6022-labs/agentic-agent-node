@@ -14,10 +14,8 @@ import (
 )
 
 type SetupLLMConnection struct {
-	*AbstractReasoningUseCase
-	repository             repositories.LLMConnectionRepositoryInterface
-	secretStorage          reasoning_interfaces.LLMSecretStorageInterface
-	llmConnectionValidator reasoning_interfaces.LLMConnectionValidatorInterface
+	*AbstractLLMConnectionUseCase
+	secretStorage reasoning_interfaces.LLMSecretStorageInterface
 }
 
 func NewSetupLLMConnection(
@@ -27,10 +25,12 @@ func NewSetupLLMConnection(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 ) *SetupLLMConnection {
 	return &SetupLLMConnection{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
-		repository:               repository,
-		secretStorage:            secretStorage,
-		llmConnectionValidator:   llmConnectionValidator,
+		AbstractLLMConnectionUseCase: NewAbstractLLMConnectionUseCase(
+			repository,
+			llmConnectionValidator,
+			agentRepository,
+		),
+		secretStorage: secretStorage,
 	}
 }
 
@@ -43,24 +43,24 @@ func (u *SetupLLMConnection) Execute(
 		return nil, err
 	}
 
-	if err := u.llmConnectionValidator.Validate(ctx, &models.LLMConnection{
-		Platform: request.Platform,
-		Model:    request.Model,
-		BaseUrl:  request.BaseUrl,
-	}, request.ApiKey); err != nil {
-		return nil, err
-	}
-
-	if err := u.resolveApiKey(ctx, request.ApiKey); err != nil {
-		return nil, err
-	}
-
 	agent, err := u.resolveAgent(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	connection, err := u.repository.Upsert(ctx, &models.LLMConnection{
+	current, err := u.llmConnectionRepository.GetByAgentId(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("setup_failed", err.Error())
+	}
+	if err := u.validateConnection(ctx, request, current); err != nil {
+		return nil, err
+	}
+
+	if err := u.resolveApiKey(ctx, request); err != nil {
+		return nil, err
+	}
+
+	connection, err := u.llmConnectionRepository.Upsert(ctx, &models.LLMConnection{
 		AgentId:     agent.Id,
 		Platform:    request.Platform,
 		Model:       request.Model,
@@ -70,15 +70,25 @@ func (u *SetupLLMConnection) Execute(
 	if err != nil {
 		return nil, errors.NewInternalError("setup_failed", err.Error())
 	}
+
+	// After the upsert, on every local save, so a failed delete heals on retry.
+	if u.usesLocalPlatform(request.Platform) {
+		if err := u.secretStorage.Delete(ctx); err != nil {
+			return nil, errors.NewInternalError("setup_failed", err.Error())
+		}
+	}
 	return responses.ToLLMConnectionResponse(connection), nil
 }
 
-// resolveApiKey saves a provided key, otherwise keeps the stored one — required when none exists yet.
-func (u *SetupLLMConnection) resolveApiKey(ctx context.Context, apiKey string) error {
-	if apiKey != "" {
-		if err := u.secretStorage.Save(ctx, apiKey); err != nil {
+// resolveApiKey saves a given key; a keyless local provider needs none, else a key must already be stored.
+func (u *SetupLLMConnection) resolveApiKey(ctx context.Context, request *requests.SetupLLMConnectionRequest) error {
+	if request.ApiKey != "" {
+		if err := u.secretStorage.Save(ctx, request.ApiKey); err != nil {
 			return errors.NewInternalError("setup_failed", err.Error())
 		}
+		return nil
+	}
+	if u.usesLocalPlatform(request.Platform) {
 		return nil
 	}
 
@@ -86,9 +96,8 @@ func (u *SetupLLMConnection) resolveApiKey(ctx context.Context, apiKey string) e
 	if err != nil {
 		return errors.NewInternalError("setup_failed", err.Error())
 	}
-	if found {
-		return nil
+	if !found {
+		return errors.NewValidationError("apiKey", "cannot be empty on first setup")
 	}
-
-	return errors.NewValidationError("apiKey", "cannot be empty on first setup")
+	return nil
 }

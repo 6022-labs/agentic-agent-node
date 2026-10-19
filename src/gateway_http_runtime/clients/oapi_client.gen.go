@@ -3625,6 +3625,7 @@ type PostInternalConfigLlmValidateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON400      *ErrorsValidationError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -5418,6 +5419,13 @@ func ParsePostInternalConfigLlmValidateResponse(rsp *http.Response) (*PostIntern
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorsInternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 
