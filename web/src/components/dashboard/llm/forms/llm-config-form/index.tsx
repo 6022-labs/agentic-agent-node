@@ -23,7 +23,7 @@ import { LLM_PROVIDERS, type LlmConfig } from "@/models/llm-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { extractAmazonPlatformRegionFromUrl } from "@/lib/utils"
 import {
-  llmConfigFormSchema,
+  createLlmConfigFormSchema,
   type LlmConfigFormSchemaType,
 } from "./llm-config-form-schema"
 
@@ -43,8 +43,17 @@ export default function LlmConfigForm({
   onFormComplete,
   onValueChange,
 }: Props) {
+  // A ref, so the resolver sees the saved provider after each save without remounting the form.
+  const currentProvider = React.useRef(config?.provider)
+  currentProvider.current = config?.provider
+
   const form = useForm<LlmConfigFormSchemaType>({
-    resolver: zodResolver(llmConfigFormSchema),
+    resolver: (values, context, options) =>
+      zodResolver(createLlmConfigFormSchema(currentProvider.current))(
+        values,
+        context,
+        options
+      ),
     defaultValues: {
       provider: config?.provider ?? "",
       model: config?.model ?? "",
@@ -56,11 +65,17 @@ export default function LlmConfigForm({
   const selectedProvider = form.watch("provider")
   const provider = LLM_PROVIDERS.find((p) => p.value === selectedProvider)
   const isSelfHosted = provider?.kind === "self-hosted"
+  const keepsKey = !!config && config.provider === selectedProvider
   const needsBaseUrl = isSelfHosted || !!provider?.requiresBaseUrl
   const isBedrock = selectedProvider === "aws.bedrock"
   const detectedRegion = isBedrock
     ? extractAmazonPlatformRegionFromUrl(form.watch("baseUrl") ?? "")
     : undefined
+
+  // A self-hosted provider never takes a key: drop one typed before switching to it.
+  React.useEffect(() => {
+    if (isSelfHosted && form.getValues("apiKey")) form.setValue("apiKey", "")
+  }, [form, isSelfHosted])
 
   React.useEffect(() => {
     onValueChange(form.getValues())
@@ -164,13 +179,15 @@ export default function LlmConfigForm({
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder={config ? "•••••• (unchanged)" : "sk-…"}
+                    placeholder={keepsKey ? "•••••• (unchanged)" : "sk-…"}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
                   Stored in the node vault, never returned by the API.
-                  {config ? " Leave blank to keep the current key." : ""}
+                  {keepsKey
+                    ? " Leave blank to keep the current key."
+                    : " A new provider needs its own key."}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

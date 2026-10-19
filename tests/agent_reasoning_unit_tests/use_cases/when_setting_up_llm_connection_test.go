@@ -14,6 +14,7 @@ import (
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -52,22 +53,32 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 	}
 }
 
-func generateValidSetupLLMConnectionRequest() *requests.SetupLLMConnectionRequest {
-	return &requests.SetupLLMConnectionRequest{
-		Platform: reasoning_enums.LLMConnectionPlatformOpenAi,
-		Model:    "gpt-4o",
-		ApiKey:   "sk-secret",
-	}
+func (s *WhenSettingUpLLMConnectionTestingSuite) givenCurrentConnection(current *models.LLMConnection) {
+	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+	s.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(current, nil)
+}
+
+func (s *WhenSettingUpLLMConnectionTestingSuite) expectUpsert() {
+	s.mockRepository.EXPECT().
+		Upsert(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
+			return c, nil
+		})
 }
 
 func TestWhenSettingUpLLMConnection(t *testing.T) {
 	t.Parallel()
 
+	openAi := reasoning_enums.LLMConnectionPlatformOpenAi
+	ollama := reasoning_enums.LLMConnectionPlatformOllama
+
+	openAiConnection := model_builders.NewLLMConnectionBuilder().WithPlatform(openAi).Build()
+	ollamaConnection := model_builders.NewLLMConnectionBuilder().WithPlatform(ollama).Build()
+
 	t.Run("Given an invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		request := generateValidSetupLLMConnectionRequest()
-		request.Model = ""
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, ApiKey: "sk-secret"}
 
 		t.Run("Should return a ValidationError without touching dependencies", func(t *testing.T) {
 			t.Parallel()
@@ -78,13 +89,133 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "model", validationErr.Field)
 		})
 	})
 
-	t.Run("Given validating the connection fails", func(t *testing.T) {
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
 		t.Parallel()
 
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
+
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError without touching other dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "agent_lookup_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the LLM connection lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError without touching other dependencies", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "setup_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given an api key for a local provider", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: ollama, Model: "llama3", ApiKey: "sk-secret"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
+		}
+
+		t.Run("Should return a ValidationError on apiKey without touching the validator", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "apiKey", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a blank api key for a new cloud provider", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(ollamaConnection)
+		}
+
+		t.Run("Should return a ValidationError on apiKey without touching the validator", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "apiKey", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a blank api key for a cloud provider and no connection exists", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(nil)
+		}
+
+		t.Run("Should return a ValidationError on apiKey without touching the validator", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "apiKey", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the probe rejects the connection", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
 			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(apperrors.NewValidationError("connection", "unauthorized"))
 		}
@@ -93,7 +224,6 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingUpLLMConnectionBeforeEach(t)
-			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)
@@ -106,7 +236,10 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 	t.Run("Given saving the api key fails", func(t *testing.T) {
 		t.Parallel()
 
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
+
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(nil)
 			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			suite.mockSecretStorage.EXPECT().Save(gomock.Any(), gomock.Any()).Return(errors.New("vault down"))
 		}
@@ -115,81 +248,214 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingUpLLMConnectionBeforeEach(t)
-			request := generateValidSetupLLMConnectionRequest()
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "setup_failed", internalErr.Code)
 			assert.Contains(t, internalErr.Message, "vault down")
 		})
 	})
 
-	t.Run("Given a blank api key and none is stored yet", func(t *testing.T) {
+	t.Run("Given reading the stored api key fails", func(t *testing.T) {
 		t.Parallel()
 
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o"}
+
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
+			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil)
+			suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, errors.New("vault down"))
+		}
+
+		t.Run("Should return an InternalError without touching the repository", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "setup_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given a blank api key for the configured cloud provider and none is stored", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
 			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil)
 			suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("", false, nil)
 		}
 
-		t.Run("Should return a ValidationError without touching the repository", func(t *testing.T) {
+		t.Run("Should return a ValidationError on apiKey without touching the repository", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingUpLLMConnectionBeforeEach(t)
-			request := generateValidSetupLLMConnectionRequest()
-			request.ApiKey = ""
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "apiKey", validationErr.Field)
 		})
 	})
 
-	t.Run("Given a blank api key and one is already stored", func(t *testing.T) {
+	t.Run("Given upserting the connection fails", func(t *testing.T) {
 		t.Parallel()
 
+		request := &requests.SetupLLMConnectionRequest{
+			Platform: ollama,
+			Model:    "llama3",
+			BaseUrl:  lo.ToPtr("http://host.docker.internal:11434"),
+		}
+
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.givenCurrentConnection(ollamaConnection)
+			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil)
+			suite.mockRepository.EXPECT().Upsert(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "setup_failed", internalErr.Code)
+			assert.Contains(t, internalErr.Message, "db down")
+		})
+	})
+
+	t.Run("Given deleting the stored api key fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{
+			Platform: ollama,
+			Model:    "llama3",
+			BaseUrl:  lo.ToPtr("http://host.docker.internal:11434"),
+		}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
+			suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil)
+			suite.expectUpsert()
+			suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).Return(errors.New("vault down"))
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "setup_failed", internalErr.Code)
+			assert.Contains(t, internalErr.Message, "vault down")
+		})
+	})
+
+	t.Run("Given a blank api key for the configured cloud provider and one is stored", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o"}
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(openAiConnection)
 			gomock.InOrder(
 				suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil),
 				suite.mockSecretStorage.EXPECT().Get(gomock.Any()).Return("sk-existing", true, nil),
+			)
+			suite.expectUpsert()
+		}
+
+		t.Run("Should return the connection", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
+		})
+	})
+
+	t.Run("Given a blank api key for a local provider", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SetupLLMConnectionRequest{
+			Platform: ollama,
+			Model:    "llama3",
+			BaseUrl:  lo.ToPtr("http://host.docker.internal:11434"),
+		}
+
+		deleted := false
+
+		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
+			suite.givenCurrentConnection(ollamaConnection)
+			gomock.InOrder(
+				suite.mockLlmConnectionValidator.EXPECT().Validate(gomock.Any(), gomock.Any(), "").Return(nil),
 				suite.mockRepository.EXPECT().
 					Upsert(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
 						return c, nil
 					}),
+				suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).DoAndReturn(func(_ context.Context) error {
+					deleted = true
+					return nil
+				}),
 			)
 		}
 
-		t.Run("Should upsert the row without saving the key", func(t *testing.T) {
+		t.Run("Should delete the stored key after saving the connection", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingUpLLMConnectionBeforeEach(t)
-			request := generateValidSetupLLMConnectionRequest()
-			request.ApiKey = ""
 			initSuite(suite)
 
 			_, err := suite.sut.Execute(context.Background(), request)
 
 			assert.NoError(t, err)
+			assert.True(t, deleted)
 		})
 	})
 
 	t.Run("Given a fully populated request", func(t *testing.T) {
 		t.Parallel()
 
+		request := &requests.SetupLLMConnectionRequest{
+			Platform: openAi,
+			Model:    "gpt-4o",
+			BaseUrl:  lo.ToPtr("https://proxy.example.com/v1"),
+			ApiKey:   "sk-secret",
+		}
+
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.givenCurrentConnection(nil)
 			gomock.InOrder(
 				suite.mockLlmConnectionValidator.EXPECT().
 					Validate(gomock.Any(), gomock.Any(), "sk-secret").
 					DoAndReturn(func(_ context.Context, c *models.LLMConnection, _ string) error {
 						assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
 						assert.Equal(t, "gpt-4o", c.Model)
+						assert.Equal(t, "https://proxy.example.com/v1", lo.FromPtr(c.BaseUrl))
 						return nil
 					}),
 				suite.mockSecretStorage.EXPECT().Save(gomock.Any(), "sk-secret").Return(nil),
@@ -198,41 +464,23 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 					DoAndReturn(func(_ context.Context, c *models.LLMConnection) (*models.LLMConnection, error) {
 						assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, c.Platform)
 						assert.Equal(t, "gpt-4o", c.Model)
+						assert.Equal(t, "https://proxy.example.com/v1", lo.FromPtr(c.BaseUrl))
 						assert.Equal(t, reasoning_enums.LLMConnectionSetupStatusEstablished, c.SetupStatus)
 						return c, nil
 					}),
 			)
 		}
 
-		t.Run(
-			"Should establish the connection",
-			func(t *testing.T) {
-				t.Parallel()
+		t.Run("Should return the connection", func(t *testing.T) {
+			t.Parallel()
 
-				suite := WhenSettingUpLLMConnectionBeforeEach(t)
-				request := generateValidSetupLLMConnectionRequest()
-				initSuite(suite)
+			suite := WhenSettingUpLLMConnectionBeforeEach(t)
+			initSuite(suite)
 
-				_, err := suite.sut.Execute(context.Background(), request)
+			resp, err := suite.sut.Execute(context.Background(), request)
 
-				assert.NoError(t, err)
-			},
-		)
-
-		t.Run(
-			"Should return the connection",
-			func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenSettingUpLLMConnectionBeforeEach(t)
-				request := generateValidSetupLLMConnectionRequest()
-				initSuite(suite)
-
-				resp, err := suite.sut.Execute(context.Background(), request)
-
-				assert.NoError(t, err)
-				assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
-			},
-		)
+			assert.NoError(t, err)
+			assert.Equal(t, reasoning_enums.LLMConnectionPlatformOpenAi, resp.Platform)
+		})
 	})
 }

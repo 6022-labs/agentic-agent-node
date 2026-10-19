@@ -85,6 +85,7 @@ func (c *LLMConfigController) Setup(ctx fiber.Ctx) error {
 // @Param request body requests.SetupLLMConnectionRequest true "LLM connection"
 // @Success 204
 // @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} errors.InternalError "validate_failed or agent_lookup_failed"
 // @Router /internal/config/llm/validate [post]
 func (c *LLMConfigController) Validate(ctx fiber.Ctx) error {
 	body := new(requests.SetupLLMConnectionRequest)

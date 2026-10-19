@@ -1873,6 +1873,16 @@
                             }
                         },
                         "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "validate_failed or agent_lookup_failed"
                     }
                 },
                 "summary": "Internal validate LLM connection",
