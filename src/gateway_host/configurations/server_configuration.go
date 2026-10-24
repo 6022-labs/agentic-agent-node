@@ -37,12 +37,13 @@ func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
 type registerRoutesParams struct {
 	dig.In
 
-	App            *fiber.App
-	Logger         *zap.Logger
-	AgentTelemetry *middlewares.AgentTelemetryContextMiddleware
-	JwtAuth        *middlewares.JwtAuthMiddleware
-	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
-	Controllers    []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
+	App               *fiber.App
+	Logger            *zap.Logger
+	AgentTelemetry    *middlewares.AgentTelemetryContextMiddleware
+	JwtAuth           *middlewares.JwtAuthMiddleware
+	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
+	RequestFailureLog *mvc_middlewares.RequestFailureLogMiddleware
+	Controllers       []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -59,6 +60,8 @@ func registerRoutes(p registerRoutesParams) {
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
 	}))
+
+	p.App.Use(p.RequestFailureLog.Handle)
 
 	p.App.Get("/swagger/*", swaggo.New())
 

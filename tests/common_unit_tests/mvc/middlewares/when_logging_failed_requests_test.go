@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common_mvc/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -63,7 +63,7 @@ func TestWhenLoggingFailedRequests(t *testing.T) {
 
 			assert.Len(t, logs, 1)
 			assert.Equal(t, zapcore.WarnLevel, logs[0].Level)
-			assert.Equal(t, "runtime request rejected", logs[0].Message)
+			assert.Equal(t, "request rejected", logs[0].Message)
 		})
 	})
 
@@ -77,7 +77,7 @@ func TestWhenLoggingFailedRequests(t *testing.T) {
 
 			assert.Len(t, logs, 1)
 			assert.Equal(t, zapcore.ErrorLevel, logs[0].Level)
-			assert.Equal(t, "runtime request failed", logs[0].Message)
+			assert.Equal(t, "request failed", logs[0].Message)
 			assert.Contains(t, logs[0].ContextMap(), "error")
 		})
 	})

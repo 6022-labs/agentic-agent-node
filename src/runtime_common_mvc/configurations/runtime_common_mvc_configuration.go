@@ -23,7 +23,7 @@ func AddRuntimeCommonMvcConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
-	if err := container.Provide(runtime_common_mvc_middlewares.NewRequestFailureLogMiddleware); err != nil {
+	if err := container.Provide(mvc_middlewares.NewRequestFailureLogMiddleware); err != nil {
 		panic(err)
 	}
 
