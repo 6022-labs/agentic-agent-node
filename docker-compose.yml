@@ -19,8 +19,13 @@ services:
       - VAULT__ADDRESS=http://agent-node-vault:8200
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret
-      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=http://evm-node:8545
+      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=https://rpc-amoy.polygon.technology
       - BLOCKCHAIN__EVM_CHAINS__80002__REQUEST_TIMEOUT_SECONDS=10
+      - BLOCKCHAIN__EVM_CHAINS__84532__HTTP_URL=https://sepolia.base.org
+      - BLOCKCHAIN__EVM_CHAINS__84532__REQUEST_TIMEOUT_SECONDS=10
+      # Public testnet x402 facilitators, so paid rules work out of the box; each needs an RPC above.
+      - PAYMENT__FACILITATORS__80002__BASE_URL=https://x402-amoy.polygon.technology
+      - PAYMENT__FACILITATORS__84532__BASE_URL=https://x402.org/facilitator
       - RUNTIME_DATABASE__DRIVER=postgres
       - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
