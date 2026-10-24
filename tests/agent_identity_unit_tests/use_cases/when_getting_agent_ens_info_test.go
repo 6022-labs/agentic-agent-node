@@ -39,6 +39,26 @@ func WhenGettingAgentEnsInfoBeforeEach(t *testing.T) *WhenGettingAgentEnsInfoTes
 func TestWhenGettingAgentEnsInfo(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given no registration draft exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should return a NotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentEnsInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
 	t.Run("Given the agent is not minted yet", func(t *testing.T) {
 		t.Parallel()
 
@@ -57,26 +77,6 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
-		})
-	})
-
-	t.Run("Given no registration draft exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-		}
-
-		t.Run("Should return a NotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentEnsInfoBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 

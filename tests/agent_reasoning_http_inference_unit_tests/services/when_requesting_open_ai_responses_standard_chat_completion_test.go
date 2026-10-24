@@ -56,181 +56,6 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 		{Role: "user", Content: "hello"},
 	}
 
-	t.Run("Given the LLM returns plain text", func(t *testing.T) {
-		t.Parallel()
-
-		expectedContent := "hi there"
-
-		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
-			suite.mockOpenAIResponsesClient.
-				EXPECT().
-				Responses(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
-					assert.Equal(t, llmConnection.Model, request.Model)
-					if assert.Len(t, request.Input, 1) {
-						assert.Equal(t, "message", request.Input[0].Type)
-						if assert.NotNil(t, request.Input[0].Role) {
-							assert.Equal(t, "user", *request.Input[0].Role)
-						}
-					}
-					assert.Nil(t, request.PreviousResponseID)
-					assert.Nil(t, request.Tools)
-
-					assistantRole := "assistant"
-					return &external_models.ExternalOpenAIResponsesStandardResponse{
-						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
-							{
-								Type: "message",
-								Role: &assistantRole,
-								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
-									{Type: "output_text", Text: expectedContent},
-								},
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should return the assistant text", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{expectedContent}, result.Texts)
-			}
-		})
-	})
-
-	t.Run("Given the message has multiple output_text content items", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
-			suite.mockOpenAIResponsesClient.
-				EXPECT().
-				Responses(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
-					assistantRole := "assistant"
-					return &external_models.ExternalOpenAIResponsesStandardResponse{
-						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
-							{
-								Type: "message",
-								Role: &assistantRole,
-								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
-									{Type: "output_text", Text: "first"},
-									{Type: "output_text", Text: "second"},
-								},
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should collect every text block in order", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{"first", "second"}, result.Texts)
-			}
-		})
-	})
-
-	t.Run("Given the response has no actionable content", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
-			suite.mockOpenAIResponsesClient.
-				EXPECT().
-				Responses(baseUrl, apiKey, gomock.Any()).
-				Return(&external_models.ExternalOpenAIResponsesStandardResponse{
-					Status: "incomplete",
-					Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{},
-				}, nil)
-		}
-
-		t.Run("Should return an empty completion", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Empty(t, result.Texts)
-				assert.Empty(t, result.ToolCalls)
-				assert.Empty(t, result.ExecutedToolCalls)
-			}
-		})
-	})
-
-	t.Run("Given the LLM emits a function_call", func(t *testing.T) {
-		t.Parallel()
-
-		mcpConnection := model_builders.NewMCPConnectionBuilder().
-			WithName("inventory").
-			Build()
-		mcpTool := &models.Tool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
-		toolArgs := map[string]any{"query": "value"}
-		argsJson, _ := json.Marshal(toolArgs)
-		argsStr := string(argsJson)
-
-		mcpTools := map[*models.MCPConnection][]*models.Tool{
-			mcpConnection: {mcpTool},
-		}
-
-		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
-			suite.mockOpenAIResponsesClient.
-				EXPECT().
-				Responses(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
-					if assert.Len(t, request.Tools, 1) {
-						assert.Equal(t, "function", request.Tools[0].Type)
-						if assert.NotNil(t, request.Tools[0].Name) {
-							assert.Equal(t, functionName, *request.Tools[0].Name)
-						}
-					}
-
-					name := functionName
-					callId := "call_1"
-					return &external_models.ExternalOpenAIResponsesStandardResponse{
-						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
-							{
-								Type:      "function_call",
-								Name:      &name,
-								CallId:    &callId,
-								Arguments: &argsStr,
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should return the ToolCall in LLMCompletion", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
-				assert.Equal(t, "call_1", result.ToolCalls[0].Id)
-				assert.Equal(t, functionName, result.ToolCalls[0].Name)
-				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
-			}
-		})
-	})
-
 	t.Run("Given direct MCP access is enabled", func(t *testing.T) {
 		t.Parallel()
 
@@ -340,6 +165,152 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the LLM returns plain text", func(t *testing.T) {
+		t.Parallel()
+
+		expectedContent := "hi there"
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
+					assert.Equal(t, llmConnection.Model, request.Model)
+					if assert.Len(t, request.Input, 1) {
+						assert.Equal(t, "message", request.Input[0].Type)
+						if assert.NotNil(t, request.Input[0].Role) {
+							assert.Equal(t, "user", *request.Input[0].Role)
+						}
+					}
+					assert.Nil(t, request.PreviousResponseID)
+					assert.Nil(t, request.Tools)
+
+					assistantRole := "assistant"
+					return &external_models.ExternalOpenAIResponsesStandardResponse{
+						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
+							{
+								Type: "message",
+								Role: &assistantRole,
+								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
+									{Type: "output_text", Text: expectedContent},
+								},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the assistant text", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
+			}
+		})
+	})
+
+	t.Run("Given the message has multiple output_text content items", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
+					assistantRole := "assistant"
+					return &external_models.ExternalOpenAIResponsesStandardResponse{
+						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
+							{
+								Type: "message",
+								Role: &assistantRole,
+								Content: []external_models.ExternalOpenAIResponsesStandardResponseOutputContent{
+									{Type: "output_text", Text: "first"},
+									{Type: "output_text", Text: "second"},
+								},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should collect every text block in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{"first", "second"}, result.Texts)
+			}
+		})
+	})
+
+	t.Run("Given the LLM emits a function_call", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			Build()
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
+		toolArgs := map[string]any{"query": "value"}
+		argsJson, _ := json.Marshal(toolArgs)
+		argsStr := string(argsJson)
+
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnection: {mcpTool},
+		}
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalOpenAIResponsesStandardRequest) (*external_models.ExternalOpenAIResponsesStandardResponse, error) {
+					if assert.Len(t, request.Tools, 1) {
+						assert.Equal(t, "function", request.Tools[0].Type)
+						if assert.NotNil(t, request.Tools[0].Name) {
+							assert.Equal(t, functionName, *request.Tools[0].Name)
+						}
+					}
+
+					name := functionName
+					callId := "call_1"
+					return &external_models.ExternalOpenAIResponsesStandardResponse{
+						Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{
+							{
+								Type:      "function_call",
+								Name:      &name,
+								CallId:    &callId,
+								Arguments: &argsStr,
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the ToolCall in LLMCompletion", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
+				assert.Equal(t, "call_1", result.ToolCalls[0].Id)
+				assert.Equal(t, functionName, result.ToolCalls[0].Name)
+				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
+			}
+		})
+	})
+
 	t.Run("Given the provider executes an mcp_call server-side", func(t *testing.T) {
 		t.Parallel()
 
@@ -379,6 +350,32 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				})
 		}
 
+		t.Run("Given the server is unknown", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should keep the provider's raw name", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+				initSuite(suite, "normalized-weather")
+
+				result, err := suite.sut.ChatCompletion(
+					baseUrl,
+					apiKey,
+					true,
+					llmConnection,
+					nil,
+					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+					messages,
+					nil,
+				)
+				assert.NoError(t, err)
+				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+					assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
+				}
+			})
+		})
+
 		t.Run("Given the server is a known connection", func(t *testing.T) {
 			t.Parallel()
 
@@ -408,31 +405,34 @@ func TestWhenRequestingOpenAIResponsesStandardChatCompletion(t *testing.T) {
 				}
 			})
 		})
+	})
 
-		t.Run("Given the server is unknown", func(t *testing.T) {
+	t.Run("Given the response has no actionable content", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingOpenAIResponsesStandardChatCompletionTestingSuite) {
+			suite.mockOpenAIResponsesClient.
+				EXPECT().
+				Responses(baseUrl, apiKey, gomock.Any()).
+				Return(&external_models.ExternalOpenAIResponsesStandardResponse{
+					Status: "incomplete",
+					Output: []external_models.ExternalOpenAIResponsesStandardResponseOutput{},
+				}, nil)
+		}
+
+		t.Run("Should return an empty completion", func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Should keep the provider's raw name", func(t *testing.T) {
-				t.Parallel()
+			suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
 
-				suite := WhenRequestingOpenAIResponsesStandardChatCompletionBeforeEach(t)
-				initSuite(suite, "normalized-weather")
-
-				result, err := suite.sut.ChatCompletion(
-					baseUrl,
-					apiKey,
-					true,
-					llmConnection,
-					nil,
-					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
-					messages,
-					nil,
-				)
-				assert.NoError(t, err)
-				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
-					assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
-				}
-			})
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Empty(t, result.Texts)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
+			}
 		})
 	})
 }

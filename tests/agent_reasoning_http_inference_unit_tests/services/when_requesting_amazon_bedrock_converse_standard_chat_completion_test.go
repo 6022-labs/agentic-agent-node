@@ -136,42 +136,6 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 		})
 	})
 
-	t.Run("Given the response has no actionable content", func(t *testing.T) {
-		t.Parallel()
-
-		stopReason := "max_tokens"
-
-		initSuite := func(suite *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite) {
-			suite.mockAmazonBedrockConverseClient.
-				EXPECT().
-				Messages(baseUrl, apiKey, gomock.Any()).
-				Return(&external_models.ExternalAmazonBedrockConverseStandardResponse{
-					Output: external_models.ExternalAmazonBedrockConverseStandardResponseOutput{
-						Message: external_models.ExternalAmazonBedrockConverseStandardMessage{
-							Role:    "assistant",
-							Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{},
-						},
-					},
-					StopReason: &stopReason,
-				}, nil)
-		}
-
-		t.Run("Should return an empty completion", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Empty(t, result.Texts)
-				assert.Empty(t, result.ToolCalls)
-				assert.Empty(t, result.ExecutedToolCalls)
-			}
-		})
-	})
-
 	t.Run("Given the LLM emits a toolUse", func(t *testing.T) {
 		t.Parallel()
 
@@ -227,6 +191,42 @@ func TestWhenRequestingAmazonBedrockConverseStandardChatCompletion(t *testing.T)
 				assert.Equal(t, "call_1", result.ToolCalls[0].Id)
 				assert.Equal(t, functionName, result.ToolCalls[0].Name)
 				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
+			}
+		})
+	})
+
+	t.Run("Given the response has no actionable content", func(t *testing.T) {
+		t.Parallel()
+
+		stopReason := "max_tokens"
+
+		initSuite := func(suite *WhenRequestingAmazonBedrockConverseStandardChatCompletionTestingSuite) {
+			suite.mockAmazonBedrockConverseClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				Return(&external_models.ExternalAmazonBedrockConverseStandardResponse{
+					Output: external_models.ExternalAmazonBedrockConverseStandardResponseOutput{
+						Message: external_models.ExternalAmazonBedrockConverseStandardMessage{
+							Role:    "assistant",
+							Content: []external_models.ExternalAmazonBedrockConverseStandardMessageContent{},
+						},
+					},
+					StopReason: &stopReason,
+				}, nil)
+		}
+
+		t.Run("Should return an empty completion", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAmazonBedrockConverseStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Empty(t, result.Texts)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
 			}
 		})
 	})

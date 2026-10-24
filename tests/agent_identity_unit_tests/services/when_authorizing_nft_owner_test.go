@@ -59,33 +59,6 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			Build()
 	}
 
-	t.Run("Given the mint is not yet confirmed", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
-			state := model_builders.NewAgentRegistrationStateBuilder().
-				WithMintStatus(identity_enums.TransactionStatusPending).
-				Build()
-			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(state, nil)
-		}
-
-		t.Run("Should authorize the owner", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAuthorizingNftOwnerBeforeEach(t)
-			initSuite(suite)
-
-			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
-
-			assert.NoError(t, err)
-			assert.True(t, ok)
-		})
-	})
-
 	t.Run("Given the registration state lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -167,6 +140,33 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.False(t, ok)
+		})
+	})
+
+	t.Run("Given the mint is not yet confirmed", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
+			state := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusPending).
+				Build()
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(state, nil)
+		}
+
+		t.Run("Should authorize the owner", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingNftOwnerBeforeEach(t)
+			initSuite(suite)
+
+			ok, err := suite.sut.IsAuthorized(context.Background(), owner)
+
+			assert.NoError(t, err)
+			assert.True(t, ok)
 		})
 	})
 

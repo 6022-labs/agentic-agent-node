@@ -21,6 +21,26 @@ func TestWhenFilteringToolsByPatterns(t *testing.T) {
 		return lo.Map(filtered, func(tool *models.Tool, _ int) string { return tool.Name })
 	}
 
+	t.Run("Given an invalid pattern alongside a valid one", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should keep what the valid pattern matches", func(t *testing.T) {
+			t.Parallel()
+
+			filtered, _ := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
+
+			assert.Equal(t, []string{"create_issue"}, names(filtered))
+		})
+
+		t.Run("Should report the invalid pattern", func(t *testing.T) {
+			t.Parallel()
+
+			_, invalid := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
+
+			assert.Equal(t, []string{"create_[issue"}, invalid)
+		})
+	})
+
 	t.Run("Given no pattern", func(t *testing.T) {
 		t.Parallel()
 
@@ -80,26 +100,6 @@ func TestWhenFilteringToolsByPatterns(t *testing.T) {
 			filtered, _ := utils.FilterToolsByPatterns(tools, []string{"search_.*"})
 
 			assert.Equal(t, []string{"search_issues"}, names(filtered))
-		})
-	})
-
-	t.Run("Given an invalid pattern alongside a valid one", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should keep what the valid pattern matches", func(t *testing.T) {
-			t.Parallel()
-
-			filtered, _ := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
-
-			assert.Equal(t, []string{"create_issue"}, names(filtered))
-		})
-
-		t.Run("Should report the invalid pattern", func(t *testing.T) {
-			t.Parallel()
-
-			_, invalid := utils.FilterToolsByPatterns(tools, []string{"create_[issue", "create_issue"})
-
-			assert.Equal(t, []string{"create_[issue"}, invalid)
 		})
 	})
 }

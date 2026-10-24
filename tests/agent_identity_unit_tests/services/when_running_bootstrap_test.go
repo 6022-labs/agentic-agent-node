@@ -93,19 +93,52 @@ func expectWalletsReady(suite *WhenRunningBootstrapTestingSuite) {
 func TestWhenRunningBootstrap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given no agent row exists", func(t *testing.T) {
+	t.Run("Given ensuring the agent fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should error without touching the wallet", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningBootstrapBeforeEach(t)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+
+			err := suite.sut.Run(context.Background())
+
+			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given a wallet cannot be readied", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningBootstrapBeforeEach(t)
+			agent := model_builders.NewAgentBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("vault down"))
+
+			err := suite.sut.Run(context.Background())
+
+			assert.ErrorContains(t, err, "vault down")
+		})
+	})
+
+	t.Run("Given the chain recovery fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
-			created := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), &models.Agent{}).Return(created, nil)
+			agent := model_builders.NewAgentBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			expectWalletsReady(suite)
-			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, nil)
+			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, errors.New("chain down"))
 			return expectEnsRefresh(suite)
 		}
 
-		t.Run("Should create an empty agent draft before readying the wallets", func(t *testing.T) {
+		t.Run("Should swallow the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
@@ -142,18 +175,19 @@ func TestWhenRunningBootstrap(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the chain recovery fails", func(t *testing.T) {
+	t.Run("Given no agent row exists", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenRunningBootstrapTestingSuite) chan struct{} {
-			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			created := model_builders.NewAgentBuilder().Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentRepository.EXPECT().Upsert(gomock.Any(), &models.Agent{}).Return(created, nil)
 			expectWalletsReady(suite)
-			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, errors.New("chain down"))
+			suite.mockAgentChainRecoverer.EXPECT().Recover(gomock.Any()).Return(false, nil)
 			return expectEnsRefresh(suite)
 		}
 
-		t.Run("Should swallow the error", func(t *testing.T) {
+		t.Run("Should create an empty agent draft before readying the wallets", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningBootstrapBeforeEach(t)
@@ -163,40 +197,6 @@ func TestWhenRunningBootstrap(t *testing.T) {
 
 			assert.NoError(t, err)
 			waitForEnsRefresh(t, done)
-		})
-	})
-
-	t.Run("Given ensuring the agent fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should error without touching the wallet", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningBootstrapBeforeEach(t)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
-
-			err := suite.sut.Run(context.Background())
-
-			assert.ErrorContains(t, err, "db down")
-		})
-	})
-
-	t.Run("Given a wallet cannot be readied", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningBootstrapBeforeEach(t)
-			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetOrGenerateForId(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("vault down"))
-
-			err := suite.sut.Run(context.Background())
-
-			assert.ErrorContains(t, err, "vault down")
 		})
 	})
 }

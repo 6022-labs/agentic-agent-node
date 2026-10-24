@@ -21,29 +21,6 @@ func expectedFromAddress(t *testing.T) string {
 func TestWhenBuildingTransactor(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a valid private key", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should build a transactor bound to the chain and signer", func(t *testing.T) {
-			t.Parallel()
-
-			opts, err := helper.Transactor(testPrivateKeyHex, 80002)
-
-			assert.NoError(t, err)
-			assert.NotNil(t, opts)
-			assert.Equal(t, expectedFromAddress(t), opts.From.Hex())
-		})
-
-		t.Run("Should accept a 0x-prefixed, whitespace-padded key", func(t *testing.T) {
-			t.Parallel()
-
-			opts, err := helper.Transactor("  0x"+testPrivateKeyHex+"  ", 1)
-
-			assert.NoError(t, err)
-			assert.Equal(t, expectedFromAddress(t), opts.From.Hex())
-		})
-	})
-
 	t.Run("Given an invalid private key", func(t *testing.T) {
 		t.Parallel()
 
@@ -53,6 +30,29 @@ func TestWhenBuildingTransactor(t *testing.T) {
 			_, err := helper.Transactor("not-a-key", 1)
 
 			assert.ErrorContains(t, err, "invalid wallet private key")
+		})
+	})
+
+	t.Run("Given a valid private key", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should accept a 0x-prefixed, whitespace-padded key", func(t *testing.T) {
+			t.Parallel()
+
+			opts, err := helper.Transactor("  0x"+testPrivateKeyHex+"  ", 1)
+
+			assert.NoError(t, err)
+			assert.Equal(t, expectedFromAddress(t), opts.From.Hex())
+		})
+
+		t.Run("Should build a transactor bound to the chain and signer", func(t *testing.T) {
+			t.Parallel()
+
+			opts, err := helper.Transactor(testPrivateKeyHex, 80002)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, opts)
+			assert.Equal(t, expectedFromAddress(t), opts.From.Hex())
 		})
 	})
 }

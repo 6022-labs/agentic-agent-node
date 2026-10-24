@@ -50,6 +50,53 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 
 	const scopedKey = "scope/wallet/evm"
 
+	t.Run("Given no generator is registered for the address type", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), "scope/wallet/btc").
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+		}
+
+		t.Run("Should error without generating", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeBtc)
+
+			assert.ErrorContains(t, err, "no key generator")
+		})
+	})
+
+	t.Run("Given saving the wallet fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
+			suite.mockStorage.EXPECT().
+				Read(gomock.Any(), scopedKey).
+				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+			suite.mockGenerator.EXPECT().
+				Generate().
+				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).
+				Times(1)
+			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(errors.New("vault down"))
+		}
+
+		t.Run("Should propagate the persistence error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeEvm)
+
+			assert.ErrorContains(t, err, "vault down")
+		})
+	})
+
 	t.Run("Given a wallet already exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -101,53 +148,6 @@ func TestWhenGettingOrGeneratingWalletCredentialsForId(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "0xnewpk", cred.PrivateKeyHex)
 			assert.Equal(t, "0xnewaddr", cred.Address)
-		})
-	})
-
-	t.Run("Given no generator is registered for the address type", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().
-				Read(gomock.Any(), "scope/wallet/btc").
-				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
-		}
-
-		t.Run("Should error without generating", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeBtc)
-
-			assert.ErrorContains(t, err, "no key generator")
-		})
-	})
-
-	t.Run("Given saving the wallet fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingOrGeneratingWalletCredentialsForIdTestingSuite) {
-			suite.mockStorage.EXPECT().
-				Read(gomock.Any(), scopedKey).
-				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
-			suite.mockGenerator.EXPECT().
-				Generate().
-				Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: "0xnewpk", Address: "0xnewaddr"}, nil).
-				Times(1)
-			suite.mockStorage.EXPECT().Write(gomock.Any(), scopedKey, gomock.Any()).Return(errors.New("vault down"))
-		}
-
-		t.Run("Should propagate the persistence error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingOrGeneratingWalletCredentialsForIdBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.GetOrGenerateForId(context.Background(), "agent-1", enums.AddressTypeEvm)
-
-			assert.ErrorContains(t, err, "vault down")
 		})
 	})
 }

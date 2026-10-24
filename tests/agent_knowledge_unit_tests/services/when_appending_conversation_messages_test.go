@@ -128,6 +128,108 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
+	t.Run("Given listing the existing hashes fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
+
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
+				Return(nil, errors.New("db blew"))
+		}
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			input := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
+			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
+
+			assert.ErrorContains(t, err, "db blew")
+		})
+	})
+
+	t.Run("Given the message appender fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
+
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
+				Return([]string{}, nil)
+			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
+				gomock.Any()).
+				Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
+			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{message})
+
+			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given every input is already stored", func(t *testing.T) {
+		t.Parallel()
+
+		input := model_builders.NewConversationMessageBuilder().
+			WithRole("user").
+			WithContent("dup").
+			WithTimestamp(now).
+			Build()
+		input.ConversationId = conversationId
+		dupHash, _ := utils.ComputeConversationMessageHash(
+			input.Role.String(),
+			lo.FromPtr(input.Content),
+			"",
+			"",
+			conversationId,
+		)
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			suite.expectAgentResolutionAndEnsure()
+
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(gomock.Any()).
+				DoAndReturn(func(content string) string { return content })
+
+			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
+				gomock.Any()).
+				Return([]string{dupHash}, nil)
+			// no AppendMessages call expected
+		}
+
+		t.Run("Should insert nothing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			res, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
+
+			assert.NoError(t, err)
+			assert.Empty(t, res)
+		})
+	})
+
 	t.Run("Given inputs whose hashes are all new", func(t *testing.T) {
 		t.Parallel()
 
@@ -317,108 +419,6 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Len(t, res, 1)
-		})
-	})
-
-	t.Run("Given every input is already stored", func(t *testing.T) {
-		t.Parallel()
-
-		input := model_builders.NewConversationMessageBuilder().
-			WithRole("user").
-			WithContent("dup").
-			WithTimestamp(now).
-			Build()
-		input.ConversationId = conversationId
-		dupHash, _ := utils.ComputeConversationMessageHash(
-			input.Role.String(),
-			lo.FromPtr(input.Content),
-			"",
-			"",
-			conversationId,
-		)
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.expectAgentResolutionAndEnsure()
-
-			suite.mockEmojiDecoder.EXPECT().
-				DemojizeContent(gomock.Any()).
-				DoAndReturn(func(content string) string { return content })
-
-			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
-				gomock.Any()).
-				Return([]string{dupHash}, nil)
-			// no AppendMessages call expected
-		}
-
-		t.Run("Should insert nothing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			res, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
-
-			assert.NoError(t, err)
-			assert.Empty(t, res)
-		})
-	})
-
-	t.Run("Given listing the existing hashes fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.expectAgentResolutionAndEnsure()
-
-			suite.mockEmojiDecoder.EXPECT().
-				DemojizeContent(gomock.Any()).
-				DoAndReturn(func(content string) string { return content })
-
-			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
-				gomock.Any()).
-				Return(nil, errors.New("db blew"))
-		}
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			input := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
-			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{input})
-
-			assert.ErrorContains(t, err, "db blew")
-		})
-	})
-
-	t.Run("Given the message appender fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.expectAgentResolutionAndEnsure()
-
-			suite.mockEmojiDecoder.EXPECT().
-				DemojizeContent(gomock.Any()).
-				DoAndReturn(func(content string) string { return content })
-
-			suite.mockRepository.EXPECT().ListExistingHashes(gomock.Any(),
-				gomock.Any()).
-				Return([]string{}, nil)
-			suite.mockRepository.EXPECT().AppendMessages(gomock.Any(),
-				gomock.Any()).
-				Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			message := model_builders.NewConversationMessageBuilder().WithTimestamp(now).Build()
-			_, err := suite.sut.Append(context.Background(), conversationId, []models.ConversationMessage{message})
-
-			assert.ErrorContains(t, err, "db down")
 		})
 	})
 }

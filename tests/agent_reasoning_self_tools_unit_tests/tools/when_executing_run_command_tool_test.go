@@ -36,25 +36,36 @@ func TestWhenExecutingRunCommandTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given only a command argument", func(t *testing.T) {
+	t.Run("Given the command argument is missing", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should leave the optional arguments unset", func(t *testing.T) {
+		t.Run("Should fail without calling the executor", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingRunCommandToolBeforeEach(t)
+
+			out, err := suite.sut.Execute(ctx, nil)
+
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "command")
+		})
+	})
+
+	t.Run("Given the executor fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingRunCommandToolBeforeEach(t)
 			suite.mockRunCommandExecutor.EXPECT().
-				Run(ctx, "ls", "", nil, nil, nil).
-				Return(&os_interfaces.CommandResult{Stdout: "web\n", ExitCode: lo.ToPtr(0)}, nil)
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("fork failed"))
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"command": "ls"})
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, out) {
-				assert.Equal(t, "web\n", out["stdout"])
-				assert.Equal(t, float64(0), out["exit_code"])
-				assert.NotContains(t, out, "session_id")
-			}
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "fork failed")
 		})
 	})
 
@@ -106,36 +117,25 @@ func TestWhenExecutingRunCommandTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the command argument is missing", func(t *testing.T) {
+	t.Run("Given only a command argument", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should fail without calling the executor", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingRunCommandToolBeforeEach(t)
-
-			out, err := suite.sut.Execute(ctx, nil)
-
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "command")
-		})
-	})
-
-	t.Run("Given the executor fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
+		t.Run("Should leave the optional arguments unset", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingRunCommandToolBeforeEach(t)
 			suite.mockRunCommandExecutor.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("fork failed"))
+				Run(ctx, "ls", "", nil, nil, nil).
+				Return(&os_interfaces.CommandResult{Stdout: "web\n", ExitCode: lo.ToPtr(0)}, nil)
 
 			out, err := suite.sut.Execute(ctx, map[string]any{"command": "ls"})
 
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "fork failed")
+			assert.NoError(t, err)
+			if assert.NotNil(t, out) {
+				assert.Equal(t, "web\n", out["stdout"])
+				assert.Equal(t, float64(0), out["exit_code"])
+				assert.NotContains(t, out, "session_id")
+			}
 		})
 	})
 

@@ -219,6 +219,31 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the response driver fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.expectOwnedKey(conversationId)
+			suite.mockResponseDriver.EXPECT().
+				Drive(gomock.Any(), conversationId, gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("driver broke"))
+			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).Times(1)
+		}
+
+		t.Run("Should return InternalError carrying the driver message", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "driver broke")
+		})
+	})
+
 	t.Run("Given no conversation key", func(t *testing.T) {
 		t.Parallel()
 
@@ -263,28 +288,27 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the response driver fails", func(t *testing.T) {
+	t.Run("Given the response driver returns nil", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.expectOwnedKey(conversationId)
 			suite.mockResponseDriver.EXPECT().
 				Drive(gomock.Any(), conversationId, gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("driver broke"))
-			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).Times(1)
+				Return(nil, nil)
 		}
 
-		t.Run("Should return InternalError carrying the driver message", func(t *testing.T) {
+		t.Run("Should return status=incomplete with no output", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingResponseBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
+			resp, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
 
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "driver broke")
+			assert.NoError(t, err)
+			assert.Equal(t, "incomplete", resp.Status)
+			assert.Empty(t, resp.Output)
 		})
 	})
 
@@ -344,30 +368,6 @@ func TestWhenCreatingResponse(t *testing.T) {
 					assert.Equal(t, expectedFinal, resp.Output[0].Content[0].Text)
 				}
 			}
-		})
-	})
-
-	t.Run("Given the response driver returns nil", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.expectOwnedKey(conversationId)
-			suite.mockResponseDriver.EXPECT().
-				Drive(gomock.Any(), conversationId, gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-		}
-
-		t.Run("Should return status=incomplete with no output", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(responseCallerCtx, userInputRequest(conversationId, "hello"))
-
-			assert.NoError(t, err)
-			assert.Equal(t, "incomplete", resp.Status)
-			assert.Empty(t, resp.Output)
 		})
 	})
 }

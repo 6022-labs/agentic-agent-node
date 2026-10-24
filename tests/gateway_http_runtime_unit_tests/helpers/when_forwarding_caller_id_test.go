@@ -18,6 +18,21 @@ var forwardedCallerId = strings.ToLower(common_tests.RandomEthAddress().Hex())
 func TestWhenForwardingCallerId(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given no caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should set no caller id header", func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "/internal/conversations", nil)
+
+			err := helpers.ForwardCallerId(context.Background(), req)
+
+			assert.NoError(t, err)
+			assert.NotContains(t, req.Header, common_helpers.CallerIdHeader)
+		})
+	})
+
 	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -32,21 +47,6 @@ func TestWhenForwardingCallerId(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, forwardedCallerId, req.Header.Get(common_helpers.CallerIdHeader))
-		})
-	})
-
-	t.Run("Given no caller id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should set no caller id header", func(t *testing.T) {
-			t.Parallel()
-
-			req := httptest.NewRequest(http.MethodGet, "/internal/conversations", nil)
-
-			err := helpers.ForwardCallerId(context.Background(), req)
-
-			assert.NoError(t, err)
-			assert.NotContains(t, req.Header, common_helpers.CallerIdHeader)
 		})
 	})
 }

@@ -36,36 +36,45 @@ func WhenCallingMcpToolAfterEach(suite *WhenCallingMcpToolTestingSuite) {
 func TestWhenCallingMcpTool(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the MCP server returns a tool call result", func(t *testing.T) {
+	t.Run("Given the context is already cancelled", func(t *testing.T) {
 		t.Parallel()
 
-		var seenBody []byte
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			buf := make([]byte, r.ContentLength)
-			_, _ = r.Body.Read(buf)
-			seenBody = buf
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"echoed"}]}}`))
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{}}`))
 		}
 
-		t.Run("Should send the tool call in the jsonrpc params", func(t *testing.T) {
+		t.Run("Should abort the request instead of hitting the server", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
 			defer WhenCallingMcpToolAfterEach(suite)
 
-			res, err := suite.sut.CallTool(
-				context.Background(),
-				suite.server.URL,
-				"echo",
-				map[string]any{"value": "hi"},
-				nil,
-			)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-			assert.NoError(t, err)
-			assert.Contains(t, string(seenBody), `"name":"echo"`)
-			assert.Contains(t, string(seenBody), `"value":"hi"`)
-			assert.NotNil(t, res.Result)
+			_, err := suite.sut.CallTool(ctx, suite.server.URL, "echo", nil, nil)
+			assert.ErrorIs(t, err, context.Canceled)
+		})
+	})
+
+	t.Run("Given the MCP server returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return a McpStatusError with the 500", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingMcpToolBeforeEach(t, handler)
+			defer WhenCallingMcpToolAfterEach(suite)
+
+			_, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", nil, nil)
+			var statusErr *clients.McpStatusError
+			assert.ErrorAs(t, err, &statusErr)
+			assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
 		})
 	})
 
@@ -102,45 +111,36 @@ func TestWhenCallingMcpTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the MCP server returns a non-2xx", func(t *testing.T) {
+	t.Run("Given the MCP server returns a tool call result", func(t *testing.T) {
 		t.Parallel()
 
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return a McpStatusError with the 500", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingMcpToolBeforeEach(t, handler)
-			defer WhenCallingMcpToolAfterEach(suite)
-
-			_, err := suite.sut.CallTool(context.Background(), suite.server.URL, "echo", nil, nil)
-			var statusErr *clients.McpStatusError
-			assert.ErrorAs(t, err, &statusErr)
-			assert.Equal(t, http.StatusInternalServerError, statusErr.StatusCode)
-		})
-	})
-
-	t.Run("Given the context is already cancelled", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
+		var seenBody []byte
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			buf := make([]byte, r.ContentLength)
+			_, _ = r.Body.Read(buf)
+			seenBody = buf
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{}}`))
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"echoed"}]}}`))
 		}
 
-		t.Run("Should abort the request instead of hitting the server", func(t *testing.T) {
+		t.Run("Should send the tool call in the jsonrpc params", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingMcpToolBeforeEach(t, handler)
 			defer WhenCallingMcpToolAfterEach(suite)
 
-			ctx, cancel := context.WithCancel(context.Background())
-			cancel()
+			res, err := suite.sut.CallTool(
+				context.Background(),
+				suite.server.URL,
+				"echo",
+				map[string]any{"value": "hi"},
+				nil,
+			)
 
-			_, err := suite.sut.CallTool(ctx, suite.server.URL, "echo", nil, nil)
-			assert.ErrorIs(t, err, context.Canceled)
+			assert.NoError(t, err)
+			assert.Contains(t, string(seenBody), `"name":"echo"`)
+			assert.Contains(t, string(seenBody), `"value":"hi"`)
+			assert.NotNil(t, res.Result)
 		})
 	})
 }

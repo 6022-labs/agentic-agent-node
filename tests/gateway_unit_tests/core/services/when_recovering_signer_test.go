@@ -23,29 +23,36 @@ func WhenRecoveringSignerBeforeEach() *WhenRecoveringSignerTestingSuite {
 func TestWhenRecoveringSigner(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a valid EIP-191 signature over a message", func(t *testing.T) {
+	t.Run("Given a malformed signature", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should recover the signer address", func(t *testing.T) {
+		t.Run("Should reject non-hex input", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringSignerBeforeEach()
 
-			key, _ := crypto.GenerateKey()
-			expectedAddress := crypto.PubkeyToAddress(key.PublicKey)
-			message := "challenge-nonce-123"
+			_, err := suite.sut.Recover("msg", "0xnothex")
+			assert.ErrorContains(t, err, "not valid hex")
+		})
 
-			prefixed := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
-			hash := crypto.Keccak256Hash([]byte(prefixed))
-			sig, err := crypto.Sign(hash.Bytes(), key)
-			assert.NoError(t, err)
-			sig[64] += 27 // many wallets ship v as 27/28
-			sigHex := "0x" + hex.EncodeToString(sig)
+		t.Run("Should reject wrong-length signature", func(t *testing.T) {
+			t.Parallel()
 
-			recovered, err := suite.sut.Recover(message, sigHex)
+			suite := WhenRecoveringSignerBeforeEach()
 
-			assert.NoError(t, err)
-			assert.Equal(t, expectedAddress, recovered)
+			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(make([]byte, 10)))
+			assert.ErrorContains(t, err, "signature length must be 65 bytes")
+		})
+
+		t.Run("Should reject invalid recovery id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringSignerBeforeEach()
+
+			bad := make([]byte, 65)
+			bad[64] = 99
+			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(bad))
+			assert.ErrorContains(t, err, "invalid recovery id")
 		})
 	})
 
@@ -98,36 +105,29 @@ func TestWhenRecoveringSigner(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a malformed signature", func(t *testing.T) {
+	t.Run("Given a valid EIP-191 signature over a message", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should reject non-hex input", func(t *testing.T) {
+		t.Run("Should recover the signer address", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringSignerBeforeEach()
 
-			_, err := suite.sut.Recover("msg", "0xnothex")
-			assert.ErrorContains(t, err, "not valid hex")
-		})
+			key, _ := crypto.GenerateKey()
+			expectedAddress := crypto.PubkeyToAddress(key.PublicKey)
+			message := "challenge-nonce-123"
 
-		t.Run("Should reject wrong-length signature", func(t *testing.T) {
-			t.Parallel()
+			prefixed := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
+			hash := crypto.Keccak256Hash([]byte(prefixed))
+			sig, err := crypto.Sign(hash.Bytes(), key)
+			assert.NoError(t, err)
+			sig[64] += 27 // many wallets ship v as 27/28
+			sigHex := "0x" + hex.EncodeToString(sig)
 
-			suite := WhenRecoveringSignerBeforeEach()
+			recovered, err := suite.sut.Recover(message, sigHex)
 
-			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(make([]byte, 10)))
-			assert.ErrorContains(t, err, "signature length must be 65 bytes")
-		})
-
-		t.Run("Should reject invalid recovery id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringSignerBeforeEach()
-
-			bad := make([]byte, 65)
-			bad[64] = 99
-			_, err := suite.sut.Recover("msg", "0x"+hex.EncodeToString(bad))
-			assert.ErrorContains(t, err, "invalid recovery id")
+			assert.NoError(t, err)
+			assert.Equal(t, expectedAddress, recovered)
 		})
 	})
 }

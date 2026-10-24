@@ -52,26 +52,18 @@ func TestWhenCallingSelfTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given a registered tool succeeds", func(t *testing.T) {
+	t.Run("Given the self tool does not exist", func(t *testing.T) {
 		t.Parallel()
 
-		args := map[string]any{"key": "value"}
-		result := map[string]any{"status": "minted"}
-
-		initSuite := func(suite *WhenCallingSelfToolTestingSuite) {
-			suite.mockSelfTool.EXPECT().Execute(ctx, args).Return(result, nil)
-		}
-
-		t.Run("Should return the tool result", func(t *testing.T) {
+		t.Run("Should fail", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingSelfToolBeforeEach(t)
-			initSuite(suite)
 
-			out, err := suite.sut.CallTool(ctx, "get_registration", args)
+			out, err := suite.sut.CallTool(ctx, "ghost", nil)
 
-			assert.NoError(t, err)
-			assert.Equal(t, result, out)
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "unknown self tool")
 		})
 	})
 
@@ -96,18 +88,26 @@ func TestWhenCallingSelfTool(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the self tool does not exist", func(t *testing.T) {
+	t.Run("Given a registered tool succeeds", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should fail", func(t *testing.T) {
+		args := map[string]any{"key": "value"}
+		result := map[string]any{"status": "minted"}
+
+		initSuite := func(suite *WhenCallingSelfToolTestingSuite) {
+			suite.mockSelfTool.EXPECT().Execute(ctx, args).Return(result, nil)
+		}
+
+		t.Run("Should return the tool result", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCallingSelfToolBeforeEach(t)
+			initSuite(suite)
 
-			out, err := suite.sut.CallTool(ctx, "ghost", nil)
+			out, err := suite.sut.CallTool(ctx, "get_registration", args)
 
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "unknown self tool")
+			assert.NoError(t, err)
+			assert.Equal(t, result, out)
 		})
 	})
 }

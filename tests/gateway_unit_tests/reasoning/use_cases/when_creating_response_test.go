@@ -207,6 +207,45 @@ func TestWhenCreatingResponse(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a result carrying usage, conversation and error", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
+			suite.mockClient.EXPECT().
+				Create(ctx, gomock.Any()).
+				Return(&models.ExternalCreateResponseResultPayload{
+					Id:           "conv-2",
+					Status:       "failed",
+					Usage:        &models.ExternalUsagePayload{InputTokens: 3, OutputTokens: 5, TotalTokens: 8},
+					Conversation: &models.ExternalConversationRefPayload{Id: "conv-2"},
+					Error:        &models.ExternalResponseErrorPayload{Code: "server_error", Message: "boom"},
+				}, nil)
+		}
+
+		t.Run("Should map them onto the response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingResponseBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(ctx, userInputRequest("conv-2", "hi"))
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, resp.Usage) {
+				assert.Equal(t, 3, resp.Usage.InputTokens)
+				assert.Equal(t, 5, resp.Usage.OutputTokens)
+				assert.Equal(t, 8, resp.Usage.TotalTokens)
+			}
+			if assert.NotNil(t, resp.Conversation) {
+				assert.Equal(t, "conv-2", resp.Conversation.Id)
+			}
+			if assert.NotNil(t, resp.Error) {
+				assert.Equal(t, "server_error", resp.Error.Code)
+				assert.Equal(t, "boom", resp.Error.Message)
+			}
+		})
+	})
+
 	t.Run("Given the runtime accepts the request", func(t *testing.T) {
 		t.Parallel()
 
@@ -265,44 +304,5 @@ func TestWhenCreatingResponse(t *testing.T) {
 				}
 			},
 		)
-	})
-
-	t.Run("Given a result carrying usage, conversation and error", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
-			suite.mockClient.EXPECT().
-				Create(ctx, gomock.Any()).
-				Return(&models.ExternalCreateResponseResultPayload{
-					Id:           "conv-2",
-					Status:       "failed",
-					Usage:        &models.ExternalUsagePayload{InputTokens: 3, OutputTokens: 5, TotalTokens: 8},
-					Conversation: &models.ExternalConversationRefPayload{Id: "conv-2"},
-					Error:        &models.ExternalResponseErrorPayload{Code: "server_error", Message: "boom"},
-				}, nil)
-		}
-
-		t.Run("Should map them onto the response", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingResponseBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(ctx, userInputRequest("conv-2", "hi"))
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, resp.Usage) {
-				assert.Equal(t, 3, resp.Usage.InputTokens)
-				assert.Equal(t, 5, resp.Usage.OutputTokens)
-				assert.Equal(t, 8, resp.Usage.TotalTokens)
-			}
-			if assert.NotNil(t, resp.Conversation) {
-				assert.Equal(t, "conv-2", resp.Conversation.Id)
-			}
-			if assert.NotNil(t, resp.Error) {
-				assert.Equal(t, "server_error", resp.Error.Code)
-				assert.Equal(t, "boom", resp.Error.Message)
-			}
-		})
 	})
 }

@@ -44,6 +44,36 @@ func WhenSettingAvailableConversationNameBeforeEach(t *testing.T) *WhenSettingAv
 func TestWhenSettingAvailableConversationName(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a padded conversation id", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
+
+		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
+					return updated, nil
+				})
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
+		}
+
+		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAvailableConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.SetAvailableName(context.Background(), " c1 ", "Audit")
+
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -82,36 +112,6 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a padded conversation id", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
-
-		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
-					return updated, nil
-				})
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
-		}
-
-		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingAvailableConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.SetAvailableName(context.Background(), " c1 ", "Audit")
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the name lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -133,78 +133,6 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 			_, err := suite.sut.SetAvailableName(context.Background(), "c1", "Audit")
 
 			assert.ErrorContains(t, err, "db blew")
-		})
-	})
-
-	t.Run("Given the name is free for that caller", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().
-			WithId("c1").
-			WithCallerId(settingAvailableNameCallerId).
-			Build()
-
-		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(
-					gomock.Any(),
-					conversation.AgentId,
-					lo.ToPtr(settingAvailableNameCallerId),
-					"ERC20 mint audit",
-					lo.ToPtr("c1"),
-				).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
-					assert.Equal(t, "ERC20 mint audit", *updated.Name)
-					return updated, nil
-				})
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
-		}
-
-		t.Run("Should store it as is", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingAvailableConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			updated, err := suite.sut.SetAvailableName(context.Background(), "c1", "ERC20 mint audit")
-
-			assert.NoError(t, err)
-			assert.Equal(t, "ERC20 mint audit", *updated.Name)
-		})
-	})
-
-	t.Run("Given the session already holds that very name", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().WithId("c1").WithName("Audit").Build()
-
-		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
-					return updated, nil
-				})
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
-		}
-
-		t.Run("Should accept it", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingAvailableConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			updated, err := suite.sut.SetAvailableName(context.Background(), "c1", "Audit")
-
-			assert.NoError(t, err)
-			assert.Equal(t, "Audit", *updated.Name)
 		})
 	})
 
@@ -294,6 +222,78 @@ func TestWhenSettingAvailableConversationName(t *testing.T) {
 			_, err := suite.sut.SetAvailableName(context.Background(), "c1", "Audit")
 
 			assert.ErrorContains(t, err, "db blew")
+		})
+	})
+
+	t.Run("Given the name is free for that caller", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().
+			WithId("c1").
+			WithCallerId(settingAvailableNameCallerId).
+			Build()
+
+		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(
+					gomock.Any(),
+					conversation.AgentId,
+					lo.ToPtr(settingAvailableNameCallerId),
+					"ERC20 mint audit",
+					lo.ToPtr("c1"),
+				).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
+					assert.Equal(t, "ERC20 mint audit", *updated.Name)
+					return updated, nil
+				})
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
+		}
+
+		t.Run("Should store it as is", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAvailableConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			updated, err := suite.sut.SetAvailableName(context.Background(), "c1", "ERC20 mint audit")
+
+			assert.NoError(t, err)
+			assert.Equal(t, "ERC20 mint audit", *updated.Name)
+		})
+	})
+
+	t.Run("Given the session already holds that very name", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().WithId("c1").WithName("Audit").Build()
+
+		initSuite := func(suite *WhenSettingAvailableConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
+					return updated, nil
+				})
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
+		}
+
+		t.Run("Should accept it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAvailableConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			updated, err := suite.sut.SetAvailableName(context.Background(), "c1", "Audit")
+
+			assert.NoError(t, err)
+			assert.Equal(t, "Audit", *updated.Name)
 		})
 	})
 }

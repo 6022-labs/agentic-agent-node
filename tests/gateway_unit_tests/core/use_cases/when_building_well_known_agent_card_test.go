@@ -64,6 +64,54 @@ func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the registration client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			card, err := suite.sut.Execute(ctx)
+
+			assert.Nil(t, card)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+
+	t.Run("Given a custom public prefix", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.expectCardSignature(ctx)
+		}
+
+		t.Run("Should honor it (the gateway never hardcodes the reverse-proxy mount)", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/gw")
+			initSuite(suite)
+
+			card, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			if assert.Len(t, card.SupportedInterfaces, 1) {
+				assert.Equal(t, "https://agent.example.com/gw/a2a", card.SupportedInterfaces[0].Url)
+			}
+		})
+	})
+
 	t.Run("Given identity resolves", func(t *testing.T) {
 		t.Parallel()
 
@@ -128,53 +176,5 @@ func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 				}
 			},
 		)
-	})
-
-	t.Run("Given the registration client fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
-		}
-
-		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			card, err := suite.sut.Execute(ctx)
-
-			assert.Nil(t, card)
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-		})
-	})
-
-	t.Run("Given a custom public prefix", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.expectCardSignature(ctx)
-		}
-
-		t.Run("Should honor it (the gateway never hardcodes the reverse-proxy mount)", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgentCardBeforeEach(t, "https://agent.example.com", "/gw")
-			initSuite(suite)
-
-			card, err := suite.sut.Execute(ctx)
-
-			assert.NoError(t, err)
-			if assert.Len(t, card.SupportedInterfaces, 1) {
-				assert.Equal(t, "https://agent.example.com/gw/a2a", card.SupportedInterfaces[0].Url)
-			}
-		})
 	})
 }

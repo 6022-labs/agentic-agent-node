@@ -11,6 +11,34 @@ import (
 func TestWhenParsingStringArg(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the argument is missing", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail naming the argument", func(t *testing.T) {
+			t.Parallel()
+
+			for _, args := range []map[string]any{nil, {}, {"name": nil}} {
+				value, err := utils.StringArg(args, "name")
+
+				assert.Empty(t, value)
+				assert.ErrorContains(t, err, "name")
+			}
+		})
+	})
+
+	t.Run("Given the argument is a non-scalar type", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail reporting a type mismatch", func(t *testing.T) {
+			t.Parallel()
+
+			value, err := utils.StringArg(map[string]any{"name": map[string]any{}}, "name")
+
+			assert.Empty(t, value)
+			assert.ErrorContains(t, err, "must be a string")
+		})
+	})
+
 	t.Run("Given the argument is present", func(t *testing.T) {
 		t.Parallel()
 
@@ -40,6 +68,15 @@ func TestWhenParsingStringArg(t *testing.T) {
 	t.Run("Given the argument is a numeric or bool value", func(t *testing.T) {
 		t.Parallel()
 
+		t.Run("Should accept a json.Number without losing precision", func(t *testing.T) {
+			t.Parallel()
+
+			value, err := utils.StringArg(map[string]any{"price": json.Number("1000000000000000000")}, "price")
+
+			assert.NoError(t, err)
+			assert.Equal(t, "1000000000000000000", value)
+		})
+
 		t.Run("Should convert it to a string", func(t *testing.T) {
 			t.Parallel()
 
@@ -61,43 +98,6 @@ func TestWhenParsingStringArg(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, expected, value)
 			}
-		})
-
-		t.Run("Should accept a json.Number without losing precision", func(t *testing.T) {
-			t.Parallel()
-
-			value, err := utils.StringArg(map[string]any{"price": json.Number("1000000000000000000")}, "price")
-
-			assert.NoError(t, err)
-			assert.Equal(t, "1000000000000000000", value)
-		})
-	})
-
-	t.Run("Given the argument is missing", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail naming the argument", func(t *testing.T) {
-			t.Parallel()
-
-			for _, args := range []map[string]any{nil, {}, {"name": nil}} {
-				value, err := utils.StringArg(args, "name")
-
-				assert.Empty(t, value)
-				assert.ErrorContains(t, err, "name")
-			}
-		})
-	})
-
-	t.Run("Given the argument is a non-scalar type", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail reporting a type mismatch", func(t *testing.T) {
-			t.Parallel()
-
-			value, err := utils.StringArg(map[string]any{"name": map[string]any{}}, "name")
-
-			assert.Empty(t, value)
-			assert.ErrorContains(t, err, "must be a string")
 		})
 	})
 }

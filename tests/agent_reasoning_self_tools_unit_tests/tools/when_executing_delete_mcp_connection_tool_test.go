@@ -35,26 +35,6 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given a valid id argument", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-
-		t.Run("Should return a success payload", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
-			suite.mockDeleteMCPConnectionExecutor.EXPECT().
-				Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).
-				Return(nil)
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
-
-			assert.NoError(t, err)
-			assert.Equal(t, map[string]any{"success": true}, out)
-		})
-	})
-
 	t.Run("Given a malformed id argument", func(t *testing.T) {
 		t.Parallel()
 
@@ -87,6 +67,26 @@ func TestWhenExecutingDeleteMCPConnectionTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "not found")
+		})
+	})
+
+	t.Run("Given a valid id argument", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+
+		t.Run("Should return a success payload", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingDeleteMCPConnectionToolBeforeEach(t)
+			suite.mockDeleteMCPConnectionExecutor.EXPECT().
+				Execute(ctx, &reasoning_requests.DeleteMCPConnectionRequest{Id: id}).
+				Return(nil)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"id": id.String()})
+
+			assert.NoError(t, err)
+			assert.Equal(t, map[string]any{"success": true}, out)
 		})
 	})
 }

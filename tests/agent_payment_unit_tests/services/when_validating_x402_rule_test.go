@@ -255,6 +255,31 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a paid rule and the node chain has no facilitator", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
+				Times(1)
+		}
+
+		t.Run("Should return a validation error on config.network", func(t *testing.T) {
+			t.Parallel()
+
+			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
+			initSuite(suite)
+
+			request := generateSaveRequest(validConfig, "10000")
+			err := suite.sut.Validate(context.Background(), request)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "config.network", validationErr.Field)
+		})
+	})
+
 	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
 		t.Parallel()
 
@@ -280,31 +305,6 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			assert.Equal(t, enums.AssetTransferMethodPermit2, config.AssetTransferMethod)
 			assert.Nil(t, config.Eip712Name)
 			assert.Nil(t, config.Eip712Version)
-		})
-	})
-
-	t.Run("Given a paid rule and the node chain has no facilitator", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
-			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
-				Times(1)
-		}
-
-		t.Run("Should return a validation error on config.network", func(t *testing.T) {
-			t.Parallel()
-
-			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
-			initSuite(suite)
-
-			request := generateSaveRequest(validConfig, "10000")
-			err := suite.sut.Validate(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.network", validationErr.Field)
 		})
 	})
 

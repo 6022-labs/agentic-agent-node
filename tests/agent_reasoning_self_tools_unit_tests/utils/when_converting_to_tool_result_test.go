@@ -11,23 +11,6 @@ import (
 func TestWhenConvertingToToolResult(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a use-case response", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should encode it as a generic map", func(t *testing.T) {
-			t.Parallel()
-
-			response := struct {
-				Name string `json:"name"`
-			}{Name: "agent-x"}
-
-			out, err := utils.ToToolResult(&response, nil)
-
-			assert.NoError(t, err)
-			assert.Equal(t, map[string]any{"name": "agent-x"}, out)
-		})
-	})
-
 	t.Run("Given the use case fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -51,6 +34,23 @@ func TestWhenConvertingToToolResult(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "failed to encode tool result")
+		})
+	})
+
+	t.Run("Given a use-case response", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should encode it as a generic map", func(t *testing.T) {
+			t.Parallel()
+
+			response := struct {
+				Name string `json:"name"`
+			}{Name: "agent-x"}
+
+			out, err := utils.ToToolResult(&response, nil)
+
+			assert.NoError(t, err)
+			assert.Equal(t, map[string]any{"name": "agent-x"}, out)
 		})
 	})
 }

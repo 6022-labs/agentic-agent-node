@@ -11,24 +11,6 @@ import (
 func TestWhenBuildingMintAddresses(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given evm and btc addresses", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should order evm first regardless of map iteration", func(t *testing.T) {
-			t.Parallel()
-
-			result := identity_interfaces.MintAddress{}.FromMap(map[enums.AddressType]string{
-				enums.AddressTypeBtc: "bc1qxyz",
-				enums.AddressTypeEvm: "0xabc",
-			})
-
-			assert.Equal(t, []identity_interfaces.MintAddress{
-				{AddressType: enums.AddressTypeEvm, Value: "0xabc"},
-				{AddressType: enums.AddressTypeBtc, Value: "bc1qxyz"},
-			}, result)
-		})
-	})
-
 	t.Run("Given a blank value for a type", func(t *testing.T) {
 		t.Parallel()
 
@@ -56,6 +38,24 @@ func TestWhenBuildingMintAddresses(t *testing.T) {
 
 			assert.NotNil(t, result)
 			assert.Empty(t, result)
+		})
+	})
+
+	t.Run("Given evm and btc addresses", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should order evm first regardless of map iteration", func(t *testing.T) {
+			t.Parallel()
+
+			result := identity_interfaces.MintAddress{}.FromMap(map[enums.AddressType]string{
+				enums.AddressTypeBtc: "bc1qxyz",
+				enums.AddressTypeEvm: "0xabc",
+			})
+
+			assert.Equal(t, []identity_interfaces.MintAddress{
+				{AddressType: enums.AddressTypeEvm, Value: "0xabc"},
+				{AddressType: enums.AddressTypeBtc, Value: "bc1qxyz"},
+			}, result)
 		})
 	})
 }

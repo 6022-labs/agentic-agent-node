@@ -37,20 +37,25 @@ func TestWhenValidatingJwt(t *testing.T) {
 
 	address := common.HexToAddress("0x2222222222222222222222222222222222222222")
 
-	t.Run("Given a token issued with the same settings", func(t *testing.T) {
+	t.Run("Given a malformed token", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should recover the original address", func(t *testing.T) {
+		t.Run("Should reject input without three segments", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingJwtBeforeEach()
 
-			token, _, _ := suite.issuer.Issue(address)
+			_, err := suite.sut.Verify("not.a.token.really")
+			assert.ErrorContains(t, err, "invalid number of segments")
+		})
 
-			recovered, err := suite.sut.Verify(token)
+		t.Run("Should reject a non-base64 signature", func(t *testing.T) {
+			t.Parallel()
 
-			assert.NoError(t, err)
-			assert.Equal(t, address, recovered)
+			suite := WhenValidatingJwtBeforeEach()
+
+			_, err := suite.sut.Verify("aGVhZGVy.cGF5bG9hZA.??not-base64??")
+			assert.ErrorContains(t, err, "token is malformed")
 		})
 	})
 
@@ -96,25 +101,20 @@ func TestWhenValidatingJwt(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a malformed token", func(t *testing.T) {
+	t.Run("Given a token issued with the same settings", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should reject input without three segments", func(t *testing.T) {
+		t.Run("Should recover the original address", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenValidatingJwtBeforeEach()
 
-			_, err := suite.sut.Verify("not.a.token.really")
-			assert.ErrorContains(t, err, "invalid number of segments")
-		})
+			token, _, _ := suite.issuer.Issue(address)
 
-		t.Run("Should reject a non-base64 signature", func(t *testing.T) {
-			t.Parallel()
+			recovered, err := suite.sut.Verify(token)
 
-			suite := WhenValidatingJwtBeforeEach()
-
-			_, err := suite.sut.Verify("aGVhZGVy.cGF5bG9hZA.??not-base64??")
-			assert.ErrorContains(t, err, "token is malformed")
+			assert.NoError(t, err)
+			assert.Equal(t, address, recovered)
 		})
 	})
 }

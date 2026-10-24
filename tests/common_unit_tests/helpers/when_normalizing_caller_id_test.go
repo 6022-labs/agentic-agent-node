@@ -12,6 +12,16 @@ import (
 func TestWhenNormalizingCallerId(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a blank caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return an empty string", func(t *testing.T) {
+			t.Parallel()
+
+			assert.Empty(t, helpers.NormalizeCallerId("   "))
+		})
+	})
+
 	t.Run("Given a padded mixed-case caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -33,16 +43,6 @@ func TestWhenNormalizingCallerId(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, "apikey:7f3c", helpers.NormalizeCallerId("ApiKey:7F3c"))
-		})
-	})
-
-	t.Run("Given a blank caller id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return an empty string", func(t *testing.T) {
-			t.Parallel()
-
-			assert.Empty(t, helpers.NormalizeCallerId("   "))
 		})
 	})
 }

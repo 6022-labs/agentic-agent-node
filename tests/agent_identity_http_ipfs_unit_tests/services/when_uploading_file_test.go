@@ -33,6 +33,26 @@ func WhenUploadingFileBeforeEach(t *testing.T) *WhenUploadingFileTestingSuite {
 func TestWhenUploadingFile(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the client fails to add the file", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUploadingFileTestingSuite) {
+			suite.mockClient.EXPECT().Add(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("ipfs down"))
+		}
+
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUploadingFileBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.UploadFile([]byte("x"), "f.png")
+
+			assert.ErrorContains(t, err, "ipfs down")
+			assert.Nil(t, result)
+		})
+	})
+
 	t.Run("Given the client adds the file", func(t *testing.T) {
 		t.Parallel()
 
@@ -85,26 +105,6 @@ func TestWhenUploadingFile(t *testing.T) {
 			case <-time.After(2 * time.Second):
 				t.Fatal("expected the cid to be announced to the DHT")
 			}
-		})
-	})
-
-	t.Run("Given the client fails to add the file", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUploadingFileTestingSuite) {
-			suite.mockClient.EXPECT().Add(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("ipfs down"))
-		}
-
-		t.Run("Should return the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUploadingFileBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.UploadFile([]byte("x"), "f.png")
-
-			assert.ErrorContains(t, err, "ipfs down")
-			assert.Nil(t, result)
 		})
 	})
 }

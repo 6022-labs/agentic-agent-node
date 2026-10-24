@@ -39,6 +39,32 @@ func WhenCallingOpenAICompletionsAfterEach(suite *WhenCallingOpenAICompletionsTe
 func TestWhenCallingOpenAICompletions(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingOpenAICompletionsBeforeEach(t, handler)
+			defer WhenCallingOpenAICompletionsAfterEach(suite)
+
+			_, err := suite.sut.ChatCompletion(
+				suite.server.URL,
+				"sk",
+				&models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"},
+			)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
+		})
+	})
+
 	t.Run("Given the upstream returns 200", func(t *testing.T) {
 		t.Parallel()
 
@@ -73,32 +99,6 @@ func TestWhenCallingOpenAICompletions(t *testing.T) {
 			assert.Equal(t, "chatcmpl-1", res.ID)
 			assert.Len(t, res.Choices, 1)
 			assert.Equal(t, "hi", res.Choices[0].Message.Content)
-		})
-	})
-
-	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingOpenAICompletionsBeforeEach(t, handler)
-			defer WhenCallingOpenAICompletionsAfterEach(suite)
-
-			_, err := suite.sut.ChatCompletion(
-				suite.server.URL,
-				"sk",
-				&models.ExternalOpenAICompletionsStandardRequest{Model: "gpt-4o"},
-			)
-			var statusError *clients.LlmStatusError
-
-			if assert.ErrorAs(t, err, &statusError) {
-				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
-			}
 		})
 	})
 }

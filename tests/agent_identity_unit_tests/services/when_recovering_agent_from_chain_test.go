@@ -114,6 +114,73 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 		})
 	})
 
+	t.Run("Given agent's wallet owns no NFT on any chain", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
+				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
+				Return(common.Address{}, uint64(0), "", nil)
+		}
+
+		t.Run("Should report nothing recovered", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringAgentFromChainBeforeEach(t)
+			initSuite(suite)
+
+			recovered, err := suite.sut.Recover(context.Background())
+
+			assert.NoError(t, err)
+			assert.False(t, recovered)
+		})
+	})
+
+	t.Run("Given agent's wallet owns an NFT whose ENS is not provisioned", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
+				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
+				Return(collection, uint64(9), "alice", nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				InformationOf(recoveryChainId, collection, uint64(9)).
+				Return(onChainInfo, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				CollectionName(recoveryChainId, collection).
+				Return("mycollection", nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
+				Return(&models.Agent{}, &models.AgentRegistrationState{}, nil)
+			suite.mockEnsRegistrar.EXPECT().
+				Provisioned(gomock.Any(), recoveryChainId, collection, "alice").
+				Return(false, nil)
+		}
+
+		t.Run("Should recover the identity", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringAgentFromChainBeforeEach(t)
+			initSuite(suite)
+
+			recovered, err := suite.sut.Recover(context.Background())
+
+			assert.NoError(t, err)
+			assert.True(t, recovered)
+		})
+	})
+
 	t.Run("Given agent's wallet owns a minted, ENS-provisioned NFT", func(t *testing.T) {
 		t.Parallel()
 
@@ -183,73 +250,6 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.True(t, recovered)
-		})
-	})
-
-	t.Run("Given agent's wallet owns an NFT whose ENS is not provisioned", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
-				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
-				Return(collection, uint64(9), "alice", nil)
-			suite.mockAgentCollectionRequester.EXPECT().
-				InformationOf(recoveryChainId, collection, uint64(9)).
-				Return(onChainInfo, nil)
-			suite.mockAgentCollectionRequester.EXPECT().
-				CollectionName(recoveryChainId, collection).
-				Return("mycollection", nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().
-				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
-				Return(&models.Agent{}, &models.AgentRegistrationState{}, nil)
-			suite.mockEnsRegistrar.EXPECT().
-				Provisioned(gomock.Any(), recoveryChainId, collection, "alice").
-				Return(false, nil)
-		}
-
-		t.Run("Should recover the identity", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringAgentFromChainBeforeEach(t)
-			initSuite(suite)
-
-			recovered, err := suite.sut.Recover(context.Background())
-
-			assert.NoError(t, err)
-			assert.True(t, recovered)
-		})
-	})
-
-	t.Run("Given agent's wallet owns no NFT on any chain", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(&models.Agent{Id: agentId}, nil)
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetForId(gomock.Any(), agentId.String(), enums.AddressTypeEvm).
-				Return(&identity_interfaces.WalletCredentials{Address: evmAddress}, true, nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				FindAgentByAddress(recoveryChainId, enums.AddressTypeEvm, gomock.Any()).
-				Return(common.Address{}, uint64(0), "", nil)
-		}
-
-		t.Run("Should report nothing recovered", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringAgentFromChainBeforeEach(t)
-			initSuite(suite)
-
-			recovered, err := suite.sut.Recover(context.Background())
-
-			assert.NoError(t, err)
-			assert.False(t, recovered)
 		})
 	})
 }

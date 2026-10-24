@@ -12,6 +12,30 @@ func TestWhenParsingResponsesOutputArguments(t *testing.T) {
 
 	stringPtr := func(value string) *string { return &value }
 
+	t.Run("Given a malformed JSON object", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a nil map", func(t *testing.T) {
+			t.Parallel()
+
+			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
+
+			args, _ := output.ParsedArguments()
+
+			assert.Nil(t, args)
+		})
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
+
+			_, err := output.ParsedArguments()
+
+			assert.ErrorContains(t, err, "invalid character")
+		})
+	})
+
 	t.Run("Given nil arguments", func(t *testing.T) {
 		t.Parallel()
 
@@ -74,30 +98,6 @@ func TestWhenParsingResponsesOutputArguments(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, map[string]any{"city": "paris"}, args)
-		})
-	})
-
-	t.Run("Given a malformed JSON object", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a nil map", func(t *testing.T) {
-			t.Parallel()
-
-			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
-
-			args, _ := output.ParsedArguments()
-
-			assert.Nil(t, args)
-		})
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			output := &models.ExternalOpenAIResponsesStandardResponseOutput{Arguments: stringPtr("{bad")}
-
-			_, err := output.ParsedArguments()
-
-			assert.ErrorContains(t, err, "invalid character")
 		})
 	})
 }

@@ -22,6 +22,20 @@ func WhenBuildingSystemPromptBeforeEach(_ *testing.T) *WhenBuildingSystemPromptT
 func TestWhenBuildingSystemPrompt(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given no agent row exists", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fall back to an uninitialized identity line", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingSystemPromptBeforeEach(t)
+			prompt := suite.sut.Build(nil, nil, "", nil, nil, "")
+
+			assert.Contains(t, prompt, "# 6022 Agent")
+			assert.Contains(t, prompt, "has not been initialized yet")
+		})
+	})
+
 	t.Run("Given a fully minted identity", func(t *testing.T) {
 		t.Parallel()
 
@@ -169,6 +183,29 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 		})
 	})
 
+	t.Run("Given self tools are provided", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+		addresses := map[identity_enums.AddressType]string{}
+		selfTools := []*models.Tool{
+			{Name: "set_guidance", Description: "edit own guidance"},
+			{Name: "get_identity", Description: "read own identity"},
+		}
+
+		t.Run("Should render them sorted under the self namespace", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingSystemPromptBeforeEach(t)
+			prompt := suite.sut.Build(agent, addresses, "", selfTools, nil, "")
+
+			assert.Contains(t, prompt, "- self_get_identity: read own identity")
+			assert.Contains(t, prompt, "- self_set_guidance: edit own guidance")
+			assert.Less(t, strings.Index(prompt, "self_get_identity"), strings.Index(prompt, "self_set_guidance"))
+			assert.NotContains(t, prompt, "(no tools configured)")
+		})
+	})
+
 	t.Run("Given MCP tools are provided", func(t *testing.T) {
 		t.Parallel()
 
@@ -195,29 +232,6 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 				strings.Index(prompt, "mcp_inventory_fetch-items"),
 				strings.Index(prompt, "mcp_weather_current"),
 			)
-			assert.NotContains(t, prompt, "(no tools configured)")
-		})
-	})
-
-	t.Run("Given self tools are provided", func(t *testing.T) {
-		t.Parallel()
-
-		agent := model_builders.NewAgentBuilder().Build()
-		addresses := map[identity_enums.AddressType]string{}
-		selfTools := []*models.Tool{
-			{Name: "set_guidance", Description: "edit own guidance"},
-			{Name: "get_identity", Description: "read own identity"},
-		}
-
-		t.Run("Should render them sorted under the self namespace", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingSystemPromptBeforeEach(t)
-			prompt := suite.sut.Build(agent, addresses, "", selfTools, nil, "")
-
-			assert.Contains(t, prompt, "- self_get_identity: read own identity")
-			assert.Contains(t, prompt, "- self_set_guidance: edit own guidance")
-			assert.Less(t, strings.Index(prompt, "self_get_identity"), strings.Index(prompt, "self_set_guidance"))
 			assert.NotContains(t, prompt, "(no tools configured)")
 		})
 	})
@@ -272,20 +286,6 @@ func TestWhenBuildingSystemPrompt(t *testing.T) {
 			prompt := suite.sut.Build(agent, addresses, "", nil, nil, "   ")
 
 			assert.NotContains(t, prompt, "## Session context")
-		})
-	})
-
-	t.Run("Given no agent row exists", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fall back to an uninitialized identity line", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingSystemPromptBeforeEach(t)
-			prompt := suite.sut.Build(nil, nil, "", nil, nil, "")
-
-			assert.Contains(t, prompt, "# 6022 Agent")
-			assert.Contains(t, prompt, "has not been initialized yet")
 		})
 	})
 }

@@ -57,6 +57,23 @@ func TestWhenExecutingCreateConversationTool(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the use case fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreateConversationToolBeforeEach(t)
+			suite.mockCreateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				Return(nil, errors.New("name taken"))
+
+			_, err := suite.sut.Execute(ctx, map[string]any{"name": "dup"})
+
+			assert.ErrorContains(t, err, "name taken")
+		})
+	})
+
 	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -79,23 +96,6 @@ func TestWhenExecutingCreateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"name": "Audit"})
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the use case fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreateConversationToolBeforeEach(t)
-			suite.mockCreateConversationExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				Return(nil, errors.New("name taken"))
-
-			_, err := suite.sut.Execute(ctx, map[string]any{"name": "dup"})
-
-			assert.ErrorContains(t, err, "name taken")
 		})
 	})
 

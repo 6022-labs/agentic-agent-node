@@ -195,69 +195,6 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 		)
 	})
 
-	t.Run("Given an existing connection with two headers", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
-			row := model_builders.NewMCPConnectionBuilder().
-				WithId(id).
-				WithName("old-name").
-				WithUrl("https://old").
-				WithHeaderAuthKeys([]string{"Authorization", "X-Drop"}).
-				Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any()).
-				Return([]models.MCPConnection{*row}, nil)
-			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any(), gomock.Any()).
-				Return([]*models.Tool{{Name: "search_issues"}}, nil)
-			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
-			suite.mockRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
-					assert.Equal(t, "new-name", c.Name)
-					assert.Equal(t, "https://new", c.Url)
-					assert.Equal(t, []string{"search_issues"}, c.AllowedToolPatterns)
-					assert.Len(t, c.HeaderAuthKeys, 1)
-					assert.Equal(t, "Authorization", string(c.HeaderAuthKeys[0]))
-					return c, nil
-				})
-			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer new").Return(nil)
-		}
-
-		t.Run("Should update the row", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-			initSuite(suite)
-
-			request := generateValidUpdateMCPConnectionRequest(id)
-			request.HeaderAuth = map[string]string{"Authorization": "Bearer new"}
-
-			_, err := suite.sut.Execute(context.Background(), request)
-
-			assert.NoError(t, err)
-		})
-
-		t.Run("Should return the updated connection", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMCPConnectionBeforeEach(t)
-			initSuite(suite)
-
-			request := generateValidUpdateMCPConnectionRequest(id)
-			request.HeaderAuth = map[string]string{"Authorization": "Bearer new"}
-
-			resp, err := suite.sut.Execute(context.Background(), request)
-
-			assert.NoError(t, err)
-			assert.Equal(t, id, resp.Id)
-		})
-	})
-
 	t.Run("Given a blank header value", func(t *testing.T) {
 		t.Parallel()
 
@@ -357,6 +294,69 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Empty(t, resp.HeaderAuthKeys)
+		})
+	})
+
+	t.Run("Given an existing connection with two headers", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingMCPConnectionTestingSuite) {
+			row := model_builders.NewMCPConnectionBuilder().
+				WithId(id).
+				WithName("old-name").
+				WithUrl("https://old").
+				WithHeaderAuthKeys([]string{"Authorization", "X-Drop"}).
+				Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{*row}, nil)
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return([]*models.Tool{{Name: "search_issues"}}, nil)
+			suite.mockSecretStorage.EXPECT().DeleteValue(gomock.Any(), id, "X-Drop").Return(nil)
+			suite.mockRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, c *models.MCPConnection) (*models.MCPConnection, error) {
+					assert.Equal(t, "new-name", c.Name)
+					assert.Equal(t, "https://new", c.Url)
+					assert.Equal(t, []string{"search_issues"}, c.AllowedToolPatterns)
+					assert.Len(t, c.HeaderAuthKeys, 1)
+					assert.Equal(t, "Authorization", string(c.HeaderAuthKeys[0]))
+					return c, nil
+				})
+			suite.mockSecretStorage.EXPECT().SaveValue(gomock.Any(), id, "Authorization", "Bearer new").Return(nil)
+		}
+
+		t.Run("Should update the row", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.HeaderAuth = map[string]string{"Authorization": "Bearer new"}
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the updated connection", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			request := generateValidUpdateMCPConnectionRequest(id)
+			request.HeaderAuth = map[string]string{"Authorization": "Bearer new"}
+
+			resp, err := suite.sut.Execute(context.Background(), request)
+
+			assert.NoError(t, err)
+			assert.Equal(t, id, resp.Id)
 		})
 	})
 }

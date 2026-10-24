@@ -68,6 +68,33 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a vault key is missing for one header", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		row := model_builders.NewMCPConnectionBuilder().
+			WithId(id).
+			WithHeaderAuthKeys([]string{"Authorization"}).
+			Build()
+		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
+			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
+		}
+
+		t.Run("Should return Ok with the wire response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingMCPConnectionBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background(), &requests.GetMCPConnectionRequest{Id: id})
+
+			assert.NoError(t, err)
+			assert.Equal(t, id, resp.Id)
+		})
+	})
+
 	t.Run("Given a connection with two header keys", func(t *testing.T) {
 		t.Parallel()
 
@@ -96,33 +123,6 @@ func TestWhenGettingMCPConnection(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, id, resp.Id)
 			assert.ElementsMatch(t, []string{"Authorization", "X-Trace"}, resp.HeaderAuthKeys)
-		})
-	})
-
-	t.Run("Given a vault key is missing for one header", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		row := model_builders.NewMCPConnectionBuilder().
-			WithId(id).
-			WithHeaderAuthKeys([]string{"Authorization"}).
-			Build()
-		initSuite := func(suite *WhenGettingMCPConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
-			suite.mockSecretStorage.EXPECT().GetValue(gomock.Any(), id, "Authorization").Return("", false, nil)
-		}
-
-		t.Run("Should return Ok with the wire response", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingMCPConnectionBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background(), &requests.GetMCPConnectionRequest{Id: id})
-
-			assert.NoError(t, err)
-			assert.Equal(t, id, resp.Id)
 		})
 	})
 }

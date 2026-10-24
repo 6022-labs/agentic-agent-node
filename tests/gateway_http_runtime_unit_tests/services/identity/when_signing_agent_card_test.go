@@ -133,21 +133,6 @@ func TestWhenSigningAgentCard(t *testing.T) {
 				})
 		}
 
-		t.Run("Should decode the detached JWS", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningAgentCardBeforeEach(t)
-			initSuite(suite)
-
-			payload, err := suite.sut.Sign(context.Background(), []byte(card))
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, payload) {
-				assert.Equal(t, "cHJvdGVjdGVk", payload.Protected)
-				assert.Equal(t, "c2ln", payload.Signature)
-			}
-		})
-
 		t.Run(
 			"Should forward the card bytes verbatim so the runtime signs what the gateway serves",
 			func(t *testing.T) {
@@ -166,5 +151,20 @@ func TestWhenSigningAgentCard(t *testing.T) {
 				assert.JSONEq(t, card, string(sent.Card))
 			},
 		)
+
+		t.Run("Should decode the detached JWS", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningAgentCardBeforeEach(t)
+			initSuite(suite)
+
+			payload, err := suite.sut.Sign(context.Background(), []byte(card))
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, payload) {
+				assert.Equal(t, "cHJvdGVjdGVk", payload.Protected)
+				assert.Equal(t, "c2ln", payload.Signature)
+			}
+		})
 	})
 }

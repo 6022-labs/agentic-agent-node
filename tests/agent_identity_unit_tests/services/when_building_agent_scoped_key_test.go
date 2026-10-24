@@ -33,6 +33,44 @@ func WhenBuildingAgentScopedKeyBeforeEach(t *testing.T) *WhenBuildingAgentScoped
 func TestWhenBuildingAgentScopedKey(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+		}
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingAgentScopedKeyBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ScopedKey(context.Background(), "wallet")
+
+			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given no agent row exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingAgentScopedKeyBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.ScopedKey(context.Background(), "wallet")
+
+			assert.ErrorContains(t, err, "no agent record exists yet")
+		})
+	})
+
 	t.Run("Given an agent row exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -69,44 +107,6 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 
 			assert.Equal(t, "agents/"+id.String()+"/llm_secret", first)
 			assert.Equal(t, "agents/"+id.String()+"/wallet", second)
-		})
-	})
-
-	t.Run("Given no agent row exists", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
-		}
-
-		t.Run("Should error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingAgentScopedKeyBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.ScopedKey(context.Background(), "wallet")
-
-			assert.ErrorContains(t, err, "no agent record exists yet")
-		})
-	})
-
-	t.Run("Given the agent lookup fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
-		}
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingAgentScopedKeyBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.ScopedKey(context.Background(), "wallet")
-
-			assert.ErrorContains(t, err, "db down")
 		})
 	})
 }

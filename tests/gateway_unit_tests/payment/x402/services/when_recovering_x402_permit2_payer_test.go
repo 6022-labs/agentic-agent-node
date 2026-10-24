@@ -52,42 +52,24 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a valid signed Permit2 authorization", func(t *testing.T) {
+	t.Run("Given the permit2 authorization is missing", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should recover the signer address", func(t *testing.T) {
+		t.Run("Should reject the payment", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402Permit2PayerBeforeEach()
-			key, _ := crypto.GenerateKey()
-			signer := crypto.PubkeyToAddress(key.PublicKey)
 			config := x402Permit2TestConfig()
-			payload := signPermit2Payment(t, key, x402Permit2TestAuthorization(signer.Hex(), config), config)
+			payload := &x402.PaymentPayload{
+				X402Version: x402.Version,
+				Scheme:      x402.SchemeExact,
+				Network:     config.Network,
+				Payload:     x402.ExactEvmPayload{Signature: "0xdeadbeef"},
+			}
 
-			payer, err := suite.sut.RecoverPayer(payload, config)
+			_, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.NoError(t, err)
-			assert.Equal(t, signer, payer)
-		})
-
-		t.Run("Should accept a 27/28 recovery id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringX402Permit2PayerBeforeEach()
-			key, _ := crypto.GenerateKey()
-			signer := crypto.PubkeyToAddress(key.PublicKey)
-			config := x402Permit2TestConfig()
-			payload := signPermit2Payment(t, key, x402Permit2TestAuthorization(signer.Hex(), config), config)
-
-			sigBytes, err := hex.DecodeString(payload.Payload.Signature[2:])
-			assert.NoError(t, err)
-			sigBytes[64] += 27
-			payload.Payload.Signature = "0x" + hex.EncodeToString(sigBytes)
-
-			payer, err := suite.sut.RecoverPayer(payload, config)
-
-			assert.NoError(t, err)
-			assert.Equal(t, signer, payer)
+			assert.ErrorContains(t, err, "missing permit2 authorization")
 		})
 	})
 
@@ -151,6 +133,46 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the authorization is not yet valid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringX402Permit2PayerBeforeEach()
+			key, _ := crypto.GenerateKey()
+			signer := crypto.PubkeyToAddress(key.PublicKey)
+			config := x402Permit2TestConfig()
+			auth := x402Permit2TestAuthorization(signer.Hex(), config)
+			auth.Witness.ValidAfter = fmt.Sprintf("%d", time.Now().Unix()+300)
+			payload := signPermit2Payment(t, key, auth, config)
+
+			_, err := suite.sut.RecoverPayer(payload, config)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
+		})
+	})
+
+	t.Run("Given the authorization has expired", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the expired sentinel", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringX402Permit2PayerBeforeEach()
+			key, _ := crypto.GenerateKey()
+			signer := crypto.PubkeyToAddress(key.PublicKey)
+			config := x402Permit2TestConfig()
+			auth := x402Permit2TestAuthorization(signer.Hex(), config)
+			auth.Deadline = fmt.Sprintf("%d", time.Now().Unix()-10)
+			payload := signPermit2Payment(t, key, auth, config)
+
+			_, err := suite.sut.RecoverPayer(payload, config)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
+		})
+	})
+
 	t.Run("Given the authorization was tampered with after signing", func(t *testing.T) {
 		t.Parallel()
 
@@ -163,6 +185,24 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 			config := x402Permit2TestConfig()
 			payload := signPermit2Payment(t, key, x402Permit2TestAuthorization(signer.Hex(), config), config)
 			payload.Payload.Permit2Authorization.Permitted.Amount = "999999999"
+
+			_, err := suite.sut.RecoverPayer(payload, config)
+
+			assert.ErrorContains(t, err, "recovered signer does not match permit2 from")
+		})
+	})
+
+	t.Run("Given the from address is not the signer", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject the payment", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRecoveringX402Permit2PayerBeforeEach()
+			key, _ := crypto.GenerateKey()
+			config := x402Permit2TestConfig()
+			auth := x402Permit2TestAuthorization("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", config)
+			payload := signPermit2Payment(t, key, auth, config)
 
 			_, err := suite.sut.RecoverPayer(payload, config)
 
@@ -191,82 +231,42 @@ func TestWhenRecoveringX402Permit2Payer(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the authorization has expired", func(t *testing.T) {
+	t.Run("Given a valid signed Permit2 authorization", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return the expired sentinel", func(t *testing.T) {
+		t.Run("Should recover the signer address", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402Permit2PayerBeforeEach()
 			key, _ := crypto.GenerateKey()
 			signer := crypto.PubkeyToAddress(key.PublicKey)
 			config := x402Permit2TestConfig()
-			auth := x402Permit2TestAuthorization(signer.Hex(), config)
-			auth.Deadline = fmt.Sprintf("%d", time.Now().Unix()-10)
-			payload := signPermit2Payment(t, key, auth, config)
+			payload := signPermit2Payment(t, key, x402Permit2TestAuthorization(signer.Hex(), config), config)
 
-			_, err := suite.sut.RecoverPayer(payload, config)
+			payer, err := suite.sut.RecoverPayer(payload, config)
 
-			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
+			assert.NoError(t, err)
+			assert.Equal(t, signer, payer)
 		})
-	})
 
-	t.Run("Given the authorization is not yet valid", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return the expired sentinel", func(t *testing.T) {
+		t.Run("Should accept a 27/28 recovery id", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRecoveringX402Permit2PayerBeforeEach()
 			key, _ := crypto.GenerateKey()
 			signer := crypto.PubkeyToAddress(key.PublicKey)
 			config := x402Permit2TestConfig()
-			auth := x402Permit2TestAuthorization(signer.Hex(), config)
-			auth.Witness.ValidAfter = fmt.Sprintf("%d", time.Now().Unix()+300)
-			payload := signPermit2Payment(t, key, auth, config)
+			payload := signPermit2Payment(t, key, x402Permit2TestAuthorization(signer.Hex(), config), config)
 
-			_, err := suite.sut.RecoverPayer(payload, config)
+			sigBytes, err := hex.DecodeString(payload.Payload.Signature[2:])
+			assert.NoError(t, err)
+			sigBytes[64] += 27
+			payload.Payload.Signature = "0x" + hex.EncodeToString(sigBytes)
 
-			assert.ErrorIs(t, err, gateway_interfaces.ErrX402AuthorizationExpired)
-		})
-	})
+			payer, err := suite.sut.RecoverPayer(payload, config)
 
-	t.Run("Given the from address is not the signer", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject the payment", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringX402Permit2PayerBeforeEach()
-			key, _ := crypto.GenerateKey()
-			config := x402Permit2TestConfig()
-			auth := x402Permit2TestAuthorization("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", config)
-			payload := signPermit2Payment(t, key, auth, config)
-
-			_, err := suite.sut.RecoverPayer(payload, config)
-
-			assert.ErrorContains(t, err, "recovered signer does not match permit2 from")
-		})
-	})
-
-	t.Run("Given the permit2 authorization is missing", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject the payment", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRecoveringX402Permit2PayerBeforeEach()
-			config := x402Permit2TestConfig()
-			payload := &x402.PaymentPayload{
-				X402Version: x402.Version,
-				Scheme:      x402.SchemeExact,
-				Network:     config.Network,
-				Payload:     x402.ExactEvmPayload{Signature: "0xdeadbeef"},
-			}
-
-			_, err := suite.sut.RecoverPayer(payload, config)
-
-			assert.ErrorContains(t, err, "missing permit2 authorization")
+			assert.NoError(t, err)
+			assert.Equal(t, signer, payer)
 		})
 	})
 }

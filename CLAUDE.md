@@ -110,6 +110,9 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 - **Assert the outcome the title names** (error type and code, or the field), never a bare `assert.Error`.
 - **One wording per situation, repo-wide.** Before writing a title, reuse the wording existing tests already use for the same situation; similar flows (a use case and the client it forwards to, sibling operations) use the same Givens in the same order.
 - **No duplicate Givens.** Integration tests follow the `tests/runtime_db_integration_tests` style; no data-migration tests for now.
+- **One `t.Run` per case**: no table-driven cases, loops or concatenated titles — except database integration tests, which loop over every supported database.
+- **`BeforeEach` only builds the suite** (sut and mocks): it never captures values (no `Do`/`DoAndReturn` writing into suite fields); a case that checks a call asserts it with its own gomock expectation.
+- **Valid Ethereum addresses are random**: build them with `common_tests.RandomEthAddress()`; only invalid addresses stay literal.
 
 ## Commands
 

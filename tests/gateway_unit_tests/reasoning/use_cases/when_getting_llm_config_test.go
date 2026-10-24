@@ -38,6 +38,27 @@ func WhenGettingLlmConfigBeforeEach(t *testing.T) *WhenGettingLlmConfigTestingSu
 func TestWhenGettingLlmConfig(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given no LLM connection exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, gateway_interfaces.ErrLLMConnectionNotFound)
+		}
+
+		t.Run("Should return NotFound with not_configured", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "not_configured", notFoundErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -59,24 +80,25 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no LLM connection exists", func(t *testing.T) {
+	t.Run("Given the payload has a nil BaseUrl", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, gateway_interfaces.ErrLLMConnectionNotFound)
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalLLMConnectionPayload{
+				Id: "abc", Platform: "ollama", Model: "llama3", SetupStatus: "established",
+			}, nil)
 		}
 
-		t.Run("Should return NotFound with not_configured", func(t *testing.T) {
+		t.Run("Should leave BaseUrl as the empty string", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingLlmConfigBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Execute(context.Background())
+			resp, err := suite.sut.Execute(context.Background())
 
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "not_configured", notFoundErr.Code)
+			assert.NoError(t, err)
+			assert.Equal(t, "", resp.BaseUrl)
 		})
 	})
 
@@ -110,28 +132,6 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 			assert.Equal(t, "gpt-4o", resp.Model)
 			assert.Equal(t, baseUrl, resp.BaseUrl)
 			assert.Equal(t, "established", resp.SetupStatus)
-		})
-	})
-
-	t.Run("Given the payload has a nil BaseUrl", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(&models.ExternalLLMConnectionPayload{
-				Id: "abc", Platform: "ollama", Model: "llama3", SetupStatus: "established",
-			}, nil)
-		}
-
-		t.Run("Should leave BaseUrl as the empty string", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingLlmConfigBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-			assert.Equal(t, "", resp.BaseUrl)
 		})
 	})
 }

@@ -44,6 +44,25 @@ func WhenProvidingRoutingAfterEach(suite *WhenProvidingRoutingTestingSuite) {
 func TestWhenProvidingRouting(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the IPFS node returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenProvidingRoutingBeforeEach(t, handler, "")
+			defer WhenProvidingRoutingAfterEach(suite)
+
+			err := suite.sut.RoutingProvideWithoutResponse(&models.ExternalRoutingProvideRequest{Arg: "QmX"})
+
+			assert.ErrorContains(t, err, "received non-200 response: 500")
+		})
+	})
+
 	t.Run("Given the IPFS node accepts the provide and a bearer token is configured", func(t *testing.T) {
 		t.Parallel()
 
@@ -69,25 +88,6 @@ func TestWhenProvidingRouting(t *testing.T) {
 			assert.Equal(t, "/api/v0/routing/provide", seenPath)
 			assert.Contains(t, seenQuery, "arg=QmHashValue")
 			assert.Equal(t, "Bearer secret-token123", seenAuth)
-		})
-	})
-
-	t.Run("Given the IPFS node returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenProvidingRoutingBeforeEach(t, handler, "")
-			defer WhenProvidingRoutingAfterEach(suite)
-
-			err := suite.sut.RoutingProvideWithoutResponse(&models.ExternalRoutingProvideRequest{Arg: "QmX"})
-
-			assert.ErrorContains(t, err, "received non-200 response: 500")
 		})
 	})
 }

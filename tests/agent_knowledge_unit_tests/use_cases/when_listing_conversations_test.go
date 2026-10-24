@@ -93,6 +93,89 @@ func TestWhenListingConversations(t *testing.T) {
 		})
 	})
 
+	t.Run("Given counting the sessions fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().
+				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
+				Return(uint(0), errors.New("db blew"))
+		}
+
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Contains(t, internalErr.Message, "db blew")
+		})
+	})
+
+	t.Run("Given listing the sessions fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().
+				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
+				Return(uint(1), nil)
+			suite.mockConversationRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db blew"))
+		}
+
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "list_failed", internalErr.Code)
+			assert.Contains(t, internalErr.Message, "db blew")
+		})
+	})
+
+	t.Run("Given counting the messages fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingConversationsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockConversationRepository.EXPECT().
+				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
+				Return(uint(1), nil)
+			suite.mockConversationRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId), gomock.Any(), gomock.Any()).
+				Return([]models.Conversation{*model_builders.NewConversationBuilder().WithId("a").Build()}, nil)
+			suite.mockConversationMessageRepository.EXPECT().
+				CountByConversationIds(gomock.Any(), []string{"a"}).
+				Return(nil, errors.New("db blew"))
+		}
+
+		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "list_failed", internalErr.Code)
+			assert.Contains(t, internalErr.Message, "db blew")
+		})
+	})
+
 	t.Run("Given the agent identity is not initialized", func(t *testing.T) {
 		t.Parallel()
 
@@ -179,89 +262,6 @@ func TestWhenListingConversations(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Len(t, resp.Conversations, 2)
-		})
-	})
-
-	t.Run("Given counting the sessions fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockConversationRepository.EXPECT().
-				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
-				Return(uint(0), errors.New("db blew"))
-		}
-
-		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "db blew")
-		})
-	})
-
-	t.Run("Given listing the sessions fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockConversationRepository.EXPECT().
-				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
-				Return(uint(1), nil)
-			suite.mockConversationRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db blew"))
-		}
-
-		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "list_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "db blew")
-		})
-	})
-
-	t.Run("Given counting the messages fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingConversationsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockConversationRepository.EXPECT().
-				CountByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId)).
-				Return(uint(1), nil)
-			suite.mockConversationRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any(), lo.ToPtr(listingCallerId), gomock.Any(), gomock.Any()).
-				Return([]models.Conversation{*model_builders.NewConversationBuilder().WithId("a").Build()}, nil)
-			suite.mockConversationMessageRepository.EXPECT().
-				CountByConversationIds(gomock.Any(), []string{"a"}).
-				Return(nil, errors.New("db blew"))
-		}
-
-		t.Run("Should return an InternalError carrying the repository message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(listingCallerCtx, &requests.ListConversationsRequest{})
-
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-			assert.Equal(t, "list_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "db blew")
 		})
 	})
 

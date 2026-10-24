@@ -39,6 +39,32 @@ func WhenCallingAnthropicMessagesAfterEach(suite *WhenCallingAnthropicMessagesTe
 func TestWhenCallingAnthropicMessages(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingAnthropicMessagesBeforeEach(t, handler)
+			defer WhenCallingAnthropicMessagesAfterEach(suite)
+
+			_, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk",
+				&models.ExternalAnthropicMessagesStandardRequest{Model: "claude"},
+			)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
+		})
+	})
+
 	t.Run("Given the upstream returns 200", func(t *testing.T) {
 		t.Parallel()
 
@@ -72,32 +98,6 @@ func TestWhenCallingAnthropicMessages(t *testing.T) {
 			assert.Equal(t, "2023-06-01", seenVersion)
 			assert.NotEmpty(t, seenBeta)
 			assert.Equal(t, "msg-1", res.ID)
-		})
-	})
-
-	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingAnthropicMessagesBeforeEach(t, handler)
-			defer WhenCallingAnthropicMessagesAfterEach(suite)
-
-			_, err := suite.sut.Messages(
-				suite.server.URL,
-				"sk",
-				&models.ExternalAnthropicMessagesStandardRequest{Model: "claude"},
-			)
-			var statusError *clients.LlmStatusError
-
-			if assert.ErrorAs(t, err, &statusError) {
-				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
-			}
 		})
 	})
 }

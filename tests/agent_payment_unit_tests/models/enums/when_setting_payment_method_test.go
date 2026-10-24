@@ -10,16 +10,15 @@ import (
 func TestWhenSettingPaymentMethod(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a known method in canonical casing", func(t *testing.T) {
+	t.Run("Given an unsupported method", func(t *testing.T) {
 		t.Parallel()
 		var method enums.PaymentMethod
 
-		t.Run("Should parse and assign it", func(t *testing.T) {
+		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
 			t.Parallel()
 
-			err := method.Set("x402")
-			assert.NoError(t, err)
-			assert.Equal(t, enums.PaymentMethodX402, method)
+			err := method.Set("lightning")
+			assert.ErrorContains(t, err, "invalid PaymentMethod: lightning")
 		})
 	})
 
@@ -36,15 +35,16 @@ func TestWhenSettingPaymentMethod(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unsupported method", func(t *testing.T) {
+	t.Run("Given a known method in canonical casing", func(t *testing.T) {
 		t.Parallel()
 		var method enums.PaymentMethod
 
-		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
+		t.Run("Should parse and assign it", func(t *testing.T) {
 			t.Parallel()
 
-			err := method.Set("lightning")
-			assert.ErrorContains(t, err, "invalid PaymentMethod: lightning")
+			err := method.Set("x402")
+			assert.NoError(t, err)
+			assert.Equal(t, enums.PaymentMethodX402, method)
 		})
 	})
 

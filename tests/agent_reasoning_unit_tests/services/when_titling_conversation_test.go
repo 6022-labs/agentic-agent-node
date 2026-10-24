@@ -54,6 +54,31 @@ func llmConnectionForTitling() *models.LLMConnection {
 func TestWhenTitlingConversation(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the model call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
+		}
+
+		t.Run("Should return the provider error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("provider down"))
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeFailed)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.ErrorContains(t, err, "provider down")
+		})
+	})
+
 	t.Run("Given there is no opening message", func(t *testing.T) {
 		t.Parallel()
 
@@ -95,56 +120,6 @@ func TestWhenTitlingConversation(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the model call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
-			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
-		}
-
-		t.Run("Should return the provider error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("provider down"))
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeFailed)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.ErrorContains(t, err, "provider down")
-		})
-	})
-
-	t.Run("Given the model answers with a uuid", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
-			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
-		}
-
-		t.Run("Should skip titling", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenTitlingConversationBeforeEach(t)
-			initSuite(suite)
-
-			suite.mockChatCompletionRequester.EXPECT().
-				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&interfaces.LLMCompletion{Texts: []string{uuid.NewString()}}, nil)
-			suite.mockReasoningMetrics.EXPECT().
-				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
-
-			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the model answers with a title longer than the column", func(t *testing.T) {
 		t.Parallel()
 
@@ -170,6 +145,31 @@ func TestWhenTitlingConversation(t *testing.T) {
 				Return(nil, nil)
 			suite.mockReasoningMetrics.EXPECT().
 				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeTitled)
+
+			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the model answers with a uuid", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenTitlingConversationTestingSuite) {
+			suite.mockConversationLabeler.EXPECT().GetName(gomock.Any(), "c1").Return(nil, nil)
+		}
+
+		t.Run("Should skip titling", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenTitlingConversationBeforeEach(t)
+			initSuite(suite)
+
+			suite.mockChatCompletionRequester.EXPECT().
+				ChatCompletion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&interfaces.LLMCompletion{Texts: []string{uuid.NewString()}}, nil)
+			suite.mockReasoningMetrics.EXPECT().
+				RecordConversationTitled(gomock.Any(), metrics_interfaces.ConversationTitleOutcomeSkipped)
 
 			err := suite.sut.TitleIfUnnamed(context.Background(), "c1", llmConnectionForTitling(), "hello")
 

@@ -51,6 +51,37 @@ func WhenValidatingErc20BeforeEach(
 func TestWhenValidatingErc20(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the address is not a contract", func(t *testing.T) {
+		t.Parallel()
+
+		// An EOA answers eth_call with empty data and has no code.
+		methods := map[string]erc20Method{"decimals": {empty: true}}
+
+		t.Run("Should reject the address as not deployed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingErc20BeforeEach(t, methods, false)
+
+			_, _, _, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+
+			assert.ErrorContains(t, err, "no contract deployed")
+		})
+	})
+
+	t.Run("Given the asset is not an ERC-20 contract", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject the asset", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingErc20BeforeEach(t, map[string]erc20Method{}, true)
+
+			_, _, _, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+
+			assert.ErrorContains(t, err, "no ERC-20 token answers decimals()")
+		})
+	})
+
 	t.Run("Given the token exposes eip712Domain", func(t *testing.T) {
 		t.Parallel()
 
@@ -105,32 +136,6 @@ func TestWhenValidatingErc20(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
-		t.Parallel()
-
-		methods := erc20ProbeMethods(t)
-		methods["name"] = erc20Method{data: packErc20Output(t, "name", "Some Token")}
-		methods["version"] = erc20Method{data: packErc20Output(t, "version", "1")}
-		methods["DOMAIN_SEPARATOR"] = erc20Method{data: packErc20Output(t, "DOMAIN_SEPARATOR", [32]byte{0x01})}
-
-		t.Run("Should fall back to permit2 with no domain", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingErc20BeforeEach(t, methods, true)
-
-			method, name, version, err := suite.sut.ValidateErc20(
-				context.Background(),
-				erc20TestChainIdStr,
-				erc20TestAsset,
-			)
-
-			assert.NoError(t, err)
-			assert.Equal(t, enums.AssetTransferMethodPermit2, method)
-			assert.Empty(t, name)
-			assert.Empty(t, version)
-		})
-	})
-
 	t.Run("Given no eip712Domain and name() reverts", func(t *testing.T) {
 		t.Parallel()
 
@@ -180,34 +185,29 @@ func TestWhenValidatingErc20(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the asset is not an ERC-20 contract", func(t *testing.T) {
+	t.Run("Given the token has no usable EIP-712 domain", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should reject the asset", func(t *testing.T) {
+		methods := erc20ProbeMethods(t)
+		methods["name"] = erc20Method{data: packErc20Output(t, "name", "Some Token")}
+		methods["version"] = erc20Method{data: packErc20Output(t, "version", "1")}
+		methods["DOMAIN_SEPARATOR"] = erc20Method{data: packErc20Output(t, "DOMAIN_SEPARATOR", [32]byte{0x01})}
+
+		t.Run("Should fall back to permit2 with no domain", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingErc20BeforeEach(t, map[string]erc20Method{}, true)
+			suite := WhenValidatingErc20BeforeEach(t, methods, true)
 
-			_, _, _, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
+			method, name, version, err := suite.sut.ValidateErc20(
+				context.Background(),
+				erc20TestChainIdStr,
+				erc20TestAsset,
+			)
 
-			assert.ErrorContains(t, err, "no ERC-20 token answers decimals()")
-		})
-	})
-
-	t.Run("Given the address is not a contract", func(t *testing.T) {
-		t.Parallel()
-
-		// An EOA answers eth_call with empty data and has no code.
-		methods := map[string]erc20Method{"decimals": {empty: true}}
-
-		t.Run("Should reject the address as not deployed", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingErc20BeforeEach(t, methods, false)
-
-			_, _, _, err := suite.sut.ValidateErc20(context.Background(), erc20TestChainIdStr, erc20TestAsset)
-
-			assert.ErrorContains(t, err, "no contract deployed")
+			assert.NoError(t, err)
+			assert.Equal(t, enums.AssetTransferMethodPermit2, method)
+			assert.Empty(t, name)
+			assert.Empty(t, version)
 		})
 	})
 }

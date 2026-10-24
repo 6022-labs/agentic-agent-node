@@ -97,33 +97,6 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the rule is free", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should accept a zero price", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Price = "0"
-
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given an explicit supported method", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should normalize it", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentRuleRequest()
-			req.Method = " X402 "
-
-			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
-		})
-	})
-
 	t.Run("Given a padded rule name", func(t *testing.T) {
 		t.Parallel()
 
@@ -147,6 +120,33 @@ func TestWhenValidatingSavePaymentRuleRequest(t *testing.T) {
 
 			assert.NoError(t, req.ValidateAndSanitize())
 			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
+		})
+	})
+
+	t.Run("Given an explicit supported method", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should normalize it", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Method = " X402 "
+
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
+		})
+	})
+
+	t.Run("Given the rule is free", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should accept a zero price", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentRuleRequest()
+			req.Price = "0"
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

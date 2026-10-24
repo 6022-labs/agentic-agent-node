@@ -95,6 +95,59 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		})
 	})
 
+	t.Run("Given deleting the stale rows fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(0), errors.New("db down"))
+		}
+
+		t.Run("Should wrap the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Reconcile(ctx)
+
+			assert.ErrorContains(t, err, "failed to delete stale self tool rows")
+		})
+	})
+
+	t.Run("Given every row matches a declared self tool", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
+			suite.mockSelfToolRepository.EXPECT().
+				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return([]string{"get_identity"}, nil)
+			// No Create expectation — inserting a matching row would fail the test.
+			suite.mockSelfToolRepository.EXPECT().
+				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
+				Return(int64(0), nil)
+		}
+
+		t.Run("Should not insert anything", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReconcilingSelfToolsBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Reconcile(ctx)
+
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Given declared self tools have no rows yet", func(t *testing.T) {
 		t.Parallel()
 
@@ -128,59 +181,6 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, defaults, created)
-		})
-	})
-
-	t.Run("Given every row matches a declared self tool", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().
-				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return([]string{"get_identity"}, nil)
-			// No Create expectation — inserting a matching row would fail the test.
-			suite.mockSelfToolRepository.EXPECT().
-				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return(int64(0), nil)
-		}
-
-		t.Run("Should not insert anything", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReconcilingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Reconcile(ctx)
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given deleting the stale rows fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
-			suite.mockSelfToolRepository.EXPECT().
-				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return([]string{"get_identity"}, nil)
-			suite.mockSelfToolRepository.EXPECT().
-				DeleteAllExceptNames(gomock.Any(), agent.Id, []string{"get_identity"}).
-				Return(int64(0), errors.New("db down"))
-		}
-
-		t.Run("Should wrap the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenReconcilingSelfToolsBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Reconcile(ctx)
-
-			assert.ErrorContains(t, err, "failed to delete stale self tool rows")
 		})
 	})
 

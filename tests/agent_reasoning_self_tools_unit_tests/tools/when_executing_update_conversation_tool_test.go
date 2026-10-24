@@ -71,6 +71,23 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the use case fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
+			suite.mockUpdateConversationExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				Return(nil, errors.New("not found"))
+
+			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1", "name": "x"})
+
+			assert.ErrorContains(t, err, "not found")
+		})
+	})
+
 	t.Run("Given a caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -93,23 +110,6 @@ func TestWhenExecutingUpdateConversationTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1", "name": "Audit"})
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the use case fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdateConversationToolBeforeEach(t)
-			suite.mockUpdateConversationExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				Return(nil, errors.New("not found"))
-
-			_, err := suite.sut.Execute(ctx, map[string]any{"conversationId": "c1", "name": "x"})
-
-			assert.ErrorContains(t, err, "not found")
 		})
 	})
 

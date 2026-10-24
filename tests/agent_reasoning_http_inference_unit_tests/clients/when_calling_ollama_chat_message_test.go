@@ -39,6 +39,31 @@ func WhenCallingOllamaChatMessageAfterEach(suite *WhenCallingOllamaChatMessageTe
 func TestWhenCallingOllamaChatMessage(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
+			defer WhenCallingOllamaChatMessageAfterEach(suite)
+
+			_, err := suite.sut.ChatMessage(
+				suite.server.URL,
+				&models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"},
+			)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
+		})
+	})
+
 	t.Run("Given the upstream returns 200", func(t *testing.T) {
 		t.Parallel()
 
@@ -66,31 +91,6 @@ func TestWhenCallingOllamaChatMessage(t *testing.T) {
 			assert.Empty(t, seenAuth)
 			assert.Equal(t, "llama3", res.Model)
 			assert.Equal(t, "hi", res.Message.Content)
-		})
-	})
-
-	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingOllamaChatMessageBeforeEach(t, handler)
-			defer WhenCallingOllamaChatMessageAfterEach(suite)
-
-			_, err := suite.sut.ChatMessage(
-				suite.server.URL,
-				&models.ExternalOllamaChatMessageStandardRequest{Model: "llama3"},
-			)
-			var statusError *clients.LlmStatusError
-
-			if assert.ErrorAs(t, err, &statusError) {
-				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
-			}
 		})
 	})
 }

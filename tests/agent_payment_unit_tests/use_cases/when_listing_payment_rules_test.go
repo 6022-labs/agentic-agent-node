@@ -87,6 +87,42 @@ func TestWhenListingPaymentRules(t *testing.T) {
 		})
 	})
 
+	t.Run("Given listing the rules fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
+			agent := model_builders.NewAgentBuilder().Build()
+			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, nil).
+				AnyTimes()
+			suite.mockPaymentPolicyRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(policy, nil).
+				Times(1)
+			suite.mockPaymentRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db down")).
+				Times(1)
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentRulesBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, result)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
 	t.Run("Given no policy exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -126,42 +162,6 @@ func TestWhenListingPaymentRules(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-		})
-	})
-
-	t.Run("Given listing the rules fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenListingPaymentRulesTestingSuite) {
-			agent := model_builders.NewAgentBuilder().Build()
-			policy := model_builders.NewPaymentPolicyBuilder().WithAgentId(agent.Id).Build()
-
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
-				Return(nil, nil).
-				AnyTimes()
-			suite.mockPaymentPolicyRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(policy, nil).
-				Times(1)
-			suite.mockPaymentRuleRepository.EXPECT().
-				ListByPolicyId(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db down")).
-				Times(1)
-		}
-
-		t.Run("Should return an InternalError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingPaymentRulesBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Execute(context.Background())
-
-			assert.Nil(t, result)
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
 		})
 	})
 

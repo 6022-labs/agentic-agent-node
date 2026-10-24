@@ -10,6 +10,30 @@ import (
 func TestWhenParsingCompletionsToolCallArguments(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a malformed JSON object", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a nil map", func(t *testing.T) {
+			t.Parallel()
+
+			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
+
+			args, _ := function.ParsedArguments()
+
+			assert.Nil(t, args)
+		})
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
+
+			_, err := function.ParsedArguments()
+
+			assert.ErrorContains(t, err, "invalid character")
+		})
+	})
+
 	t.Run("Given a blank arguments string", func(t *testing.T) {
 		t.Parallel()
 
@@ -56,30 +80,6 @@ func TestWhenParsingCompletionsToolCallArguments(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, map[string]any{"city": "paris"}, args)
-		})
-	})
-
-	t.Run("Given a malformed JSON object", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a nil map", func(t *testing.T) {
-			t.Parallel()
-
-			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
-
-			args, _ := function.ParsedArguments()
-
-			assert.Nil(t, args)
-		})
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			function := &models.ExternalOpenAICompletionsStandardToolCallFunction{Arguments: "{bad"}
-
-			_, err := function.ParsedArguments()
-
-			assert.ErrorContains(t, err, "invalid character")
 		})
 	})
 }

@@ -40,46 +40,6 @@ func WhenCallingOpenAIResponsesAfterEach(suite *WhenCallingOpenAIResponsesTestin
 func TestWhenCallingOpenAIResponses(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the upstream returns 200", func(t *testing.T) {
-		t.Parallel()
-
-		var seenPath, seenAuth string
-		var seenBody []byte
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenPath = r.URL.Path
-			seenAuth = r.Header.Get("Authorization")
-			seenBody, _ = io.ReadAll(r.Body)
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write(
-				[]byte(
-					`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant",` +
-						`"status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`,
-				),
-			)
-		}
-
-		t.Run("Should return the decoded response", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
-			defer WhenCallingOpenAIResponsesAfterEach(suite)
-
-			res, err := suite.sut.Responses(
-				suite.server.URL,
-				"sk-secret",
-				&models.ExternalOpenAIResponsesStandardRequest{
-					Model: "gpt-4o",
-				},
-			)
-
-			assert.NoError(t, err)
-			assert.Equal(t, "/v1/responses", seenPath)
-			assert.Equal(t, "Bearer sk-secret", seenAuth)
-			assert.Contains(t, string(seenBody), `"model":"gpt-4o"`)
-			assert.Equal(t, "resp-1", res.ID)
-		})
-	})
-
 	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
 		t.Parallel()
 
@@ -126,6 +86,46 @@ func TestWhenCallingOpenAIResponses(t *testing.T) {
 				&models.ExternalOpenAIResponsesStandardRequest{Model: "gpt-4o"},
 			)
 			assert.ErrorContains(t, err, "decode")
+		})
+	})
+
+	t.Run("Given the upstream returns 200", func(t *testing.T) {
+		t.Parallel()
+
+		var seenPath, seenAuth string
+		var seenBody []byte
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			seenPath = r.URL.Path
+			seenAuth = r.Header.Get("Authorization")
+			seenBody, _ = io.ReadAll(r.Body)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write(
+				[]byte(
+					`{"id":"resp-1","model":"gpt-4o","output":[{"type":"message","role":"assistant",` +
+						`"status":"completed","content":[{"type":"output_text","text":"hello"}]}]}`,
+				),
+			)
+		}
+
+		t.Run("Should return the decoded response", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingOpenAIResponsesBeforeEach(t, handler)
+			defer WhenCallingOpenAIResponsesAfterEach(suite)
+
+			res, err := suite.sut.Responses(
+				suite.server.URL,
+				"sk-secret",
+				&models.ExternalOpenAIResponsesStandardRequest{
+					Model: "gpt-4o",
+				},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "/v1/responses", seenPath)
+			assert.Equal(t, "Bearer sk-secret", seenAuth)
+			assert.Contains(t, string(seenBody), `"model":"gpt-4o"`)
+			assert.Equal(t, "resp-1", res.ID)
 		})
 	})
 }

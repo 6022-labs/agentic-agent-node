@@ -16,37 +16,6 @@ type decodedPayload struct {
 func TestWhenDecodingRuntimeResponse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime answers 200 with a JSON body", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should decode it into out and return no error", func(t *testing.T) {
-			t.Parallel()
-
-			var out decodedPayload
-			err := helpers.DecodeRuntimeResponse(
-				&http.Response{StatusCode: http.StatusOK},
-				[]byte(`{"name":"agent"}`),
-				&out,
-				nil,
-			)
-
-			assert.NoError(t, err)
-			assert.Equal(t, "agent", out.Name)
-		})
-	})
-
-	t.Run("Given the runtime answers 204 and no out target is provided", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return no error without decoding", func(t *testing.T) {
-			t.Parallel()
-
-			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusNoContent}, nil, nil, nil)
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the runtime answers 404 and a not-found sentinel is provided", func(t *testing.T) {
 		t.Parallel()
 
@@ -131,6 +100,37 @@ func TestWhenDecodingRuntimeResponse(t *testing.T) {
 			assert.Empty(t, statusErr.Code)
 			assert.Empty(t, statusErr.Field)
 			assert.Empty(t, statusErr.Message)
+		})
+	})
+
+	t.Run("Given the runtime answers 204 and no out target is provided", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return no error without decoding", func(t *testing.T) {
+			t.Parallel()
+
+			err := helpers.DecodeRuntimeResponse(&http.Response{StatusCode: http.StatusNoContent}, nil, nil, nil)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the runtime answers 200 with a JSON body", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should decode it into out and return no error", func(t *testing.T) {
+			t.Parallel()
+
+			var out decodedPayload
+			err := helpers.DecodeRuntimeResponse(
+				&http.Response{StatusCode: http.StatusOK},
+				[]byte(`{"name":"agent"}`),
+				&out,
+				nil,
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "agent", out.Name)
 		})
 	})
 }

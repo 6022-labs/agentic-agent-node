@@ -39,6 +39,32 @@ func WhenCallingAmazonBedrockConverseAfterEach(suite *WhenCallingAmazonBedrockCo
 func TestWhenCallingAmazonBedrockConverse(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCallingAmazonBedrockConverseBeforeEach(t, handler)
+			defer WhenCallingAmazonBedrockConverseAfterEach(suite)
+
+			_, err := suite.sut.Messages(
+				suite.server.URL,
+				"sk",
+				&models.ExternalAmazonBedrockConverseStandardRequest{ModelId: "x"},
+			)
+			var statusError *clients.LlmStatusError
+
+			if assert.ErrorAs(t, err, &statusError) {
+				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
+			}
+		})
+	})
+
 	t.Run("Given the upstream returns 200", func(t *testing.T) {
 		t.Parallel()
 
@@ -68,32 +94,6 @@ func TestWhenCallingAmazonBedrockConverse(t *testing.T) {
 			assert.Equal(t, "/model/anthropic.claude-3-sonnet/converse", seenPath)
 			assert.Equal(t, "Bearer sk-secret", seenAuth)
 			assert.Equal(t, "assistant", res.Output.Message.Role)
-		})
-	})
-
-	t.Run("Given the upstream returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		t.Run("Should return a LlmStatusError with the 500", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCallingAmazonBedrockConverseBeforeEach(t, handler)
-			defer WhenCallingAmazonBedrockConverseAfterEach(suite)
-
-			_, err := suite.sut.Messages(
-				suite.server.URL,
-				"sk",
-				&models.ExternalAmazonBedrockConverseStandardRequest{ModelId: "x"},
-			)
-			var statusError *clients.LlmStatusError
-
-			if assert.ErrorAs(t, err, &statusError) {
-				assert.Equal(t, http.StatusInternalServerError, statusError.StatusCode)
-			}
 		})
 	})
 }

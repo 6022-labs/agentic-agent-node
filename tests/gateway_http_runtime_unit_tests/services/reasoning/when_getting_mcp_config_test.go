@@ -63,6 +63,32 @@ func TestWhenGettingMCPConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the connection does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+
+		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
+				Return(&clients.GetInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found"}`),
+				}, nil)
+		}
+
+		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingMCPConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.GetById(context.Background(), id)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
+		})
+	})
+
 	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
@@ -87,32 +113,6 @@ func TestWhenGettingMCPConfig(t *testing.T) {
 
 			var target *apperrors.ValidationError
 			assert.ErrorAs(t, err, &target)
-		})
-	})
-
-	t.Run("Given the connection does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-
-		initSuite := func(suite *WhenGettingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				GetInternalConfigMcpIdWithResponse(gomock.Any(), id.String()).
-				Return(&clients.GetInternalConfigMcpIdResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-					Body:         []byte(`{"code":"not_found"}`),
-				}, nil)
-		}
-
-		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingMCPConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.GetById(context.Background(), id)
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
 		})
 	})
 

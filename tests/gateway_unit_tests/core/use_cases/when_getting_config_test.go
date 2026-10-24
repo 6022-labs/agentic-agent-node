@@ -40,6 +40,27 @@ func WhenGettingConfigBeforeEach(t *testing.T) *WhenGettingConfigTestingSuite {
 func TestWhenGettingConfig(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingConfigTestingSuite) {
+			suite.mockClient.EXPECT().Get(gomock.Any()).
+				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *errors.UnavailableError
+			assert.ErrorAs(t, err, &target)
+		})
+	})
+
 	t.Run("Given the runtime returns the chain config", func(t *testing.T) {
 		t.Parallel()
 
@@ -80,27 +101,6 @@ func TestWhenGettingConfig(t *testing.T) {
 				}
 			}
 			assert.Equal(t, []string{"https://{cid}.ipfs.example.com"}, resp.IpfsGatewayUrlTemplates)
-		})
-	})
-
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).
-				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
-		}
-
-		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var target *errors.UnavailableError
-			assert.ErrorAs(t, err, &target)
 		})
 	})
 }

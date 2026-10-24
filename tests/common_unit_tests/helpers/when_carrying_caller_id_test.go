@@ -13,19 +13,15 @@ import (
 func TestWhenCarryingCallerId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a padded mixed-case caller id", func(t *testing.T) {
+	t.Run("Given no caller id", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should read it back trimmed and lowercased", func(t *testing.T) {
+		t.Run("Should report no caller", func(t *testing.T) {
 			t.Parallel()
 
-			callerId := strings.ToLower(common_tests.RandomEthAddress().Hex())
-			ctx := helpers.ContextWithCallerId(context.Background(), " "+strings.ToUpper(callerId)+" ")
+			_, ok := helpers.CallerIdFromContext(context.Background())
 
-			carried, ok := helpers.CallerIdFromContext(ctx)
-
-			assert.True(t, ok)
-			assert.Equal(t, callerId, carried)
+			assert.False(t, ok)
 		})
 	})
 
@@ -43,15 +39,19 @@ func TestWhenCarryingCallerId(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no caller id", func(t *testing.T) {
+	t.Run("Given a padded mixed-case caller id", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should report no caller", func(t *testing.T) {
+		t.Run("Should read it back trimmed and lowercased", func(t *testing.T) {
 			t.Parallel()
 
-			_, ok := helpers.CallerIdFromContext(context.Background())
+			callerId := strings.ToLower(common_tests.RandomEthAddress().Hex())
+			ctx := helpers.ContextWithCallerId(context.Background(), " "+strings.ToUpper(callerId)+" ")
 
-			assert.False(t, ok)
+			carried, ok := helpers.CallerIdFromContext(ctx)
+
+			assert.True(t, ok)
+			assert.Equal(t, callerId, carried)
 		})
 	})
 }

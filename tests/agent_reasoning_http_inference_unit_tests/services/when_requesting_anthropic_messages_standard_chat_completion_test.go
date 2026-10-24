@@ -57,186 +57,6 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 		{Role: "user", Content: "hello"},
 	}
 
-	t.Run("Given the LLM returns plain text", func(t *testing.T) {
-		t.Parallel()
-
-		expectedContent := "hi there"
-
-		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
-			suite.mockAnthropicMessagesClient.
-				EXPECT().
-				Messages(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, request *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
-					assert.Equal(t, llmConnection.Model, request.Model)
-					if assert.Len(t, request.System, 1) {
-						assert.Equal(t, "you are helpful", request.System[0].Text)
-					}
-					if assert.Len(t, request.Messages, 1) {
-						assert.Equal(t, "user", request.Messages[0].Role)
-					}
-					assert.Nil(t, request.Tools)
-					assert.Nil(t, request.McpServers)
-
-					return &external_models.ExternalAnthropicMessagesStandardResponse{
-						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
-							Role: "assistant",
-							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
-								{Type: "text", Text: &expectedContent},
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should return the text content", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{expectedContent}, result.Texts)
-			}
-			assert.Empty(t, result.ToolCalls)
-		})
-	})
-
-	t.Run("Given the LLM emits text before and after a server-side tool call", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
-			suite.mockAnthropicMessagesClient.
-				EXPECT().
-				Messages(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
-					first := "first"
-					second := "second"
-					id := "mcptoolu_1"
-					name := "get"
-					isError := false
-					return &external_models.ExternalAnthropicMessagesStandardResponse{
-						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
-							Role: "assistant",
-							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
-								{Type: "text", Text: &first},
-								{Type: "mcp_tool_use", Id: &id, Name: &name, Input: map[string]any{}},
-								{
-									Type:      "mcp_tool_result",
-									ToolUseId: &id,
-									IsError:   &isError,
-									Content:   []map[string]any{{"type": "text", "text": "20C"}},
-								},
-								{Type: "text", Text: &second},
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should collect every text block in order", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{"first", "second"}, result.Texts)
-			}
-		})
-	})
-
-	t.Run("Given the response has no actionable content", func(t *testing.T) {
-		t.Parallel()
-
-		stopReason := "max_tokens"
-
-		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
-			suite.mockAnthropicMessagesClient.
-				EXPECT().
-				Messages(baseUrl, apiKey, gomock.Any()).
-				Return(&external_models.ExternalAnthropicMessagesStandardResponse{
-					ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
-						Role:       "assistant",
-						Content:    []external_models.ExternalAnthropicMessagesStandardMessageContent{},
-						StopReason: &stopReason,
-					},
-				}, nil)
-		}
-
-		t.Run("Should return an empty completion", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Empty(t, result.Texts)
-				assert.Empty(t, result.ToolCalls)
-				assert.Empty(t, result.ExecutedToolCalls)
-			}
-		})
-	})
-
-	t.Run("Given the LLM emits a tool_use", func(t *testing.T) {
-		t.Parallel()
-
-		mcpConnection := model_builders.NewMCPConnectionBuilder().
-			WithName("inventory").
-			WithUrl("https://mcp.example.com").
-			Build()
-		mcpTool := &models.Tool{Name: "fetch_items"}
-		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
-		toolArgs := map[string]any{"query": "value"}
-
-		mcpTools := map[*models.MCPConnection][]*models.Tool{
-			mcpConnection: {mcpTool},
-		}
-
-		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
-			suite.mockAnthropicMessagesClient.
-				EXPECT().
-				Messages(baseUrl, apiKey, gomock.Any()).
-				DoAndReturn(func(_ string, _ string, request *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
-					if assert.Len(t, request.Tools, 1) {
-						assert.Equal(t, functionName, request.Tools[0].Name)
-					}
-					assert.Nil(t, request.McpServers)
-
-					id := "tool_1"
-					name := functionName
-					return &external_models.ExternalAnthropicMessagesStandardResponse{
-						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
-							Role: "assistant",
-							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
-								{Type: "tool_use", Id: &id, Name: &name, Input: toolArgs},
-							},
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should return the ToolCall in LLMCompletion", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
-				assert.Equal(t, "tool_1", result.ToolCalls[0].Id)
-				assert.Equal(t, functionName, result.ToolCalls[0].Name)
-				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
-			}
-		})
-	})
-
 	t.Run("Given direct MCP access is enabled", func(t *testing.T) {
 		t.Parallel()
 
@@ -332,6 +152,152 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the LLM returns plain text", func(t *testing.T) {
+		t.Parallel()
+
+		expectedContent := "hi there"
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
+					assert.Equal(t, llmConnection.Model, request.Model)
+					if assert.Len(t, request.System, 1) {
+						assert.Equal(t, "you are helpful", request.System[0].Text)
+					}
+					if assert.Len(t, request.Messages, 1) {
+						assert.Equal(t, "user", request.Messages[0].Role)
+					}
+					assert.Nil(t, request.Tools)
+					assert.Nil(t, request.McpServers)
+
+					return &external_models.ExternalAnthropicMessagesStandardResponse{
+						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+							Role: "assistant",
+							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+								{Type: "text", Text: &expectedContent},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the text content", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
+			}
+			assert.Empty(t, result.ToolCalls)
+		})
+	})
+
+	t.Run("Given the LLM emits text before and after a server-side tool call", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, _ *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
+					first := "first"
+					second := "second"
+					id := "mcptoolu_1"
+					name := "get"
+					isError := false
+					return &external_models.ExternalAnthropicMessagesStandardResponse{
+						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+							Role: "assistant",
+							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+								{Type: "text", Text: &first},
+								{Type: "mcp_tool_use", Id: &id, Name: &name, Input: map[string]any{}},
+								{
+									Type:      "mcp_tool_result",
+									ToolUseId: &id,
+									IsError:   &isError,
+									Content:   []map[string]any{{"type": "text", "text": "20C"}},
+								},
+								{Type: "text", Text: &second},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should collect every text block in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{"first", "second"}, result.Texts)
+			}
+		})
+	})
+
+	t.Run("Given the LLM emits a tool_use", func(t *testing.T) {
+		t.Parallel()
+
+		mcpConnection := model_builders.NewMCPConnectionBuilder().
+			WithName("inventory").
+			WithUrl("https://mcp.example.com").
+			Build()
+		mcpTool := &models.Tool{Name: "fetch_items"}
+		functionName := fmt.Sprintf("mcp_%s_%s", mcpConnection.Name, mcpTool.Name)
+		toolArgs := map[string]any{"query": "value"}
+
+		mcpTools := map[*models.MCPConnection][]*models.Tool{
+			mcpConnection: {mcpTool},
+		}
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				DoAndReturn(func(_ string, _ string, request *external_models.ExternalAnthropicMessagesStandardRequest) (*external_models.ExternalAnthropicMessagesStandardResponse, error) {
+					if assert.Len(t, request.Tools, 1) {
+						assert.Equal(t, functionName, request.Tools[0].Name)
+					}
+					assert.Nil(t, request.McpServers)
+
+					id := "tool_1"
+					name := functionName
+					return &external_models.ExternalAnthropicMessagesStandardResponse{
+						ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+							Role: "assistant",
+							Content: []external_models.ExternalAnthropicMessagesStandardMessageContent{
+								{Type: "tool_use", Id: &id, Name: &name, Input: toolArgs},
+							},
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the ToolCall in LLMCompletion", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, mcpTools, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) && assert.Len(t, result.ToolCalls, 1) {
+				assert.Equal(t, "tool_1", result.ToolCalls[0].Id)
+				assert.Equal(t, functionName, result.ToolCalls[0].Name)
+				assert.Equal(t, toolArgs, result.ToolCalls[0].Arguments)
+			}
+		})
+	})
+
 	t.Run("Given the provider executes an mcp_tool_use server-side", func(t *testing.T) {
 		t.Parallel()
 
@@ -367,6 +333,32 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 				})
 		}
 
+		t.Run("Given the server is unknown", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should keep the provider's raw name", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+				initSuite(suite, "normalized-weather")
+
+				result, err := suite.sut.ChatCompletion(
+					baseUrl,
+					apiKey,
+					true,
+					llmConnection,
+					nil,
+					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
+					messages,
+					nil,
+				)
+				assert.NoError(t, err)
+				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
+					assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
+				}
+			})
+		})
+
 		t.Run("Given the server is a known connection", func(t *testing.T) {
 			t.Parallel()
 
@@ -396,31 +388,39 @@ func TestWhenRequestingAnthropicMessagesStandardChatCompletion(t *testing.T) {
 				}
 			})
 		})
+	})
 
-		t.Run("Given the server is unknown", func(t *testing.T) {
+	t.Run("Given the response has no actionable content", func(t *testing.T) {
+		t.Parallel()
+
+		stopReason := "max_tokens"
+
+		initSuite := func(suite *WhenRequestingAnthropicMessagesStandardChatCompletionTestingSuite) {
+			suite.mockAnthropicMessagesClient.
+				EXPECT().
+				Messages(baseUrl, apiKey, gomock.Any()).
+				Return(&external_models.ExternalAnthropicMessagesStandardResponse{
+					ExternalAnthropicMessagesStandardMessage: external_models.ExternalAnthropicMessagesStandardMessage{
+						Role:       "assistant",
+						Content:    []external_models.ExternalAnthropicMessagesStandardMessageContent{},
+						StopReason: &stopReason,
+					},
+				}, nil)
+		}
+
+		t.Run("Should return an empty completion", func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Should keep the provider's raw name", func(t *testing.T) {
-				t.Parallel()
+			suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
 
-				suite := WhenRequestingAnthropicMessagesStandardChatCompletionBeforeEach(t)
-				initSuite(suite, "normalized-weather")
-
-				result, err := suite.sut.ChatCompletion(
-					baseUrl,
-					apiKey,
-					true,
-					llmConnection,
-					nil,
-					map[*models.MCPConnection][]*models.Tool{mcpConnection: nil},
-					messages,
-					nil,
-				)
-				assert.NoError(t, err)
-				if assert.NotNil(t, result) && assert.Len(t, result.ExecutedToolCalls, 1) {
-					assert.Equal(t, "get", result.ExecutedToolCalls[0].Name)
-				}
-			})
+			result, err := suite.sut.ChatCompletion(baseUrl, apiKey, false, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Empty(t, result.Texts)
+				assert.Empty(t, result.ToolCalls)
+				assert.Empty(t, result.ExecutedToolCalls)
+			}
 		})
 	})
 }

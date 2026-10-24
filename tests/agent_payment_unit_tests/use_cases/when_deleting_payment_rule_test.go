@@ -35,6 +35,26 @@ func WhenDeletingPaymentRuleBeforeEach(t *testing.T) *WhenDeletingPaymentRuleTes
 func TestWhenDeletingPaymentRule(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the rule does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentRuleTestingSuite) {
+			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+		}
+
+		t.Run("Should return a not found error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentRuleBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: uuid.New()})
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
 	t.Run("Given the rule exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -53,26 +73,6 @@ func TestWhenDeletingPaymentRule(t *testing.T) {
 			id := initSuite(suite)
 
 			assert.NoError(t, suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: *id}))
-		})
-	})
-
-	t.Run("Given the rule does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDeletingPaymentRuleTestingSuite) {
-			suite.mockPaymentRuleRepository.EXPECT().GetById(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
-		}
-
-		t.Run("Should return a not found error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDeletingPaymentRuleBeforeEach(t)
-			initSuite(suite)
-
-			err := suite.sut.Execute(context.Background(), &requests.DeletePaymentRuleRequest{Id: uuid.New()})
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
 		})
 	})
 }

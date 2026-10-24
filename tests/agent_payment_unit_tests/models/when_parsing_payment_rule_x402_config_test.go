@@ -11,6 +11,32 @@ import (
 func TestWhenParsingPaymentRuleX402Config(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given empty input", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
+			t.Parallel()
+
+			config := &models.PaymentRuleX402Config{}
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, config.Parse(nil), &validationErr)
+			assert.Equal(t, "config", validationErr.Field)
+		})
+	})
+
+	t.Run("Given malformed JSON", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
+			t.Parallel()
+
+			config := &models.PaymentRuleX402Config{}
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, config.Parse([]byte("{not-json")), &validationErr)
+			assert.Equal(t, "config", validationErr.Field)
+		})
+	})
+
 	t.Run("Given a valid config blob", func(t *testing.T) {
 		t.Parallel()
 
@@ -51,32 +77,6 @@ func TestWhenParsingPaymentRuleX402Config(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotContains(t, string(raw), "paymentRuleId")
 			assert.NotContains(t, string(raw), "PaymentRule")
-		})
-	})
-
-	t.Run("Given empty input", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
-			t.Parallel()
-
-			config := &models.PaymentRuleX402Config{}
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, config.Parse(nil), &validationErr)
-			assert.Equal(t, "config", validationErr.Field)
-		})
-	})
-
-	t.Run("Given malformed JSON", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError on the config field", func(t *testing.T) {
-			t.Parallel()
-
-			config := &models.PaymentRuleX402Config{}
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, config.Parse([]byte("{not-json")), &validationErr)
-			assert.Equal(t, "config", validationErr.Field)
 		})
 	})
 }

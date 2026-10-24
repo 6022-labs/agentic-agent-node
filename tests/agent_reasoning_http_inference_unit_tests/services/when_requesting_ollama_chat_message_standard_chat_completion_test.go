@@ -53,46 +53,6 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 		{Role: "user", Content: "hello"},
 	}
 
-	t.Run("Given the LLM returns plain text", func(t *testing.T) {
-		t.Parallel()
-
-		expectedContent := "hi there"
-
-		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
-			suite.mockOllamaClient.EXPECT().
-				ChatMessage(baseUrl, gomock.Any()).
-				DoAndReturn(func(_ string, request *external_models.ExternalOllamaChatMessageStandardRequest) (*external_models.ExternalOllamaChatMessageStandardResponse, error) {
-					assert.Equal(t, llmConnection.Model, request.Model)
-					if assert.Len(t, request.Messages, 1) {
-						assert.Equal(t, "user", request.Messages[0].Role)
-						assert.Equal(t, "hello", request.Messages[0].Content)
-					}
-					assert.Nil(t, request.Tools)
-
-					return &external_models.ExternalOllamaChatMessageStandardResponse{
-						Model: llmConnection.Model,
-						Message: external_models.ExternalOllamaChatMessageStandardMessage{
-							Role:    "assistant",
-							Content: expectedContent,
-						},
-					}, nil
-				})
-		}
-
-		t.Run("Should return the message content", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages, nil)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, []string{expectedContent}, result.Texts)
-			}
-		})
-	})
-
 	t.Run("Given a blank response content", func(t *testing.T) {
 		t.Parallel()
 
@@ -160,6 +120,46 @@ func TestWhenRequestingOllamaChatMessageStandardChatCompletion(t *testing.T) {
 			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, selfTools, nil, messages, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
+		})
+	})
+
+	t.Run("Given the LLM returns plain text", func(t *testing.T) {
+		t.Parallel()
+
+		expectedContent := "hi there"
+
+		initSuite := func(suite *WhenRequestingOllamaChatMessageStandardChatCompletionTestingSuite) {
+			suite.mockOllamaClient.EXPECT().
+				ChatMessage(baseUrl, gomock.Any()).
+				DoAndReturn(func(_ string, request *external_models.ExternalOllamaChatMessageStandardRequest) (*external_models.ExternalOllamaChatMessageStandardResponse, error) {
+					assert.Equal(t, llmConnection.Model, request.Model)
+					if assert.Len(t, request.Messages, 1) {
+						assert.Equal(t, "user", request.Messages[0].Role)
+						assert.Equal(t, "hello", request.Messages[0].Content)
+					}
+					assert.Nil(t, request.Tools)
+
+					return &external_models.ExternalOllamaChatMessageStandardResponse{
+						Model: llmConnection.Model,
+						Message: external_models.ExternalOllamaChatMessageStandardMessage{
+							Role:    "assistant",
+							Content: expectedContent,
+						},
+					}, nil
+				})
+		}
+
+		t.Run("Should return the message content", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRequestingOllamaChatMessageStandardChatCompletionBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.ChatCompletion(baseUrl, llmConnection, nil, nil, messages, nil)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.Equal(t, []string{expectedContent}, result.Texts)
+			}
 		})
 	})
 
