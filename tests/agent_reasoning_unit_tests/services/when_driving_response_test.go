@@ -189,67 +189,6 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a stored tool-call turn has a corrupted payload", func(t *testing.T) {
-		t.Parallel()
-
-		history := []knowledge_interfaces.ConversationMessage{
-			{Role: "assistant", ToolCalls: "}{ not json"},
-		}
-		finalText := "recovered"
-
-		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationTitler.EXPECT().
-				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil).
-				AnyTimes()
-			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{}, nil).
-				AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any()).
-				Return([]models.MCPConnection{}, nil)
-			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
-			suite.mockSystemPromptBuilder.EXPECT().
-				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
-				Return(builtSystemPrompt)
-
-			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
-					// The unreadable tool calls are dropped, not fatal — the turn is still replayed.
-					if assert.GreaterOrEqual(t, len(msgs), 2) {
-						assert.Empty(t, msgs[1].ToolCalls)
-					}
-					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: finalText}), nil
-				})
-
-			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
-					return msgs, nil
-				})
-		}
-
-		t.Run("Should drop the bad tool calls", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDrivingResponseBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.Equal(t, finalText, result.Content)
-			}
-		})
-	})
-
 	t.Run("Given the LLM connection lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -536,20 +475,40 @@ func TestWhenDrivingResponse(t *testing.T) {
 
 	})
 
-	t.Run("Given inputs do not match history", func(t *testing.T) {
+	t.Run("Given inputs contain unicode emoji that match a demojized history entry", func(t *testing.T) {
 		t.Parallel()
 
-		expectedFinal := "hi there"
+		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi :fire:"}
+		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥"}
+
+		// Sanity: the hash of the demojized input matches the stored one.
+		storedHash, _ := utils.ComputeConversationMessageHash(
+			stored.Role,
+			stored.Content,
+			stored.ToolCalls,
+			stored.ToolCallId,
+			conversationId,
+		)
+		inputHash, _ := utils.ComputeConversationMessageHash(
+			emojiInput.Role,
+			"hi :fire:",
+			emojiInput.ToolCalls,
+			emojiInput.ToolCallId,
+			conversationId,
+		)
+		assert.Equal(t, storedHash, inputHash)
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationTitler.EXPECT().
 				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(nil).
 				AnyTimes()
-			suite.expectDemojizePassthrough()
-			suite.mockConversationHistory.EXPECT().
-				Read(gomock.Any(), conversationId).
-				Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockEmojiDecoder.EXPECT().
+				DemojizeContent(emojiInput.Content).
+				Return("hi :fire:")
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
+				conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
 			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
@@ -565,59 +524,38 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockSystemPromptBuilder.EXPECT().
 				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
 				Return(builtSystemPrompt)
-
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
-					// The built system prompt leads the stream, never coming from inputs.
-					if assert.Len(t, msgs, 2) {
-						assert.Equal(t, "system", msgs[0].Role)
-						assert.Equal(t, builtSystemPrompt, msgs[0].Content)
-						assert.Equal(t, "user", msgs[1].Role)
-						assert.Equal(t, "hello", msgs[1].Content)
-					}
-					return append(
-						msgs,
-						&interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal},
-					), nil
-				})
-
+				Return([]*interfaces.ChatCompletionMessage{
+					{Role: "system", Content: builtSystemPrompt},
+					{Role: "user", Content: "hi :fire:"},
+					{Role: "assistant", Content: "ok"},
+				}, nil)
 			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
 				conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
-					// The built prompt is never persisted.
-					if assert.Len(t, msgs, 2) {
-						assert.Equal(t, "user", msgs[0].Role)
-						assert.Equal(t, "hello", msgs[0].Content)
-						assert.Equal(t, "assistant", msgs[1].Role)
-						assert.Equal(t, expectedFinal, msgs[1].Content)
+					if assert.Len(t, msgs, 1) {
+						assert.Equal(t, "assistant", msgs[0].Role)
 					}
 					return msgs, nil
 				})
 		}
 
-		t.Run("Should not persist the built prompt", func(t *testing.T) {
+		t.Run("Should treat the emoji input as a duplicate", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDrivingResponseBeforeEach(t)
 			initSuite(suite)
 
-			_, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			result, err := suite.sut.Drive(
+				ctx,
+				conversationId,
+				"",
+				[]knowledge_interfaces.ConversationMessage{emojiInput},
+			)
 			assert.NoError(t, err)
+			assert.NotNil(t, result)
 		})
-
-		t.Run("Should return the final assistant message", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDrivingResponseBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-			}
-		})
-
 	})
 
 	t.Run("Given an input matches an already-stored message", func(t *testing.T) {
@@ -746,89 +684,6 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given inputs contain unicode emoji that match a demojized history entry", func(t *testing.T) {
-		t.Parallel()
-
-		stored := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi :fire:"}
-		emojiInput := knowledge_interfaces.ConversationMessage{Role: "user", Content: "hi 🔥"}
-
-		// Sanity: the hash of the demojized input matches the stored one.
-		storedHash, _ := utils.ComputeConversationMessageHash(
-			stored.Role,
-			stored.Content,
-			stored.ToolCalls,
-			stored.ToolCallId,
-			conversationId,
-		)
-		inputHash, _ := utils.ComputeConversationMessageHash(
-			emojiInput.Role,
-			"hi :fire:",
-			emojiInput.ToolCalls,
-			emojiInput.ToolCallId,
-			conversationId,
-		)
-		assert.Equal(t, storedHash, inputHash)
-
-		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
-			suite.mockConversationTitler.EXPECT().
-				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil).
-				AnyTimes()
-			suite.mockEmojiDecoder.EXPECT().
-				DemojizeContent(emojiInput.Content).
-				Return("hi :fire:")
-			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
-				conversationId).
-				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{}, nil).
-				AnyTimes()
-			suite.mockLLMConnectionRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
-			suite.mockMCPRepository.EXPECT().
-				ListByAgentId(gomock.Any(), gomock.Any()).
-				Return([]models.MCPConnection{}, nil)
-			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
-			suite.mockSystemPromptBuilder.EXPECT().
-				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
-				Return(builtSystemPrompt)
-			suite.mockInferenceLoop.EXPECT().
-				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return([]*interfaces.ChatCompletionMessage{
-					{Role: "system", Content: builtSystemPrompt},
-					{Role: "user", Content: "hi :fire:"},
-					{Role: "assistant", Content: "ok"},
-				}, nil)
-			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
-				conversationId, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
-					if assert.Len(t, msgs, 1) {
-						assert.Equal(t, "assistant", msgs[0].Role)
-					}
-					return msgs, nil
-				})
-		}
-
-		t.Run("Should treat the emoji input as a duplicate", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDrivingResponseBeforeEach(t)
-			initSuite(suite)
-
-			result, err := suite.sut.Drive(
-				ctx,
-				conversationId,
-				"",
-				[]knowledge_interfaces.ConversationMessage{emojiInput},
-			)
-			assert.NoError(t, err)
-			assert.NotNil(t, result)
-		})
-	})
-
 	t.Run("Given history holds a stray system row", func(t *testing.T) {
 		t.Parallel()
 
@@ -891,14 +746,13 @@ func TestWhenDrivingResponse(t *testing.T) {
 		})
 	})
 
-	t.Run("Given history holds a tool-call turn and the loop emits new tool calls", func(t *testing.T) {
+	t.Run("Given a stored tool-call turn has a corrupted payload", func(t *testing.T) {
 		t.Parallel()
 
-		storedToolCalls := `[{"Id":"call-1","Name":"conn_tool","Arguments":{"city":"paris"}}]`
 		history := []knowledge_interfaces.ConversationMessage{
-			{Role: "assistant", ToolCalls: storedToolCalls},
-			{Role: "tool", Content: `{"temp":"20"}`, ToolCallId: "call-1"},
+			{Role: "assistant", ToolCalls: "}{ not json"},
 		}
+		finalText := "recovered"
 
 		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
 			suite.mockConversationTitler.EXPECT().
@@ -926,70 +780,20 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockInferenceLoop.EXPECT().
 				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
-					// History is replayed full-fidelity, tool-call turn and result included.
-					if assert.Len(t, msgs, 4) {
-						assert.Equal(t, "system", msgs[0].Role)
-						assert.Equal(t, "assistant", msgs[1].Role)
-						if assert.Len(t, msgs[1].ToolCalls, 1) {
-							assert.Equal(t, "call-1", msgs[1].ToolCalls[0].Id)
-							assert.Equal(t, "conn_tool", msgs[1].ToolCalls[0].Name)
-							assert.Equal(t, "paris", msgs[1].ToolCalls[0].Arguments["city"])
-						}
-						assert.Equal(t, "tool", msgs[2].Role)
-						assert.Equal(t, "call-1", msgs[2].ToolCallId)
-						assert.Equal(t, "user", msgs[3].Role)
+					// The unreadable tool calls are dropped, not fatal — the turn is still replayed.
+					if assert.GreaterOrEqual(t, len(msgs), 2) {
+						assert.Empty(t, msgs[1].ToolCalls)
 					}
-					return append(
-						msgs,
-						&interfaces.ChatCompletionMessage{
-							Role: "assistant",
-							ToolCalls: []interfaces.ToolCall{
-								{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}},
-							},
-						},
-						&interfaces.ChatCompletionMessage{Role: "tool", ToolCallId: "call-2", Content: `{"temp":"15"}`},
-						&interfaces.ChatCompletionMessage{Role: "assistant", Content: "final answer"},
-					), nil
+					return append(msgs, &interfaces.ChatCompletionMessage{Role: "assistant", Content: finalText}), nil
 				})
 
-			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
-				conversationId, gomock.Any()).
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(), conversationId, gomock.Any()).
 				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
-					// Persist the new input plus every assistant + tool turn the loop added.
-					if assert.Len(t, msgs, 4) {
-						assert.Equal(t, "user", msgs[0].Role)
-
-						assert.Equal(t, "assistant", msgs[1].Role)
-						assert.Contains(t, msgs[1].ToolCalls, "call-2")
-						assert.Empty(t, msgs[1].Content)
-
-						assert.Equal(t, "tool", msgs[2].Role)
-						assert.Equal(t, "call-2", msgs[2].ToolCallId)
-						assert.Equal(t, `{"temp":"15"}`, msgs[2].Content)
-
-						assert.Equal(t, "assistant", msgs[3].Role)
-						assert.Equal(t, "final answer", msgs[3].Content)
-
-						// Strictly increasing timestamps keep stream order (and tool pairing) on reload.
-						for i := 0; i < len(msgs)-1; i++ {
-							assert.True(t, msgs[i].Timestamp.Before(msgs[i+1].Timestamp))
-						}
-					}
 					return msgs, nil
 				})
 		}
 
-		t.Run("Should persist the full new stream in order", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDrivingResponseBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Drive(ctx, conversationId, "", inputs)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Should return the final answer", func(t *testing.T) {
+		t.Run("Should drop the bad tool calls", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDrivingResponseBeforeEach(t)
@@ -998,6 +802,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
 			assert.NoError(t, err)
 			if assert.NotNil(t, result) {
+				assert.Equal(t, finalText, result.Content)
 			}
 		})
 	})
@@ -1686,5 +1491,200 @@ func TestWhenDrivingResponse(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Nil(t, result)
 		})
+	})
+
+	t.Run("Given history holds a tool-call turn and the loop emits new tool calls", func(t *testing.T) {
+		t.Parallel()
+
+		storedToolCalls := `[{"Id":"call-1","Name":"conn_tool","Arguments":{"city":"paris"}}]`
+		history := []knowledge_interfaces.ConversationMessage{
+			{Role: "assistant", ToolCalls: storedToolCalls},
+			{Role: "tool", Content: `{"temp":"20"}`, ToolCallId: "call-1"},
+		}
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
+			suite.expectDemojizePassthrough()
+			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// History is replayed full-fidelity, tool-call turn and result included.
+					if assert.Len(t, msgs, 4) {
+						assert.Equal(t, "system", msgs[0].Role)
+						assert.Equal(t, "assistant", msgs[1].Role)
+						if assert.Len(t, msgs[1].ToolCalls, 1) {
+							assert.Equal(t, "call-1", msgs[1].ToolCalls[0].Id)
+							assert.Equal(t, "conn_tool", msgs[1].ToolCalls[0].Name)
+							assert.Equal(t, "paris", msgs[1].ToolCalls[0].Arguments["city"])
+						}
+						assert.Equal(t, "tool", msgs[2].Role)
+						assert.Equal(t, "call-1", msgs[2].ToolCallId)
+						assert.Equal(t, "user", msgs[3].Role)
+					}
+					return append(
+						msgs,
+						&interfaces.ChatCompletionMessage{
+							Role: "assistant",
+							ToolCalls: []interfaces.ToolCall{
+								{Id: "call-2", Name: "conn_tool", Arguments: map[string]any{"city": "london"}},
+							},
+						},
+						&interfaces.ChatCompletionMessage{Role: "tool", ToolCallId: "call-2", Content: `{"temp":"15"}`},
+						&interfaces.ChatCompletionMessage{Role: "assistant", Content: "final answer"},
+					), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					// Persist the new input plus every assistant + tool turn the loop added.
+					if assert.Len(t, msgs, 4) {
+						assert.Equal(t, "user", msgs[0].Role)
+
+						assert.Equal(t, "assistant", msgs[1].Role)
+						assert.Contains(t, msgs[1].ToolCalls, "call-2")
+						assert.Empty(t, msgs[1].Content)
+
+						assert.Equal(t, "tool", msgs[2].Role)
+						assert.Equal(t, "call-2", msgs[2].ToolCallId)
+						assert.Equal(t, `{"temp":"15"}`, msgs[2].Content)
+
+						assert.Equal(t, "assistant", msgs[3].Role)
+						assert.Equal(t, "final answer", msgs[3].Content)
+
+						// Strictly increasing timestamps keep stream order (and tool pairing) on reload.
+						for i := 0; i < len(msgs)-1; i++ {
+							assert.True(t, msgs[i].Timestamp.Before(msgs[i+1].Timestamp))
+						}
+					}
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should persist the full new stream in order", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the final answer", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+			}
+		})
+	})
+
+	t.Run("Given inputs do not match history", func(t *testing.T) {
+		t.Parallel()
+
+		expectedFinal := "hi there"
+
+		initSuite := func(suite *WhenDrivingResponseTestingSuite) {
+			suite.mockConversationTitler.EXPECT().
+				TitleIfUnnamed(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil).
+				AnyTimes()
+			suite.expectDemojizePassthrough()
+			suite.mockConversationHistory.EXPECT().
+				Read(gomock.Any(), conversationId).
+				Return([]knowledge_interfaces.ConversationMessage{}, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil).
+				AnyTimes()
+			suite.mockLLMConnectionRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewLLMConnectionBuilder().Build(), nil)
+			suite.mockMCPRepository.EXPECT().
+				ListByAgentId(gomock.Any(), gomock.Any()).
+				Return([]models.MCPConnection{}, nil)
+			suite.mockAgentGuidanceRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, nil)
+			suite.mockSystemPromptBuilder.EXPECT().
+				Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), "").
+				Return(builtSystemPrompt)
+
+			suite.mockInferenceLoop.EXPECT().
+				Run(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ *models.LLMConnection, _ []*models.Tool, _ map[*models.MCPConnection][]*models.Tool, msgs []*interfaces.ChatCompletionMessage) ([]*interfaces.ChatCompletionMessage, error) {
+					// The built system prompt leads the stream, never coming from inputs.
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "system", msgs[0].Role)
+						assert.Equal(t, builtSystemPrompt, msgs[0].Content)
+						assert.Equal(t, "user", msgs[1].Role)
+						assert.Equal(t, "hello", msgs[1].Content)
+					}
+					return append(
+						msgs,
+						&interfaces.ChatCompletionMessage{Role: "assistant", Content: expectedFinal},
+					), nil
+				})
+
+			suite.mockConversationHistory.EXPECT().Write(gomock.Any(),
+				conversationId, gomock.Any()).
+				DoAndReturn(func(_ context.Context, _ string, msgs []knowledge_interfaces.ConversationMessage) ([]knowledge_interfaces.ConversationMessage, error) {
+					// The built prompt is never persisted.
+					if assert.Len(t, msgs, 2) {
+						assert.Equal(t, "user", msgs[0].Role)
+						assert.Equal(t, "hello", msgs[0].Content)
+						assert.Equal(t, "assistant", msgs[1].Role)
+						assert.Equal(t, expectedFinal, msgs[1].Content)
+					}
+					return msgs, nil
+				})
+		}
+
+		t.Run("Should not persist the built prompt", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+		})
+
+		t.Run("Should return the final assistant message", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDrivingResponseBeforeEach(t)
+			initSuite(suite)
+
+			result, err := suite.sut.Drive(ctx, conversationId, "", inputs)
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+			}
+		})
+
 	})
 }

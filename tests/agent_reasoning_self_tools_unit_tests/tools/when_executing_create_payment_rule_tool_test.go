@@ -44,30 +44,6 @@ func TestWhenExecutingCreatePaymentRuleTool(t *testing.T) {
 		}
 	}
 
-	t.Run("Given name, price and config arguments", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should forward the encoded request to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreatePaymentRuleToolBeforeEach(t)
-			suite.mockCreatePaymentRuleExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(_ context.Context, request *payment_requests.SavePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
-					assert.Equal(t, "premium", request.Name)
-					assert.Equal(t, "1000", request.Price)
-					assert.Empty(t, request.Method)
-					assert.Equal(t, json.RawMessage(`{"network":"eip155:80002"}`), request.Config)
-					return &payment_responses.PaymentRuleResponse{}, nil
-				})
-
-			out, err := suite.sut.Execute(ctx, ruleArgs())
-
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
-		})
-	})
-
 	t.Run("Given the config argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -100,6 +76,30 @@ func TestWhenExecutingCreatePaymentRuleTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "invalid price")
+		})
+	})
+
+	t.Run("Given name, price and config arguments", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should forward the encoded request to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentRuleToolBeforeEach(t)
+			suite.mockCreatePaymentRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(_ context.Context, request *payment_requests.SavePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
+					assert.Equal(t, "premium", request.Name)
+					assert.Equal(t, "1000", request.Price)
+					assert.Empty(t, request.Method)
+					assert.Equal(t, json.RawMessage(`{"network":"eip155:80002"}`), request.Config)
+					return &payment_responses.PaymentRuleResponse{}, nil
+				})
+
+			out, err := suite.sut.Execute(ctx, ruleArgs())
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
 		})
 	})
 }

@@ -34,6 +34,24 @@ func TestWhenExecutingKillProcessTool(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the executor fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingKillProcessToolBeforeEach(t)
+			suite.mockKillProcessExecutor.EXPECT().
+				Kill(ctx, gomock.Any()).
+				Return(errors.New("no such process"))
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"session_id": uuid.New().String()})
+
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "no such process")
+		})
+	})
+
 	t.Run("Given a session id", func(t *testing.T) {
 		t.Parallel()
 
@@ -50,24 +68,6 @@ func TestWhenExecutingKillProcessTool(t *testing.T) {
 			if assert.NotNil(t, out) {
 				assert.Equal(t, true, out["success"])
 			}
-		})
-	})
-
-	t.Run("Given the executor fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingKillProcessToolBeforeEach(t)
-			suite.mockKillProcessExecutor.EXPECT().
-				Kill(ctx, gomock.Any()).
-				Return(errors.New("no such process"))
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"session_id": uuid.New().String()})
-
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "no such process")
 		})
 	})
 }

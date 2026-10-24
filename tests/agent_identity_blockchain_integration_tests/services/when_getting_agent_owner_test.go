@@ -23,6 +23,19 @@ func WhenGettingAgentOwnerBeforeEach(t *testing.T) *WhenGettingAgentOwnerTesting
 func TestWhenGettingAgentOwner(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a token id that was never minted", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail rather than report a zero owner", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenGettingAgentOwnerBeforeEach(t)
+
+			_, err := suite.sut.OwnerOf(suite.fixture.chainId(), suite.fixture.stack.Collection, 999)
+
+			assert.ErrorContains(t, err, "custom error 0x7e273289")
+		})
+	})
+
 	t.Run("Given a minted agent", func(t *testing.T) {
 		t.Parallel()
 
@@ -35,19 +48,6 @@ func TestWhenGettingAgentOwner(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, suite.fixture.anvilAccountSettings.Address, owner)
-		})
-	})
-
-	t.Run("Given a token id that was never minted", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail rather than report a zero owner", func(t *testing.T) {
-			t.Parallel()
-			suite := WhenGettingAgentOwnerBeforeEach(t)
-
-			_, err := suite.sut.OwnerOf(suite.fixture.chainId(), suite.fixture.stack.Collection, 999)
-
-			assert.ErrorContains(t, err, "custom error 0x7e273289")
 		})
 	})
 }

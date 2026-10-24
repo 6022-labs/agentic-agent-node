@@ -31,6 +31,22 @@ func TestWhenFindingAgentByAddress(t *testing.T) {
 
 		agentName := "managed-agent"
 
+		t.Run("Should return a zero collection for an address that owns no agent", func(t *testing.T) {
+			t.Parallel()
+			suite := WhenFindingAgentByAddressBeforeEach(t)
+
+			collection, tokenId, name, err := suite.sut.FindAgentByAddress(
+				suite.fixture.chainId(),
+				agent_enums.AddressTypeEvm,
+				"0x000000000000000000000000000000000000dEaD",
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, common.Address{}, collection)
+			assert.Zero(t, tokenId)
+			assert.Empty(t, name)
+		})
+
 		t.Run("Should find it by its registered evm address", func(t *testing.T) {
 			t.Parallel()
 			suite := WhenFindingAgentByAddressBeforeEach(t)
@@ -46,22 +62,6 @@ func TestWhenFindingAgentByAddress(t *testing.T) {
 			assert.Equal(t, suite.fixture.stack.Collection, collection)
 			assert.Equal(t, tokenId, foundTokenId)
 			assert.Equal(t, agentName, name)
-		})
-
-		t.Run("Should return a zero collection for an address that owns no agent", func(t *testing.T) {
-			t.Parallel()
-			suite := WhenFindingAgentByAddressBeforeEach(t)
-
-			collection, tokenId, name, err := suite.sut.FindAgentByAddress(
-				suite.fixture.chainId(),
-				agent_enums.AddressTypeEvm,
-				"0x000000000000000000000000000000000000dEaD",
-			)
-
-			assert.NoError(t, err)
-			assert.Equal(t, common.Address{}, collection)
-			assert.Zero(t, tokenId)
-			assert.Empty(t, name)
 		})
 	})
 }

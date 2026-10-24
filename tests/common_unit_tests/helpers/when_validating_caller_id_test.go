@@ -11,16 +11,6 @@ import (
 func TestWhenValidatingCallerId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given an opaque caller id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should accept it", func(t *testing.T) {
-			t.Parallel()
-
-			assert.True(t, helpers.IsCallerId("ApiKey:7F3c"))
-		})
-	})
-
 	t.Run("Given a blank caller id", func(t *testing.T) {
 		t.Parallel()
 
@@ -58,6 +48,16 @@ func TestWhenValidatingCallerId(t *testing.T) {
 			t.Parallel()
 
 			assert.False(t, helpers.IsCallerId(strings.Repeat("é", helpers.CallerIdMaxLength+1)))
+		})
+	})
+
+	t.Run("Given an opaque caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should accept it", func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(t, helpers.IsCallerId("ApiKey:7F3c"))
 		})
 	})
 

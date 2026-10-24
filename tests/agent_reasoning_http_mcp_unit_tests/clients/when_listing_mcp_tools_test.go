@@ -36,41 +36,25 @@ func WhenListingMcpToolsAfterEach(suite *WhenListingMcpToolsTestingSuite) {
 func TestWhenListingMcpTools(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the MCP server returns a tools list", func(t *testing.T) {
+	t.Run("Given the context is already cancelled", func(t *testing.T) {
 		t.Parallel()
 
-		var seenContentType, seenAccept, seenAuth string
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenContentType = r.Header.Get("Content-Type")
-			seenAccept = r.Header.Get("Accept")
-			seenAuth = r.Header.Get("Authorization")
+		handler := func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write(
-				[]byte(
-					`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input",` +
-						`"inputSchema":{"type":"object","properties":{},"required":[]}}]}}`,
-				),
-			)
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"tools":[]}}`))
 		}
 
-		t.Run("Should send a jsonrpc list tools request with the custom headers", func(t *testing.T) {
+		t.Run("Should abort the request instead of hitting the server", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingMcpToolsBeforeEach(t, handler)
 			defer WhenListingMcpToolsAfterEach(suite)
 
-			res, err := suite.sut.ListTools(
-				context.Background(),
-				suite.server.URL,
-				map[string]string{"Authorization": "Bearer token"},
-			)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-			assert.NoError(t, err)
-			assert.Equal(t, "application/json", seenContentType)
-			assert.Contains(t, seenAccept, "application/json")
-			assert.Equal(t, "Bearer token", seenAuth)
-			assert.Len(t, res.Result.Tools, 1)
-			assert.Equal(t, "echo", res.Result.Tools[0].Name)
+			_, err := suite.sut.ListTools(ctx, suite.server.URL, nil)
+			assert.ErrorIs(t, err, context.Canceled)
 		})
 	})
 
@@ -116,28 +100,6 @@ func TestWhenListingMcpTools(t *testing.T) {
 			var statusErr *clients.McpStatusError
 			assert.ErrorAs(t, err, &statusErr)
 			assert.Equal(t, http.StatusUnauthorized, statusErr.StatusCode)
-		})
-	})
-
-	t.Run("Given the context is already cancelled", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"tools":[]}}`))
-		}
-
-		t.Run("Should abort the request instead of hitting the server", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingMcpToolsBeforeEach(t, handler)
-			defer WhenListingMcpToolsAfterEach(suite)
-
-			ctx, cancel := context.WithCancel(context.Background())
-			cancel()
-
-			_, err := suite.sut.ListTools(ctx, suite.server.URL, nil)
-			assert.ErrorIs(t, err, context.Canceled)
 		})
 	})
 
@@ -219,6 +181,44 @@ func TestWhenListingMcpTools(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, res)
 			assert.Empty(t, res.Result.Tools)
+		})
+	})
+
+	t.Run("Given the MCP server returns a tools list", func(t *testing.T) {
+		t.Parallel()
+
+		var seenContentType, seenAccept, seenAuth string
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			seenContentType = r.Header.Get("Content-Type")
+			seenAccept = r.Header.Get("Accept")
+			seenAuth = r.Header.Get("Authorization")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write(
+				[]byte(
+					`{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"echo","description":"Echo input",` +
+						`"inputSchema":{"type":"object","properties":{},"required":[]}}]}}`,
+				),
+			)
+		}
+
+		t.Run("Should send a jsonrpc list tools request with the custom headers", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingMcpToolsBeforeEach(t, handler)
+			defer WhenListingMcpToolsAfterEach(suite)
+
+			res, err := suite.sut.ListTools(
+				context.Background(),
+				suite.server.URL,
+				map[string]string{"Authorization": "Bearer token"},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "application/json", seenContentType)
+			assert.Contains(t, seenAccept, "application/json")
+			assert.Equal(t, "Bearer token", seenAuth)
+			assert.Len(t, res.Result.Tools, 1)
+			assert.Equal(t, "echo", res.Result.Tools[0].Name)
 		})
 	})
 

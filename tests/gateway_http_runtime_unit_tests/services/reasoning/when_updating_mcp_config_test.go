@@ -69,6 +69,35 @@ func TestWhenUpdatingMCPConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the connection does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+
+		initSuite := func(suite *WhenUpdatingMCPConfigTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).
+				Return(&clients.PutInternalConfigMcpIdResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"not_found"}`),
+				}, nil)
+		}
+
+		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingMCPConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(context.Background(), id, &models.ExternalUpdateMCPConnectionPayload{
+				Name: "renamed",
+				Url:  "https://mcp.example",
+			})
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
+		})
+	})
+
 	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
@@ -96,35 +125,6 @@ func TestWhenUpdatingMCPConfig(t *testing.T) {
 
 			var target *apperrors.ValidationError
 			assert.ErrorAs(t, err, &target)
-		})
-	})
-
-	t.Run("Given the connection does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-
-		initSuite := func(suite *WhenUpdatingMCPConfigTestingSuite) {
-			suite.mockClient.EXPECT().
-				PutInternalConfigMcpIdWithBodyWithResponse(gomock.Any(), id.String(), "application/json", gomock.Any()).
-				Return(&clients.PutInternalConfigMcpIdResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-					Body:         []byte(`{"code":"not_found"}`),
-				}, nil)
-		}
-
-		t.Run("Should return ErrMCPConnectionNotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingMCPConfigBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Update(context.Background(), id, &models.ExternalUpdateMCPConnectionPayload{
-				Name: "renamed",
-				Url:  "https://mcp.example",
-			})
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
 		})
 	})
 

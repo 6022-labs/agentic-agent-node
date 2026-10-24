@@ -27,6 +27,21 @@ func WhenListingCollectionsBeforeEach(t *testing.T) *WhenListingCollectionsTesti
 func TestWhenListingCollections(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a chain with no configured manager", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail instead of calling a zero address", func(t *testing.T) {
+			t.Parallel()
+			fixture := newChainFixture(t)
+			emptySettings := settings.AgentCollectionsManagersSettings{}
+			sut := services.NewAgentCollectionsManagerRequester(fixture.ethClientFactory, &emptySettings)
+
+			_, err := sut.ListCollections(fixture.chainId())
+
+			assert.ErrorContains(t, err, "no AgentCollectionsManager configured for chainId")
+		})
+	})
+
 	t.Run("Given a manager governing one created collection", func(t *testing.T) {
 		t.Parallel()
 
@@ -76,21 +91,6 @@ func TestWhenListingCollections(t *testing.T) {
 			if assert.Len(t, collections, 1) {
 				assert.Equal(t, uint64(1), collections[0].ModeratorCount)
 			}
-		})
-	})
-
-	t.Run("Given a chain with no configured manager", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail instead of calling a zero address", func(t *testing.T) {
-			t.Parallel()
-			fixture := newChainFixture(t)
-			emptySettings := settings.AgentCollectionsManagersSettings{}
-			sut := services.NewAgentCollectionsManagerRequester(fixture.ethClientFactory, &emptySettings)
-
-			_, err := sut.ListCollections(fixture.chainId())
-
-			assert.ErrorContains(t, err, "no AgentCollectionsManager configured for chainId")
 		})
 	})
 }

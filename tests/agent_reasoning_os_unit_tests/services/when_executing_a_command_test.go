@@ -144,57 +144,25 @@ func TestWhenExecutingACommand(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a background command", func(t *testing.T) {
+	t.Run("Given the runner fails", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return its session id without waiting", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingACommandBeforeEach(t)
-			sessionId := uuid.New()
-			suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
-			suite.mockProcessRegistry.EXPECT().
-				Register("tail -f log", suite.osSettings.Workdir, suite.mockCommandHandle).
-				Return(&os_interfaces.BackgroundProcess{Id: sessionId, Running: true}, nil)
-			suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
-			suite.mockCommandHandle.EXPECT().Snapshot().Return(&os_interfaces.CommandResult{Running: true})
+			suite.mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return(nil, errors.New("fork failed"))
 
-			result, err := suite.sut.Run(ctx, "tail -f log", "", nil, nil, lo.ToPtr(true))
+			result, err := suite.sut.Run(ctx, "echo hi", "", nil, nil, nil)
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.True(t, result.Running)
-				if assert.NotNil(t, result.SessionId) {
-					assert.Equal(t, sessionId, *result.SessionId)
-				}
-			}
+			assert.Nil(t, result)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
 		})
+	})
 
-		t.Run("Should report the exit code of a command that already finished", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingACommandBeforeEach(t)
-			sessionId := uuid.New()
-			suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
-			suite.mockProcessRegistry.EXPECT().
-				Register(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&os_interfaces.BackgroundProcess{Id: sessionId}, nil)
-			suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
-			suite.mockCommandHandle.EXPECT().
-				Snapshot().
-				Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(127), Stderr: "not found"})
-
-			result, err := suite.sut.Run(ctx, "npm ci", "", nil, nil, lo.ToPtr(true))
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, result) {
-				assert.False(t, result.Running)
-				if assert.NotNil(t, result.ExitCode) {
-					assert.Equal(t, 127, *result.ExitCode)
-				}
-				assert.Equal(t, "not found", result.Stderr)
-			}
-		})
+	t.Run("Given a background command", func(t *testing.T) {
+		t.Parallel()
 
 		t.Run(
 			"Should run it to the background ceiling",
@@ -254,10 +222,130 @@ func TestWhenExecutingACommand(t *testing.T) {
 				assert.ErrorAs(t, err, &conflictError)
 			})
 		})
+
+		t.Run("Should return its session id without waiting", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingACommandBeforeEach(t)
+			sessionId := uuid.New()
+			suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
+			suite.mockProcessRegistry.EXPECT().
+				Register("tail -f log", suite.osSettings.Workdir, suite.mockCommandHandle).
+				Return(&os_interfaces.BackgroundProcess{Id: sessionId, Running: true}, nil)
+			suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
+			suite.mockCommandHandle.EXPECT().Snapshot().Return(&os_interfaces.CommandResult{Running: true})
+
+			result, err := suite.sut.Run(ctx, "tail -f log", "", nil, nil, lo.ToPtr(true))
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.True(t, result.Running)
+				if assert.NotNil(t, result.SessionId) {
+					assert.Equal(t, sessionId, *result.SessionId)
+				}
+			}
+		})
+
+		t.Run("Should report the exit code of a command that already finished", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingACommandBeforeEach(t)
+			sessionId := uuid.New()
+			suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
+			suite.mockProcessRegistry.EXPECT().
+				Register(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&os_interfaces.BackgroundProcess{Id: sessionId}, nil)
+			suite.mockCommandMetrics.EXPECT().RecordBackgroundStarted(ctx)
+			suite.mockCommandHandle.EXPECT().
+				Snapshot().
+				Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(127), Stderr: "not found"})
+
+			result, err := suite.sut.Run(ctx, "npm ci", "", nil, nil, lo.ToPtr(true))
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, result) {
+				assert.False(t, result.Running)
+				if assert.NotNil(t, result.ExitCode) {
+					assert.Equal(t, 127, *result.ExitCode)
+				}
+				assert.Equal(t, "not found", result.Stderr)
+			}
+		})
 	})
 
 	t.Run("Given a foreground command with a yield delay", func(t *testing.T) {
 		t.Parallel()
+
+		t.Run("Given an explicit zero yield delay", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should wait the command out", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenExecutingACommandBeforeEach(t)
+
+				suite.mockCommandRunner.EXPECT().
+					Run(ctx, gomock.Any()).
+					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)}, nil)
+
+				result, err := suite.sut.Run(ctx, "echo hi", "", nil, lo.ToPtr(0), nil)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			})
+		})
+
+		t.Run("Given a yield delay reaching the timeout", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should skip yielding", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenExecutingACommandBeforeEach(t)
+
+				suite.mockCommandRunner.EXPECT().
+					Run(ctx, gomock.Any()).
+					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)}, nil)
+
+				result, err := suite.sut.Run(ctx, "echo hi", "", lo.ToPtr(30), lo.ToPtr(30), nil)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			})
+		})
+
+		t.Run("Given the registry is full", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should wait it out", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenExecutingACommandBeforeEach(t)
+
+				exited := make(chan struct{})
+				close(exited)
+
+				suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
+				gomock.InOrder(
+					suite.mockCommandHandle.EXPECT().Done().Return(make(chan struct{})),
+					suite.mockCommandHandle.EXPECT().Done().Return(exited),
+				)
+				suite.mockProcessRegistry.EXPECT().
+					Register(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, apperrors.NewConflictError("too_many_background_processes", "full"))
+				suite.mockCommandHandle.EXPECT().
+					Snapshot().
+					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)})
+
+				result, err := suite.sut.Run(ctx, "sleep 60", "", lo.ToPtr(60), lo.ToPtr(1), nil)
+
+				assert.NoError(t, err)
+				if assert.NotNil(t, result) {
+					assert.Nil(t, result.SessionId)
+					assert.Equal(t, lo.ToPtr(0), result.ExitCode)
+				}
+			})
+		})
 
 		t.Run("Given a command that finishes before yielding", func(t *testing.T) {
 			t.Parallel()
@@ -314,94 +402,6 @@ func TestWhenExecutingACommand(t *testing.T) {
 					assert.True(t, result.Running)
 				}
 			})
-		})
-
-		t.Run("Given the registry is full", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should wait it out", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenExecutingACommandBeforeEach(t)
-
-				exited := make(chan struct{})
-				close(exited)
-
-				suite.mockCommandRunner.EXPECT().Start(gomock.Any()).Return(suite.mockCommandHandle, nil)
-				gomock.InOrder(
-					suite.mockCommandHandle.EXPECT().Done().Return(make(chan struct{})),
-					suite.mockCommandHandle.EXPECT().Done().Return(exited),
-				)
-				suite.mockProcessRegistry.EXPECT().
-					Register(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil, apperrors.NewConflictError("too_many_background_processes", "full"))
-				suite.mockCommandHandle.EXPECT().
-					Snapshot().
-					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)})
-
-				result, err := suite.sut.Run(ctx, "sleep 60", "", lo.ToPtr(60), lo.ToPtr(1), nil)
-
-				assert.NoError(t, err)
-				if assert.NotNil(t, result) {
-					assert.Nil(t, result.SessionId)
-					assert.Equal(t, lo.ToPtr(0), result.ExitCode)
-				}
-			})
-		})
-
-		t.Run("Given an explicit zero yield delay", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should wait the command out", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenExecutingACommandBeforeEach(t)
-
-				suite.mockCommandRunner.EXPECT().
-					Run(ctx, gomock.Any()).
-					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)}, nil)
-
-				result, err := suite.sut.Run(ctx, "echo hi", "", nil, lo.ToPtr(0), nil)
-
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-			})
-		})
-
-		t.Run("Given a yield delay reaching the timeout", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should skip yielding", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenExecutingACommandBeforeEach(t)
-
-				suite.mockCommandRunner.EXPECT().
-					Run(ctx, gomock.Any()).
-					Return(&os_interfaces.CommandResult{ExitCode: lo.ToPtr(0)}, nil)
-
-				result, err := suite.sut.Run(ctx, "echo hi", "", lo.ToPtr(30), lo.ToPtr(30), nil)
-
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-			})
-		})
-	})
-
-	t.Run("Given the runner fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return an InternalError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingACommandBeforeEach(t)
-			suite.mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return(nil, errors.New("fork failed"))
-
-			result, err := suite.sut.Run(ctx, "echo hi", "", nil, nil, nil)
-
-			assert.Nil(t, result)
-			var internalError *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalError)
 		})
 	})
 

@@ -248,80 +248,6 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the conversation is new", func(t *testing.T) {
-		t.Parallel()
-
-		req := &requests.AppendConversationMessagesRequest{
-			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
-			Messages: []requests.ConversationMessageInput{
-				{Role: "user", Content: "hi", Timestamp: now},
-			},
-		}
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			agent := suite.expectMintedAgent()
-			gomock.InOrder(
-				suite.mockConversationRepository.EXPECT().
-					Ensure(gomock.Any(), &models.Conversation{
-						Id:       conversationId,
-						AgentId:  agent.Id,
-						CallerId: lo.ToPtr(appendingCallerId),
-					}).
-					Return(true, nil),
-				suite.mockConversationRepository.EXPECT().
-					GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, lo.ToPtr(appendingCallerId)).
-					Return(model_builders.NewConversationBuilder().
-						WithId(conversationId).
-						WithAgentId(agent.Id).
-						WithCallerId(appendingCallerId).
-						Build(), nil),
-				suite.mockMessageAppender.EXPECT().
-					Append(gomock.Any(), conversationId, gomock.Any()).
-					Return(nil, nil),
-			)
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
-		}
-
-		t.Run("Should create it for the caller", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(appendingCallerCtx, req)
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the conversation already exists", func(t *testing.T) {
-		t.Parallel()
-
-		req := &requests.AppendConversationMessagesRequest{
-			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
-			Messages: []requests.ConversationMessageInput{
-				{Role: "user", Content: "hi", Timestamp: now},
-			},
-		}
-
-		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			agent := suite.expectMintedAgent()
-			suite.expectReachableConversation(agent, conversationId)
-			suite.mockMessageAppender.EXPECT().Append(gomock.Any(), conversationId, gomock.Any()).Return(nil, nil)
-		}
-
-		t.Run("Should not count it as started", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAppendingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(appendingCallerCtx, req)
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -452,6 +378,80 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Contains(t, internalErr.Message, "db down")
+		})
+	})
+
+	t.Run("Given the conversation is new", func(t *testing.T) {
+		t.Parallel()
+
+		req := &requests.AppendConversationMessagesRequest{
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
+			Messages: []requests.ConversationMessageInput{
+				{Role: "user", Content: "hi", Timestamp: now},
+			},
+		}
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			agent := suite.expectMintedAgent()
+			gomock.InOrder(
+				suite.mockConversationRepository.EXPECT().
+					Ensure(gomock.Any(), &models.Conversation{
+						Id:       conversationId,
+						AgentId:  agent.Id,
+						CallerId: lo.ToPtr(appendingCallerId),
+					}).
+					Return(true, nil),
+				suite.mockConversationRepository.EXPECT().
+					GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, lo.ToPtr(appendingCallerId)).
+					Return(model_builders.NewConversationBuilder().
+						WithId(conversationId).
+						WithAgentId(agent.Id).
+						WithCallerId(appendingCallerId).
+						Build(), nil),
+				suite.mockMessageAppender.EXPECT().
+					Append(gomock.Any(), conversationId, gomock.Any()).
+					Return(nil, nil),
+			)
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
+		}
+
+		t.Run("Should create it for the caller", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(appendingCallerCtx, req)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the conversation already exists", func(t *testing.T) {
+		t.Parallel()
+
+		req := &requests.AppendConversationMessagesRequest{
+			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
+			Messages: []requests.ConversationMessageInput{
+				{Role: "user", Content: "hi", Timestamp: now},
+			},
+		}
+
+		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
+			agent := suite.expectMintedAgent()
+			suite.expectReachableConversation(agent, conversationId)
+			suite.mockMessageAppender.EXPECT().Append(gomock.Any(), conversationId, gomock.Any()).Return(nil, nil)
+		}
+
+		t.Run("Should not count it as started", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAppendingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(appendingCallerCtx, req)
+
+			assert.NoError(t, err)
 		})
 	})
 

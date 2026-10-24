@@ -43,6 +43,27 @@ func WhenCreatingTransactorBeforeEach(t *testing.T) *WhenCreatingTransactorTesti
 func TestWhenCreatingTransactor(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the node wallet is not bootstrapped", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, false, nil)
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCreatingTransactorBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Create(context.Background(), 1)
+
+			assert.ErrorContains(t, err, "wallet credentials not present")
+		})
+	})
+
 	t.Run("Given the node wallet is available", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,27 +83,6 @@ func TestWhenCreatingTransactor(t *testing.T) {
 			assert.NoError(t, err)
 			key, _ := crypto.HexToECDSA(testPrivateKeyHex)
 			assert.Equal(t, crypto.PubkeyToAddress(key.PublicKey).Hex(), opts.From.Hex())
-		})
-	})
-
-	t.Run("Given the node wallet is not bootstrapped", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCreatingTransactorTestingSuite) {
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetForId(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, false, nil)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCreatingTransactorBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Create(context.Background(), 1)
-
-			assert.ErrorContains(t, err, "wallet credentials not present")
 		})
 	})
 }

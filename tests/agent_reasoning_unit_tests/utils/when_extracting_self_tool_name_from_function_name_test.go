@@ -10,19 +10,6 @@ import (
 func TestWhenExtractingSelfToolNameFromFunctionName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a namespaced function name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should extract the bare tool name", func(t *testing.T) {
-			t.Parallel()
-
-			toolName, err := utils.ExtractSelfToolNameFromFunctionName("self_get_registration")
-
-			assert.NoError(t, err)
-			assert.Equal(t, "get_registration", toolName)
-		})
-	})
-
 	t.Run("Given a function name outside the self namespace", func(t *testing.T) {
 		t.Parallel()
 
@@ -46,6 +33,19 @@ func TestWhenExtractingSelfToolNameFromFunctionName(t *testing.T) {
 			_, err := utils.ExtractSelfToolNameFromFunctionName("self_")
 
 			assert.ErrorContains(t, err, "invalid function name format")
+		})
+	})
+
+	t.Run("Given a namespaced function name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should extract the bare tool name", func(t *testing.T) {
+			t.Parallel()
+
+			toolName, err := utils.ExtractSelfToolNameFromFunctionName("self_get_registration")
+
+			assert.NoError(t, err)
+			assert.Equal(t, "get_registration", toolName)
 		})
 	})
 }

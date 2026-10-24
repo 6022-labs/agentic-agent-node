@@ -65,6 +65,33 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the connection does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockClient.EXPECT().
+				PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PostInternalConfigMcpToolsResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
+					Body:         []byte(`{"code":"mcp_connection_not_found"}`),
+				}, nil)
+		}
+
+		t.Run("Should return the not-found sentinel untouched", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.DiscoverTools(
+				context.Background(),
+				&models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")},
+			)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
+		})
+	})
+
 	t.Run("Given the server cannot be reached", func(t *testing.T) {
 		t.Parallel()
 
@@ -93,33 +120,6 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "url", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the connection does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockClient.EXPECT().
-				PostInternalConfigMcpToolsWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
-				Return(&clients.PostInternalConfigMcpToolsResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
-					Body:         []byte(`{"code":"mcp_connection_not_found"}`),
-				}, nil)
-		}
-
-		t.Run("Should return the not-found sentinel untouched", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.DiscoverTools(
-				context.Background(),
-				&models.ExternalDiscoverMCPServerToolsPayload{Url: lo.ToPtr("https://mcp.github.example")},
-			)
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrMCPConnectionNotFound)
 		})
 	})
 

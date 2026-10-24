@@ -43,31 +43,6 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 
 	ctx := helpers.ContextWithCallerId(context.Background(), listToolCallerId)
 
-	t.Run("Given a caller id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingListConversationsToolBeforeEach(t)
-			suite.mockListConversationsExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(
-					callCtx context.Context,
-					_ *knowledge_requests.ListConversationsRequest,
-				) (*knowledge_responses.ListConversationsResponse, error) {
-					carried, _ := helpers.CallerIdFromContext(callCtx)
-					assert.Equal(t, listToolCallerId, carried)
-					return &knowledge_responses.ListConversationsResponse{}, nil
-				}).
-				Times(1)
-
-			_, err := suite.sut.Execute(ctx, nil)
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the use case fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -82,33 +57,6 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, nil)
 
 			assert.ErrorContains(t, err, "db blew")
-		})
-	})
-
-	t.Run("Given no page arguments", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should expose the conversation id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingListConversationsToolBeforeEach(t)
-			suite.mockListConversationsExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				Return(&knowledge_responses.ListConversationsResponse{
-					Page:          1,
-					TotalElements: 1,
-					Conversations: []knowledge_responses.ConversationResponse{
-						{ConversationId: "c1", Name: lo.ToPtr("ERC20 mint audit"), MessageCount: 2},
-					},
-				}, nil)
-
-			out, err := suite.sut.Execute(ctx, nil)
-
-			assert.NoError(t, err)
-			conversations, ok := out["conversations"].([]any)
-			assert.True(t, ok)
-			assert.Len(t, conversations, 1)
-			assert.Equal(t, "c1", conversations[0].(map[string]any)["conversationId"])
 		})
 	})
 
@@ -157,6 +105,58 @@ func TestWhenExecutingListConversationsTool(t *testing.T) {
 			_, err := suite.sut.Execute(ctx, map[string]any{"page": float64(0), "elementsPerPage": float64(-5)})
 
 			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given a caller id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should hand the caller's context to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingListConversationsToolBeforeEach(t)
+			suite.mockListConversationsExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					callCtx context.Context,
+					_ *knowledge_requests.ListConversationsRequest,
+				) (*knowledge_responses.ListConversationsResponse, error) {
+					carried, _ := helpers.CallerIdFromContext(callCtx)
+					assert.Equal(t, listToolCallerId, carried)
+					return &knowledge_responses.ListConversationsResponse{}, nil
+				}).
+				Times(1)
+
+			_, err := suite.sut.Execute(ctx, nil)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given no page arguments", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should expose the conversation id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingListConversationsToolBeforeEach(t)
+			suite.mockListConversationsExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				Return(&knowledge_responses.ListConversationsResponse{
+					Page:          1,
+					TotalElements: 1,
+					Conversations: []knowledge_responses.ConversationResponse{
+						{ConversationId: "c1", Name: lo.ToPtr("ERC20 mint audit"), MessageCount: 2},
+					},
+				}, nil)
+
+			out, err := suite.sut.Execute(ctx, nil)
+
+			assert.NoError(t, err)
+			conversations, ok := out["conversations"].([]any)
+			assert.True(t, ok)
+			assert.Len(t, conversations, 1)
+			assert.Equal(t, "c1", conversations[0].(map[string]any)["conversationId"])
 		})
 	})
 }

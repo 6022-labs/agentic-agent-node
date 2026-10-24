@@ -36,6 +36,27 @@ func WhenGettingConversationNameBeforeEach(t *testing.T) *WhenGettingConversatio
 func TestWhenGettingConversationName(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a padded conversation id", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().
+				GetById(gomock.Any(), "c1").
+				Return(model_builders.NewConversationBuilder().WithId("c1").Build(), nil)
+		}
+
+		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.GetName(context.Background(), " c1 ")
+
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -72,27 +93,6 @@ func TestWhenGettingConversationName(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Nil(t, name)
-		})
-	})
-
-	t.Run("Given a padded conversation id", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().
-				GetById(gomock.Any(), "c1").
-				Return(model_builders.NewConversationBuilder().WithId("c1").Build(), nil)
-		}
-
-		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.GetName(context.Background(), " c1 ")
-
-			assert.NoError(t, err)
 		})
 	})
 

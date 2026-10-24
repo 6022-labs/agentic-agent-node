@@ -75,7 +75,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 	nodeWallet := common_tests.RandomEthAddress().Hex()
 	agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
 
-	t.Run("Given the node wallet controls a token in the draft collection", func(t *testing.T) {
+	t.Run("Given no token is found anywhere", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
@@ -84,10 +84,13 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 				Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).
-				Return(uint64(7), nil)
+				Return(uint64(0), nil)
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).
+				Return(common.Address{}, uint64(0), "", nil)
 		}
 
-		t.Run("Should return that token without scanning the manager", func(t *testing.T) {
+		t.Run("Should report tokenId 0", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenResolvingMintedTokenBeforeEach(t)
@@ -96,7 +99,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 			_, tokenId, err := suite.sut.ResolveMintedToken(context.Background(), agent)
 
 			assert.NoError(t, err)
-			assert.Equal(t, uint64(7), tokenId)
+			assert.Equal(t, uint64(0), tokenId)
 		})
 	})
 
@@ -131,7 +134,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no token is found anywhere", func(t *testing.T) {
+	t.Run("Given the node wallet controls a token in the draft collection", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenResolvingMintedTokenTestingSuite) {
@@ -140,13 +143,10 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 				Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				AddressToTokenId(gomock.Any(), gomock.Any(), enums.AddressTypeEvm, gomock.Any()).
-				Return(uint64(0), nil)
-			suite.mockAgentCollectionsManagerRequester.EXPECT().
-				FindAgentByAddress(gomock.Any(), enums.AddressTypeEvm, gomock.Any()).
-				Return(common.Address{}, uint64(0), "", nil)
+				Return(uint64(7), nil)
 		}
 
-		t.Run("Should report tokenId 0", func(t *testing.T) {
+		t.Run("Should return that token without scanning the manager", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenResolvingMintedTokenBeforeEach(t)
@@ -155,7 +155,7 @@ func TestWhenResolvingMintedToken(t *testing.T) {
 			_, tokenId, err := suite.sut.ResolveMintedToken(context.Background(), agent)
 
 			assert.NoError(t, err)
-			assert.Equal(t, uint64(0), tokenId)
+			assert.Equal(t, uint64(7), tokenId)
 		})
 	})
 }

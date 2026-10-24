@@ -137,6 +137,24 @@ func TestWhenResolvingConversation(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a padded conversation key", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should claim it trimmed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenResolvingConversationBeforeEach(t)
+			suite.expectAgent()
+			suite.expectEnsure("c1", true)
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
+
+			conversationId, err := suite.sut.Resolve(ctx, " c1 ", alice)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "c1", conversationId)
+		})
+	})
+
 	t.Run("Given no conversation key", func(t *testing.T) {
 		t.Parallel()
 
@@ -162,24 +180,6 @@ func TestWhenResolvingConversation(t *testing.T) {
 			assert.Equal(t, ensuredId, conversationId)
 			_, parseErr := uuid.Parse(conversationId)
 			assert.NoError(t, parseErr)
-		})
-	})
-
-	t.Run("Given a padded conversation key", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should claim it trimmed", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenResolvingConversationBeforeEach(t)
-			suite.expectAgent()
-			suite.expectEnsure("c1", true)
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any())
-
-			conversationId, err := suite.sut.Resolve(ctx, " c1 ", alice)
-
-			assert.NoError(t, err)
-			assert.Equal(t, "c1", conversationId)
 		})
 	})
 
@@ -291,6 +291,29 @@ func TestWhenResolvingConversation(t *testing.T) {
 	t.Run("Given the caller owns the agent", func(t *testing.T) {
 		t.Parallel()
 
+		t.Run("Given a key that belongs to another agent", func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("Should return ErrConversationUnavailable", func(t *testing.T) {
+				t.Parallel()
+
+				suite := WhenResolvingConversationBeforeEach(t)
+				suite.expectOwnedAgent(alice)
+				suite.expectEnsure("c1", false)
+				suite.mockConversationRepository.EXPECT().
+					GetById(gomock.Any(), "c1").
+					Return(model_builders.NewConversationBuilder().
+						WithId("c1").
+						WithAgentId(uuid.New()).
+						WithCallerId(bob).
+						Build(), nil)
+
+				_, err := suite.sut.Resolve(ctx, "c1", alice)
+
+				assert.ErrorIs(t, err, interfaces.ErrConversationUnavailable)
+			})
+		})
+
 		t.Run("Given a key another caller holds", func(t *testing.T) {
 			t.Parallel()
 
@@ -324,29 +347,6 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.Equal(t, "legacy", conversationId)
-			})
-		})
-
-		t.Run("Given a key that belongs to another agent", func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("Should return ErrConversationUnavailable", func(t *testing.T) {
-				t.Parallel()
-
-				suite := WhenResolvingConversationBeforeEach(t)
-				suite.expectOwnedAgent(alice)
-				suite.expectEnsure("c1", false)
-				suite.mockConversationRepository.EXPECT().
-					GetById(gomock.Any(), "c1").
-					Return(model_builders.NewConversationBuilder().
-						WithId("c1").
-						WithAgentId(uuid.New()).
-						WithCallerId(bob).
-						Build(), nil)
-
-				_, err := suite.sut.Resolve(ctx, "c1", alice)
-
-				assert.ErrorIs(t, err, interfaces.ErrConversationUnavailable)
 			})
 		})
 	})

@@ -51,21 +51,6 @@ func TestWhenValidatingDiscoverMCPServerToolsRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a blank header value", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should pass validation", func(t *testing.T) {
-			t.Parallel()
-
-			req := &requests.DiscoverMCPServerToolsRequest{
-				ConnectionId:         lo.ToPtr(uuid.New()),
-				MCPHeaderAuthRequest: requests.MCPHeaderAuthRequest{HeaderAuth: map[string]string{"Authorization": ""}},
-			}
-
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
 	t.Run("Given a url only", func(t *testing.T) {
 		t.Parallel()
 
@@ -107,6 +92,21 @@ func TestWhenValidatingDiscoverMCPServerToolsRequest(t *testing.T) {
 			_ = req.ValidateAndSanitize()
 
 			assert.Nil(t, req.Url)
+		})
+	})
+
+	t.Run("Given a blank header value", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			req := &requests.DiscoverMCPServerToolsRequest{
+				ConnectionId:         lo.ToPtr(uuid.New()),
+				MCPHeaderAuthRequest: requests.MCPHeaderAuthRequest{HeaderAuth: map[string]string{"Authorization": ""}},
+			}
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

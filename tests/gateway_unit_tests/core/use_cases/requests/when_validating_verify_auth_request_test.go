@@ -38,19 +38,6 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the signature is shorter than 65 bytes", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject with a validation error on signature", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateVerifyAuthRequest()
-			req.Signature = "0xdeadbeef"
-
-			assert.ErrorContains(t, req.ValidateAndSanitize(), "signature")
-		})
-	})
-
 	t.Run("Given the signature has non-hex characters", func(t *testing.T) {
 		t.Parallel()
 
@@ -59,6 +46,19 @@ func TestWhenValidatingVerifyAuthRequest(t *testing.T) {
 
 			req := generateVerifyAuthRequest()
 			req.Signature = "0x" + string(make([]byte, 130))
+
+			assert.ErrorContains(t, req.ValidateAndSanitize(), "signature")
+		})
+	})
+
+	t.Run("Given the signature is shorter than 65 bytes", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject with a validation error on signature", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateVerifyAuthRequest()
+			req.Signature = "0xdeadbeef"
 
 			assert.ErrorContains(t, req.ValidateAndSanitize(), "signature")
 		})

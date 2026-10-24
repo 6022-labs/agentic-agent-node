@@ -53,20 +53,6 @@ func TestWhenLoggingFailedRequests(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a client error response", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should log a warning", func(t *testing.T) {
-			t.Parallel()
-
-			logs := run(t, http.StatusConflict, nil).All()
-
-			assert.Len(t, logs, 1)
-			assert.Equal(t, zapcore.WarnLevel, logs[0].Level)
-			assert.Equal(t, "request rejected", logs[0].Message)
-		})
-	})
-
 	t.Run("Given a server error response", func(t *testing.T) {
 		t.Parallel()
 
@@ -79,6 +65,20 @@ func TestWhenLoggingFailedRequests(t *testing.T) {
 			assert.Equal(t, zapcore.ErrorLevel, logs[0].Level)
 			assert.Equal(t, "request failed", logs[0].Message)
 			assert.Contains(t, logs[0].ContextMap(), "error")
+		})
+	})
+
+	t.Run("Given a client error response", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should log a warning", func(t *testing.T) {
+			t.Parallel()
+
+			logs := run(t, http.StatusConflict, nil).All()
+
+			assert.Len(t, logs, 1)
+			assert.Equal(t, zapcore.WarnLevel, logs[0].Level)
+			assert.Equal(t, "request rejected", logs[0].Message)
 		})
 	})
 }

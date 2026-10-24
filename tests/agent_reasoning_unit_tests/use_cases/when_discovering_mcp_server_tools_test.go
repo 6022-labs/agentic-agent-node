@@ -96,32 +96,6 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the server cannot list its tools", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockMcpRequester.EXPECT().
-				ListTools(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run("Should return a ValidationError carrying the reason", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(
-				context.Background(),
-				&requests.DiscoverMCPServerToolsRequest{Url: lo.ToPtr("https://mcp.github.example")},
-			)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Contains(t, validationErr.Message, "connection refused")
-		})
-	})
-
 	t.Run("Given the server refuses the credentials", func(t *testing.T) {
 		t.Parallel()
 
@@ -147,6 +121,32 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "headerAuth", validationErr.Field)
 			assert.Equal(t, "the server rejected these credentials — check the API key", validationErr.Message)
+		})
+	})
+
+	t.Run("Given the server cannot list its tools", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
+			suite.mockMcpRequester.EXPECT().
+				ListTools(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should return a ValidationError carrying the reason", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDiscoveringMCPServerToolsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.DiscoverMCPServerToolsRequest{Url: lo.ToPtr("https://mcp.github.example")},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationErr)
+			assert.Contains(t, validationErr.Message, "connection refused")
 		})
 	})
 

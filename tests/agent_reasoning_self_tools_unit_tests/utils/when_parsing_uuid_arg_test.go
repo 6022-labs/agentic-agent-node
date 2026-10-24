@@ -11,18 +11,16 @@ import (
 func TestWhenParsingUuidArg(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a valid uuid argument", func(t *testing.T) {
+	t.Run("Given the argument is missing", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should parse it", func(t *testing.T) {
+		t.Run("Should fail naming the argument", func(t *testing.T) {
 			t.Parallel()
 
-			id := uuid.New()
+			parsed, err := utils.UuidArg(nil, "id")
 
-			parsed, err := utils.UuidArg(map[string]any{"id": id.String()}, "id")
-
-			assert.NoError(t, err)
-			assert.Equal(t, id, parsed)
+			assert.Equal(t, uuid.Nil, parsed)
+			assert.ErrorContains(t, err, "id")
 		})
 	})
 
@@ -39,16 +37,18 @@ func TestWhenParsingUuidArg(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the argument is missing", func(t *testing.T) {
+	t.Run("Given a valid uuid argument", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should fail naming the argument", func(t *testing.T) {
+		t.Run("Should parse it", func(t *testing.T) {
 			t.Parallel()
 
-			parsed, err := utils.UuidArg(nil, "id")
+			id := uuid.New()
 
-			assert.Equal(t, uuid.Nil, parsed)
-			assert.ErrorContains(t, err, "id")
+			parsed, err := utils.UuidArg(map[string]any{"id": id.String()}, "id")
+
+			assert.NoError(t, err)
+			assert.Equal(t, id, parsed)
 		})
 	})
 }

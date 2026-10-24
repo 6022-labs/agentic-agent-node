@@ -43,6 +43,69 @@ func TestWhenAddingFile(t *testing.T) {
 
 	pin := true
 
+	t.Run("Given the IPFS node returns a non-2xx", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("boom"))
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAddingFileBeforeEach(t, handler, "")
+			defer WhenAddingFileAfterEach(suite)
+
+			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
+
+			assert.ErrorContains(t, err, "received non-200 response: 500")
+		})
+	})
+
+	t.Run("Given the IPFS node returns a malformed body", func(t *testing.T) {
+		t.Parallel()
+
+		handler := func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte("not-json"))
+		}
+
+		t.Run("Should return a decode error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAddingFileBeforeEach(t, handler, "")
+			defer WhenAddingFileAfterEach(suite)
+
+			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
+
+			assert.ErrorContains(t, err, "failed to decode response")
+		})
+	})
+
+	t.Run("Given no bearer token is configured", func(t *testing.T) {
+		t.Parallel()
+
+		var seenAuth string
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			seenAuth = r.Header.Get("Authorization")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Hash":"QmHashValue"}`))
+		}
+
+		t.Run("Should not send an Authorization header", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAddingFileBeforeEach(t, handler, "")
+			defer WhenAddingFileAfterEach(suite)
+
+			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
+
+			assert.NoError(t, err)
+			assert.Empty(t, seenAuth)
+		})
+	})
+
 	t.Run("Given the IPFS node accepts the file and a bearer token is configured", func(t *testing.T) {
 		t.Parallel()
 
@@ -86,68 +149,5 @@ func TestWhenAddingFile(t *testing.T) {
 				assert.Contains(t, string(seenBody), "agent.png")
 			},
 		)
-	})
-
-	t.Run("Given no bearer token is configured", func(t *testing.T) {
-		t.Parallel()
-
-		var seenAuth string
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			seenAuth = r.Header.Get("Authorization")
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"Hash":"QmHashValue"}`))
-		}
-
-		t.Run("Should not send an Authorization header", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAddingFileBeforeEach(t, handler, "")
-			defer WhenAddingFileAfterEach(suite)
-
-			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
-
-			assert.NoError(t, err)
-			assert.Empty(t, seenAuth)
-		})
-	})
-
-	t.Run("Given the IPFS node returns a non-2xx", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("boom"))
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAddingFileBeforeEach(t, handler, "")
-			defer WhenAddingFileAfterEach(suite)
-
-			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
-
-			assert.ErrorContains(t, err, "received non-200 response: 500")
-		})
-	})
-
-	t.Run("Given the IPFS node returns a malformed body", func(t *testing.T) {
-		t.Parallel()
-
-		handler := func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte("not-json"))
-		}
-
-		t.Run("Should return a decode error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAddingFileBeforeEach(t, handler, "")
-			defer WhenAddingFileAfterEach(suite)
-
-			_, err := suite.sut.Add([]byte("x"), "f.png", &models.ExternalAddQueryRequest{Pin: &pin})
-
-			assert.ErrorContains(t, err, "failed to decode response")
-		})
 	})
 }

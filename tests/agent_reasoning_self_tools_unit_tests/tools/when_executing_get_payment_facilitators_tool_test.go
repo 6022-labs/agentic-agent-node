@@ -38,6 +38,22 @@ func TestWhenExecutingGetPaymentFacilitatorsTool(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the use case fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingGetPaymentFacilitatorsToolBeforeEach(t)
+			suite.mockGetPaymentFacilitatorsExecutor.EXPECT().Execute(ctx).Return(nil, errors.New("boom"))
+
+			out, err := suite.sut.Execute(ctx, nil)
+
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "boom")
+		})
+	})
+
 	t.Run("Given the use case succeeds", func(t *testing.T) {
 		t.Parallel()
 
@@ -53,22 +69,6 @@ func TestWhenExecutingGetPaymentFacilitatorsTool(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, out)
-		})
-	})
-
-	t.Run("Given the use case fails", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should propagate the error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingGetPaymentFacilitatorsToolBeforeEach(t)
-			suite.mockGetPaymentFacilitatorsExecutor.EXPECT().Execute(ctx).Return(nil, errors.New("boom"))
-
-			out, err := suite.sut.Execute(ctx, nil)
-
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "boom")
 		})
 	})
 }

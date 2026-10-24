@@ -34,6 +34,21 @@ func TestWhenExecutingReadProcessOutputTool(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given a malformed session id", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail without calling the executor", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingReadProcessOutputToolBeforeEach(t)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"session_id": "not-a-uuid"})
+
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "session_id")
+		})
+	})
+
 	t.Run("Given a session id", func(t *testing.T) {
 		t.Parallel()
 
@@ -54,21 +69,6 @@ func TestWhenExecutingReadProcessOutputTool(t *testing.T) {
 				assert.Equal(t, sessionId.String(), out["session_id"])
 				assert.NotContains(t, out, "exit_code")
 			}
-		})
-	})
-
-	t.Run("Given a malformed session id", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should fail without calling the executor", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingReadProcessOutputToolBeforeEach(t)
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"session_id": "not-a-uuid"})
-
-			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "session_id")
 		})
 	})
 }

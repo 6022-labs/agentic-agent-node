@@ -54,6 +54,33 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the tool does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.mockClient.EXPECT().
+				Update(gomock.Any(), id, gomock.Any()).
+				Return(nil, gateway_interfaces.ErrSelfToolNotFound)
+		}
+
+		t.Run("Should return a NotFoundError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(
+				context.Background(),
+				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
+			)
+
+			var notFoundErr *apperrors.NotFoundError
+			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "self_tool_not_found", notFoundErr.Code)
+		})
+	})
+
 	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -103,33 +130,6 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "enabled", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the tool does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		id := uuid.New()
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.mockClient.EXPECT().
-				Update(gomock.Any(), id, gomock.Any()).
-				Return(nil, gateway_interfaces.ErrSelfToolNotFound)
-		}
-
-		t.Run("Should return a NotFoundError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(
-				context.Background(),
-				&requests.UpdateSelfToolRequest{Id: id, Enabled: lo.ToPtr(true)},
-			)
-
-			var notFoundErr *apperrors.NotFoundError
-			assert.ErrorAs(t, err, &notFoundErr)
-			assert.Equal(t, "self_tool_not_found", notFoundErr.Code)
 		})
 	})
 

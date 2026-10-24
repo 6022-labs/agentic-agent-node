@@ -59,43 +59,6 @@ func WhenCheckingMintBeforeEach(t *testing.T) *WhenCheckingMintTestingSuite {
 func TestWhenCheckingMint(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the node wallet now controls a token", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCheckingMintTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			savedAgent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			savedState := model_builders.NewAgentRegistrationStateBuilder().
-				WithMintStatus(identity_enums.TransactionStatusConfirmed).
-				Build()
-
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockMintPublisher.EXPECT().
-				ResolveMintedToken(gomock.Any(), gomock.Any()).
-				Return(common_tests.RandomEthAddress(), uint64(7), nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().
-				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(7), gomock.Any()).
-				Return(savedAgent, savedState, nil)
-		}
-
-		t.Run("Should confirm the mint and return the tokenId", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCheckingMintBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.MintStatus)
-			assert.NotNil(t, resp.TokenId)
-			assert.Equal(t, uint64(7), *resp.TokenId)
-		})
-	})
-
 	t.Run("Given the mint is already recorded in the database", func(t *testing.T) {
 		t.Parallel()
 
@@ -154,6 +117,43 @@ func TestWhenCheckingMint(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.MintStatus)
+		})
+	})
+
+	t.Run("Given the node wallet now controls a token", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCheckingMintTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
+			savedAgent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
+			savedState := model_builders.NewAgentRegistrationStateBuilder().
+				WithMintStatus(identity_enums.TransactionStatusConfirmed).
+				Build()
+
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockMintPublisher.EXPECT().
+				ResolveMintedToken(gomock.Any(), gomock.Any()).
+				Return(common_tests.RandomEthAddress(), uint64(7), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), uint64(7), gomock.Any()).
+				Return(savedAgent, savedState, nil)
+		}
+
+		t.Run("Should confirm the mint and return the tokenId", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingMintBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.MintStatus)
+			assert.NotNil(t, resp.TokenId)
+			assert.Equal(t, uint64(7), *resp.TokenId)
 		})
 	})
 }

@@ -74,6 +74,43 @@ func TestWhenRunningAccessChain(t *testing.T) {
 		})
 	})
 
+	t.Run("Given no link handles the request", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return 502 — the terminal link is misconfigured", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningAccessChainBeforeEach(t)
+			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
+			suite.linkA.EXPECT().TryHandle(gomock.Any(), gomock.Any()).Return(false, nil).Times(1)
+
+			resp, err := suite.build(suite.linkA).Test(x402GateRequest(""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
+			assert.Contains(t, accessChainBody(t, resp), "access_methods_unavailable")
+			assert.False(t, suite.downstreamRan)
+		})
+	})
+
+	t.Run("Given the chain is empty", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return 502", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenRunningAccessChainBeforeEach(t)
+			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+
+			resp, err := suite.build().Test(x402GateRequest(""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
+			assert.Contains(t, accessChainBody(t, resp), "access_methods_unavailable")
+		})
+	})
+
 	t.Run("Given the runtime refuses because the agent is not minted", func(t *testing.T) {
 		t.Parallel()
 
@@ -160,43 +197,6 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.downstreamRan)
-		})
-	})
-
-	t.Run("Given no link handles the request", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return 502 — the terminal link is misconfigured", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
-			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
-			suite.linkA.EXPECT().TryHandle(gomock.Any(), gomock.Any()).Return(false, nil).Times(1)
-
-			resp, err := suite.build(suite.linkA).Test(x402GateRequest(""))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
-			assert.Contains(t, accessChainBody(t, resp), "access_methods_unavailable")
-			assert.False(t, suite.downstreamRan)
-		})
-	})
-
-	t.Run("Given the chain is empty", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return 502", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
-
-			resp, err := suite.build().Test(x402GateRequest(""))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
-			assert.Contains(t, accessChainBody(t, resp), "access_methods_unavailable")
 		})
 	})
 }

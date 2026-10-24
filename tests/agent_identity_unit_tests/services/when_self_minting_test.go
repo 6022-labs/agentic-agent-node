@@ -79,6 +79,37 @@ func TestWhenSelfMinting(t *testing.T) {
 		return model_builders.NewAgentBuilder().WithoutCollectionTokenId().WithOwner(owner).Build()
 	}
 
+	t.Run("Given the mint lands but the token cannot be read back", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSelfMintingTestingSuite) {
+			suite.mockWalletCredentialsStorage.EXPECT().
+				GetForId(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				ModeratorCount(gomock.Any(), gomock.Any()).
+				Return(uint64(0), nil)
+			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).
+				Return(uint64(0), nil)
+		}
+
+		t.Run("Should return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfMintingBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.SelfMint(context.Background(), draft(), nil)
+
+			assert.ErrorContains(t, err, "token not found on chain")
+		})
+	})
+
 	t.Run("Given a non-moderated collection", func(t *testing.T) {
 		t.Parallel()
 
@@ -323,37 +354,6 @@ func TestWhenSelfMinting(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, identity_enums.TransactionStatusSubmitted, result.State.MintStatus)
-		})
-	})
-
-	t.Run("Given the mint lands but the token cannot be read back", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSelfMintingTestingSuite) {
-			suite.mockWalletCredentialsStorage.EXPECT().
-				GetForId(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&identity_interfaces.WalletCredentials{Address: nodeWallet}, true, nil)
-			suite.mockAgentAddressRepository.EXPECT().
-				GetAllByAgentId(gomock.Any(), gomock.Any()).
-				Return(map[identity_enums.AddressType]string{}, nil)
-			suite.mockAgentCollectionRequester.EXPECT().
-				ModeratorCount(gomock.Any(), gomock.Any()).
-				Return(uint64(0), nil)
-			suite.mockAgentMinter.EXPECT().Mint(gomock.Any(), gomock.Any(), gomock.Any()).Return("0xtx", nil)
-			suite.mockAgentCollectionRequester.EXPECT().
-				AddressToTokenId(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm, gomock.Any()).
-				Return(uint64(0), nil)
-		}
-
-		t.Run("Should return an error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSelfMintingBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.SelfMint(context.Background(), draft(), nil)
-
-			assert.ErrorContains(t, err, "token not found on chain")
 		})
 	})
 }

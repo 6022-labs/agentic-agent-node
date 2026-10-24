@@ -43,6 +43,36 @@ func WhenSettingConversationNameBeforeEach(t *testing.T) *WhenSettingConversatio
 func TestWhenSettingConversationName(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a padded conversation id", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
+
+		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
+					return updated, nil
+				})
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
+		}
+
+		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.SetName(context.Background(), " c1 ", "Audit")
+
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -81,36 +111,6 @@ func TestWhenSettingConversationName(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a padded conversation id", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
-
-		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, updated *models.Conversation) (*models.Conversation, error) {
-					return updated, nil
-				})
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any())
-		}
-
-		t.Run("Should look the conversation up by the trimmed id", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.SetName(context.Background(), " c1 ", "Audit")
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the name lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -124,6 +124,59 @@ func TestWhenSettingConversationName(t *testing.T) {
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.SetName(context.Background(), "c1", "Audit")
+
+			assert.ErrorContains(t, err, "db blew")
+		})
+	})
+
+	t.Run("Given another conversation holds that name", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
+
+		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
+				Return(true, nil)
+			suite.mockConversationRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
+		}
+
+		t.Run("Should report the name as taken without suffixing it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingConversationNameBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.SetName(context.Background(), "c1", "Audit")
+
+			assert.ErrorIs(t, err, interfaces.ErrConversationNameTaken)
+		})
+	})
+
+	t.Run("Given saving the name fails", func(t *testing.T) {
+		t.Parallel()
+
+		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
+
+		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
+			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
+			suite.mockConversationRepository.EXPECT().
+				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
+				Return(false, nil)
+			suite.mockConversationRepository.EXPECT().
+				Update(gomock.Any(), gomock.Any()).
+				Return(nil, errors.New("db blew"))
+			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any()).Times(0)
+		}
+
+		t.Run("Should propagate the error without counting a naming", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingConversationNameBeforeEach(t)
@@ -204,59 +257,6 @@ func TestWhenSettingConversationName(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Audit", *updated.Name)
-		})
-	})
-
-	t.Run("Given another conversation holds that name", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
-
-		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
-				Return(true, nil)
-			suite.mockConversationRepository.EXPECT().Update(gomock.Any(), gomock.Any()).Times(0)
-		}
-
-		t.Run("Should report the name as taken without suffixing it", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.SetName(context.Background(), "c1", "Audit")
-
-			assert.ErrorIs(t, err, interfaces.ErrConversationNameTaken)
-		})
-	})
-
-	t.Run("Given saving the name fails", func(t *testing.T) {
-		t.Parallel()
-
-		conversation := model_builders.NewConversationBuilder().WithId("c1").Build()
-
-		initSuite := func(suite *WhenSettingConversationNameTestingSuite) {
-			suite.mockConversationRepository.EXPECT().GetById(gomock.Any(), "c1").Return(conversation, nil)
-			suite.mockConversationRepository.EXPECT().
-				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), conversation.AgentId, gomock.Nil(), "Audit", lo.ToPtr("c1")).
-				Return(false, nil)
-			suite.mockConversationRepository.EXPECT().
-				Update(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("db blew"))
-			suite.mockKnowledgeMetrics.EXPECT().RecordConversationNamed(gomock.Any()).Times(0)
-		}
-
-		t.Run("Should propagate the error without counting a naming", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSettingConversationNameBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.SetName(context.Background(), "c1", "Audit")
-
-			assert.ErrorContains(t, err, "db blew")
 		})
 	})
 }

@@ -10,6 +10,18 @@ import (
 func TestWhenExtractingFunctionNameNamespace(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a function name without a separator", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return an empty namespace", func(t *testing.T) {
+			t.Parallel()
+
+			namespace := utils.ExtractNamespaceFromFunctionName("standalone")
+
+			assert.Empty(t, namespace)
+		})
+	})
+
 	t.Run("Given a namespaced function name", func(t *testing.T) {
 		t.Parallel()
 
@@ -25,18 +37,6 @@ func TestWhenExtractingFunctionNameNamespace(t *testing.T) {
 
 				assert.Equal(t, expected, namespace, functionName)
 			}
-		})
-	})
-
-	t.Run("Given a function name without a separator", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return an empty namespace", func(t *testing.T) {
-			t.Parallel()
-
-			namespace := utils.ExtractNamespaceFromFunctionName("standalone")
-
-			assert.Empty(t, namespace)
 		})
 	})
 }

@@ -183,6 +183,18 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			suite.build(suite.matcherA)
 		}
 
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+		})
+
 		t.Run("Should run the downstream handler", func(t *testing.T) {
 			t.Parallel()
 
@@ -194,18 +206,6 @@ func TestWhenGrantingJwtFreeAccess(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.downstreamRan)
-		})
-
-		t.Run("Should attach the caller id to the context", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGrantingJwtFreeAccessBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.app.Test(jwtAuthRequest("Bearer " + jwtTestToken))
-
-			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
 		})
 	})
 

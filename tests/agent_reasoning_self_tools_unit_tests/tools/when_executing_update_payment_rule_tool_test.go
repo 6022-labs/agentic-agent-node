@@ -47,30 +47,6 @@ func TestWhenExecutingUpdatePaymentRuleTool(t *testing.T) {
 		}
 	}
 
-	t.Run("Given a full update payload", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should forward the id and the request to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdatePaymentRuleToolBeforeEach(t)
-			suite.mockUpdatePaymentRuleExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(_ context.Context, request *payment_requests.UpdatePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
-					assert.Equal(t, id, request.Id)
-					assert.Equal(t, "premium", request.Name)
-					assert.Equal(t, "2000", request.Price)
-					assert.Equal(t, "x402", request.Method)
-					return &payment_responses.PaymentRuleResponse{}, nil
-				})
-
-			out, err := suite.sut.Execute(ctx, ruleArgs())
-
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
-		})
-	})
-
 	t.Run("Given the id argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -103,6 +79,30 @@ func TestWhenExecutingUpdatePaymentRuleTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "rule not found")
+		})
+	})
+
+	t.Run("Given a full update payload", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should forward the id and the request to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdatePaymentRuleToolBeforeEach(t)
+			suite.mockUpdatePaymentRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(_ context.Context, request *payment_requests.UpdatePaymentRuleRequest) (*payment_responses.PaymentRuleResponse, error) {
+					assert.Equal(t, id, request.Id)
+					assert.Equal(t, "premium", request.Name)
+					assert.Equal(t, "2000", request.Price)
+					assert.Equal(t, "x402", request.Method)
+					return &payment_responses.PaymentRuleResponse{}, nil
+				})
+
+			out, err := suite.sut.Execute(ctx, ruleArgs())
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
 		})
 	})
 }

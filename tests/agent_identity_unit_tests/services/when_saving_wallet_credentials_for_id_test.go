@@ -44,6 +44,25 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 
 	const scopedKey = "scope/wallet/evm"
 
+	t.Run("Given blank credentials", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject without writing", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
+
+			err := suite.sut.SaveForId(
+				context.Background(),
+				"agent-1",
+				enums.AddressTypeEvm,
+				&identity_interfaces.WalletCredentials{},
+			)
+
+			assert.ErrorContains(t, err, "must have both privateKey and address")
+		})
+	})
+
 	t.Run("Given valid credentials", func(t *testing.T) {
 		t.Parallel()
 
@@ -68,25 +87,6 @@ func TestWhenSavingWalletCredentialsForId(t *testing.T) {
 			)
 
 			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given blank credentials", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should reject without writing", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSavingWalletCredentialsForIdBeforeEach(t)
-
-			err := suite.sut.SaveForId(
-				context.Background(),
-				"agent-1",
-				enums.AddressTypeEvm,
-				&identity_interfaces.WalletCredentials{},
-			)
-
-			assert.ErrorContains(t, err, "must have both privateKey and address")
 		})
 	})
 }

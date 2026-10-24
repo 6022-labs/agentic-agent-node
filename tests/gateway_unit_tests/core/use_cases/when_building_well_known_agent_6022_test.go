@@ -70,6 +70,189 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the registration client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.Nil(t, document)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+
+	t.Run("Given the payment rule client fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.Nil(t, document)
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+		})
+	})
+
+	t.Run("Given the runtime cannot sign the card", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, nil)
+			suite.mockAgentCardSignatureClient.EXPECT().
+				Sign(ctx, gomock.Any()).
+				Return(nil, apperrors.NewInternalError("agent_card_signing_failed", "vault unreachable"))
+		}
+
+		t.Run("Should fail rather than serve an unsigned document", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.Nil(t, document)
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+		})
+	})
+
+	t.Run("Given the payment policy does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, apperrors.NewNotFoundError("payment_policy_not_found", "no policy"))
+			suite.expectCardSignature(ctx)
+		}
+
+		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			assert.Empty(t, document.PaymentMethods)
+		})
+	})
+
+	t.Run("Given the agent is not minted yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
+			suite.expectCardSignature(ctx)
+		}
+
+		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			assert.Empty(t, document.PaymentMethods)
+		})
+	})
+
+	t.Run("Given no payment rules exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return([]payment_models.ExternalPaymentRule{}, nil)
+			suite.expectCardSignature(ctx)
+		}
+
+		t.Run("Should serve the document without payment methods", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			assert.Empty(t, document.PaymentMethods)
+			assert.Empty(t, document.EnsDomain)
+		})
+	})
+
+	t.Run("Given a custom public prefix", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
+			suite.mockAgentRegistrationClient.EXPECT().
+				Get(ctx).
+				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
+			suite.mockPaymentRuleClient.EXPECT().
+				List(ctx).
+				Return(nil, nil)
+			suite.expectCardSignature(ctx)
+		}
+
+		t.Run("Should honor it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/gw")
+			initSuite(suite)
+
+			document, err := suite.sut.Execute(ctx)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "https://agent.example.com/gw/responses", document.Endpoints.Responses)
+		})
+	})
+
 	t.Run("Given identity resolves and payment rules exist", func(t *testing.T) {
 		t.Parallel()
 
@@ -157,189 +340,6 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			assert.NoError(t, json.Unmarshal(suite.signedBody, &members))
 			assert.NotContains(t, members, "signatures")
 			assert.Contains(t, members, "protocol")
-		})
-	})
-
-	t.Run("Given the runtime cannot sign the card", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return(nil, nil)
-			suite.mockAgentCardSignatureClient.EXPECT().
-				Sign(ctx, gomock.Any()).
-				Return(nil, apperrors.NewInternalError("agent_card_signing_failed", "vault unreachable"))
-		}
-
-		t.Run("Should fail rather than serve an unsigned document", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.Nil(t, document)
-			var internalErr *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalErr)
-		})
-	})
-
-	t.Run("Given no payment rules exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return([]payment_models.ExternalPaymentRule{}, nil)
-			suite.expectCardSignature(ctx)
-		}
-
-		t.Run("Should serve the document without payment methods", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.NoError(t, err)
-			assert.Empty(t, document.PaymentMethods)
-			assert.Empty(t, document.EnsDomain)
-		})
-	})
-
-	t.Run("Given the payment policy does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return(nil, apperrors.NewNotFoundError("payment_policy_not_found", "no policy"))
-			suite.expectCardSignature(ctx)
-		}
-
-		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.NoError(t, err)
-			assert.Empty(t, document.PaymentMethods)
-		})
-	})
-
-	t.Run("Given the agent is not minted yet", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
-			suite.expectCardSignature(ctx)
-		}
-
-		t.Run("Should serve the document without payment methods rather than fail", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.NoError(t, err)
-			assert.Empty(t, document.PaymentMethods)
-		})
-	})
-
-	t.Run("Given the payment rule client fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
-		}
-
-		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.Nil(t, document)
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-		})
-	})
-
-	t.Run("Given the registration client fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
-		}
-
-		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/api")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.Nil(t, document)
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-		})
-	})
-
-	t.Run("Given a custom public prefix", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
-			suite.mockAgentRegistrationClient.EXPECT().
-				Get(ctx).
-				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
-				List(ctx).
-				Return(nil, nil)
-			suite.expectCardSignature(ctx)
-		}
-
-		t.Run("Should honor it", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenBuildingWellKnownAgent6022BeforeEach(t, "https://agent.example.com", "/gw")
-			initSuite(suite)
-
-			document, err := suite.sut.Execute(ctx)
-
-			assert.NoError(t, err)
-			assert.Equal(t, "https://agent.example.com/gw/responses", document.Endpoints.Responses)
 		})
 	})
 }

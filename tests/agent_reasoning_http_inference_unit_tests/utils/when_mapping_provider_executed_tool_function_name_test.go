@@ -12,21 +12,6 @@ import (
 func TestWhenMappingProviderExecutedToolFunctionName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the echoed server label matches a known connection", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should rebuild the local mcp namespaced name", func(t *testing.T) {
-			t.Parallel()
-
-			mcpConnection := model_builders.NewMCPConnectionBuilder().WithName("weather").Build()
-			mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}
-
-			name := utils.ProviderExecutedToolFunctionName(mcpTools, "weather", "get")
-
-			assert.Equal(t, "mcp_weather_get", name)
-		})
-	})
-
 	t.Run("Given the echoed server label matches no connection", func(t *testing.T) {
 		t.Parallel()
 
@@ -39,6 +24,21 @@ func TestWhenMappingProviderExecutedToolFunctionName(t *testing.T) {
 			name := utils.ProviderExecutedToolFunctionName(mcpTools, "normalized-weather", "get")
 
 			assert.Equal(t, "get", name)
+		})
+	})
+
+	t.Run("Given the echoed server label matches a known connection", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should rebuild the local mcp namespaced name", func(t *testing.T) {
+			t.Parallel()
+
+			mcpConnection := model_builders.NewMCPConnectionBuilder().WithName("weather").Build()
+			mcpTools := map[*models.MCPConnection][]*models.Tool{mcpConnection: nil}
+
+			name := utils.ProviderExecutedToolFunctionName(mcpTools, "weather", "get")
+
+			assert.Equal(t, "mcp_weather_get", name)
 		})
 	})
 }

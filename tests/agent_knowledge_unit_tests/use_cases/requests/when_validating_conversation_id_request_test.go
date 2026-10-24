@@ -40,6 +40,18 @@ func TestWhenValidatingConversationIdRequest(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a padded conversation id", func(t *testing.T) {
+		t.Parallel()
+		req := &requests.ConversationIdRequest{ConversationId: " conv-1 "}
+
+		t.Run("Should trim it", func(t *testing.T) {
+			t.Parallel()
+
+			assert.NoError(t, req.ValidateAndSanitize())
+			assert.Equal(t, "conv-1", req.ConversationId)
+		})
+	})
+
 	t.Run("Given a conversation id of exactly the maximum length", func(t *testing.T) {
 		t.Parallel()
 		req := &requests.ConversationIdRequest{
@@ -50,18 +62,6 @@ func TestWhenValidatingConversationIdRequest(t *testing.T) {
 			t.Parallel()
 
 			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given a padded conversation id", func(t *testing.T) {
-		t.Parallel()
-		req := &requests.ConversationIdRequest{ConversationId: " conv-1 "}
-
-		t.Run("Should trim it", func(t *testing.T) {
-			t.Parallel()
-
-			assert.NoError(t, req.ValidateAndSanitize())
-			assert.Equal(t, "conv-1", req.ConversationId)
 		})
 	})
 }

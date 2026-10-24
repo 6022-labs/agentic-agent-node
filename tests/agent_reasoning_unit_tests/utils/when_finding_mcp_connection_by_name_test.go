@@ -12,6 +12,22 @@ import (
 func TestWhenFindingMcpConnectionByName(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given no connection with that name", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should report not found", func(t *testing.T) {
+			t.Parallel()
+
+			inventory := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()
+			mcpTools := map[*models.MCPConnection][]*models.Tool{inventory: nil}
+
+			found, ok := utils.FindMcpConnectionByName(mcpTools, "weather")
+
+			assert.False(t, ok)
+			assert.Nil(t, found)
+		})
+	})
+
 	t.Run("Given a connection with that name exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -26,22 +42,6 @@ func TestWhenFindingMcpConnectionByName(t *testing.T) {
 
 			assert.True(t, ok)
 			assert.Equal(t, weather, found)
-		})
-	})
-
-	t.Run("Given no connection with that name", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should report not found", func(t *testing.T) {
-			t.Parallel()
-
-			inventory := model_builders.NewMCPConnectionBuilder().WithName("inventory").Build()
-			mcpTools := map[*models.MCPConnection][]*models.Tool{inventory: nil}
-
-			found, ok := utils.FindMcpConnectionByName(mcpTools, "weather")
-
-			assert.False(t, ok)
-			assert.Nil(t, found)
 		})
 	})
 }

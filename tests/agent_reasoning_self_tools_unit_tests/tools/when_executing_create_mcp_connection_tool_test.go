@@ -35,30 +35,6 @@ func TestWhenExecutingCreateMCPConnectionTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given name and url arguments", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should forward a header-less request to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreateMCPConnectionToolBeforeEach(t)
-			suite.mockCreateMCPConnectionExecutor.EXPECT().
-				Execute(ctx, &reasoning_requests.CreateMCPConnectionRequest{
-					MCPConnectionRequest: reasoning_requests.MCPConnectionRequest{
-						Name:                "weather",
-						Url:                 "https://mcp.example.com",
-						AllowedToolPatterns: []string{".*"},
-					},
-				}).
-				Return(&reasoning_responses.MCPConnectionResponse{}, nil)
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"name": "weather", "url": "https://mcp.example.com"})
-
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
-		})
-	})
-
 	t.Run("Given the url argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -89,6 +65,30 @@ func TestWhenExecutingCreateMCPConnectionTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "underscores")
+		})
+	})
+
+	t.Run("Given name and url arguments", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should forward a header-less request to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreateMCPConnectionToolBeforeEach(t)
+			suite.mockCreateMCPConnectionExecutor.EXPECT().
+				Execute(ctx, &reasoning_requests.CreateMCPConnectionRequest{
+					MCPConnectionRequest: reasoning_requests.MCPConnectionRequest{
+						Name:                "weather",
+						Url:                 "https://mcp.example.com",
+						AllowedToolPatterns: []string{".*"},
+					},
+				}).
+				Return(&reasoning_responses.MCPConnectionResponse{}, nil)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"name": "weather", "url": "https://mcp.example.com"})
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
 		})
 	})
 }

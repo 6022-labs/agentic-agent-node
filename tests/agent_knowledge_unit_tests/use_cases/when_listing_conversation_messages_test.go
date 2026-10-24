@@ -138,64 +138,6 @@ func TestWhenListingConversationMessages(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the caller does not own the agent", func(t *testing.T) {
-		t.Parallel()
-
-		agent := model_builders.NewAgentBuilder().Build()
-
-		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().
-				GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, lo.ToPtr(listingMessagesCallerId)).
-				Return(model_builders.NewConversationBuilder().
-					WithId(conversationId).
-					WithAgentId(agent.Id).
-					WithCallerId(listingMessagesCallerId).
-					Build(), nil)
-			suite.mockConversationMessageRepository.EXPECT().
-				ListByConversationId(gomock.Any(), conversationId).
-				Return([]models.ConversationMessage{}, nil)
-		}
-
-		t.Run("Should look the conversation up within the caller's scope", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(listingMessagesCallerCtx, request())
-
-			assert.NoError(t, err)
-		})
-	})
-
-	t.Run("Given the caller owns the agent", func(t *testing.T) {
-		t.Parallel()
-
-		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(listingMessagesCallerId)).Build()
-
-		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockConversationRepository.EXPECT().
-				GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, gomock.Nil()).
-				Return(model_builders.NewConversationBuilder().WithId(conversationId).WithAgentId(agent.Id).Build(), nil)
-			suite.mockConversationMessageRepository.EXPECT().
-				ListByConversationId(gomock.Any(), conversationId).
-				Return([]models.ConversationMessage{}, nil)
-		}
-
-		t.Run("Should look the conversation up unscoped", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenListingConversationMessagesBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(listingMessagesCallerCtx, request())
-
-			assert.NoError(t, err)
-		})
-	})
-
 	t.Run("Given the conversation lookup fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -274,6 +216,64 @@ func TestWhenListingConversationMessages(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Contains(t, internalErr.Message, "db blew")
+		})
+	})
+
+	t.Run("Given the caller does not own the agent", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().Build()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, lo.ToPtr(listingMessagesCallerId)).
+				Return(model_builders.NewConversationBuilder().
+					WithId(conversationId).
+					WithAgentId(agent.Id).
+					WithCallerId(listingMessagesCallerId).
+					Build(), nil)
+			suite.mockConversationMessageRepository.EXPECT().
+				ListByConversationId(gomock.Any(), conversationId).
+				Return([]models.ConversationMessage{}, nil)
+		}
+
+		t.Run("Should look the conversation up within the caller's scope", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(listingMessagesCallerCtx, request())
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the caller owns the agent", func(t *testing.T) {
+		t.Parallel()
+
+		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(listingMessagesCallerId)).Build()
+
+		initSuite := func(suite *WhenListingConversationMessagesTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockConversationRepository.EXPECT().
+				GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, gomock.Nil()).
+				Return(model_builders.NewConversationBuilder().WithId(conversationId).WithAgentId(agent.Id).Build(), nil)
+			suite.mockConversationMessageRepository.EXPECT().
+				ListByConversationId(gomock.Any(), conversationId).
+				Return([]models.ConversationMessage{}, nil)
+		}
+
+		t.Run("Should look the conversation up unscoped", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingConversationMessagesBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(listingMessagesCallerCtx, request())
+
+			assert.NoError(t, err)
 		})
 	})
 

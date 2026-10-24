@@ -35,26 +35,6 @@ func TestWhenExecutingListAgentCollectionsTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given a chainId argument", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should forward it to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingListAgentCollectionsToolBeforeEach(t)
-			suite.mockListAgentCollectionsExecutor.EXPECT().
-				Execute(ctx, &identity_requests.ListAgentCollectionsRequest{
-					ChainIdRequest: identity_requests.ChainIdRequest{ChainId: "80002"},
-				}).
-				Return(&identity_responses.AgentCollectionsResponse{}, nil)
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"chainId": "80002"})
-
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
-		})
-	})
-
 	t.Run("Given the chainId argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -85,6 +65,26 @@ func TestWhenExecutingListAgentCollectionsTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "chain unreachable")
+		})
+	})
+
+	t.Run("Given a chainId argument", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should forward it to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingListAgentCollectionsToolBeforeEach(t)
+			suite.mockListAgentCollectionsExecutor.EXPECT().
+				Execute(ctx, &identity_requests.ListAgentCollectionsRequest{
+					ChainIdRequest: identity_requests.ChainIdRequest{ChainId: "80002"},
+				}).
+				Return(&identity_responses.AgentCollectionsResponse{}, nil)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"chainId": "80002"})
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
 		})
 	})
 }

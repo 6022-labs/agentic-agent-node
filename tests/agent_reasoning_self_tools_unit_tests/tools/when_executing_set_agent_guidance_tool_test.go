@@ -35,26 +35,6 @@ func TestWhenExecutingSetAgentGuidanceTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given a content argument", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should forward it to the use case", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingSetAgentGuidanceToolBeforeEach(t)
-			suite.mockSetAgentGuidanceExecutor.EXPECT().
-				Execute(ctx, &reasoning_requests.SetAgentGuidanceRequest{Content: "answer concisely"}).
-				Return(&reasoning_responses.AgentGuidanceResponse{Content: "answer concisely"}, nil)
-
-			out, err := suite.sut.Execute(ctx, map[string]any{"content": "answer concisely"})
-
-			assert.NoError(t, err)
-			if assert.NotNil(t, out) {
-				assert.Equal(t, "answer concisely", out["content"])
-			}
-		})
-	})
-
 	t.Run("Given the content argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -85,6 +65,26 @@ func TestWhenExecutingSetAgentGuidanceTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given a content argument", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should forward it to the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingSetAgentGuidanceToolBeforeEach(t)
+			suite.mockSetAgentGuidanceExecutor.EXPECT().
+				Execute(ctx, &reasoning_requests.SetAgentGuidanceRequest{Content: "answer concisely"}).
+				Return(&reasoning_responses.AgentGuidanceResponse{Content: "answer concisely"}, nil)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"content": "answer concisely"})
+
+			assert.NoError(t, err)
+			if assert.NotNil(t, out) {
+				assert.Equal(t, "answer concisely", out["content"])
+			}
 		})
 	})
 }

@@ -10,6 +10,18 @@ import (
 func TestWhenSettingTransactionStatus(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given an unknown status", func(t *testing.T) {
+		t.Parallel()
+		var status enums.TransactionStatus
+
+		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
+			t.Parallel()
+
+			err := status.Set("published")
+			assert.ErrorContains(t, err, "invalid TransactionStatus: published")
+		})
+	})
+
 	t.Run("Given a known status in mixed casing", func(t *testing.T) {
 		t.Parallel()
 		var status enums.TransactionStatus
@@ -20,18 +32,6 @@ func TestWhenSettingTransactionStatus(t *testing.T) {
 			err := status.Set("Confirmed")
 			assert.NoError(t, err)
 			assert.Equal(t, enums.TransactionStatusConfirmed, status)
-		})
-	})
-
-	t.Run("Given an unknown status", func(t *testing.T) {
-		t.Parallel()
-		var status enums.TransactionStatus
-
-		t.Run("Should reject with an error mentioning the value", func(t *testing.T) {
-			t.Parallel()
-
-			err := status.Set("published")
-			assert.ErrorContains(t, err, "invalid TransactionStatus: published")
 		})
 	})
 

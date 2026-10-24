@@ -77,6 +77,34 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the tool does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
+			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"code":"not_found"}`))
+			}
+		}
+
+		t.Run("Should return ErrSelfToolNotFound", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingSelfToolBeforeEach(t)
+			defer WhenUpdatingSelfToolAfterEach(suite)
+			initSuite(suite)
+
+			_, err := suite.sut.Update(
+				context.Background(),
+				uuid.New(),
+				&models.ExternalUpdateSelfToolPayload{Enabled: true},
+			)
+
+			assert.ErrorIs(t, err, gateway_interfaces.ErrSelfToolNotFound)
+		})
+	})
+
 	t.Run("Given the runtime answers 400", func(t *testing.T) {
 		t.Parallel()
 
@@ -104,34 +132,6 @@ func TestWhenUpdatingSelfTool(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "enabled", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the tool does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenUpdatingSelfToolTestingSuite) {
-			suite.handler = func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusNotFound)
-				_, _ = w.Write([]byte(`{"code":"not_found"}`))
-			}
-		}
-
-		t.Run("Should return ErrSelfToolNotFound", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenUpdatingSelfToolBeforeEach(t)
-			defer WhenUpdatingSelfToolAfterEach(suite)
-			initSuite(suite)
-
-			_, err := suite.sut.Update(
-				context.Background(),
-				uuid.New(),
-				&models.ExternalUpdateSelfToolPayload{Enabled: true},
-			)
-
-			assert.ErrorIs(t, err, gateway_interfaces.ErrSelfToolNotFound)
 		})
 	})
 

@@ -10,18 +10,6 @@ import (
 func TestWhenParsingOptionalStringArg(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the argument is present", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return its value", func(t *testing.T) {
-			t.Parallel()
-
-			value := utils.OptionalStringArg(map[string]any{"method": "x402"}, "method")
-
-			assert.Equal(t, "x402", value)
-		})
-	})
-
 	t.Run("Given the argument is missing", func(t *testing.T) {
 		t.Parallel()
 
@@ -31,6 +19,18 @@ func TestWhenParsingOptionalStringArg(t *testing.T) {
 			value := utils.OptionalStringArg(nil, "method")
 
 			assert.Empty(t, value)
+		})
+	})
+
+	t.Run("Given the argument is present", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return its value", func(t *testing.T) {
+			t.Parallel()
+
+			value := utils.OptionalStringArg(map[string]any{"method": "x402"}, "method")
+
+			assert.Equal(t, "x402", value)
 		})
 	})
 }

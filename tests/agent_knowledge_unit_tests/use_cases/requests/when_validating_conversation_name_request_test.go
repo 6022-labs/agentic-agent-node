@@ -53,17 +53,6 @@ func TestWhenValidatingConversationNameRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a name of exactly the maximum length", func(t *testing.T) {
-		t.Parallel()
-		req := &requests.ConversationNameRequest{Name: strings.Repeat("a", requests.ConversationNameMaxLength)}
-
-		t.Run("Should pass validation", func(t *testing.T) {
-			t.Parallel()
-
-			assert.NoError(t, req.ValidateAndSanitize())
-		})
-	})
-
 	t.Run("Given a padded name", func(t *testing.T) {
 		t.Parallel()
 		req := &requests.ConversationNameRequest{Name: "  ERC20   mint audit "}
@@ -73,6 +62,17 @@ func TestWhenValidatingConversationNameRequest(t *testing.T) {
 
 			assert.NoError(t, req.ValidateAndSanitize())
 			assert.Equal(t, "ERC20 mint audit", req.Name)
+		})
+	})
+
+	t.Run("Given a name of exactly the maximum length", func(t *testing.T) {
+		t.Parallel()
+		req := &requests.ConversationNameRequest{Name: strings.Repeat("a", requests.ConversationNameMaxLength)}
+
+		t.Run("Should pass validation", func(t *testing.T) {
+			t.Parallel()
+
+			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

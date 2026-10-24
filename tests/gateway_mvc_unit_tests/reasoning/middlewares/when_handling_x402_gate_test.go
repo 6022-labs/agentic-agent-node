@@ -122,6 +122,35 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a JWT whose address has only a paid rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePublicRule()), nil).
+				Times(1)
+			suite.mockJwtValidator.EXPECT().
+				Verify("valid.jwt.token").
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+		}
+
+		t.Run("Should return 402", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.False(t, suite.handlerCalled)
+		})
+	})
+
 	t.Run("Given listing the facilitators fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -253,6 +282,35 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a public paid rule has no facilitator", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePublicRule()), nil).
+				Times(1)
+			// No facilitator configured for the rule's network.
+			suite.mockPaymentFacilitatorClient.EXPECT().
+				Get(gomock.Any()).
+				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+				Times(1)
+		}
+
+		t.Run("Should return 402 without advertising the unsettleable rule", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.app.Test(x402GateRequest(""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.Empty(t, decodePaymentRequiredHeader(t, resp).Accepts)
+		})
+	})
+
 	t.Run("Given the payment header is malformed", func(t *testing.T) {
 		t.Parallel()
 
@@ -304,37 +362,6 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the payment signature is invalid", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(x402GatePublicRule()), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.Address{}, errors.New("recovered signer does not match")).
-				Times(1)
-		}
-
-		t.Run("Should return 402 with the invalid signature error code", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.Equal(t, "invalid_payment_signature", decodePaymentRequiredHeader(t, resp).Error)
-		})
-	})
-
 	t.Run("Given the authorization has expired", func(t *testing.T) {
 		t.Parallel()
 
@@ -366,89 +393,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the payer matches a zero-price rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(
-					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
-				), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
-					assert.Equal(t, x402TestAgentWalletHex, config.PayTo)
-					return common.HexToAddress(x402TestPayerHex), nil
-				}).
-				Times(1)
-		}
-
-		t.Run("Should serve for free without contacting the facilitator", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-			assert.True(t, suite.handlerCalled)
-			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenPayer)
-			assert.Empty(t, resp.Header.Get(middlewares.PaymentResponseHeader))
-		})
-
-		t.Run("Should attach the caller id to the context", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
-			_, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
-		})
-	})
-
-	t.Run("Given an everyone-free rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(x402GateFreeRule(".*")), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.HexToAddress(x402TestPayerHex), nil).
-				Times(1)
-		}
-
-		t.Run("Should serve any payer for free", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-			assert.True(t, suite.handlerCalled)
-		})
-	})
-
-	t.Run("Given a public paid rule has no facilitator", func(t *testing.T) {
+	t.Run("Given the payment signature is invalid", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
@@ -456,39 +401,40 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
-			// No facilitator configured for the rule's network.
-			suite.mockPaymentFacilitatorClient.EXPECT().
-				Get(gomock.Any()).
-				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.Address{}, errors.New("recovered signer does not match")).
 				Times(1)
 		}
 
-		t.Run("Should return 402 without advertising the unsettleable rule", func(t *testing.T) {
+		t.Run("Should return 402 with the invalid signature error code", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)
 			initSuite(suite)
 
-			resp, err := suite.app.Test(x402GateRequest(""))
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
+			resp, err := suite.app.Test(x402GateRequest(header))
 
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.Empty(t, decodePaymentRequiredHeader(t, resp).Accepts)
+			assert.Equal(t, "invalid_payment_signature", decodePaymentRequiredHeader(t, resp).Error)
 		})
 	})
 
-	t.Run("Given a free rule has no facilitator", func(t *testing.T) {
+	t.Run("Given a stranger signs against a scoped rule", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
 			suite.mockPaymentRuleClient.EXPECT().
 				List(gomock.Any()).
-				Return(x402GateTestRules(x402GateFreeRule(strings.ToLower(x402TestPayerHex))), nil).
+				Return(x402GateTestRules(
+					x402GateFreeRule("0x1111111111111111111111111111111111111111"),
+				), nil).
 				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().
-				Get(gomock.Any()).
-				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
-				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
 
 			suite.mockX402PaymentVerifier.EXPECT().
 				RecoverPayer(gomock.Any(), gomock.Any()).
@@ -496,7 +442,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should serve it for free", func(t *testing.T) {
+		t.Run("Should return 402 with no matching requirements", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)
@@ -506,8 +452,9 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			resp, err := suite.app.Test(x402GateRequest(header))
 
 			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-			assert.True(t, suite.handlerCalled)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.Equal(t, "no_matching_payment_requirements", decodePaymentRequiredHeader(t, resp).Error)
+			assert.False(t, suite.handlerCalled)
 		})
 	})
 
@@ -546,88 +493,6 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a stranger signs against a scoped rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(
-					x402GateFreeRule("0x1111111111111111111111111111111111111111"),
-				), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.HexToAddress(x402TestPayerHex), nil).
-				Times(1)
-		}
-
-		t.Run("Should return 402 with no matching requirements", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.Equal(t, "no_matching_payment_requirements", decodePaymentRequiredHeader(t, resp).Error)
-			assert.False(t, suite.handlerCalled)
-		})
-	})
-
-	t.Run("Given the payer is entitled to a discounted rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			discounted := x402GateRule("5000", x402TestPayToHex, []string{strings.ToLower(x402TestPayerHex)})
-
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(x402GatePublicRule(), discounted), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.HexToAddress(x402TestPayerHex), nil).
-				Times(2)
-
-			suite.mockX402FacilitatorClient.EXPECT().
-				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ any, _ string, _ *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.VerifyResponse, error) {
-					// The cheapest entitled rule prices the call.
-					assert.Equal(t, "5000", requirements.Amount)
-					assert.Equal(t, 120, requirements.MaxTimeoutSeconds)
-					return &x402.VerifyResponse{IsValid: true}, nil
-				}).
-				Times(1)
-
-			suite.mockX402FacilitatorClient.EXPECT().
-				Settle(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				Return(&x402.SettleResponse{Success: true, Transaction: "0xtxhash"}, nil).
-				Times(1)
-		}
-
-		t.Run("Should charge the discounted price", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "5000")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-			assert.True(t, suite.handlerCalled)
-		})
-	})
-
 	t.Run("Given a paying caller signs less than their price", func(t *testing.T) {
 		t.Parallel()
 
@@ -656,43 +521,6 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
 			assert.Equal(t, "insufficient_amount", decodePaymentRequiredHeader(t, resp).Error)
-		})
-	})
-
-	t.Run("Given the facilitator rejects the payment", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(x402GatePublicRule()), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-
-			suite.mockX402PaymentVerifier.EXPECT().
-				RecoverPayer(gomock.Any(), gomock.Any()).
-				Return(common.HexToAddress(x402TestPayerHex), nil).
-				Times(1)
-
-			suite.mockX402FacilitatorClient.EXPECT().
-				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				Return(&x402.VerifyResponse{IsValid: false, InvalidReason: "insufficient_funds"}, nil).
-				Times(1)
-		}
-
-		t.Run("Should return 402 with the facilitator's reason", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.Equal(t, "insufficient_funds", decodePaymentRequiredHeader(t, resp).Error)
-			assert.False(t, suite.handlerCalled)
 		})
 	})
 
@@ -731,7 +559,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the payment is valid and settlement succeeds", func(t *testing.T) {
+	t.Run("Given the facilitator rejects the payment", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
@@ -748,24 +576,11 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 
 			suite.mockX402FacilitatorClient.EXPECT().
 				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				Return(&x402.VerifyResponse{IsValid: true, Payer: x402TestPayerHex}, nil).
-				Times(1)
-
-			suite.mockX402FacilitatorClient.EXPECT().
-				Settle(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
-				Return(
-					&x402.SettleResponse{
-						Success:     true,
-						Transaction: "0xtxhash",
-						Network:     "eip155:80002",
-						Payer:       x402TestPayerHex,
-					},
-					nil,
-				).
+				Return(&x402.VerifyResponse{IsValid: false, InvalidReason: "insufficient_funds"}, nil).
 				Times(1)
 		}
 
-		t.Run("Should serve the response with a PAYMENT-RESPONSE header", func(t *testing.T) {
+		t.Run("Should return 402 with the facilitator's reason", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenHandlingX402GateBeforeEach(t)
@@ -775,31 +590,9 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			resp, err := suite.app.Test(x402GateRequest(header))
 
 			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-			assert.True(t, suite.handlerCalled)
-			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenPayer)
-
-			raw := resp.Header.Get(middlewares.PaymentResponseHeader)
-			assert.NotEmpty(t, raw)
-			decoded, err := base64.StdEncoding.DecodeString(raw)
-			assert.NoError(t, err)
-			var settle x402.SettleResponse
-			assert.NoError(t, json.Unmarshal(decoded, &settle))
-			assert.True(t, settle.Success)
-			assert.Equal(t, "0xtxhash", settle.Transaction)
-		})
-
-		t.Run("Should attach the caller id to the context", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
-			_, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.Equal(t, "insufficient_funds", decodePaymentRequiredHeader(t, resp).Error)
+			assert.False(t, suite.handlerCalled)
 		})
 	})
 
@@ -869,20 +662,6 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return 402 with the settlement_failed reason", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
-			resp, err := suite.app.Test(x402GateRequest(header))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.Equal(t, "settlement_failed", decodePaymentRequiredHeader(t, resp).Error)
-		})
-
 		t.Run("Should discard the response body", func(t *testing.T) {
 			t.Parallel()
 
@@ -897,6 +676,20 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			assert.NotContains(t, string(bodyBytes), "42")
+		})
+
+		t.Run("Should return 402 with the settlement_failed reason", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
+			assert.Equal(t, "settlement_failed", decodePaymentRequiredHeader(t, resp).Error)
 		})
 
 		t.Run("Should not set the payment response header", func(t *testing.T) {
@@ -929,6 +722,18 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 				Times(1)
 		}
 
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+		})
+
 		t.Run("Should serve free without a signature or the facilitator", func(t *testing.T) {
 			t.Parallel()
 
@@ -942,47 +747,6 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.True(t, suite.handlerCalled)
 			// Identity comes from the JWT, not a recovered signature.
 			assert.Empty(t, suite.seenPayer)
-		})
-
-		t.Run("Should attach the caller id to the context", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
-
-			assert.NoError(t, err)
-			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
-		})
-	})
-
-	t.Run("Given a JWT whose address has only a paid rule", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
-				List(gomock.Any()).
-				Return(x402GateTestRules(x402GatePublicRule()), nil).
-				Times(1)
-			suite.mockJwtValidator.EXPECT().
-				Verify("valid.jwt.token").
-				Return(common.HexToAddress(x402TestPayerHex), nil).
-				Times(1)
-			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
-		}
-
-		t.Run("Should return 402", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenHandlingX402GateBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.app.Test(x402GateBearerRequest("valid.jwt.token", ""))
-
-			assert.NoError(t, err)
-			assert.Equal(t, fiber.StatusPaymentRequired, resp.StatusCode)
-			assert.False(t, suite.handlerCalled)
 		})
 	})
 
@@ -1019,6 +783,242 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 			assert.True(t, suite.handlerCalled)
+		})
+	})
+
+	t.Run("Given the payer matches a zero-price rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(
+					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
+				), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ *x402.PaymentPayload, config *x402.X402Config) (common.Address, error) {
+					assert.Equal(t, x402TestAgentWalletHex, config.PayTo)
+					return common.HexToAddress(x402TestPayerHex), nil
+				}).
+				Times(1)
+		}
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			_, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+		})
+
+		t.Run("Should serve for free without contacting the facilitator", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenPayer)
+			assert.Empty(t, resp.Header.Get(middlewares.PaymentResponseHeader))
+		})
+	})
+
+	t.Run("Given an everyone-free rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GateFreeRule(".*")), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+		}
+
+		t.Run("Should serve any payer for free", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+		})
+	})
+
+	t.Run("Given a free rule has no facilitator", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GateFreeRule(strings.ToLower(x402TestPayerHex))), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().
+				Get(gomock.Any()).
+				Return(map[string]models.ExternalPaymentFacilitator{}, nil).
+				Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+		}
+
+		t.Run("Should serve it for free", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestAgentWalletHex, "0")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+		})
+	})
+
+	t.Run("Given the payer is entitled to a discounted rule", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			discounted := x402GateRule("5000", x402TestPayToHex, []string{strings.ToLower(x402TestPayerHex)})
+
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePublicRule(), discounted), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(2)
+
+			suite.mockX402FacilitatorClient.EXPECT().
+				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ any, _ string, _ *x402.PaymentPayload, requirements *x402.PaymentRequirements) (*x402.VerifyResponse, error) {
+					// The cheapest entitled rule prices the call.
+					assert.Equal(t, "5000", requirements.Amount)
+					assert.Equal(t, 120, requirements.MaxTimeoutSeconds)
+					return &x402.VerifyResponse{IsValid: true}, nil
+				}).
+				Times(1)
+
+			suite.mockX402FacilitatorClient.EXPECT().
+				Settle(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
+				Return(&x402.SettleResponse{Success: true, Transaction: "0xtxhash"}, nil).
+				Times(1)
+		}
+
+		t.Run("Should charge the discounted price", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "5000")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+		})
+	})
+
+	t.Run("Given the payment is valid and settlement succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
+			suite.mockPaymentRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(x402GateTestRules(x402GatePublicRule()), nil).
+				Times(1)
+			suite.mockPaymentFacilitatorClient.EXPECT().Get(gomock.Any()).Return(x402GateFacilitators(), nil).Times(1)
+
+			suite.mockX402PaymentVerifier.EXPECT().
+				RecoverPayer(gomock.Any(), gomock.Any()).
+				Return(common.HexToAddress(x402TestPayerHex), nil).
+				Times(1)
+
+			suite.mockX402FacilitatorClient.EXPECT().
+				Verify(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
+				Return(&x402.VerifyResponse{IsValid: true, Payer: x402TestPayerHex}, nil).
+				Times(1)
+
+			suite.mockX402FacilitatorClient.EXPECT().
+				Settle(gomock.Any(), "https://x402-amoy.polygon.technology", gomock.Any(), gomock.Any()).
+				Return(
+					&x402.SettleResponse{
+						Success:     true,
+						Transaction: "0xtxhash",
+						Network:     "eip155:80002",
+						Payer:       x402TestPayerHex,
+					},
+					nil,
+				).
+				Times(1)
+		}
+
+		t.Run("Should attach the caller id to the context", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
+			_, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, strings.ToLower(x402TestPayerHex), suite.seenAddress)
+		})
+
+		t.Run("Should serve the response with a PAYMENT-RESPONSE header", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenHandlingX402GateBeforeEach(t)
+			initSuite(suite)
+
+			header := x402GatePaymentHeader(t, "eip155:80002", x402TestPayToHex, "10000")
+			resp, err := suite.app.Test(x402GateRequest(header))
+
+			assert.NoError(t, err)
+			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+			assert.True(t, suite.handlerCalled)
+			assert.Equal(t, common.HexToAddress(x402TestPayerHex).Hex(), suite.seenPayer)
+
+			raw := resp.Header.Get(middlewares.PaymentResponseHeader)
+			assert.NotEmpty(t, raw)
+			decoded, err := base64.StdEncoding.DecodeString(raw)
+			assert.NoError(t, err)
+			var settle x402.SettleResponse
+			assert.NoError(t, json.Unmarshal(decoded, &settle))
+			assert.True(t, settle.Success)
+			assert.Equal(t, "0xtxhash", settle.Transaction)
 		})
 	})
 }

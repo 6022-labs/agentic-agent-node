@@ -34,27 +34,6 @@ func WhenGettingAgentSoulBeforeEach(t *testing.T) *WhenGettingAgentSoulTestingSu
 func TestWhenGettingAgentSoul(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
-		}
-
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenGettingAgentSoulBeforeEach(t)
-			initSuite(suite)
-
-			_, err := suite.sut.Execute(context.Background())
-
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
-		})
-	})
-
 	t.Run("Given the runtime reports no identity", func(t *testing.T) {
 		t.Parallel()
 
@@ -73,6 +52,27 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
 			assert.Equal(t, "identity_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
+			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentSoulBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var unavailableErr *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 

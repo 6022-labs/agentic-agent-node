@@ -101,6 +101,35 @@ func TestWhenCheckingEns(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the subnode is not provisioned yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
+			pendingState := model_builders.NewAgentRegistrationStateBuilder().
+				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
+				Build()
+
+			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(pendingState, nil)
+		}
+
+		t.Run("Should report ENS still pending without reconciling", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingEnsBeforeEach(t)
+			initSuite(suite)
+
+			resp, err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.EnsStatus)
+		})
+	})
+
 	t.Run("Given a provisioned subnode not yet marked confirmed", func(t *testing.T) {
 		t.Parallel()
 
@@ -133,35 +162,6 @@ func TestWhenCheckingEns(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.EnsStatus)
-		})
-	})
-
-	t.Run("Given the subnode is not provisioned yet", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			pendingState := model_builders.NewAgentRegistrationStateBuilder().
-				WithEnsRegistryStatus(identity_enums.TransactionStatusPending).
-				Build()
-
-			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
-			suite.mockAgentRegistrationStateRepository.EXPECT().
-				GetByAgentId(gomock.Any(), gomock.Any()).
-				Return(pendingState, nil)
-		}
-
-		t.Run("Should report ENS still pending without reconciling", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenCheckingEnsBeforeEach(t)
-			initSuite(suite)
-
-			resp, err := suite.sut.Execute(context.Background())
-
-			assert.NoError(t, err)
-			assert.Equal(t, string(identity_enums.TransactionStatusPending), resp.EnsStatus)
 		})
 	})
 }

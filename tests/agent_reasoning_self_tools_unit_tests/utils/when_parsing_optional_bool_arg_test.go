@@ -11,6 +11,18 @@ import (
 func TestWhenParsingOptionalBoolArg(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given a missing or unparseable value", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return nil", func(t *testing.T) {
+			t.Parallel()
+
+			assert.Nil(t, utils.OptionalBoolArg(nil, "background"))
+			assert.Nil(t, utils.OptionalBoolArg(map[string]any{"background": nil}, "background"))
+			assert.Nil(t, utils.OptionalBoolArg(map[string]any{"background": "yes please"}, "background"))
+		})
+	})
+
 	t.Run("Given a truthy value in any json shape", func(t *testing.T) {
 		t.Parallel()
 
@@ -35,18 +47,6 @@ func TestWhenParsingOptionalBoolArg(t *testing.T) {
 
 			assert.Equal(t, lo.ToPtr(false), utils.OptionalBoolArg(map[string]any{"background": false}, "background"))
 			assert.Equal(t, lo.ToPtr(false), utils.OptionalBoolArg(map[string]any{"background": "false"}, "background"))
-		})
-	})
-
-	t.Run("Given a missing or unparseable value", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return nil", func(t *testing.T) {
-			t.Parallel()
-
-			assert.Nil(t, utils.OptionalBoolArg(nil, "background"))
-			assert.Nil(t, utils.OptionalBoolArg(map[string]any{"background": nil}, "background"))
-			assert.Nil(t, utils.OptionalBoolArg(map[string]any{"background": "yes please"}, "background"))
 		})
 	})
 }

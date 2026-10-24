@@ -14,15 +14,16 @@ func TestWhenCheckingAgentOwnership(t *testing.T) {
 
 	callerId := strings.ToLower(common_tests.RandomEthAddress().Hex())
 
-	t.Run("Given the caller is the owner in a different case", func(t *testing.T) {
+	t.Run("Given no owner", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should own the agent", func(t *testing.T) {
+		t.Run("Should not own the agent", func(t *testing.T) {
 			t.Parallel()
 
-			agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(callerId)).Build()
+			agent := model_builders.NewAgentBuilder().Build()
+			agent.Owner = nil
 
-			assert.True(t, agent.IsOwnedBy(callerId))
+			assert.False(t, agent.IsOwnedBy(callerId))
 		})
 	})
 
@@ -38,16 +39,15 @@ func TestWhenCheckingAgentOwnership(t *testing.T) {
 		})
 	})
 
-	t.Run("Given no owner", func(t *testing.T) {
+	t.Run("Given the caller is the owner in a different case", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should not own the agent", func(t *testing.T) {
+		t.Run("Should own the agent", func(t *testing.T) {
 			t.Parallel()
 
-			agent := model_builders.NewAgentBuilder().Build()
-			agent.Owner = nil
+			agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(callerId)).Build()
 
-			assert.False(t, agent.IsOwnedBy(callerId))
+			assert.True(t, agent.IsOwnedBy(callerId))
 		})
 	})
 }

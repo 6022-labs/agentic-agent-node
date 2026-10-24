@@ -231,52 +231,39 @@ func TestWhenSendingA2AMessage(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime accepts the request", func(t *testing.T) {
+	t.Run("Given a result whose output mixes roles and content types", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSendingA2AMessageTestingSuite) {
 			suite.mockCreateResponse.EXPECT().
 				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(_ context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
-					if assert.Len(t, request.Input.Messages, 1) {
-						assert.Equal(t, "user", request.Input.Messages[0].Role)
-						assert.Equal(t, "hello", request.Input.Messages[0].Content)
-					}
-					return &responses.Response{
-						Output: []responses.OutputItem{
-							{
-								Role:    "assistant",
-								Content: []responses.OutputContent{{Type: "output_text", Text: "hi there"}},
-							},
-						},
-						Conversation: &responses.ConversationRef{Id: "ctx-1"},
-					}, nil
-				})
+				Return(&responses.Response{
+					Output: []responses.OutputItem{
+						{Role: "user", Content: []responses.OutputContent{{Type: "output_text", Text: "echo"}}},
+						{Content: []responses.OutputContent{
+							{Text: "a"},
+							{Type: "text", Text: "b"},
+							{Type: "refusal", Text: "nope"},
+						}},
+						{Role: "assistant", Content: []responses.OutputContent{{Type: "output_text", Text: "c"}}},
+					},
+				}, nil)
 		}
 
-		t.Run(
-			"Should return a ProtoJSON agent message",
-			func(t *testing.T) {
-				t.Parallel()
+		t.Run("Should join only the assistant text parts", func(t *testing.T) {
+			t.Parallel()
 
-				suite := WhenSendingA2AMessageBeforeEach(t)
-				initSuite(suite)
+			suite := WhenSendingA2AMessageBeforeEach(t)
+			initSuite(suite)
 
-				resp, err := suite.sut.Execute(ctx, a2aTextRequest(requests.A2AMethodSendMessage, "hello", "ctx-1"))
+			resp, err := suite.sut.Execute(ctx, a2aTextRequest(requests.A2AMethodSendMessage, "hello", ""))
 
-				assert.NoError(t, err)
-				assert.Equal(t, "2.0", resp.JsonRpc)
-				if assert.NotNil(t, resp.Result) && assert.NotNil(t, resp.Result.Message) {
-					message := resp.Result.Message
-					assert.Equal(t, "ROLE_AGENT", message.Role)
-					assert.Equal(t, "ctx-1", message.ContextId)
-					assert.NotEmpty(t, message.MessageId)
-					if assert.Len(t, message.Parts, 1) {
-						assert.Equal(t, "hi there", message.Parts[0].Text)
-					}
-				}
-			},
-		)
+			assert.NoError(t, err)
+			if assert.NotNil(t, resp.Result) && assert.NotNil(t, resp.Result.Message) &&
+				assert.Len(t, resp.Result.Message.Parts, 1) {
+				assert.Equal(t, "abc", resp.Result.Message.Parts[0].Text)
+			}
+		})
 	})
 
 	t.Run("Given a result carrying a conversation", func(t *testing.T) {
@@ -327,38 +314,51 @@ func TestWhenSendingA2AMessage(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a result whose output mixes roles and content types", func(t *testing.T) {
+	t.Run("Given the runtime accepts the request", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSendingA2AMessageTestingSuite) {
 			suite.mockCreateResponse.EXPECT().
 				Execute(ctx, gomock.Any()).
-				Return(&responses.Response{
-					Output: []responses.OutputItem{
-						{Role: "user", Content: []responses.OutputContent{{Type: "output_text", Text: "echo"}}},
-						{Content: []responses.OutputContent{
-							{Text: "a"},
-							{Type: "text", Text: "b"},
-							{Type: "refusal", Text: "nope"},
-						}},
-						{Role: "assistant", Content: []responses.OutputContent{{Type: "output_text", Text: "c"}}},
-					},
-				}, nil)
+				DoAndReturn(func(_ context.Context, request *requests.CreateResponseRequest) (*responses.Response, error) {
+					if assert.Len(t, request.Input.Messages, 1) {
+						assert.Equal(t, "user", request.Input.Messages[0].Role)
+						assert.Equal(t, "hello", request.Input.Messages[0].Content)
+					}
+					return &responses.Response{
+						Output: []responses.OutputItem{
+							{
+								Role:    "assistant",
+								Content: []responses.OutputContent{{Type: "output_text", Text: "hi there"}},
+							},
+						},
+						Conversation: &responses.ConversationRef{Id: "ctx-1"},
+					}, nil
+				})
 		}
 
-		t.Run("Should join only the assistant text parts", func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			"Should return a ProtoJSON agent message",
+			func(t *testing.T) {
+				t.Parallel()
 
-			suite := WhenSendingA2AMessageBeforeEach(t)
-			initSuite(suite)
+				suite := WhenSendingA2AMessageBeforeEach(t)
+				initSuite(suite)
 
-			resp, err := suite.sut.Execute(ctx, a2aTextRequest(requests.A2AMethodSendMessage, "hello", ""))
+				resp, err := suite.sut.Execute(ctx, a2aTextRequest(requests.A2AMethodSendMessage, "hello", "ctx-1"))
 
-			assert.NoError(t, err)
-			if assert.NotNil(t, resp.Result) && assert.NotNil(t, resp.Result.Message) &&
-				assert.Len(t, resp.Result.Message.Parts, 1) {
-				assert.Equal(t, "abc", resp.Result.Message.Parts[0].Text)
-			}
-		})
+				assert.NoError(t, err)
+				assert.Equal(t, "2.0", resp.JsonRpc)
+				if assert.NotNil(t, resp.Result) && assert.NotNil(t, resp.Result.Message) {
+					message := resp.Result.Message
+					assert.Equal(t, "ROLE_AGENT", message.Role)
+					assert.Equal(t, "ctx-1", message.ContextId)
+					assert.NotEmpty(t, message.MessageId)
+					if assert.Len(t, message.Parts, 1) {
+						assert.Equal(t, "hi there", message.Parts[0].Text)
+					}
+				}
+			},
+		)
 	})
 }

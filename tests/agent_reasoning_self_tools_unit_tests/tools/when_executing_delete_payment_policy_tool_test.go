@@ -33,22 +33,6 @@ func TestWhenExecutingDeletePaymentPolicyTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given the use case succeeds", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a success payload", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingDeletePaymentPolicyToolBeforeEach(t)
-			suite.mockDeletePaymentPolicyExecutor.EXPECT().Execute(ctx).Return(nil)
-
-			out, err := suite.sut.Execute(ctx, nil)
-
-			assert.NoError(t, err)
-			assert.Equal(t, map[string]any{"success": true}, out)
-		})
-	})
-
 	t.Run("Given the use case fails", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,6 +46,22 @@ func TestWhenExecutingDeletePaymentPolicyTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "db down")
+		})
+	})
+
+	t.Run("Given the use case succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a success payload", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingDeletePaymentPolicyToolBeforeEach(t)
+			suite.mockDeletePaymentPolicyExecutor.EXPECT().Execute(ctx).Return(nil)
+
+			out, err := suite.sut.Execute(ctx, nil)
+
+			assert.NoError(t, err)
+			assert.Equal(t, map[string]any{"success": true}, out)
 		})
 	})
 }
