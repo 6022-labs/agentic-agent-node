@@ -31,9 +31,9 @@ func (m *RequestFailureLogMiddleware) Handle(ctx fiber.Ctx) error {
 		fields = append(fields, zap.Error(err))
 	}
 	if status >= fiber.StatusInternalServerError {
-		m.logger.Error("runtime request failed", fields...)
+		m.logger.Error("request failed", fields...)
 	} else {
-		m.logger.Warn("runtime request rejected", fields...)
+		m.logger.Warn("request rejected", fields...)
 	}
 	return err
 }

@@ -41,7 +41,7 @@ type registerRoutesParams struct {
 	AgentTelemetry    *identity_middlewares.AgentTelemetryContextMiddleware
 	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
 	CallerContext     *runtime_common_mvc_middlewares.CallerContextMiddleware
-	RequestFailureLog *runtime_common_mvc_middlewares.RequestFailureLogMiddleware
+	RequestFailureLog *mvc_middlewares.RequestFailureLogMiddleware
 	Controllers       []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 

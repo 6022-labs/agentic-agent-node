@@ -45,6 +45,9 @@ func addCoreConfiguration(container *dig.Container) {
 	if err := container.Provide(mvc_middlewares.NewApiRequestMetricsMiddleware); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(mvc_middlewares.NewRequestFailureLogMiddleware); err != nil {
+		panic(err)
+	}
 
 	if err := container.Provide(
 		metrics.NewAuthMetrics,
