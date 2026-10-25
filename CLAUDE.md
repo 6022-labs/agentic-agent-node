@@ -129,6 +129,6 @@ make fmt                                                      # golines, 120-cha
 - **Mocks** are generated, never hand-written. Regenerate after changing any interface: `deepsearch-mockgen -S ./src -O ./tests -A -P` (CLI: https://github.com/FournyP/deepsearch-mockgen-cli).
 - **Migrations**: `src/runtime_db/migrations/generate_migrations.sh` (atlas+gorm; per-driver SQL under `postgres/`, `mysql/`, `mariadb/`).
 - **Swagger docs**: `./scripts/generate_swagger_docs_for_hosts.sh [--host gateway_host]` — regenerates `*_host/docs/{docs.go,swagger.json,swagger.yaml}` from `// @` annotations.
-- **Run locally**: `docker compose up` — one container runs nginx + both hosts plus Vault, Postgres, IPFS, pgAdmin; console at `http://localhost:5500`, API at `http://localhost:5500/api`. Web dev mode: `cd web && npm run dev` (proxies `/api`).
+- **Run locally**: `docker compose up` — one container runs nginx + both hosts plus Vault, Postgres, IPFS, pgAdmin; console at `http://localhost:5500`, API at `http://localhost:5500/api`. Web dev mode: `cd web && npm run dev` (proxies `/api`). Local chain: add `-f docker-compose.local-chain.yml` (Anvil `31337` + contracts deployer); its `EXPECTED_CONTRACTS` must match the `31337` entries in `src/runtime_common/settings/*.json`.
 
 Test-writing conventions live in the `go-*-test-conventions` skills — follow them (`when_<behavior>_test.go`, `Given.../Should...` nested `t.Run`, suite `BeforeEach`, gomock, testify, `model_builders`).

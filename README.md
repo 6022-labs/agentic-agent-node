@@ -22,6 +22,22 @@ Postgres, IPFS, pgAdmin, and a Grafana observability stack. Once it is up:
 
 nginx listens on port 5000 in-container and is published on host port 5500.
 
+Vault runs in dev mode and keeps secrets in memory: restarting it loses the
+agent's wallet key while Postgres keeps its data. Reset everything together with
+`docker compose down -v`.
+
+### On a local chain
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-chain.yml up
+```
+
+Adds an Anvil chain (id `31337`, RPC http://localhost:8545) with the 6022 contracts deployed from
+[agentic-smart-contracts](https://github.com/6022-labs/agentic-smart-contracts); the agent waits for the deploy.
+Names on it don't resolve through public ENS, and it has no x402 facilitator.
+The chain state lives in a volume next to Postgres: reset both with `down -v` on
+the same two files, never one volume alone.
+
 ## Observability
 
 Both hosts export metrics, logs and traces over OTLP/gRPC to Grafana Alloy, which

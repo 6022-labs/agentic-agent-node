@@ -19,8 +19,13 @@ services:
       - VAULT__ADDRESS=http://agent-node-vault:8200
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret
-      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=http://evm-node:8545
+      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=https://polygon-amoy-bor-rpc.publicnode.com
       - BLOCKCHAIN__EVM_CHAINS__80002__REQUEST_TIMEOUT_SECONDS=10
+      - BLOCKCHAIN__EVM_CHAINS__84532__HTTP_URL=https://sepolia.base.org
+      - BLOCKCHAIN__EVM_CHAINS__84532__REQUEST_TIMEOUT_SECONDS=10
+      # Public testnet x402 facilitators, so paid rules work out of the box; each needs an RPC above.
+      - PAYMENT__FACILITATORS__80002__BASE_URL=https://x402-amoy.polygon.technology
+      - PAYMENT__FACILITATORS__84532__BASE_URL=https://x402.org/facilitator
       - RUNTIME_DATABASE__DRIVER=postgres
       - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
@@ -40,12 +45,12 @@ services:
       agent-node-db:
         condition: service_healthy
       agent-node-vault:
-        condition: service_started
+        condition: service_healthy
       agent-node-ipfs:
         condition: service_started
 
   agent-node-ipfs:
-    image: "ipfs/kubo:v0.43.0"
+    image: "ipfs/kubo:v0.43.1"
     container_name: agent-node-ipfs
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -83,7 +88,7 @@ services:
       - agent-node-db-data:/var/lib/postgresql
 
   agent-node-pgadmin:
-    image: "dpage/pgadmin4:9.17"
+    image: "dpage/pgadmin4:9.18"
     container_name: agent-node-pgadmin
     user: "root"
     depends_on:
@@ -97,11 +102,12 @@ services:
       - "5050:80"
     networks:
       agent-node-network:
-    volumes:
-      - ./pgadmin-servers.json:/pgadmin4/servers.json
+    configs:
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
 
   agent-node-vault:
-    image: hashicorp/vault:1.21
+    image: "hashicorp/vault:2.2"
     container_name: agent-node-vault
     ports:
       - "8200:8200"
@@ -111,6 +117,16 @@ services:
       - agent-node-vault-data:/vault/file
     networks:
       agent-node-network:
+    # Ready once the dev-mode KV v2 "secret" mount has been swapped for the v1 one the agent uses.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt vault read -field=options sys/mounts/secret | grep -q 'version:1'",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
     command: >
       /bin/sh -c "
       vault server -dev -dev-listen-address=0.0.0.0:8200 -dev-root-token-id=wBGKZCJjfIGqIKB3HMmvcQVt &
@@ -145,7 +161,7 @@ services:
       agent-node-network:
 
   agent-node-mimir:
-    image: "grafana/mimir:3.2.0"
+    image: "grafana/mimir:3.2.3"
     container_name: agent-node-mimir
     command: ["--config.file=/etc/mimir/mimir.yml", "--target=all"]
     volumes:
@@ -157,7 +173,7 @@ services:
       agent-node-network:
 
   agent-node-loki:
-    image: "grafana/loki:3.7.6"
+    image: "grafana/loki:3.7.9"
     container_name: agent-node-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
@@ -169,7 +185,7 @@ services:
       agent-node-network:
 
   agent-node-tempo:
-    image: "grafana/tempo:3.0.3"
+    image: "grafana/tempo:3.1.1"
     container_name: agent-node-tempo
     depends_on:
       - agent-node-mimir
@@ -183,7 +199,7 @@ services:
       agent-node-network:
 
   agent-node-grafana:
-    image: "grafana/grafana:13.2.0"
+    image: "grafana/grafana:13.2.4"
     container_name: agent-node-grafana
     depends_on:
       - agent-node-mimir
@@ -204,6 +220,23 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     networks:
       agent-node-network:
+
+configs:
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "postgres": {
+            "Name": "[LOCAL] : agentic-agent-node",
+            "Group": "Servers",
+            "Port": 5432,
+            "Username": "postgres",
+            "Host": "agent-node-db",
+            "SSLMode": "prefer",
+            "MaintenanceDB": "postgres"
+          }
+        }
+      }
 
 networks:
   agent-node-network:
