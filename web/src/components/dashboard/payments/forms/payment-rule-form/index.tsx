@@ -108,7 +108,7 @@ export default function PaymentRuleForm({
           asset: defaultToken,
           payTo: agentWalletAddress,
           price: "0.01",
-          allowEveryone: true,
+          allowEveryone: false,
           addresses: [],
         },
   })
