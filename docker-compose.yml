@@ -19,7 +19,7 @@ services:
       - VAULT__ADDRESS=http://agent-node-vault:8200
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret
-      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=https://rpc-amoy.polygon.technology
+      - BLOCKCHAIN__EVM_CHAINS__80002__HTTP_URL=https://polygon-amoy-bor-rpc.publicnode.com
       - BLOCKCHAIN__EVM_CHAINS__80002__REQUEST_TIMEOUT_SECONDS=10
       - BLOCKCHAIN__EVM_CHAINS__84532__HTTP_URL=https://sepolia.base.org
       - BLOCKCHAIN__EVM_CHAINS__84532__REQUEST_TIMEOUT_SECONDS=10
@@ -50,7 +50,7 @@ services:
         condition: service_started
 
   agent-node-ipfs:
-    image: "ipfs/kubo:v0.43.0"
+    image: "ipfs/kubo:v0.43.1"
     container_name: agent-node-ipfs
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -88,7 +88,7 @@ services:
       - agent-node-db-data:/var/lib/postgresql
 
   agent-node-pgadmin:
-    image: "dpage/pgadmin4:9.17"
+    image: "dpage/pgadmin4:9.18"
     container_name: agent-node-pgadmin
     user: "root"
     depends_on:
@@ -106,7 +106,7 @@ services:
       - ./pgadmin-servers.json:/pgadmin4/servers.json
 
   agent-node-vault:
-    image: hashicorp/vault:1.21
+    image: "hashicorp/vault:2.2"
     container_name: agent-node-vault
     ports:
       - "8200:8200"
@@ -160,7 +160,7 @@ services:
       agent-node-network:
 
   agent-node-mimir:
-    image: "grafana/mimir:3.2.0"
+    image: "grafana/mimir:3.2.3"
     container_name: agent-node-mimir
     command: ["--config.file=/etc/mimir/mimir.yml", "--target=all"]
     volumes:
@@ -172,7 +172,7 @@ services:
       agent-node-network:
 
   agent-node-loki:
-    image: "grafana/loki:3.7.6"
+    image: "grafana/loki:3.7.9"
     container_name: agent-node-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
@@ -184,7 +184,7 @@ services:
       agent-node-network:
 
   agent-node-tempo:
-    image: "grafana/tempo:3.0.3"
+    image: "grafana/tempo:3.1.1"
     container_name: agent-node-tempo
     depends_on:
       - agent-node-mimir
@@ -198,7 +198,7 @@ services:
       agent-node-network:
 
   agent-node-grafana:
-    image: "grafana/grafana:13.2.0"
+    image: "grafana/grafana:13.2.4"
     container_name: agent-node-grafana
     depends_on:
       - agent-node-mimir
