@@ -45,7 +45,7 @@ services:
       agent-node-db:
         condition: service_healthy
       agent-node-vault:
-        condition: service_started
+        condition: service_healthy
       agent-node-ipfs:
         condition: service_started
 
@@ -116,6 +116,16 @@ services:
       - agent-node-vault-data:/vault/file
     networks:
       agent-node-network:
+    # Ready once the dev-mode KV v2 "secret" mount has been swapped for the v1 one the agent uses.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt vault read -field=options sys/mounts/secret | grep -q 'version:1'",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
     command: >
       /bin/sh -c "
       vault server -dev -dev-listen-address=0.0.0.0:8200 -dev-root-token-id=wBGKZCJjfIGqIKB3HMmvcQVt &
