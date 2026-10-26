@@ -18,13 +18,13 @@ export type PaymentSpendRule = {
   // period as nothing spent, since it only rolls over on the next payment.
   windowSpent: string
   windowResetsAt?: string
-  // Regexes full-matched against the quote's facets. A rule authorizes a quote
-  // only when all four match, and the effective cap is the smallest maxAmountPerPayment
-  // among the rules that do.
-  networkPatterns: string[]
-  assetPatterns: string[]
+  // A rule authorizes a quote on this CAIP-2 network and token, paid to a recipient
+  // a payToPatterns regex full-matches; the smallest matching cap wins.
+  network: string
+  asset: string
+  // Unset accepts either transfer method.
+  assetTransferMethod?: string
   payToPatterns: string[]
-  assetTransferMethodPatterns: string[]
 }
 
 export type ListPaymentSpendRulesResponse = {
@@ -34,10 +34,10 @@ export type ListPaymentSpendRulesResponse = {
 // PaymentSpendRuleConfig is the x402 method's matcher, carried in the wire rule's
 // method-specific config blob.
 export type PaymentSpendRuleConfig = {
-  networkPatterns: string[]
-  assetPatterns: string[]
+  network: string
+  asset: string
+  assetTransferMethod?: string
   payToPatterns: string[]
-  assetTransferMethodPatterns: string[]
 }
 
 // PaymentSpendRuleWire mirrors the gateway's spend rule.
@@ -70,7 +70,7 @@ export { X402_METHOD }
 // ANY_PATTERN opens one facet of the matcher to everything.
 export const ANY_PATTERN = ".*"
 
-// Max uint256: what the seeded catch-all rule carries, i.e. no cap at all.
+// Max uint256: no cap at all.
 export const UNBOUNDED_MAX_AMOUNT =
   "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
@@ -79,16 +79,10 @@ export function isUnbounded(maxAmountPerPayment: string): boolean {
   return maxAmountPerPayment === UNBOUNDED_MAX_AMOUNT
 }
 
-// isOpenToEverything reports whether a rule constrains nothing at all — the
-// state a freshly seeded agent starts in.
-export function isOpenToEverything(rule: PaymentSpendRule): boolean {
+// isUnrestricted reports whether a rule pays any amount of its token to anyone.
+export function isUnrestricted(rule: PaymentSpendRule): boolean {
   return (
     isUnbounded(rule.maxAmountPerPayment) &&
-    [
-      rule.networkPatterns,
-      rule.assetPatterns,
-      rule.payToPatterns,
-      rule.assetTransferMethodPatterns,
-    ].every((patterns) => patterns?.includes(ANY_PATTERN) ?? false)
+    (rule.payToPatterns?.includes(ANY_PATTERN) ?? false)
   )
 }

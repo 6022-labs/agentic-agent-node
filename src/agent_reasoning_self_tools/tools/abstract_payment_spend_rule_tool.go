@@ -7,8 +7,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// AbstractPaymentSpendRuleTool shares the rule scheme and its args → SavePaymentSpendRuleRequest
-// mapping between the create/update payment-spend-rule tools, so the two cannot drift apart.
+// AbstractPaymentSpendRuleTool shares the rule scheme and args mapping between the create and update tools.
 type AbstractPaymentSpendRuleTool struct{}
 
 func NewAbstractPaymentSpendRuleTool() *AbstractPaymentSpendRuleTool {
@@ -30,8 +29,9 @@ func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleProperties() map[stri
 		),
 		"method": utils.StringProperty("Payment method; defaults to x402."),
 		"config": utils.ObjectProperty(
-			"Method-specific matcher. For x402: {networkPatterns, assetPatterns, payToPatterns, " +
-				"assetTransferMethodPatterns}, each a non-empty array of regexes (\".*\" matches everything).",
+			"Method-specific matcher. For x402: {network (CAIP-2, e.g. eip155:8453), asset (ERC-20 address), " +
+				"assetTransferMethod (optional: eip3009 or permit2; omit for either), payToPatterns (non-empty " +
+				"array of recipient regexes, \".*\" matches everyone)}.",
 		),
 	}
 }

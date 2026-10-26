@@ -300,7 +300,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingPaymentSpendRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().
 				Validate(gomock.Any(), gomock.Any()).
-				Return(apperrors.NewValidationError("config.assetPatterns", "unsupported")).
+				Return(apperrors.NewValidationError("config.asset", "unsupported")).
 				Times(1)
 		}
 
@@ -318,7 +318,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			assert.Nil(t, updated)
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.assetPatterns", validationErr.Field)
+			assert.Equal(t, "config.asset", validationErr.Field)
 		})
 	})
 

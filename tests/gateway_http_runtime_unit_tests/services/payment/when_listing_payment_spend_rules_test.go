@@ -45,7 +45,7 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 						`{"rules":[{"id":"r1","name":"Anything, unbounded","maxAmountPerPayment":"1000",` +
 							`"windowSeconds":86400,"maxAmountPerWindow":"50000","windowSpent":"4000",` +
 							`"windowResetsAt":"2026-09-10T12:00:00Z","method":"x402",` +
-							`"config":{"networkPatterns":[".*"],"assetPatterns":[".*"]}}]}`,
+							`"config":{"network":"eip155:8453","payToPatterns":[".*"]}}]}`,
 					),
 				}, nil)
 		}
@@ -68,7 +68,7 @@ func TestWhenListingPaymentSpendRulesOverHttp(t *testing.T) {
 				if assert.NotNil(t, rules[0].WindowResetsAt) {
 					assert.Equal(t, 2026, rules[0].WindowResetsAt.Year())
 				}
-				assert.Contains(t, string(rules[0].Config), "networkPatterns")
+				assert.Contains(t, string(rules[0].Config), "eip155:8453")
 			}
 		})
 	})

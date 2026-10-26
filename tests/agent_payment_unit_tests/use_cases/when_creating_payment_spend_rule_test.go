@@ -204,7 +204,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 		initSuite := func(suite *WhenCreatingPaymentSpendRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().
 				Validate(gomock.Any(), gomock.Any()).
-				Return(apperrors.NewValidationError("config.networkPatterns", "unsupported")).
+				Return(apperrors.NewValidationError("config.network", "unsupported")).
 				Times(1)
 		}
 
@@ -219,7 +219,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			assert.Nil(t, rule)
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.networkPatterns", validationErr.Field)
+			assert.Equal(t, "config.network", validationErr.Field)
 		})
 	})
 

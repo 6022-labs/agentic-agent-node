@@ -1,3 +1,4 @@
+import React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
@@ -25,7 +26,10 @@ import {
   type PaymentSpendRule,
 } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
+import { getAppConfig } from "@/configs/app-config"
+import { formatNetwork } from "@/lib/token-format"
 import {
+  ANY_TRANSFER_METHOD,
   paymentSpendRuleFormSchema,
   type PaymentSpendRuleFormSchemaType,
 } from "./payment-spend-rule-form-schema"
@@ -46,6 +50,15 @@ export default function PaymentSpendRuleForm({
   initialRule,
   onFormComplete,
 }: Props) {
+  // Reachable chains as CAIP-2 networks; the edited rule's network is always kept.
+  const networkOptions = React.useMemo(() => {
+    const ids = new Set(
+      Object.keys(getAppConfig().evmChains).map((id) => `eip155:${id}`)
+    )
+    if (initialRule?.network) ids.add(initialRule.network)
+    return [...ids]
+  }, [initialRule])
+
   const form = useForm<PaymentSpendRuleFormSchemaType>({
     resolver: zodResolver(paymentSpendRuleFormSchema),
     defaultValues: {
@@ -60,12 +73,11 @@ export default function PaymentSpendRuleForm({
         initialRule.maxAmountPerWindow !== "0"
           ? initialRule.maxAmountPerWindow
           : "",
-      networkPatterns: toLines(initialRule?.networkPatterns),
-      assetPatterns: toLines(initialRule?.assetPatterns),
+      network: initialRule?.network ?? networkOptions[0] ?? "",
+      asset: initialRule?.asset ?? "",
+      assetTransferMethod: (initialRule?.assetTransferMethod ||
+        ANY_TRANSFER_METHOD) as PaymentSpendRuleFormSchemaType["assetTransferMethod"],
       payToPatterns: toLines(initialRule?.payToPatterns),
-      assetTransferMethodPatterns: toLines(
-        initialRule?.assetTransferMethodPatterns
-      ),
     },
   })
 
@@ -75,31 +87,6 @@ export default function PaymentSpendRuleForm({
       form.setError(error.field, { type: "server", message: error.message })
     }
   }
-
-  const facet = (
-    name:
-      | "networkPatterns"
-      | "assetPatterns"
-      | "payToPatterns"
-      | "assetTransferMethodPatterns",
-    label: string,
-    description: string
-  ) => (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Textarea rows={3} className="font-mono text-xs" {...field} />
-          </FormControl>
-          <FormDescription>{description}</FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  )
 
   return (
     <Form {...form}>
@@ -158,8 +145,8 @@ export default function PaymentSpendRuleForm({
                 <Input className="font-mono text-xs" {...field} />
               </FormControl>
               <FormDescription>
-                Atomic units of the quoted asset. When several rules match a
-                quote, the smallest cap wins — 0 refuses anything priced.
+                Atomic units of the token. When several rules match a quote, the
+                smallest cap wins — 0 refuses anything priced.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -206,26 +193,98 @@ export default function PaymentSpendRuleForm({
           )}
         />
 
-        {facet(
-          "networkPatterns",
-          "Networks",
-          'One regex per line, matched against the quote\'s CAIP-2 network, e.g. eip155:8453 — ".*" allows any.'
-        )}
-        {facet(
-          "assetPatterns",
-          "Assets",
-          "One regex per line, matched against the token contract address."
-        )}
-        {facet(
-          "payToPatterns",
-          "Recipients",
-          "One regex per line, matched against the address being paid."
-        )}
-        {facet(
-          "assetTransferMethodPatterns",
-          "Transfer methods",
-          "eip3009 authorizes one transfer; permit2 grants a standing allowance."
-        )}
+        <FormField
+          control={form.control}
+          name="network"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Network</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a network" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {networkOptions.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {formatNetwork(id) === id
+                        ? id
+                        : `${formatNetwork(id)} (${id})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="asset"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Token contract</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="0x…"
+                  className="font-mono text-xs"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                The caps are counted in this token's atomic units.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="assetTransferMethod"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Transfer method</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={ANY_TRANSFER_METHOD}>Either</SelectItem>
+                  <SelectItem value="eip3009">eip3009</SelectItem>
+                  <SelectItem value="permit2">permit2</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                eip3009 authorizes one transfer; permit2 grants a standing
+                allowance.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="payToPatterns"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Recipients</FormLabel>
+              <FormControl>
+                <Textarea rows={3} className="font-mono text-xs" {...field} />
+              </FormControl>
+              <FormDescription>
+                One regex per line, matched against the address being paid —
+                ".*" allows anyone.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </form>
     </Form>
   )

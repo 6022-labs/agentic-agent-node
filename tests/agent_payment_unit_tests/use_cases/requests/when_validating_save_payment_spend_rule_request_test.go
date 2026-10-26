@@ -18,7 +18,7 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		return &requests.SavePaymentSpendRuleRequest{
 			Name:                "  Anything, unbounded  ",
 			MaxAmountPerPayment: "10000",
-			Config:              json.RawMessage(`{"networkPatterns":[".*"]}`),
+			Config:              json.RawMessage(`{"network":"eip155:8453"}`),
 		}
 	}
 

@@ -46,7 +46,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 					WindowSeconds:       86400,
 					MaxAmountPerWindow:  "50000",
 					Method:              "x402",
-					Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
+					Config:              json.RawMessage(`{"network":"eip155:8453"}`),
 				}).
 				Return(&models.ExternalPaymentSpendRule{Id: "rule-id", Name: "Only base, small"}, nil).
 				Times(1)
@@ -64,7 +64,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				WindowSeconds:       86400,
 				MaxAmountPerWindow:  "50000",
 				Method:              "x402",
-				Config:              json.RawMessage(`{"networkPatterns":["eip155:8453"]}`),
+				Config:              json.RawMessage(`{"network":"eip155:8453"}`),
 			})
 
 			assert.NoError(t, err)

@@ -43,7 +43,7 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 		return map[string]any{
 			"name":                "Only base, small",
 			"maxAmountPerPayment": "1000",
-			"config":              map[string]any{"networkPatterns": []any{"eip155:8453"}},
+			"config":              map[string]any{"network": "eip155:8453"},
 		}
 	}
 

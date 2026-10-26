@@ -1,6 +1,9 @@
 import { z } from "zod"
 
-// A facet is entered one pattern per line; an empty facet matches nothing, so
+// ANY_TRANSFER_METHOD is the select's stand-in for "either"; the wire omits the field.
+export const ANY_TRANSFER_METHOD = "any"
+
+// Recipients are entered one pattern per line; an empty list matches nobody, so
 // the form requires at least one and offers ".*" as the open value. Patterns are
 // compiled server-side by Go's RE2, which rejects lookahead and backreferences.
 const patternList = (label: string) =>
@@ -50,10 +53,16 @@ export const paymentSpendRuleFormSchema = z
       .string()
       .trim()
       .regex(/^\d*$/, "Whole atomic units (empty = no recurring budget)"),
-    networkPatterns: patternList("Networks"),
-    assetPatterns: patternList("Assets"),
+    network: z
+      .string()
+      .trim()
+      .regex(/^eip155:\d+$/, "Pick a network"),
+    asset: z
+      .string()
+      .trim()
+      .regex(/^0x[0-9a-fA-F]{40}$/, "A 0x-prefixed token contract address"),
+    assetTransferMethod: z.enum([ANY_TRANSFER_METHOD, "eip3009", "permit2"]),
     payToPatterns: patternList("Recipients"),
-    assetTransferMethodPatterns: patternList("Transfer methods"),
   })
   .superRefine((values, ctx) => {
     const period =

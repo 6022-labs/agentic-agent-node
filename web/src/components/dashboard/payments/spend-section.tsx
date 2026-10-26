@@ -24,11 +24,14 @@ import {
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import PaymentSpendRuleDialog from "@/components/dashboard/payments/dialogs/payment-spend-rule-dialog"
-import type { PaymentSpendRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
+import {
+  ANY_TRANSFER_METHOD,
+  type PaymentSpendRuleFormSchemaType,
+} from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
 import {
   ANY_PATTERN,
-  isOpenToEverything,
   isUnbounded,
+  isUnrestricted,
   type PaymentSpendPolicy,
   type PaymentSpendRule,
 } from "@/models/payment-spend-policy"
@@ -44,7 +47,7 @@ import {
   updatePaymentSpendRule,
 } from "@/queries/api/payment-spend-rule.queries"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import { isPlainAddressPattern } from "@/lib/token-format"
+import { formatNetwork, isPlainAddressPattern } from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
 
 const MAX_PATTERN_CHIPS = 2
@@ -105,10 +108,10 @@ const FORM_FIELDS: Array<keyof PaymentSpendRuleFormSchemaType> = [
   "maxAmountPerPayment",
   "windowSeconds",
   "maxAmountPerWindow",
-  "networkPatterns",
-  "assetPatterns",
+  "network",
+  "asset",
+  "assetTransferMethod",
   "payToPatterns",
-  "assetTransferMethodPatterns",
 ]
 
 // splitPatterns turns the form's one-per-line text back into the wire array.
@@ -159,12 +162,13 @@ export default function PaymentSpendPolicySection() {
     maxAmountPerWindow:
       values.maxAmountPerWindow.length === 0 ? "0" : values.maxAmountPerWindow,
     windowSpent: "0",
-    networkPatterns: splitPatterns(values.networkPatterns),
-    assetPatterns: splitPatterns(values.assetPatterns),
+    network: values.network,
+    asset: values.asset,
+    assetTransferMethod:
+      values.assetTransferMethod === ANY_TRANSFER_METHOD
+        ? undefined
+        : values.assetTransferMethod,
     payToPatterns: splitPatterns(values.payToPatterns),
-    assetTransferMethodPatterns: splitPatterns(
-      values.assetTransferMethodPatterns
-    ),
   })
 
   const onSaveRule =
@@ -187,7 +191,7 @@ export default function PaymentSpendPolicySection() {
         const validation = extractValidationError(error)
         if (validation) {
           // Runtime errors on the x402 matcher come back prefixed (e.g.
-          // "config.networkPatterns"); strip it to reach the form control.
+          // "config.network"); strip it to reach the form control.
           const field = validation.field.replace(/^config\./, "")
           if (
             FORM_FIELDS.includes(field as keyof PaymentSpendRuleFormSchemaType)
@@ -243,7 +247,7 @@ export default function PaymentSpendPolicySection() {
 
   // With no rule at all the agent cannot pay anything: matching is deny-by-default.
   const cannotSpend = rules.length === 0
-  const unrestricted = rules.some(isOpenToEverything)
+  const unrestricted = rules.some(isUnrestricted)
 
   return (
     <Card>
@@ -253,8 +257,8 @@ export default function PaymentSpendPolicySection() {
             <CardTitle>Spending policy</CardTitle>
             <CardDescription>
               What the agent may pay for. Every x402 quote it is asked to sign
-              must match a rule on all four facets, and is capped by the
-              smallest matching rule.
+              must match a rule's network, token, transfer method and
+              recipients, and is capped by the smallest matching rule.
             </CardDescription>
           </div>
           <Badge
@@ -287,9 +291,8 @@ export default function PaymentSpendPolicySection() {
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <p className="text-muted-foreground">
-                  A seeded rule allows any amount, to any recipient, on any
-                  network. Narrow or remove it before the agent holds funds
-                  worth taking.
+                  A rule allows any amount of its token, to any recipient.
+                  Narrow it before the agent holds funds worth taking.
                 </p>
               </div>
             ) : null}
@@ -313,10 +316,10 @@ export default function PaymentSpendPolicySection() {
                     <TableHead>Name</TableHead>
                     <TableHead>Cap (atomic units)</TableHead>
                     <TableHead>Spent this period</TableHead>
-                    <TableHead>Networks</TableHead>
-                    <TableHead>Assets</TableHead>
+                    <TableHead>Network</TableHead>
+                    <TableHead>Token</TableHead>
                     <TableHead>Recipients</TableHead>
-                    <TableHead>Transfer methods</TableHead>
+                    <TableHead>Transfer method</TableHead>
                     <TableHead className="w-20" />
                   </TableRow>
                 </TableHeader>
@@ -373,19 +376,22 @@ export default function PaymentSpendPolicySection() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <PatternsCell patterns={rule.networkPatterns} />
+                      <TableCell className="text-xs" title={rule.network}>
+                        {formatNetwork(rule.network)}
                       </TableCell>
-                      <TableCell>
-                        <PatternsCell patterns={rule.assetPatterns} />
+                      <TableCell
+                        className="font-mono text-xs"
+                        title={rule.asset}
+                      >
+                        {truncateEthAddress(rule.asset)}
                       </TableCell>
                       <TableCell>
                         <PatternsCell patterns={rule.payToPatterns} />
                       </TableCell>
-                      <TableCell>
-                        <PatternsCell
-                          patterns={rule.assetTransferMethodPatterns}
-                        />
+                      <TableCell className="text-xs">
+                        {rule.assetTransferMethod ?? (
+                          <span className="text-muted-foreground">either</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
@@ -421,14 +427,14 @@ export default function PaymentSpendPolicySection() {
       {policy ? (
         <CardFooter className="justify-end">
           <ConfirmDialog
-            title="Reset to the unrestricted default?"
-            description="Every spend rule is removed, and the agent is seeded again with a rule allowing any amount, to any recipient, on any network."
+            title="Remove every spend rule?"
+            description="The agent will not be able to pay anything until a rule allows it again."
             confirmLabel="Reset"
             onConfirm={onResetPolicy}
           >
             <Button variant="destructive" size="sm" disabled={mutating}>
               <Trash2 />
-              Reset to unrestricted
+              Remove all rules
             </Button>
           </ConfirmDialog>
         </CardFooter>

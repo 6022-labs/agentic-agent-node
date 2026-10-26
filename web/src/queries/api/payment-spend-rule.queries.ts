@@ -18,10 +18,10 @@ const toWire = (rule: PaymentSpendRule): PaymentSpendRuleWire => ({
   maxAmountPerWindow: rule.maxAmountPerWindow,
   method: rule.method || X402_METHOD,
   config: {
-    networkPatterns: rule.networkPatterns,
-    assetPatterns: rule.assetPatterns,
+    network: rule.network,
+    asset: rule.asset,
+    assetTransferMethod: rule.assetTransferMethod || undefined,
     payToPatterns: rule.payToPatterns,
-    assetTransferMethodPatterns: rule.assetTransferMethodPatterns,
   },
 })
 
@@ -35,10 +35,10 @@ const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
   windowSpent: wire.windowSpent ?? "0",
   windowResetsAt: wire.windowResetsAt,
   method: wire.method,
-  networkPatterns: wire.config?.networkPatterns ?? [],
-  assetPatterns: wire.config?.assetPatterns ?? [],
+  network: wire.config?.network ?? "",
+  asset: wire.config?.asset ?? "",
+  assetTransferMethod: wire.config?.assetTransferMethod,
   payToPatterns: wire.config?.payToPatterns ?? [],
-  assetTransferMethodPatterns: wire.config?.assetTransferMethodPatterns ?? [],
 })
 
 // GET /config/payment-spend-policy/rules — the spend rules in table order.
