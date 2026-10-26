@@ -18,15 +18,17 @@ import (
 type WhenLoadingX402ConfigTestingSuite struct {
 	sut *services.X402PaymentMethodStrategy
 
-	mockConfigRepository *payment_repositories_mocks.MockPaymentRuleX402ConfigRepositoryInterface
+	mockConfigRepository *payment_repositories_mocks.MockPaymentReceiveRuleX402ConfigRepositoryInterface
 }
 
 func WhenLoadingX402ConfigBeforeEach(t *testing.T) *WhenLoadingX402ConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
-	facilitators := &runtime_common_settings.PaymentFacilitatorsSettings{}
+	facilitators := &runtime_common_settings.PaymentReceiveSettings{}
 	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
-	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
+	mockConfigRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleX402ConfigRepositoryInterface(
+		mockController,
+	)
 
 	return &WhenLoadingX402ConfigTestingSuite{
 		sut: services.NewX402PaymentMethodStrategy(
@@ -88,12 +90,15 @@ func TestWhenLoadingX402Config(t *testing.T) {
 	t.Run("Given the rule has a config", func(t *testing.T) {
 		t.Parallel()
 
-		row := model_builders.NewPaymentRuleX402ConfigBuilder().
+		row := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
 			WithAddressPatterns([]string{".*"}).
 			Build()
 
 		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
-			suite.mockConfigRepository.EXPECT().GetByRuleId(gomock.Any(), row.PaymentRuleId).Return(row, nil).Times(1)
+			suite.mockConfigRepository.EXPECT().
+				GetByRuleId(gomock.Any(), row.PaymentReceiveRuleId).
+				Return(row, nil).
+				Times(1)
 		}
 
 		t.Run("Should return it as the wire blob", func(t *testing.T) {
@@ -102,10 +107,10 @@ func TestWhenLoadingX402Config(t *testing.T) {
 			suite := WhenLoadingX402ConfigBeforeEach(t)
 			initSuite(suite)
 
-			raw, err := suite.sut.LoadConfig(context.Background(), row.PaymentRuleId)
+			raw, err := suite.sut.LoadConfig(context.Background(), row.PaymentReceiveRuleId)
 
 			assert.NoError(t, err)
-			config := &models.PaymentRuleX402Config{}
+			config := &models.PaymentReceiveRuleX402Config{}
 			assert.NoError(t, config.Parse(raw))
 			assert.Equal(t, row.Network, config.Network)
 			assert.Equal(t, []string{".*"}, config.AddressPatterns)

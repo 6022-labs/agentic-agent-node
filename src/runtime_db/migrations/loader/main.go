@@ -29,9 +29,9 @@ func main() {
 		&agent_identity_models.AgentRegistrationState{},
 		&agent_identity_models.AgentAddress{},
 
-		&paymentPolicyWithCrossDomainFK{},
-		&agent_payment_models.PaymentRule{},
-		&agent_payment_models.PaymentRuleX402Config{},
+		&paymentReceivePolicyWithCrossDomainFK{},
+		&agent_payment_models.PaymentReceiveRule{},
+		&agent_payment_models.PaymentReceiveRuleX402Config{},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)

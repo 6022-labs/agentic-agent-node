@@ -25,25 +25,25 @@ const (
 type GetWellKnownAgent6022 struct {
 	wellKnownCardSigner
 
-	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface
-	paymentRuleClient       payment_interfaces.PaymentRuleClientInterface
-	agentIdentitySettings   *identity_settings.AgentIdentitySettings
-	gatewaySettings         *core_settings.GatewaySettings
+	agentRegistrationClient  identity_interfaces.AgentRegistrationClientInterface
+	paymentReceiveRuleClient payment_interfaces.PaymentReceiveRuleClientInterface
+	agentIdentitySettings    *identity_settings.AgentIdentitySettings
+	gatewaySettings          *core_settings.GatewaySettings
 }
 
 func NewGetWellKnownAgent6022(
 	agentRegistrationClient identity_interfaces.AgentRegistrationClientInterface,
 	agentCardSignatureClient identity_interfaces.AgentCardSignatureClientInterface,
-	paymentRuleClient payment_interfaces.PaymentRuleClientInterface,
+	paymentReceiveRuleClient payment_interfaces.PaymentReceiveRuleClientInterface,
 	agentIdentitySettings *identity_settings.AgentIdentitySettings,
 	gatewaySettings *core_settings.GatewaySettings,
 ) *GetWellKnownAgent6022 {
 	return &GetWellKnownAgent6022{
-		wellKnownCardSigner:     wellKnownCardSigner{agentCardSignatureClient: agentCardSignatureClient},
-		agentRegistrationClient: agentRegistrationClient,
-		paymentRuleClient:       paymentRuleClient,
-		agentIdentitySettings:   agentIdentitySettings,
-		gatewaySettings:         gatewaySettings,
+		wellKnownCardSigner:      wellKnownCardSigner{agentCardSignatureClient: agentCardSignatureClient},
+		agentRegistrationClient:  agentRegistrationClient,
+		paymentReceiveRuleClient: paymentReceiveRuleClient,
+		agentIdentitySettings:    agentIdentitySettings,
+		gatewaySettings:          gatewaySettings,
 	}
 }
 
@@ -81,7 +81,7 @@ func (u *GetWellKnownAgent6022) Execute(ctx context.Context) (*responses.WellKno
 
 // listPaymentMethods derives distinct rule methods; a missing or not-yet-minted policy means no payment, not an error.
 func (u *GetWellKnownAgent6022) listPaymentMethods(ctx context.Context) ([]string, error) {
-	rules, err := u.paymentRuleClient.List(ctx)
+	rules, err := u.paymentReceiveRuleClient.List(ctx)
 	if err != nil {
 		var notFoundErr *apperrors.NotFoundError
 		var conflictErr *apperrors.ConflictError
@@ -91,7 +91,7 @@ func (u *GetWellKnownAgent6022) listPaymentMethods(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	methods := lo.Uniq(lo.Map(rules, func(rule payment_models.ExternalPaymentRule, _ int) string {
+	methods := lo.Uniq(lo.Map(rules, func(rule payment_models.ExternalPaymentReceiveRule, _ int) string {
 		return rule.Method
 	}))
 

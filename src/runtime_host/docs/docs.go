@@ -949,7 +949,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/internal/config/payment-policy": {
+        "/internal/config/payment-receive-policy": {
             "get": {
                 "produces": [
                     "application/json"
@@ -962,7 +962,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.PaymentPolicyResponse"
+                            "$ref": "#/definitions/responses.PaymentReceivePolicyResponse"
                         }
                     },
                     "409": {
@@ -997,7 +997,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/internal/config/payment-policy/rules": {
+        "/internal/config/payment-receive-policy/rules": {
             "get": {
                 "produces": [
                     "application/json"
@@ -1010,7 +1010,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.ListPaymentRulesResponse"
+                            "$ref": "#/definitions/responses.ListPaymentReceiveRulesResponse"
                         }
                     },
                     "409": {
@@ -1045,7 +1045,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1053,7 +1053,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.PaymentRuleResponse"
+                            "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
                         }
                     },
                     "400": {
@@ -1077,7 +1077,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/internal/config/payment-policy/rules/{id}": {
+        "/internal/config/payment-receive-policy/rules/{id}": {
             "put": {
                 "consumes": [
                     "application/json"
@@ -1103,7 +1103,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1111,7 +1111,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.PaymentRuleResponse"
+                            "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
                         }
                     },
                     "400": {
@@ -2000,7 +2000,7 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.SavePaymentRuleRequest": {
+        "requests.SavePaymentReceiveRuleRequest": {
             "type": "object",
             "properties": {
                 "config": {
@@ -2450,13 +2450,13 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.ListPaymentRulesResponse": {
+        "responses.ListPaymentReceiveRulesResponse": {
             "type": "object",
             "properties": {
                 "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/responses.PaymentRuleResponse"
+                        "$ref": "#/definitions/responses.PaymentReceiveRuleResponse"
                     }
                 }
             }
@@ -2630,7 +2630,7 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.PaymentPolicyResponse": {
+        "responses.PaymentReceivePolicyResponse": {
             "type": "object",
             "properties": {
                 "agentId": {
@@ -2650,7 +2650,7 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.PaymentRuleResponse": {
+        "responses.PaymentReceiveRuleResponse": {
             "type": "object",
             "properties": {
                 "config": {

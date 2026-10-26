@@ -52,7 +52,7 @@ components:
         message:
           type: string
       type: object
-    models.ExternalPaymentRule:
+    models.ExternalPaymentReceiveRule:
       properties:
         config:
           type: object
@@ -204,7 +204,7 @@ components:
             $ref: '#/components/schemas/requests.InputMessage'
           type: array
       type: object
-    requests.SavePaymentRuleRequest:
+    requests.SavePaymentReceiveRuleRequest:
       properties:
         config:
           type: object
@@ -531,7 +531,7 @@ components:
         updatedAt:
           type: string
       type: object
-    responses.GetPaymentPolicyResponse:
+    responses.GetPaymentReceivePolicyResponse:
       properties:
         agentId:
           type: string
@@ -581,11 +581,11 @@ components:
           type: array
           uniqueItems: false
       type: object
-    responses.ListPaymentRulesResponse:
+    responses.ListPaymentReceiveRulesResponse:
       properties:
         rules:
           items:
-            $ref: '#/components/schemas/models.ExternalPaymentRule'
+            $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
           type: array
           uniqueItems: false
       type: object
@@ -1867,7 +1867,7 @@ paths:
       summary: Discover MCP server tools
       tags:
       - Config
-  /config/payment-policy:
+  /config/payment-receive-policy:
     delete:
       responses:
         "204": {}
@@ -1894,7 +1894,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.GetPaymentPolicyResponse'
+                $ref: '#/components/schemas/responses.GetPaymentReceivePolicyResponse'
           description: OK
         "401":
           content:
@@ -1919,14 +1919,14 @@ paths:
       summary: Get payment policy
       tags:
       - Config
-  /config/payment-policy/rules:
+  /config/payment-receive-policy/rules:
     get:
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.ListPaymentRulesResponse'
+                $ref: '#/components/schemas/responses.ListPaymentReceiveRulesResponse'
           description: OK
         "401":
           content:
@@ -1958,7 +1958,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+              - $ref: '#/components/schemas/requests.SavePaymentReceiveRuleRequest'
                 description: payment rule
                 summary: request
         description: payment rule
@@ -1968,7 +1968,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalPaymentRule'
+                $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
           description: OK
         "400":
           content:
@@ -1999,7 +1999,7 @@ paths:
       summary: Create payment rule
       tags:
       - Config
-  /config/payment-policy/rules/{id}:
+  /config/payment-receive-policy/rules/{id}:
     delete:
       parameters:
       - description: rule id
@@ -2053,7 +2053,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+              - $ref: '#/components/schemas/requests.SavePaymentReceiveRuleRequest'
                 description: payment rule
                 summary: request
         description: payment rule
@@ -2063,7 +2063,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalPaymentRule'
+                $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
           description: OK
         "400":
           content:

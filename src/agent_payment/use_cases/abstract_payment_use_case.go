@@ -24,37 +24,37 @@ import (
 // AbstractPaymentUseCase carries the repositories every payment use case
 // needs and the shared policy-materialization behavior.
 type AbstractPaymentUseCase struct {
-	agentRepository         identity_repositories.AgentRepositoryInterface
-	agentAddressRepository  identity_repositories.AgentAddressRepositoryInterface
-	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface
-	paymentRuleRepository   repositories.PaymentRuleRepositoryInterface
-	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface
-	token6022Settings       *runtime_common_settings.Token6022Settings
+	agentRepository                identity_repositories.AgentRepositoryInterface
+	agentAddressRepository         identity_repositories.AgentAddressRepositoryInterface
+	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface
+	paymentReceiveRuleRepository   repositories.PaymentReceiveRuleRepositoryInterface
+	paymentMethodStrategies        payment_interfaces.PaymentMethodStrategiesInterface
+	token6022Settings              *runtime_common_settings.Token6022Settings
 }
 
 func NewAbstractPaymentUseCase(
 	agentRepository identity_repositories.AgentRepositoryInterface,
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
-	paymentPolicyRepository repositories.PaymentPolicyRepositoryInterface,
-	paymentRuleRepository repositories.PaymentRuleRepositoryInterface,
+	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
+	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
 	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
 	token6022Settings *runtime_common_settings.Token6022Settings,
 ) *AbstractPaymentUseCase {
 	return &AbstractPaymentUseCase{
-		agentRepository:         agentRepository,
-		agentAddressRepository:  agentAddressRepository,
-		paymentPolicyRepository: paymentPolicyRepository,
-		paymentRuleRepository:   paymentRuleRepository,
-		paymentMethodStrategies: paymentMethodStrategies,
-		token6022Settings:       token6022Settings,
+		agentRepository:                agentRepository,
+		agentAddressRepository:         agentAddressRepository,
+		paymentReceivePolicyRepository: paymentReceivePolicyRepository,
+		paymentReceiveRuleRepository:   paymentReceiveRuleRepository,
+		paymentMethodStrategies:        paymentMethodStrategies,
+		token6022Settings:              token6022Settings,
 	}
 }
 
-// ensurePaymentPolicy returns the policy head, materializing it with the
+// ensurePaymentReceivePolicy returns the policy head, materializing it with the
 // seeded default rule on first access.
-func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
+func (u *AbstractPaymentUseCase) ensurePaymentReceivePolicy(
 	ctx context.Context,
-) (*models.PaymentPolicy, *identity_models.Agent, error) {
+) (*models.PaymentReceivePolicy, *identity_models.Agent, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
@@ -67,7 +67,7 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
 		return nil, nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
 	}
 
-	policy, err := u.paymentPolicyRepository.GetByAgentId(ctx, agent.Id)
+	policy, err := u.paymentReceivePolicyRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 	}
@@ -75,10 +75,10 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
 		return policy, agent, nil
 	}
 
-	policy, err = u.paymentPolicyRepository.Create(ctx, &models.PaymentPolicy{AgentId: agent.Id})
+	policy, err = u.paymentReceivePolicyRepository.Create(ctx, &models.PaymentReceivePolicy{AgentId: agent.Id})
 	if err != nil {
 		// A concurrent first request may have won the insert race; re-read before failing.
-		existing, getErr := u.paymentPolicyRepository.GetByAgentId(ctx, agent.Id)
+		existing, getErr := u.paymentReceivePolicyRepository.GetByAgentId(ctx, agent.Id)
 		if getErr == nil && existing != nil {
 			return existing, agent, nil
 		}
@@ -89,7 +89,7 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
 		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 	}
 	if rule, config := u.defaultRule(policy, agent, evmAddress); rule != nil {
-		created, err := u.paymentRuleRepository.Create(ctx, rule)
+		created, err := u.paymentReceiveRuleRepository.Create(ctx, rule)
 		if err != nil {
 			return nil, nil, errors.NewInternalError("policy_failed", err.Error())
 		}
@@ -108,10 +108,10 @@ func (u *AbstractPaymentUseCase) ensurePaymentPolicy(
 // EIP-712 signing context — zero-price rules never settle on-chain. Returns
 // (nil, nil) when the agent has no addresses to scope to.
 func (u *AbstractPaymentUseCase) defaultRule(
-	policy *models.PaymentPolicy,
+	policy *models.PaymentReceivePolicy,
 	agent *identity_models.Agent,
 	evmAddress string,
-) (*models.PaymentRule, json.RawMessage) {
+) (*models.PaymentReceiveRule, json.RawMessage) {
 	patterns := []string{}
 	if len(evmAddress) != 0 {
 		patterns = append(patterns, strings.ToLower(evmAddress))
@@ -127,7 +127,7 @@ func (u *AbstractPaymentUseCase) defaultRule(
 	asset, _ := u.token6022Settings.AddressFor(lo.FromPtr(agent.ChainId))
 	// x402 networks are CAIP-2; the agent stores a plain chain id.
 	evmChainId, _ := strconv.ParseUint(lo.FromPtr(agent.ChainId), 10, 64)
-	config := &models.PaymentRuleX402Config{
+	config := &models.PaymentReceiveRuleX402Config{
 		Network:             helpers.FormatCaip2(evmChainId),
 		Asset:               asset.Hex(),
 		PayTo:               evmAddress,
@@ -140,7 +140,7 @@ func (u *AbstractPaymentUseCase) defaultRule(
 	if err != nil {
 		return nil, nil
 	}
-	return &models.PaymentRule{
+	return &models.PaymentReceiveRule{
 		PolicyId: policy.Id,
 		Name:     "Owner free access",
 		Price:    "0",

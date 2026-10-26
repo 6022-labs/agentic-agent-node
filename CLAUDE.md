@@ -78,7 +78,7 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 
 ### Payment (x402)
 
-`agent_payment` is method-agnostic via a strategy pattern (`PaymentMethodStrategiesInterface` dispatches by `Method`); **x402** is the implemented method. An x402 rule (`PaymentRuleX402Config`) carries a CAIP-2 `network`, ERC-20 `asset` (default $6022), `payTo`, and `assetTransferMethod` (ERC-3009 `transferWithAuthorization` or permit2). **Zero-price rules never settle on-chain** — they carry only EIP-712 signing context. Actual settlement goes through an **x402 facilitator** (`gateway_http_x402`, long timeout because `/settle` blocks until the tx lands); facilitators are configured in `runtime_common/settings/payment_facilitators_settings.go` and a facilitator is only valid if a matching chain RPC exists in `blockchain.chains`.
+`agent_payment` is method-agnostic via a strategy pattern (`PaymentMethodStrategiesInterface` dispatches by `Method`); **x402** is the implemented method. An x402 rule (`PaymentReceiveRuleX402Config`) carries a CAIP-2 `network`, ERC-20 `asset` (default $6022), `payTo`, and `assetTransferMethod` (ERC-3009 `transferWithAuthorization` or permit2). **Zero-price rules never settle on-chain** — they carry only EIP-712 signing context. Actual settlement goes through an **x402 facilitator** (`gateway_http_x402`, long timeout because `/settle` blocks until the tx lands); facilitators are configured in `runtime_common/settings/payment_receive_settings.go` and a facilitator is only valid if a matching chain RPC exists in `blockchain.chains`.
 
 ### Identity resolves lazily
 

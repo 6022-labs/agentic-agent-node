@@ -6,14 +6,14 @@ import type { ChatMessage } from "@/components/dashboard/playground/chat-transcr
 import type { MessageRole } from "@/models/enums/message-role"
 import type { Conversation } from "@/models/conversation"
 import { createResponse } from "@/queries/api/responses.queries"
-import { listPaymentRules } from "@/queries/api/payment-rule.queries"
+import { listPaymentReceiveRules } from "@/queries/api/payment-receive-rule.queries"
 import {
   getConversationMessages,
   listConversations,
 } from "@/queries/api/conversations.queries"
 import { extractErrorMessage } from "@/lib/api-errors"
 import { getX402PaymentHeader } from "@/lib/x402"
-import { findFreeRule } from "@/models/payment-policy"
+import { findFreeRule } from "@/models/payment-receive-policy"
 import { newId } from "@/lib/utils"
 import { useWallet } from "@/contexts/wallet-provider-context"
 
@@ -105,7 +105,7 @@ export function usePlaygroundChat() {
             cause: error,
           })
         }
-        const { rules } = await listPaymentRules()
+        const { rules } = await listPaymentReceiveRules()
         const freeRule = findFreeRule(rules, address)
         if (!freeRule) {
           throw new Error(

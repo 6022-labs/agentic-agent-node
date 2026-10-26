@@ -138,12 +138,12 @@ func addPaymentConfiguration(container *dig.Container) {
 	}
 
 	useCaseProviders := []any{
-		payment_use_cases.NewGetPaymentPolicy,
-		payment_use_cases.NewDeletePaymentPolicy,
-		payment_use_cases.NewListPaymentRules,
-		payment_use_cases.NewCreatePaymentRule,
-		payment_use_cases.NewUpdatePaymentRule,
-		payment_use_cases.NewDeletePaymentRule,
+		payment_use_cases.NewGetPaymentReceivePolicy,
+		payment_use_cases.NewDeletePaymentReceivePolicy,
+		payment_use_cases.NewListPaymentReceiveRules,
+		payment_use_cases.NewCreatePaymentReceiveRule,
+		payment_use_cases.NewUpdatePaymentReceiveRule,
+		payment_use_cases.NewDeletePaymentReceiveRule,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {

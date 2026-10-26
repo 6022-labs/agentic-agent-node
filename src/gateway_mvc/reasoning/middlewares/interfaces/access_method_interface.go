@@ -8,7 +8,7 @@ import (
 // AccessMethodInterface is one link in the gate's access chain.
 type AccessMethodInterface interface {
 	// TryHandle handles the request (returns true) or defers to the next link.
-	TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (handled bool, err error)
+	TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentReceiveRule) (handled bool, err error)
 	// Priority orders links in the chain, lowest first.
 	Priority() int
 }

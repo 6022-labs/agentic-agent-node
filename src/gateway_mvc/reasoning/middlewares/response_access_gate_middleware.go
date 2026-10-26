@@ -14,15 +14,15 @@ import (
 
 // ResponseAccessGateMiddleware runs the /responses access chain in priority order.
 type ResponseAccessGateMiddleware struct {
-	paymentRuleClient gateway_interfaces.PaymentRuleClientInterface
-	chain             []middleware_interfaces.AccessMethodInterface
+	paymentReceiveRuleClient gateway_interfaces.PaymentReceiveRuleClientInterface
+	chain                    []middleware_interfaces.AccessMethodInterface
 }
 
 type NewResponseAccessGateMiddlewareParams struct {
 	dig.In
 
-	PaymentRuleClient gateway_interfaces.PaymentRuleClientInterface
-	AccessMethods     []middleware_interfaces.AccessMethodInterface `group:"access_methods"`
+	PaymentReceiveRuleClient gateway_interfaces.PaymentReceiveRuleClientInterface
+	AccessMethods            []middleware_interfaces.AccessMethodInterface `group:"access_methods"`
 }
 
 func NewResponseAccessGateMiddleware(params NewResponseAccessGateMiddlewareParams) *ResponseAccessGateMiddleware {
@@ -33,18 +33,18 @@ func NewResponseAccessGateMiddleware(params NewResponseAccessGateMiddlewareParam
 	})
 
 	return &ResponseAccessGateMiddleware{
-		paymentRuleClient: params.PaymentRuleClient,
-		chain:             chain,
+		paymentReceiveRuleClient: params.PaymentReceiveRuleClient,
+		chain:                    chain,
 	}
 }
 
 func (m *ResponseAccessGateMiddleware) Handle(ctx fiber.Ctx) error {
-	rules, err := m.paymentRuleClient.List(ctx.Context())
+	rules, err := m.paymentReceiveRuleClient.List(ctx.Context())
 	if err != nil {
 		// Pre-mint the runtime refuses to materialize rules; run the chain ruleless (x402 advertises a 402).
 		var conflictErr *apperrors.ConflictError
 		if !errors.As(err, &conflictErr) {
-			return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_rules_unavailable", err.Error()))
+			return mvc.WriteError(ctx, apperrors.NewUnavailableError("payment_receive_rules_unavailable", err.Error()))
 		}
 		rules = nil
 	}

@@ -24,8 +24,8 @@ services:
       - BLOCKCHAIN__EVM_CHAINS__84532__HTTP_URL=https://sepolia.base.org
       - BLOCKCHAIN__EVM_CHAINS__84532__REQUEST_TIMEOUT_SECONDS=10
       # Public testnet x402 facilitators, so paid rules work out of the box; each needs an RPC above.
-      - PAYMENT__FACILITATORS__80002__BASE_URL=https://x402-amoy.polygon.technology
-      - PAYMENT__FACILITATORS__84532__BASE_URL=https://x402.org/facilitator
+      - PAYMENT__RECEIVE__FACILITATORS__80002__BASE_URL=https://x402-amoy.polygon.technology
+      - PAYMENT__RECEIVE__FACILITATORS__84532__BASE_URL=https://x402.org/facilitator
       - RUNTIME_DATABASE__DRIVER=postgres
       - RUNTIME_DATABASE__URL=host=agent-node-db port=5432 user=postgres password=root dbname=postgres sslmode=disable
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations

@@ -1263,7 +1263,7 @@
                 }
             }
         },
-        "/config/payment-policy": {
+        "/config/payment-receive-policy": {
             "get": {
                 "security": [
                     {
@@ -1281,7 +1281,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.GetPaymentPolicyResponse"
+                            "$ref": "#/definitions/responses.GetPaymentReceivePolicyResponse"
                         }
                     },
                     "401": {
@@ -1336,7 +1336,7 @@
                 }
             }
         },
-        "/config/payment-policy/rules": {
+        "/config/payment-receive-policy/rules": {
             "get": {
                 "security": [
                     {
@@ -1354,7 +1354,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.ListPaymentRulesResponse"
+                            "$ref": "#/definitions/responses.ListPaymentReceiveRulesResponse"
                         }
                     },
                     "401": {
@@ -1400,7 +1400,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1408,7 +1408,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                         }
                     },
                     "400": {
@@ -1438,7 +1438,7 @@
                 }
             }
         },
-        "/config/payment-policy/rules/{id}": {
+        "/config/payment-receive-policy/rules/{id}": {
             "put": {
                 "security": [
                     {
@@ -1469,7 +1469,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1477,7 +1477,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                         }
                     },
                     "400": {
@@ -2160,7 +2160,7 @@
                 }
             }
         },
-        "models.ExternalPaymentRule": {
+        "models.ExternalPaymentReceiveRule": {
             "type": "object",
             "properties": {
                 "config": {
@@ -2389,7 +2389,7 @@
                 }
             }
         },
-        "requests.SavePaymentRuleRequest": {
+        "requests.SavePaymentReceiveRuleRequest": {
             "type": "object",
             "properties": {
                 "config": {
@@ -2879,7 +2879,7 @@
                 }
             }
         },
-        "responses.GetPaymentPolicyResponse": {
+        "responses.GetPaymentReceivePolicyResponse": {
             "type": "object",
             "properties": {
                 "agentId": {
@@ -2952,13 +2952,13 @@
                 }
             }
         },
-        "responses.ListPaymentRulesResponse": {
+        "responses.ListPaymentReceiveRulesResponse": {
             "type": "object",
             "properties": {
                 "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.ExternalPaymentRule"
+                        "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                     }
                 }
             }

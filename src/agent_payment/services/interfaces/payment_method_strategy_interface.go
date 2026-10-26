@@ -17,7 +17,7 @@ import (
 type PaymentMethodStrategyInterface interface {
 	Method() enums.PaymentMethod
 	// Validate checks and sanitizes the request's Config blob in place.
-	Validate(ctx context.Context, request *requests.SavePaymentRuleRequest) error
+	Validate(ctx context.Context, request *requests.SavePaymentReceiveRuleRequest) error
 	// SaveConfig persists the rule's method config from the validated blob,
 	// replacing any existing one.
 	SaveConfig(ctx context.Context, ruleId uuid.UUID, config json.RawMessage) error

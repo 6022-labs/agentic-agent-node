@@ -166,7 +166,7 @@ components:
         type:
           type: string
       type: object
-    requests.SavePaymentRuleRequest:
+    requests.SavePaymentReceiveRuleRequest:
       properties:
         config:
           type: object
@@ -464,11 +464,11 @@ components:
         totalElements:
           type: integer
       type: object
-    responses.ListPaymentRulesResponse:
+    responses.ListPaymentReceiveRulesResponse:
       properties:
         rules:
           items:
-            $ref: '#/components/schemas/responses.PaymentRuleResponse'
+            $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
           type: array
           uniqueItems: false
       type: object
@@ -591,7 +591,7 @@ components:
           type: array
           uniqueItems: false
       type: object
-    responses.PaymentPolicyResponse:
+    responses.PaymentReceivePolicyResponse:
       properties:
         agentId:
           type: string
@@ -604,7 +604,7 @@ components:
         updatedAt:
           type: string
       type: object
-    responses.PaymentRuleResponse:
+    responses.PaymentReceiveRuleResponse:
       properties:
         config:
           type: object
@@ -1427,7 +1427,7 @@ paths:
       summary: Internal get payment facilitators
       tags:
       - Internal
-  /internal/config/payment-policy:
+  /internal/config/payment-receive-policy:
     delete:
       responses:
         "204":
@@ -1447,7 +1447,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.PaymentPolicyResponse'
+                $ref: '#/components/schemas/responses.PaymentReceivePolicyResponse'
           description: OK
         "409":
           content:
@@ -1464,14 +1464,14 @@ paths:
       summary: Internal get payment policy
       tags:
       - Internal
-  /internal/config/payment-policy/rules:
+  /internal/config/payment-receive-policy/rules:
     get:
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.ListPaymentRulesResponse'
+                $ref: '#/components/schemas/responses.ListPaymentReceiveRulesResponse'
           description: OK
         "409":
           content:
@@ -1495,7 +1495,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+              - $ref: '#/components/schemas/requests.SavePaymentReceiveRuleRequest'
                 description: payment rule
                 summary: request
         description: payment rule
@@ -1505,7 +1505,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.PaymentRuleResponse'
+                $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
           description: OK
         "400":
           content:
@@ -1528,7 +1528,7 @@ paths:
       summary: Internal create payment rule
       tags:
       - Internal
-  /internal/config/payment-policy/rules/{id}:
+  /internal/config/payment-receive-policy/rules/{id}:
     delete:
       parameters:
       - description: rule id
@@ -1575,7 +1575,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/requests.SavePaymentRuleRequest'
+              - $ref: '#/components/schemas/requests.SavePaymentReceiveRuleRequest'
                 description: payment rule
                 summary: request
         description: payment rule
@@ -1585,7 +1585,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/responses.PaymentRuleResponse'
+                $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
           description: OK
         "400":
           content:

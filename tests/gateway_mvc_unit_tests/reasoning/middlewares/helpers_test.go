@@ -14,7 +14,7 @@ import (
 )
 
 // x402GateRule builds an x402 rule with its settings serialized into Config.
-func x402GateRule(price string, payTo string, patterns []string) models.ExternalPaymentRule {
+func x402GateRule(price string, payTo string, patterns []string) models.ExternalPaymentReceiveRule {
 	config, _ := json.Marshal(x402.X402Config{
 		Network:             "eip155:80002",
 		Asset:               "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
@@ -24,23 +24,23 @@ func x402GateRule(price string, payTo string, patterns []string) models.External
 		Eip712Version:       "2",
 		AddressPatterns:     patterns,
 	})
-	return models.ExternalPaymentRule{
+	return models.ExternalPaymentReceiveRule{
 		Method: "x402",
 		Price:  price,
 		Config: config,
 	}
 }
 
-func x402GatePublicRule() models.ExternalPaymentRule {
+func x402GatePublicRule() models.ExternalPaymentReceiveRule {
 	return x402GateRule("10000", x402TestPayToHex, []string{".*"})
 }
 
-func x402GateFreeRule(patterns ...string) models.ExternalPaymentRule {
+func x402GateFreeRule(patterns ...string) models.ExternalPaymentReceiveRule {
 	return x402GateRule("0", x402TestAgentWalletHex, patterns)
 }
 
 // x402GatePermit2Rule is a public paid rule on the permit2 method, with no EIP-712 domain.
-func x402GatePermit2Rule() models.ExternalPaymentRule {
+func x402GatePermit2Rule() models.ExternalPaymentReceiveRule {
 	config, _ := json.Marshal(x402.X402Config{
 		Network:             "eip155:80002",
 		Asset:               "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
@@ -48,10 +48,10 @@ func x402GatePermit2Rule() models.ExternalPaymentRule {
 		AssetTransferMethod: x402.AssetTransferMethodPermit2,
 		AddressPatterns:     []string{".*"},
 	})
-	return models.ExternalPaymentRule{Method: "x402", Price: "10000", Config: config}
+	return models.ExternalPaymentReceiveRule{Method: "x402", Price: "10000", Config: config}
 }
 
-func x402GateTestRules(rules ...models.ExternalPaymentRule) []models.ExternalPaymentRule {
+func x402GateTestRules(rules ...models.ExternalPaymentReceiveRule) []models.ExternalPaymentReceiveRule {
 	return rules
 }
 

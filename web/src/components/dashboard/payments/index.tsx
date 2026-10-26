@@ -26,24 +26,24 @@ import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import NotMintedState from "@/components/dashboard/not-minted-state"
-import PaymentRuleDialog from "@/components/dashboard/payments/dialogs/payment-rule-dialog"
-import type { PaymentRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-rule-form/payment-rule-form-schema"
+import PaymentReceiveRuleDialog from "@/components/dashboard/payments/dialogs/payment-receive-rule-dialog"
+import type { PaymentReceiveRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
 import {
   EVERYONE_PATTERN,
-  type PaymentPolicy,
-  type PaymentRule,
-} from "@/models/payment-policy"
+  type PaymentReceivePolicy,
+  type PaymentReceiveRule,
+} from "@/models/payment-receive-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import {
-  deletePaymentPolicy,
-  getPaymentPolicy,
-} from "@/queries/api/payment-policy.queries"
+  deletePaymentReceivePolicy,
+  getPaymentReceivePolicy,
+} from "@/queries/api/payment-receive-policy.queries"
 import {
-  createPaymentRule,
-  deletePaymentRule,
-  listPaymentRules,
-  updatePaymentRule,
-} from "@/queries/api/payment-rule.queries"
+  createPaymentReceiveRule,
+  deletePaymentReceiveRule,
+  listPaymentReceiveRules,
+  updatePaymentReceiveRule,
+} from "@/queries/api/payment-receive-rule.queries"
 import { getFacilitatorNetworks } from "@/configs/app-config"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 import {
@@ -57,7 +57,7 @@ const MAX_CALLER_CHIPS = 3
 
 // The fields the rule form actually renders; runtime errors on any other
 // (defaulted) config field are toasted instead of pinned to a control.
-const FORM_FIELDS: Array<keyof PaymentRuleFormSchemaType> = [
+const FORM_FIELDS: Array<keyof PaymentReceiveRuleFormSchemaType> = [
   "name",
   "method",
   "network",
@@ -73,10 +73,10 @@ const isNotMintedError = (error: unknown) =>
   (error.response.data as { code?: string } | undefined)?.code ===
     "agent_not_minted"
 
-export default function PaymentPolicySection() {
+export default function PaymentReceivePolicySection() {
   const { loading: identityLoading, isMinted } = useAgentIdentity()
-  const [policy, setPolicy] = React.useState<PaymentPolicy | null>(null)
-  const [rules, setRules] = React.useState<PaymentRule[]>([])
+  const [policy, setPolicy] = React.useState<PaymentReceivePolicy | null>(null)
+  const [rules, setRules] = React.useState<PaymentReceiveRule[]>([])
   const [loading, setLoading] = React.useState(true)
   const [mutating, setMutating] = React.useState(false)
 
@@ -84,8 +84,8 @@ export default function PaymentPolicySection() {
     setLoading(true)
     try {
       // Sequential on purpose: both calls lazily materialize the policy server-side.
-      const policyResponse = await getPaymentPolicy()
-      const rulesResponse = await listPaymentRules()
+      const policyResponse = await getPaymentReceivePolicy()
+      const rulesResponse = await listPaymentReceiveRules()
       setPolicy(policyResponse.data)
       setRules(rulesResponse.rules)
     } catch (error) {
@@ -103,16 +103,16 @@ export default function PaymentPolicySection() {
   }, [load, isMinted])
 
   const reloadRules = async () => {
-    const { rules } = await listPaymentRules()
+    const { rules } = await listPaymentReceiveRules()
     setRules(rules)
   }
 
   // The form deals in plain addresses; custom regex patterns set via the API
   // on an edited rule are preserved verbatim.
   const toRule = (
-    values: PaymentRuleFormSchemaType,
-    existing?: PaymentRule
-  ): PaymentRule => ({
+    values: PaymentReceiveRuleFormSchemaType,
+    existing?: PaymentReceiveRule
+  ): PaymentReceiveRule => ({
     name: values.name,
     method: values.method,
     network: values.network,
@@ -127,24 +127,24 @@ export default function PaymentPolicySection() {
         ],
   })
 
-  const customPatternsOf = (rule: PaymentRule): string[] =>
+  const customPatternsOf = (rule: PaymentReceiveRule): string[] =>
     (rule.addressPatterns ?? []).filter(
       (pattern) =>
         pattern !== EVERYONE_PATTERN && !isPlainAddressPattern(pattern)
     )
 
   const onSaveRule =
-    (existing?: PaymentRule) =>
+    (existing?: PaymentReceiveRule) =>
     async (
-      values: PaymentRuleFormSchemaType
-    ): Promise<FormCompletionResult<keyof PaymentRuleFormSchemaType>> => {
+      values: PaymentReceiveRuleFormSchemaType
+    ): Promise<FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>> => {
       setMutating(true)
       try {
         const rule = toRule(values, existing)
         if (existing?.id) {
-          await updatePaymentRule(existing.id, rule)
+          await updatePaymentReceiveRule(existing.id, rule)
         } else {
-          await createPaymentRule(rule)
+          await createPaymentReceiveRule(rule)
         }
         await reloadRules()
         toast.success(existing ? "Pricing rule updated" : "Pricing rule added")
@@ -157,10 +157,10 @@ export default function PaymentPolicySection() {
           // address list.
           const bare = validation.field.replace(/^config\./, "")
           const field = bare === "addressPatterns" ? "addresses" : bare
-          if (FORM_FIELDS.includes(field as keyof PaymentRuleFormSchemaType)) {
+          if (FORM_FIELDS.includes(field as keyof PaymentReceiveRuleFormSchemaType)) {
             return {
               error: {
-                field: field as keyof PaymentRuleFormSchemaType,
+                field: field as keyof PaymentReceiveRuleFormSchemaType,
                 message: validation.message,
               },
             }
@@ -177,11 +177,11 @@ export default function PaymentPolicySection() {
       }
     }
 
-  const onRemoveRule = async (rule: PaymentRule) => {
+  const onRemoveRule = async (rule: PaymentReceiveRule) => {
     if (!rule.id) return
     setMutating(true)
     try {
-      await deletePaymentRule(rule.id)
+      await deletePaymentReceiveRule(rule.id)
       await reloadRules()
       toast.success("Pricing rule removed")
     } catch (error) {
@@ -193,7 +193,7 @@ export default function PaymentPolicySection() {
 
   const onReset = async () => {
     try {
-      await deletePaymentPolicy()
+      await deletePaymentReceivePolicy()
       await load()
       toast.success("Payment policy reset")
     } catch (error) {
@@ -201,12 +201,12 @@ export default function PaymentPolicySection() {
     }
   }
 
-  const isPublic = (rule: PaymentRule) =>
+  const isPublic = (rule: PaymentReceiveRule) =>
     rule.addressPatterns?.includes(EVERYONE_PATTERN)
   // A paid rule whose network has no configured facilitator can't be settled,
   // so callers can never pay it — flag it.
   const facilitatorNetworks = getFacilitatorNetworks()
-  const isUnsettleable = (rule: PaymentRule) =>
+  const isUnsettleable = (rule: PaymentReceiveRule) =>
     rule.price !== "0" && !facilitatorNetworks.includes(rule.network)
   const acceptingPayments = rules.some(
     (rule) => isPublic(rule) && rule.price !== "0"
@@ -250,7 +250,7 @@ export default function PaymentPolicySection() {
                 everyone are advertised to anonymous callers; scoped rules are
                 private offers.
               </p>
-              <PaymentRuleDialog
+              <PaymentReceiveRuleDialog
                 agentWalletAddress={policy.agentWalletAddress}
                 onSave={onSaveRule()}
               />
@@ -320,7 +320,7 @@ export default function PaymentPolicySection() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <PaymentRuleDialog
+                        <PaymentReceiveRuleDialog
                           agentWalletAddress={policy.agentWalletAddress}
                           initialRule={rule}
                           preservedPatternCount={customPatternsOf(rule).length}

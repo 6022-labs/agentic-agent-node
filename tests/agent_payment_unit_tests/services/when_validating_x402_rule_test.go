@@ -22,7 +22,7 @@ type WhenValidatingX402RuleTestingSuite struct {
 }
 
 func WhenValidatingX402RuleBeforeEach(t *testing.T) *WhenValidatingX402RuleTestingSuite {
-	return validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{
+	return validatingX402RuleSuite(t, &runtime_common_settings.PaymentReceiveSettings{
 		"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology"},
 		"eip155:84532": {BaseUrl: "https://x402.org/facilitator"},
 	})
@@ -31,12 +31,14 @@ func WhenValidatingX402RuleBeforeEach(t *testing.T) *WhenValidatingX402RuleTesti
 // validatingX402RuleSuite builds the suite with a given facilitator config; only chains 80002 and 84532 are reachable.
 func validatingX402RuleSuite(
 	t *testing.T,
-	facilitators *runtime_common_settings.PaymentFacilitatorsSettings,
+	facilitators *runtime_common_settings.PaymentReceiveSettings,
 ) *WhenValidatingX402RuleTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
-	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
+	mockConfigRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleX402ConfigRepositoryInterface(
+		mockController,
+	)
 	evmChainsSettings := &runtime_common_settings.EvmChainsSettings{
 		"80002": {ChainId: "80002", HttpUrl: "http://localhost:8545"},
 		"84532": {ChainId: "84532", HttpUrl: "http://localhost:8546"},
@@ -268,7 +270,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		t.Run("Should return a validation error on config.network", func(t *testing.T) {
 			t.Parallel()
 
-			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
+			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentReceiveSettings{})
 			initSuite(suite)
 
 			request := generateSaveRequest(validConfig, "10000")
@@ -300,7 +302,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			err := suite.sut.Validate(context.Background(), request)
 
 			assert.NoError(t, err)
-			config := &models.PaymentRuleX402Config{}
+			config := &models.PaymentReceiveRuleX402Config{}
 			assert.NoError(t, config.Parse(request.Config))
 			assert.Equal(t, enums.AssetTransferMethodPermit2, config.AssetTransferMethod)
 			assert.Nil(t, config.Eip712Name)
@@ -321,7 +323,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		t.Run("Should be allowed (free rules never settle)", func(t *testing.T) {
 			t.Parallel()
 
-			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentFacilitatorsSettings{})
+			suite := validatingX402RuleSuite(t, &runtime_common_settings.PaymentReceiveSettings{})
 			initSuite(suite)
 
 			request := generateSaveRequest(validConfig, "0")
@@ -375,7 +377,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			err := suite.sut.Validate(context.Background(), request)
 
 			assert.NoError(t, err)
-			config := &models.PaymentRuleX402Config{}
+			config := &models.PaymentReceiveRuleX402Config{}
 			assert.NoError(t, config.Parse(request.Config))
 			assert.Equal(t, ".*", config.AddressPatterns[0])
 			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", config.AddressPatterns[1])

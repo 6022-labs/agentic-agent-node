@@ -22,7 +22,7 @@ type WhenBuildingWellKnownAgent6022TestingSuite struct {
 
 	mockAgentRegistrationClient  *identity_mocks.MockAgentRegistrationClientInterface
 	mockAgentCardSignatureClient *identity_mocks.MockAgentCardSignatureClientInterface
-	mockPaymentRuleClient        *payment_mocks.MockPaymentRuleClientInterface
+	mockPaymentReceiveRuleClient *payment_mocks.MockPaymentReceiveRuleClientInterface
 	signedBody                   []byte
 }
 
@@ -34,12 +34,12 @@ func WhenBuildingWellKnownAgent6022BeforeEach(
 
 	mockAgentRegistrationClient := identity_mocks.NewMockAgentRegistrationClientInterface(mockController)
 	mockAgentCardSignatureClient := identity_mocks.NewMockAgentCardSignatureClientInterface(mockController)
-	mockPaymentRuleClient := payment_mocks.NewMockPaymentRuleClientInterface(mockController)
+	mockPaymentReceiveRuleClient := payment_mocks.NewMockPaymentReceiveRuleClientInterface(mockController)
 
 	sut := use_cases.NewGetWellKnownAgent6022(
 		mockAgentRegistrationClient,
 		mockAgentCardSignatureClient,
-		mockPaymentRuleClient,
+		mockPaymentReceiveRuleClient,
 		&identity_settings.AgentIdentitySettings{RuntimeUrl: runtimeUrl},
 		&core_settings.GatewaySettings{PublicPrefix: publicPrefix},
 	)
@@ -48,7 +48,7 @@ func WhenBuildingWellKnownAgent6022BeforeEach(
 		sut:                          sut,
 		mockAgentRegistrationClient:  mockAgentRegistrationClient,
 		mockAgentCardSignatureClient: mockAgentCardSignatureClient,
-		mockPaymentRuleClient:        mockPaymentRuleClient,
+		mockPaymentReceiveRuleClient: mockPaymentReceiveRuleClient,
 	}
 }
 
@@ -100,7 +100,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
 		}
@@ -126,7 +126,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, nil)
 			suite.mockAgentCardSignatureClient.EXPECT().
@@ -155,9 +155,9 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
-				Return(nil, apperrors.NewNotFoundError("payment_policy_not_found", "no policy"))
+				Return(nil, apperrors.NewNotFoundError("payment_receive_policy_not_found", "no policy"))
 			suite.expectCardSignature(ctx)
 		}
 
@@ -181,7 +181,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet"))
 			suite.expectCardSignature(ctx)
@@ -207,9 +207,9 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
-				Return([]payment_models.ExternalPaymentRule{}, nil)
+				Return([]payment_models.ExternalPaymentReceiveRule{}, nil)
 			suite.expectCardSignature(ctx)
 		}
 
@@ -234,7 +234,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
 				Return(nil, nil)
 			suite.expectCardSignature(ctx)
@@ -263,9 +263,9 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 					Name:      " hermes ",
 					EnsDomain: "hermes.agents6022.eth",
 				}, nil)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
-				Return([]payment_models.ExternalPaymentRule{
+				Return([]payment_models.ExternalPaymentReceiveRule{
 					{Method: "x402"},
 					{Method: "x402"},
 					{Method: "l402"},

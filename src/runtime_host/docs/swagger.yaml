@@ -163,7 +163,7 @@ definitions:
       type:
         type: string
     type: object
-  requests.SavePaymentRuleRequest:
+  requests.SavePaymentReceiveRuleRequest:
     properties:
       config:
         type: object
@@ -454,11 +454,11 @@ definitions:
       totalElements:
         type: integer
     type: object
-  responses.ListPaymentRulesResponse:
+  responses.ListPaymentReceiveRulesResponse:
     properties:
       rules:
         items:
-          $ref: '#/definitions/responses.PaymentRuleResponse'
+          $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         type: array
     type: object
   responses.MCPConnectionListResponse:
@@ -571,7 +571,7 @@ definitions:
           $ref: '#/definitions/responses.PaymentFacilitatorResponse'
         type: array
     type: object
-  responses.PaymentPolicyResponse:
+  responses.PaymentReceivePolicyResponse:
     properties:
       agentId:
         type: string
@@ -584,7 +584,7 @@ definitions:
       updatedAt:
         type: string
     type: object
-  responses.PaymentRuleResponse:
+  responses.PaymentReceiveRuleResponse:
     properties:
       config:
         type: object
@@ -1276,7 +1276,7 @@ paths:
       summary: Internal get payment facilitators
       tags:
       - Internal
-  /internal/config/payment-policy:
+  /internal/config/payment-receive-policy:
     delete:
       responses:
         "204":
@@ -1295,7 +1295,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.PaymentPolicyResponse'
+            $ref: '#/definitions/responses.PaymentReceivePolicyResponse'
         "409":
           description: agent_not_minted
           schema:
@@ -1307,7 +1307,7 @@ paths:
       summary: Internal get payment policy
       tags:
       - Internal
-  /internal/config/payment-policy/rules:
+  /internal/config/payment-receive-policy/rules:
     get:
       produces:
       - application/json
@@ -1315,7 +1315,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.ListPaymentRulesResponse'
+            $ref: '#/definitions/responses.ListPaymentReceiveRulesResponse'
         "409":
           description: agent_not_minted
           schema:
@@ -1336,14 +1336,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+          $ref: '#/definitions/requests.SavePaymentReceiveRuleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.PaymentRuleResponse'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:
@@ -1359,7 +1359,7 @@ paths:
       summary: Internal create payment rule
       tags:
       - Internal
-  /internal/config/payment-policy/rules/{id}:
+  /internal/config/payment-receive-policy/rules/{id}:
     delete:
       parameters:
       - description: rule id
@@ -1399,14 +1399,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+          $ref: '#/definitions/requests.SavePaymentReceiveRuleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.PaymentRuleResponse'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:

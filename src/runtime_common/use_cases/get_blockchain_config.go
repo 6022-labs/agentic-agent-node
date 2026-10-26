@@ -18,7 +18,7 @@ type GetBlockchainConfig struct {
 	agentCollectionCreatorsSettings  *settings.AgentCollectionCreatorsSettings
 	token6022Settings                *settings.Token6022Settings
 	agentEnsRegistriesSettings       *settings.AgentEnsRegistriesSettings
-	paymentFacilitatorsSettings      *settings.PaymentFacilitatorsSettings
+	paymentReceiveSettings           *settings.PaymentReceiveSettings
 }
 
 func NewGetBlockchainConfig(
@@ -27,7 +27,7 @@ func NewGetBlockchainConfig(
 	agentCollectionCreatorsSettings *settings.AgentCollectionCreatorsSettings,
 	token6022Settings *settings.Token6022Settings,
 	agentEnsRegistriesSettings *settings.AgentEnsRegistriesSettings,
-	paymentFacilitatorsSettings *settings.PaymentFacilitatorsSettings,
+	paymentReceiveSettings *settings.PaymentReceiveSettings,
 ) *GetBlockchainConfig {
 	return &GetBlockchainConfig{
 		evmChainsSettings:                evmChainsSettings,
@@ -35,7 +35,7 @@ func NewGetBlockchainConfig(
 		agentCollectionCreatorsSettings:  agentCollectionCreatorsSettings,
 		token6022Settings:                token6022Settings,
 		agentEnsRegistriesSettings:       agentEnsRegistriesSettings,
-		paymentFacilitatorsSettings:      paymentFacilitatorsSettings,
+		paymentReceiveSettings:           paymentReceiveSettings,
 	}
 }
 
@@ -65,7 +65,7 @@ func (u *GetBlockchainConfig) facilitatorNetwork(chainId string) *string {
 		return nil
 	}
 	network := helpers.FormatCaip2(evmChainId)
-	if _, ok := u.paymentFacilitatorsSettings.BaseUrlFor(network); !ok {
+	if _, ok := u.paymentReceiveSettings.BaseUrlFor(network); !ok {
 		return nil
 	}
 	return &network

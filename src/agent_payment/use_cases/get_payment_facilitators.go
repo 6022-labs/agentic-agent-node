@@ -10,15 +10,15 @@ import (
 // GetPaymentFacilitators serves the configured network→facilitator mapping to
 // the gateway's payment gate, which joins it with the rules to settle.
 type GetPaymentFacilitators struct {
-	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings
+	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings
 }
 
 func NewGetPaymentFacilitators(
-	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
+	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings,
 ) *GetPaymentFacilitators {
-	return &GetPaymentFacilitators{paymentFacilitatorsSettings: paymentFacilitatorsSettings}
+	return &GetPaymentFacilitators{paymentReceiveSettings: paymentReceiveSettings}
 }
 
 func (u *GetPaymentFacilitators) Execute(_ context.Context) (*responses.PaymentFacilitatorsResponse, error) {
-	return responses.ToPaymentFacilitatorsResponse(u.paymentFacilitatorsSettings.Entries()), nil
+	return responses.ToPaymentFacilitatorsResponse(u.paymentReceiveSettings.Entries()), nil
 }

@@ -40,7 +40,7 @@ func (m *JwtFreeAccessMethod) Priority() int {
 	return jwtFreeAccessPriority
 }
 
-func (m *JwtFreeAccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *JwtFreeAccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentReceiveRule) (bool, error) {
 	address, ok := m.freeAccessAddress(ctx, rules)
 	if !ok {
 		return false, nil
@@ -52,7 +52,7 @@ func (m *JwtFreeAccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPa
 // freeAccessAddress returns the bearer's free-entitled address; false on any failure.
 func (m *JwtFreeAccessMethod) freeAccessAddress(
 	ctx fiber.Ctx,
-	rules []models.ExternalPaymentRule,
+	rules []models.ExternalPaymentReceiveRule,
 ) (common.Address, bool) {
 	const prefix = "Bearer "
 	header := ctx.Get(fiber.HeaderAuthorization)
