@@ -1,18 +1,13 @@
-// Package helper holds the low-level blockchain adapter helpers shared by the
-// on-chain adapters (mint + ENS): EVM signing/transaction utilities and
-// domain-to-abi conversions.
+// Package helper holds this adapter's EVM signing and domain-to-abi conversions.
 package helper
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // Transactor builds a chain-bound transactor from a 0x-prefixed private key hex.
@@ -26,23 +21,4 @@ func Transactor(privateKeyHex string, chainId uint64) (*bind.TransactOpts, error
 		return nil, fmt.Errorf("invalid wallet private key: %w", err)
 	}
 	return bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(chainId))
-}
-
-// WaitForReceipt blocks until tx is mined and errors if it reverted.
-func WaitForReceipt(ctx context.Context, client *ethclient.Client, tx *types.Transaction) (*types.Receipt, error) {
-	receipt, err := bind.WaitMined(ctx, client, tx)
-	if err != nil {
-		return nil, fmt.Errorf("wait for tx %s: %w", tx.Hash().Hex(), err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return nil, fmt.Errorf("tx %s reverted (status=%d)", tx.Hash().Hex(), receipt.Status)
-	}
-	return receipt, nil
-}
-
-// WaitForSuccess blocks until tx is mined and errors if it reverted, discarding
-// the receipt. Use WaitForReceipt when the receipt (e.g. logs) is needed.
-func WaitForSuccess(ctx context.Context, client *ethclient.Client, tx *types.Transaction) error {
-	_, err := WaitForReceipt(ctx, client, tx)
-	return err
 }

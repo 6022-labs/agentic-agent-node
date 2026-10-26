@@ -7,9 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -26,8 +24,7 @@ const (
 
 // AgentCardSigner signs agent cards as A2A detached JWS (ES256K, RFC 8812) with the node's EVM wallet key.
 type AgentCardSigner struct {
-	agentRepository          repositories.AgentRepositoryInterface
-	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
+	*AbstractWalletSigner
 }
 
 func NewAgentCardSigner(
@@ -35,12 +32,11 @@ func NewAgentCardSigner(
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 ) *AgentCardSigner {
 	return &AgentCardSigner{
-		agentRepository:          agentRepository,
-		walletCredentialsStorage: walletCredentialsStorage,
+		AbstractWalletSigner: NewAbstractWalletSigner(agentRepository, walletCredentialsStorage),
 	}
 }
 
-// jwsProtectedHeader fields are declared alphabetically so the marshalled header is already JCS-ordered.
+// Fields are alphabetical so the marshalled header is already JCS-ordered.
 type jwsProtectedHeader struct {
 	Algorithm string       `json:"alg"`
 	Jwk       secp256k1Jwk `json:"jwk"`
@@ -61,7 +57,7 @@ func (s *AgentCardSigner) Sign(ctx context.Context, card []byte) (*identity_inte
 		return nil, fmt.Errorf("canonicalize agent card: %w", err)
 	}
 
-	key, err := s.loadWalletKey(ctx)
+	key, err := s.load(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,30 +101,4 @@ func (s *AgentCardSigner) buildProtectedHeader(key *ecdsa.PrivateKey) jwsProtect
 		KeyId: crypto.PubkeyToAddress(key.PublicKey).Hex(),
 		Type:  cardSignatureType,
 	}
-}
-
-func (s *AgentCardSigner) loadWalletKey(ctx context.Context) (*ecdsa.PrivateKey, error) {
-	agent, err := s.agentRepository.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("load agent: %w", err)
-	}
-	if agent == nil {
-		return nil, fmt.Errorf("agent not registered")
-	}
-
-	cred, found, err := s.walletCredentialsStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
-	if err != nil {
-		return nil, fmt.Errorf("load node wallet: %w", err)
-	}
-	if !found {
-		return nil, fmt.Errorf("node wallet not bootstrapped")
-	}
-
-	key, err := crypto.HexToECDSA(
-		strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(cred.PrivateKeyHex), "0x"), "0X"),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("invalid wallet private key: %w", err)
-	}
-	return key, nil
 }

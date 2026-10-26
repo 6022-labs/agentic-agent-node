@@ -9,12 +9,12 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
+	common_helper "github.com/6022-labs/agentic-agent-node/src/runtime_common/helper"
 	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
 )
 
-// AgentMinter sends mint transactions with the node's bootstrap wallet (from
-// Vault). Used by the self-mint flow once the owner has funded that wallet.
+// AgentMinter sends mint transactions with the node's Vault wallet, once the owner has funded it.
 type AgentMinter struct {
 	logger            *zap.Logger
 	ethClientFactory  *factory.EthClientFactory
@@ -63,7 +63,7 @@ func (m *AgentMinter) Mint(ctx context.Context, chainId string, params identity_
 	if err != nil {
 		return "", fmt.Errorf("mint: %w", err)
 	}
-	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
+	if err := common_helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return tx.Hash().Hex(), fmt.Errorf("mint: %w", err)
 	}
 
@@ -109,7 +109,7 @@ func (m *AgentMinter) CreateMintProposal(
 	if err != nil {
 		return "", 0, fmt.Errorf("createMintProposal: %w", err)
 	}
-	receipt, err := helper.WaitForReceipt(ctx, client, tx)
+	receipt, err := common_helper.WaitForReceipt(ctx, client, tx)
 	if err != nil {
 		return tx.Hash().Hex(), 0, fmt.Errorf("createMintProposal: %w", err)
 	}

@@ -93,6 +93,13 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		services.NewTypedDataSigner,
+		dig.As(new(identity_interfaces.TypedDataSignerInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		services.NewWalletCredentialsStorage,
 		dig.As(new(identity_interfaces.WalletCredentialsStorageInterface)),
 	); err != nil {
@@ -178,6 +185,7 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		use_cases.NewListAgentCollections,
 		use_cases.NewGetAgentSoul,
 		use_cases.NewSignAgentCard,
+		use_cases.NewSignTypedData,
 	}
 	for _, p := range useCaseProviders {
 		if err := container.Provide(p); err != nil {
