@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_x402/clients"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

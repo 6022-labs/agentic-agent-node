@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	x402_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"

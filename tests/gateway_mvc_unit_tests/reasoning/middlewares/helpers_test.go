@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	"github.com/stretchr/testify/assert"
 )

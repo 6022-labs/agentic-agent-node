@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	x402 "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	x402 "github.com/6022-labs/agentic-agent-node/src/common/x402"
 	gomock "go.uber.org/mock/gomock"
 )
 

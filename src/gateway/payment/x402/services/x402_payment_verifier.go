@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"

@@ -3,7 +3,7 @@ package interfaces
 import (
 	"errors"
 
-	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402"
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/ethereum/go-ethereum/common"
 )
 
