@@ -2,7 +2,6 @@ package repositories_test
 
 import (
 	"context"
-	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -11,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -48,10 +48,7 @@ func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
 	}
 
 	agentId := uuid.New()
-	if err := dbClient.GetDB(context.Background()).
-		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-		panic(err)
-	}
+	seeds.SeedAgent(dbClient, agentId)
 
 	return &WhenGettingAgentAddressByAgentIdAndTypeTestingSuite{
 		dbName:                   dbName,

@@ -73,11 +73,6 @@ func dialectorFor(driver enums.DatabaseDriver, url string) (gorm.Dialector, erro
 	}
 }
 
-// Begin opens a transaction on the pooled connection.
-func (c *DatabaseClient) Begin(ctx context.Context) *gorm.DB {
-	return c.db.WithContext(ctx).Begin()
-}
-
 // Use registers a gorm plugin at bootstrap, where there is no request context.
 func (c *DatabaseClient) Use(plugin gorm.Plugin) error {
 	return c.db.Use(plugin)
@@ -85,8 +80,10 @@ func (c *DatabaseClient) Use(plugin gorm.Plugin) error {
 
 // GetDB returns the transaction the context carries, or the pooled connection.
 func (c *DatabaseClient) GetDB(ctx context.Context) *gorm.DB {
-	if tx, ok := utils.UnitOfWorkFrom(ctx); ok {
-		return tx.WithContext(ctx)
+	if transaction, ok := c.TransactionFrom(ctx); ok {
+		if tx, open := transaction.open(); open {
+			return tx.WithContext(ctx)
+		}
 	}
 	return c.db.WithContext(ctx)
 }

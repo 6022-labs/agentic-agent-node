@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -78,10 +79,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -109,10 +107,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -139,7 +134,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -168,10 +163,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -201,7 +193,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").

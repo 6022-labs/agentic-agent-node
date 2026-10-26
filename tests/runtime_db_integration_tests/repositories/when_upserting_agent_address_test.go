@@ -2,7 +2,6 @@ package repositories_test
 
 import (
 	"context"
-	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"testing"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -12,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,10 +48,7 @@ func WhenUpsertingAgentAddressBeforeEach(tc *common_tests.DatabaseTestCase) *Whe
 	}
 
 	agentId := uuid.New()
-	if err := dbClient.GetDB(context.Background()).
-		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-		panic(err)
-	}
+	seeds.SeedAgent(dbClient, agentId)
 
 	return &WhenUpsertingAgentAddressTestingSuite{
 		dbName:                   dbName,

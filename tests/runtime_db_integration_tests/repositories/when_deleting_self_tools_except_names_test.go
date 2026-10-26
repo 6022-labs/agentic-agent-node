@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -76,14 +77,8 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 
 					agentId := uuid.New()
 					otherAgentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(otherAgentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -125,8 +120,8 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 
 					agentId := uuid.New()
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
-					seedAgent(suite.dbClient, otherAgentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 
 					kept, err := suite.sut.Create(
 						context.Background(),
@@ -172,8 +167,8 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 
 					agentId := uuid.New()
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
-					seedAgent(suite.dbClient, otherAgentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -222,10 +217,7 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					defer WhenDeletingSelfToolsExceptNamesAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -269,10 +261,7 @@ func TestWhenDeletingSelfToolsExceptNames(t *testing.T) {
 					defer WhenDeletingSelfToolsExceptNamesAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),

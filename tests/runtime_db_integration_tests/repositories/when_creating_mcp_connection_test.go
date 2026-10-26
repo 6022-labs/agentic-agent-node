@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -73,10 +74,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -106,10 +104,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -138,10 +133,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -173,7 +165,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -212,14 +204,8 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 					firstAgentId := uuid.New()
 					secondAgentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(firstAgentId).Build()).Error; err != nil {
-						panic(err)
-					}
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(secondAgentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, firstAgentId)
+					seeds.SeedAgent(suite.dbClient, secondAgentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),

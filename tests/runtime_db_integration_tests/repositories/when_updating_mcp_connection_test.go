@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -73,10 +74,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					defer WhenUpdatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),

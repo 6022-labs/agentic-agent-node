@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -22,7 +23,7 @@ type unitOfWorkTestingSuite struct {
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *runtime_db_services.UnitOfWorkFactory
-	connections              *repositories.MCPConnectionRepository
+	mcpConnectionRepository  *repositories.MCPConnectionRepository
 	agentId                  uuid.UUID
 }
 
@@ -48,17 +49,14 @@ func newUnitOfWorkTestingSuite(tc *common_tests.DatabaseTestCase) *unitOfWorkTes
 	}
 
 	agentId := uuid.New()
-	if err := dbClient.GetDB(context.Background()).
-		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-		panic(err)
-	}
+	seeds.SeedAgent(dbClient, agentId)
 
 	return &unitOfWorkTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
 		sut:                      runtime_db_services.NewUnitOfWorkFactory(dbClient),
-		connections:              repositories.NewMCPConnectionRepository(dbClient),
+		mcpConnectionRepository:  repositories.NewMCPConnectionRepository(dbClient),
 		agentId:                  agentId,
 	}
 }
@@ -71,7 +69,7 @@ func (s *unitOfWorkTestingSuite) close() {
 func (s *unitOfWorkTestingSuite) seedConnection(t *testing.T) *models.MCPConnection {
 	t.Helper()
 
-	created, err := s.connections.Create(context.Background(),
+	created, err := s.mcpConnectionRepository.Create(context.Background(),
 		model_builders.NewMCPConnectionBuilder().WithAgentId(s.agentId).Build())
 	assert.NoError(t, err)
 	return created
@@ -80,7 +78,7 @@ func (s *unitOfWorkTestingSuite) seedConnection(t *testing.T) *models.MCPConnect
 func (s *unitOfWorkTestingSuite) nameOf(t *testing.T, id uuid.UUID) string {
 	t.Helper()
 
-	connection, err := s.connections.GetById(context.Background(), s.agentId, id)
+	connection, err := s.mcpConnectionRepository.GetById(context.Background(), s.agentId, id)
 	assert.NoError(t, err)
 	return connection.Name
 }

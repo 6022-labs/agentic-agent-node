@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Ensure(context.Background(),
 						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(agentId).Build())
 					assert.NoError(t, err)
@@ -92,7 +93,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Ensure(context.Background(),
 						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(agentId).Build())
 					assert.NoError(t, err)
@@ -111,7 +112,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Ensure(context.Background(), model_builders.NewConversationBuilder().
 						WithId("conv-mine").

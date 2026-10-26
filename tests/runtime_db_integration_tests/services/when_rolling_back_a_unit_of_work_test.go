@@ -27,11 +27,11 @@ func TestWhenRollingBackAUnitOfWork(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given a rollback follows a commit", func(t *testing.T) {
+			t.Run("Given the scope is already closed", func(t *testing.T) {
 				t.Parallel()
 
-				// `defer Rollback()` sits on the committed path too, so it must be a no-op.
-				t.Run("Should be a no-op that keeps the committed work", func(t *testing.T) {
+				// `defer Rollback()` sits on the committed path too.
+				t.Run("Should be a no-op", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenRollingBackAUnitOfWorkBeforeEach(tc)
 					defer WhenRollingBackAUnitOfWorkAfterEach(suite)
@@ -41,20 +41,19 @@ func TestWhenRollingBackAUnitOfWork(t *testing.T) {
 					unitOfWork, err := suite.sut.Start(context.Background())
 					assert.NoError(t, err)
 					connection.Name = "kept"
-					_, err = suite.connections.Update(unitOfWork.Context(), connection)
+					_, err = suite.mcpConnectionRepository.Update(unitOfWork.Context(), connection)
 					assert.NoError(t, err)
-
 					assert.NoError(t, unitOfWork.Commit())
-					assert.NoError(t, unitOfWork.Rollback())
 
+					assert.NoError(t, unitOfWork.Rollback())
 					assert.Equal(t, "kept", suite.nameOf(t, connection.Id))
 				})
 			})
 
-			t.Run("Given the scope is rolled back", func(t *testing.T) {
+			t.Run("Given the scope is open", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should discard every write made through it", func(t *testing.T) {
+				t.Run("Should discard every write made through the scope", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenRollingBackAUnitOfWorkBeforeEach(tc)
 					defer WhenRollingBackAUnitOfWorkAfterEach(suite)
@@ -65,35 +64,9 @@ func TestWhenRollingBackAUnitOfWork(t *testing.T) {
 					unitOfWork, err := suite.sut.Start(context.Background())
 					assert.NoError(t, err)
 					connection.Name = "discarded"
-					_, err = suite.connections.Update(unitOfWork.Context(), connection)
+					_, err = suite.mcpConnectionRepository.Update(unitOfWork.Context(), connection)
 					assert.NoError(t, err)
 					assert.NoError(t, unitOfWork.Rollback())
-
-					assert.Equal(t, original, suite.nameOf(t, connection.Id))
-				})
-			})
-
-			t.Run("Given the caller never commits", func(t *testing.T) {
-				t.Parallel()
-
-				// The pattern every caller uses: defer Rollback, return early on refusal.
-				t.Run("Should discard the work when the deferred rollback runs", func(t *testing.T) {
-					t.Parallel()
-					suite := WhenRollingBackAUnitOfWorkBeforeEach(tc)
-					defer WhenRollingBackAUnitOfWorkAfterEach(suite)
-
-					connection := suite.seedConnection(t)
-					original := connection.Name
-
-					func() {
-						unitOfWork, err := suite.sut.Start(context.Background())
-						assert.NoError(t, err)
-						defer func() { _ = unitOfWork.Rollback() }()
-
-						connection.Name = "abandoned"
-						_, err = suite.connections.Update(unitOfWork.Context(), connection)
-						assert.NoError(t, err)
-					}()
 
 					assert.Equal(t, original, suite.nameOf(t, connection.Id))
 				})

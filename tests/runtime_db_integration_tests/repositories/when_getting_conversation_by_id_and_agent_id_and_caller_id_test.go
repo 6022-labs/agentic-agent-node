@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -107,7 +108,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -134,7 +135,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -159,7 +160,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -200,7 +201,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -240,9 +241,9 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, otherAgentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -268,7 +269,7 @@ func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					conversation, err := suite.sut.GetByIdAndAgentIdAndCallerId(ctx, "ghost", agentId, nil)
 

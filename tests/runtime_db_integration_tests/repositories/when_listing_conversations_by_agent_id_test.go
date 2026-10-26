@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -80,7 +81,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -122,7 +123,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -149,7 +150,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("console").
@@ -174,7 +175,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -215,9 +216,9 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, otherAgentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("theirs").
@@ -243,10 +244,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					createdAt := time.Now().UTC().Truncate(time.Second)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -292,10 +290,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 					seed(suite, agentId)
 
 					firstPage, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(0), lo.ToPtr(2))
@@ -313,10 +308,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					if err := suite.dbClient.GetDB(context.Background()).
-						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
-						panic(err)
-					}
+					seeds.SeedAgent(suite.dbClient, agentId)
 					seed(suite, agentId)
 
 					secondPage, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(2), lo.ToPtr(2))
@@ -337,7 +329,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 						ctx := context.Background()
 						agentId := uuid.New()
-						seedAgent(suite.dbClient, agentId)
+						seeds.SeedAgent(suite.dbClient, agentId)
 						seed(suite, agentId)
 
 						list, err := suite.sut.ListByAgentId(ctx, agentId, nil, lo.ToPtr(99), lo.ToPtr(2))
@@ -357,7 +349,7 @@ func TestWhenListingConversationsByAgentId(t *testing.T) {
 
 						ctx := context.Background()
 						agentId := uuid.New()
-						seedAgent(suite.dbClient, agentId)
+						seeds.SeedAgent(suite.dbClient, agentId)
 						seed(suite, agentId)
 
 						list, err := suite.sut.ListByAgentId(ctx, agentId, nil, nil, lo.ToPtr(1))
