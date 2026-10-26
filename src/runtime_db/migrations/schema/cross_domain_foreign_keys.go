@@ -1,4 +1,4 @@
-package main
+package schema
 
 import (
 	agent_identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"

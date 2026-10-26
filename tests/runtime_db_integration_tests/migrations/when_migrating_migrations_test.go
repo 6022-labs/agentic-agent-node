@@ -1,10 +1,12 @@
 package migrations_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/schema"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
@@ -102,6 +104,25 @@ func TestWhenMigratingMigrations(t *testing.T) {
 					defer WhenMigratingMigrationsAfterEach(suite)
 
 					assert.NoError(t, suite.sut.Migrate())
+				})
+			})
+
+			t.Run("Given every migration is applied", func(t *testing.T) {
+				t.Parallel()
+
+				// A model with no migration boots fine and fails on first query.
+				t.Run("Should create a table for every registered model", func(t *testing.T) {
+					t.Parallel()
+
+					suite := WhenMigratingMigrationsBeforeEach(testCase)
+					defer WhenMigratingMigrationsAfterEach(suite)
+
+					assert.NoError(t, suite.sut.Migrate())
+
+					migrator := suite.sut.GetDB(context.Background()).Migrator()
+					for _, model := range schema.Models() {
+						assert.Truef(t, migrator.HasTable(model), "no table for %T", model)
+					}
 				})
 			})
 

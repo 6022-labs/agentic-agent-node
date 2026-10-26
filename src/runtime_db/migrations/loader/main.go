@@ -7,32 +7,14 @@ import (
 	"os"
 
 	"ariga.io/atlas-provider-gorm/gormschema"
-	agent_identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
-	agent_knowledge_models "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
-	agent_payment_models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_db/migrations/schema"
 )
 
 func main() {
 	dialect := flag.String("dialect", "", "database dialect")
 	flag.Parse()
 
-	stmts, err := gormschema.New(*dialect).Load(
-		&mcpConnectionWithCrossDomainFK{},
-		&llmConnectionWithCrossDomainFK{},
-		&agentGuidanceWithCrossDomainFK{},
-		&selfToolWithCrossDomainFK{},
-
-		&conversationWithCrossDomainFK{},
-		&agent_knowledge_models.ConversationMessage{},
-
-		&agent_identity_models.Agent{},
-		&agent_identity_models.AgentRegistrationState{},
-		&agent_identity_models.AgentAddress{},
-
-		&paymentReceivePolicyWithCrossDomainFK{},
-		&agent_payment_models.PaymentReceiveRule{},
-		&agent_payment_models.PaymentReceiveRuleX402Config{},
-	)
+	stmts, err := gormschema.New(*dialect).Load(schema.Models()...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)
 		os.Exit(1)
