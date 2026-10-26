@@ -3,6 +3,7 @@ package configurations
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/settings"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"go.uber.org/dig"
 )
@@ -18,12 +19,24 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 		use_cases.NewCreatePaymentReceiveRule,
 		use_cases.NewUpdatePaymentReceiveRule,
 		use_cases.NewDeletePaymentReceiveRule,
+		use_cases.NewSignX402Payment,
 		use_cases.NewAuthorizePaymentReceiveAccess,
 	}
 	for _, useCase := range useCases {
 		if err := container.Provide(useCase); err != nil {
 			panic(err)
 		}
+	}
+
+	if err := container.Provide(settings.NewPaymentSpendSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewX402PaymentSigner,
+		dig.As(new(payment_interfaces.X402PaymentSignerInterface)),
+	); err != nil {
+		panic(err)
 	}
 
 	if err := container.Provide(

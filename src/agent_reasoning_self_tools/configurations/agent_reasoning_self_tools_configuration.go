@@ -50,6 +50,7 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewDeletePaymentReceivePolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
+	provideSelfTool(container, tools.NewSignX402PaymentTool)
 	provideSelfTool(container, tools.NewSignTypedDataTool)
 	provideSelfTool(container, tools.NewRunCommandTool)
 	provideSelfTool(container, tools.NewListProcessesTool)
@@ -166,6 +167,9 @@ func providePaymentExecutors(container *dig.Container) {
 	asDeletePaymentReceivePolicy := func(u *payment_use_cases.DeletePaymentReceivePolicy) tool_interfaces.DeletePaymentReceivePolicyExecutorInterface {
 		return u
 	}
+	asSignX402Payment := func(u *payment_use_cases.SignX402Payment) tool_interfaces.SignX402PaymentExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetPaymentReceivePolicy)
 	provideExecutor(container, asListPaymentReceiveRules)
@@ -174,6 +178,7 @@ func providePaymentExecutors(container *dig.Container) {
 	provideExecutor(container, asUpdatePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceivePolicy)
+	provideExecutor(container, asSignX402Payment)
 }
 
 func provideCommonExecutors(container *dig.Container) {

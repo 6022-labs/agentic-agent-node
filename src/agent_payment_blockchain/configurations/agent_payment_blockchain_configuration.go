@@ -17,6 +17,20 @@ func AddAgentPaymentBlockchainConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		factory.NewTransactorFactory,
+		dig.As(new(factory_interfaces.TransactorFactoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		blockchain_services.NewPermit2ApprovalEnsurer,
+		dig.As(new(payment_interfaces.Permit2ApprovalEnsurerInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		blockchain_services.NewErc20Validator,
 		dig.As(new(payment_interfaces.Erc20ValidatorInterface)),
 	); err != nil {

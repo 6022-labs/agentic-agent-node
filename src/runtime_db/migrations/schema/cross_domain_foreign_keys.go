@@ -59,3 +59,12 @@ type paymentReceivePolicyWithCrossDomainFK struct {
 func (model paymentReceivePolicyWithCrossDomainFK) TableName() string {
 	return model.PaymentReceivePolicy.TableName()
 }
+
+type paymentSpendPolicyWithCrossDomainFK struct {
+	agent_payment_models.PaymentSpendPolicy
+	Agent agent_identity_models.Agent `gorm:"foreignKey:AgentId;references:Id;constraint:OnDelete:CASCADE"`
+}
+
+func (model paymentSpendPolicyWithCrossDomainFK) TableName() string {
+	return model.PaymentSpendPolicy.TableName()
+}

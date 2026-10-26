@@ -17,6 +17,15 @@ You write too many comments. Cut hard. The defaults:
 
 - **Name dependency fields/params after their full type** (the mvc-controller convention), not a generic role. Drop the package qualifier and `Interface` suffix, camelCase the rest: `EnsPublisherInterface` → `ensPublisher` (not `publisher`), `AgentRegistrationStateRepositoryInterface` → `agentRegistrationStateRepository` (not `stateRepository`), `*settings.AgentIdentitySettings` → `agentIdentitySettings`. Idiomatic infra names (`logger`, `client`, `ctx`) and local _domain-value_ variables (`agent`, `state`, `collection`, `tokenId`) keep their short names.
 
+### Helpers hang off a type, not the package
+
+A private helper belongs on the type that uses it, as a method — not as a package-level `func`. A free function is visible to every file in its package, so it invites name collisions and reads as shared API when it is really one type's internals.
+
+- `func (r *SignX402PaymentRequest) extraString(key string) string` — yes.
+- `func extraString(extra map[string]any, key string) string` — no.
+
+The exceptions, and they are the only ones: `New...` constructors; `Add<Module>Configuration` and its `provide...` helpers in a `configurations/` package; enum helpers like `GetAll...`; free functions in a `utils/` or `helpers/` package; and the exported API of a deliberate utility package (`common/x402`). Package-level `var` is fine for an immutable value a `const` cannot express (a sentinel error, a `*big.Int`, a lookup table).
+
 ## Architecture
 
 Single Go module (`github.com/6022-labs/agentic-agent-node`, Go 1.26), **two binaries** + the web console, all in one image. **One agent = one container** — so the runtime DB holds at most **one** LLM connection row and **one** agent-identity row.
@@ -78,7 +87,9 @@ So the trust boundary is: external → nginx → `gateway_host` (auth) → `runt
 
 ### Payment (x402)
 
-`agent_payment` is method-agnostic via a strategy pattern (`PaymentMethodStrategiesInterface` dispatches by `Method`); **x402** is the implemented method. An x402 rule (`PaymentReceiveRuleX402Config`) carries a CAIP-2 `network`, ERC-20 `asset` (default $6022), `payTo`, and `assetTransferMethod` (ERC-3009 `transferWithAuthorization` or permit2). **Zero-price rules never settle on-chain** — they carry only EIP-712 signing context. Actual settlement goes through an **x402 facilitator** (`gateway_http_x402`, long timeout because `/settle` blocks until the tx lands); facilitators are configured in `runtime_common/settings/payment_receive_settings.go` and a facilitator is only valid if a matching chain RPC exists in `blockchain.chains`.
+`agent_payment` is method-agnostic via a strategy pattern (`PaymentMethodStrategiesInterface` dispatches by `Method`); **x402** is the implemented method. An x402 rule (`PaymentReceiveRuleX402Config`) carries a CAIP-2 `network`, ERC-20 `asset` (default $6022), `payTo`, and `assetTransferMethod` (ERC-3009 `transferWithAuthorization` or permit2). **Zero-price rules never settle on-chain** — they carry only EIP-712 signing context. Actual settlement goes through an **x402 facilitator** (`gateway_http_x402`, long timeout because `/settle` blocks until the tx lands); facilitators are configured under `payment.receive.facilitators` (`runtime_common/settings/payment_receive_settings.go`) and a facilitator is only valid if a matching chain RPC exists in `blockchain.evm_chains`.
+
+**Spending is NOT yet gated.** `PaymentSpendRule` + `PaymentSpendRuleX402Config` (regex arrays over network/asset/payTo/assetTransferMethod) are modelled but have no repository, no use case and no caller: `X402PaymentSigner.Sign` signs any well-formed quote, and `Permit2ApprovalEnsurer` will grant Permit2 a standing max-uint256 allowance on the quoted asset before it. The only control is that `sign_x402_payment` is disabled by default. When the gate lands it belongs in `Sign`, ahead of that approval. `payment.spend` keeps only the signing window. Planned: effective cap = **minimum** `MaxAmount` over matching rules, no match = deny; per-signature only, so spend rate stays unbounded.
 
 ### Identity resolves lazily
 
@@ -129,7 +140,7 @@ make fmt                                                      # golines, 120-cha
 - **Integration tests** (`tests/*_integration_tests`) spin up real Postgres/Vault via `tests/common_tests/container_builders` — they need Docker and are **not** in the unit-test CI sweep.
 - **Mocks** are generated, never hand-written. Regenerate after changing any interface: `deepsearch-mockgen -S ./src -O ./tests -A -P` (CLI: https://github.com/FournyP/deepsearch-mockgen-cli).
 - **Migrations**: `src/runtime_db/migrations/generate_migrations.sh` (atlas+gorm; per-driver SQL under `postgres/`, `mysql/`, `mariadb/`).
-- **Swagger docs**: `./scripts/generate_swagger_docs_for_hosts.sh [--host gateway_host]` — regenerates `*_host/docs/{docs.go,swagger.json,swagger.yaml}` from `// @` annotations.
+- **Swagger docs**: `sh src/runtime_host/docs/generate_docs.sh` and `sh src/gateway_host/docs/generate_docs.sh` (or `make swagger` for both) — regenerates `*_host/docs/{docs.go,swagger.json,swagger.yaml}` from `// @` annotations. The runtime docs feed the generated gateway client, so regenerate them **before** `sh src/gateway_http_runtime/clients/generate_client.sh`.
 - **Run locally**: `docker compose up` — one container runs nginx + both hosts plus Vault, Postgres, IPFS, pgAdmin; console at `http://localhost:5500`, API at `http://localhost:5500/api`. Web dev mode: `cd web && npm run dev` (proxies `/api`). Local chain: add `-f docker-compose.local-chain.yml` (Anvil `31337` + contracts deployer); its `EXPECTED_CONTRACTS` must match the `31337` entries in `src/runtime_common/settings/*.json`.
 
 Test-writing conventions live in the `go-*-test-conventions` skills — follow them (`when_<behavior>_test.go`, `Given.../Should...` nested `t.Run`, suite `BeforeEach`, gomock, testify, `model_builders`).
