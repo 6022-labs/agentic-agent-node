@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,9 +26,9 @@ type WhenUpsertingAgentRegistrationStateTestingSuite struct {
 }
 
 func WhenUpsertingAgentRegistrationStateBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenUpsertingAgentRegistrationStateTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +37,7 @@ func WhenUpsertingAgentRegistrationStateBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -63,8 +64,8 @@ func WhenUpsertingAgentRegistrationStateAfterEach(suite *WhenUpsertingAgentRegis
 func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no state exists", func(t *testing.T) {
@@ -76,7 +77,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Upsert(
 						context.Background(),
@@ -93,7 +94,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Upsert(
 						context.Background(),
@@ -102,7 +103,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.AgentRegistrationState{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.AgentRegistrationState{}).Count(&count)
 
 					assert.Equal(t, int64(1), count)
 				})
@@ -117,7 +118,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					first, err := suite.sut.Upsert(
 						context.Background(),
@@ -148,7 +149,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Upsert(
 						context.Background(),
@@ -179,7 +180,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Upsert(
 						context.Background(),
@@ -210,7 +211,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Upsert(
 						context.Background(),
@@ -241,7 +242,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					defer WhenUpsertingAgentRegistrationStateAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Upsert(
 						context.Background(),
@@ -265,7 +266,7 @@ func TestWhenUpsertingAgentRegistrationState(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.AgentRegistrationState{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.AgentRegistrationState{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})

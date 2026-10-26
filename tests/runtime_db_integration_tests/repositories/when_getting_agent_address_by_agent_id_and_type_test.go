@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -24,9 +25,9 @@ type WhenGettingAgentAddressByAgentIdAndTypeTestingSuite struct {
 }
 
 func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenGettingAgentAddressByAgentIdAndTypeTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -35,7 +36,7 @@ func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -47,7 +48,7 @@ func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
 	}
 
 	agentId := uuid.New()
-	seedAgent(dbClient, agentId)
+	seeds.SeedAgent(dbClient, agentId)
 
 	return &WhenGettingAgentAddressByAgentIdAndTypeTestingSuite{
 		dbName:                   dbName,
@@ -66,8 +67,8 @@ func WhenGettingAgentAddressByAgentIdAndTypeAfterEach(suite *WhenGettingAgentAdd
 func TestWhenGettingAgentAddressByAgentIdAndType(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a stored address of the type", func(t *testing.T) {

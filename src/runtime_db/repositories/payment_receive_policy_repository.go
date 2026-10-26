@@ -23,7 +23,7 @@ func (r *PaymentReceivePolicyRepository) GetByAgentId(
 	agentId uuid.UUID,
 ) (*models.PaymentReceivePolicy, error) {
 	var entity models.PaymentReceivePolicy
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -37,14 +37,14 @@ func (r *PaymentReceivePolicyRepository) Create(
 	ctx context.Context,
 	policy *models.PaymentReceivePolicy,
 ) (*models.PaymentReceivePolicy, error) {
-	if err := r.client.GetDB().WithContext(ctx).Create(policy).Error; err != nil {
+	if err := r.client.GetDB(ctx).Create(policy).Error; err != nil {
 		return nil, err
 	}
 	return policy, nil
 }
 
 func (r *PaymentReceivePolicyRepository) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
-	return r.client.GetDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.client.GetDB(ctx).Transaction(func(tx *gorm.DB) error {
 		var policy models.PaymentReceivePolicy
 		err := tx.First(&policy, "agent_id = ?", agentId).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {

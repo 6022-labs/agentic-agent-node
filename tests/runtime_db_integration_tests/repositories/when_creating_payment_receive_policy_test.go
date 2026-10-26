@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -22,8 +23,10 @@ type WhenCreatingPaymentReceivePolicyTestingSuite struct {
 	sut                      *repositories.PaymentReceivePolicyRepository
 }
 
-func WhenCreatingPaymentReceivePolicyBeforeEach(tc *repositoryTestCase) *WhenCreatingPaymentReceivePolicyTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenCreatingPaymentReceivePolicyBeforeEach(
+	tc *common_tests.DatabaseTestCase,
+) *WhenCreatingPaymentReceivePolicyTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -32,7 +35,7 @@ func WhenCreatingPaymentReceivePolicyBeforeEach(tc *repositoryTestCase) *WhenCre
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,8 +62,8 @@ func WhenCreatingPaymentReceivePolicyAfterEach(suite *WhenCreatingPaymentReceive
 func TestWhenCreatingPaymentReceivePolicy(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no policy exists", func(t *testing.T) {
@@ -72,7 +75,7 @@ func TestWhenCreatingPaymentReceivePolicy(t *testing.T) {
 					defer WhenCreatingPaymentReceivePolicyAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					created, err := suite.sut.Create(context.Background(),
 						model_builders.NewPaymentReceivePolicyBuilder().WithId(uuid.Nil).WithAgentId(agentId).Build())

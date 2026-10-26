@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -23,8 +24,8 @@ type WhenCreatingSelfToolTestingSuite struct {
 	sut                      *repositories.SelfToolRepository
 }
 
-func WhenCreatingSelfToolBeforeEach(tc *repositoryTestCase) *WhenCreatingSelfToolTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenCreatingSelfToolBeforeEach(tc *common_tests.DatabaseTestCase) *WhenCreatingSelfToolTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -33,7 +34,7 @@ func WhenCreatingSelfToolBeforeEach(tc *repositoryTestCase) *WhenCreatingSelfToo
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -60,8 +61,8 @@ func WhenCreatingSelfToolAfterEach(suite *WhenCreatingSelfToolTestingSuite) {
 func TestWhenCreatingSelfTool(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a valid tool", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					defer WhenCreatingSelfToolAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -90,7 +91,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					assert.True(t, inserted.Enabled)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.SelfTool{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.SelfTool{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -104,7 +105,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					defer WhenCreatingSelfToolAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -136,7 +137,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					defer WhenCreatingSelfToolAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -160,7 +161,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.SelfTool{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.SelfTool{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -175,8 +176,8 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 
 					firstAgentId := uuid.New()
 					secondAgentId := uuid.New()
-					seedAgent(suite.dbClient, firstAgentId)
-					seedAgent(suite.dbClient, secondAgentId)
+					seeds.SeedAgent(suite.dbClient, firstAgentId)
+					seeds.SeedAgent(suite.dbClient, secondAgentId)
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -201,7 +202,7 @@ func TestWhenCreatingSelfTool(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.SelfTool{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.SelfTool{}).Count(&count)
 					assert.Equal(t, int64(2), count)
 				})
 			})

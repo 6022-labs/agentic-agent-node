@@ -19,7 +19,7 @@ func NewAgentRepository(client *runtime_db.DatabaseClient) *AgentRepository {
 
 func (r *AgentRepository) Get(ctx context.Context) (*models.Agent, error) {
 	var agent models.Agent
-	err := r.client.GetDB().WithContext(ctx).First(&agent).Error
+	err := r.client.GetDB(ctx).First(&agent).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -35,7 +35,7 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 		return nil, err
 	}
 	if existing == nil {
-		if err := r.client.GetDB().WithContext(ctx).Create(agent).Error; err != nil {
+		if err := r.client.GetDB(ctx).Create(agent).Error; err != nil {
 			return nil, err
 		}
 		return agent, nil
@@ -53,8 +53,7 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 	existing.Images = agent.Images
 	existing.Attributes = agent.Attributes
 	if err := r.client.
-		GetDB().
-		WithContext(ctx).
+		GetDB(ctx).
 		Save(existing).
 		Error; err != nil {
 		return nil, err

@@ -20,8 +20,7 @@ func NewConversationRepository(client *runtime_db.DatabaseClient) *ConversationR
 }
 
 func (r *ConversationRepository) Ensure(ctx context.Context, conversation *models.Conversation) (bool, error) {
-	result := r.client.GetDB().
-		WithContext(ctx).
+	result := r.client.GetDB(ctx).
 		Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "id"}}, DoNothing: true}).
 		Create(conversation)
 	if result.Error != nil {
@@ -34,7 +33,7 @@ func (r *ConversationRepository) Create(
 	ctx context.Context,
 	conversation *models.Conversation,
 ) (*models.Conversation, error) {
-	if err := r.client.GetDB().WithContext(ctx).Create(conversation).Error; err != nil {
+	if err := r.client.GetDB(ctx).Create(conversation).Error; err != nil {
 		return nil, err
 	}
 	return conversation, nil
@@ -42,7 +41,7 @@ func (r *ConversationRepository) Create(
 
 func (r *ConversationRepository) GetById(ctx context.Context, id string) (*models.Conversation, error) {
 	var entity models.Conversation
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "id = ?", id).Error
+	err := r.client.GetDB(ctx).First(&entity, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -59,7 +58,7 @@ func (r *ConversationRepository) GetByIdAndAgentIdAndCallerId(
 	callerId *string,
 ) (*models.Conversation, error) {
 	var entity models.Conversation
-	query := r.client.GetDB().WithContext(ctx).Where("id = ? AND agent_id = ?", id, agentId)
+	query := r.client.GetDB(ctx).Where("id = ? AND agent_id = ?", id, agentId)
 	err := r.scopeToCallerId(query, callerId).First(&entity).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -77,8 +76,7 @@ func (r *ConversationRepository) ExistsByAgentIdAndCallerIdAndName(
 	name string,
 	excludedId *string,
 ) (bool, error) {
-	query := r.client.GetDB().
-		WithContext(ctx).
+	query := r.client.GetDB(ctx).
 		Model(&models.Conversation{}).
 		Where("agent_id = ? AND name = ?", agentId, name)
 
@@ -103,7 +101,7 @@ func (r *ConversationRepository) Update(
 	ctx context.Context,
 	conversation *models.Conversation,
 ) (*models.Conversation, error) {
-	if err := r.client.GetDB().WithContext(ctx).Save(conversation).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(conversation).Error; err != nil {
 		return nil, err
 	}
 	return conversation, nil
@@ -116,7 +114,7 @@ func (r *ConversationRepository) ListByAgentId(
 	offset *int,
 	limit *int,
 ) ([]models.Conversation, error) {
-	query := r.scopeToCallerId(r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId), callerId).
+	query := r.scopeToCallerId(r.client.GetDB(ctx).Where("agent_id = ?", agentId), callerId).
 		Order("created_at DESC")
 
 	if limit != nil {
@@ -139,7 +137,7 @@ func (r *ConversationRepository) CountByAgentId(
 	callerId *string,
 ) (uint, error) {
 	var total int64
-	query := r.client.GetDB().WithContext(ctx).Model(&models.Conversation{}).Where("agent_id = ?", agentId)
+	query := r.client.GetDB(ctx).Model(&models.Conversation{}).Where("agent_id = ?", agentId)
 	if err := r.scopeToCallerId(query, callerId).Count(&total).Error; err != nil {
 		return 0, err
 	}

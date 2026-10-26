@@ -24,8 +24,8 @@ type WhenUpsertingAgentTestingSuite struct {
 	sut                      *repositories.AgentRepository
 }
 
-func WhenUpsertingAgentBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpsertingAgentBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpsertingAgentTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -34,7 +34,7 @@ func WhenUpsertingAgentBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentTes
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -61,8 +61,8 @@ func WhenUpsertingAgentAfterEach(suite *WhenUpsertingAgentTestingSuite) {
 func TestWhenUpsertingAgent(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given an empty draft", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.Agent{}).Count(&count)
 
 					assert.Equal(t, int64(1), count)
 				})
@@ -204,7 +204,7 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.Agent{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.Agent{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})

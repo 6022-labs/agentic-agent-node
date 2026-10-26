@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +26,8 @@ type WhenUpsertingAgentAddressTestingSuite struct {
 	agentId                  uuid.UUID
 }
 
-func WhenUpsertingAgentAddressBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentAddressTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpsertingAgentAddressBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpsertingAgentAddressTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -35,7 +36,7 @@ func WhenUpsertingAgentAddressBeforeEach(tc *repositoryTestCase) *WhenUpsertingA
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -47,7 +48,7 @@ func WhenUpsertingAgentAddressBeforeEach(tc *repositoryTestCase) *WhenUpsertingA
 	}
 
 	agentId := uuid.New()
-	seedAgent(dbClient, agentId)
+	seeds.SeedAgent(dbClient, agentId)
 
 	return &WhenUpsertingAgentAddressTestingSuite{
 		dbName:                   dbName,
@@ -74,8 +75,8 @@ func agentAddress(
 func TestWhenUpsertingAgentAddress(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no address of the type yet", func(t *testing.T) {

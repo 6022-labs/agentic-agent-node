@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -23,8 +24,8 @@ type WhenGettingConversationByIdTestingSuite struct {
 	sut                      *repositories.ConversationRepository
 }
 
-func WhenGettingConversationByIdBeforeEach(tc *repositoryTestCase) *WhenGettingConversationByIdTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenGettingConversationByIdBeforeEach(tc *common_tests.DatabaseTestCase) *WhenGettingConversationByIdTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -33,7 +34,7 @@ func WhenGettingConversationByIdBeforeEach(tc *repositoryTestCase) *WhenGettingC
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -60,8 +61,8 @@ func WhenGettingConversationByIdAfterEach(suite *WhenGettingConversationByIdTest
 func TestWhenGettingConversationById(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a conversation exists", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Ensure(context.Background(),
 						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(agentId).Build())
 					assert.NoError(t, err)
@@ -92,7 +93,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Ensure(context.Background(),
 						model_builders.NewConversationBuilder().WithId("conv-mine").WithAgentId(agentId).Build())
 					assert.NoError(t, err)
@@ -111,7 +112,7 @@ func TestWhenGettingConversationById(t *testing.T) {
 					defer WhenGettingConversationByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Ensure(context.Background(), model_builders.NewConversationBuilder().
 						WithId("conv-mine").

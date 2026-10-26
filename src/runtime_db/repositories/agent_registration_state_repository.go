@@ -23,7 +23,7 @@ func (r *AgentRegistrationStateRepository) GetByAgentId(
 	agentId uuid.UUID,
 ) (*models.AgentRegistrationState, error) {
 	var entity models.AgentRegistrationState
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -42,7 +42,7 @@ func (r *AgentRegistrationStateRepository) Upsert(
 		return nil, err
 	}
 	if existing == nil {
-		if err := r.client.GetDB().WithContext(ctx).Create(state).Error; err != nil {
+		if err := r.client.GetDB(ctx).Create(state).Error; err != nil {
 			return nil, err
 		}
 		return state, nil
@@ -56,7 +56,7 @@ func (r *AgentRegistrationStateRepository) Upsert(
 	existing.EnsChainId = state.EnsChainId
 	existing.EnsTxHash = state.EnsTxHash
 	existing.EnsPublishedAt = state.EnsPublishedAt
-	if err := r.client.GetDB().WithContext(ctx).Save(existing).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(existing).Error; err != nil {
 		return nil, err
 	}
 	return existing, nil

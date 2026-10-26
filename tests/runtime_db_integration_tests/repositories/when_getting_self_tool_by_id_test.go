@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -22,8 +23,8 @@ type WhenGettingSelfToolByIdTestingSuite struct {
 	sut                      *repositories.SelfToolRepository
 }
 
-func WhenGettingSelfToolByIdBeforeEach(tc *repositoryTestCase) *WhenGettingSelfToolByIdTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenGettingSelfToolByIdBeforeEach(tc *common_tests.DatabaseTestCase) *WhenGettingSelfToolByIdTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -32,7 +33,7 @@ func WhenGettingSelfToolByIdBeforeEach(tc *repositoryTestCase) *WhenGettingSelfT
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,8 +60,8 @@ func WhenGettingSelfToolByIdAfterEach(suite *WhenGettingSelfToolByIdTestingSuite
 func TestWhenGettingSelfToolById(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the tool does not exist", func(t *testing.T) {
@@ -86,7 +87,7 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 					defer WhenGettingSelfToolByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -117,8 +118,8 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 
 					agentId := uuid.New()
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
-					seedAgent(suite.dbClient, otherAgentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, otherAgentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),

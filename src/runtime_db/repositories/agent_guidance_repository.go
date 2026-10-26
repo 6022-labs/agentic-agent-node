@@ -20,7 +20,7 @@ func NewAgentGuidanceRepository(client *runtime_db.DatabaseClient) *AgentGuidanc
 
 func (r *AgentGuidanceRepository) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.AgentGuidance, error) {
 	var entity models.AgentGuidance
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -39,14 +39,14 @@ func (r *AgentGuidanceRepository) Upsert(
 		return nil, err
 	}
 	if existing == nil {
-		if err := r.client.GetDB().WithContext(ctx).Create(guidance).Error; err != nil {
+		if err := r.client.GetDB(ctx).Create(guidance).Error; err != nil {
 			return nil, err
 		}
 		return guidance, nil
 	}
 
 	existing.Content = guidance.Content
-	if err := r.client.GetDB().WithContext(ctx).Save(existing).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(existing).Error; err != nil {
 		return nil, err
 	}
 	return existing, nil

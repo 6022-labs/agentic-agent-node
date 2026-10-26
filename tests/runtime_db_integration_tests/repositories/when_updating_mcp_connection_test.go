@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -23,8 +24,8 @@ type WhenUpdatingMCPConnectionTestingSuite struct {
 	sut                      *repositories.MCPConnectionRepository
 }
 
-func WhenUpdatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenUpdatingMCPConnectionTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpdatingMCPConnectionBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpdatingMCPConnectionTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -33,7 +34,7 @@ func WhenUpdatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenUpdatingMC
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -60,8 +61,8 @@ func WhenUpdatingMCPConnectionAfterEach(suite *WhenUpdatingMCPConnectionTestingS
 func TestWhenUpdatingMCPConnection(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a connection exists", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestWhenUpdatingMCPConnection(t *testing.T) {
 					defer WhenUpdatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					inserted, err := suite.sut.Create(
 						context.Background(),

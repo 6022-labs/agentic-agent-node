@@ -22,8 +22,8 @@ type WhenGettingAgentTestingSuite struct {
 	sut                      *repositories.AgentRepository
 }
 
-func WhenGettingAgentBeforeEach(tc *repositoryTestCase) *WhenGettingAgentTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenGettingAgentBeforeEach(tc *common_tests.DatabaseTestCase) *WhenGettingAgentTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -32,7 +32,7 @@ func WhenGettingAgentBeforeEach(tc *repositoryTestCase) *WhenGettingAgentTesting
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,8 +59,8 @@ func WhenGettingAgentAfterEach(suite *WhenGettingAgentTestingSuite) {
 func TestWhenGettingAgent(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no agent exists", func(t *testing.T) {

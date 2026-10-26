@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -25,9 +26,9 @@ type WhenCheckingConversationNameExistsTestingSuite struct {
 }
 
 func WhenCheckingConversationNameExistsBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenCheckingConversationNameExistsTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +37,7 @@ func WhenCheckingConversationNameExistsBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -57,14 +58,15 @@ func WhenCheckingConversationNameExistsBeforeEach(
 
 func WhenCheckingConversationNameExistsAfterEach(suite *WhenCheckingConversationNameExistsTestingSuite) {
 	_ = suite.dbClient.Close()
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
 func TestWhenCheckingConversationNameExists(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the agent holds that name in the caller-less namespace", func(t *testing.T) {
@@ -77,7 +79,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -102,7 +104,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -133,7 +135,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -164,7 +166,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -197,7 +199,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					bob := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
@@ -225,7 +227,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -252,7 +254,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -284,7 +286,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 					alice := strings.ToLower(common_tests.RandomEthAddress().Hex())
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
@@ -317,7 +319,7 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					seeds.SeedAgent(suite.dbClient, agentId)
 
 					taken, err := suite.sut.ExistsByAgentIdAndCallerIdAndName(ctx, agentId, nil, "Never used", nil)
 
@@ -337,8 +339,8 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 					ctx := context.Background()
 					firstAgentId := uuid.New()
 					secondAgentId := uuid.New()
-					seedAgent(suite.dbClient, firstAgentId)
-					seedAgent(suite.dbClient, secondAgentId)
+					seeds.SeedAgent(suite.dbClient, firstAgentId)
+					seeds.SeedAgent(suite.dbClient, secondAgentId)
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(firstAgentId).

@@ -25,7 +25,7 @@ func (r *PaymentReceiveRuleX402ConfigRepository) Upsert(
 	ctx context.Context,
 	config *models.PaymentReceiveRuleX402Config,
 ) error {
-	return r.client.GetDB().WithContext(ctx).
+	return r.client.GetDB(ctx).
 		Omit("PaymentReceiveRule").
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "payment_receive_rule_id"}},
@@ -39,7 +39,7 @@ func (r *PaymentReceiveRuleX402ConfigRepository) GetByRuleId(
 	ruleId uuid.UUID,
 ) (*models.PaymentReceiveRuleX402Config, error) {
 	var entity models.PaymentReceiveRuleX402Config
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "payment_receive_rule_id = ?", ruleId).Error
+	err := r.client.GetDB(ctx).First(&entity, "payment_receive_rule_id = ?", ruleId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

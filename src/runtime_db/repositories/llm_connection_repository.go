@@ -20,7 +20,7 @@ func NewLLMConnectionRepository(client *runtime_db.DatabaseClient) *LLMConnectio
 
 func (r *LLMConnectionRepository) GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.LLMConnection, error) {
 	var entity models.LLMConnection
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ?", agentId).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ?", agentId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -40,7 +40,7 @@ func (r *LLMConnectionRepository) Upsert(
 		return nil, err
 	}
 	if existing == nil {
-		if err := r.client.GetDB().WithContext(ctx).Create(connection).Error; err != nil {
+		if err := r.client.GetDB(ctx).Create(connection).Error; err != nil {
 			return nil, err
 		}
 		return connection, nil
@@ -50,15 +50,14 @@ func (r *LLMConnectionRepository) Upsert(
 	existing.Model = connection.Model
 	existing.BaseUrl = connection.BaseUrl
 	existing.SetupStatus = connection.SetupStatus
-	if err := r.client.GetDB().WithContext(ctx).Save(existing).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(existing).Error; err != nil {
 		return nil, err
 	}
 	return existing, nil
 }
 
 func (r *LLMConnectionRepository) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
-	return r.client.GetDB().
-		WithContext(ctx).
+	return r.client.GetDB(ctx).
 		Where("agent_id = ?", agentId).
 		Delete(&models.LLMConnection{}).Error
 }

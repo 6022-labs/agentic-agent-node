@@ -23,8 +23,7 @@ func (r *MCPConnectionRepository) ListByAgentId(
 	agentId uuid.UUID,
 ) ([]models.MCPConnection, error) {
 	var entities []models.MCPConnection
-	if err := r.client.GetDB().
-		WithContext(ctx).
+	if err := r.client.GetDB(ctx).
 		Where("agent_id = ?", agentId).
 		Order("created_at ASC").
 		Find(&entities).
@@ -40,7 +39,7 @@ func (r *MCPConnectionRepository) GetById(
 	id uuid.UUID,
 ) (*models.MCPConnection, error) {
 	var entity models.MCPConnection
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ? AND id = ?", agentId, id).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ? AND id = ?", agentId, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -54,7 +53,7 @@ func (r *MCPConnectionRepository) Create(
 	ctx context.Context,
 	connection *models.MCPConnection,
 ) (*models.MCPConnection, error) {
-	if err := r.client.GetDB().WithContext(ctx).Create(connection).Error; err != nil {
+	if err := r.client.GetDB(ctx).Create(connection).Error; err != nil {
 		return nil, err
 	}
 	return connection, nil
@@ -64,15 +63,14 @@ func (r *MCPConnectionRepository) Update(
 	ctx context.Context,
 	connection *models.MCPConnection,
 ) (*models.MCPConnection, error) {
-	if err := r.client.GetDB().WithContext(ctx).Save(connection).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(connection).Error; err != nil {
 		return nil, err
 	}
 	return connection, nil
 }
 
 func (r *MCPConnectionRepository) DeleteById(ctx context.Context, agentId uuid.UUID, id uuid.UUID) error {
-	return r.client.GetDB().
-		WithContext(ctx).
+	return r.client.GetDB(ctx).
 		Delete(&models.MCPConnection{}, "agent_id = ? AND id = ?", agentId, id).
 		Error
 }
