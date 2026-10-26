@@ -144,8 +144,8 @@ type RequestsInputMessage struct {
 	Type    *string `json:"type,omitempty"`
 }
 
-// RequestsSavePaymentRuleRequest defines model for requests.SavePaymentRuleRequest.
-type RequestsSavePaymentRuleRequest struct {
+// RequestsSavePaymentReceiveRuleRequest defines model for requests.SavePaymentReceiveRuleRequest.
+type RequestsSavePaymentReceiveRuleRequest struct {
 	Config *map[string]interface{} `json:"config,omitempty"`
 	Method *string                 `json:"method,omitempty"`
 	Name   *string                 `json:"name,omitempty"`
@@ -344,9 +344,9 @@ type ResponsesListConversationsResponse struct {
 	TotalElements   *int                             `json:"totalElements,omitempty"`
 }
 
-// ResponsesListPaymentRulesResponse defines model for responses.ListPaymentRulesResponse.
-type ResponsesListPaymentRulesResponse struct {
-	Rules *[]ResponsesPaymentRuleResponse `json:"rules,omitempty"`
+// ResponsesListPaymentReceiveRulesResponse defines model for responses.ListPaymentReceiveRulesResponse.
+type ResponsesListPaymentReceiveRulesResponse struct {
+	Rules *[]ResponsesPaymentReceiveRuleResponse `json:"rules,omitempty"`
 }
 
 // ResponsesMCPConnectionListResponse defines model for responses.MCPConnectionListResponse.
@@ -417,8 +417,8 @@ type ResponsesPaymentFacilitatorsResponse struct {
 	Facilitators *[]ResponsesPaymentFacilitatorResponse `json:"facilitators,omitempty"`
 }
 
-// ResponsesPaymentPolicyResponse defines model for responses.PaymentPolicyResponse.
-type ResponsesPaymentPolicyResponse struct {
+// ResponsesPaymentReceivePolicyResponse defines model for responses.PaymentReceivePolicyResponse.
+type ResponsesPaymentReceivePolicyResponse struct {
 	AgentId            *string `json:"agentId,omitempty"`
 	AgentWalletAddress *string `json:"agentWalletAddress,omitempty"`
 	CreatedAt          *string `json:"createdAt,omitempty"`
@@ -426,8 +426,8 @@ type ResponsesPaymentPolicyResponse struct {
 	UpdatedAt          *string `json:"updatedAt,omitempty"`
 }
 
-// ResponsesPaymentRuleResponse defines model for responses.PaymentRuleResponse.
-type ResponsesPaymentRuleResponse struct {
+// ResponsesPaymentReceiveRuleResponse defines model for responses.PaymentReceiveRuleResponse.
+type ResponsesPaymentReceiveRuleResponse struct {
 	Config    *map[string]interface{} `json:"config,omitempty"`
 	CreatedAt *string                 `json:"createdAt,omitempty"`
 	Id        *string                 `json:"id,omitempty"`
@@ -563,21 +563,21 @@ type PutInternalConfigMcpIdJSONBody struct {
 // PutInternalConfigMcpIdJSONBody0 defines parameters for PutInternalConfigMcpId.
 type PutInternalConfigMcpIdJSONBody0 = map[string]interface{}
 
-// PostInternalConfigPaymentPolicyRulesJSONBody defines parameters for PostInternalConfigPaymentPolicyRules.
-type PostInternalConfigPaymentPolicyRulesJSONBody struct {
+// PostInternalConfigPaymentReceivePolicyRulesJSONBody defines parameters for PostInternalConfigPaymentReceivePolicyRules.
+type PostInternalConfigPaymentReceivePolicyRulesJSONBody struct {
 	union json.RawMessage
 }
 
-// PostInternalConfigPaymentPolicyRulesJSONBody0 defines parameters for PostInternalConfigPaymentPolicyRules.
-type PostInternalConfigPaymentPolicyRulesJSONBody0 = map[string]interface{}
+// PostInternalConfigPaymentReceivePolicyRulesJSONBody0 defines parameters for PostInternalConfigPaymentReceivePolicyRules.
+type PostInternalConfigPaymentReceivePolicyRulesJSONBody0 = map[string]interface{}
 
-// PutInternalConfigPaymentPolicyRulesIdJSONBody defines parameters for PutInternalConfigPaymentPolicyRulesId.
-type PutInternalConfigPaymentPolicyRulesIdJSONBody struct {
+// PutInternalConfigPaymentReceivePolicyRulesIdJSONBody defines parameters for PutInternalConfigPaymentReceivePolicyRulesId.
+type PutInternalConfigPaymentReceivePolicyRulesIdJSONBody struct {
 	union json.RawMessage
 }
 
-// PutInternalConfigPaymentPolicyRulesIdJSONBody0 defines parameters for PutInternalConfigPaymentPolicyRulesId.
-type PutInternalConfigPaymentPolicyRulesIdJSONBody0 = map[string]interface{}
+// PutInternalConfigPaymentReceivePolicyRulesIdJSONBody0 defines parameters for PutInternalConfigPaymentReceivePolicyRulesId.
+type PutInternalConfigPaymentReceivePolicyRulesIdJSONBody0 = map[string]interface{}
 
 // PutInternalConfigSelfToolsIdJSONBody defines parameters for PutInternalConfigSelfToolsId.
 type PutInternalConfigSelfToolsIdJSONBody struct {
@@ -663,11 +663,11 @@ type PostInternalConfigMcpToolsJSONRequestBody PostInternalConfigMcpToolsJSONBod
 // PutInternalConfigMcpIdJSONRequestBody defines body for PutInternalConfigMcpId for application/json ContentType.
 type PutInternalConfigMcpIdJSONRequestBody PutInternalConfigMcpIdJSONBody
 
-// PostInternalConfigPaymentPolicyRulesJSONRequestBody defines body for PostInternalConfigPaymentPolicyRules for application/json ContentType.
-type PostInternalConfigPaymentPolicyRulesJSONRequestBody PostInternalConfigPaymentPolicyRulesJSONBody
+// PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody defines body for PostInternalConfigPaymentReceivePolicyRules for application/json ContentType.
+type PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody PostInternalConfigPaymentReceivePolicyRulesJSONBody
 
-// PutInternalConfigPaymentPolicyRulesIdJSONRequestBody defines body for PutInternalConfigPaymentPolicyRulesId for application/json ContentType.
-type PutInternalConfigPaymentPolicyRulesIdJSONRequestBody PutInternalConfigPaymentPolicyRulesIdJSONBody
+// PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody defines body for PutInternalConfigPaymentReceivePolicyRulesId for application/json ContentType.
+type PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody PutInternalConfigPaymentReceivePolicyRulesIdJSONBody
 
 // PutInternalConfigSelfToolsIdJSONRequestBody defines body for PutInternalConfigSelfToolsId for application/json ContentType.
 type PutInternalConfigSelfToolsIdJSONRequestBody PutInternalConfigSelfToolsIdJSONBody
@@ -848,27 +848,27 @@ type ClientInterface interface {
 	// GetInternalConfigPaymentFacilitators request
 	GetInternalConfigPaymentFacilitators(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteInternalConfigPaymentPolicy request
-	DeleteInternalConfigPaymentPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteInternalConfigPaymentReceivePolicy request
+	DeleteInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetInternalConfigPaymentPolicy request
-	GetInternalConfigPaymentPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetInternalConfigPaymentReceivePolicy request
+	GetInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetInternalConfigPaymentPolicyRules request
-	GetInternalConfigPaymentPolicyRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetInternalConfigPaymentReceivePolicyRules request
+	GetInternalConfigPaymentReceivePolicyRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostInternalConfigPaymentPolicyRulesWithBody request with any body
-	PostInternalConfigPaymentPolicyRulesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PostInternalConfigPaymentReceivePolicyRulesWithBody request with any body
+	PostInternalConfigPaymentReceivePolicyRulesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostInternalConfigPaymentPolicyRules(ctx context.Context, body PostInternalConfigPaymentPolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PostInternalConfigPaymentReceivePolicyRules(ctx context.Context, body PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteInternalConfigPaymentPolicyRulesId request
-	DeleteInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// DeleteInternalConfigPaymentReceivePolicyRulesId request
+	DeleteInternalConfigPaymentReceivePolicyRulesId(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutInternalConfigPaymentPolicyRulesIdWithBody request with any body
-	PutInternalConfigPaymentPolicyRulesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PutInternalConfigPaymentReceivePolicyRulesIdWithBody request with any body
+	PutInternalConfigPaymentReceivePolicyRulesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutInternalConfigPaymentReceivePolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConfigSelfTools request
 	GetInternalConfigSelfTools(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1300,8 +1300,8 @@ func (c *Client) GetInternalConfigPaymentFacilitators(ctx context.Context, reqEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteInternalConfigPaymentPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteInternalConfigPaymentPolicyRequest(c.Server)
+func (c *Client) DeleteInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteInternalConfigPaymentReceivePolicyRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1312,8 +1312,8 @@ func (c *Client) DeleteInternalConfigPaymentPolicy(ctx context.Context, reqEdito
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInternalConfigPaymentPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInternalConfigPaymentPolicyRequest(c.Server)
+func (c *Client) GetInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConfigPaymentReceivePolicyRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1324,8 +1324,8 @@ func (c *Client) GetInternalConfigPaymentPolicy(ctx context.Context, reqEditors 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInternalConfigPaymentPolicyRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInternalConfigPaymentPolicyRulesRequest(c.Server)
+func (c *Client) GetInternalConfigPaymentReceivePolicyRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInternalConfigPaymentReceivePolicyRulesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1336,8 +1336,8 @@ func (c *Client) GetInternalConfigPaymentPolicyRules(ctx context.Context, reqEdi
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostInternalConfigPaymentPolicyRulesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostInternalConfigPaymentPolicyRulesRequestWithBody(c.Server, contentType, body)
+func (c *Client) PostInternalConfigPaymentReceivePolicyRulesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigPaymentReceivePolicyRulesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1348,8 +1348,8 @@ func (c *Client) PostInternalConfigPaymentPolicyRulesWithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostInternalConfigPaymentPolicyRules(ctx context.Context, body PostInternalConfigPaymentPolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostInternalConfigPaymentPolicyRulesRequest(c.Server, body)
+func (c *Client) PostInternalConfigPaymentReceivePolicyRules(ctx context.Context, body PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalConfigPaymentReceivePolicyRulesRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1360,8 +1360,8 @@ func (c *Client) PostInternalConfigPaymentPolicyRules(ctx context.Context, body 
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteInternalConfigPaymentPolicyRulesIdRequest(c.Server, id)
+func (c *Client) DeleteInternalConfigPaymentReceivePolicyRulesId(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteInternalConfigPaymentReceivePolicyRulesIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -1372,8 +1372,8 @@ func (c *Client) DeleteInternalConfigPaymentPolicyRulesId(ctx context.Context, i
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutInternalConfigPaymentPolicyRulesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) PutInternalConfigPaymentReceivePolicyRulesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigPaymentReceivePolicyRulesIdRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1384,8 +1384,8 @@ func (c *Client) PutInternalConfigPaymentPolicyRulesIdWithBody(ctx context.Conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutInternalConfigPaymentPolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutInternalConfigPaymentPolicyRulesIdRequest(c.Server, id, body)
+func (c *Client) PutInternalConfigPaymentReceivePolicyRulesId(ctx context.Context, id string, body PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigPaymentReceivePolicyRulesIdRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2391,8 +2391,8 @@ func NewGetInternalConfigPaymentFacilitatorsRequest(server string) (*http.Reques
 	return req, nil
 }
 
-// NewDeleteInternalConfigPaymentPolicyRequest generates requests for DeleteInternalConfigPaymentPolicy
-func NewDeleteInternalConfigPaymentPolicyRequest(server string) (*http.Request, error) {
+// NewDeleteInternalConfigPaymentReceivePolicyRequest generates requests for DeleteInternalConfigPaymentReceivePolicy
+func NewDeleteInternalConfigPaymentReceivePolicyRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2400,7 +2400,7 @@ func NewDeleteInternalConfigPaymentPolicyRequest(server string) (*http.Request, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy")
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2418,8 +2418,8 @@ func NewDeleteInternalConfigPaymentPolicyRequest(server string) (*http.Request, 
 	return req, nil
 }
 
-// NewGetInternalConfigPaymentPolicyRequest generates requests for GetInternalConfigPaymentPolicy
-func NewGetInternalConfigPaymentPolicyRequest(server string) (*http.Request, error) {
+// NewGetInternalConfigPaymentReceivePolicyRequest generates requests for GetInternalConfigPaymentReceivePolicy
+func NewGetInternalConfigPaymentReceivePolicyRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2427,7 +2427,7 @@ func NewGetInternalConfigPaymentPolicyRequest(server string) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy")
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2445,8 +2445,8 @@ func NewGetInternalConfigPaymentPolicyRequest(server string) (*http.Request, err
 	return req, nil
 }
 
-// NewGetInternalConfigPaymentPolicyRulesRequest generates requests for GetInternalConfigPaymentPolicyRules
-func NewGetInternalConfigPaymentPolicyRulesRequest(server string) (*http.Request, error) {
+// NewGetInternalConfigPaymentReceivePolicyRulesRequest generates requests for GetInternalConfigPaymentReceivePolicyRules
+func NewGetInternalConfigPaymentReceivePolicyRulesRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2454,7 +2454,7 @@ func NewGetInternalConfigPaymentPolicyRulesRequest(server string) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy/rules")
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy/rules")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2472,19 +2472,19 @@ func NewGetInternalConfigPaymentPolicyRulesRequest(server string) (*http.Request
 	return req, nil
 }
 
-// NewPostInternalConfigPaymentPolicyRulesRequest calls the generic PostInternalConfigPaymentPolicyRules builder with application/json body
-func NewPostInternalConfigPaymentPolicyRulesRequest(server string, body PostInternalConfigPaymentPolicyRulesJSONRequestBody) (*http.Request, error) {
+// NewPostInternalConfigPaymentReceivePolicyRulesRequest calls the generic PostInternalConfigPaymentReceivePolicyRules builder with application/json body
+func NewPostInternalConfigPaymentReceivePolicyRulesRequest(server string, body PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostInternalConfigPaymentPolicyRulesRequestWithBody(server, "application/json", bodyReader)
+	return NewPostInternalConfigPaymentReceivePolicyRulesRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostInternalConfigPaymentPolicyRulesRequestWithBody generates requests for PostInternalConfigPaymentPolicyRules with any type of body
-func NewPostInternalConfigPaymentPolicyRulesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostInternalConfigPaymentReceivePolicyRulesRequestWithBody generates requests for PostInternalConfigPaymentReceivePolicyRules with any type of body
+func NewPostInternalConfigPaymentReceivePolicyRulesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -2492,7 +2492,7 @@ func NewPostInternalConfigPaymentPolicyRulesRequestWithBody(server string, conte
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy/rules")
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy/rules")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2512,8 +2512,8 @@ func NewPostInternalConfigPaymentPolicyRulesRequestWithBody(server string, conte
 	return req, nil
 }
 
-// NewDeleteInternalConfigPaymentPolicyRulesIdRequest generates requests for DeleteInternalConfigPaymentPolicyRulesId
-func NewDeleteInternalConfigPaymentPolicyRulesIdRequest(server string, id string) (*http.Request, error) {
+// NewDeleteInternalConfigPaymentReceivePolicyRulesIdRequest generates requests for DeleteInternalConfigPaymentReceivePolicyRulesId
+func NewDeleteInternalConfigPaymentReceivePolicyRulesIdRequest(server string, id string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2528,7 +2528,7 @@ func NewDeleteInternalConfigPaymentPolicyRulesIdRequest(server string, id string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy/rules/%s", pathParam0)
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy/rules/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2546,19 +2546,19 @@ func NewDeleteInternalConfigPaymentPolicyRulesIdRequest(server string, id string
 	return req, nil
 }
 
-// NewPutInternalConfigPaymentPolicyRulesIdRequest calls the generic PutInternalConfigPaymentPolicyRulesId builder with application/json body
-func NewPutInternalConfigPaymentPolicyRulesIdRequest(server string, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody) (*http.Request, error) {
+// NewPutInternalConfigPaymentReceivePolicyRulesIdRequest calls the generic PutInternalConfigPaymentReceivePolicyRulesId builder with application/json body
+func NewPutInternalConfigPaymentReceivePolicyRulesIdRequest(server string, id string, body PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody(server, id, "application/json", bodyReader)
+	return NewPutInternalConfigPaymentReceivePolicyRulesIdRequestWithBody(server, id, "application/json", bodyReader)
 }
 
-// NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody generates requests for PutInternalConfigPaymentPolicyRulesId with any type of body
-func NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPutInternalConfigPaymentReceivePolicyRulesIdRequestWithBody generates requests for PutInternalConfigPaymentReceivePolicyRulesId with any type of body
+func NewPutInternalConfigPaymentReceivePolicyRulesIdRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2573,7 +2573,7 @@ func NewPutInternalConfigPaymentPolicyRulesIdRequestWithBody(server string, id s
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/internal/config/payment-policy/rules/%s", pathParam0)
+	operationPath := fmt.Sprintf("/internal/config/payment-receive-policy/rules/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3165,27 +3165,27 @@ type ClientWithResponsesInterface interface {
 	// GetInternalConfigPaymentFacilitatorsWithResponse request
 	GetInternalConfigPaymentFacilitatorsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentFacilitatorsResponse, error)
 
-	// DeleteInternalConfigPaymentPolicyWithResponse request
-	DeleteInternalConfigPaymentPolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentPolicyResponse, error)
+	// DeleteInternalConfigPaymentReceivePolicyWithResponse request
+	DeleteInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyResponse, error)
 
-	// GetInternalConfigPaymentPolicyWithResponse request
-	GetInternalConfigPaymentPolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentPolicyResponse, error)
+	// GetInternalConfigPaymentReceivePolicyWithResponse request
+	GetInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentReceivePolicyResponse, error)
 
-	// GetInternalConfigPaymentPolicyRulesWithResponse request
-	GetInternalConfigPaymentPolicyRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentPolicyRulesResponse, error)
+	// GetInternalConfigPaymentReceivePolicyRulesWithResponse request
+	GetInternalConfigPaymentReceivePolicyRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentReceivePolicyRulesResponse, error)
 
-	// PostInternalConfigPaymentPolicyRulesWithBodyWithResponse request with any body
-	PostInternalConfigPaymentPolicyRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentPolicyRulesResponse, error)
+	// PostInternalConfigPaymentReceivePolicyRulesWithBodyWithResponse request with any body
+	PostInternalConfigPaymentReceivePolicyRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentReceivePolicyRulesResponse, error)
 
-	PostInternalConfigPaymentPolicyRulesWithResponse(ctx context.Context, body PostInternalConfigPaymentPolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentPolicyRulesResponse, error)
+	PostInternalConfigPaymentReceivePolicyRulesWithResponse(ctx context.Context, body PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentReceivePolicyRulesResponse, error)
 
-	// DeleteInternalConfigPaymentPolicyRulesIdWithResponse request
-	DeleteInternalConfigPaymentPolicyRulesIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentPolicyRulesIdResponse, error)
+	// DeleteInternalConfigPaymentReceivePolicyRulesIdWithResponse request
+	DeleteInternalConfigPaymentReceivePolicyRulesIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyRulesIdResponse, error)
 
-	// PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse request with any body
-	PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error)
+	// PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse request with any body
+	PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentReceivePolicyRulesIdResponse, error)
 
-	PutInternalConfigPaymentPolicyRulesIdWithResponse(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error)
+	PutInternalConfigPaymentReceivePolicyRulesIdWithResponse(ctx context.Context, id string, body PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentReceivePolicyRulesIdResponse, error)
 
 	// GetInternalConfigSelfToolsWithResponse request
 	GetInternalConfigSelfToolsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigSelfToolsResponse, error)
@@ -3813,14 +3813,14 @@ func (r GetInternalConfigPaymentFacilitatorsResponse) StatusCode() int {
 	return 0
 }
 
-type DeleteInternalConfigPaymentPolicyResponse struct {
+type DeleteInternalConfigPaymentReceivePolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteInternalConfigPaymentPolicyResponse) Status() string {
+func (r DeleteInternalConfigPaymentReceivePolicyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3828,23 +3828,23 @@ func (r DeleteInternalConfigPaymentPolicyResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteInternalConfigPaymentPolicyResponse) StatusCode() int {
+func (r DeleteInternalConfigPaymentReceivePolicyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetInternalConfigPaymentPolicyResponse struct {
+type GetInternalConfigPaymentReceivePolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResponsesPaymentPolicyResponse
+	JSON200      *ResponsesPaymentReceivePolicyResponse
 	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r GetInternalConfigPaymentPolicyResponse) Status() string {
+func (r GetInternalConfigPaymentReceivePolicyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3852,23 +3852,23 @@ func (r GetInternalConfigPaymentPolicyResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetInternalConfigPaymentPolicyResponse) StatusCode() int {
+func (r GetInternalConfigPaymentReceivePolicyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetInternalConfigPaymentPolicyRulesResponse struct {
+type GetInternalConfigPaymentReceivePolicyRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResponsesListPaymentRulesResponse
+	JSON200      *ResponsesListPaymentReceiveRulesResponse
 	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r GetInternalConfigPaymentPolicyRulesResponse) Status() string {
+func (r GetInternalConfigPaymentReceivePolicyRulesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3876,24 +3876,24 @@ func (r GetInternalConfigPaymentPolicyRulesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetInternalConfigPaymentPolicyRulesResponse) StatusCode() int {
+func (r GetInternalConfigPaymentReceivePolicyRulesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostInternalConfigPaymentPolicyRulesResponse struct {
+type PostInternalConfigPaymentReceivePolicyRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResponsesPaymentRuleResponse
+	JSON200      *ResponsesPaymentReceiveRuleResponse
 	JSON400      *ErrorsValidationError
 	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r PostInternalConfigPaymentPolicyRulesResponse) Status() string {
+func (r PostInternalConfigPaymentReceivePolicyRulesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3901,49 +3901,23 @@ func (r PostInternalConfigPaymentPolicyRulesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostInternalConfigPaymentPolicyRulesResponse) StatusCode() int {
+func (r PostInternalConfigPaymentReceivePolicyRulesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteInternalConfigPaymentPolicyRulesIdResponse struct {
+type DeleteInternalConfigPaymentReceivePolicyRulesIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *ErrorsValidationError
-	JSON404      *ErrorsNotFoundError
-	JSON500      *ErrorsInternalError
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteInternalConfigPaymentPolicyRulesIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteInternalConfigPaymentPolicyRulesIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PutInternalConfigPaymentPolicyRulesIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResponsesPaymentRuleResponse
 	JSON400      *ErrorsValidationError
 	JSON404      *ErrorsNotFoundError
-	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r PutInternalConfigPaymentPolicyRulesIdResponse) Status() string {
+func (r DeleteInternalConfigPaymentReceivePolicyRulesIdResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3951,7 +3925,33 @@ func (r PutInternalConfigPaymentPolicyRulesIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PutInternalConfigPaymentPolicyRulesIdResponse) StatusCode() int {
+func (r DeleteInternalConfigPaymentReceivePolicyRulesIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutInternalConfigPaymentReceivePolicyRulesIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesPaymentReceiveRuleResponse
+	JSON400      *ErrorsValidationError
+	JSON404      *ErrorsNotFoundError
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r PutInternalConfigPaymentReceivePolicyRulesIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutInternalConfigPaymentReceivePolicyRulesIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4514,74 +4514,74 @@ func (c *ClientWithResponses) GetInternalConfigPaymentFacilitatorsWithResponse(c
 	return ParseGetInternalConfigPaymentFacilitatorsResponse(rsp)
 }
 
-// DeleteInternalConfigPaymentPolicyWithResponse request returning *DeleteInternalConfigPaymentPolicyResponse
-func (c *ClientWithResponses) DeleteInternalConfigPaymentPolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentPolicyResponse, error) {
-	rsp, err := c.DeleteInternalConfigPaymentPolicy(ctx, reqEditors...)
+// DeleteInternalConfigPaymentReceivePolicyWithResponse request returning *DeleteInternalConfigPaymentReceivePolicyResponse
+func (c *ClientWithResponses) DeleteInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyResponse, error) {
+	rsp, err := c.DeleteInternalConfigPaymentReceivePolicy(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteInternalConfigPaymentPolicyResponse(rsp)
+	return ParseDeleteInternalConfigPaymentReceivePolicyResponse(rsp)
 }
 
-// GetInternalConfigPaymentPolicyWithResponse request returning *GetInternalConfigPaymentPolicyResponse
-func (c *ClientWithResponses) GetInternalConfigPaymentPolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentPolicyResponse, error) {
-	rsp, err := c.GetInternalConfigPaymentPolicy(ctx, reqEditors...)
+// GetInternalConfigPaymentReceivePolicyWithResponse request returning *GetInternalConfigPaymentReceivePolicyResponse
+func (c *ClientWithResponses) GetInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentReceivePolicyResponse, error) {
+	rsp, err := c.GetInternalConfigPaymentReceivePolicy(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetInternalConfigPaymentPolicyResponse(rsp)
+	return ParseGetInternalConfigPaymentReceivePolicyResponse(rsp)
 }
 
-// GetInternalConfigPaymentPolicyRulesWithResponse request returning *GetInternalConfigPaymentPolicyRulesResponse
-func (c *ClientWithResponses) GetInternalConfigPaymentPolicyRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentPolicyRulesResponse, error) {
-	rsp, err := c.GetInternalConfigPaymentPolicyRules(ctx, reqEditors...)
+// GetInternalConfigPaymentReceivePolicyRulesWithResponse request returning *GetInternalConfigPaymentReceivePolicyRulesResponse
+func (c *ClientWithResponses) GetInternalConfigPaymentReceivePolicyRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentReceivePolicyRulesResponse, error) {
+	rsp, err := c.GetInternalConfigPaymentReceivePolicyRules(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetInternalConfigPaymentPolicyRulesResponse(rsp)
+	return ParseGetInternalConfigPaymentReceivePolicyRulesResponse(rsp)
 }
 
-// PostInternalConfigPaymentPolicyRulesWithBodyWithResponse request with arbitrary body returning *PostInternalConfigPaymentPolicyRulesResponse
-func (c *ClientWithResponses) PostInternalConfigPaymentPolicyRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentPolicyRulesResponse, error) {
-	rsp, err := c.PostInternalConfigPaymentPolicyRulesWithBody(ctx, contentType, body, reqEditors...)
+// PostInternalConfigPaymentReceivePolicyRulesWithBodyWithResponse request with arbitrary body returning *PostInternalConfigPaymentReceivePolicyRulesResponse
+func (c *ClientWithResponses) PostInternalConfigPaymentReceivePolicyRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentReceivePolicyRulesResponse, error) {
+	rsp, err := c.PostInternalConfigPaymentReceivePolicyRulesWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostInternalConfigPaymentPolicyRulesResponse(rsp)
+	return ParsePostInternalConfigPaymentReceivePolicyRulesResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostInternalConfigPaymentPolicyRulesWithResponse(ctx context.Context, body PostInternalConfigPaymentPolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentPolicyRulesResponse, error) {
-	rsp, err := c.PostInternalConfigPaymentPolicyRules(ctx, body, reqEditors...)
+func (c *ClientWithResponses) PostInternalConfigPaymentReceivePolicyRulesWithResponse(ctx context.Context, body PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalConfigPaymentReceivePolicyRulesResponse, error) {
+	rsp, err := c.PostInternalConfigPaymentReceivePolicyRules(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostInternalConfigPaymentPolicyRulesResponse(rsp)
+	return ParsePostInternalConfigPaymentReceivePolicyRulesResponse(rsp)
 }
 
-// DeleteInternalConfigPaymentPolicyRulesIdWithResponse request returning *DeleteInternalConfigPaymentPolicyRulesIdResponse
-func (c *ClientWithResponses) DeleteInternalConfigPaymentPolicyRulesIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentPolicyRulesIdResponse, error) {
-	rsp, err := c.DeleteInternalConfigPaymentPolicyRulesId(ctx, id, reqEditors...)
+// DeleteInternalConfigPaymentReceivePolicyRulesIdWithResponse request returning *DeleteInternalConfigPaymentReceivePolicyRulesIdResponse
+func (c *ClientWithResponses) DeleteInternalConfigPaymentReceivePolicyRulesIdWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyRulesIdResponse, error) {
+	rsp, err := c.DeleteInternalConfigPaymentReceivePolicyRulesId(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteInternalConfigPaymentPolicyRulesIdResponse(rsp)
+	return ParseDeleteInternalConfigPaymentReceivePolicyRulesIdResponse(rsp)
 }
 
-// PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse request with arbitrary body returning *PutInternalConfigPaymentPolicyRulesIdResponse
-func (c *ClientWithResponses) PutInternalConfigPaymentPolicyRulesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error) {
-	rsp, err := c.PutInternalConfigPaymentPolicyRulesIdWithBody(ctx, id, contentType, body, reqEditors...)
+// PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse request with arbitrary body returning *PutInternalConfigPaymentReceivePolicyRulesIdResponse
+func (c *ClientWithResponses) PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentReceivePolicyRulesIdResponse, error) {
+	rsp, err := c.PutInternalConfigPaymentReceivePolicyRulesIdWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutInternalConfigPaymentPolicyRulesIdResponse(rsp)
+	return ParsePutInternalConfigPaymentReceivePolicyRulesIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutInternalConfigPaymentPolicyRulesIdWithResponse(ctx context.Context, id string, body PutInternalConfigPaymentPolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentPolicyRulesIdResponse, error) {
-	rsp, err := c.PutInternalConfigPaymentPolicyRulesId(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) PutInternalConfigPaymentReceivePolicyRulesIdWithResponse(ctx context.Context, id string, body PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentReceivePolicyRulesIdResponse, error) {
+	rsp, err := c.PutInternalConfigPaymentReceivePolicyRulesId(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePutInternalConfigPaymentPolicyRulesIdResponse(rsp)
+	return ParsePutInternalConfigPaymentReceivePolicyRulesIdResponse(rsp)
 }
 
 // GetInternalConfigSelfToolsWithResponse request returning *GetInternalConfigSelfToolsResponse
@@ -5719,15 +5719,15 @@ func ParseGetInternalConfigPaymentFacilitatorsResponse(rsp *http.Response) (*Get
 	return response, nil
 }
 
-// ParseDeleteInternalConfigPaymentPolicyResponse parses an HTTP response from a DeleteInternalConfigPaymentPolicyWithResponse call
-func ParseDeleteInternalConfigPaymentPolicyResponse(rsp *http.Response) (*DeleteInternalConfigPaymentPolicyResponse, error) {
+// ParseDeleteInternalConfigPaymentReceivePolicyResponse parses an HTTP response from a DeleteInternalConfigPaymentReceivePolicyWithResponse call
+func ParseDeleteInternalConfigPaymentReceivePolicyResponse(rsp *http.Response) (*DeleteInternalConfigPaymentReceivePolicyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteInternalConfigPaymentPolicyResponse{
+	response := &DeleteInternalConfigPaymentReceivePolicyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5745,22 +5745,22 @@ func ParseDeleteInternalConfigPaymentPolicyResponse(rsp *http.Response) (*Delete
 	return response, nil
 }
 
-// ParseGetInternalConfigPaymentPolicyResponse parses an HTTP response from a GetInternalConfigPaymentPolicyWithResponse call
-func ParseGetInternalConfigPaymentPolicyResponse(rsp *http.Response) (*GetInternalConfigPaymentPolicyResponse, error) {
+// ParseGetInternalConfigPaymentReceivePolicyResponse parses an HTTP response from a GetInternalConfigPaymentReceivePolicyWithResponse call
+func ParseGetInternalConfigPaymentReceivePolicyResponse(rsp *http.Response) (*GetInternalConfigPaymentReceivePolicyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetInternalConfigPaymentPolicyResponse{
+	response := &GetInternalConfigPaymentReceivePolicyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponsesPaymentPolicyResponse
+		var dest ResponsesPaymentReceivePolicyResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5785,22 +5785,22 @@ func ParseGetInternalConfigPaymentPolicyResponse(rsp *http.Response) (*GetIntern
 	return response, nil
 }
 
-// ParseGetInternalConfigPaymentPolicyRulesResponse parses an HTTP response from a GetInternalConfigPaymentPolicyRulesWithResponse call
-func ParseGetInternalConfigPaymentPolicyRulesResponse(rsp *http.Response) (*GetInternalConfigPaymentPolicyRulesResponse, error) {
+// ParseGetInternalConfigPaymentReceivePolicyRulesResponse parses an HTTP response from a GetInternalConfigPaymentReceivePolicyRulesWithResponse call
+func ParseGetInternalConfigPaymentReceivePolicyRulesResponse(rsp *http.Response) (*GetInternalConfigPaymentReceivePolicyRulesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetInternalConfigPaymentPolicyRulesResponse{
+	response := &GetInternalConfigPaymentReceivePolicyRulesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponsesListPaymentRulesResponse
+		var dest ResponsesListPaymentReceiveRulesResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5825,22 +5825,22 @@ func ParseGetInternalConfigPaymentPolicyRulesResponse(rsp *http.Response) (*GetI
 	return response, nil
 }
 
-// ParsePostInternalConfigPaymentPolicyRulesResponse parses an HTTP response from a PostInternalConfigPaymentPolicyRulesWithResponse call
-func ParsePostInternalConfigPaymentPolicyRulesResponse(rsp *http.Response) (*PostInternalConfigPaymentPolicyRulesResponse, error) {
+// ParsePostInternalConfigPaymentReceivePolicyRulesResponse parses an HTTP response from a PostInternalConfigPaymentReceivePolicyRulesWithResponse call
+func ParsePostInternalConfigPaymentReceivePolicyRulesResponse(rsp *http.Response) (*PostInternalConfigPaymentReceivePolicyRulesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostInternalConfigPaymentPolicyRulesResponse{
+	response := &PostInternalConfigPaymentReceivePolicyRulesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponsesPaymentRuleResponse
+		var dest ResponsesPaymentReceiveRuleResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -5872,15 +5872,15 @@ func ParsePostInternalConfigPaymentPolicyRulesResponse(rsp *http.Response) (*Pos
 	return response, nil
 }
 
-// ParseDeleteInternalConfigPaymentPolicyRulesIdResponse parses an HTTP response from a DeleteInternalConfigPaymentPolicyRulesIdWithResponse call
-func ParseDeleteInternalConfigPaymentPolicyRulesIdResponse(rsp *http.Response) (*DeleteInternalConfigPaymentPolicyRulesIdResponse, error) {
+// ParseDeleteInternalConfigPaymentReceivePolicyRulesIdResponse parses an HTTP response from a DeleteInternalConfigPaymentReceivePolicyRulesIdWithResponse call
+func ParseDeleteInternalConfigPaymentReceivePolicyRulesIdResponse(rsp *http.Response) (*DeleteInternalConfigPaymentReceivePolicyRulesIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteInternalConfigPaymentPolicyRulesIdResponse{
+	response := &DeleteInternalConfigPaymentReceivePolicyRulesIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5912,22 +5912,22 @@ func ParseDeleteInternalConfigPaymentPolicyRulesIdResponse(rsp *http.Response) (
 	return response, nil
 }
 
-// ParsePutInternalConfigPaymentPolicyRulesIdResponse parses an HTTP response from a PutInternalConfigPaymentPolicyRulesIdWithResponse call
-func ParsePutInternalConfigPaymentPolicyRulesIdResponse(rsp *http.Response) (*PutInternalConfigPaymentPolicyRulesIdResponse, error) {
+// ParsePutInternalConfigPaymentReceivePolicyRulesIdResponse parses an HTTP response from a PutInternalConfigPaymentReceivePolicyRulesIdWithResponse call
+func ParsePutInternalConfigPaymentReceivePolicyRulesIdResponse(rsp *http.Response) (*PutInternalConfigPaymentReceivePolicyRulesIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PutInternalConfigPaymentPolicyRulesIdResponse{
+	response := &PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponsesPaymentRuleResponse
+		var dest ResponsesPaymentReceiveRuleResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

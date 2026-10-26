@@ -11,13 +11,13 @@ const paymentMethodStrategiesGroup = "payment_method_strategies"
 
 func AddAgentPaymentConfiguration(container *dig.Container) {
 	useCases := []any{
-		use_cases.NewGetPaymentPolicy,
-		use_cases.NewDeletePaymentPolicy,
+		use_cases.NewGetPaymentReceivePolicy,
+		use_cases.NewDeletePaymentReceivePolicy,
 		use_cases.NewGetPaymentFacilitators,
-		use_cases.NewListPaymentRules,
-		use_cases.NewCreatePaymentRule,
-		use_cases.NewUpdatePaymentRule,
-		use_cases.NewDeletePaymentRule,
+		use_cases.NewListPaymentReceiveRules,
+		use_cases.NewCreatePaymentReceiveRule,
+		use_cases.NewUpdatePaymentReceiveRule,
+		use_cases.NewDeletePaymentReceiveRule,
 	}
 	for _, useCase := range useCases {
 		if err := container.Provide(useCase); err != nil {

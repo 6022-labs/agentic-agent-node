@@ -14,13 +14,13 @@ type WhenGettingPaymentFacilitatorsTestingSuite struct {
 }
 
 func WhenGettingPaymentFacilitatorsBeforeEach(_ *testing.T) *WhenGettingPaymentFacilitatorsTestingSuite {
-	paymentFacilitatorsSettings := &runtime_common_settings.PaymentFacilitatorsSettings{
+	paymentReceiveSettings := &runtime_common_settings.PaymentReceiveSettings{
 		"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology", MaxTimeoutSeconds: 90},
 		"eip155:84532": {BaseUrl: "https://x402.org/facilitator", MaxTimeoutSeconds: 60},
 	}
 
 	return &WhenGettingPaymentFacilitatorsTestingSuite{
-		sut: use_cases.NewGetPaymentFacilitators(paymentFacilitatorsSettings),
+		sut: use_cases.NewGetPaymentFacilitators(paymentReceiveSettings),
 	}
 }
 

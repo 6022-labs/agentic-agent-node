@@ -1,6 +1,7 @@
-h1:MWOUZyfajPKLVNrbrJ+zSsaX2Jf9jyr727BVXcRfT5A=
+h1:r0fzfOYpsF61DmHXoC1yjvECwF/2w4FZtskxffExA/8=
 20260721111609_initial.sql h1:ass317z+7p0jjDbOL+O5Lykf8i+QgKjbmuyd+zKk/vc=
 20260725141200_add_mcp_connection_allowed_tool_patterns.sql h1:OTO/BF5q3i6N7kJ92B8R9uvdMIqP+Dj2OwuhcI0GRE8=
 20260807004810_add_self_tools.sql h1:pso/kE496dy4Fo47lQIrkjNYIK/CT5ux6mxbNwzRWO8=
 20260823221119_add_conversation_name.sql h1:BvzjfkX73sWKsh8P162dByf8PLXapJw64eF9flBzJn4=
 20260930204116_add_conversation_caller_id.sql h1:lXrmUKlY334dplSJBhbTsl2MpESuhROShAeCpDBe8Qs=
+20261019210000_rename_payment_tables_to_receive.sql h1:hbZlOBBd1yZURUi/aZP+rZ0mEBfPOW3Z/64Wo+M3CZo=

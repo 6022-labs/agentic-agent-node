@@ -37,17 +37,17 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewListAgentCollectionsTool)
 	provideSelfTool(container, tools.NewGetLLMConnectionTool)
 	provideSelfTool(container, tools.NewListMCPConnectionsTool)
-	provideSelfTool(container, tools.NewGetPaymentPolicyTool)
-	provideSelfTool(container, tools.NewListPaymentRulesTool)
+	provideSelfTool(container, tools.NewGetPaymentReceivePolicyTool)
+	provideSelfTool(container, tools.NewListPaymentReceiveRulesTool)
 	provideSelfTool(container, tools.NewGetPaymentFacilitatorsTool)
 	provideSelfTool(container, tools.NewGetBlockchainConfigTool)
 	provideSelfTool(container, tools.NewSetAgentGuidanceTool)
 	provideSelfTool(container, tools.NewCreateMCPConnectionTool)
 	provideSelfTool(container, tools.NewDeleteMCPConnectionTool)
-	provideSelfTool(container, tools.NewCreatePaymentRuleTool)
-	provideSelfTool(container, tools.NewUpdatePaymentRuleTool)
-	provideSelfTool(container, tools.NewDeletePaymentRuleTool)
-	provideSelfTool(container, tools.NewDeletePaymentPolicyTool)
+	provideSelfTool(container, tools.NewCreatePaymentReceiveRuleTool)
+	provideSelfTool(container, tools.NewUpdatePaymentReceiveRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentReceiveRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentReceivePolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
 	provideSelfTool(container, tools.NewRunCommandTool)
@@ -140,35 +140,35 @@ func provideReasoningExecutors(container *dig.Container) {
 }
 
 func providePaymentExecutors(container *dig.Container) {
-	asGetPaymentPolicy := func(u *payment_use_cases.GetPaymentPolicy) tool_interfaces.GetPaymentPolicyExecutorInterface {
+	asGetPaymentReceivePolicy := func(u *payment_use_cases.GetPaymentReceivePolicy) tool_interfaces.GetPaymentReceivePolicyExecutorInterface {
 		return u
 	}
-	asListPaymentRules := func(u *payment_use_cases.ListPaymentRules) tool_interfaces.ListPaymentRulesExecutorInterface {
+	asListPaymentReceiveRules := func(u *payment_use_cases.ListPaymentReceiveRules) tool_interfaces.ListPaymentReceiveRulesExecutorInterface {
 		return u
 	}
 	asGetPaymentFacilitators := func(u *payment_use_cases.GetPaymentFacilitators) tool_interfaces.GetPaymentFacilitatorsExecutorInterface {
 		return u
 	}
-	asCreatePaymentRule := func(u *payment_use_cases.CreatePaymentRule) tool_interfaces.CreatePaymentRuleExecutorInterface {
+	asCreatePaymentReceiveRule := func(u *payment_use_cases.CreatePaymentReceiveRule) tool_interfaces.CreatePaymentReceiveRuleExecutorInterface {
 		return u
 	}
-	asUpdatePaymentRule := func(u *payment_use_cases.UpdatePaymentRule) tool_interfaces.UpdatePaymentRuleExecutorInterface {
+	asUpdatePaymentReceiveRule := func(u *payment_use_cases.UpdatePaymentReceiveRule) tool_interfaces.UpdatePaymentReceiveRuleExecutorInterface {
 		return u
 	}
-	asDeletePaymentRule := func(u *payment_use_cases.DeletePaymentRule) tool_interfaces.DeletePaymentRuleExecutorInterface {
+	asDeletePaymentReceiveRule := func(u *payment_use_cases.DeletePaymentReceiveRule) tool_interfaces.DeletePaymentReceiveRuleExecutorInterface {
 		return u
 	}
-	asDeletePaymentPolicy := func(u *payment_use_cases.DeletePaymentPolicy) tool_interfaces.DeletePaymentPolicyExecutorInterface {
+	asDeletePaymentReceivePolicy := func(u *payment_use_cases.DeletePaymentReceivePolicy) tool_interfaces.DeletePaymentReceivePolicyExecutorInterface {
 		return u
 	}
 
-	provideExecutor(container, asGetPaymentPolicy)
-	provideExecutor(container, asListPaymentRules)
+	provideExecutor(container, asGetPaymentReceivePolicy)
+	provideExecutor(container, asListPaymentReceiveRules)
 	provideExecutor(container, asGetPaymentFacilitators)
-	provideExecutor(container, asCreatePaymentRule)
-	provideExecutor(container, asUpdatePaymentRule)
-	provideExecutor(container, asDeletePaymentRule)
-	provideExecutor(container, asDeletePaymentPolicy)
+	provideExecutor(container, asCreatePaymentReceiveRule)
+	provideExecutor(container, asUpdatePaymentReceiveRule)
+	provideExecutor(container, asDeletePaymentReceiveRule)
+	provideExecutor(container, asDeletePaymentReceivePolicy)
 }
 
 func provideCommonExecutors(container *dig.Container) {

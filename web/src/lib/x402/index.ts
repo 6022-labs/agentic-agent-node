@@ -3,8 +3,8 @@ import { BrowserProvider, type Eip1193Provider } from "ethers"
 import {
   ASSET_TRANSFER_METHOD_EIP3009,
   ASSET_TRANSFER_METHOD_PERMIT2,
-  type PaymentRule,
-} from "@/models/payment-policy"
+  type PaymentReceiveRule,
+} from "@/models/payment-receive-policy"
 
 import { buildEip3009PaymentHeader } from "./eip3009"
 import { buildPermit2PaymentHeader } from "./permit2"
@@ -36,7 +36,7 @@ function chainIdOf(network: string): number {
 export async function getX402PaymentHeader(
   wallet: Eip1193Provider,
   payerAddress: string,
-  rule: PaymentRule,
+  rule: PaymentReceiveRule,
   value: string = "0"
 ): Promise<string> {
   const cacheKey =

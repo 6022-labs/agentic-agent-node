@@ -1,9 +1,9 @@
-import PaymentPolicySection from "@/components/dashboard/payments"
+import PaymentReceivePolicySection from "@/components/dashboard/payments"
 
 export default function DashboardPaymentsPage() {
   return (
     <div className="w-full">
-      <PaymentPolicySection />
+      <PaymentReceivePolicySection />
     </div>
   )
 }

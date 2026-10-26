@@ -7,8 +7,8 @@ import (
 )
 
 func AddAgentPaymentMvcConfiguration(container *dig.Container) {
-	provideController(container, agent_payment_mvc.NewPaymentPolicyController)
-	provideController(container, agent_payment_mvc.NewPaymentRuleController)
+	provideController(container, agent_payment_mvc.NewPaymentReceivePolicyController)
+	provideController(container, agent_payment_mvc.NewPaymentReceiveRuleController)
 	provideController(container, agent_payment_mvc.NewPaymentFacilitatorController)
 }
 

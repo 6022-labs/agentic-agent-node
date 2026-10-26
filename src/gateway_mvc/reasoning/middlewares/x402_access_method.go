@@ -64,7 +64,7 @@ func NewX402AccessMethod(
 
 // x402Rule pairs a rule with its decoded x402 config.
 type x402Rule struct {
-	rule   *models.ExternalPaymentRule
+	rule   *models.ExternalPaymentReceiveRule
 	config *x402.X402Config
 }
 
@@ -73,11 +73,11 @@ func (m *X402AccessMethod) Priority() int {
 }
 
 // x402 is terminal: it always handles, settling a payment or advertising a 402.
-func (m *X402AccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *X402AccessMethod) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentReceiveRule) (bool, error) {
 	return true, m.handle(ctx, rules)
 }
 
-func (m *X402AccessMethod) MatchesFreeRule(rules []models.ExternalPaymentRule, address common.Address) bool {
+func (m *X402AccessMethod) MatchesFreeRule(rules []models.ExternalPaymentReceiveRule, address common.Address) bool {
 	for _, candidate := range m.parseX402Rules(rules) {
 		if m.matchesAddressPatterns(candidate.config.AddressPatterns, address) && m.isZeroPrice(candidate.rule.Price) {
 			return true
@@ -86,7 +86,7 @@ func (m *X402AccessMethod) MatchesFreeRule(rules []models.ExternalPaymentRule, a
 	return false
 }
 
-func (m *X402AccessMethod) handle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) error {
+func (m *X402AccessMethod) handle(ctx fiber.Ctx, rules []models.ExternalPaymentReceiveRule) error {
 	// A rule is settleable only if its network has a facilitator.
 	facilitators, err := m.paymentFacilitatorClient.Get(ctx.Context())
 	if err != nil {
@@ -231,7 +231,7 @@ func (m *X402AccessMethod) paymentRequired(
 }
 
 // parseX402Rules keeps x402-method rules and decodes their config, skipping unparseable ones.
-func (m *X402AccessMethod) parseX402Rules(rules []models.ExternalPaymentRule) []x402Rule {
+func (m *X402AccessMethod) parseX402Rules(rules []models.ExternalPaymentReceiveRule) []x402Rule {
 	var out []x402Rule
 	for i := range rules {
 		if rules[i].Method != methodX402 {
@@ -327,7 +327,7 @@ func (m *X402AccessMethod) isZeroPrice(price string) bool {
 	return ok && value.Sign() == 0
 }
 
-func (m *X402AccessMethod) coversPrice(payload *x402.PaymentPayload, rule *models.ExternalPaymentRule) bool {
+func (m *X402AccessMethod) coversPrice(payload *x402.PaymentPayload, rule *models.ExternalPaymentReceiveRule) bool {
 	value, valueOk := new(big.Int).SetString(payload.Amount(), 10)
 	price, priceOk := new(big.Int).SetString(rule.Price, 10)
 	return valueOk && priceOk && value.Cmp(price) >= 0

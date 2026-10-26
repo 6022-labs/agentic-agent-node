@@ -37,7 +37,7 @@ func WhenGettingBlockchainConfigBeforeEach(_ *testing.T) *WhenGettingBlockchainC
 		&creators,
 		&token6022,
 		&ensRegistries,
-		&settings.PaymentFacilitatorsSettings{
+		&settings.PaymentReceiveSettings{
 			"eip155:80002": {BaseUrl: "https://x402-amoy.polygon.technology"},
 		},
 	)

@@ -1270,7 +1270,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/config/payment-policy": {
+        "/config/payment-receive-policy": {
             "get": {
                 "security": [
                     {
@@ -1288,7 +1288,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.GetPaymentPolicyResponse"
+                            "$ref": "#/definitions/responses.GetPaymentReceivePolicyResponse"
                         }
                     },
                     "401": {
@@ -1343,7 +1343,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/config/payment-policy/rules": {
+        "/config/payment-receive-policy/rules": {
             "get": {
                 "security": [
                     {
@@ -1361,7 +1361,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/responses.ListPaymentRulesResponse"
+                            "$ref": "#/definitions/responses.ListPaymentReceiveRulesResponse"
                         }
                     },
                     "401": {
@@ -1407,7 +1407,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1415,7 +1415,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                         }
                     },
                     "400": {
@@ -1445,7 +1445,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/config/payment-policy/rules/{id}": {
+        "/config/payment-receive-policy/rules/{id}": {
             "put": {
                 "security": [
                     {
@@ -1476,7 +1476,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.SavePaymentRuleRequest"
+                            "$ref": "#/definitions/requests.SavePaymentReceiveRuleRequest"
                         }
                     }
                 ],
@@ -1484,7 +1484,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ExternalPaymentRule"
+                            "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                         }
                     },
                     "400": {
@@ -2167,7 +2167,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ExternalPaymentRule": {
+        "models.ExternalPaymentReceiveRule": {
             "type": "object",
             "properties": {
                 "config": {
@@ -2396,7 +2396,7 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.SavePaymentRuleRequest": {
+        "requests.SavePaymentReceiveRuleRequest": {
             "type": "object",
             "properties": {
                 "config": {
@@ -2886,7 +2886,7 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.GetPaymentPolicyResponse": {
+        "responses.GetPaymentReceivePolicyResponse": {
             "type": "object",
             "properties": {
                 "agentId": {
@@ -2959,13 +2959,13 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.ListPaymentRulesResponse": {
+        "responses.ListPaymentReceiveRulesResponse": {
             "type": "object",
             "properties": {
                 "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.ExternalPaymentRule"
+                        "$ref": "#/definitions/models.ExternalPaymentReceiveRule"
                     }
                 }
             }

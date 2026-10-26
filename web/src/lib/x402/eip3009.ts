@@ -1,6 +1,6 @@
 import { type Signer } from "ethers"
 
-import type { PaymentRule } from "@/models/payment-policy"
+import type { PaymentReceiveRule } from "@/models/payment-receive-policy"
 
 import { randomBytes32Hex } from "./nonce"
 
@@ -19,7 +19,7 @@ const TRANSFER_WITH_AUTHORIZATION_TYPES = {
 export async function buildEip3009PaymentHeader(
   signer: Signer,
   payerAddress: string,
-  rule: PaymentRule,
+  rule: PaymentReceiveRule,
   value: string,
   chainId: number,
   validAfter: number,

@@ -42,7 +42,7 @@ func (m *MockFreeRuleMatcherInterface) EXPECT() *MockFreeRuleMatcherInterfaceMoc
 }
 
 // MatchesFreeRule mocks base method.
-func (m *MockFreeRuleMatcherInterface) MatchesFreeRule(rules []models.ExternalPaymentRule, address common.Address) bool {
+func (m *MockFreeRuleMatcherInterface) MatchesFreeRule(rules []models.ExternalPaymentReceiveRule, address common.Address) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MatchesFreeRule", rules, address)
 	ret0, _ := ret[0].(bool)

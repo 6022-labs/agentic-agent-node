@@ -52,7 +52,7 @@ definitions:
       message:
         type: string
     type: object
-  models.ExternalPaymentRule:
+  models.ExternalPaymentReceiveRule:
     properties:
       config:
         type: object
@@ -200,7 +200,7 @@ definitions:
           $ref: '#/definitions/requests.InputMessage'
         type: array
     type: object
-  requests.SavePaymentRuleRequest:
+  requests.SavePaymentReceiveRuleRequest:
     properties:
       config:
         type: object
@@ -517,7 +517,7 @@ definitions:
       updatedAt:
         type: string
     type: object
-  responses.GetPaymentPolicyResponse:
+  responses.GetPaymentReceivePolicyResponse:
     properties:
       agentId:
         type: string
@@ -564,11 +564,11 @@ definitions:
           $ref: '#/definitions/responses.McpConnectionResponse'
         type: array
     type: object
-  responses.ListPaymentRulesResponse:
+  responses.ListPaymentReceiveRulesResponse:
     properties:
       rules:
         items:
-          $ref: '#/definitions/models.ExternalPaymentRule'
+          $ref: '#/definitions/models.ExternalPaymentReceiveRule'
         type: array
     type: object
   responses.ListSelfToolsResponse:
@@ -1654,7 +1654,7 @@ paths:
       summary: Discover MCP server tools
       tags:
       - Config
-  /config/payment-policy:
+  /config/payment-receive-policy:
     delete:
       produces:
       - application/json
@@ -1681,7 +1681,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.GetPaymentPolicyResponse'
+            $ref: '#/definitions/responses.GetPaymentReceivePolicyResponse'
         "401":
           description: missing_authorization or invalid_token
           schema:
@@ -1699,7 +1699,7 @@ paths:
       summary: Get payment policy
       tags:
       - Config
-  /config/payment-policy/rules:
+  /config/payment-receive-policy/rules:
     get:
       produces:
       - application/json
@@ -1707,7 +1707,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.ListPaymentRulesResponse'
+            $ref: '#/definitions/responses.ListPaymentReceiveRulesResponse'
         "401":
           description: missing_authorization or invalid_token
           schema:
@@ -1734,14 +1734,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+          $ref: '#/definitions/requests.SavePaymentReceiveRuleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentRule'
+            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
         "400":
           description: Bad Request
           schema:
@@ -1763,7 +1763,7 @@ paths:
       summary: Create payment rule
       tags:
       - Config
-  /config/payment-policy/rules/{id}:
+  /config/payment-receive-policy/rules/{id}:
     delete:
       parameters:
       - description: rule id
@@ -1809,14 +1809,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/requests.SavePaymentRuleRequest'
+          $ref: '#/definitions/requests.SavePaymentReceiveRuleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentRule'
+            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
         "400":
           description: Bad Request
           schema:

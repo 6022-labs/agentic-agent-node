@@ -7,5 +7,5 @@ import (
 
 // FreeRuleMatcherInterface reports whether an address matches a zero-price rule.
 type FreeRuleMatcherInterface interface {
-	MatchesFreeRule(rules []models.ExternalPaymentRule, address common.Address) bool
+	MatchesFreeRule(rules []models.ExternalPaymentReceiveRule, address common.Address) bool
 }

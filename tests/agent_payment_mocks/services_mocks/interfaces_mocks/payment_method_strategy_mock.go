@@ -88,7 +88,7 @@ func (mr *MockPaymentMethodStrategyInterfaceMockRecorder) SaveConfig(ctx, ruleId
 }
 
 // Validate mocks base method.
-func (m *MockPaymentMethodStrategyInterface) Validate(ctx context.Context, request *requests.SavePaymentRuleRequest) error {
+func (m *MockPaymentMethodStrategyInterface) Validate(ctx context.Context, request *requests.SavePaymentReceiveRuleRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Validate", ctx, request)
 	ret0, _ := ret[0].(error)

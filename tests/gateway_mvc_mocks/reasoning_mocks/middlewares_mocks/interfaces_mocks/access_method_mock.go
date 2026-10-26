@@ -56,7 +56,7 @@ func (mr *MockAccessMethodInterfaceMockRecorder) Priority() *gomock.Call {
 }
 
 // TryHandle mocks base method.
-func (m *MockAccessMethodInterface) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentRule) (bool, error) {
+func (m *MockAccessMethodInterface) TryHandle(ctx fiber.Ctx, rules []models.ExternalPaymentReceiveRule) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "TryHandle", ctx, rules)
 	ret0, _ := ret[0].(bool)

@@ -19,15 +19,17 @@ import (
 type WhenSavingX402ConfigTestingSuite struct {
 	sut *services.X402PaymentMethodStrategy
 
-	mockConfigRepository *payment_repositories_mocks.MockPaymentRuleX402ConfigRepositoryInterface
+	mockConfigRepository *payment_repositories_mocks.MockPaymentReceiveRuleX402ConfigRepositoryInterface
 }
 
 func WhenSavingX402ConfigBeforeEach(t *testing.T) *WhenSavingX402ConfigTestingSuite {
 	mockController := gomock.NewController(t)
 
-	facilitators := &runtime_common_settings.PaymentFacilitatorsSettings{}
+	facilitators := &runtime_common_settings.PaymentReceiveSettings{}
 	mockErc20Validator := payment_interfaces_mocks.NewMockErc20ValidatorInterface(mockController)
-	mockConfigRepository := payment_repositories_mocks.NewMockPaymentRuleX402ConfigRepositoryInterface(mockController)
+	mockConfigRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleX402ConfigRepositoryInterface(
+		mockController,
+	)
 
 	return &WhenSavingX402ConfigTestingSuite{
 		sut: services.NewX402PaymentMethodStrategy(
@@ -90,8 +92,8 @@ func TestWhenSavingX402Config(t *testing.T) {
 		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
 			suite.mockConfigRepository.EXPECT().
 				Upsert(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, config *models.PaymentRuleX402Config) error {
-					assert.Equal(t, ruleId, config.PaymentRuleId)
+				DoAndReturn(func(_ context.Context, config *models.PaymentReceiveRuleX402Config) error {
+					assert.Equal(t, ruleId, config.PaymentReceiveRuleId)
 					assert.Equal(t, "eip155:80002", config.Network)
 					assert.Equal(t, []string{".*"}, config.AddressPatterns)
 					return nil

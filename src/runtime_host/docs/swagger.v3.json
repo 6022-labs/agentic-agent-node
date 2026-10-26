@@ -249,7 +249,7 @@
                 },
                 "type": "object"
             },
-            "requests.SavePaymentRuleRequest": {
+            "requests.SavePaymentReceiveRuleRequest": {
                 "properties": {
                     "config": {
                         "type": "object"
@@ -706,11 +706,11 @@
                 },
                 "type": "object"
             },
-            "responses.ListPaymentRulesResponse": {
+            "responses.ListPaymentReceiveRulesResponse": {
                 "properties": {
                     "rules": {
                         "items": {
-                            "$ref": "#/components/schemas/responses.PaymentRuleResponse"
+                            "$ref": "#/components/schemas/responses.PaymentReceiveRuleResponse"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -896,7 +896,7 @@
                 },
                 "type": "object"
             },
-            "responses.PaymentPolicyResponse": {
+            "responses.PaymentReceivePolicyResponse": {
                 "properties": {
                     "agentId": {
                         "type": "string"
@@ -916,7 +916,7 @@
                 },
                 "type": "object"
             },
-            "responses.PaymentRuleResponse": {
+            "responses.PaymentReceiveRuleResponse": {
                 "properties": {
                     "config": {
                         "type": "object"
@@ -2271,7 +2271,7 @@
                 ]
             }
         },
-        "/internal/config/payment-policy": {
+        "/internal/config/payment-receive-policy": {
             "delete": {
                 "responses": {
                     "204": {
@@ -2299,7 +2299,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/responses.PaymentPolicyResponse"
+                                    "$ref": "#/components/schemas/responses.PaymentReceivePolicyResponse"
                                 }
                             }
                         },
@@ -2332,14 +2332,14 @@
                 ]
             }
         },
-        "/internal/config/payment-policy/rules": {
+        "/internal/config/payment-receive-policy/rules": {
             "get": {
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/responses.ListPaymentRulesResponse"
+                                    "$ref": "#/components/schemas/responses.ListPaymentReceiveRulesResponse"
                                 }
                             }
                         },
@@ -2381,7 +2381,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.SavePaymentRuleRequest",
+                                        "$ref": "#/components/schemas/requests.SavePaymentReceiveRuleRequest",
                                         "summary": "request",
                                         "description": "payment rule"
                                     }
@@ -2397,7 +2397,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/responses.PaymentRuleResponse"
+                                    "$ref": "#/components/schemas/responses.PaymentReceiveRuleResponse"
                                 }
                             }
                         },
@@ -2440,7 +2440,7 @@
                 ]
             }
         },
-        "/internal/config/payment-policy/rules/{id}": {
+        "/internal/config/payment-receive-policy/rules/{id}": {
             "delete": {
                 "parameters": [
                     {
@@ -2514,7 +2514,7 @@
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/requests.SavePaymentRuleRequest",
+                                        "$ref": "#/components/schemas/requests.SavePaymentReceiveRuleRequest",
                                         "summary": "request",
                                         "description": "payment rule"
                                     }
@@ -2530,7 +2530,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/responses.PaymentRuleResponse"
+                                    "$ref": "#/components/schemas/responses.PaymentReceiveRuleResponse"
                                 }
                             }
                         },

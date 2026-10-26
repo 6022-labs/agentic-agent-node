@@ -80,8 +80,8 @@ func addKnowledgeConfiguration(container *dig.Container) {
 }
 
 func addPaymentConfiguration(container *dig.Container) {
-	provideController(container, payment.NewPaymentPolicyController)
-	provideController(container, payment.NewPaymentRuleController)
+	provideController(container, payment.NewPaymentReceivePolicyController)
+	provideController(container, payment.NewPaymentReceiveRuleController)
 }
 
 func addReasoningConfiguration(container *dig.Container) {

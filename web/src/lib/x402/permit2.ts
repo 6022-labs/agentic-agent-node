@@ -1,6 +1,6 @@
 import { Contract, MaxUint256, type Signer } from "ethers"
 
-import type { PaymentRule } from "@/models/payment-policy"
+import type { PaymentReceiveRule } from "@/models/payment-receive-policy"
 
 import { randomBytes32Hex } from "./nonce"
 
@@ -64,7 +64,7 @@ async function ensurePermit2Approval(
 export async function buildPermit2PaymentHeader(
   signer: Signer,
   payerAddress: string,
-  rule: PaymentRule,
+  rule: PaymentReceiveRule,
   value: string,
   chainId: number,
   validAfter: number,

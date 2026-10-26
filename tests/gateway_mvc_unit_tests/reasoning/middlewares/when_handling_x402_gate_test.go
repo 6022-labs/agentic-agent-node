@@ -39,7 +39,7 @@ type WhenHandlingX402GateTestingSuite struct {
 	seenPayer     string
 	seenAddress   string
 
-	mockPaymentRuleClient        *interfaces_mocks.MockPaymentRuleClientInterface
+	mockPaymentReceiveRuleClient *interfaces_mocks.MockPaymentReceiveRuleClientInterface
 	mockPaymentFacilitatorClient *interfaces_mocks.MockPaymentFacilitatorClientInterface
 	mockJwtValidator             *core_interfaces_mocks.MockJwtValidatorInterface
 	mockX402PaymentVerifier      *x402_mocks.MockX402PaymentVerifierInterface
@@ -49,7 +49,7 @@ type WhenHandlingX402GateTestingSuite struct {
 func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockPaymentRuleClient := interfaces_mocks.NewMockPaymentRuleClientInterface(mockController)
+	mockPaymentReceiveRuleClient := interfaces_mocks.NewMockPaymentReceiveRuleClientInterface(mockController)
 	mockPaymentFacilitatorClient := interfaces_mocks.NewMockPaymentFacilitatorClientInterface(mockController)
 	mockJwtValidator := core_interfaces_mocks.NewMockJwtValidatorInterface(mockController)
 	mockX402PaymentVerifier := x402_mocks.NewMockX402PaymentVerifierInterface(mockController)
@@ -71,13 +71,13 @@ func WhenHandlingX402GateBeforeEach(t *testing.T) *WhenHandlingX402GateTestingSu
 		FreeRuleMatchers: []middleware_interfaces.FreeRuleMatcherInterface{x402Method},
 	})
 	sut := middlewares.NewResponseAccessGateMiddleware(middlewares.NewResponseAccessGateMiddlewareParams{
-		PaymentRuleClient: mockPaymentRuleClient,
-		AccessMethods:     []middleware_interfaces.AccessMethodInterface{x402Method, jwtMethod},
+		PaymentReceiveRuleClient: mockPaymentReceiveRuleClient,
+		AccessMethods:            []middleware_interfaces.AccessMethodInterface{x402Method, jwtMethod},
 	})
 
 	suite := &WhenHandlingX402GateTestingSuite{
 		sut:                          sut,
-		mockPaymentRuleClient:        mockPaymentRuleClient,
+		mockPaymentReceiveRuleClient: mockPaymentReceiveRuleClient,
 		mockPaymentFacilitatorClient: mockPaymentFacilitatorClient,
 		mockJwtValidator:             mockJwtValidator,
 		mockX402PaymentVerifier:      mockX402PaymentVerifier,
@@ -103,7 +103,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(nil, errors.New("runtime down")).
 				Times(1)
@@ -126,7 +126,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -155,7 +155,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -182,7 +182,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GatePublicRule(),
@@ -227,7 +227,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePermit2Rule()), nil).
 				Times(1)
@@ -259,7 +259,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GateFreeRule(strings.ToLower(x402TestAgentWalletHex)),
@@ -286,7 +286,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -315,7 +315,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -340,7 +340,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -366,7 +366,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -397,7 +397,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -428,7 +428,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GateFreeRule("0x1111111111111111111111111111111111111111"),
@@ -462,7 +462,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -497,7 +497,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -528,7 +528,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -563,7 +563,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -600,7 +600,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -640,7 +640,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)
@@ -710,7 +710,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
@@ -754,7 +754,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
@@ -790,7 +790,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(
 					x402GateFreeRule(strings.ToLower(x402TestPayerHex)),
@@ -841,7 +841,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GateFreeRule(".*")), nil).
 				Times(1)
@@ -872,7 +872,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GateFreeRule(strings.ToLower(x402TestPayerHex))), nil).
 				Times(1)
@@ -908,7 +908,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
 			discounted := x402GateRule("5000", x402TestPayToHex, []string{strings.ToLower(x402TestPayerHex)})
 
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule(), discounted), nil).
 				Times(1)
@@ -954,7 +954,7 @@ func TestWhenHandlingX402Gate(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenHandlingX402GateTestingSuite) {
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(x402GateTestRules(x402GatePublicRule()), nil).
 				Times(1)

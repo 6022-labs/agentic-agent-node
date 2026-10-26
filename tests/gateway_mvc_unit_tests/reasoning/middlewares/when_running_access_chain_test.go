@@ -18,26 +18,26 @@ import (
 )
 
 type WhenRunningAccessChainTestingSuite struct {
-	mockPaymentRuleClient *payment_mocks.MockPaymentRuleClientInterface
-	linkA                 *access_mocks.MockAccessMethodInterface
-	linkB                 *access_mocks.MockAccessMethodInterface
-	downstreamRan         bool
+	mockPaymentReceiveRuleClient *payment_mocks.MockPaymentReceiveRuleClientInterface
+	linkA                        *access_mocks.MockAccessMethodInterface
+	linkB                        *access_mocks.MockAccessMethodInterface
+	downstreamRan                bool
 }
 
 func WhenRunningAccessChainBeforeEach(t *testing.T) *WhenRunningAccessChainTestingSuite {
 	mockController := gomock.NewController(t)
 	return &WhenRunningAccessChainTestingSuite{
-		mockPaymentRuleClient: payment_mocks.NewMockPaymentRuleClientInterface(mockController),
-		linkA:                 access_mocks.NewMockAccessMethodInterface(mockController),
-		linkB:                 access_mocks.NewMockAccessMethodInterface(mockController),
+		mockPaymentReceiveRuleClient: payment_mocks.NewMockPaymentReceiveRuleClientInterface(mockController),
+		linkA:                        access_mocks.NewMockAccessMethodInterface(mockController),
+		linkB:                        access_mocks.NewMockAccessMethodInterface(mockController),
 	}
 }
 
 // build wires the gate over the given links and exposes /responses.
 func (s *WhenRunningAccessChainTestingSuite) build(links ...middleware_interfaces.AccessMethodInterface) *fiber.App {
 	sut := middlewares.NewResponseAccessGateMiddleware(middlewares.NewResponseAccessGateMiddlewareParams{
-		PaymentRuleClient: s.mockPaymentRuleClient,
-		AccessMethods:     links,
+		PaymentReceiveRuleClient: s.mockPaymentReceiveRuleClient,
+		AccessMethods:            links,
 	})
 	app := fiber.New()
 	app.Post("/responses", sut.Handle, func(ctx fiber.Ctx) error {
@@ -63,14 +63,17 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, errors.New("runtime down")).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().
+				List(gomock.Any()).
+				Return(nil, errors.New("runtime down")).
+				Times(1)
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 
 			resp, err := suite.build(suite.linkA).Test(x402GateRequest(""))
 
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusBadGateway, resp.StatusCode)
-			assert.Contains(t, accessChainBody(t, resp), "payment_rules_unavailable")
+			assert.Contains(t, accessChainBody(t, resp), "payment_receive_rules_unavailable")
 		})
 	})
 
@@ -81,7 +84,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 			suite.linkA.EXPECT().TryHandle(gomock.Any(), gomock.Any()).Return(false, nil).Times(1)
 
@@ -101,7 +104,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
 
 			resp, err := suite.build().Test(x402GateRequest(""))
 
@@ -118,7 +121,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().
+			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
 				Return(nil, apperrors.NewConflictError("agent_not_minted", "agent identity is not minted yet")).
 				Times(1)
@@ -139,7 +142,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
 			// linkA registered first but is the lower-priority (later) link.
 			suite.linkA.EXPECT().Priority().Return(100).AnyTimes()
 			suite.linkB.EXPECT().Priority().Return(10).AnyTimes()
@@ -161,7 +164,7 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 			suite.linkB.EXPECT().Priority().Return(100).AnyTimes()
 			gomock.InOrder(
@@ -183,11 +186,11 @@ func TestWhenRunningAccessChain(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRunningAccessChainBeforeEach(t)
-			suite.mockPaymentRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockPaymentReceiveRuleClient.EXPECT().List(gomock.Any()).Return(nil, nil).Times(1)
 			suite.linkA.EXPECT().Priority().Return(10).AnyTimes()
 			suite.linkA.EXPECT().
 				TryHandle(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx fiber.Ctx, _ []models.ExternalPaymentRule) (bool, error) {
+				DoAndReturn(func(ctx fiber.Ctx, _ []models.ExternalPaymentReceiveRule) (bool, error) {
 					return true, ctx.Next()
 				}).
 				Times(1)

@@ -31,26 +31,26 @@ const (
 // X402PaymentMethodStrategy is the x402 payment method: it validates a rule's
 // config (must target a reachable chain, hex asset/payTo, address patterns, a
 // real ERC-20 asset whose EIP-712 domain is derived on-chain, a facilitator for
-// paid rules) and persists/loads it in the typed payment_rule_x402_configs
+// paid rules) and persists/loads it in the typed payment_receive_rule_x402_configs
 // table. The settlement timeout is network-level (facilitator config), not here.
 type X402PaymentMethodStrategy struct {
-	paymentFacilitatorsSettings     *runtime_common_settings.PaymentFacilitatorsSettings
-	evmChainsSettings               *runtime_common_settings.EvmChainsSettings
-	erc20Validator                  payment_interfaces.Erc20ValidatorInterface
-	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface
+	paymentReceiveSettings                 *runtime_common_settings.PaymentReceiveSettings
+	evmChainsSettings                      *runtime_common_settings.EvmChainsSettings
+	erc20Validator                         payment_interfaces.Erc20ValidatorInterface
+	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface
 }
 
 func NewX402PaymentMethodStrategy(
-	paymentFacilitatorsSettings *runtime_common_settings.PaymentFacilitatorsSettings,
+	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings,
 	evmChainsSettings *runtime_common_settings.EvmChainsSettings,
 	erc20Validator payment_interfaces.Erc20ValidatorInterface,
-	paymentRuleX402ConfigRepository repositories.PaymentRuleX402ConfigRepositoryInterface,
+	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface,
 ) *X402PaymentMethodStrategy {
 	return &X402PaymentMethodStrategy{
-		paymentFacilitatorsSettings:     paymentFacilitatorsSettings,
-		evmChainsSettings:               evmChainsSettings,
-		erc20Validator:                  erc20Validator,
-		paymentRuleX402ConfigRepository: paymentRuleX402ConfigRepository,
+		paymentReceiveSettings:                 paymentReceiveSettings,
+		evmChainsSettings:                      evmChainsSettings,
+		erc20Validator:                         erc20Validator,
+		paymentReceiveRuleX402ConfigRepository: paymentReceiveRuleX402ConfigRepository,
 	}
 }
 
@@ -58,8 +58,11 @@ func (s *X402PaymentMethodStrategy) Method() enums.PaymentMethod {
 	return enums.PaymentMethodX402
 }
 
-func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *requests.SavePaymentRuleRequest) error {
-	config := &models.PaymentRuleX402Config{}
+func (s *X402PaymentMethodStrategy) Validate(
+	ctx context.Context,
+	request *requests.SavePaymentReceiveRuleRequest,
+) error {
+	config := &models.PaymentReceiveRuleX402Config{}
 	if err := config.Parse(request.Config); err != nil {
 		return err
 	}
@@ -134,16 +137,16 @@ func (s *X402PaymentMethodStrategy) Validate(ctx context.Context, request *reque
 }
 
 func (s *X402PaymentMethodStrategy) SaveConfig(ctx context.Context, ruleId uuid.UUID, raw json.RawMessage) error {
-	config := &models.PaymentRuleX402Config{}
+	config := &models.PaymentReceiveRuleX402Config{}
 	if err := config.Parse(raw); err != nil {
 		return err
 	}
-	config.PaymentRuleId = ruleId
-	return s.paymentRuleX402ConfigRepository.Upsert(ctx, config)
+	config.PaymentReceiveRuleId = ruleId
+	return s.paymentReceiveRuleX402ConfigRepository.Upsert(ctx, config)
 }
 
 func (s *X402PaymentMethodStrategy) LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error) {
-	row, err := s.paymentRuleX402ConfigRepository.GetByRuleId(ctx, ruleId)
+	row, err := s.paymentReceiveRuleX402ConfigRepository.GetByRuleId(ctx, ruleId)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +163,7 @@ func (s *X402PaymentMethodStrategy) requireFacilitatorForPaidRule(price string, 
 	if !ok || parsed.Sign() == 0 {
 		return nil
 	}
-	if _, configured := s.paymentFacilitatorsSettings.BaseUrlFor(network); !configured {
+	if _, configured := s.paymentReceiveSettings.BaseUrlFor(network); !configured {
 		return errors.NewValidationError("config.network", "no facilitator configured for this network")
 	}
 	return nil
