@@ -20,8 +20,7 @@ func NewSelfToolRepository(client *runtime_db.DatabaseClient) *SelfToolRepositor
 
 func (r *SelfToolRepository) ListByAgentId(ctx context.Context, agentId uuid.UUID) ([]models.SelfTool, error) {
 	var entities []models.SelfTool
-	if err := r.client.GetDB().
-		WithContext(ctx).
+	if err := r.client.GetDB(ctx).
 		Where("agent_id = ?", agentId).
 		Order("name ASC").
 		Find(&entities).
@@ -33,7 +32,7 @@ func (r *SelfToolRepository) ListByAgentId(ctx context.Context, agentId uuid.UUI
 
 func (r *SelfToolRepository) GetById(ctx context.Context, agentId uuid.UUID, id uuid.UUID) (*models.SelfTool, error) {
 	var entity models.SelfTool
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ? AND id = ?", agentId, id).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ? AND id = ?", agentId, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -44,14 +43,14 @@ func (r *SelfToolRepository) GetById(ctx context.Context, agentId uuid.UUID, id 
 }
 
 func (r *SelfToolRepository) Create(ctx context.Context, tool *models.SelfTool) (*models.SelfTool, error) {
-	if err := r.client.GetDB().WithContext(ctx).Create(tool).Error; err != nil {
+	if err := r.client.GetDB(ctx).Create(tool).Error; err != nil {
 		return nil, err
 	}
 	return tool, nil
 }
 
 func (r *SelfToolRepository) Update(ctx context.Context, tool *models.SelfTool) (*models.SelfTool, error) {
-	if err := r.client.GetDB().WithContext(ctx).Save(tool).Error; err != nil {
+	if err := r.client.GetDB(ctx).Save(tool).Error; err != nil {
 		return nil, err
 	}
 	return tool, nil
@@ -66,7 +65,7 @@ func (r *SelfToolRepository) ListExistingNames(
 		return nil, nil
 	}
 	var existing []string
-	if err := r.client.GetDB().WithContext(ctx).Model(&models.SelfTool{}).
+	if err := r.client.GetDB(ctx).Model(&models.SelfTool{}).
 		Where("agent_id = ? AND name IN ?", agentId, names).
 		Pluck("name", &existing).Error; err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ func (r *SelfToolRepository) DeleteAllExceptNames(
 	agentId uuid.UUID,
 	names []string,
 ) (int64, error) {
-	db := r.client.GetDB().WithContext(ctx)
+	db := r.client.GetDB(ctx)
 	// An empty NOT IN would match nothing in SQL; an empty registry means every row is stale.
 	if len(names) == 0 {
 		result := db.Delete(&models.SelfTool{}, "agent_id = ?", agentId)

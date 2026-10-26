@@ -1,6 +1,7 @@
 package repositories_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 // seedAgent inserts a parent agents row directly; AgentRepository.Upsert collapses to one row and cannot seed several.
 func seedAgent(dbClient *runtime_db.DatabaseClient, agentId uuid.UUID) {
 	agent := model_builders.NewAgentBuilder().WithId(agentId).Build()
-	if err := dbClient.GetDB().Create(agent).Error; err != nil {
+	if err := dbClient.GetDB(context.Background()).Create(agent).Error; err != nil {
 		panic(err)
 	}
 }

@@ -21,7 +21,7 @@ func NewAgentAddressRepository(client *runtime_db.DatabaseClient) *AgentAddressR
 }
 
 func (r *AgentAddressRepository) Upsert(ctx context.Context, address *models.AgentAddress) error {
-	return r.client.GetDB().WithContext(ctx).
+	return r.client.GetDB(ctx).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "agent_id"}, {Name: "type"}},
 			DoUpdates: clause.AssignmentColumns([]string{"address", "updated_at"}),
@@ -34,7 +34,7 @@ func (r *AgentAddressRepository) GetAllByAgentId(
 	agentId uuid.UUID,
 ) (map[enums.AddressType]string, error) {
 	var rows []models.AgentAddress
-	if err := r.client.GetDB().WithContext(ctx).Where("agent_id = ?", agentId).Find(&rows).Error; err != nil {
+	if err := r.client.GetDB(ctx).Where("agent_id = ?", agentId).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	addresses := make(map[enums.AddressType]string, len(rows))
@@ -50,7 +50,7 @@ func (r *AgentAddressRepository) GetByAgentIdAndType(
 	addressType enums.AddressType,
 ) (*models.AgentAddress, error) {
 	var entity models.AgentAddress
-	err := r.client.GetDB().WithContext(ctx).First(&entity, "agent_id = ? AND type = ?", agentId, addressType).Error
+	err := r.client.GetDB(ctx).First(&entity, "agent_id = ? AND type = ?", agentId, addressType).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

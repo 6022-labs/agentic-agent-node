@@ -24,8 +24,8 @@ type WhenEnsuringConversationTestingSuite struct {
 	sut                      *repositories.ConversationRepository
 }
 
-func WhenEnsuringConversationBeforeEach(tc *repositoryTestCase) *WhenEnsuringConversationTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenEnsuringConversationBeforeEach(tc *common_tests.DatabaseTestCase) *WhenEnsuringConversationTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -34,7 +34,7 @@ func WhenEnsuringConversationBeforeEach(tc *repositoryTestCase) *WhenEnsuringCon
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -61,8 +61,8 @@ func WhenEnsuringConversationAfterEach(suite *WhenEnsuringConversationTestingSui
 func TestWhenEnsuringConversation(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the same conversation is ensured twice", func(t *testing.T) {
@@ -74,7 +74,10 @@ func TestWhenEnsuringConversation(t *testing.T) {
 					defer WhenEnsuringConversationAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					conversation := model_builders.NewConversationBuilder().
 						WithId("conv-dup").
 						WithAgentId(agentId).

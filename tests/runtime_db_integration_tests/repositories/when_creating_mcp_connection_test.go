@@ -23,8 +23,8 @@ type WhenCreatingMCPConnectionTestingSuite struct {
 	sut                      *repositories.MCPConnectionRepository
 }
 
-func WhenCreatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenCreatingMCPConnectionTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenCreatingMCPConnectionBeforeEach(tc *common_tests.DatabaseTestCase) *WhenCreatingMCPConnectionTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -33,7 +33,7 @@ func WhenCreatingMCPConnectionBeforeEach(tc *repositoryTestCase) *WhenCreatingMC
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -60,8 +60,8 @@ func WhenCreatingMCPConnectionAfterEach(suite *WhenCreatingMCPConnectionTestingS
 func TestWhenCreatingMCPConnection(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a valid connection", func(t *testing.T) {
@@ -73,7 +73,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -89,7 +92,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					assert.Equal(t, "github", inserted.Name)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.MCPConnection{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -103,7 +106,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -132,7 +138,10 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					defer WhenCreatingMCPConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -188,7 +197,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.MCPConnection{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})
@@ -203,8 +212,14 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 					firstAgentId := uuid.New()
 					secondAgentId := uuid.New()
-					seedAgent(suite.dbClient, firstAgentId)
-					seedAgent(suite.dbClient, secondAgentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(firstAgentId).Build()).Error; err != nil {
+						panic(err)
+					}
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(secondAgentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					_, err := suite.sut.Create(
 						context.Background(),
@@ -229,7 +244,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.MCPConnection{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.MCPConnection{}).Count(&count)
 					assert.Equal(t, int64(2), count)
 				})
 			})

@@ -26,8 +26,8 @@ type WhenUpdatingConversationTestingSuite struct {
 	sut                      *repositories.ConversationRepository
 }
 
-func WhenUpdatingConversationBeforeEach(tc *repositoryTestCase) *WhenUpdatingConversationTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpdatingConversationBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpdatingConversationTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +36,7 @@ func WhenUpdatingConversationBeforeEach(tc *repositoryTestCase) *WhenUpdatingCon
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -57,14 +57,15 @@ func WhenUpdatingConversationBeforeEach(tc *repositoryTestCase) *WhenUpdatingCon
 
 func WhenUpdatingConversationAfterEach(suite *WhenUpdatingConversationTestingSuite) {
 	_ = suite.dbClient.Close()
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
 func TestWhenUpdatingConversation(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a stored conversation", func(t *testing.T) {
@@ -77,7 +78,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -105,7 +109,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -161,7 +168,10 @@ func TestWhenUpdatingConversation(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).

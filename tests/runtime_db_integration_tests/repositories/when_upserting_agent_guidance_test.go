@@ -23,8 +23,8 @@ type WhenUpsertingAgentGuidanceTestingSuite struct {
 	sut                      *repositories.AgentGuidanceRepository
 }
 
-func WhenUpsertingAgentGuidanceBeforeEach(tc *repositoryTestCase) *WhenUpsertingAgentGuidanceTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpsertingAgentGuidanceBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpsertingAgentGuidanceTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -33,7 +33,7 @@ func WhenUpsertingAgentGuidanceBeforeEach(tc *repositoryTestCase) *WhenUpserting
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -60,8 +60,8 @@ func WhenUpsertingAgentGuidanceAfterEach(suite *WhenUpsertingAgentGuidanceTestin
 func TestWhenUpsertingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no row exists", func(t *testing.T) {
@@ -73,7 +73,10 @@ func TestWhenUpsertingAgentGuidance(t *testing.T) {
 					defer WhenUpsertingAgentGuidanceAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					inserted, err := suite.sut.Upsert(context.Background(), &models.AgentGuidance{
 						AgentId: agentId,
 						Content: "answer concisely",
@@ -113,7 +116,7 @@ func TestWhenUpsertingAgentGuidance(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.AgentGuidance{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.AgentGuidance{}).Count(&count)
 
 					assert.Equal(t, int64(1), count)
 				})
@@ -128,7 +131,10 @@ func TestWhenUpsertingAgentGuidance(t *testing.T) {
 					defer WhenUpsertingAgentGuidanceAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					first, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentGuidanceBuilder().
 						WithAgentId(agentId).
 						WithContent("first guidance").
@@ -187,7 +193,7 @@ func TestWhenUpsertingAgentGuidance(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.AgentGuidance{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.AgentGuidance{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})

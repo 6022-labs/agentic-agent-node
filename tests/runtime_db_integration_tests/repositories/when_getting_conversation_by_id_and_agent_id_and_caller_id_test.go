@@ -25,9 +25,9 @@ type WhenGettingConversationByIdAndAgentIdAndCallerIdTestingSuite struct {
 }
 
 func WhenGettingConversationByIdAndAgentIdAndCallerIdBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenGettingConversationByIdAndAgentIdAndCallerIdTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +36,7 @@ func WhenGettingConversationByIdAndAgentIdAndCallerIdBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -65,8 +65,8 @@ func WhenGettingConversationByIdAndAgentIdAndCallerIdAfterEach(
 func TestWhenGettingConversationByIdAndAgentIdAndCallerId(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the caller owns the conversation", func(t *testing.T) {

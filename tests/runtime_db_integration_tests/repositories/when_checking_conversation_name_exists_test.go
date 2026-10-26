@@ -25,9 +25,9 @@ type WhenCheckingConversationNameExistsTestingSuite struct {
 }
 
 func WhenCheckingConversationNameExistsBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenCheckingConversationNameExistsTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +36,7 @@ func WhenCheckingConversationNameExistsBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -57,14 +57,15 @@ func WhenCheckingConversationNameExistsBeforeEach(
 
 func WhenCheckingConversationNameExistsAfterEach(suite *WhenCheckingConversationNameExistsTestingSuite) {
 	_ = suite.dbClient.Close()
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
 func TestWhenCheckingConversationNameExists(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the agent holds that name in the caller-less namespace", func(t *testing.T) {
@@ -77,7 +78,10 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(agentId).
@@ -337,8 +341,14 @@ func TestWhenCheckingConversationNameExists(t *testing.T) {
 					ctx := context.Background()
 					firstAgentId := uuid.New()
 					secondAgentId := uuid.New()
-					seedAgent(suite.dbClient, firstAgentId)
-					seedAgent(suite.dbClient, secondAgentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(firstAgentId).Build()).Error; err != nil {
+						panic(err)
+					}
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(secondAgentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					_, err := suite.sut.Create(ctx, model_builders.NewConversationBuilder().
 						WithId("c1").
 						WithAgentId(firstAgentId).

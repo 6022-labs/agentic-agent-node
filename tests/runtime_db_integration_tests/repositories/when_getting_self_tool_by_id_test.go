@@ -22,8 +22,8 @@ type WhenGettingSelfToolByIdTestingSuite struct {
 	sut                      *repositories.SelfToolRepository
 }
 
-func WhenGettingSelfToolByIdBeforeEach(tc *repositoryTestCase) *WhenGettingSelfToolByIdTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenGettingSelfToolByIdBeforeEach(tc *common_tests.DatabaseTestCase) *WhenGettingSelfToolByIdTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -32,7 +32,7 @@ func WhenGettingSelfToolByIdBeforeEach(tc *repositoryTestCase) *WhenGettingSelfT
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,8 +59,8 @@ func WhenGettingSelfToolByIdAfterEach(suite *WhenGettingSelfToolByIdTestingSuite
 func TestWhenGettingSelfToolById(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the tool does not exist", func(t *testing.T) {
@@ -86,7 +86,10 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 					defer WhenGettingSelfToolByIdAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					inserted, err := suite.sut.Create(
 						context.Background(),
@@ -117,8 +120,14 @@ func TestWhenGettingSelfToolById(t *testing.T) {
 
 					agentId := uuid.New()
 					otherAgentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
-					seedAgent(suite.dbClient, otherAgentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(otherAgentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					inserted, err := suite.sut.Create(
 						context.Background(),

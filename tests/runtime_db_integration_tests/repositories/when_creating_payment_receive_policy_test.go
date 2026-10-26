@@ -22,8 +22,10 @@ type WhenCreatingPaymentReceivePolicyTestingSuite struct {
 	sut                      *repositories.PaymentReceivePolicyRepository
 }
 
-func WhenCreatingPaymentReceivePolicyBeforeEach(tc *repositoryTestCase) *WhenCreatingPaymentReceivePolicyTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenCreatingPaymentReceivePolicyBeforeEach(
+	tc *common_tests.DatabaseTestCase,
+) *WhenCreatingPaymentReceivePolicyTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -32,7 +34,7 @@ func WhenCreatingPaymentReceivePolicyBeforeEach(tc *repositoryTestCase) *WhenCre
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,8 +61,8 @@ func WhenCreatingPaymentReceivePolicyAfterEach(suite *WhenCreatingPaymentReceive
 func TestWhenCreatingPaymentReceivePolicy(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no policy exists", func(t *testing.T) {
@@ -72,7 +74,10 @@ func TestWhenCreatingPaymentReceivePolicy(t *testing.T) {
 					defer WhenCreatingPaymentReceivePolicyAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 
 					created, err := suite.sut.Create(context.Background(),
 						model_builders.NewPaymentReceivePolicyBuilder().WithId(uuid.Nil).WithAgentId(agentId).Build())

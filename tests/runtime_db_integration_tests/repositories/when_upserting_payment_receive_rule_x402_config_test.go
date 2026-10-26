@@ -26,9 +26,9 @@ type WhenUpsertingPaymentReceiveRuleX402ConfigTestingSuite struct {
 }
 
 func WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenUpsertingPaymentReceiveRuleX402ConfigTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -37,7 +37,7 @@ func WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -49,7 +49,10 @@ func WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(
 	}
 
 	agentId := uuid.New()
-	seedAgent(dbClient, agentId)
+	if err := dbClient.GetDB(context.Background()).
+		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+		panic(err)
+	}
 
 	policy, err := repositories.NewPaymentReceivePolicyRepository(dbClient).Create(
 		context.Background(), model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agentId).Build())
@@ -79,8 +82,8 @@ func WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite *WhenUpsertingPaym
 func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given the rule has no config yet", func(t *testing.T) {

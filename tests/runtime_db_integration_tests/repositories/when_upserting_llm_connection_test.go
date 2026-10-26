@@ -24,8 +24,8 @@ type WhenUpsertingLLMConnectionTestingSuite struct {
 	sut                      *repositories.LLMConnectionRepository
 }
 
-func WhenUpsertingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenUpsertingLLMConnectionTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenUpsertingLLMConnectionBeforeEach(tc *common_tests.DatabaseTestCase) *WhenUpsertingLLMConnectionTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -34,7 +34,7 @@ func WhenUpsertingLLMConnectionBeforeEach(tc *repositoryTestCase) *WhenUpserting
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -61,8 +61,8 @@ func WhenUpsertingLLMConnectionAfterEach(suite *WhenUpsertingLLMConnectionTestin
 func TestWhenUpsertingLLMConnection(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given no row exists", func(t *testing.T) {
@@ -74,7 +74,10 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					inserted, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
@@ -104,7 +107,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.LLMConnection{}).Count(&count)
 
 					assert.Equal(t, int64(1), count)
 				})
@@ -119,7 +122,10 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					defer WhenUpsertingLLMConnectionAfterEach(suite)
 
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					first, err := suite.sut.Upsert(context.Background(), model_builders.NewLLMConnectionBuilder().
 						WithAgentId(agentId).
 						WithPlatform(reasoning_enums.LLMConnectionPlatformOpenAi).
@@ -216,7 +222,7 @@ func TestWhenUpsertingLLMConnection(t *testing.T) {
 					assert.NoError(t, err)
 
 					var count int64
-					suite.dbClient.GetDB().Model(&models.LLMConnection{}).Count(&count)
+					suite.dbClient.GetDB(context.Background()).Model(&models.LLMConnection{}).Count(&count)
 					assert.Equal(t, int64(1), count)
 				})
 			})

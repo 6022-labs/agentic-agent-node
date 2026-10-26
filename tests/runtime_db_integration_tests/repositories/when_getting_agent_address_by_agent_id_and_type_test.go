@@ -2,6 +2,7 @@ package repositories_test
 
 import (
 	"context"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -24,9 +25,9 @@ type WhenGettingAgentAddressByAgentIdAndTypeTestingSuite struct {
 }
 
 func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenGettingAgentAddressByAgentIdAndTypeTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -35,7 +36,7 @@ func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -47,7 +48,10 @@ func WhenGettingAgentAddressByAgentIdAndTypeBeforeEach(
 	}
 
 	agentId := uuid.New()
-	seedAgent(dbClient, agentId)
+	if err := dbClient.GetDB(context.Background()).
+		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+		panic(err)
+	}
 
 	return &WhenGettingAgentAddressByAgentIdAndTypeTestingSuite{
 		dbName:                   dbName,
@@ -66,8 +70,8 @@ func WhenGettingAgentAddressByAgentIdAndTypeAfterEach(suite *WhenGettingAgentAdd
 func TestWhenGettingAgentAddressByAgentIdAndType(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given a stored address of the type", func(t *testing.T) {

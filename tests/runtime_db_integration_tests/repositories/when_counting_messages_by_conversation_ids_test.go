@@ -25,9 +25,9 @@ type WhenCountingMessagesByConversationIdsTestingSuite struct {
 }
 
 func WhenCountingMessagesByConversationIdsBeforeEach(
-	tc *repositoryTestCase,
+	tc *common_tests.DatabaseTestCase,
 ) *WhenCountingMessagesByConversationIdsTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -36,7 +36,7 @@ func WhenCountingMessagesByConversationIdsBeforeEach(
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -59,14 +59,15 @@ func WhenCountingMessagesByConversationIdsBeforeEach(
 func WhenCountingMessagesByConversationIdsAfterEach(suite *WhenCountingMessagesByConversationIdsTestingSuite) {
 	// The pool outlives the dropped database otherwise, and the server runs out of clients.
 	_ = suite.dbClient.Close()
+	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
 func TestWhenCountingMessagesByConversationIds(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given conversations holding messages", func(t *testing.T) {
@@ -79,7 +80,10 @@ func TestWhenCountingMessagesByConversationIds(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					for _, id := range []string{"busy", "quiet", "empty"} {
 						_, err := suite.conversations.Create(ctx, model_builders.NewConversationBuilder().
 							WithId(id).
@@ -140,7 +144,10 @@ func TestWhenCountingMessagesByConversationIds(t *testing.T) {
 
 					ctx := context.Background()
 					agentId := uuid.New()
-					seedAgent(suite.dbClient, agentId)
+					if err := suite.dbClient.GetDB(context.Background()).
+						Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+						panic(err)
+					}
 					for _, id := range []string{"wanted", "other"} {
 						_, err := suite.conversations.Create(ctx, model_builders.NewConversationBuilder().
 							WithId(id).

@@ -5,10 +5,12 @@ import (
 	knowledge_repositories "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	payment_repositories "github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	reasoning_repositories "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/metrics"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_db/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
+	runtime_db_services "github.com/6022-labs/agentic-agent-node/src/runtime_db/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
@@ -104,6 +106,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 	); err != nil {
 		panic(err)
 	}
+	if err := container.Provide(
+		runtime_db_services.NewUnitOfWorkFactory,
+		dig.As(new(runtime_common_interfaces.UnitOfWorkFactoryInterface)),
+	); err != nil {
+		panic(err)
+	}
 }
 
 // newDatabaseClient opens the DB and runs migrations at boot. A failure here
@@ -118,7 +126,7 @@ func newDatabaseClient(
 	if err != nil {
 		logger.Fatal("failed to create runtime database client", zap.Error(err))
 	}
-	if err := client.GetDB().Use(metrics.NewGormMetricsPlugin(dbMetrics)); err != nil {
+	if err := client.Use(metrics.NewGormMetricsPlugin(dbMetrics)); err != nil {
 		logger.Fatal("failed to register db metrics plugin", zap.Error(err))
 	}
 	if err := client.Migrate(); err != nil {

@@ -24,8 +24,10 @@ type WhenCreatingPaymentReceiveRuleTestingSuite struct {
 	policy                   *models.PaymentReceivePolicy
 }
 
-func WhenCreatingPaymentReceiveRuleBeforeEach(tc *repositoryTestCase) *WhenCreatingPaymentReceiveRuleTestingSuite {
-	databaseContainerBuilder := tc.clientBuilderFn()
+func WhenCreatingPaymentReceiveRuleBeforeEach(
+	tc *common_tests.DatabaseTestCase,
+) *WhenCreatingPaymentReceiveRuleTestingSuite {
+	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
@@ -34,7 +36,7 @@ func WhenCreatingPaymentReceiveRuleBeforeEach(tc *repositoryTestCase) *WhenCreat
 	}
 
 	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.driver, Url: connectionString},
+		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
 		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 		zap.NewNop(),
 	)
@@ -46,7 +48,10 @@ func WhenCreatingPaymentReceiveRuleBeforeEach(tc *repositoryTestCase) *WhenCreat
 	}
 
 	agentId := uuid.New()
-	seedAgent(dbClient, agentId)
+	if err := dbClient.GetDB(context.Background()).
+		Create(model_builders.NewAgentBuilder().WithId(agentId).Build()).Error; err != nil {
+		panic(err)
+	}
 
 	policy, err := repositories.NewPaymentReceivePolicyRepository(dbClient).Create(
 		context.Background(), model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agentId).Build())
@@ -71,8 +76,8 @@ func WhenCreatingPaymentReceiveRuleAfterEach(suite *WhenCreatingPaymentReceiveRu
 func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range repositoryTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tc := range common_tests.DatabaseTestCases() {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("Given rules exist in insertion order", func(t *testing.T) {
