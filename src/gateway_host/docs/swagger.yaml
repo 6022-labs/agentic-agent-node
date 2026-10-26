@@ -2132,10 +2132,13 @@ paths:
       description: 'x402 v2 gated (PAYMENT-SIGNATURE header): callers pay the cheapest
         matching option; zero-price is free.'
       parameters:
-      - description: x402 v2 payment payload (base64 JSON)
+      - description: Bearer JWT; a caller the policy lets in free needs no payment
+        in: header
+        name: Authorization
+        type: string
+      - description: x402 v2 payment payload (base64 JSON), required unless free
         in: header
         name: PAYMENT-SIGNATURE
-        required: true
         type: string
       - description: Conversation turn
         in: body
@@ -2148,18 +2151,22 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            PAYMENT-RESPONSE:
+              description: base64 x402 settle response, paid requests only
+              type: string
           schema:
             $ref: '#/definitions/responses.Response'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/errors.UnauthorizedError'
         "402":
           description: Payment Required
+          headers:
+            PAYMENT-REQUIRED:
+              description: base64 x402 payment requirements
+              type: string
           schema:
             $ref: '#/definitions/x402.PaymentRequired'
         "409":
@@ -2167,7 +2174,7 @@ paths:
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
-          description: runtime_unavailable
+          description: access_decision_unavailable or facilitator_unavailable
           schema:
             $ref: '#/definitions/errors.UnavailableError'
       summary: Create response

@@ -14,7 +14,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/payment"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning"
 	reasoning_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
-	middleware_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares/interfaces"
 	"go.uber.org/dig"
 )
 
@@ -86,40 +85,6 @@ func addPaymentConfiguration(container *dig.Container) {
 
 func addReasoningConfiguration(container *dig.Container) {
 	if err := container.Provide(reasoning_middlewares.NewResponseAccessGateMiddleware); err != nil {
-		panic(err)
-	}
-
-	// One x402 instance exposed under two groups: the access chain and the
-	// free-access evaluators the JWT link consults.
-	if err := container.Provide(reasoning_middlewares.NewX402AccessMethod); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
-		func(x *reasoning_middlewares.X402AccessMethod) middleware_interfaces.AccessMethodInterface {
-			return x
-		},
-		dig.Group("access_methods"),
-	); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
-		func(x *reasoning_middlewares.X402AccessMethod) middleware_interfaces.FreeRuleMatcherInterface {
-			return x
-		},
-		dig.Group("free_rule_matchers"),
-	); err != nil {
-		panic(err)
-	}
-
-	if err := container.Provide(reasoning_middlewares.NewJwtFreeAccessMethod); err != nil {
-		panic(err)
-	}
-	if err := container.Provide(
-		func(x *reasoning_middlewares.JwtFreeAccessMethod) middleware_interfaces.AccessMethodInterface {
-			return x
-		},
-		dig.Group("access_methods"),
-	); err != nil {
 		panic(err)
 	}
 

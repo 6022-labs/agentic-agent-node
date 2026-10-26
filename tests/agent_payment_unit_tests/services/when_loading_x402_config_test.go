@@ -16,7 +16,7 @@ import (
 )
 
 type WhenLoadingX402ConfigTestingSuite struct {
-	sut *services.X402PaymentMethodStrategy
+	sut *services.X402PaymentReceiveMethodStrategy
 
 	mockConfigRepository *payment_repositories_mocks.MockPaymentReceiveRuleX402ConfigRepositoryInterface
 }
@@ -31,7 +31,7 @@ func WhenLoadingX402ConfigBeforeEach(t *testing.T) *WhenLoadingX402ConfigTesting
 	)
 
 	return &WhenLoadingX402ConfigTestingSuite{
-		sut: services.NewX402PaymentMethodStrategy(
+		sut: services.NewX402PaymentReceiveMethodStrategy(
 			facilitators,
 			&runtime_common_settings.EvmChainsSettings{},
 			mockErc20Validator,

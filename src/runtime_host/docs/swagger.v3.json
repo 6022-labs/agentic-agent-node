@@ -33,6 +33,19 @@
                     "LLMConnectionSetupStatusEstablished"
                 ]
             },
+            "enums.PaymentReceiveAccessOutcome": {
+                "enum": [
+                    "free",
+                    "payable",
+                    "payment_required"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "PaymentReceiveAccessOutcomeFree",
+                    "PaymentReceiveAccessOutcomePayable",
+                    "PaymentReceiveAccessOutcomePaymentRequired"
+                ]
+            },
             "errors.ConflictError": {
                 "properties": {
                     "code": {
@@ -99,6 +112,10 @@
                 },
                 "type": "object"
             },
+            "fiber.Map": {
+                "additionalProperties": {},
+                "type": "object"
+            },
             "requests.AppendConversationMessagesRequest": {
                 "properties": {
                     "messages": {
@@ -107,6 +124,18 @@
                         },
                         "type": "array",
                         "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.AuthorizePaymentReceiveAccessRequest": {
+                "properties": {
+                    "address": {
+                        "description": "Address is a caller the gateway already proved (JWT); it grants free access only.",
+                        "type": "string"
+                    },
+                    "paymentSignature": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -459,6 +488,33 @@
                         },
                         "type": "array",
                         "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.AuthorizePaymentReceiveAccessResponse": {
+                "properties": {
+                    "accepts": {
+                        "description": "Accepts carries public rules only; scoped ones would leak their patterns.",
+                        "items": {
+                            "$ref": "#/components/schemas/x402.PaymentRequirements"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "errorCode": {
+                        "description": "ErrorCode lands in the x402 body's `error` field.",
+                        "type": "string"
+                    },
+                    "outcome": {
+                        "$ref": "#/components/schemas/enums.PaymentReceiveAccessOutcome"
+                    },
+                    "payer": {
+                        "description": "Payer is empty when the outcome refuses.",
+                        "type": "string"
+                    },
+                    "settlement": {
+                        "$ref": "#/components/schemas/responses.PaymentReceiveSettlementResponse"
                     }
                 },
                 "type": "object"
@@ -870,32 +926,6 @@
                 },
                 "type": "object"
             },
-            "responses.PaymentFacilitatorResponse": {
-                "properties": {
-                    "baseUrl": {
-                        "type": "string"
-                    },
-                    "maxTimeoutSeconds": {
-                        "type": "integer"
-                    },
-                    "network": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "responses.PaymentFacilitatorsResponse": {
-                "properties": {
-                    "facilitators": {
-                        "items": {
-                            "$ref": "#/components/schemas/responses.PaymentFacilitatorResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
             "responses.PaymentReceivePolicyResponse": {
                 "properties": {
                     "agentId": {
@@ -938,6 +968,21 @@
                     },
                     "updatedAt": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "responses.PaymentReceiveSettlementResponse": {
+                "description": "Settlement is set only when the outcome is payable.",
+                "properties": {
+                    "facilitatorBaseUrl": {
+                        "type": "string"
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "requirements": {
+                        "$ref": "#/components/schemas/x402.PaymentRequirements"
                     }
                 },
                 "type": "object"
@@ -1024,6 +1069,33 @@
                     },
                     "total_tokens": {
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "x402.PaymentRequirements": {
+                "properties": {
+                    "amount": {
+                        "type": "string"
+                    },
+                    "asset": {
+                        "type": "string"
+                    },
+                    "extra": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "maxTimeoutSeconds": {
+                        "type": "integer"
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "payTo": {
+                        "type": "string"
+                    },
+                    "scheme": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -2251,26 +2323,6 @@
                 ]
             }
         },
-        "/internal/config/payment-facilitators": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/responses.PaymentFacilitatorsResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    }
-                },
-                "summary": "Internal get payment facilitators",
-                "tags": [
-                    "Internal"
-                ]
-            }
-        },
         "/internal/config/payment-receive-policy": {
             "delete": {
                 "responses": {
@@ -3268,6 +3320,66 @@
                     }
                 },
                 "summary": "Re-publish ENS runtime records",
+                "tags": [
+                    "Internal"
+                ]
+            }
+        },
+        "/internal/payment/receive/access": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.AuthorizePaymentReceiveAccessRequest",
+                                        "summary": "request",
+                                        "description": "Caller credentials"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Caller credentials",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.AuthorizePaymentReceiveAccessResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "validation_error"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fiber.Map"
+                                }
+                            }
+                        },
+                        "description": "authorize_payment_receive_access_failed"
+                    }
+                },
+                "summary": "Internal authorize payment receive access",
                 "tags": [
                     "Internal"
                 ]

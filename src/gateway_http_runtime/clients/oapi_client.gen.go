@@ -38,11 +38,21 @@ const (
 	LLMConnectionSetupStatusEstablished EnumsLLMConnectionSetupStatus = "established"
 )
 
+// Defines values for EnumsPaymentReceiveAccessOutcome.
+const (
+	PaymentReceiveAccessOutcomeFree            EnumsPaymentReceiveAccessOutcome = "free"
+	PaymentReceiveAccessOutcomePayable         EnumsPaymentReceiveAccessOutcome = "payable"
+	PaymentReceiveAccessOutcomePaymentRequired EnumsPaymentReceiveAccessOutcome = "payment_required"
+)
+
 // EnumsLLMConnectionPlatform defines model for enums.LLMConnectionPlatform.
 type EnumsLLMConnectionPlatform string
 
 // EnumsLLMConnectionSetupStatus defines model for enums.LLMConnectionSetupStatus.
 type EnumsLLMConnectionSetupStatus string
+
+// EnumsPaymentReceiveAccessOutcome defines model for enums.PaymentReceiveAccessOutcome.
+type EnumsPaymentReceiveAccessOutcome string
 
 // ErrorsConflictError defines model for errors.ConflictError.
 type ErrorsConflictError struct {
@@ -80,9 +90,19 @@ type ErrorsValidationError struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// FiberMap defines model for fiber.Map.
+type FiberMap map[string]interface{}
+
 // RequestsAppendConversationMessagesRequest defines model for requests.AppendConversationMessagesRequest.
 type RequestsAppendConversationMessagesRequest struct {
 	Messages *[]RequestsConversationMessageInput `json:"messages,omitempty"`
+}
+
+// RequestsAuthorizePaymentReceiveAccessRequest defines model for requests.AuthorizePaymentReceiveAccessRequest.
+type RequestsAuthorizePaymentReceiveAccessRequest struct {
+	// Address Address is a caller the gateway already proved (JWT); it grants free access only.
+	Address          *string `json:"address,omitempty"`
+	PaymentSignature *string `json:"paymentSignature,omitempty"`
 }
 
 // RequestsAuthorizeRequest defines model for requests.AuthorizeRequest.
@@ -238,6 +258,22 @@ type ResponsesAgentSoulResponse struct {
 // ResponsesAppendConversationMessagesResponse defines model for responses.AppendConversationMessagesResponse.
 type ResponsesAppendConversationMessagesResponse struct {
 	Inserted *[]ResponsesConversationMessage `json:"inserted,omitempty"`
+}
+
+// ResponsesAuthorizePaymentReceiveAccessResponse defines model for responses.AuthorizePaymentReceiveAccessResponse.
+type ResponsesAuthorizePaymentReceiveAccessResponse struct {
+	// Accepts Accepts carries public rules only; scoped ones would leak their patterns.
+	Accepts *[]X402PaymentRequirements `json:"accepts,omitempty"`
+
+	// ErrorCode ErrorCode lands in the x402 body's `error` field.
+	ErrorCode *string                           `json:"errorCode,omitempty"`
+	Outcome   *EnumsPaymentReceiveAccessOutcome `json:"outcome,omitempty"`
+
+	// Payer Payer is empty when the outcome refuses.
+	Payer *string `json:"payer,omitempty"`
+
+	// Settlement Settlement is set only when the outcome is payable.
+	Settlement *ResponsesPaymentReceiveSettlementResponse `json:"settlement,omitempty"`
 }
 
 // ResponsesAuthorizeResponse defines model for responses.AuthorizeResponse.
@@ -405,18 +441,6 @@ type ResponsesOutputItem struct {
 	Type    *string                   `json:"type,omitempty"`
 }
 
-// ResponsesPaymentFacilitatorResponse defines model for responses.PaymentFacilitatorResponse.
-type ResponsesPaymentFacilitatorResponse struct {
-	BaseUrl           *string `json:"baseUrl,omitempty"`
-	MaxTimeoutSeconds *int    `json:"maxTimeoutSeconds,omitempty"`
-	Network           *string `json:"network,omitempty"`
-}
-
-// ResponsesPaymentFacilitatorsResponse defines model for responses.PaymentFacilitatorsResponse.
-type ResponsesPaymentFacilitatorsResponse struct {
-	Facilitators *[]ResponsesPaymentFacilitatorResponse `json:"facilitators,omitempty"`
-}
-
 // ResponsesPaymentReceivePolicyResponse defines model for responses.PaymentReceivePolicyResponse.
 type ResponsesPaymentReceivePolicyResponse struct {
 	AgentId            *string `json:"agentId,omitempty"`
@@ -435,6 +459,13 @@ type ResponsesPaymentReceiveRuleResponse struct {
 	Name      *string                 `json:"name,omitempty"`
 	Price     *string                 `json:"price,omitempty"`
 	UpdatedAt *string                 `json:"updatedAt,omitempty"`
+}
+
+// ResponsesPaymentReceiveSettlementResponse Settlement is set only when the outcome is payable.
+type ResponsesPaymentReceiveSettlementResponse struct {
+	FacilitatorBaseUrl *string                  `json:"facilitatorBaseUrl,omitempty"`
+	Network            *string                  `json:"network,omitempty"`
+	Requirements       *X402PaymentRequirements `json:"requirements,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.
@@ -474,6 +505,17 @@ type ResponsesUsage struct {
 	InputTokens  *int `json:"input_tokens,omitempty"`
 	OutputTokens *int `json:"output_tokens,omitempty"`
 	TotalTokens  *int `json:"total_tokens,omitempty"`
+}
+
+// X402PaymentRequirements defines model for x402.PaymentRequirements.
+type X402PaymentRequirements struct {
+	Amount            *string                 `json:"amount,omitempty"`
+	Asset             *string                 `json:"asset,omitempty"`
+	Extra             *map[string]interface{} `json:"extra,omitempty"`
+	MaxTimeoutSeconds *int                    `json:"maxTimeoutSeconds,omitempty"`
+	Network           *string                 `json:"network,omitempty"`
+	PayTo             *string                 `json:"payTo,omitempty"`
+	Scheme            *string                 `json:"scheme,omitempty"`
 }
 
 // GetInternalAgentCollectionsParams defines parameters for GetInternalAgentCollections.
@@ -628,6 +670,14 @@ type PostInternalIdentityCardSignatureJSONBody struct {
 // PostInternalIdentityCardSignatureJSONBody0 defines parameters for PostInternalIdentityCardSignature.
 type PostInternalIdentityCardSignatureJSONBody0 = map[string]interface{}
 
+// PostInternalPaymentReceiveAccessJSONBody defines parameters for PostInternalPaymentReceiveAccess.
+type PostInternalPaymentReceiveAccessJSONBody struct {
+	union json.RawMessage
+}
+
+// PostInternalPaymentReceiveAccessJSONBody0 defines parameters for PostInternalPaymentReceiveAccess.
+type PostInternalPaymentReceiveAccessJSONBody0 = map[string]interface{}
+
 // PostInternalResponsesJSONBody defines parameters for PostInternalResponses.
 type PostInternalResponsesJSONBody struct {
 	union json.RawMessage
@@ -683,6 +733,9 @@ type PostInternalConversationsConversationIdMessagesJSONRequestBody PostInternal
 
 // PostInternalIdentityCardSignatureJSONRequestBody defines body for PostInternalIdentityCardSignature for application/json ContentType.
 type PostInternalIdentityCardSignatureJSONRequestBody PostInternalIdentityCardSignatureJSONBody
+
+// PostInternalPaymentReceiveAccessJSONRequestBody defines body for PostInternalPaymentReceiveAccess for application/json ContentType.
+type PostInternalPaymentReceiveAccessJSONRequestBody PostInternalPaymentReceiveAccessJSONBody
 
 // PostInternalResponsesJSONRequestBody defines body for PostInternalResponses for application/json ContentType.
 type PostInternalResponsesJSONRequestBody PostInternalResponsesJSONBody
@@ -845,9 +898,6 @@ type ClientInterface interface {
 
 	PutInternalConfigMcpId(ctx context.Context, id string, body PutInternalConfigMcpIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetInternalConfigPaymentFacilitators request
-	GetInternalConfigPaymentFacilitators(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// DeleteInternalConfigPaymentReceivePolicy request
 	DeleteInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -909,6 +959,11 @@ type ClientInterface interface {
 
 	// PostInternalIdentityEnsPublish request
 	PostInternalIdentityEnsPublish(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostInternalPaymentReceiveAccessWithBody request with any body
+	PostInternalPaymentReceiveAccessWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostInternalPaymentReceiveAccess(ctx context.Context, body PostInternalPaymentReceiveAccessJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostInternalResponsesWithBody request with any body
 	PostInternalResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1288,18 +1343,6 @@ func (c *Client) PutInternalConfigMcpId(ctx context.Context, id string, body Put
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetInternalConfigPaymentFacilitators(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInternalConfigPaymentFacilitatorsRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) DeleteInternalConfigPaymentReceivePolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteInternalConfigPaymentReceivePolicyRequest(c.Server)
 	if err != nil {
@@ -1566,6 +1609,30 @@ func (c *Client) PostInternalIdentityCardSignature(ctx context.Context, body Pos
 
 func (c *Client) PostInternalIdentityEnsPublish(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostInternalIdentityEnsPublishRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalPaymentReceiveAccessWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalPaymentReceiveAccessRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostInternalPaymentReceiveAccess(ctx context.Context, body PostInternalPaymentReceiveAccessJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostInternalPaymentReceiveAccessRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2364,33 +2431,6 @@ func NewPutInternalConfigMcpIdRequestWithBody(server string, id string, contentT
 	return req, nil
 }
 
-// NewGetInternalConfigPaymentFacilitatorsRequest generates requests for GetInternalConfigPaymentFacilitators
-func NewGetInternalConfigPaymentFacilitatorsRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/internal/config/payment-facilitators")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewDeleteInternalConfigPaymentReceivePolicyRequest generates requests for DeleteInternalConfigPaymentReceivePolicy
 func NewDeleteInternalConfigPaymentReceivePolicyRequest(server string) (*http.Request, error) {
 	var err error
@@ -2994,6 +3034,46 @@ func NewPostInternalIdentityEnsPublishRequest(server string) (*http.Request, err
 	return req, nil
 }
 
+// NewPostInternalPaymentReceiveAccessRequest calls the generic PostInternalPaymentReceiveAccess builder with application/json body
+func NewPostInternalPaymentReceiveAccessRequest(server string, body PostInternalPaymentReceiveAccessJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostInternalPaymentReceiveAccessRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostInternalPaymentReceiveAccessRequestWithBody generates requests for PostInternalPaymentReceiveAccess with any type of body
+func NewPostInternalPaymentReceiveAccessRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/payment/receive/access")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewPostInternalResponsesRequest calls the generic PostInternalResponses builder with application/json body
 func NewPostInternalResponsesRequest(server string, body PostInternalResponsesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -3162,9 +3242,6 @@ type ClientWithResponsesInterface interface {
 
 	PutInternalConfigMcpIdWithResponse(ctx context.Context, id string, body PutInternalConfigMcpIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigMcpIdResponse, error)
 
-	// GetInternalConfigPaymentFacilitatorsWithResponse request
-	GetInternalConfigPaymentFacilitatorsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentFacilitatorsResponse, error)
-
 	// DeleteInternalConfigPaymentReceivePolicyWithResponse request
 	DeleteInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyResponse, error)
 
@@ -3226,6 +3303,11 @@ type ClientWithResponsesInterface interface {
 
 	// PostInternalIdentityEnsPublishWithResponse request
 	PostInternalIdentityEnsPublishWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostInternalIdentityEnsPublishResponse, error)
+
+	// PostInternalPaymentReceiveAccessWithBodyWithResponse request with any body
+	PostInternalPaymentReceiveAccessWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalPaymentReceiveAccessResponse, error)
+
+	PostInternalPaymentReceiveAccessWithResponse(ctx context.Context, body PostInternalPaymentReceiveAccessJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalPaymentReceiveAccessResponse, error)
 
 	// PostInternalResponsesWithBodyWithResponse request with any body
 	PostInternalResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalResponsesResponse, error)
@@ -3791,28 +3873,6 @@ func (r PutInternalConfigMcpIdResponse) StatusCode() int {
 	return 0
 }
 
-type GetInternalConfigPaymentFacilitatorsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResponsesPaymentFacilitatorsResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r GetInternalConfigPaymentFacilitatorsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetInternalConfigPaymentFacilitatorsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type DeleteInternalConfigPaymentReceivePolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4208,6 +4268,30 @@ func (r PostInternalIdentityEnsPublishResponse) StatusCode() int {
 	return 0
 }
 
+type PostInternalPaymentReceiveAccessResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesAuthorizePaymentReceiveAccessResponse
+	JSON400      *FiberMap
+	JSON500      *FiberMap
+}
+
+// Status returns HTTPResponse.Status
+func (r PostInternalPaymentReceiveAccessResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostInternalPaymentReceiveAccessResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type PostInternalResponsesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4505,15 +4589,6 @@ func (c *ClientWithResponses) PutInternalConfigMcpIdWithResponse(ctx context.Con
 	return ParsePutInternalConfigMcpIdResponse(rsp)
 }
 
-// GetInternalConfigPaymentFacilitatorsWithResponse request returning *GetInternalConfigPaymentFacilitatorsResponse
-func (c *ClientWithResponses) GetInternalConfigPaymentFacilitatorsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentFacilitatorsResponse, error) {
-	rsp, err := c.GetInternalConfigPaymentFacilitators(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetInternalConfigPaymentFacilitatorsResponse(rsp)
-}
-
 // DeleteInternalConfigPaymentReceivePolicyWithResponse request returning *DeleteInternalConfigPaymentReceivePolicyResponse
 func (c *ClientWithResponses) DeleteInternalConfigPaymentReceivePolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteInternalConfigPaymentReceivePolicyResponse, error) {
 	rsp, err := c.DeleteInternalConfigPaymentReceivePolicy(ctx, reqEditors...)
@@ -4712,6 +4787,23 @@ func (c *ClientWithResponses) PostInternalIdentityEnsPublishWithResponse(ctx con
 		return nil, err
 	}
 	return ParsePostInternalIdentityEnsPublishResponse(rsp)
+}
+
+// PostInternalPaymentReceiveAccessWithBodyWithResponse request with arbitrary body returning *PostInternalPaymentReceiveAccessResponse
+func (c *ClientWithResponses) PostInternalPaymentReceiveAccessWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostInternalPaymentReceiveAccessResponse, error) {
+	rsp, err := c.PostInternalPaymentReceiveAccessWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalPaymentReceiveAccessResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostInternalPaymentReceiveAccessWithResponse(ctx context.Context, body PostInternalPaymentReceiveAccessJSONRequestBody, reqEditors ...RequestEditorFn) (*PostInternalPaymentReceiveAccessResponse, error) {
+	rsp, err := c.PostInternalPaymentReceiveAccess(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostInternalPaymentReceiveAccessResponse(rsp)
 }
 
 // PostInternalResponsesWithBodyWithResponse request with arbitrary body returning *PostInternalResponsesResponse
@@ -5693,32 +5785,6 @@ func ParsePutInternalConfigMcpIdResponse(rsp *http.Response) (*PutInternalConfig
 	return response, nil
 }
 
-// ParseGetInternalConfigPaymentFacilitatorsResponse parses an HTTP response from a GetInternalConfigPaymentFacilitatorsWithResponse call
-func ParseGetInternalConfigPaymentFacilitatorsResponse(rsp *http.Response) (*GetInternalConfigPaymentFacilitatorsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetInternalConfigPaymentFacilitatorsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponsesPaymentFacilitatorsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseDeleteInternalConfigPaymentReceivePolicyResponse parses an HTTP response from a DeleteInternalConfigPaymentReceivePolicyWithResponse call
 func ParseDeleteInternalConfigPaymentReceivePolicyResponse(rsp *http.Response) (*DeleteInternalConfigPaymentReceivePolicyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6426,6 +6492,46 @@ func ParsePostInternalIdentityEnsPublishResponse(rsp *http.Response) (*PostInter
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest ErrorsInternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostInternalPaymentReceiveAccessResponse parses an HTTP response from a PostInternalPaymentReceiveAccessWithResponse call
+func ParsePostInternalPaymentReceiveAccessResponse(rsp *http.Response) (*PostInternalPaymentReceiveAccessResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostInternalPaymentReceiveAccessResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesAuthorizePaymentReceiveAccessResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest FiberMap
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest FiberMap
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

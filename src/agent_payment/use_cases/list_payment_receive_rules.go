@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
 
 type ListPaymentReceiveRules struct {
@@ -17,21 +15,15 @@ type ListPaymentReceiveRules struct {
 }
 
 func NewListPaymentReceiveRules(
-	agentRepository identity_repositories.AgentRepositoryInterface,
-	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
-	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
+	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
-	paymentMethodStrategies payment_interfaces.PaymentMethodStrategiesInterface,
-	token6022Settings *runtime_common_settings.Token6022Settings,
+	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 ) *ListPaymentReceiveRules {
 	return &ListPaymentReceiveRules{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
-			agentRepository,
-			agentAddressRepository,
-			paymentReceivePolicyRepository,
+			paymentReceivePolicyProvider,
 			paymentReceiveRuleRepository,
-			paymentMethodStrategies,
-			token6022Settings,
+			paymentReceiveMethodStrategies,
 		),
 	}
 }
@@ -50,7 +42,7 @@ func (u *ListPaymentReceiveRules) Execute(ctx context.Context) (*responses.ListP
 	out := make([]responses.PaymentReceiveRuleResponse, 0, len(rules))
 	for i := range rules {
 		var config json.RawMessage
-		if strategy, ok := u.paymentMethodStrategies.For(rules[i].Method); ok {
+		if strategy, ok := u.paymentReceiveMethodStrategies.For(rules[i].Method); ok {
 			config, err = strategy.LoadConfig(ctx, rules[i].Id)
 			if err != nil {
 				return nil, errors.NewInternalError("list_failed", err.Error())

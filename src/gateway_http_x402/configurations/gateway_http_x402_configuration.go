@@ -5,7 +5,7 @@ import (
 	"time"
 
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
-	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/x402/services/interfaces"
+	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_x402/clients"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"

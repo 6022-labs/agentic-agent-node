@@ -930,25 +930,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/internal/config/payment-facilitators": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Internal"
-                ],
-                "summary": "Internal get payment facilitators",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/responses.PaymentFacilitatorsResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/internal/config/payment-receive-policy": {
             "get": {
                 "produces": [
@@ -1691,6 +1672,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/internal/payment/receive/access": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal authorize payment receive access",
+                "parameters": [
+                    {
+                        "description": "Caller credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.AuthorizePaymentReceiveAccessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AuthorizePaymentReceiveAccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "validation_error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "authorize_payment_receive_access_failed",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/responses": {
             "post": {
                 "security": [
@@ -1787,6 +1813,19 @@ const docTemplate = `{
                 "LLMConnectionSetupStatusEstablished"
             ]
         },
+        "enums.PaymentReceiveAccessOutcome": {
+            "type": "string",
+            "enum": [
+                "free",
+                "payable",
+                "payment_required"
+            ],
+            "x-enum-varnames": [
+                "PaymentReceiveAccessOutcomeFree",
+                "PaymentReceiveAccessOutcomePayable",
+                "PaymentReceiveAccessOutcomePaymentRequired"
+            ]
+        },
         "errors.ConflictError": {
             "type": "object",
             "properties": {
@@ -1853,6 +1892,10 @@ const docTemplate = `{
                 }
             }
         },
+        "fiber.Map": {
+            "type": "object",
+            "additionalProperties": {}
+        },
         "requests.AppendConversationMessagesRequest": {
             "type": "object",
             "properties": {
@@ -1861,6 +1904,18 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/requests.ConversationMessageInput"
                     }
+                }
+            }
+        },
+        "requests.AuthorizePaymentReceiveAccessRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Address is a caller the gateway already proved (JWT); it grants free access only.",
+                    "type": "string"
+                },
+                "paymentSignature": {
+                    "type": "string"
                 }
             }
         },
@@ -2208,6 +2263,37 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/responses.ConversationMessage"
                     }
+                }
+            }
+        },
+        "responses.AuthorizePaymentReceiveAccessResponse": {
+            "type": "object",
+            "properties": {
+                "accepts": {
+                    "description": "Accepts carries public rules only; scoped ones would leak their patterns.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/x402.PaymentRequirements"
+                    }
+                },
+                "errorCode": {
+                    "description": "ErrorCode lands in the x402 body's ` + "`" + `error` + "`" + ` field.",
+                    "type": "string"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/enums.PaymentReceiveAccessOutcome"
+                },
+                "payer": {
+                    "description": "Payer is empty when the outcome refuses.",
+                    "type": "string"
+                },
+                "settlement": {
+                    "description": "Settlement is set only when the outcome is payable.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/responses.PaymentReceiveSettlementResponse"
+                        }
+                    ]
                 }
             }
         },
@@ -2605,31 +2691,6 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.PaymentFacilitatorResponse": {
-            "type": "object",
-            "properties": {
-                "baseUrl": {
-                    "type": "string"
-                },
-                "maxTimeoutSeconds": {
-                    "type": "integer"
-                },
-                "network": {
-                    "type": "string"
-                }
-            }
-        },
-        "responses.PaymentFacilitatorsResponse": {
-            "type": "object",
-            "properties": {
-                "facilitators": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/responses.PaymentFacilitatorResponse"
-                    }
-                }
-            }
-        },
         "responses.PaymentReceivePolicyResponse": {
             "type": "object",
             "properties": {
@@ -2673,6 +2734,20 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.PaymentReceiveSettlementResponse": {
+            "type": "object",
+            "properties": {
+                "facilitatorBaseUrl": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "requirements": {
+                    "$ref": "#/definitions/x402.PaymentRequirements"
                 }
             }
         },
@@ -2758,6 +2833,33 @@ const docTemplate = `{
                 },
                 "total_tokens": {
                     "type": "integer"
+                }
+            }
+        },
+        "x402.PaymentRequirements": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "asset": {
+                    "type": "string"
+                },
+                "extra": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "maxTimeoutSeconds": {
+                    "type": "integer"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "payTo": {
+                    "type": "string"
+                },
+                "scheme": {
+                    "type": "string"
                 }
             }
         }

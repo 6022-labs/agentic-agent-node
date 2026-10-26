@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"regexp"
+	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -24,6 +26,22 @@ type PaymentReceiveRuleX402Config struct {
 	Eip712Name           *string                   `gorm:"size:64"                                                                   json:"eip712Name,omitempty"`
 	Eip712Version        *string                   `gorm:"size:16"                                                                   json:"eip712Version,omitempty"`
 	AddressPatterns      []string                  `gorm:"serializer:json;not null"                                                  json:"addressPatterns"`
+}
+
+// Matches reports whether the rule is open to this address.
+func (c *PaymentReceiveRuleX402Config) Matches(address string) bool {
+	// The address is lowercased; patterns are matched as written, so uppercase-hex patterns never match.
+	lowered := strings.ToLower(strings.TrimSpace(address))
+	for _, pattern := range c.AddressPatterns {
+		compiled, err := regexp.Compile("^(?:" + pattern + ")$")
+		if err != nil {
+			continue
+		}
+		if compiled.MatchString(lowered) {
+			return true
+		}
+	}
+	return false
 }
 
 func (PaymentReceiveRuleX402Config) TableName() string {

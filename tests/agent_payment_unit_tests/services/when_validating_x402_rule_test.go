@@ -16,7 +16,7 @@ import (
 )
 
 type WhenValidatingX402RuleTestingSuite struct {
-	sut *services.X402PaymentMethodStrategy
+	sut *services.X402PaymentReceiveMethodStrategy
 
 	mockErc20Validator *payment_interfaces_mocks.MockErc20ValidatorInterface
 }
@@ -45,7 +45,7 @@ func validatingX402RuleSuite(
 	}
 
 	return &WhenValidatingX402RuleTestingSuite{
-		sut: services.NewX402PaymentMethodStrategy(
+		sut: services.NewX402PaymentReceiveMethodStrategy(
 			facilitators,
 			evmChainsSettings,
 			mockErc20Validator,
@@ -229,6 +229,34 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "config.addressPatterns", validationErr.Field)
+		})
+	})
+
+	t.Run("Given an address pattern spelled as a checksummed address", func(t *testing.T) {
+		t.Parallel()
+
+		// Matching lowercases the payer, so a checksummed pattern would compile and never match.
+		t.Run("Should be stored lowercased", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
+				Times(1)
+
+			request := generateSaveRequest(
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",`+
+					`"addressPatterns":["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]}`,
+				"10000",
+			)
+
+			assert.NoError(t, suite.sut.Validate(context.Background(), request))
+
+			sanitized := &models.PaymentReceiveRuleX402Config{}
+			assert.NoError(t, sanitized.Parse(request.Config))
+			assert.Equal(t, []string{"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"}, sanitized.AddressPatterns)
 		})
 	})
 
