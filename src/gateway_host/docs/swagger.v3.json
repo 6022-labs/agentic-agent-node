@@ -4011,10 +4011,17 @@
                 "description": "x402 v2 gated (PAYMENT-SIGNATURE header): callers pay the cheapest matching option; zero-price is free.",
                 "parameters": [
                     {
-                        "description": "x402 v2 payment payload (base64 JSON)",
+                        "description": "Bearer JWT; a caller the policy lets in free needs no payment",
+                        "in": "header",
+                        "name": "Authorization",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "x402 v2 payment payload (base64 JSON), required unless free",
                         "in": "header",
                         "name": "PAYMENT-SIGNATURE",
-                        "required": true,
                         "schema": {
                             "type": "string"
                         }
@@ -4049,7 +4056,15 @@
                                 }
                             }
                         },
-                        "description": "OK"
+                        "description": "OK",
+                        "headers": {
+                            "PAYMENT-RESPONSE": {
+                                "description": "base64 x402 settle response, paid requests only",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "content": {
@@ -4061,16 +4076,6 @@
                         },
                         "description": "Bad Request"
                     },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/errors.UnauthorizedError"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
                     "402": {
                         "content": {
                             "application/json": {
@@ -4079,7 +4084,15 @@
                                 }
                             }
                         },
-                        "description": "Payment Required"
+                        "description": "Payment Required",
+                        "headers": {
+                            "PAYMENT-REQUIRED": {
+                                "description": "base64 x402 payment requirements",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     },
                     "409": {
                         "content": {
@@ -4099,7 +4112,7 @@
                                 }
                             }
                         },
-                        "description": "runtime_unavailable"
+                        "description": "access_decision_unavailable or facilitator_unavailable"
                     }
                 },
                 "summary": "Create response",

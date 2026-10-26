@@ -13,6 +13,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
+	"go.uber.org/zap"
 )
 
 // everyoneAddressPattern marks a rule as public: only these are advertised in a 402.
@@ -20,6 +22,7 @@ const everyoneAddressPattern = ".*"
 
 // X402PaymentReceivePolicyEvaluator decides receive access; the gateway only executes the verdict.
 type X402PaymentReceivePolicyEvaluator struct {
+	logger                                 *zap.Logger
 	paymentReceivePolicyProvider           payment_interfaces.PaymentReceivePolicyProviderInterface
 	paymentReceiveRuleRepository           repositories.PaymentReceiveRuleRepositoryInterface
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface
@@ -28,6 +31,7 @@ type X402PaymentReceivePolicyEvaluator struct {
 }
 
 func NewX402PaymentReceivePolicyEvaluator(
+	logger *zap.Logger,
 	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface,
@@ -35,6 +39,7 @@ func NewX402PaymentReceivePolicyEvaluator(
 	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings,
 ) *X402PaymentReceivePolicyEvaluator {
 	return &X402PaymentReceivePolicyEvaluator{
+		logger:                                 logger,
 		paymentReceivePolicyProvider:           paymentReceivePolicyProvider,
 		paymentReceiveRuleRepository:           paymentReceiveRuleRepository,
 		paymentReceiveRuleX402ConfigRepository: paymentReceiveRuleX402ConfigRepository,
@@ -136,7 +141,10 @@ func (e *X402PaymentReceivePolicyEvaluator) loadRules(
 		}
 		config, err := e.paymentReceiveRuleX402ConfigRepository.GetByRuleId(ctx, rules[i].Id)
 		if err != nil {
-			return nil, apperrors.NewInternalError("access_evaluation_failed", err.Error())
+			// One unreadable matcher must not lock everyone out; the rule just entitles nobody.
+			e.logger.Error("skipping payment receive rule with unreadable x402 config",
+				zap.String("ruleId", rules[i].Id.String()), zap.Error(err))
+			continue
 		}
 		// A rule with no matcher describes nothing, so it entitles nobody.
 		if config == nil {
@@ -296,8 +304,8 @@ func (e *X402PaymentReceivePolicyEvaluator) toPaymentRequirements(
 	// assetTransferMethod tells the client how to sign; eip3009 also needs the token's EIP-712 domain.
 	extra := map[string]any{"assetTransferMethod": candidate.AssetTransferMethod.String()}
 	if candidate.AssetTransferMethod != enums.AssetTransferMethodPermit2 {
-		extra["name"] = candidate.Eip712Name
-		extra["version"] = candidate.Eip712Version
+		extra["name"] = lo.FromPtr(candidate.Eip712Name)
+		extra["version"] = lo.FromPtr(candidate.Eip712Version)
 	}
 	return &x402.PaymentRequirements{
 		Scheme:            x402.SchemeExact,

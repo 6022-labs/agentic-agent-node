@@ -30,7 +30,7 @@ type PaymentReceiveRuleX402Config struct {
 
 // Matches reports whether the rule is open to this address.
 func (c *PaymentReceiveRuleX402Config) Matches(address string) bool {
-	// Case-sensitive on purpose: folding it would newly match uppercase-hex patterns.
+	// The address is lowercased; patterns are matched as written, so uppercase-hex patterns never match.
 	lowered := strings.ToLower(strings.TrimSpace(address))
 	for _, pattern := range c.AddressPatterns {
 		compiled, err := regexp.Compile("^(?:" + pattern + ")$")

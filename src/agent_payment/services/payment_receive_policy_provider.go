@@ -154,7 +154,6 @@ func (p *PaymentReceivePolicyProvider) defaultRule(
 	}, rawConfig
 }
 
-// EvmAddress returns the agent's stored evm address, or "" when none exists.
 func (p *PaymentReceivePolicyProvider) EvmAddress(ctx context.Context, agentId uuid.UUID) (string, error) {
 	address, err := p.agentAddressRepository.GetByAgentIdAndType(ctx, agentId, identity_enums.AddressTypeEvm)
 	if err != nil {

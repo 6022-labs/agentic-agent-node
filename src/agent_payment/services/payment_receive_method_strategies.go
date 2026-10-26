@@ -6,8 +6,7 @@ import (
 	"go.uber.org/dig"
 )
 
-// PaymentReceiveMethodStrategies routes a rule to its method's strategy. Adding a
-// method means registering its strategy in the dig group, nothing here.
+// PaymentReceiveMethodStrategies routes a rule to its method's strategy via the dig group.
 type PaymentReceiveMethodStrategies struct {
 	byMethod map[enums.PaymentMethod]payment_interfaces.PaymentReceiveMethodStrategyInterface
 }

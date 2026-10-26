@@ -38,14 +38,16 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 // @Tags Responses
 // @Accept json
 // @Produce json
-// @Param PAYMENT-SIGNATURE header string true "x402 v2 payment payload (base64 JSON)"
+// @Param Authorization header string false "Bearer JWT; a caller the policy lets in free needs no payment"
+// @Param PAYMENT-SIGNATURE header string false "x402 v2 payment payload (base64 JSON), required unless free"
 // @Param request body requests.CreateResponseRequest true "Conversation turn"
 // @Success 200 {object} responses.Response
 // @Failure 400 {object} errors.ValidationError
-// @Failure 401 {object} errors.UnauthorizedError
 // @Failure 402 {object} x402.PaymentRequired
 // @Failure 409 {object} errors.ConflictError "conversation_unavailable or agent_not_minted"
-// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
+// @Failure 502 {object} errors.UnavailableError "access_decision_unavailable or facilitator_unavailable"
+// @Header 200 {string} PAYMENT-RESPONSE "base64 x402 settle response, paid requests only"
+// @Header 402 {string} PAYMENT-REQUIRED "base64 x402 payment requirements"
 // @Router /responses [post]
 func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)

@@ -2031,10 +2031,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "x402 v2 payment payload (base64 JSON)",
+                        "description": "Bearer JWT; a caller the policy lets in free needs no payment",
+                        "name": "Authorization",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "x402 v2 payment payload (base64 JSON), required unless free",
                         "name": "PAYMENT-SIGNATURE",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "Conversation turn",
@@ -2051,6 +2056,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.Response"
+                        },
+                        "headers": {
+                            "PAYMENT-RESPONSE": {
+                                "type": "string",
+                                "description": "base64 x402 settle response, paid requests only"
+                            }
                         }
                     },
                     "400": {
@@ -2059,16 +2070,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/errors.UnauthorizedError"
-                        }
-                    },
                     "402": {
                         "description": "Payment Required",
                         "schema": {
                             "$ref": "#/definitions/x402.PaymentRequired"
+                        },
+                        "headers": {
+                            "PAYMENT-REQUIRED": {
+                                "type": "string",
+                                "description": "base64 x402 payment requirements"
+                            }
                         }
                     },
                     "409": {
@@ -2078,7 +2089,7 @@ const docTemplate = `{
                         }
                     },
                     "502": {
-                        "description": "runtime_unavailable",
+                        "description": "access_decision_unavailable or facilitator_unavailable",
                         "schema": {
                             "$ref": "#/definitions/errors.UnavailableError"
                         }

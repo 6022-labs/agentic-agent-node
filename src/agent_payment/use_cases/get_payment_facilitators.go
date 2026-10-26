@@ -7,8 +7,7 @@ import (
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 )
 
-// GetPaymentFacilitators serves the configured network→facilitator mapping to
-// the gateway's payment gate, which joins it with the rules to settle.
+// GetPaymentFacilitators serves the configured network→facilitator mapping to the get_payment_facilitators self tool.
 type GetPaymentFacilitators struct {
 	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings
 }
