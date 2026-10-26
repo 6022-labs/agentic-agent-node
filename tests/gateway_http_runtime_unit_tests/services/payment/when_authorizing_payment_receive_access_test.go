@@ -11,12 +11,13 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/clients"
 	services "github.com/6022-labs/agentic-agent-node/src/gateway_http_runtime/services/payment"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	clients_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_http_runtime_mocks/clients_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-const gatePayerAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+var gatePayerAddress = common_tests.RandomEthAddress().Hex()
 
 type WhenAuthorizingPaymentReceiveAccessTestingSuite struct {
 	sut *services.HttpPaymentReceiveAccessClient
@@ -40,56 +41,29 @@ func WhenAuthorizingPaymentReceiveAccessBeforeEach(
 func TestWhenAuthorizingPaymentReceiveAccessOverHttp(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns a payable decision", func(t *testing.T) {
+	t.Run("Given the runtime fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingPaymentReceiveAccessTestingSuite) {
 			suite.mockClient.EXPECT().
-				PostInternalPaymentReceiveAccessWithBodyWithResponse(
-					gomock.Any(),
-					"application/json",
-					gomock.Any(),
-				).
-				DoAndReturn(func(
-					_ context.Context,
-					_ string,
-					body io.Reader,
-					_ ...clients.RequestEditorFn,
-				) (*clients.PostInternalPaymentReceiveAccessResponse, error) {
-					// The body is hand-marshalled, so its exact keys are the contract.
-					var sent map[string]string
-					assert.NoError(t, json.NewDecoder(body).Decode(&sent))
-					assert.Equal(t, gatePayerAddress, sent["address"])
-					assert.Equal(t, "a-header", sent["paymentSignature"])
-					return &clients.PostInternalPaymentReceiveAccessResponse{
-						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-						Body: []byte(
-							`{"outcome":"payable","payer":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",` +
-								`"accepts":[{"network":"eip155:80002","amount":"10000"}],` +
-								`"settlement":{"requirements":{"amount":"10000"},` +
-								`"facilitatorBaseUrl":"https://facilitator.test","network":"eip155:80002"}}`,
-						),
-					}, nil
-				})
+				PostInternalPaymentReceiveAccessWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&clients.PostInternalPaymentReceiveAccessResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
+					Body:         []byte(`{"code":"access_evaluation_failed","message":"boom"}`),
+				}, nil)
 		}
 
-		t.Run("Should decode the verdict and its settlement", func(t *testing.T) {
+		t.Run("Should map it to an application error", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingPaymentReceiveAccessBeforeEach(t)
 			initSuite(suite)
 
-			decision, err := suite.sut.Authorize(context.Background(), gatePayerAddress, "a-header")
+			decision, err := suite.sut.Authorize(context.Background(), "", "")
 
-			assert.NoError(t, err)
-			assert.Equal(t, models.PaymentReceiveAccessOutcomePayable, decision.Outcome)
-			assert.Len(t, decision.Accepts, 1)
-			if assert.NotNil(t, decision.Settlement) {
-				assert.Equal(t, "https://facilitator.test", decision.Settlement.FacilitatorBaseUrl)
-				assert.Equal(t, "10000", decision.Settlement.Requirements.Amount)
-				assert.Equal(t, "eip155:80002", decision.Settlement.Network)
-				assert.Equal(t, gatePayerAddress, decision.Payer)
-			}
+			assert.Nil(t, decision)
+			var unavailableError *apperrors.UnavailableError
+			assert.ErrorAs(t, err, &unavailableError)
 		})
 	})
 
@@ -122,29 +96,56 @@ func TestWhenAuthorizingPaymentReceiveAccessOverHttp(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime fails", func(t *testing.T) {
+	t.Run("Given the runtime returns a payable decision", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenAuthorizingPaymentReceiveAccessTestingSuite) {
 			suite.mockClient.EXPECT().
-				PostInternalPaymentReceiveAccessWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&clients.PostInternalPaymentReceiveAccessResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
-					Body:         []byte(`{"code":"access_evaluation_failed","message":"boom"}`),
-				}, nil)
+				PostInternalPaymentReceiveAccessWithBodyWithResponse(
+					gomock.Any(),
+					"application/json",
+					gomock.Any(),
+				).
+				DoAndReturn(func(
+					_ context.Context,
+					_ string,
+					body io.Reader,
+					_ ...clients.RequestEditorFn,
+				) (*clients.PostInternalPaymentReceiveAccessResponse, error) {
+					// The body is hand-marshalled, so its exact keys are the contract.
+					var sent map[string]string
+					assert.NoError(t, json.NewDecoder(body).Decode(&sent))
+					assert.Equal(t, gatePayerAddress, sent["address"])
+					assert.Equal(t, "a-header", sent["paymentSignature"])
+					return &clients.PostInternalPaymentReceiveAccessResponse{
+						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+						Body: []byte(
+							`{"outcome":"payable","payer":"` + gatePayerAddress + `",` +
+								`"accepts":[{"network":"eip155:80002","amount":"10000"}],` +
+								`"settlement":{"requirements":{"amount":"10000"},` +
+								`"facilitatorBaseUrl":"https://facilitator.test","network":"eip155:80002"}}`,
+						),
+					}, nil
+				})
 		}
 
-		t.Run("Should map it to an application error", func(t *testing.T) {
+		t.Run("Should decode the verdict and its settlement", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingPaymentReceiveAccessBeforeEach(t)
 			initSuite(suite)
 
-			decision, err := suite.sut.Authorize(context.Background(), "", "")
+			decision, err := suite.sut.Authorize(context.Background(), gatePayerAddress, "a-header")
 
-			assert.Nil(t, decision)
-			var unavailableError *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableError)
+			assert.NoError(t, err)
+			assert.Equal(t, models.PaymentReceiveAccessOutcomePayable, decision.Outcome)
+			assert.Len(t, decision.Accepts, 1)
+			if assert.NotNil(t, decision.Settlement) {
+				assert.Equal(t, "https://facilitator.test", decision.Settlement.FacilitatorBaseUrl)
+				assert.Equal(t, "10000", decision.Settlement.Requirements.Amount)
+				assert.Equal(t, "eip155:80002", decision.Settlement.Network)
+				assert.Equal(t, gatePayerAddress, decision.Payer)
+			}
 		})
 	})
 }

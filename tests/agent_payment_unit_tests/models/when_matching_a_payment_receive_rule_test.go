@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +13,7 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 	t.Parallel()
 
 	// The EIP-55 checksummed form of the address the seeded rule stores lowercased.
-	const checksummed = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+	checksummed := common_tests.RandomEthAddress().Hex()
 
 	config := func(patterns ...string) *models.PaymentReceiveRuleX402Config {
 		return &models.PaymentReceiveRuleX402Config{AddressPatterns: patterns}

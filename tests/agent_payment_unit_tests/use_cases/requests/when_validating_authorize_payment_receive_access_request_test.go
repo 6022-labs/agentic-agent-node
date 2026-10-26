@@ -5,41 +5,12 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWhenValidatingAuthorizePaymentReceiveAccessRequest(t *testing.T) {
 	t.Parallel()
-
-	t.Run("Given neither credential", func(t *testing.T) {
-		t.Parallel()
-
-		// A caller with nothing to show is valid input; the evaluator answers with a 402.
-		t.Run("Should be accepted", func(t *testing.T) {
-			t.Parallel()
-
-			request := &requests.AuthorizePaymentReceiveAccessRequest{}
-
-			assert.NoError(t, request.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given a padded address and signature", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should trim both", func(t *testing.T) {
-			t.Parallel()
-
-			request := &requests.AuthorizePaymentReceiveAccessRequest{
-				Address:          "  0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266  ",
-				PaymentSignature: "  a-header  ",
-			}
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", request.Address)
-			assert.Equal(t, "a-header", request.PaymentSignature)
-		})
-	})
 
 	t.Run("Given a whitespace-only address", func(t *testing.T) {
 		t.Parallel()
@@ -68,6 +39,37 @@ func TestWhenValidatingAuthorizePaymentReceiveAccessRequest(t *testing.T) {
 			var validationError *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationError)
 			assert.Equal(t, "address", validationError.Field)
+		})
+	})
+
+	t.Run("Given neither credential", func(t *testing.T) {
+		t.Parallel()
+
+		// A caller with nothing to show is valid input; the evaluator answers with a 402.
+		t.Run("Should be accepted", func(t *testing.T) {
+			t.Parallel()
+
+			request := &requests.AuthorizePaymentReceiveAccessRequest{}
+
+			assert.NoError(t, request.ValidateAndSanitize())
+		})
+	})
+
+	t.Run("Given a padded address and signature", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should trim both", func(t *testing.T) {
+			t.Parallel()
+
+			address := common_tests.RandomEthAddress().Hex()
+			request := &requests.AuthorizePaymentReceiveAccessRequest{
+				Address:          "  " + address + "  ",
+				PaymentSignature: "  a-header  ",
+			}
+
+			assert.NoError(t, request.ValidateAndSanitize())
+			assert.Equal(t, address, request.Address)
+			assert.Equal(t, "a-header", request.PaymentSignature)
 		})
 	})
 }
