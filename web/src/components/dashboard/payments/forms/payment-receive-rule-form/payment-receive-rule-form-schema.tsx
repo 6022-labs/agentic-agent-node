@@ -55,4 +55,6 @@ export const paymentReceiveRuleFormSchema = z
     }
   })
 
-export type PaymentReceiveRuleFormSchemaType = z.infer<typeof paymentReceiveRuleFormSchema>
+export type PaymentReceiveRuleFormSchemaType = z.infer<
+  typeof paymentReceiveRuleFormSchema
+>

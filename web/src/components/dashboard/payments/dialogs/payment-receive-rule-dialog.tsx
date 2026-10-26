@@ -38,9 +38,8 @@ export default function PaymentReceiveRuleDialog({
 }: Props) {
   const [open, setOpen] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
-  const [values, setValues] = React.useState<PaymentReceiveRuleFormSchemaType | null>(
-    null
-  )
+  const [values, setValues] =
+    React.useState<PaymentReceiveRuleFormSchemaType | null>(null)
   const editing = initialRule !== undefined
 
   const tokenLookup = useErc20Lookup(values?.network, values?.asset)
@@ -99,7 +98,11 @@ export default function PaymentReceiveRuleDialog({
           />
         ) : null}
         <DialogFooter>
-          <Button type="submit" form="payment-receive-rule-form" disabled={saving}>
+          <Button
+            type="submit"
+            form="payment-receive-rule-form"
+            disabled={saving}
+          >
             {saving ? <Loader2 className="animate-spin" /> : null}
             {editing ? "Save" : "Add"}
           </Button>

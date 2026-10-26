@@ -137,7 +137,9 @@ export default function PaymentReceivePolicySection() {
     (existing?: PaymentReceiveRule) =>
     async (
       values: PaymentReceiveRuleFormSchemaType
-    ): Promise<FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>> => {
+    ): Promise<
+      FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>
+    > => {
       setMutating(true)
       try {
         const rule = toRule(values, existing)
@@ -157,7 +159,11 @@ export default function PaymentReceivePolicySection() {
           // address list.
           const bare = validation.field.replace(/^config\./, "")
           const field = bare === "addressPatterns" ? "addresses" : bare
-          if (FORM_FIELDS.includes(field as keyof PaymentReceiveRuleFormSchemaType)) {
+          if (
+            FORM_FIELDS.includes(
+              field as keyof PaymentReceiveRuleFormSchemaType
+            )
+          ) {
             return {
               error: {
                 field: field as keyof PaymentReceiveRuleFormSchemaType,

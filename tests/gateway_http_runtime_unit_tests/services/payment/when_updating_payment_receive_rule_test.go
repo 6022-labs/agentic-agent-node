@@ -40,7 +40,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).
 				Return(nil, errors.New("runtime down"))
 		}
 
@@ -64,7 +66,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusBadRequest},
 					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
@@ -89,7 +93,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), "r1", "application/json", gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), "r1", "application/json", gomock.Any(),
+				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusNotFound},
 					Body:         []byte(`{"code":"rule_not_found"}`),
@@ -115,7 +121,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
 					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
@@ -140,7 +148,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusInternalServerError},
 					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
@@ -167,7 +177,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockClient.EXPECT().
-				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(gomock.Any(), "r1", "application/json", gomock.Any()).
+				PutInternalConfigPaymentReceivePolicyRulesIdWithBodyWithResponse(
+					gomock.Any(), "r1", "application/json", gomock.Any(),
+				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 					Body:         []byte(`{"id":"r1","name":"Renamed"}`),

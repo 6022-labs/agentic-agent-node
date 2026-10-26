@@ -41,12 +41,13 @@ const fromWire = (wire: PaymentReceiveRuleWire): PaymentReceiveRule => ({
 // GET /config/payment-receive-policy/rules — the pricing rules in table order. Unlike
 // the passthrough queries, this maps the wire rules' config blob into the flat
 // view model, so it returns the model directly rather than the axios response.
-export const listPaymentReceiveRules = async (): Promise<ListPaymentReceiveRulesResponse> => {
-  const response = await axios.get<ListPaymentReceiveRulesResponseWire>(
-    "/config/payment-receive-policy/rules"
-  )
-  return { rules: (response.data.rules ?? []).map(fromWire) }
-}
+export const listPaymentReceiveRules =
+  async (): Promise<ListPaymentReceiveRulesResponse> => {
+    const response = await axios.get<ListPaymentReceiveRulesResponseWire>(
+      "/config/payment-receive-policy/rules"
+    )
+    return { rules: (response.data.rules ?? []).map(fromWire) }
+  }
 
 // POST /config/payment-receive-policy/rules — appends a rule.
 export const createPaymentReceiveRule = async (rule: PaymentReceiveRule) => {
@@ -57,7 +58,10 @@ export const createPaymentReceiveRule = async (rule: PaymentReceiveRule) => {
 }
 
 // PUT /config/payment-receive-policy/rules/:id — replaces a rule's fields.
-export const updatePaymentReceiveRule = async (id: string, rule: PaymentReceiveRule) => {
+export const updatePaymentReceiveRule = async (
+  id: string,
+  rule: PaymentReceiveRule
+) => {
   return await axios.put<PaymentReceiveRuleWire>(
     `/config/payment-receive-policy/rules/${id}`,
     toWire(rule)
