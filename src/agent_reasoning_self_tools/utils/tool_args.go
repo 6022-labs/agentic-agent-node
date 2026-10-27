@@ -107,3 +107,15 @@ func scalarToString(value any) (string, bool) {
 		return "", false
 	}
 }
+
+func JsonObjectArg[T any](args map[string]any, key string) (*T, error) {
+	raw, err := RawJsonObjectArg(args, key)
+	if err != nil {
+		return nil, err
+	}
+	var value T
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return nil, fmt.Errorf("argument %q has the wrong shape: %w", key, err)
+	}
+	return &value, nil
+}

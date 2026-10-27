@@ -50,6 +50,7 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewDeletePaymentReceivePolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
+	provideSelfTool(container, tools.NewSignTypedDataTool)
 	provideSelfTool(container, tools.NewRunCommandTool)
 	provideSelfTool(container, tools.NewListProcessesTool)
 	provideSelfTool(container, tools.NewReadProcessOutputTool)
@@ -92,11 +93,15 @@ func provideIdentityExecutors(container *dig.Container) {
 	asCheckAgentEns := func(u *identity_use_cases.CheckAgentEns) tool_interfaces.CheckAgentEnsExecutorInterface {
 		return u
 	}
+	asSignTypedData := func(u *identity_use_cases.SignTypedData) tool_interfaces.SignTypedDataExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetAgentRegistration)
 	provideExecutor(container, asListAgentCollections)
 	provideExecutor(container, asCheckAgentMint)
 	provideExecutor(container, asCheckAgentEns)
+	provideExecutor(container, asSignTypedData)
 }
 
 func provideKnowledgeExecutors(container *dig.Container) {

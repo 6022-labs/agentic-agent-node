@@ -10,16 +10,14 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/abi"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/factory"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity_blockchain/helper"
+	common_helper "github.com/6022-labs/agentic-agent-node/src/runtime_common/helper"
 	ens_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
 
-// AgentEnsRegistryRequester is a thin translator over the on-chain
-// AgentEnsRegistry: it resolves the agent's subnode and reads/writes records.
-// It holds no domain state and touches no repositories — orchestration (mint
-// guard, init vs refresh) lives in the EnsPublisher domain service.
+// AgentEnsRegistryRequester translates the on-chain AgentEnsRegistry; orchestration lives in EnsPublisher.
 type AgentEnsRegistryRequester struct {
 	logger                   *zap.Logger
 	ethClientFactory         *factory.EthClientFactory
@@ -107,7 +105,7 @@ func (r *AgentEnsRegistryRequester) InitRecords(
 	if err != nil {
 		return fmt.Errorf("initAgentTexts: %w", err)
 	}
-	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
+	if err := common_helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return fmt.Errorf("initAgentTexts: %w", err)
 	}
 
@@ -142,7 +140,7 @@ func (r *AgentEnsRegistryRequester) SetRecord(
 	if err != nil {
 		return fmt.Errorf("setAgentText %s: %w", key, err)
 	}
-	if err := helper.WaitForSuccess(ctx, client, tx); err != nil {
+	if err := common_helper.WaitForSuccess(ctx, client, tx); err != nil {
 		return fmt.Errorf("setAgentText %s: %w", key, err)
 	}
 
@@ -179,8 +177,7 @@ func (r *AgentEnsRegistryRequester) transactor(ctx context.Context, chainId stri
 	return r.transactorFactory.Create(ctx, evmChainId)
 }
 
-// resolveAgentNode reads parentNode + collection name on chain, then computes
-// the agent's ENS namehash.
+// resolveAgentNode reads parentNode + collection name on chain, then computes the namehash.
 func (r *AgentEnsRegistryRequester) resolveAgentNode(
 	ctx context.Context,
 	chainId string,
