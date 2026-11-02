@@ -22,8 +22,8 @@ func NewListPaymentSpendRulesTool(
 func (t *ListPaymentSpendRulesTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "list_payment_spend_rules",
-		Description: "List your own spend rules. A quote you are asked to sign must match a rule on every facet, " +
-			"and is capped by the smallest matching maxAmountPerPayment.",
+		Description: "List your own spend rules, one per token, with each window's spend this period. A quote " +
+			"is paid only if its payee is allowed by the policy and the amount fits its token's rule.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{}, nil),
 	}
 }

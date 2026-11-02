@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	identity_requests "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
-	identity_responses "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
+	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	payment_responses "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/tools_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -96,10 +96,10 @@ func TestWhenExecutingSignTypedDataTool(t *testing.T) {
 
 		initSuite := func(suite *WhenExecutingSignTypedDataToolTestingSuite) {
 			suite.mockSignTypedDataExecutor.EXPECT().
-				Execute(ctx, gomock.Cond(func(request *identity_requests.SignTypedDataRequest) bool {
+				Execute(ctx, gomock.Cond(func(request *payment_requests.SignTypedDataRequest) bool {
 					return request.TypedData != nil && request.TypedData.PrimaryType == "Mail"
 				})).
-				Return(&identity_responses.TypedDataSignatureResponse{Signature: "0xdead"}, nil)
+				Return(&payment_responses.TypedDataSignatureResponse{Signature: "0xdead"}, nil)
 		}
 
 		t.Run("Should return the signature", func(t *testing.T) {

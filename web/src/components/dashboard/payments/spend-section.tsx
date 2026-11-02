@@ -1,6 +1,7 @@
 import React from "react"
 import { toast } from "sonner"
-import { AlertTriangle, Trash2, Wallet } from "lucide-react"
+import axios from "axios"
+import { AlertTriangle, Plus, Trash2, Wallet, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -26,6 +28,7 @@ import EmptyState from "@/components/dashboard/empty-state"
 import PaymentSpendRuleDialog from "@/components/dashboard/payments/dialogs/payment-spend-rule-dialog"
 import {
   ANY_TRANSFER_METHOD,
+  type PaymentSpendRuleFormField,
   type PaymentSpendRuleFormSchemaType,
 } from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
 import {
@@ -34,11 +37,13 @@ import {
   isUnrestricted,
   type PaymentSpendPolicy,
   type PaymentSpendRule,
+  type PaymentSpendRuleWindow,
 } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import {
   deletePaymentSpendPolicy,
   getPaymentSpendPolicy,
+  updatePaymentSpendPolicy,
 } from "@/queries/api/payment-spend-policy.queries"
 import {
   createPaymentSpendRule,
@@ -49,8 +54,6 @@ import {
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
 import { formatNetwork, isPlainAddressPattern } from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
-
-const MAX_PATTERN_CHIPS = 2
 
 // formatResetsIn is coarse on purpose: the exact second the period rolls is not actionable.
 const formatResetsIn = (resetsAt: string): string => {
@@ -91,7 +94,7 @@ const formatPeriod = (seconds: number): string => {
       return "week"
     }
     if (days === 30) {
-      return "month"
+      return "30 days"
     }
     return `${days}d`
   }
@@ -106,20 +109,40 @@ const FORM_FIELDS: Array<keyof PaymentSpendRuleFormSchemaType> = [
   "name",
   "method",
   "maxAmountPerPayment",
-  "windowSeconds",
-  "maxAmountPerWindow",
+  "windows",
   "network",
   "asset",
   "assetTransferMethod",
-  "payToPatterns",
 ]
 
-// splitPatterns turns the form's one-per-line text back into the wire array.
-const splitPatterns = (value: string): string[] =>
-  value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
+// isAssetTaken reports the runtime's refusal of a second rule on one token.
+const isAssetTaken = (error: unknown): boolean =>
+  axios.isAxiosError(error) && error.response?.status === 409
+
+// toFormField maps a runtime error path ("config.network", "windows[0].maxAmount") to a form control.
+const toFormField = (path: string): PaymentSpendRuleFormField | null => {
+  const field = path.replace(/^config\./, "").replace(/\[(\d+)\]/g, ".$1")
+  const root = field.split(".")[0] as keyof PaymentSpendRuleFormSchemaType
+  return FORM_FIELDS.includes(root)
+    ? (field as PaymentSpendRuleFormField)
+    : null
+}
+
+// normalizePayee lowercases a plain address, as the runtime stores it, so duplicates are caught.
+const normalizePayee = (pattern: string): string =>
+  isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
+
+// AmountLabel shows an atomic amount the way the cap column does: badges for the sentinels, else truncated.
+function AmountLabel({ amount }: { amount: string }) {
+  if (isUnbounded(amount)) {
+    return <Badge variant="destructive">unbounded</Badge>
+  }
+  return (
+    <span className="font-mono text-xs" title={amount}>
+      {amount.length > 12 ? `${amount.slice(0, 12)}…` : amount}
+    </span>
+  )
+}
 
 export default function PaymentSpendPolicySection() {
   const [policy, setPolicy] = React.useState<PaymentSpendPolicy | null>(null)
@@ -156,26 +179,27 @@ export default function PaymentSpendPolicySection() {
   ): PaymentSpendRule => ({
     name: values.name,
     method: values.method,
-    maxAmountPerPayment: values.maxAmountPerPayment,
-    windowSeconds:
-      values.windowSeconds.length === 0 ? 0 : Number(values.windowSeconds),
-    maxAmountPerWindow:
-      values.maxAmountPerWindow.length === 0 ? "0" : values.maxAmountPerWindow,
-    windowSpent: "0",
+    maxAmountPerPayment:
+      values.maxAmountPerPayment.length === 0
+        ? undefined
+        : values.maxAmountPerPayment,
+    windows: values.windows.map((window) => ({
+      windowSeconds: Number(window.windowSeconds),
+      maxAmount: window.maxAmount,
+    })),
     network: values.network,
     asset: values.asset,
     assetTransferMethod:
       values.assetTransferMethod === ANY_TRANSFER_METHOD
         ? undefined
         : values.assetTransferMethod,
-    payToPatterns: splitPatterns(values.payToPatterns),
   })
 
   const onSaveRule =
     (existing?: PaymentSpendRule) =>
     async (
       values: PaymentSpendRuleFormSchemaType
-    ): Promise<FormCompletionResult<keyof PaymentSpendRuleFormSchemaType>> => {
+    ): Promise<FormCompletionResult<PaymentSpendRuleFormField>> => {
       setMutating(true)
       try {
         const rule = toRule(values)
@@ -184,24 +208,28 @@ export default function PaymentSpendPolicySection() {
         } else {
           await createPaymentSpendRule(rule)
         }
-        await reloadRules()
         toast.success(existing ? "Spend rule updated" : "Spend rule added")
+        // The rule is saved even if the refresh fails; reporting it as a save failure invites a 409 on retry.
+        try {
+          await reloadRules()
+        } catch (error) {
+          toast.error(extractErrorMessage(error, "Failed to refresh the rules"))
+        }
         return {}
       } catch (error) {
+        if (isAssetTaken(error)) {
+          return {
+            error: {
+              field: "asset",
+              message: "This token already has a rule — edit that one instead",
+            },
+          }
+        }
         const validation = extractValidationError(error)
         if (validation) {
-          // Runtime errors on the x402 matcher come back prefixed (e.g.
-          // "config.network"); strip it to reach the form control.
-          const field = validation.field.replace(/^config\./, "")
-          if (
-            FORM_FIELDS.includes(field as keyof PaymentSpendRuleFormSchemaType)
-          ) {
-            return {
-              error: {
-                field: field as keyof PaymentSpendRuleFormSchemaType,
-                message: validation.message,
-              },
-            }
+          const field = toFormField(validation.field)
+          if (field) {
+            return { error: { field, message: validation.message } }
           }
           // A field with no form control: toast it rather than swallow it.
           toast.error(validation.message)
@@ -230,6 +258,25 @@ export default function PaymentSpendPolicySection() {
     }
   }
 
+  // savePayees returns the runtime's refusal so the editor can keep the draft and show why.
+  const savePayees = async (
+    payToPatterns: string[]
+  ): Promise<string | null> => {
+    setMutating(true)
+    try {
+      const { data } = await updatePaymentSpendPolicy(payToPatterns)
+      setPolicy(data)
+      return null
+    } catch (error) {
+      return (
+        extractValidationError(error)?.message ??
+        extractErrorMessage(error, "Failed to save the payees")
+      )
+    } finally {
+      setMutating(false)
+    }
+  }
+
   const onResetPolicy = async () => {
     setMutating(true)
     try {
@@ -245,9 +292,11 @@ export default function PaymentSpendPolicySection() {
     }
   }
 
-  // With no rule at all the agent cannot pay anything: matching is deny-by-default.
-  const cannotSpend = rules.length === 0
-  const unrestricted = rules.some(isUnrestricted)
+  // With no payee or no rule the agent cannot pay anything: matching is deny-by-default.
+  const payees = policy?.payToPatterns ?? []
+  const cannotSpend = rules.length === 0 || payees.length === 0
+  const unrestricted =
+    payees.includes(ANY_PATTERN) && rules.some(isUnrestricted)
 
   return (
     <Card>
@@ -257,8 +306,8 @@ export default function PaymentSpendPolicySection() {
             <CardTitle>Spending policy</CardTitle>
             <CardDescription>
               What the agent may pay for. Every x402 quote it is asked to sign
-              must match a rule's network, token, transfer method and
-              recipients, and is capped by the smallest matching rule.
+              must go to an allowed payee, in a token that has a rule, and fit
+              that rule's cap and every one of its windows.
             </CardDescription>
           </div>
           <Badge
@@ -291,15 +340,20 @@ export default function PaymentSpendPolicySection() {
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <p className="text-muted-foreground">
-                  A rule allows any amount of its token, to any recipient.
+                  Anyone can be paid, and a rule allows any amount of its token.
                   Narrow it before the agent holds funds worth taking.
                 </p>
               </div>
             ) : null}
+            <PayeesEditor
+              payees={payees}
+              disabled={mutating}
+              onChange={savePayees}
+            />
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground">
-                A quote no rule matches is refused, so removing every rule stops
-                the agent paying entirely.
+                One rule per token. A token with no rule is refused, so removing
+                every rule stops the agent paying entirely.
               </p>
               <PaymentSpendRuleDialog onSave={onSaveRule()} />
             </div>
@@ -314,12 +368,11 @@ export default function PaymentSpendPolicySection() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Cap (atomic units)</TableHead>
-                    <TableHead>Spent this period</TableHead>
                     <TableHead>Network</TableHead>
                     <TableHead>Token</TableHead>
-                    <TableHead>Recipients</TableHead>
                     <TableHead>Transfer method</TableHead>
+                    <TableHead>Cap per payment</TableHead>
+                    <TableHead>Spent this period</TableHead>
                     <TableHead className="w-20" />
                   </TableRow>
                 </TableHeader>
@@ -327,55 +380,6 @@ export default function PaymentSpendPolicySection() {
                   {rules.map((rule) => (
                     <TableRow key={rule.id ?? rule.name}>
                       <TableCell className="font-medium">{rule.name}</TableCell>
-                      <TableCell>
-                        {isUnbounded(rule.maxAmountPerPayment) ? (
-                          <Badge variant="destructive">unbounded</Badge>
-                        ) : rule.maxAmountPerPayment === "0" ? (
-                          <Badge variant="secondary">denies</Badge>
-                        ) : (
-                          <span
-                            className="font-mono text-xs"
-                            title={rule.maxAmountPerPayment}
-                          >
-                            {rule.maxAmountPerPayment.length > 12
-                              ? `${rule.maxAmountPerPayment.slice(0, 12)}…`
-                              : rule.maxAmountPerPayment}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {rule.windowSeconds > 0 ? (
-                          <div className="min-w-36 space-y-1">
-                            <div
-                              className="font-mono text-xs"
-                              title={`${rule.windowSpent} of ${rule.maxAmountPerWindow} atomic units this period`}
-                            >
-                              {rule.windowSpent} / {rule.maxAmountPerWindow}
-                              <span className="text-muted-foreground">
-                                {" "}
-                                per {formatPeriod(rule.windowSeconds)}
-                              </span>
-                            </div>
-                            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                              <div
-                                className="h-full bg-primary"
-                                style={{
-                                  width: `${spentPercent(rule.windowSpent, rule.maxAmountPerWindow)}%`,
-                                }}
-                              />
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {rule.windowResetsAt
-                                ? `resets in ${formatResetsIn(rule.windowResetsAt)}`
-                                : "nothing spent yet"}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            per payment only
-                          </span>
-                        )}
-                      </TableCell>
                       <TableCell className="text-xs" title={rule.network}>
                         {formatNetwork(rule.network)}
                       </TableCell>
@@ -385,12 +389,36 @@ export default function PaymentSpendPolicySection() {
                       >
                         {truncateEthAddress(rule.asset)}
                       </TableCell>
-                      <TableCell>
-                        <PatternsCell patterns={rule.payToPatterns} />
-                      </TableCell>
                       <TableCell className="text-xs">
                         {rule.assetTransferMethod ?? (
                           <span className="text-muted-foreground">either</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {rule.maxAmountPerPayment === undefined ? (
+                          <span className="text-xs text-muted-foreground">
+                            none
+                          </span>
+                        ) : rule.maxAmountPerPayment === "0" ? (
+                          <Badge variant="secondary">denies</Badge>
+                        ) : (
+                          <AmountLabel amount={rule.maxAmountPerPayment} />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {rule.windows.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            per payment only
+                          </span>
+                        ) : (
+                          <div className="min-w-36 space-y-2">
+                            {rule.windows.map((window) => (
+                              <WindowUsage
+                                key={window.windowSeconds}
+                                window={window}
+                              />
+                            ))}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
@@ -427,14 +455,14 @@ export default function PaymentSpendPolicySection() {
       {policy ? (
         <CardFooter className="justify-end">
           <ConfirmDialog
-            title="Remove every spend rule?"
-            description="The agent will not be able to pay anything until a rule allows it again."
+            title="Reset the spending policy?"
+            description="Every rule and payee is removed; the agent will not be able to pay anything until both are set again."
             confirmLabel="Reset"
             onConfirm={onResetPolicy}
           >
             <Button variant="destructive" size="sm" disabled={mutating}>
               <Trash2 />
-              Remove all rules
+              Reset policy
             </Button>
           </ConfirmDialog>
         </CardFooter>
@@ -443,42 +471,153 @@ export default function PaymentSpendPolicySection() {
   )
 }
 
-// PatternsCell shows the open marker, or up to MAX_PATTERN_CHIPS patterns with
-// the rest collapsed into a "+N" chip.
-function PatternsCell({ patterns }: { patterns: string[] }) {
-  if (patterns.includes(ANY_PATTERN)) {
-    return <Badge>any</Badge>
+// WindowUsage shows one window's spend against its budget and when the period rolls over.
+function WindowUsage({ window }: { window: PaymentSpendRuleWindow }) {
+  const spent = window.spent ?? "0"
+  return (
+    <div className="space-y-1">
+      <div
+        className="flex flex-wrap items-center gap-1 text-xs"
+        title={`${spent} of ${window.maxAmount} atomic units this period`}
+      >
+        <AmountLabel amount={spent} />
+        <span>/</span>
+        {window.maxAmount === "0" ? (
+          <Badge variant="secondary">denies</Badge>
+        ) : (
+          <AmountLabel amount={window.maxAmount} />
+        )}
+        <span className="text-muted-foreground">
+          per {formatPeriod(window.windowSeconds)}
+        </span>
+      </div>
+      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full bg-primary"
+          style={{ width: `${spentPercent(spent, window.maxAmount)}%` }}
+        />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {window.resetsAt
+          ? `resets in ${formatResetsIn(window.resetsAt)}`
+          : "nothing spent yet"}
+      </div>
+    </div>
+  )
+}
+
+// PayeesEditor edits the policy's payee list; every change is saved at once.
+function PayeesEditor({
+  payees,
+  disabled,
+  onChange,
+}: {
+  payees: string[]
+  disabled: boolean
+  onChange: (payees: string[]) => Promise<string | null>
+}) {
+  const [draft, setDraft] = React.useState("")
+  const [error, setError] = React.useState<string | null>(null)
+
+  // The runtime judges the regex (Go RE2), so a refused pattern keeps the draft and shows its message.
+  const save = async (next: string[]): Promise<boolean> => {
+    const refusal = await onChange(next)
+    setError(refusal)
+    return refusal === null
   }
 
-  // An empty facet matches nothing, so the rule can never authorize a quote.
-  if (patterns.length === 0) {
-    return <Badge variant="destructive">none — never matches</Badge>
+  const add = async () => {
+    const pattern = normalizePayee(draft.trim())
+    // Enter bypasses the button's disabled state, so a save in flight is checked here.
+    if (pattern.length === 0 || disabled) {
+      return
+    }
+    if (payees.includes(pattern) || (await save([...payees, pattern]))) {
+      setError(null)
+      setDraft("")
+    }
   }
-
-  const visible = patterns.slice(0, MAX_PATTERN_CHIPS)
-  const hidden = patterns.slice(MAX_PATTERN_CHIPS)
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      {visible.map((pattern, index) => (
-        <Badge
-          key={`${pattern}-${index}`}
-          variant="outline"
+    <div className="space-y-2 rounded-md border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Payees</p>
+          <p className="text-xs text-muted-foreground">
+            Who the agent may pay, whatever the token. Addresses or regexes,
+            full-matched ignoring case.
+          </p>
+        </div>
+        {payees.includes(ANY_PATTERN) ? null : (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            onClick={() => void save([ANY_PATTERN])}
+          >
+            Allow anyone (.*)
+          </Button>
+        )}
+      </div>
+      {payees.length === 0 ? (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <p className="text-muted-foreground">
+            Nobody can be paid yet: add a payee for the rules to take effect.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-1">
+          {payees.map((pattern, index) => (
+            <Badge
+              key={`${index}:${pattern}`}
+              variant={pattern === ANY_PATTERN ? "default" : "outline"}
+              className="gap-1 font-mono text-xs"
+              title={pattern}
+            >
+              {pattern === ANY_PATTERN
+                ? "anyone"
+                : isPlainAddressPattern(pattern)
+                  ? truncateEthAddress(pattern)
+                  : pattern}
+              <button
+                type="button"
+                aria-label={`Remove ${pattern}`}
+                disabled={disabled}
+                onClick={() =>
+                  void save(payees.filter((_, other) => other !== index))
+                }
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <Input
           className="font-mono text-xs"
-          title={pattern}
+          placeholder="0x… or a regex"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+              void add()
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || draft.trim().length === 0}
+          onClick={() => void add()}
         >
-          {isPlainAddressPattern(pattern)
-            ? truncateEthAddress(pattern)
-            : pattern.length > 16
-              ? `${pattern.slice(0, 16)}…`
-              : pattern}
-        </Badge>
-      ))}
-      {hidden.length > 0 ? (
-        <Badge variant="outline" title={hidden.join("\n")}>
-          +{hidden.length}
-        </Badge>
-      ) : null}
+          <Plus />
+          Add
+        </Button>
+      </div>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   )
 }

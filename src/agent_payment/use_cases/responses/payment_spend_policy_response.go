@@ -9,10 +9,11 @@ import (
 
 // PaymentSpendPolicyResponse is the policy head returned by /internal/config/payment-spend-policy.
 type PaymentSpendPolicyResponse struct {
-	Id        uuid.UUID `json:"id"`
-	AgentId   uuid.UUID `json:"agentId"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	Id            uuid.UUID `json:"id"`
+	AgentId       uuid.UUID `json:"agentId"`
+	PayToPatterns []string  `json:"payToPatterns"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 func ToPaymentSpendPolicyResponse(p *models.PaymentSpendPolicy) *PaymentSpendPolicyResponse {
@@ -20,9 +21,10 @@ func ToPaymentSpendPolicyResponse(p *models.PaymentSpendPolicy) *PaymentSpendPol
 		return nil
 	}
 	return &PaymentSpendPolicyResponse{
-		Id:        p.Id,
-		AgentId:   p.AgentId,
-		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
+		Id:            p.Id,
+		AgentId:       p.AgentId,
+		PayToPatterns: p.PayToPatterns,
+		CreatedAt:     p.CreatedAt,
+		UpdatedAt:     p.UpdatedAt,
 	}
 }

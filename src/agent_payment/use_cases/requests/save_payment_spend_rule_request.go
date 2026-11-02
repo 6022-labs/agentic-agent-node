@@ -7,36 +7,30 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
-// SavePaymentSpendRuleRequest is method-neutral: the bounds, name and method are generic.
+// SavePaymentSpendRuleRequest is method-neutral: the limits, name and method are generic.
 type SavePaymentSpendRuleRequest struct {
-	Name                string          `json:"name"`
-	MaxAmountPerPayment string          `json:"maxAmountPerPayment"`
-	WindowSeconds       int             `json:"windowSeconds,omitempty"`
-	MaxAmountPerWindow  string          `json:"maxAmountPerWindow,omitempty"`
-	Method              string          `json:"method,omitempty"`
-	Config              json.RawMessage `json:"config"                       swaggertype:"object"`
+	Name                string                              `json:"name"`
+	MaxAmountPerPayment *string                             `json:"maxAmountPerPayment,omitempty"`
+	Windows             []SavePaymentSpendRuleWindowRequest `json:"windows"`
+	Method              string                              `json:"method,omitempty"`
+	Config              json.RawMessage                     `json:"config"                        swaggertype:"object"`
 }
 
 // ValidateAndSanitize checks the method-agnostic fields and defaults the method to x402.
 func (a *SavePaymentSpendRuleRequest) ValidateAndSanitize() error {
 	a.Name = strings.TrimSpace(a.Name)
-	a.MaxAmountPerPayment = strings.TrimSpace(a.MaxAmountPerPayment)
-
 	if len(a.Name) == 0 || len(a.Name) > 64 {
 		return errors.NewValidationError("name", "must be 1-64 characters")
 	}
-	// There is no unlimited sentinel: "0" denies every non-zero quote in scope.
-	maxAmountPerPayment, ok := new(big.Int).SetString(a.MaxAmountPerPayment, 10)
-	if !ok || maxAmountPerPayment.Sign() < 0 {
-		return errors.NewValidationError(
-			"maxAmountPerPayment",
-			"must be a non-negative integer in the asset's atomic units (0 = deny)",
-		)
-	}
 
-	if err := a.validateWindow(maxAmountPerPayment); err != nil {
+	maxAmountPerPayment, err := a.validateMaxAmountPerPayment()
+	if err != nil {
+		return err
+	}
+	if err := a.validateWindows(maxAmountPerPayment); err != nil {
 		return err
 	}
 
@@ -51,36 +45,48 @@ func (a *SavePaymentSpendRuleRequest) ValidateAndSanitize() error {
 	return nil
 }
 
-// validateWindow requires a period and a budget together, with the per-payment cap within the budget.
-func (a *SavePaymentSpendRuleRequest) validateWindow(maxAmountPerPayment *big.Int) error {
-	a.MaxAmountPerWindow = strings.TrimSpace(a.MaxAmountPerWindow)
-
-	if a.WindowSeconds < 0 {
-		return errors.NewValidationError("windowSeconds", "must not be negative")
-	}
-	if a.WindowSeconds == 0 {
-		if len(a.MaxAmountPerWindow) != 0 {
-			return errors.NewValidationError(
-				"maxAmountPerWindow",
-				"needs a windowSeconds period to be spent over",
-			)
-		}
-		a.MaxAmountPerWindow = "0"
-		return nil
+// validateMaxAmountPerPayment treats a blank cap as none; "0" denies every non-zero quote.
+func (a *SavePaymentSpendRuleRequest) validateMaxAmountPerPayment() (*big.Int, error) {
+	if a.MaxAmountPerPayment == nil || len(strings.TrimSpace(*a.MaxAmountPerPayment)) == 0 {
+		a.MaxAmountPerPayment = nil
+		return nil, nil
 	}
 
-	maxAmountPerWindow, ok := new(big.Int).SetString(a.MaxAmountPerWindow, 10)
-	if !ok || maxAmountPerWindow.Sign() < 0 {
-		return errors.NewValidationError(
-			"maxAmountPerWindow",
+	trimmed := strings.TrimSpace(*a.MaxAmountPerPayment)
+	a.MaxAmountPerPayment = &trimmed
+	maxAmountPerPayment, ok := helpers.ParseUint256(trimmed)
+	if !ok {
+		return nil, errors.NewValidationError(
+			"maxAmountPerPayment",
 			"must be a non-negative integer in the asset's atomic units (0 = deny)",
 		)
 	}
-	if maxAmountPerPayment.Cmp(maxAmountPerWindow) > 0 {
-		return errors.NewValidationError(
-			"maxAmountPerPayment",
-			"must not exceed maxAmountPerWindow, or no payment could ever fit the period",
-		)
+	return maxAmountPerPayment, nil
+}
+
+// validateWindows rejects a rule with no limit at all, a repeated period, and a cap no window could fit.
+func (a *SavePaymentSpendRuleRequest) validateWindows(maxAmountPerPayment *big.Int) error {
+	if maxAmountPerPayment == nil && len(a.Windows) == 0 {
+		return errors.NewValidationError("windows", "a rule needs maxAmountPerPayment, a window, or both")
+	}
+
+	seen := make(map[int]bool, len(a.Windows))
+	for i := range a.Windows {
+		maxAmount, err := a.Windows[i].ValidateAndSanitize(i)
+		if err != nil {
+			return err
+		}
+		if seen[a.Windows[i].WindowSeconds] {
+			return errors.NewValidationError("windows", "each windowSeconds may appear only once")
+		}
+		seen[a.Windows[i].WindowSeconds] = true
+
+		if maxAmountPerPayment != nil && maxAmountPerPayment.Cmp(maxAmount) > 0 {
+			return errors.NewValidationError(
+				"maxAmountPerPayment",
+				"must not exceed any window's maxAmount, or no payment could ever fit it",
+			)
+		}
 	}
 	return nil
 }

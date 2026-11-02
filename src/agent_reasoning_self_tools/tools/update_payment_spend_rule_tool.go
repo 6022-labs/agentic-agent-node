@@ -26,8 +26,9 @@ func NewUpdatePaymentSpendRuleTool(
 
 func (t *UpdatePaymentSpendRuleTool) Definition() *models.Tool {
 	return &models.Tool{
-		Name:        "update_payment_spend_rule",
-		Description: "Replace one of your spend rules by id.",
+		Name: "update_payment_spend_rule",
+		Description: "Replace one of your spend rules by id. Omitted fields are cleared: resend the cap and " +
+			"every window to keep them. A window keeps its spend only if its windowSeconds and the token stay.",
 		InputScheme: utils.ObjectScheme(
 			t.propertiesWithId(),
 			append([]string{"id"}, t.savePaymentSpendRuleRequired()...),

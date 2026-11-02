@@ -224,11 +224,19 @@ components:
           type: object
         maxAmountPerPayment:
           type: string
-        maxAmountPerWindow:
-          type: string
         method:
           type: string
         name:
+          type: string
+        windows:
+          items:
+            $ref: '#/components/schemas/requests.SavePaymentSpendRuleWindowRequest'
+          type: array
+          uniqueItems: false
+      type: object
+    requests.SavePaymentSpendRuleWindowRequest:
+      properties:
+        maxAmount:
           type: string
         windowSeconds:
           type: integer
@@ -272,6 +280,14 @@ components:
           type: string
         url:
           type: string
+      type: object
+    requests.UpdatePaymentSpendPolicyRequest:
+      properties:
+        payToPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
       type: object
     requests.UpdateSelfToolRequest:
       properties:
@@ -570,6 +586,11 @@ components:
           type: string
         id:
           type: string
+        payToPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
         updatedAt:
           type: string
       type: object
@@ -749,18 +770,26 @@ components:
           type: string
         maxAmountPerPayment:
           type: string
-        maxAmountPerWindow:
-          type: string
         method:
           type: string
         name:
           type: string
-        windowResetsAt:
+        windows:
+          items:
+            $ref: '#/components/schemas/responses.PaymentSpendRuleWindowResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.PaymentSpendRuleWindowResponse:
+      properties:
+        maxAmount:
+          type: string
+        resetsAt:
+          type: string
+        spent:
           type: string
         windowSeconds:
           type: integer
-        windowSpent:
-          type: string
       type: object
     responses.RegistrationStatusResponse:
       properties:
@@ -2205,6 +2234,42 @@ paths:
       summary: Get payment spend policy
       tags:
       - Config
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.UpdatePaymentSpendPolicyRequest'
+                description: spend policy
+                summary: request
+        description: spend policy
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.GetPaymentSpendPolicyResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fiber.Map'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Update payment spend policy
+      tags:
+      - Config
   /config/payment-spend-policy/rules:
     get:
       responses:
@@ -2250,6 +2315,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: asset_already_has_rule
         "502":
           content:
             application/json:
@@ -2333,6 +2404,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
           description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: asset_already_has_rule
         "502":
           content:
             application/json:

@@ -10,13 +10,15 @@ import (
 )
 
 // PaymentSpendMethodStrategyInterface owns one payment method on the spend side:
-// it validates the rule's Config blob and persists/loads that method's matcher.
+// it validates the rule's Config blob and persists/loads the token it names.
 type PaymentSpendMethodStrategyInterface interface {
 	Method() enums.PaymentMethod
 	// Validate checks and sanitizes the request's Config blob in place.
 	Validate(ctx context.Context, request *requests.SavePaymentSpendRuleRequest) error
-	// SaveConfig persists the rule's matcher from the validated blob, replacing any existing one.
-	SaveConfig(ctx context.Context, ruleId uuid.UUID, config json.RawMessage) error
-	// LoadConfig returns the rule's matcher as the wire JSON blob.
+	// RuleIdForAsset returns the policy's rule already spending the validated blob's token, or uuid.Nil.
+	RuleIdForAsset(ctx context.Context, policyId uuid.UUID, config json.RawMessage) (uuid.UUID, error)
+	// SaveConfig persists the rule's token from the validated blob, replacing any existing one.
+	SaveConfig(ctx context.Context, policyId uuid.UUID, ruleId uuid.UUID, config json.RawMessage) error
+	// LoadConfig returns the rule's token as the wire JSON blob.
 	LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error)
 }

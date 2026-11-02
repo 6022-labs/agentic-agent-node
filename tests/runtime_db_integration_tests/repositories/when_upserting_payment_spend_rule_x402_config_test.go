@@ -2,6 +2,7 @@ package repositories_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
@@ -87,13 +88,14 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 			t.Run("Given a config for a rule that has none", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should store every pattern array", func(t *testing.T) {
+				t.Run("Should store the token and its transfer method", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingPaymentSpendRuleX402ConfigBeforeEach(tc)
 					defer WhenUpsertingPaymentSpendRuleX402ConfigAfterEach(suite)
 
 					config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
 						WithPaymentSpendRuleId(suite.rule.Id).
+						WithPolicyId(suite.rule.PolicyId).
 						WithNetwork("eip155:80002").
 						WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
 						Build()
@@ -105,7 +107,7 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 					assert.Equal(t, "eip155:80002", stored.Network)
 					assert.Equal(t, enums.AssetTransferMethodEip3009, *stored.AssetTransferMethod)
 					assert.Equal(t, config.Asset, stored.Asset)
-					assert.Equal(t, config.PayToPatterns, stored.PayToPatterns)
+					assert.Equal(t, suite.rule.PolicyId, stored.PolicyId)
 				})
 			})
 
@@ -120,18 +122,20 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 					assert.NoError(t, suite.sut.Upsert(context.Background(),
 						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
 							WithPaymentSpendRuleId(suite.rule.Id).
-							WithPayToPatterns([]string{".*"}).
+							WithPolicyId(suite.rule.PolicyId).
+							WithNetwork("eip155:80002").
 							Build()))
 
 					assert.NoError(t, suite.sut.Upsert(context.Background(),
 						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
 							WithPaymentSpendRuleId(suite.rule.Id).
-							WithPayToPatterns([]string{"0x1111111111111111111111111111111111111111"}).
+							WithPolicyId(suite.rule.PolicyId).
+							WithNetwork("eip155:8453").
 							Build()))
 
 					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
 					assert.NoError(t, err)
-					assert.Equal(t, []string{"0x1111111111111111111111111111111111111111"}, stored.PayToPatterns)
+					assert.Equal(t, "eip155:8453", stored.Network)
 
 					var count int64
 					assert.NoError(t, suite.dbClient.GetDB(context.Background()).
@@ -139,6 +143,112 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 						Where("payment_spend_rule_id = ?", suite.rule.Id).
 						Count(&count).Error)
 					assert.Equal(t, int64(1), count)
+				})
+			})
+
+			t.Run("Given the rule's transfer method is cleared", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should store it unset", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentSpendRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentSpendRuleX402ConfigAfterEach(suite)
+
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
+							Build()))
+
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							Build()))
+
+					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
+					assert.NoError(t, err)
+					assert.Nil(t, stored.AssetTransferMethod)
+				})
+			})
+
+			t.Run("Given another rule of the policy already names the asset", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should refuse a second rule for that token", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentSpendRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentSpendRuleX402ConfigAfterEach(suite)
+
+					other, err := repositories.NewPaymentSpendRuleRepository(suite.dbClient).Create(
+						context.Background(),
+						model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(suite.rule.PolicyId).Build(),
+					)
+					assert.NoError(t, err)
+					spentAsset := strings.ToLower(common_tests.RandomEthAddress().Hex())
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(other.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(spentAsset).
+							Build()))
+
+					err = suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(spentAsset).
+							Build())
+
+					assert.Error(t, err)
+					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
+					assert.NoError(t, getErr)
+					assert.Equal(t, other.Id, stored.PaymentSpendRuleId)
+				})
+			})
+
+			// The rule already has a config, so the upsert takes its update path rather than an insert.
+			t.Run("Given a configured rule moves onto a token another rule spends", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should refuse it and leave the other rule's row unchanged", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentSpendRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentSpendRuleX402ConfigAfterEach(suite)
+
+					other, err := repositories.NewPaymentSpendRuleRepository(suite.dbClient).Create(
+						context.Background(),
+						model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(suite.rule.PolicyId).Build(),
+					)
+					assert.NoError(t, err)
+					spentAsset := strings.ToLower(common_tests.RandomEthAddress().Hex())
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(other.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(spentAsset).
+							WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
+							Build()))
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(strings.ToLower(common_tests.RandomEthAddress().Hex())).
+							Build()))
+
+					err = suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(spentAsset).
+							Build())
+
+					assert.Error(t, err)
+					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
+					assert.NoError(t, getErr)
+					assert.Equal(t, spentAsset, stored.Asset)
+					assert.Equal(t, enums.AssetTransferMethodEip3009, *stored.AssetTransferMethod)
 				})
 			})
 		})

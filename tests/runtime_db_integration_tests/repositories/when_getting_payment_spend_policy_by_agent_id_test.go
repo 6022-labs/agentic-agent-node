@@ -94,7 +94,10 @@ func TestWhenGettingPaymentSpendPolicyByAgentId(t *testing.T) {
 
 					created, err := suite.sut.Create(
 						context.Background(),
-						model_builders.NewPaymentSpendPolicyBuilder().WithAgentId(agentId).Build(),
+						model_builders.NewPaymentSpendPolicyBuilder().
+							WithAgentId(agentId).
+							WithPayToPatterns([]string{"0xabc.*", ".*def"}).
+							Build(),
 					)
 					assert.NoError(t, err)
 
@@ -103,6 +106,7 @@ func TestWhenGettingPaymentSpendPolicyByAgentId(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Equal(t, created.Id, policy.Id)
 					assert.Equal(t, created.AgentId, policy.AgentId)
+					assert.Equal(t, []string{"0xabc.*", ".*def"}, policy.PayToPatterns)
 				})
 			})
 		})

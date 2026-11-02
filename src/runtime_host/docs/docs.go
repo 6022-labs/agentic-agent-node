@@ -1177,9 +1177,52 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "get_payment_spend_policy_failed",
+                        "description": "spend_policy_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update payment spend policy",
+                "parameters": [
+                    {
+                        "description": "payment spend policy",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdatePaymentSpendPolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendPolicyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed or update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1194,9 +1237,9 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "500": {
-                        "description": "delete_payment_spend_policy_failed",
+                        "description": "delete_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1219,9 +1262,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "list_payment_spend_rules_failed",
+                        "description": "spend_policy_failed or list_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1261,10 +1304,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
-                    "500": {
-                        "description": "create_payment_spend_rule_failed",
+                    "409": {
+                        "description": "asset_already_has_rule",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed, rule_lookup_failed or create_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1319,10 +1368,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
                     },
-                    "500": {
-                        "description": "update_payment_spend_rule_failed",
+                    "409": {
+                        "description": "asset_already_has_rule",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "rule_lookup_failed or update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -1352,9 +1407,9 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "delete_payment_spend_rule_failed",
+                        "description": "delete_failed",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/errors.InternalError"
                         }
                     }
                 }
@@ -2298,13 +2353,24 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
-                "maxAmountPerWindow": {
-                    "type": "string"
-                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.SavePaymentSpendRuleWindowRequest"
+                    }
+                }
+            }
+        },
+        "requests.SavePaymentSpendRuleWindowRequest": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
                     "type": "string"
                 },
                 "windowSeconds": {
@@ -2373,6 +2439,17 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "requests.UpdatePaymentSpendPolicyRequest": {
+            "type": "object",
+            "properties": {
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3031,6 +3108,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "updatedAt": {
                     "type": "string"
                 }
@@ -3051,9 +3134,6 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
-                "maxAmountPerWindow": {
-                    "type": "string"
-                },
                 "method": {
                     "type": "string"
                 },
@@ -3063,14 +3143,28 @@ const docTemplate = `{
                 "updatedAt": {
                     "type": "string"
                 },
-                "windowResetsAt": {
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleWindowResponse"
+                    }
+                }
+            }
+        },
+        "responses.PaymentSpendRuleWindowResponse": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
+                    "type": "string"
+                },
+                "resetsAt": {
+                    "type": "string"
+                },
+                "spent": {
                     "type": "string"
                 },
                 "windowSeconds": {
                     "type": "integer"
-                },
-                "windowSpent": {
-                    "type": "string"
                 }
             }
         },

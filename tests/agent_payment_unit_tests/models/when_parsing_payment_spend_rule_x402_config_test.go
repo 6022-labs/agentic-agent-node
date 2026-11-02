@@ -16,7 +16,7 @@ func TestWhenParsingPaymentSpendRuleX402Config(t *testing.T) {
 	t.Run("Given a marshalled config", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should round-trip every pattern array", func(t *testing.T) {
+		t.Run("Should round-trip every wire field", func(t *testing.T) {
 			t.Parallel()
 
 			original := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
@@ -32,7 +32,6 @@ func TestWhenParsingPaymentSpendRuleX402Config(t *testing.T) {
 
 			assert.Equal(t, original.Network, parsed.Network)
 			assert.Equal(t, original.Asset, parsed.Asset)
-			assert.Equal(t, original.PayToPatterns, parsed.PayToPatterns)
 			assert.Equal(t, original.AssetTransferMethod, parsed.AssetTransferMethod)
 		})
 
@@ -44,6 +43,7 @@ func TestWhenParsingPaymentSpendRuleX402Config(t *testing.T) {
 
 			assert.NotContains(t, string(raw), "spendRuleId")
 			assert.NotContains(t, string(raw), "PaymentSpendRule")
+			assert.NotContains(t, string(raw), "olicyId")
 		})
 	})
 

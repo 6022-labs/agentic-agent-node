@@ -105,7 +105,12 @@ func TestWhenDeletingPaymentSpendPolicyByAgentId(t *testing.T) {
 					assert.NoError(t, configRepository.Upsert(context.Background(),
 						model_builders.NewPaymentSpendRuleX402ConfigBuilder().
 							WithPaymentSpendRuleId(rule.Id).
+							WithPolicyId(policy.Id).
 							Build()))
+					windowRepository := repositories.NewPaymentSpendRuleWindowRepository(suite.dbClient)
+					_, err = windowRepository.Create(context.Background(),
+						model_builders.NewPaymentSpendRuleWindowBuilder().WithPaymentSpendRuleId(rule.Id).Build())
+					assert.NoError(t, err)
 
 					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))
 
@@ -117,10 +122,14 @@ func TestWhenDeletingPaymentSpendPolicyByAgentId(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Empty(t, rules)
 
-					// The config row rides the rule delete via the DB cascade.
+					// The config and window rows ride the rule delete via the DB cascade.
 					config, err := configRepository.GetByRuleId(context.Background(), rule.Id)
 					assert.NoError(t, err)
 					assert.Nil(t, config)
+
+					windows, err := windowRepository.ListByRuleId(context.Background(), rule.Id)
+					assert.NoError(t, err)
+					assert.Empty(t, windows)
 				})
 			})
 		})

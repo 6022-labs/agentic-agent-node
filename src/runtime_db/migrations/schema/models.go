@@ -30,5 +30,6 @@ func Models() []any {
 		&paymentSpendPolicyWithCrossDomainFK{},
 		&agent_payment_models.PaymentSpendRule{},
 		&agent_payment_models.PaymentSpendRuleX402Config{},
+		&agent_payment_models.PaymentSpendRuleWindow{},
 	}
 }

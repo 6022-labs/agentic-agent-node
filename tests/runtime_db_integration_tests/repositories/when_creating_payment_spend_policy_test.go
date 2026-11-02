@@ -89,6 +89,33 @@ func TestWhenCreatingPaymentSpendPolicy(t *testing.T) {
 					assert.Equal(t, created.AgentId, stored.AgentId)
 				})
 			})
+
+			t.Run("Given a policy without payees", func(t *testing.T) {
+				t.Parallel()
+
+				// A nil list would serialize as null, which the not-null column refuses.
+				t.Run("Should store an empty payee list", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingPaymentSpendPolicyBeforeEach(tc)
+					defer WhenCreatingPaymentSpendPolicyAfterEach(suite)
+
+					agentId := uuid.New()
+					seeds.SeedAgent(suite.dbClient, agentId)
+
+					created, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentSpendPolicyBuilder().
+							WithAgentId(agentId).
+							WithPayToPatterns(nil).
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					stored, err := suite.sut.GetByAgentId(context.Background(), created.AgentId)
+					assert.NoError(t, err)
+					assert.Equal(t, []string{}, stored.PayToPatterns)
+				})
+			})
 		})
 	}
 }

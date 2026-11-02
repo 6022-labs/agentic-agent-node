@@ -14,160 +14,165 @@ import (
 func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 	t.Parallel()
 
-	generateSavePaymentSpendRuleRequest := func() *requests.SavePaymentSpendRuleRequest {
+	generateSavePaymentSpendRuleRequest := func(maxAmountPerPayment string) *requests.SavePaymentSpendRuleRequest {
 		return &requests.SavePaymentSpendRuleRequest{
-			Name:                "  Anything, unbounded  ",
-			MaxAmountPerPayment: "10000",
-			Config:              json.RawMessage(`{"network":"eip155:8453"}`),
+			Name:                "  Test token  ",
+			MaxAmountPerPayment: &maxAmountPerPayment,
+			Windows: []requests.SavePaymentSpendRuleWindowRequest{
+				{WindowSeconds: 86400, MaxAmount: "50000"},
+			},
+			Config: json.RawMessage(`{"network":"eip155:8453"}`),
 		}
 	}
 
-	t.Run("Given the request is valid", func(t *testing.T) {
+	t.Run("Given the name is empty", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should trim the name and default the method to x402", func(t *testing.T) {
+		t.Run("Should return a validation error on the name field", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			err := request.ValidateAndSanitize()
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Name = "   "
 
-			assert.NoError(t, err)
-			assert.Equal(t, "Anything, unbounded", request.Name)
-			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
 		})
 	})
 
-	t.Run("Given an explicit supported method", func(t *testing.T) {
+	t.Run("Given the name is longer than 64 characters", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should normalize it", func(t *testing.T) {
+		t.Run("Should return a validation error on the name field", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.Method = " X402 "
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Name = strings.Repeat("a", 65)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "name", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the per-payment cap is blank", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should treat it as no cap", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("  ")
 
 			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
+			assert.Nil(t, request.MaxAmountPerPayment)
 		})
 	})
 
-	t.Run("Given a period with a budget that covers the per-payment cap", func(t *testing.T) {
+	t.Run("Given the per-payment cap is negative", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should accept both bounds", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-			request.WindowSeconds = 86400
-			request.MaxAmountPerWindow = "  50000  "
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, "50000", request.MaxAmountPerWindow)
-			assert.Equal(t, 86400, request.WindowSeconds)
-		})
-	})
-
-	t.Run("Given no period at all", func(t *testing.T) {
-		t.Parallel()
-
-		// The column is NOT NULL, so an absent budget still has to reach the row as "0".
-		t.Run("Should default the budget to the deny value", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, "0", request.MaxAmountPerWindow)
-		})
-	})
-
-	t.Run("Given a budget with no period to spend it over", func(t *testing.T) {
-		t.Parallel()
-
-		// Accepting it would silently drop the bound the owner asked for.
-		t.Run("Should return a validation error on the budget field", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerWindow = "50000"
-
-			err := request.ValidateAndSanitize()
-
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "maxAmountPerWindow", validationError.Field)
-		})
-	})
-
-	t.Run("Given a period with no budget", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on the budget field", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-			request.WindowSeconds = 86400
-
-			err := request.ValidateAndSanitize()
-
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "maxAmountPerWindow", validationError.Field)
-		})
-	})
-
-	t.Run("Given a negative period", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on the period field", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-			request.WindowSeconds = -1
-
-			err := request.ValidateAndSanitize()
-
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "windowSeconds", validationError.Field)
-		})
-	})
-
-	t.Run("Given a per-payment cap above the period budget", func(t *testing.T) {
-		t.Parallel()
-
-		// No payment could ever fit the period, so the rule would deny everything it matches.
 		t.Run("Should return a validation error on the per-payment field", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerPayment = "10000"
-			request.WindowSeconds = 86400
-			request.MaxAmountPerWindow = "9999"
+			request := generateSavePaymentSpendRuleRequest("-1")
 
-			err := request.ValidateAndSanitize()
-
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "maxAmountPerPayment", validationError.Field)
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "maxAmountPerPayment", validationErr.Field)
 		})
 	})
 
-	t.Run("Given a period budget that is not a usable amount", func(t *testing.T) {
+	t.Run("Given the per-payment cap is not an integer", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error on the budget field", func(t *testing.T) {
+		t.Run("Should return a validation error on the per-payment field", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.WindowSeconds = 86400
-			request.MaxAmountPerWindow = "-1"
+			request := generateSavePaymentSpendRuleRequest("1.5")
 
-			err := request.ValidateAndSanitize()
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "maxAmountPerPayment", validationErr.Field)
+		})
+	})
 
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "maxAmountPerWindow", validationError.Field)
+	t.Run("Given the per-payment cap is above the largest uint256", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on the per-payment field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest(
+				"115792089237316195423570985008687907853269984665640564039457584007913129639936",
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "maxAmountPerPayment", validationErr.Field)
+		})
+	})
+
+	t.Run("Given neither a per-payment cap nor a window", func(t *testing.T) {
+		t.Parallel()
+
+		// Nothing is unlimited: a rule with no bound at all would let the agent pay anything.
+		t.Run("Should return a validation error on the windows field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("")
+			request.Windows = nil
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "windows", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a window is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return the window's validation error", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Windows = append(request.Windows, requests.SavePaymentSpendRuleWindowRequest{MaxAmount: "1"})
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "windows[1].windowSeconds", validationErr.Field)
+		})
+	})
+
+	t.Run("Given two windows share a period", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on the windows field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Windows = append(
+				request.Windows,
+				requests.SavePaymentSpendRuleWindowRequest{WindowSeconds: 86400, MaxAmount: "60000"},
+			)
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "windows", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a per-payment cap above a window budget", func(t *testing.T) {
+		t.Parallel()
+
+		// No single payment could ever fit, so the cap would be dead config.
+		t.Run("Should return a validation error on the per-payment field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("50001")
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "maxAmountPerPayment", validationErr.Field)
 		})
 	})
 
@@ -177,91 +182,89 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		t.Run("Should return a validation error on the method field", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
+			request := generateSavePaymentSpendRuleRequest("10000")
 			request.Method = "lightning"
 
-			err := request.ValidateAndSanitize()
-
-			assert.Error(t, err)
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "method", validationErr.Field)
 		})
 	})
 
-	t.Run("Given the name is empty", func(t *testing.T) {
+	t.Run("Given an explicit supported method", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should normalize it", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.Name = "   "
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Method = " X402 "
 
-			assert.Error(t, request.ValidateAndSanitize())
+			assert.NoError(t, request.ValidateAndSanitize())
+			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
 		})
 	})
 
-	t.Run("Given the name is longer than 64 characters", func(t *testing.T) {
+	t.Run("Given a per-payment cap equal to a window budget", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest()
-			request.Name = strings.Repeat("a", 65)
-
-			assert.Error(t, request.ValidateAndSanitize())
-		})
-	})
-
-	t.Run("Given the max amount is zero", func(t *testing.T) {
-		t.Parallel()
-
-		// "0" is the deny idiom, not an invalid cap.
 		t.Run("Should accept it", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerPayment = "0"
+			request := generateSavePaymentSpendRuleRequest("50000")
 
 			assert.NoError(t, request.ValidateAndSanitize())
 		})
 	})
 
-	t.Run("Given the max amount is negative", func(t *testing.T) {
+	t.Run("Given a per-payment cap and no window", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error on the max amount field", func(t *testing.T) {
+		t.Run("Should accept it", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerPayment = "-1"
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Windows = nil
 
-			assert.Error(t, request.ValidateAndSanitize())
+			assert.NoError(t, request.ValidateAndSanitize())
 		})
 	})
 
-	t.Run("Given the max amount is not an integer", func(t *testing.T) {
+	t.Run("Given a zero per-payment cap", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		// "0" is the deny value, so it must survive validation rather than be read as blank.
+		t.Run("Should keep it as a cap", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerPayment = "1.5"
+			request := generateSavePaymentSpendRuleRequest("0")
 
-			assert.Error(t, request.ValidateAndSanitize())
+			assert.NoError(t, request.ValidateAndSanitize())
+			if assert.NotNil(t, request.MaxAmountPerPayment) {
+				assert.Equal(t, "0", *request.MaxAmountPerPayment)
+			}
 		})
 	})
 
-	t.Run("Given the max amount is blank", func(t *testing.T) {
+	t.Run("Given the request is valid", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error", func(t *testing.T) {
+		t.Run("Should trim the name", func(t *testing.T) {
 			t.Parallel()
 
-			request := generateSavePaymentSpendRuleRequest()
-			request.MaxAmountPerPayment = "  "
+			request := generateSavePaymentSpendRuleRequest("10000")
 
-			assert.Error(t, request.ValidateAndSanitize())
+			assert.NoError(t, request.ValidateAndSanitize())
+			assert.Equal(t, "Test token", request.Name)
+		})
+
+		t.Run("Should default the method to x402", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("10000")
+
+			assert.NoError(t, request.ValidateAndSanitize())
+			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
 		})
 	})
 }

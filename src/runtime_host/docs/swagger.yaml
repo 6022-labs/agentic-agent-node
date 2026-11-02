@@ -213,11 +213,18 @@ definitions:
         type: object
       maxAmountPerPayment:
         type: string
-      maxAmountPerWindow:
-        type: string
       method:
         type: string
       name:
+        type: string
+      windows:
+        items:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleWindowRequest'
+        type: array
+    type: object
+  requests.SavePaymentSpendRuleWindowRequest:
+    properties:
+      maxAmount:
         type: string
       windowSeconds:
         type: integer
@@ -262,6 +269,13 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  requests.UpdatePaymentSpendPolicyRequest:
+    properties:
+      payToPatterns:
+        items:
+          type: string
+        type: array
     type: object
   requests.UpdateSelfToolRequest:
     properties:
@@ -689,6 +703,10 @@ definitions:
         type: string
       id:
         type: string
+      payToPatterns:
+        items:
+          type: string
+        type: array
       updatedAt:
         type: string
     type: object
@@ -702,20 +720,27 @@ definitions:
         type: string
       maxAmountPerPayment:
         type: string
-      maxAmountPerWindow:
-        type: string
       method:
         type: string
       name:
         type: string
       updatedAt:
         type: string
-      windowResetsAt:
+      windows:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleWindowResponse'
+        type: array
+    type: object
+  responses.PaymentSpendRuleWindowResponse:
+    properties:
+      maxAmount:
+        type: string
+      resetsAt:
+        type: string
+      spent:
         type: string
       windowSeconds:
         type: integer
-      windowSpent:
-        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -1554,9 +1579,9 @@ paths:
         "204":
           description: No Content
         "500":
-          description: delete_payment_spend_policy_failed
+          description: delete_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal delete payment spend policy
       tags:
       - Internal
@@ -1569,10 +1594,38 @@ paths:
           schema:
             $ref: '#/definitions/responses.PaymentSpendPolicyResponse'
         "500":
-          description: get_payment_spend_policy_failed
+          description: spend_policy_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal get payment spend policy
+      tags:
+      - Internal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: payment spend policy
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdatePaymentSpendPolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendPolicyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "500":
+          description: spend_policy_failed or update_failed
+          schema:
+            $ref: '#/definitions/errors.InternalError'
+      summary: Internal update payment spend policy
       tags:
       - Internal
   /internal/config/payment-spend-policy/rules:
@@ -1585,9 +1638,9 @@ paths:
           schema:
             $ref: '#/definitions/responses.ListPaymentSpendRulesResponse'
         "500":
-          description: list_payment_spend_rules_failed
+          description: spend_policy_failed or list_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal list payment spend rules
       tags:
       - Internal
@@ -1612,10 +1665,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
-        "500":
-          description: create_payment_spend_rule_failed
+        "409":
+          description: asset_already_has_rule
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.ConflictError'
+        "500":
+          description: spend_policy_failed, rule_lookup_failed or create_failed
+          schema:
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal create payment spend rule
       tags:
       - Internal
@@ -1635,9 +1692,9 @@ paths:
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "500":
-          description: delete_payment_spend_rule_failed
+          description: delete_failed
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal delete payment spend rule
       tags:
       - Internal
@@ -1671,10 +1728,14 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
-        "500":
-          description: update_payment_spend_rule_failed
+        "409":
+          description: asset_already_has_rule
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.ConflictError'
+        "500":
+          description: rule_lookup_failed or update_failed
+          schema:
+            $ref: '#/definitions/errors.InternalError'
       summary: Internal update payment spend rule
       tags:
       - Internal

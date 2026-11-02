@@ -11,6 +11,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
+	"github.com/google/uuid"
 )
 
 type CreatePaymentSpendRule struct {
@@ -20,13 +22,17 @@ type CreatePaymentSpendRule struct {
 func NewCreatePaymentSpendRule(
 	paymentSpendPolicyProvider payment_interfaces.PaymentSpendPolicyProviderInterface,
 	paymentSpendRuleRepository repositories.PaymentSpendRuleRepositoryInterface,
+	paymentSpendRuleWindowRepository repositories.PaymentSpendRuleWindowRepositoryInterface,
 	paymentSpendMethodStrategies payment_interfaces.PaymentSpendMethodStrategiesInterface,
+	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *CreatePaymentSpendRule {
 	return &CreatePaymentSpendRule{
 		AbstractPaymentSpendUseCase: NewAbstractPaymentSpendUseCase(
 			paymentSpendPolicyProvider,
 			paymentSpendRuleRepository,
+			paymentSpendRuleWindowRepository,
 			paymentSpendMethodStrategies,
+			unitOfWorkFactory,
 		),
 	}
 }
@@ -50,29 +56,45 @@ func (u *CreatePaymentSpendRule) Execute(
 	if err != nil {
 		return nil, err
 	}
+	if _, err := u.claimAsset(ctx, strategy, policy.Id, uuid.Nil, request.Config); err != nil {
+		return nil, err
+	}
 
-	rule, err := u.paymentSpendRuleRepository.Create(ctx, u.toPaymentSpendRule(policy, request))
+	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
-	// Persist the matcher after the rule (it needs the rule id).
-	if err := strategy.SaveConfig(ctx, rule.Id, request.Config); err != nil {
-		_ = u.paymentSpendRuleRepository.DeleteById(ctx, rule.Id)
-		return nil, errors.NewInternalError("create_failed", err.Error())
-	}
-	return responses.ToPaymentSpendRuleResponse(rule, request.Config, time.Now()), nil
-}
+	defer func() { _ = unitOfWork.Rollback() }()
 
-func (u *CreatePaymentSpendRule) toPaymentSpendRule(
-	policy *models.PaymentSpendPolicy,
-	request *requests.SavePaymentSpendRuleRequest,
-) *models.PaymentSpendRule {
-	return &models.PaymentSpendRule{
+	rule, err := u.paymentSpendRuleRepository.Create(unitOfWork.Context(), &models.PaymentSpendRule{
 		PolicyId:            policy.Id,
 		Name:                request.Name,
-		MaxAmountPerPayment: request.MaxAmountPerPayment,
-		WindowSeconds:       request.WindowSeconds,
-		MaxAmountPerWindow:  request.MaxAmountPerWindow,
 		Method:              enums.PaymentMethod(request.Method),
+		MaxAmountPerPayment: request.MaxAmountPerPayment,
+	})
+	if err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
+	if err := strategy.SaveConfig(unitOfWork.Context(), policy.Id, rule.Id, request.Config); err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
+	}
+
+	windows := make([]models.PaymentSpendRuleWindow, 0, len(request.Windows))
+	for i := range request.Windows {
+		window, err := u.paymentSpendRuleWindowRepository.Create(unitOfWork.Context(), &models.PaymentSpendRuleWindow{
+			PaymentSpendRuleId: rule.Id,
+			WindowSeconds:      request.Windows[i].WindowSeconds,
+			MaxAmount:          request.Windows[i].MaxAmount,
+			Spent:              "0",
+		})
+		if err != nil {
+			return nil, errors.NewInternalError("create_failed", err.Error())
+		}
+		windows = append(windows, *window)
+	}
+
+	if err := unitOfWork.Commit(); err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
+	}
+	return responses.ToPaymentSpendRuleResponse(rule, windows, request.Config, time.Now()), nil
 }

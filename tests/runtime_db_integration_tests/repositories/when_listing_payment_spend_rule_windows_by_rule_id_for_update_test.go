@@ -21,20 +21,18 @@ import (
 	"go.uber.org/zap"
 )
 
-const listingForUpdateWindowSeconds = 24 * 60 * 60
-
-type WhenListingPaymentSpendRulesByPolicyIdForUpdateTestingSuite struct {
+type WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateTestingSuite struct {
 	dbName                   string
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
-	sut                      *repositories.PaymentSpendRuleRepository
+	sut                      *repositories.PaymentSpendRuleWindowRepository
 	unitOfWorkFactory        *runtime_db_services.UnitOfWorkFactory
-	policy                   *models.PaymentSpendPolicy
+	rule                     *models.PaymentSpendRule
 }
 
-func WhenListingPaymentSpendRulesByPolicyIdForUpdateBeforeEach(
+func WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateBeforeEach(
 	tc *common_tests.DatabaseTestCase,
-) *WhenListingPaymentSpendRulesByPolicyIdForUpdateTestingSuite {
+) *WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateTestingSuite {
 	databaseContainerBuilder := tc.ClientBuilderFn()
 	dbName, connectionString := databaseContainerBuilder.Create()
 
@@ -63,25 +61,30 @@ func WhenListingPaymentSpendRulesByPolicyIdForUpdateBeforeEach(
 	if err != nil {
 		panic(err)
 	}
+	rule, err := repositories.NewPaymentSpendRuleRepository(dbClient).Create(
+		context.Background(), model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build())
+	if err != nil {
+		panic(err)
+	}
 
-	return &WhenListingPaymentSpendRulesByPolicyIdForUpdateTestingSuite{
+	return &WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateTestingSuite{
 		dbName:                   dbName,
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
-		sut:                      repositories.NewPaymentSpendRuleRepository(dbClient),
+		sut:                      repositories.NewPaymentSpendRuleWindowRepository(dbClient),
 		unitOfWorkFactory:        runtime_db_services.NewUnitOfWorkFactory(dbClient),
-		policy:                   policy,
+		rule:                     rule,
 	}
 }
 
-func WhenListingPaymentSpendRulesByPolicyIdForUpdateAfterEach(
-	suite *WhenListingPaymentSpendRulesByPolicyIdForUpdateTestingSuite,
+func WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateAfterEach(
+	suite *WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateTestingSuite,
 ) {
 	_ = suite.dbClient.Close()
 	suite.databaseContainerBuilder.DropDatabase(suite.dbName)
 }
 
-func TestWhenListingPaymentSpendRulesByPolicyIdForUpdate(t *testing.T) {
+func TestWhenListingPaymentSpendRuleWindowsByRuleIdForUpdate(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range common_tests.DatabaseTestCases() {
@@ -94,15 +97,14 @@ func TestWhenListingPaymentSpendRulesByPolicyIdForUpdate(t *testing.T) {
 				// The locked read is what stops both readers seeing the same empty period.
 				t.Run("Should let through only what the budget funds", func(t *testing.T) {
 					t.Parallel()
-					suite := WhenListingPaymentSpendRulesByPolicyIdForUpdateBeforeEach(tc)
-					defer WhenListingPaymentSpendRulesByPolicyIdForUpdateAfterEach(suite)
+					suite := WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateBeforeEach(tc)
+					defer WhenListingPaymentSpendRuleWindowsByRuleIdForUpdateAfterEach(suite)
 
-					budgeted := model_builders.NewPaymentSpendRuleBuilder().
-						WithPolicyId(suite.policy.Id).
-						WithWindowSeconds(listingForUpdateWindowSeconds).
-						WithMaxAmountPerWindow("300").
-						Build()
-					_, err := suite.sut.Create(context.Background(), budgeted)
+					budgeted, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentSpendRuleWindowBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithMaxAmount("300").
+							Build())
 					assert.NoError(t, err)
 
 					const racers = 8
@@ -117,10 +119,10 @@ func TestWhenListingPaymentSpendRulesByPolicyIdForUpdate(t *testing.T) {
 							assert.NoError(t, err)
 							defer func() { _ = unitOfWork.Rollback() }()
 
-							locked, err := suite.sut.ListByPolicyIdForUpdate(unitOfWork.Context(), suite.policy.Id)
+							locked, err := suite.sut.ListByRuleIdForUpdate(unitOfWork.Context(), suite.rule.Id)
 							assert.NoError(t, err)
 
-							recorded, err := locked[0].RecordWindowSpend(big.NewInt(100), time.Now())
+							recorded, err := locked[0].RecordSpend(big.NewInt(100), time.Now())
 							assert.NoError(t, err)
 							if !recorded {
 								return
@@ -142,9 +144,12 @@ func TestWhenListingPaymentSpendRulesByPolicyIdForUpdate(t *testing.T) {
 
 					assert.Equal(t, 3, granted, "a budget of 300 must fund exactly three payments of 100")
 
-					stored, err := suite.sut.GetById(context.Background(), budgeted.Id)
+					stored, err := suite.sut.ListByRuleId(context.Background(), suite.rule.Id)
 					assert.NoError(t, err)
-					assert.Equal(t, "300", stored.WindowSpent)
+					if assert.Len(t, stored, 1) {
+						assert.Equal(t, budgeted.Id, stored[0].Id)
+						assert.Equal(t, "300", stored[0].Spent)
+					}
 				})
 			})
 		})

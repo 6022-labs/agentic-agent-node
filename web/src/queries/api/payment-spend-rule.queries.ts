@@ -8,20 +8,21 @@ import {
   type PaymentSpendRuleWire,
 } from "@/models/payment-spend-policy"
 
-// toWire nests the flat view model's matcher into the method-specific config
+// toWire nests the flat view model's token into the method-specific config
 // blob the gateway expects.
 const toWire = (rule: PaymentSpendRule): PaymentSpendRuleWire => ({
   id: rule.id,
   name: rule.name,
   maxAmountPerPayment: rule.maxAmountPerPayment,
-  windowSeconds: rule.windowSeconds,
-  maxAmountPerWindow: rule.maxAmountPerWindow,
+  windows: rule.windows.map(({ windowSeconds, maxAmount }) => ({
+    windowSeconds,
+    maxAmount,
+  })),
   method: rule.method || X402_METHOD,
   config: {
     network: rule.network,
     asset: rule.asset,
     assetTransferMethod: rule.assetTransferMethod || undefined,
-    payToPatterns: rule.payToPatterns,
   },
 })
 
@@ -30,18 +31,14 @@ const fromWire = (wire: PaymentSpendRuleWire): PaymentSpendRule => ({
   id: wire.id,
   name: wire.name,
   maxAmountPerPayment: wire.maxAmountPerPayment,
-  windowSeconds: wire.windowSeconds ?? 0,
-  maxAmountPerWindow: wire.maxAmountPerWindow ?? "0",
-  windowSpent: wire.windowSpent ?? "0",
-  windowResetsAt: wire.windowResetsAt,
+  windows: wire.windows ?? [],
   method: wire.method,
   network: wire.config?.network ?? "",
   asset: wire.config?.asset ?? "",
   assetTransferMethod: wire.config?.assetTransferMethod,
-  payToPatterns: wire.config?.payToPatterns ?? [],
 })
 
-// GET /config/payment-spend-policy/rules — the spend rules in table order.
+// GET /config/payment-spend-policy/rules — the spend rules, oldest first.
 export const listPaymentSpendRules =
   async (): Promise<ListPaymentSpendRulesResponse> => {
     const response = await axios.get<ListPaymentSpendRulesResponseWire>(
@@ -50,7 +47,7 @@ export const listPaymentSpendRules =
     return { rules: (response.data.rules ?? []).map(fromWire) }
   }
 
-// POST /config/payment-spend-policy/rules — appends a rule.
+// POST /config/payment-spend-policy/rules — adds the rule for one token; 409 if it has one.
 export const createPaymentSpendRule = async (rule: PaymentSpendRule) => {
   return await axios.post<PaymentSpendRuleWire>(
     "/config/payment-spend-policy/rules",
@@ -58,7 +55,7 @@ export const createPaymentSpendRule = async (rule: PaymentSpendRule) => {
   )
 }
 
-// PUT /config/payment-spend-policy/rules/:id — replaces a rule's fields.
+// PUT /config/payment-spend-policy/rules/:id — replaces a rule; kept windows keep their spend.
 export const updatePaymentSpendRule = async (
   id: string,
   rule: PaymentSpendRule

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
@@ -18,19 +19,23 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/v2"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 
-const (
-	signingNetwork = "eip155:80002"
-	signingAsset   = "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"
-	signingPayTo   = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+const signingNetwork = "eip155:80002"
+
+var (
+	signingAsset = common_tests.RandomEthAddress().Hex()
+	signingPayTo = common_tests.RandomEthAddress().Hex()
 )
 
 type WhenSigningX402PaymentTestingSuite struct {
@@ -54,26 +59,13 @@ func WhenSigningX402PaymentBeforeEach(t *testing.T) *WhenSigningX402PaymentTesti
 	mockPermit2ApprovalEnsurer := interfaces_mocks.NewMockPermit2ApprovalEnsurerInterface(mockController)
 	mockSpendPolicyEvaluator := interfaces_mocks.NewMockX402PaymentSpendPolicyEvaluatorInterface(mockController)
 
-	mockTypedDataSigner.EXPECT().WalletAddress(gomock.Any()).Return(walletAddress, nil).AnyTimes()
-	// Sign the real digest so the gateway verifier can be pointed at the result.
-	mockTypedDataSigner.EXPECT().
-		SignDigest(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, digest []byte) ([]byte, error) {
-			signature, err := crypto.Sign(digest, walletKey)
-			if err != nil {
-				return nil, err
-			}
-			signature[crypto.RecoveryIDOffset] += 27
-			return signature, nil
-		}).
-		AnyTimes()
-
 	suite := &WhenSigningX402PaymentTestingSuite{
 		sut: services.NewX402PaymentSigner(
 			mockTypedDataSigner,
 			mockPermit2ApprovalEnsurer,
 			mockSpendPolicyEvaluator,
 			newSpendSettings(),
+			zap.NewNop(),
 		),
 		mockTypedDataSigner:        mockTypedDataSigner,
 		mockPermit2ApprovalEnsurer: mockPermit2ApprovalEnsurer,
@@ -83,6 +75,30 @@ func WhenSigningX402PaymentBeforeEach(t *testing.T) *WhenSigningX402PaymentTesti
 	}
 
 	return suite
+}
+
+// expectWalletSigning lets the wallet sign the real digest, so the gateway verifier can be pointed at the result.
+func (s *WhenSigningX402PaymentTestingSuite) expectWalletSigning() {
+	s.mockTypedDataSigner.EXPECT().WalletAddress(gomock.Any()).Return(s.walletAddress, nil).AnyTimes()
+	s.mockTypedDataSigner.EXPECT().
+		SignDigest(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, digest []byte) ([]byte, error) {
+			signature, err := crypto.Sign(digest, s.walletKey)
+			if err != nil {
+				return nil, err
+			}
+			signature[crypto.RecoveryIDOffset] += 27
+			return signature, nil
+		}).
+		AnyTimes()
+}
+
+func signingReservation() *payment_interfaces.X402PaymentSpendReservation {
+	return &payment_interfaces.X402PaymentSpendReservation{
+		RuleId:       uuid.New(),
+		Amount:       big.NewInt(10000),
+		WindowStarts: map[uuid.UUID]time.Time{uuid.New(): time.Now().Truncate(time.Second)},
+	}
 }
 
 // newSpendSettings builds the settings through koanf the way the app parses them.
@@ -96,7 +112,6 @@ func newSpendSettings() *payment_settings.PaymentSpendSettings {
 	return payment_settings.NewPaymentSpendSettings(zap.NewNop(), k)
 }
 
-// decodePaymentPayload unwraps the base64 header the signer produced.
 func (s *WhenSigningX402PaymentTestingSuite) decodePaymentPayload(t *testing.T, header string) *x402.PaymentPayload {
 	t.Helper()
 
@@ -113,14 +128,344 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 	ctx := context.Background()
 
+	t.Run("Given the network is not eip155", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on network", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			quote := eip3009SigningQuote()
+			quote.Network = "base"
+
+			signed, err := suite.sut.Sign(ctx, quote)
+
+			assert.Nil(t, signed)
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "network", validationError.Field)
+		})
+	})
+
+	t.Run("Given the amount is negative", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on amount", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			quote := eip3009SigningQuote()
+			quote.Amount = "-1"
+
+			signed, err := suite.sut.Sign(ctx, quote)
+
+			assert.Nil(t, signed)
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "amount", validationError.Field)
+		})
+	})
+
+	t.Run("Given the amount is not a number", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on amount", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			quote := eip3009SigningQuote()
+			quote.Amount = "ten"
+
+			signed, err := suite.sut.Sign(ctx, quote)
+
+			assert.Nil(t, signed)
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "amount", validationError.Field)
+		})
+	})
+
+	t.Run("Given an unsupported transfer method", func(t *testing.T) {
+		t.Parallel()
+
+		// No spend expectation: a malformed quote must be rejected before the gate, or it burns budget.
+		t.Run("Should refuse to sign without consulting the spend policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: "swap",
+			})
+
+			assert.Nil(t, signed)
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "assetTransferMethod", validationError.Field)
+		})
+	})
+
+	t.Run("Given evaluating the spend policy fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(ctx, gomock.Any(), big.NewInt(10000)).
+				Return(nil, apperrors.NewInternalError("spend_policy_failed", "db down")).
+				Times(1)
+		}
+
+		// No Release expectation: nothing was recorded, so nothing is given back.
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			signed, err := suite.sut.Sign(ctx, eip3009SigningQuote())
+
+			assert.Nil(t, signed)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given the spend policy refuses the quote", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				Times(1)
+		}
+
+		t.Run("Should return the refusal instead of a signature", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodEip3009,
+				Eip712Name:          "USDC",
+				Eip712Version:       "2",
+			})
+
+			assert.Nil(t, signed)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+		})
+
+		// The gate runs before EnsureApproval so a refusal never costs gas.
+		t.Run("Should not grant permit2 an allowance", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+
+			assert.Nil(t, signed)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_refused", unauthorizedError.Code)
+		})
+	})
+
+	t.Run("Given the wallet address is unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		reservation := signingReservation()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(reservation, nil).
+				Times(1)
+			suite.mockTypedDataSigner.EXPECT().
+				WalletAddress(ctx).
+				Return(common.Address{}, errors.New("node wallet not bootstrapped")).
+				Times(1)
+		}
+
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			signed, err := suite.sut.Sign(ctx, eip3009SigningQuote())
+
+			assert.Nil(t, signed)
+			assert.EqualError(t, err, "node wallet not bootstrapped")
+		})
+
+		t.Run("Should give the spend back", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			_, _ = suite.sut.Sign(ctx, eip3009SigningQuote())
+		})
+	})
+
+	t.Run("Given the permit2 approval fails", func(t *testing.T) {
+		t.Parallel()
+
+		reservation := signingReservation()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(reservation, nil).
+				Times(1)
+			suite.expectWalletSigning()
+			suite.mockPermit2ApprovalEnsurer.EXPECT().
+				EnsureApproval(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(errors.New("insufficient gas")).
+				Times(1)
+		}
+
+		t.Run("Should fail rather than return a signature that can never settle", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+
+			assert.Nil(t, signed)
+			assert.ErrorContains(t, err, "permit2 approval")
+		})
+
+		t.Run("Should give the spend back", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			_, _ = suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+		})
+	})
+
+	t.Run("Given signing the digest fails", func(t *testing.T) {
+		t.Parallel()
+
+		reservation := signingReservation()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(reservation, nil).
+				Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(suite.walletAddress, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().
+				SignDigest(ctx, gomock.Any()).
+				Return(nil, errors.New("vault sealed")).
+				Times(1)
+		}
+
+		t.Run("Should return the error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			signed, err := suite.sut.Sign(ctx, eip3009SigningQuote())
+
+			assert.Nil(t, signed)
+			assert.EqualError(t, err, "vault sealed")
+		})
+
+		t.Run("Should give the spend back", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+			suite.mockSpendPolicyEvaluator.EXPECT().Release(gomock.Any(), reservation).Return(nil).Times(1)
+
+			_, _ = suite.sut.Sign(ctx, eip3009SigningQuote())
+		})
+	})
+
+	t.Run("Given giving the spend back fails too", func(t *testing.T) {
+		t.Parallel()
+
+		reservation := signingReservation()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(reservation, nil).
+				Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(suite.walletAddress, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().
+				SignDigest(ctx, gomock.Any()).
+				Return(nil, errors.New("vault sealed")).
+				Times(1)
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Release(gomock.Any(), reservation).
+				Return(apperrors.NewInternalError("spend_policy_failed", "")).
+				Times(1)
+		}
+
+		// The signing failure is what the caller acts on; the failed refund is only logged.
+		t.Run("Should return the signing error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			signed, err := suite.sut.Sign(ctx, eip3009SigningQuote())
+
+			assert.Nil(t, signed)
+			assert.EqualError(t, err, "vault sealed")
+		})
+	})
+
 	t.Run("Given an eip3009 quote", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(true, nil).
+				Return(signingReservation(), nil).
 				Times(1)
+			suite.expectWalletSigning()
 		}
 
 		t.Run("Should build an authorization bound to the payee and a bounded validity window", func(t *testing.T) {
@@ -169,8 +514,9 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(true, nil).
+				Return(signingReservation(), nil).
 				Times(2)
+			suite.expectWalletSigning()
 		}
 
 		t.Run("Should draw a fresh nonce every time", func(t *testing.T) {
@@ -206,8 +552,9 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(true, nil).
+				Return(signingReservation(), nil).
 				Times(1)
+			suite.expectWalletSigning()
 			suite.mockPermit2ApprovalEnsurer.EXPECT().
 				EnsureApproval(ctx, signingNetwork, signingAsset, big.NewInt(10000)).
 				Return(nil).
@@ -247,8 +594,9 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(true, nil).
+				Return(signingReservation(), nil).
 				Times(1)
+			suite.expectWalletSigning()
 		}
 
 		t.Run("Should skip the approval", func(t *testing.T) {
@@ -271,74 +619,19 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 	})
 
-	t.Run("Given the permit2 approval fails", func(t *testing.T) {
+	// A payment the signer produced must recover to the same wallet the verifier checks against.
+	t.Run("Given an eip3009 payment signed by the agent wallet", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(true, nil).
+				Return(signingReservation(), nil).
 				Times(1)
-			suite.mockPermit2ApprovalEnsurer.EXPECT().
-				EnsureApproval(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(errors.New("insufficient gas")).
-				Times(1)
+			suite.expectWalletSigning()
 		}
 
-		t.Run("Should fail rather than return a signature that can never settle", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningX402PaymentBeforeEach(t)
-			initSuite(suite)
-
-			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
-				Network:             signingNetwork,
-				Asset:               signingAsset,
-				PayTo:               signingPayTo,
-				Amount:              "10000",
-				AssetTransferMethod: enums.AssetTransferMethodPermit2,
-			})
-
-			assert.Nil(t, signed)
-			assert.ErrorContains(t, err, "permit2 approval")
-		})
-	})
-
-	t.Run("Given an unsupported transfer method", func(t *testing.T) {
-		t.Parallel()
-
-		// No spend expectation: a malformed quote must be rejected before the gate, or it burns budget.
-		t.Run("Should refuse to sign without consulting the spend policy", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningX402PaymentBeforeEach(t)
-
-			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
-				Network:             signingNetwork,
-				Asset:               signingAsset,
-				PayTo:               signingPayTo,
-				Amount:              "10000",
-				AssetTransferMethod: "swap",
-			})
-
-			assert.Nil(t, signed)
-			var validationError *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationError)
-			assert.Equal(t, "assetTransferMethod", validationError.Field)
-		})
-	})
-
-	t.Run("Given the spend policy refuses the quote", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
-			suite.mockSpendPolicyEvaluator.EXPECT().
-				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(false, nil).
-				Times(1)
-		}
-
-		t.Run("Should return the refusal instead of a signature", func(t *testing.T) {
+		t.Run("Should recover as that same wallet", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
@@ -353,29 +646,76 @@ func TestWhenSigningX402Payment(t *testing.T) {
 				Eip712Name:          "USDC",
 				Eip712Version:       "2",
 			})
+			assert.NoError(t, err)
 
-			assert.Nil(t, signed)
-			var unauthorizedError *apperrors.UnauthorizedError
-			assert.ErrorAs(t, err, &unauthorizedError)
+			payer, err := services.NewX402PaymentVerifier().RecoverPayer(
+				suite.decodePaymentPayload(t, signed.PaymentSignature),
+				&models.PaymentReceiveRuleX402Config{
+					Network:             signingNetwork,
+					Asset:               signingAsset,
+					PayTo:               signingPayTo,
+					AssetTransferMethod: enums.AssetTransferMethodEip3009,
+					Eip712Name:          lo.ToPtr("USDC"),
+					Eip712Version:       lo.ToPtr("2"),
+				},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, suite.walletAddress, payer)
 		})
+	})
 
-		// The gate runs before EnsureApproval so a refusal never costs gas.
-		t.Run("Should not grant permit2 an allowance", func(t *testing.T) {
+	t.Run("Given a permit2 payment signed by the agent wallet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(signingReservation(), nil).
+				Times(1)
+			suite.expectWalletSigning()
+		}
+
+		t.Run("Should recover as that same wallet", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningX402PaymentBeforeEach(t)
 			initSuite(suite)
 
+			// Zero-price keeps the on-chain approval out of a unit test.
 			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
 				Network:             signingNetwork,
 				Asset:               signingAsset,
 				PayTo:               signingPayTo,
-				Amount:              "10000",
+				Amount:              "0",
 				AssetTransferMethod: enums.AssetTransferMethodPermit2,
 			})
+			assert.NoError(t, err)
 
-			assert.Nil(t, signed)
-			assert.Error(t, err)
+			payer, err := services.NewX402PaymentVerifier().RecoverPayer(
+				suite.decodePaymentPayload(t, signed.PaymentSignature),
+				&models.PaymentReceiveRuleX402Config{
+					Network:             signingNetwork,
+					Asset:               signingAsset,
+					PayTo:               signingPayTo,
+					AssetTransferMethod: enums.AssetTransferMethodPermit2,
+				},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, suite.walletAddress, payer)
 		})
 	})
+}
+
+func eip3009SigningQuote() *payment_interfaces.X402PaymentQuote {
+	return &payment_interfaces.X402PaymentQuote{
+		Network:             signingNetwork,
+		Asset:               signingAsset,
+		PayTo:               signingPayTo,
+		Amount:              "10000",
+		AssetTransferMethod: enums.AssetTransferMethodEip3009,
+		Eip712Name:          "USDC",
+		Eip712Version:       "2",
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/ethereum/go-ethereum/common"
-	"regexp"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
@@ -16,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// X402PaymentSpendMethodStrategy validates a spend rule's matcher; unlike receive it touches no chain.
+// X402PaymentSpendMethodStrategy validates a spend rule's token; unlike receive it touches no chain.
 type X402PaymentSpendMethodStrategy struct {
 	paymentSpendRuleX402ConfigRepository repositories.PaymentSpendRuleX402ConfigRepositoryInterface
 }
@@ -46,13 +45,16 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 	config.Asset = strings.TrimSpace(config.Asset)
 
 	// The x402 network is CAIP-2.
-	if _, err := helpers.ParseCaip2(config.Network); err != nil {
+	chainId, err := helpers.ParseCaip2(config.Network)
+	if err != nil {
 		return errors.NewValidationError("config.network", err.Error())
 	}
+	// Canonical because it is part of the one-rule-per-token key.
+	config.Network = helpers.FormatCaip2(chainId)
 	if !common.IsHexAddress(config.Asset) {
 		return errors.NewValidationError("config.asset", "must be the token contract address")
 	}
-	// Lowercased so the stored value reads the same whatever case was pasted.
+	// Lowercased because it is the lookup key: every pasted case must store alike.
 	config.Asset = strings.ToLower(config.Asset)
 
 	if config.AssetTransferMethod != nil {
@@ -66,12 +68,6 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 		config.AssetTransferMethod = &method
 	}
 
-	sanitized, err := s.sanitizePayToPatterns(config.PayToPatterns)
-	if err != nil {
-		return err
-	}
-	config.PayToPatterns = sanitized
-
 	raw, err := config.Marshal()
 	if err != nil {
 		return errors.NewValidationError("config", "could not be encoded")
@@ -80,38 +76,33 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 	return nil
 }
 
-// sanitizePayToPatterns rejects an empty array, which would match nobody.
-func (s *X402PaymentSpendMethodStrategy) sanitizePayToPatterns(patterns []string) ([]string, error) {
-	if len(patterns) == 0 {
-		return nil, errors.NewValidationError(
-			"config.payToPatterns",
-			"at least one pattern is required (\".*\" allows every payee)",
-		)
+func (s *X402PaymentSpendMethodStrategy) RuleIdForAsset(
+	ctx context.Context,
+	policyId uuid.UUID,
+	raw json.RawMessage,
+) (uuid.UUID, error) {
+	config := &models.PaymentSpendRuleX402Config{}
+	if err := config.Parse(raw); err != nil {
+		return uuid.Nil, err
 	}
-
-	sanitized := make([]string, 0, len(patterns))
-	for _, pattern := range patterns {
-		trimmed := strings.TrimSpace(pattern)
-		if len(trimmed) == 0 {
-			return nil, errors.NewValidationError("config.payToPatterns", "patterns cannot be empty")
-		}
-		if _, err := regexp.Compile(trimmed); err != nil {
-			return nil, errors.NewValidationError(
-				"config.payToPatterns",
-				"must be valid regexes matched against the payee address",
-			)
-		}
-		// A pasted checksummed address would compile and then never match the lowercased payee.
-		if common.IsHexAddress(trimmed) {
-			trimmed = strings.ToLower(trimmed)
-		}
-		sanitized = append(sanitized, trimmed)
+	existing, err := s.paymentSpendRuleX402ConfigRepository.GetByPolicyIdAndAsset(
+		ctx,
+		policyId,
+		config.Network,
+		config.Asset,
+	)
+	if err != nil {
+		return uuid.Nil, err
 	}
-	return sanitized, nil
+	if existing == nil {
+		return uuid.Nil, nil
+	}
+	return existing.PaymentSpendRuleId, nil
 }
 
 func (s *X402PaymentSpendMethodStrategy) SaveConfig(
 	ctx context.Context,
+	policyId uuid.UUID,
 	ruleId uuid.UUID,
 	raw json.RawMessage,
 ) error {
@@ -120,6 +111,7 @@ func (s *X402PaymentSpendMethodStrategy) SaveConfig(
 		return err
 	}
 	config.PaymentSpendRuleId = ruleId
+	config.PolicyId = policyId
 	return s.paymentSpendRuleX402ConfigRepository.Upsert(ctx, config)
 }
 

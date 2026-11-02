@@ -12,23 +12,17 @@ type PaymentSpendRuleBuilder struct {
 	id                  uuid.UUID
 	policyId            uuid.UUID
 	name                string
-	maxAmountPerPayment string
-	windowSeconds       int
-	maxAmountPerWindow  string
-	windowSpent         string
-	windowStartedAt     *time.Time
+	maxAmountPerPayment *string
 	createdAt           time.Time
 }
 
-// NewPaymentSpendRuleBuilder mirrors the column defaults, so a built rule is one the database could return.
 func NewPaymentSpendRuleBuilder() *PaymentSpendRuleBuilder {
+	maxAmountPerPayment := "1000000"
 	return &PaymentSpendRuleBuilder{
 		id:                  uuid.New(),
 		policyId:            uuid.New(),
 		name:                "Test spend rule",
-		maxAmountPerPayment: "1000000",
-		maxAmountPerWindow:  "0",
-		windowSpent:         "0",
+		maxAmountPerPayment: &maxAmountPerPayment,
 	}
 }
 
@@ -48,27 +42,12 @@ func (b *PaymentSpendRuleBuilder) WithName(name string) *PaymentSpendRuleBuilder
 }
 
 func (b *PaymentSpendRuleBuilder) WithMaxAmountPerPayment(maxAmountPerPayment string) *PaymentSpendRuleBuilder {
-	b.maxAmountPerPayment = maxAmountPerPayment
+	b.maxAmountPerPayment = &maxAmountPerPayment
 	return b
 }
 
-func (b *PaymentSpendRuleBuilder) WithWindowSeconds(windowSeconds int) *PaymentSpendRuleBuilder {
-	b.windowSeconds = windowSeconds
-	return b
-}
-
-func (b *PaymentSpendRuleBuilder) WithMaxAmountPerWindow(maxAmountPerWindow string) *PaymentSpendRuleBuilder {
-	b.maxAmountPerWindow = maxAmountPerWindow
-	return b
-}
-
-func (b *PaymentSpendRuleBuilder) WithWindowSpent(windowSpent string) *PaymentSpendRuleBuilder {
-	b.windowSpent = windowSpent
-	return b
-}
-
-func (b *PaymentSpendRuleBuilder) WithWindowStartedAt(windowStartedAt time.Time) *PaymentSpendRuleBuilder {
-	b.windowStartedAt = &windowStartedAt
+func (b *PaymentSpendRuleBuilder) WithoutMaxAmountPerPayment() *PaymentSpendRuleBuilder {
+	b.maxAmountPerPayment = nil
 	return b
 }
 
@@ -82,12 +61,8 @@ func (b *PaymentSpendRuleBuilder) Build() *models.PaymentSpendRule {
 		Id:                  b.id,
 		PolicyId:            b.policyId,
 		Name:                b.name,
-		MaxAmountPerPayment: b.maxAmountPerPayment,
 		Method:              enums.PaymentMethodX402,
-		WindowSeconds:       b.windowSeconds,
-		MaxAmountPerWindow:  b.maxAmountPerWindow,
-		WindowSpent:         b.windowSpent,
-		WindowStartedAt:     b.windowStartedAt,
+		MaxAmountPerPayment: b.maxAmountPerPayment,
 		CreatedAt:           b.createdAt,
 	}
 }

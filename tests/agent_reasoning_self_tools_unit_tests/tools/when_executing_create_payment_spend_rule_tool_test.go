@@ -47,7 +47,7 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 		}
 	}
 
-	// Enabling this tool lets the agent widen its own cap, so the owner must opt in.
+	// Enabling this tool lets the agent widen its own limits, so the owner must opt in.
 	t.Run("Given the tool is registered", func(t *testing.T) {
 		t.Parallel()
 
@@ -59,77 +59,29 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 			assert.False(t, suite.sut.IsEnabledByDefault())
 			assert.Equal(t, "create_payment_spend_rule", suite.sut.Definition().Name)
 		})
-	})
-
-	t.Run("Given valid arguments", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should map them onto the save request", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
-			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					request *payment_requests.SavePaymentSpendRuleRequest,
-				) (*payment_responses.PaymentSpendRuleResponse, error) {
-					assert.Equal(t, "Only base, small", request.Name)
-					assert.Equal(t, "1000", request.MaxAmountPerPayment)
-					assert.Contains(t, string(request.Config), "eip155:8453")
-					return &payment_responses.PaymentSpendRuleResponse{}, nil
-				})
-
-			out, err := suite.sut.Execute(ctx, validArgs())
-
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
-		})
-
-		t.Run("Should read every argument the tool asks for", func(t *testing.T) {
+		t.Run("Should require the name and config arguments", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
 
-			for _, name := range suite.sut.Definition().InputScheme.Required {
-				_, ok := validArgs()[name]
-				assert.True(t, ok, "the schema requires %q but Execute never reads it", name)
-			}
+			assert.Equal(t, []string{"name", "config"}, suite.sut.Definition().InputScheme.Required)
 		})
 	})
 
-	t.Run("Given the optional window arguments", func(t *testing.T) {
+	t.Run("Given the windows argument is not an array", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenExecutingCreatePaymentSpendRuleToolTestingSuite) {
-			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
-				Execute(ctx, gomock.Any()).
-				DoAndReturn(func(
-					_ context.Context,
-					request *payment_requests.SavePaymentSpendRuleRequest,
-				) (*payment_responses.PaymentSpendRuleResponse, error) {
-					assert.Equal(t, 86400, request.WindowSeconds)
-					assert.Equal(t, "50000", request.MaxAmountPerWindow)
-					return &payment_responses.PaymentSpendRuleResponse{}, nil
-				}).
-				Times(1)
-		}
-
-		// The model passes numbers as strings, so the period has to survive that round trip.
-		t.Run("Should carry the period and its budget onto the request", func(t *testing.T) {
+		t.Run("Should fail without calling the use case", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
-			initSuite(suite)
 
 			args := validArgs()
-			args["windowSeconds"] = "86400"
-			args["maxAmountPerWindow"] = "50000"
-
+			args["windows"] = "daily"
 			out, err := suite.sut.Execute(ctx, args)
 
-			assert.NoError(t, err)
-			assert.NotNil(t, out)
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "must be a json array")
 		})
 	})
 
@@ -142,11 +94,11 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
 
 			args := validArgs()
-			delete(args, "maxAmountPerPayment")
+			delete(args, "config")
 			out, err := suite.sut.Execute(ctx, args)
 
 			assert.Nil(t, out)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "config")
 		})
 	})
 
@@ -164,7 +116,104 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 			out, err := suite.sut.Execute(ctx, validArgs())
 
 			assert.Nil(t, out)
-			assert.Error(t, err)
+			assert.ErrorContains(t, err, "boom")
+		})
+	})
+
+	t.Run("Given valid arguments", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should map them onto the save request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *payment_requests.SavePaymentSpendRuleRequest,
+				) (*payment_responses.PaymentSpendRuleResponse, error) {
+					assert.Equal(t, "Only base, small", request.Name)
+					assert.Equal(t, "1000", *request.MaxAmountPerPayment)
+					assert.Contains(t, string(request.Config), "eip155:8453")
+					return &payment_responses.PaymentSpendRuleResponse{}, nil
+				})
+
+			out, err := suite.sut.Execute(ctx, validArgs())
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
+		})
+
+	})
+
+	t.Run("Given the optional windows argument", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenExecutingCreatePaymentSpendRuleToolTestingSuite) {
+			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *payment_requests.SavePaymentSpendRuleRequest,
+				) (*payment_responses.PaymentSpendRuleResponse, error) {
+					assert.Equal(t, []payment_requests.SavePaymentSpendRuleWindowRequest{
+						{WindowSeconds: 86400, MaxAmount: "50000"},
+						{WindowSeconds: 604800, MaxAmount: "200000"},
+					}, request.Windows)
+					return &payment_responses.PaymentSpendRuleResponse{}, nil
+				}).
+				Times(1)
+		}
+
+		t.Run("Should carry every window onto the request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+			initSuite(suite)
+
+			args := validArgs()
+			args["windows"] = []any{
+				map[string]any{"windowSeconds": float64(86400), "maxAmount": "50000"},
+				map[string]any{"windowSeconds": float64(604800), "maxAmount": "200000"},
+			}
+
+			out, err := suite.sut.Execute(ctx, args)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
+		})
+	})
+
+	t.Run("Given no per-payment cap", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenExecutingCreatePaymentSpendRuleToolTestingSuite) {
+			suite.mockCreatePaymentSpendRuleExecutor.EXPECT().
+				Execute(ctx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					request *payment_requests.SavePaymentSpendRuleRequest,
+				) (*payment_responses.PaymentSpendRuleResponse, error) {
+					assert.Nil(t, request.MaxAmountPerPayment)
+					return &payment_responses.PaymentSpendRuleResponse{}, nil
+				}).
+				Times(1)
+		}
+
+		t.Run("Should leave the cap unset on the request", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+			initSuite(suite)
+
+			args := validArgs()
+			delete(args, "maxAmountPerPayment")
+
+			out, err := suite.sut.Execute(ctx, args)
+
+			assert.NoError(t, err)
+			assert.NotNil(t, out)
 		})
 	})
 }

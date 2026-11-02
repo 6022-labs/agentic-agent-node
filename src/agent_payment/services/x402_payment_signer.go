@@ -16,6 +16,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"go.uber.org/zap"
 )
 
 // nonceLength is the 32 bytes both an EIP-3009 nonce and a Permit2 uint256 nonce take.
@@ -27,6 +28,7 @@ type X402PaymentSigner struct {
 	permit2ApprovalEnsurer          interfaces.Permit2ApprovalEnsurerInterface
 	x402PaymentSpendPolicyEvaluator interfaces.X402PaymentSpendPolicyEvaluatorInterface
 	paymentSpendSettings            *settings.PaymentSpendSettings
+	logger                          *zap.Logger
 }
 
 func NewX402PaymentSigner(
@@ -34,12 +36,14 @@ func NewX402PaymentSigner(
 	permit2ApprovalEnsurer interfaces.Permit2ApprovalEnsurerInterface,
 	x402PaymentSpendPolicyEvaluator interfaces.X402PaymentSpendPolicyEvaluatorInterface,
 	paymentSpendSettings *settings.PaymentSpendSettings,
+	logger *zap.Logger,
 ) *X402PaymentSigner {
 	return &X402PaymentSigner{
 		typedDataSigner:                 typedDataSigner,
 		permit2ApprovalEnsurer:          permit2ApprovalEnsurer,
 		x402PaymentSpendPolicyEvaluator: x402PaymentSpendPolicyEvaluator,
 		paymentSpendSettings:            paymentSpendSettings,
+		logger:                          logger,
 	}
 }
 
@@ -62,14 +66,35 @@ func (s *X402PaymentSigner) Sign(
 		return nil, errors.NewValidationError("assetTransferMethod", "must be one of eip3009, permit2")
 	}
 
-	authorized, err := s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
+	reservation, err := s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
 	if err != nil {
 		return nil, err
 	}
-	if !authorized {
+	if reservation == nil {
 		return nil, errors.NewUnauthorizedError("spend_refused", "the agent's spend policy does not cover this quote")
 	}
 
+	signed, err := s.signAuthorized(ctx, quote, amount, int64(chainId))
+	if err != nil {
+		s.release(ctx, reservation)
+		return nil, err
+	}
+	return signed, nil
+}
+
+// release gives the spend back when no signature came out; the caller's error matters more than a failed refund.
+func (s *X402PaymentSigner) release(ctx context.Context, reservation *interfaces.X402PaymentSpendReservation) {
+	if err := s.x402PaymentSpendPolicyEvaluator.Release(context.WithoutCancel(ctx), reservation); err != nil {
+		s.logger.Error("failed to release an unsigned payment's spend", zap.Error(err))
+	}
+}
+
+func (s *X402PaymentSigner) signAuthorized(
+	ctx context.Context,
+	quote *interfaces.X402PaymentQuote,
+	amount *big.Int,
+	chainId int64,
+) (*interfaces.X402SignedPayment, error) {
 	payer, err := s.typedDataSigner.WalletAddress(ctx)
 	if err != nil {
 		return nil, err
@@ -87,9 +112,9 @@ func (s *X402PaymentSigner) Sign(
 	var payload x402.ExactEvmPayload
 	switch quote.AssetTransferMethod {
 	case enums.AssetTransferMethodEip3009:
-		payload, err = s.signEip3009(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, int64(chainId))
+		payload, err = s.signEip3009(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, chainId)
 	default:
-		payload, err = s.signPermit2(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, int64(chainId))
+		payload, err = s.signPermit2(ctx, quote, payer.Hex(), amount, nonce, validAfter, validBefore, chainId)
 	}
 	if err != nil {
 		return nil, err

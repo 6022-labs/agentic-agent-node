@@ -180,12 +180,17 @@ type RequestsSavePaymentReceiveRuleRequest struct {
 
 // RequestsSavePaymentSpendRuleRequest defines model for requests.SavePaymentSpendRuleRequest.
 type RequestsSavePaymentSpendRuleRequest struct {
-	Config              *map[string]interface{} `json:"config,omitempty"`
-	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
-	MaxAmountPerWindow  *string                 `json:"maxAmountPerWindow,omitempty"`
-	Method              *string                 `json:"method,omitempty"`
-	Name                *string                 `json:"name,omitempty"`
-	WindowSeconds       *int                    `json:"windowSeconds,omitempty"`
+	Config              *map[string]interface{}                      `json:"config,omitempty"`
+	MaxAmountPerPayment *string                                      `json:"maxAmountPerPayment,omitempty"`
+	Method              *string                                      `json:"method,omitempty"`
+	Name                *string                                      `json:"name,omitempty"`
+	Windows             *[]RequestsSavePaymentSpendRuleWindowRequest `json:"windows,omitempty"`
+}
+
+// RequestsSavePaymentSpendRuleWindowRequest defines model for requests.SavePaymentSpendRuleWindowRequest.
+type RequestsSavePaymentSpendRuleWindowRequest struct {
+	MaxAmount     *string `json:"maxAmount,omitempty"`
+	WindowSeconds *int    `json:"windowSeconds,omitempty"`
 }
 
 // RequestsSetAgentGuidanceRequest defines model for requests.SetAgentGuidanceRequest.
@@ -217,6 +222,11 @@ type RequestsUpdateMCPConnectionRequest struct {
 	HeaderAuth          *map[string]string `json:"headerAuth,omitempty"`
 	Name                *string            `json:"name,omitempty"`
 	Url                 *string            `json:"url,omitempty"`
+}
+
+// RequestsUpdatePaymentSpendPolicyRequest defines model for requests.UpdatePaymentSpendPolicyRequest.
+type RequestsUpdatePaymentSpendPolicyRequest struct {
+	PayToPatterns *[]string `json:"payToPatterns,omitempty"`
 }
 
 // RequestsUpdateSelfToolRequest defines model for requests.UpdateSelfToolRequest.
@@ -497,25 +507,31 @@ type ResponsesPaymentReceiveSettlementResponse struct {
 
 // ResponsesPaymentSpendPolicyResponse defines model for responses.PaymentSpendPolicyResponse.
 type ResponsesPaymentSpendPolicyResponse struct {
-	AgentId   *string `json:"agentId,omitempty"`
-	CreatedAt *string `json:"createdAt,omitempty"`
-	Id        *string `json:"id,omitempty"`
-	UpdatedAt *string `json:"updatedAt,omitempty"`
+	AgentId       *string   `json:"agentId,omitempty"`
+	CreatedAt     *string   `json:"createdAt,omitempty"`
+	Id            *string   `json:"id,omitempty"`
+	PayToPatterns *[]string `json:"payToPatterns,omitempty"`
+	UpdatedAt     *string   `json:"updatedAt,omitempty"`
 }
 
 // ResponsesPaymentSpendRuleResponse defines model for responses.PaymentSpendRuleResponse.
 type ResponsesPaymentSpendRuleResponse struct {
-	Config              *map[string]interface{} `json:"config,omitempty"`
-	CreatedAt           *string                 `json:"createdAt,omitempty"`
-	Id                  *string                 `json:"id,omitempty"`
-	MaxAmountPerPayment *string                 `json:"maxAmountPerPayment,omitempty"`
-	MaxAmountPerWindow  *string                 `json:"maxAmountPerWindow,omitempty"`
-	Method              *string                 `json:"method,omitempty"`
-	Name                *string                 `json:"name,omitempty"`
-	UpdatedAt           *string                 `json:"updatedAt,omitempty"`
-	WindowResetsAt      *string                 `json:"windowResetsAt,omitempty"`
-	WindowSeconds       *int                    `json:"windowSeconds,omitempty"`
-	WindowSpent         *string                 `json:"windowSpent,omitempty"`
+	Config              *map[string]interface{}                    `json:"config,omitempty"`
+	CreatedAt           *string                                    `json:"createdAt,omitempty"`
+	Id                  *string                                    `json:"id,omitempty"`
+	MaxAmountPerPayment *string                                    `json:"maxAmountPerPayment,omitempty"`
+	Method              *string                                    `json:"method,omitempty"`
+	Name                *string                                    `json:"name,omitempty"`
+	UpdatedAt           *string                                    `json:"updatedAt,omitempty"`
+	Windows             *[]ResponsesPaymentSpendRuleWindowResponse `json:"windows,omitempty"`
+}
+
+// ResponsesPaymentSpendRuleWindowResponse defines model for responses.PaymentSpendRuleWindowResponse.
+type ResponsesPaymentSpendRuleWindowResponse struct {
+	MaxAmount     *string `json:"maxAmount,omitempty"`
+	ResetsAt      *string `json:"resetsAt,omitempty"`
+	Spent         *string `json:"spent,omitempty"`
+	WindowSeconds *int    `json:"windowSeconds,omitempty"`
 }
 
 // ResponsesRegistrationStatusResponse defines model for responses.RegistrationStatusResponse.
@@ -671,6 +687,14 @@ type PutInternalConfigPaymentReceivePolicyRulesIdJSONBody struct {
 // PutInternalConfigPaymentReceivePolicyRulesIdJSONBody0 defines parameters for PutInternalConfigPaymentReceivePolicyRulesId.
 type PutInternalConfigPaymentReceivePolicyRulesIdJSONBody0 = map[string]interface{}
 
+// PutInternalConfigPaymentSpendPolicyJSONBody defines parameters for PutInternalConfigPaymentSpendPolicy.
+type PutInternalConfigPaymentSpendPolicyJSONBody struct {
+	union json.RawMessage
+}
+
+// PutInternalConfigPaymentSpendPolicyJSONBody0 defines parameters for PutInternalConfigPaymentSpendPolicy.
+type PutInternalConfigPaymentSpendPolicyJSONBody0 = map[string]interface{}
+
 // PostInternalConfigPaymentSpendPolicyRulesJSONBody defines parameters for PostInternalConfigPaymentSpendPolicyRules.
 type PostInternalConfigPaymentSpendPolicyRulesJSONBody struct {
 	union json.RawMessage
@@ -784,6 +808,9 @@ type PostInternalConfigPaymentReceivePolicyRulesJSONRequestBody PostInternalConf
 
 // PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody defines body for PutInternalConfigPaymentReceivePolicyRulesId for application/json ContentType.
 type PutInternalConfigPaymentReceivePolicyRulesIdJSONRequestBody PutInternalConfigPaymentReceivePolicyRulesIdJSONBody
+
+// PutInternalConfigPaymentSpendPolicyJSONRequestBody defines body for PutInternalConfigPaymentSpendPolicy for application/json ContentType.
+type PutInternalConfigPaymentSpendPolicyJSONRequestBody PutInternalConfigPaymentSpendPolicyJSONBody
 
 // PostInternalConfigPaymentSpendPolicyRulesJSONRequestBody defines body for PostInternalConfigPaymentSpendPolicyRules for application/json ContentType.
 type PostInternalConfigPaymentSpendPolicyRulesJSONRequestBody PostInternalConfigPaymentSpendPolicyRulesJSONBody
@@ -997,6 +1024,11 @@ type ClientInterface interface {
 
 	// GetInternalConfigPaymentSpendPolicy request
 	GetInternalConfigPaymentSpendPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutInternalConfigPaymentSpendPolicyWithBody request with any body
+	PutInternalConfigPaymentSpendPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutInternalConfigPaymentSpendPolicy(ctx context.Context, body PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInternalConfigPaymentSpendPolicyRules request
 	GetInternalConfigPaymentSpendPolicyRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1547,6 +1579,30 @@ func (c *Client) DeleteInternalConfigPaymentSpendPolicy(ctx context.Context, req
 
 func (c *Client) GetInternalConfigPaymentSpendPolicy(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInternalConfigPaymentSpendPolicyRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConfigPaymentSpendPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigPaymentSpendPolicyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutInternalConfigPaymentSpendPolicy(ctx context.Context, body PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutInternalConfigPaymentSpendPolicyRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2877,6 +2933,46 @@ func NewGetInternalConfigPaymentSpendPolicyRequest(server string) (*http.Request
 	return req, nil
 }
 
+// NewPutInternalConfigPaymentSpendPolicyRequest calls the generic PutInternalConfigPaymentSpendPolicy builder with application/json body
+func NewPutInternalConfigPaymentSpendPolicyRequest(server string, body PutInternalConfigPaymentSpendPolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutInternalConfigPaymentSpendPolicyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPutInternalConfigPaymentSpendPolicyRequestWithBody generates requests for PutInternalConfigPaymentSpendPolicy with any type of body
+func NewPutInternalConfigPaymentSpendPolicyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/internal/config/payment-spend-policy")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetInternalConfigPaymentSpendPolicyRulesRequest generates requests for GetInternalConfigPaymentSpendPolicyRules
 func NewGetInternalConfigPaymentSpendPolicyRulesRequest(server string) (*http.Request, error) {
 	var err error
@@ -3662,6 +3758,11 @@ type ClientWithResponsesInterface interface {
 	// GetInternalConfigPaymentSpendPolicyWithResponse request
 	GetInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentSpendPolicyResponse, error)
 
+	// PutInternalConfigPaymentSpendPolicyWithBodyWithResponse request with any body
+	PutInternalConfigPaymentSpendPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentSpendPolicyResponse, error)
+
+	PutInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, body PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentSpendPolicyResponse, error)
+
 	// GetInternalConfigPaymentSpendPolicyRulesWithResponse request
 	GetInternalConfigPaymentSpendPolicyRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetInternalConfigPaymentSpendPolicyRulesResponse, error)
 
@@ -4435,7 +4536,7 @@ func (r PutInternalConfigPaymentReceivePolicyRulesIdResponse) StatusCode() int {
 type DeleteInternalConfigPaymentSpendPolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON500      *FiberMap
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4458,7 +4559,7 @@ type GetInternalConfigPaymentSpendPolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesPaymentSpendPolicyResponse
-	JSON500      *FiberMap
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4477,11 +4578,35 @@ func (r GetInternalConfigPaymentSpendPolicyResponse) StatusCode() int {
 	return 0
 }
 
+type PutInternalConfigPaymentSpendPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ResponsesPaymentSpendPolicyResponse
+	JSON400      *ErrorsValidationError
+	JSON500      *ErrorsInternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r PutInternalConfigPaymentSpendPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutInternalConfigPaymentSpendPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetInternalConfigPaymentSpendPolicyRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesListPaymentSpendRulesResponse
-	JSON500      *FiberMap
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4505,7 +4630,8 @@ type PostInternalConfigPaymentSpendPolicyRulesResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesPaymentSpendRuleResponse
 	JSON400      *ErrorsValidationError
-	JSON500      *FiberMap
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4528,7 +4654,7 @@ type DeleteInternalConfigPaymentSpendPolicyRulesIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON404      *ErrorsNotFoundError
-	JSON500      *FiberMap
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -4553,7 +4679,8 @@ type PutInternalConfigPaymentSpendPolicyRulesIdResponse struct {
 	JSON200      *ResponsesPaymentSpendRuleResponse
 	JSON400      *ErrorsValidationError
 	JSON404      *ErrorsNotFoundError
-	JSON500      *FiberMap
+	JSON409      *ErrorsConflictError
+	JSON500      *ErrorsInternalError
 }
 
 // Status returns HTTPResponse.Status
@@ -5229,6 +5356,23 @@ func (c *ClientWithResponses) GetInternalConfigPaymentSpendPolicyWithResponse(ct
 		return nil, err
 	}
 	return ParseGetInternalConfigPaymentSpendPolicyResponse(rsp)
+}
+
+// PutInternalConfigPaymentSpendPolicyWithBodyWithResponse request with arbitrary body returning *PutInternalConfigPaymentSpendPolicyResponse
+func (c *ClientWithResponses) PutInternalConfigPaymentSpendPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentSpendPolicyResponse, error) {
+	rsp, err := c.PutInternalConfigPaymentSpendPolicyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConfigPaymentSpendPolicyResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, body PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*PutInternalConfigPaymentSpendPolicyResponse, error) {
+	rsp, err := c.PutInternalConfigPaymentSpendPolicy(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutInternalConfigPaymentSpendPolicyResponse(rsp)
 }
 
 // GetInternalConfigPaymentSpendPolicyRulesWithResponse request returning *GetInternalConfigPaymentSpendPolicyRulesResponse
@@ -6671,7 +6815,7 @@ func ParseDeleteInternalConfigPaymentSpendPolicyResponse(rsp *http.Response) (*D
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6704,7 +6848,47 @@ func ParseGetInternalConfigPaymentSpendPolicyResponse(rsp *http.Response) (*GetI
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutInternalConfigPaymentSpendPolicyResponse parses an HTTP response from a PutInternalConfigPaymentSpendPolicyWithResponse call
+func ParsePutInternalConfigPaymentSpendPolicyResponse(rsp *http.Response) (*PutInternalConfigPaymentSpendPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutInternalConfigPaymentSpendPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ResponsesPaymentSpendPolicyResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6737,7 +6921,7 @@ func ParseGetInternalConfigPaymentSpendPolicyRulesResponse(rsp *http.Response) (
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6776,8 +6960,15 @@ func ParsePostInternalConfigPaymentSpendPolicyRulesResponse(rsp *http.Response) 
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6810,7 +7001,7 @@ func ParseDeleteInternalConfigPaymentSpendPolicyRulesIdResponse(rsp *http.Respon
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -6856,8 +7047,15 @@ func ParsePutInternalConfigPaymentSpendPolicyRulesIdResponse(rsp *http.Response)
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest FiberMap
+		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

@@ -42,6 +42,21 @@ func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) EXPECT() *MockPaymen
 	return m.recorder
 }
 
+// GetByPolicyIdAndAsset mocks base method.
+func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByPolicyIdAndAsset(ctx context.Context, policyId uuid.UUID, network, asset string) (*models.PaymentSpendRuleX402Config, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByPolicyIdAndAsset", ctx, policyId, network, asset)
+	ret0, _ := ret[0].(*models.PaymentSpendRuleX402Config)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByPolicyIdAndAsset indicates an expected call of GetByPolicyIdAndAsset.
+func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByPolicyIdAndAsset(ctx, policyId, network, asset any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPolicyIdAndAsset", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByPolicyIdAndAsset), ctx, policyId, network, asset)
+}
+
 // GetByRuleId mocks base method.
 func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error) {
 	m.ctrl.T.Helper()

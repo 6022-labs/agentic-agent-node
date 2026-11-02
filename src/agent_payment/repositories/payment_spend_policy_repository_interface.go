@@ -13,6 +13,7 @@ type PaymentSpendPolicyRepositoryInterface interface {
 	// GetByAgentId returns the agent's spend policy head, or (nil, nil) if none exists.
 	GetByAgentId(ctx context.Context, agentId uuid.UUID) (*models.PaymentSpendPolicy, error)
 	Create(ctx context.Context, policy *models.PaymentSpendPolicy) (*models.PaymentSpendPolicy, error)
+	Update(ctx context.Context, policy *models.PaymentSpendPolicy) (*models.PaymentSpendPolicy, error)
 	// DeleteByAgentId removes the agent's spend policy head and all its rules. No-op if none is set.
 	DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error
 }

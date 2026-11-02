@@ -69,3 +69,18 @@ func (mr *MockPaymentSpendPolicyClientInterfaceMockRecorder) Get(ctx any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockPaymentSpendPolicyClientInterface)(nil).Get), ctx)
 }
+
+// Update mocks base method.
+func (m *MockPaymentSpendPolicyClientInterface) Update(ctx context.Context, payload *models.ExternalUpdatePaymentSpendPolicyPayload) (*models.ExternalPaymentSpendPolicyPayload, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, payload)
+	ret0, _ := ret[0].(*models.ExternalPaymentSpendPolicyPayload)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockPaymentSpendPolicyClientInterfaceMockRecorder) Update(ctx, payload any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockPaymentSpendPolicyClientInterface)(nil).Update), ctx, payload)
+}

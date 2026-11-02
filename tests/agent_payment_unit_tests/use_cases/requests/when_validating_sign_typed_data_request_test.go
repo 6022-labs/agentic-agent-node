@@ -3,7 +3,7 @@ package requests_test
 import (
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/stretchr/testify/assert"

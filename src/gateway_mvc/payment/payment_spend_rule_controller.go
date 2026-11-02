@@ -63,6 +63,7 @@ func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules [post]
@@ -88,6 +89,7 @@ func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError
+// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
 // @Failure 502 {object} fiber.Map "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules/{id} [put]

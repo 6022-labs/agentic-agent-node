@@ -2,6 +2,7 @@ package agent_payment_mvc
 
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v3"
 )
@@ -10,21 +11,25 @@ const InternalPaymentSpendPolicyEndpoint = "/internal/config/payment-spend-polic
 
 type PaymentSpendPolicyController struct {
 	getPaymentSpendPolicy    *use_cases.GetPaymentSpendPolicy
+	updatePaymentSpendPolicy *use_cases.UpdatePaymentSpendPolicy
 	deletePaymentSpendPolicy *use_cases.DeletePaymentSpendPolicy
 }
 
 func NewPaymentSpendPolicyController(
 	getPaymentSpendPolicy *use_cases.GetPaymentSpendPolicy,
+	updatePaymentSpendPolicy *use_cases.UpdatePaymentSpendPolicy,
 	deletePaymentSpendPolicy *use_cases.DeletePaymentSpendPolicy,
 ) *PaymentSpendPolicyController {
 	return &PaymentSpendPolicyController{
 		getPaymentSpendPolicy:    getPaymentSpendPolicy,
+		updatePaymentSpendPolicy: updatePaymentSpendPolicy,
 		deletePaymentSpendPolicy: deletePaymentSpendPolicy,
 	}
 }
 
 func (c *PaymentSpendPolicyController) RegisterRoutes(app fiber.Router) {
 	app.Get(InternalPaymentSpendPolicyEndpoint, c.Get)
+	app.Put(InternalPaymentSpendPolicyEndpoint, c.Update)
 	app.Delete(InternalPaymentSpendPolicyEndpoint, c.Delete)
 }
 
@@ -33,10 +38,32 @@ func (c *PaymentSpendPolicyController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.PaymentSpendPolicyResponse
-// @Failure 500 {object} fiber.Map "get_payment_spend_policy_failed"
+// @Failure 500 {object} errors.InternalError "spend_policy_failed"
 // @Router /internal/config/payment-spend-policy [get]
 func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getPaymentSpendPolicy.Execute(ctx.Context())
+	if err != nil {
+		return mvc.WriteError(ctx, err)
+	}
+	return ctx.JSON(resp)
+}
+
+// Update replaces the payees the agent may pay.
+// @Summary Internal update payment spend policy
+// @Tags Internal
+// @Accept json
+// @Produce json
+// @Param request body requests.UpdatePaymentSpendPolicyRequest true "payment spend policy"
+// @Success 200 {object} responses.PaymentSpendPolicyResponse
+// @Failure 400 {object} errors.ValidationError
+// @Failure 500 {object} errors.InternalError "spend_policy_failed or update_failed"
+// @Router /internal/config/payment-spend-policy [put]
+func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {
+	body := new(requests.UpdatePaymentSpendPolicyRequest)
+	if err := ctx.Bind().Body(body); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+	}
+	resp, err := c.updatePaymentSpendPolicy.Execute(ctx.Context(), body)
 	if err != nil {
 		return mvc.WriteError(ctx, err)
 	}
@@ -47,7 +74,7 @@ func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 // @Summary Internal delete payment spend policy
 // @Tags Internal
 // @Success 204
-// @Failure 500 {object} fiber.Map "delete_payment_spend_policy_failed"
+// @Failure 500 {object} errors.InternalError "delete_failed"
 // @Router /internal/config/payment-spend-policy [delete]
 func (c *PaymentSpendPolicyController) Delete(ctx fiber.Ctx) error {
 	if err := c.deletePaymentSpendPolicy.Execute(ctx.Context()); err != nil {

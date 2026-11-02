@@ -88,7 +88,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 
 					// Create omits the association, or gorm would upsert the embedded policy as a second row.
 					rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(suite.policy.Id).Build()
-					rule.Policy = models.PaymentSpendPolicy{Id: uuid.New(), AgentId: uuid.New()}
+					rule.Policy = *model_builders.NewPaymentSpendPolicyBuilder().Build()
 
 					_, err := suite.sut.Create(context.Background(), rule)
 					assert.NoError(t, err)
@@ -99,25 +99,44 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 					assert.Equal(t, int64(1), policies)
 				})
 
-				t.Run("Should generate ids and append positions", func(t *testing.T) {
+				t.Run("Should generate an id", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenCreatingPaymentSpendRuleBeforeEach(tc)
 					defer WhenCreatingPaymentSpendRuleAfterEach(suite)
 
-					first, err := suite.sut.Create(
+					created, err := suite.sut.Create(
 						context.Background(),
 						model_builders.NewPaymentSpendRuleBuilder().
 							WithId(uuid.Nil).
 							WithPolicyId(suite.policy.Id).
 							Build(),
 					)
-					assert.NoError(t, err)
-					assert.NotEqual(t, uuid.Nil, first.Id)
 
-					second, err := suite.sut.Create(context.Background(),
-						model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(suite.policy.Id).Build())
 					assert.NoError(t, err)
-					assert.Greater(t, second.Position, first.Position)
+					assert.NotEqual(t, uuid.Nil, created.Id)
+				})
+			})
+
+			t.Run("Given a rule without a per-payment cap", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should store the cap as unset", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenCreatingPaymentSpendRuleBeforeEach(tc)
+					defer WhenCreatingPaymentSpendRuleAfterEach(suite)
+
+					created, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentSpendRuleBuilder().
+							WithPolicyId(suite.policy.Id).
+							WithoutMaxAmountPerPayment().
+							Build(),
+					)
+					assert.NoError(t, err)
+
+					stored, err := suite.sut.GetById(context.Background(), created.Id)
+					assert.NoError(t, err)
+					assert.Nil(t, stored.MaxAmountPerPayment)
 				})
 			})
 		})

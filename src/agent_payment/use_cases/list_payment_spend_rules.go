@@ -9,6 +9,7 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 )
 
 type ListPaymentSpendRules struct {
@@ -18,13 +19,17 @@ type ListPaymentSpendRules struct {
 func NewListPaymentSpendRules(
 	paymentSpendPolicyProvider payment_interfaces.PaymentSpendPolicyProviderInterface,
 	paymentSpendRuleRepository repositories.PaymentSpendRuleRepositoryInterface,
+	paymentSpendRuleWindowRepository repositories.PaymentSpendRuleWindowRepositoryInterface,
 	paymentSpendMethodStrategies payment_interfaces.PaymentSpendMethodStrategiesInterface,
+	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *ListPaymentSpendRules {
 	return &ListPaymentSpendRules{
 		AbstractPaymentSpendUseCase: NewAbstractPaymentSpendUseCase(
 			paymentSpendPolicyProvider,
 			paymentSpendRuleRepository,
+			paymentSpendRuleWindowRepository,
 			paymentSpendMethodStrategies,
+			unitOfWorkFactory,
 		),
 	}
 }
@@ -39,10 +44,14 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 		return nil, errors.NewInternalError("list_failed", err.Error())
 	}
 
-	// The matcher lives in each method's own table, so join it back per rule.
+	// Windows and the token live in their own tables, so join them back per rule.
 	out := make([]responses.PaymentSpendRuleResponse, 0, len(rules))
 	now := time.Now()
 	for i := range rules {
+		windows, err := u.paymentSpendRuleWindowRepository.ListByRuleId(ctx, rules[i].Id)
+		if err != nil {
+			return nil, errors.NewInternalError("list_failed", err.Error())
+		}
 		var config json.RawMessage
 		if strategy, ok := u.paymentSpendMethodStrategies.For(rules[i].Method); ok {
 			config, err = strategy.LoadConfig(ctx, rules[i].Id)
@@ -50,7 +59,7 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 				return nil, errors.NewInternalError("list_failed", err.Error())
 			}
 		}
-		out = append(out, *responses.ToPaymentSpendRuleResponse(&rules[i], config, now))
+		out = append(out, *responses.ToPaymentSpendRuleResponse(&rules[i], windows, config, now))
 	}
 	return &responses.ListPaymentSpendRulesResponse{Rules: out}, nil
 }

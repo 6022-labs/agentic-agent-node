@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"math/big"
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -41,16 +40,19 @@ func (r *SignX402PaymentRequest) ValidateAndSanitize() error {
 	r.PayTo = strings.TrimSpace(r.PayTo)
 	r.Amount = strings.TrimSpace(r.Amount)
 
-	if _, err := helpers.ParseCaip2(r.Network); err != nil {
+	chainId, err := helpers.ParseCaip2(r.Network)
+	if err != nil {
 		return errors.NewValidationError("network", err.Error())
 	}
+	// Canonical so "eip155:08453" cannot dodge the spend rule stored for "eip155:8453".
+	r.Network = helpers.FormatCaip2(chainId)
 	if !helpers.IsEthAddress(r.Asset) {
 		return errors.NewValidationError("asset", "must be a 0x-prefixed address")
 	}
 	if !helpers.IsEthAddress(r.PayTo) {
 		return errors.NewValidationError("payTo", "must be a 0x-prefixed address")
 	}
-	if amount, ok := new(big.Int).SetString(r.Amount, 10); !ok || amount.Sign() < 0 {
+	if _, ok := helpers.ParseUint256(r.Amount); !ok {
 		return errors.NewValidationError("amount", "must be a non-negative atomic amount")
 	}
 

@@ -73,18 +73,33 @@ func (mr *MockPaymentSpendMethodStrategyInterfaceMockRecorder) Method() *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method", reflect.TypeOf((*MockPaymentSpendMethodStrategyInterface)(nil).Method))
 }
 
-// SaveConfig mocks base method.
-func (m *MockPaymentSpendMethodStrategyInterface) SaveConfig(ctx context.Context, ruleId uuid.UUID, config json.RawMessage) error {
+// RuleIdForAsset mocks base method.
+func (m *MockPaymentSpendMethodStrategyInterface) RuleIdForAsset(ctx context.Context, policyId uuid.UUID, config json.RawMessage) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveConfig", ctx, ruleId, config)
+	ret := m.ctrl.Call(m, "RuleIdForAsset", ctx, policyId, config)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RuleIdForAsset indicates an expected call of RuleIdForAsset.
+func (mr *MockPaymentSpendMethodStrategyInterfaceMockRecorder) RuleIdForAsset(ctx, policyId, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RuleIdForAsset", reflect.TypeOf((*MockPaymentSpendMethodStrategyInterface)(nil).RuleIdForAsset), ctx, policyId, config)
+}
+
+// SaveConfig mocks base method.
+func (m *MockPaymentSpendMethodStrategyInterface) SaveConfig(ctx context.Context, policyId, ruleId uuid.UUID, config json.RawMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveConfig", ctx, policyId, ruleId, config)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveConfig indicates an expected call of SaveConfig.
-func (mr *MockPaymentSpendMethodStrategyInterfaceMockRecorder) SaveConfig(ctx, ruleId, config any) *gomock.Call {
+func (mr *MockPaymentSpendMethodStrategyInterfaceMockRecorder) SaveConfig(ctx, policyId, ruleId, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveConfig", reflect.TypeOf((*MockPaymentSpendMethodStrategyInterface)(nil).SaveConfig), ctx, ruleId, config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveConfig", reflect.TypeOf((*MockPaymentSpendMethodStrategyInterface)(nil).SaveConfig), ctx, policyId, ruleId, config)
 }
 
 // Validate mocks base method.

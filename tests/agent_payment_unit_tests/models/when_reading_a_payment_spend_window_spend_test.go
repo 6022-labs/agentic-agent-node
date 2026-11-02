@@ -17,14 +17,12 @@ func TestWhenReadingAPaymentSpendWindowSpend(t *testing.T) {
 		t.Run("Should report what the period has absorbed", func(t *testing.T) {
 			t.Parallel()
 
-			rule := model_builders.NewPaymentSpendRuleBuilder().
-				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				WithWindowSpent("4000").
-				WithWindowStartedAt(time.Now().Add(-time.Hour)).
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().
+				WithSpent("4000").
+				WithStartedAt(time.Now().Add(-time.Hour)).
 				Build()
 
-			assert.Equal(t, "4000", rule.SpentInWindow(time.Now()))
+			assert.Equal(t, "4000", window.SpentAt(time.Now()))
 		})
 	})
 
@@ -35,14 +33,29 @@ func TestWhenReadingAPaymentSpendWindowSpend(t *testing.T) {
 		t.Run("Should report nothing spent", func(t *testing.T) {
 			t.Parallel()
 
-			rule := model_builders.NewPaymentSpendRuleBuilder().
-				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				WithWindowSpent("4000").
-				WithWindowStartedAt(time.Now().Add(-48 * time.Hour)).
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().
+				WithSpent("4000").
+				WithStartedAt(time.Now().Add(-48 * time.Hour)).
 				Build()
 
-			assert.Equal(t, "0", rule.SpentInWindow(time.Now()))
+			assert.Equal(t, "0", window.SpentAt(time.Now()))
+		})
+	})
+
+	// The end instant already belongs to the next period.
+	t.Run("Given the period ends exactly now", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should report nothing spent", func(t *testing.T) {
+			t.Parallel()
+
+			startedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().
+				WithSpent("4000").
+				WithStartedAt(startedAt).
+				Build()
+
+			assert.Equal(t, "0", window.SpentAt(startedAt.Add(24*time.Hour)))
 		})
 	})
 
@@ -52,24 +65,9 @@ func TestWhenReadingAPaymentSpendWindowSpend(t *testing.T) {
 		t.Run("Should report nothing spent", func(t *testing.T) {
 			t.Parallel()
 
-			rule := model_builders.NewPaymentSpendRuleBuilder().
-				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				Build()
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().Build()
 
-			assert.Equal(t, "0", rule.SpentInWindow(time.Now()))
-		})
-	})
-
-	t.Run("Given a rule bounded per payment only", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should report nothing spent", func(t *testing.T) {
-			t.Parallel()
-
-			rule := model_builders.NewPaymentSpendRuleBuilder().Build()
-
-			assert.Equal(t, "0", rule.SpentInWindow(time.Now()))
+			assert.Equal(t, "0", window.SpentAt(time.Now()))
 		})
 	})
 }

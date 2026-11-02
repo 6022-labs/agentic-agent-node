@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -33,30 +34,27 @@ func WhenGettingPaymentSpendPolicyBeforeEach(t *testing.T) *WhenGettingPaymentSp
 func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime returns the policy head", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentSpendPolicyTestingSuite) {
 			suite.mockClient.EXPECT().
 				GetInternalConfigPaymentSpendPolicyWithResponse(gomock.Any()).
-				Return(&clients.GetInternalConfigPaymentSpendPolicyResponse{
-					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-					Body: []byte(
-						`{"id":"a","agentId":"b","agentWalletAddress":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
-					),
-				}, nil)
+				Return(nil, errors.New("runtime down"))
 		}
 
-		t.Run("Should decode the head", func(t *testing.T) {
+		t.Run("Should map the transport error onto an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentSpendPolicyBeforeEach(t)
 			initSuite(suite)
 
-			payload, err := suite.sut.Get(context.Background())
+			_, err := suite.sut.Get(context.Background())
 
-			assert.NoError(t, err)
-			assert.Equal(t, "a", payload.Id)
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
 		})
 	})
 
@@ -72,7 +70,7 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should return a conflict error carrying the runtime code", func(t *testing.T) {
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentSpendPolicyBeforeEach(t)
@@ -87,7 +85,7 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingPaymentSpendPolicyTestingSuite) {
@@ -99,7 +97,7 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 				}, nil)
 		}
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should map the 500 onto an UnavailableError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentSpendPolicyBeforeEach(t)
@@ -108,7 +106,38 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 			payload, err := suite.sut.Get(context.Background())
 
 			assert.Nil(t, payload)
-			assert.Error(t, err)
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "runtime_unavailable", target.Code)
+			}
+		})
+	})
+
+	t.Run("Given the runtime returns the policy head", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentSpendPolicyTestingSuite) {
+			suite.mockClient.EXPECT().
+				GetInternalConfigPaymentSpendPolicyWithResponse(gomock.Any()).
+				Return(&clients.GetInternalConfigPaymentSpendPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+					Body: []byte(
+						`{"id":"a","agentId":"b","payToPatterns":["0xabc.*"]}`,
+					),
+				}, nil)
+		}
+
+		t.Run("Should decode the head", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			payload, err := suite.sut.Get(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, "a", payload.Id)
+			assert.Equal(t, []string{"0xabc.*"}, payload.PayToPatterns)
 		})
 	})
 }

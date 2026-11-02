@@ -43,10 +43,10 @@ func (m *MockX402PaymentSpendPolicyEvaluatorInterface) EXPECT() *MockX402Payment
 }
 
 // Authorize mocks base method.
-func (m *MockX402PaymentSpendPolicyEvaluatorInterface) Authorize(ctx context.Context, quote *interfaces.X402PaymentQuote, amount *big.Int) (bool, error) {
+func (m *MockX402PaymentSpendPolicyEvaluatorInterface) Authorize(ctx context.Context, quote *interfaces.X402PaymentQuote, amount *big.Int) (*interfaces.X402PaymentSpendReservation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Authorize", ctx, quote, amount)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(*interfaces.X402PaymentSpendReservation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -55,4 +55,18 @@ func (m *MockX402PaymentSpendPolicyEvaluatorInterface) Authorize(ctx context.Con
 func (mr *MockX402PaymentSpendPolicyEvaluatorInterfaceMockRecorder) Authorize(ctx, quote, amount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authorize", reflect.TypeOf((*MockX402PaymentSpendPolicyEvaluatorInterface)(nil).Authorize), ctx, quote, amount)
+}
+
+// Release mocks base method.
+func (m *MockX402PaymentSpendPolicyEvaluatorInterface) Release(ctx context.Context, reservation *interfaces.X402PaymentSpendReservation) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Release", ctx, reservation)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Release indicates an expected call of Release.
+func (mr *MockX402PaymentSpendPolicyEvaluatorInterfaceMockRecorder) Release(ctx, reservation any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockX402PaymentSpendPolicyEvaluatorInterface)(nil).Release), ctx, reservation)
 }

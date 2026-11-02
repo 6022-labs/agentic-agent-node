@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases/requests"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/payment_mocks/services_mocks/interfaces_mocks"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -42,11 +43,13 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			suite.mockPaymentSpendRuleClient.EXPECT().
 				Create(gomock.Any(), &models.ExternalPaymentSpendRule{
 					Name:                "Only base, small",
-					MaxAmountPerPayment: "1000",
-					WindowSeconds:       86400,
-					MaxAmountPerWindow:  "50000",
-					Method:              "x402",
-					Config:              json.RawMessage(`{"network":"eip155:8453"}`),
+					MaxAmountPerPayment: lo.ToPtr("1000"),
+					Windows: []models.ExternalPaymentSpendRuleWindow{
+						{WindowSeconds: 86400, MaxAmount: "50000"},
+						{WindowSeconds: 604800, MaxAmount: "200000"},
+					},
+					Method: "x402",
+					Config: json.RawMessage(`{"network":"eip155:8453"}`),
 				}).
 				Return(&models.ExternalPaymentSpendRule{Id: "rule-id", Name: "Only base, small"}, nil).
 				Times(1)
@@ -60,11 +63,13 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentSpendRuleRequest{
 				Name:                "Only base, small",
-				MaxAmountPerPayment: "1000",
-				WindowSeconds:       86400,
-				MaxAmountPerWindow:  "50000",
-				Method:              "x402",
-				Config:              json.RawMessage(`{"network":"eip155:8453"}`),
+				MaxAmountPerPayment: lo.ToPtr("1000"),
+				Windows: []requests.SavePaymentSpendRuleWindowRequest{
+					{WindowSeconds: 86400, MaxAmount: "50000"},
+					{WindowSeconds: 604800, MaxAmount: "200000"},
+				},
+				Method: "x402",
+				Config: json.RawMessage(`{"network":"eip155:8453"}`),
 			})
 
 			assert.NoError(t, err)
@@ -91,7 +96,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentSpendRuleRequest{})
 
 			assert.Nil(t, rule)
-			assert.Error(t, err)
+			assert.ErrorIs(t, err, assert.AnError)
 		})
 	})
 }

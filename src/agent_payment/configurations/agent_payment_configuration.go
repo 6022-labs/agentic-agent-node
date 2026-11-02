@@ -22,8 +22,10 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 		use_cases.NewUpdatePaymentReceiveRule,
 		use_cases.NewDeletePaymentReceiveRule,
 		use_cases.NewSignX402Payment,
+		use_cases.NewSignTypedData,
 		use_cases.NewAuthorizePaymentReceiveAccess,
 		use_cases.NewGetPaymentSpendPolicy,
+		use_cases.NewUpdatePaymentSpendPolicy,
 		use_cases.NewListPaymentSpendRules,
 		use_cases.NewCreatePaymentSpendRule,
 		use_cases.NewUpdatePaymentSpendRule,
@@ -37,6 +39,13 @@ func AddAgentPaymentConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(settings.NewPaymentSpendSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		services.NewTypedDataSpendQuoter,
+		dig.As(new(payment_interfaces.TypedDataSpendQuoterInterface)),
+	); err != nil {
 		panic(err)
 	}
 

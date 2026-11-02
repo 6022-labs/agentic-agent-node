@@ -136,6 +136,7 @@ func addPaymentConfiguration(container *dig.Container) {
 		payment_use_cases.NewUpdatePaymentReceiveRule,
 		payment_use_cases.NewDeletePaymentReceiveRule,
 		payment_use_cases.NewGetPaymentSpendPolicy,
+		payment_use_cases.NewUpdatePaymentSpendPolicy,
 		payment_use_cases.NewDeletePaymentSpendPolicy,
 		payment_use_cases.NewListPaymentSpendRules,
 		payment_use_cases.NewCreatePaymentSpendRule,

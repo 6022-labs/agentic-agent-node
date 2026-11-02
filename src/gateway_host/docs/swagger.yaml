@@ -218,11 +218,18 @@ definitions:
         type: object
       maxAmountPerPayment:
         type: string
-      maxAmountPerWindow:
-        type: string
       method:
         type: string
       name:
+        type: string
+      windows:
+        items:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleWindowRequest'
+        type: array
+    type: object
+  requests.SavePaymentSpendRuleWindowRequest:
+    properties:
+      maxAmount:
         type: string
       windowSeconds:
         type: integer
@@ -265,6 +272,13 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  requests.UpdatePaymentSpendPolicyRequest:
+    properties:
+      payToPatterns:
+        items:
+          type: string
+        type: array
     type: object
   requests.UpdateSelfToolRequest:
     properties:
@@ -554,6 +568,10 @@ definitions:
         type: string
       id:
         type: string
+      payToPatterns:
+        items:
+          type: string
+        type: array
       updatedAt:
         type: string
     type: object
@@ -720,18 +738,25 @@ definitions:
         type: string
       maxAmountPerPayment:
         type: string
-      maxAmountPerWindow:
-        type: string
       method:
         type: string
       name:
         type: string
-      windowResetsAt:
+      windows:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleWindowResponse'
+        type: array
+    type: object
+  responses.PaymentSpendRuleWindowResponse:
+    properties:
+      maxAmount:
+        type: string
+      resetsAt:
+        type: string
+      spent:
         type: string
       windowSeconds:
         type: integer
-      windowSpent:
-        type: string
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -1943,6 +1968,36 @@ paths:
       summary: Get payment spend policy
       tags:
       - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: spend policy
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdatePaymentSpendPolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetPaymentSpendPolicyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - BearerAuth: []
+      summary: Update payment spend policy
+      tags:
+      - Config
   /config/payment-spend-policy/rules:
     get:
       produces:
@@ -1982,6 +2037,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "409":
+          description: asset_already_has_rule
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
@@ -2049,6 +2108,10 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: asset_already_has_rule
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:

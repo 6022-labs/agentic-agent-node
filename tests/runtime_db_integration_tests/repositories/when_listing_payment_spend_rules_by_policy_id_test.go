@@ -3,6 +3,7 @@ package repositories_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -96,16 +97,18 @@ func TestWhenListingPaymentSpendRulesByPolicyId(t *testing.T) {
 			t.Run("Given several rules exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return them in creation order", func(t *testing.T) {
+				t.Run("Should return them oldest first", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingPaymentSpendRulesByPolicyIdBeforeEach(tc)
 					defer WhenListingPaymentSpendRulesByPolicyIdAfterEach(suite)
 
+					// Created newest first, so only created_at ordering puts them back.
 					_, err := suite.sut.Create(
 						context.Background(),
 						model_builders.NewPaymentSpendRuleBuilder().
 							WithPolicyId(suite.policy.Id).
-							WithName("first").
+							WithName("second").
+							WithCreatedAt(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)).
 							Build(),
 					)
 					assert.NoError(t, err)
@@ -113,7 +116,8 @@ func TestWhenListingPaymentSpendRulesByPolicyId(t *testing.T) {
 						context.Background(),
 						model_builders.NewPaymentSpendRuleBuilder().
 							WithPolicyId(suite.policy.Id).
-							WithName("second").
+							WithName("first").
+							WithCreatedAt(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)).
 							Build(),
 					)
 					assert.NoError(t, err)

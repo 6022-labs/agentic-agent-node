@@ -96,7 +96,7 @@ func TestWhenGettingPaymentSpendRuleById(t *testing.T) {
 
 					rule, err := suite.sut.GetById(context.Background(), created.Id)
 					assert.NoError(t, err)
-					assert.Equal(t, maxUint256, rule.MaxAmountPerPayment)
+					assert.Equal(t, maxUint256, *rule.MaxAmountPerPayment)
 				})
 			})
 

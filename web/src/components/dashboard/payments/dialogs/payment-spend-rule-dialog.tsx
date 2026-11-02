@@ -12,7 +12,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import PaymentSpendRuleForm from "@/components/dashboard/payments/forms/payment-spend-rule-form"
-import type { PaymentSpendRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
+import type {
+  PaymentSpendRuleFormField,
+  PaymentSpendRuleFormSchemaType,
+} from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
 import type { PaymentSpendRule } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 
@@ -21,7 +24,7 @@ type Props = {
   initialRule?: PaymentSpendRule
   onSave: (
     values: PaymentSpendRuleFormSchemaType
-  ) => Promise<FormCompletionResult<keyof PaymentSpendRuleFormSchemaType>>
+  ) => Promise<FormCompletionResult<PaymentSpendRuleFormField>>
 }
 
 export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
@@ -31,7 +34,7 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
 
   const onFormComplete = async (
     values: PaymentSpendRuleFormSchemaType
-  ): Promise<FormCompletionResult<keyof PaymentSpendRuleFormSchemaType>> => {
+  ): Promise<FormCompletionResult<PaymentSpendRuleFormField>> => {
     setSaving(true)
     try {
       const result = await onSave(values)
@@ -64,8 +67,8 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
             {editing ? "Edit spend rule" : "Add spend rule"}
           </DialogTitle>
           <DialogDescription>
-            What the agent may pay for. A quote is authorized only when every
-            facet matches a rule, and the smallest matching cap applies.
+            How much the agent may pay in one token. A payment must fit the cap
+            and every window; who may be paid is set on the policy.
           </DialogDescription>
         </DialogHeader>
         {/* Remount per open so an edited rule's values are re-derived fresh. */}

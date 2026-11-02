@@ -22,8 +22,8 @@ func NewDeletePaymentSpendPolicyTool(
 func (t *DeletePaymentSpendPolicyTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "delete_payment_spend_policy",
-		Description: "Reset your spending policy. Every rule is removed, leaving you unable to pay " +
-			"anything until a rule allows it again.",
+		Description: "Reset your spending policy. Every rule and every allowed payee is removed, leaving you " +
+			"unable to pay anyone until both are set again.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{}, nil),
 	}
 }

@@ -15,29 +15,28 @@ func NewAbstractPaymentSpendRuleTool() *AbstractPaymentSpendRuleTool {
 }
 
 func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleProperties() map[string]models.ToolInputSchemeProperty {
+	window := utils.ObjectProperty(
+		"{windowSeconds (integer, 86400 = a day), maxAmount (non-negative integer string in atomic units)}.",
+	)
 	return map[string]models.ToolInputSchemeProperty{
 		"name": utils.StringProperty("Rule name (1-64 characters)."),
 		"maxAmountPerPayment": utils.StringProperty(
-			"Non-negative integer cap in the asset's atomic units (0 denies anything priced).",
+			"Optional cap on one payment in the asset's atomic units (0 denies anything priced).",
 		),
-		"windowSeconds": utils.StringProperty(
-			"Optional recurring period in seconds (86400 = a day); omit for a per-payment cap only.",
-		),
-		"maxAmountPerWindow": utils.StringProperty(
-			"Budget for one period, in the same atomic units; required when windowSeconds is set, " +
-				"and never below maxAmountPerPayment.",
+		"windows": utils.ArrayProperty(
+			"Recurring budgets, at most one per windowSeconds; the rule needs a cap, a window, or both.",
+			window,
 		),
 		"method": utils.StringProperty("Payment method; defaults to x402."),
 		"config": utils.ObjectProperty(
-			"Method-specific matcher. For x402: {network (CAIP-2, e.g. eip155:8453), asset (ERC-20 address), " +
-				"assetTransferMethod (optional: eip3009 or permit2; omit for either), payToPatterns (non-empty " +
-				"array of recipient regexes, \".*\" matches everyone)}.",
+			"Method-specific token. For x402: {network (CAIP-2, e.g. eip155:8453), asset (ERC-20 address), " +
+				"assetTransferMethod (optional: eip3009 or permit2; omit for either)}. One rule per token.",
 		),
 	}
 }
 
 func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequired() []string {
-	return []string{"name", "maxAmountPerPayment", "config"}
+	return []string{"name", "config"}
 }
 
 func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequestFromArgs(
@@ -47,7 +46,7 @@ func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequestFromArgs(
 	if err != nil {
 		return nil, err
 	}
-	maxAmountPerPayment, err := utils.StringArg(args, "maxAmountPerPayment")
+	windows, err := utils.OptionalJsonArrayArg[payment_requests.SavePaymentSpendRuleWindowRequest](args, "windows")
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +56,8 @@ func (t *AbstractPaymentSpendRuleTool) savePaymentSpendRuleRequestFromArgs(
 	}
 	return &payment_requests.SavePaymentSpendRuleRequest{
 		Name:                name,
-		MaxAmountPerPayment: maxAmountPerPayment,
-		WindowSeconds:       lo.FromPtr(utils.OptionalIntArg(args, "windowSeconds")),
-		MaxAmountPerWindow:  utils.OptionalStringArg(args, "maxAmountPerWindow"),
+		MaxAmountPerPayment: lo.EmptyableToPtr(utils.OptionalStringArg(args, "maxAmountPerPayment")),
+		Windows:             windows,
 		Method:              utils.OptionalStringArg(args, "method"),
 		Config:              config,
 	}, nil

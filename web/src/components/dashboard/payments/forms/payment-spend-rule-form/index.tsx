@@ -1,5 +1,6 @@
 import React from "react"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
+import { Plus, Trash2 } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import {
@@ -11,8 +12,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  ANY_PATTERN,
+  WINDOW_PRESETS,
   X402_METHOD,
   type PaymentSpendRule,
 } from "@/models/payment-spend-policy"
@@ -31,6 +32,7 @@ import { formatNetwork } from "@/lib/token-format"
 import {
   ANY_TRANSFER_METHOD,
   paymentSpendRuleFormSchema,
+  type PaymentSpendRuleFormField,
   type PaymentSpendRuleFormSchemaType,
 } from "./payment-spend-rule-form-schema"
 
@@ -39,12 +41,16 @@ type Props = {
   initialRule?: PaymentSpendRule
   onFormComplete: (
     values: PaymentSpendRuleFormSchemaType
-  ) => Promise<FormCompletionResult<keyof PaymentSpendRuleFormSchemaType>>
+  ) => Promise<FormCompletionResult<PaymentSpendRuleFormField>>
 }
 
-// toLines renders a stored facet for editing, one pattern per line.
-const toLines = (patterns: string[] | undefined) =>
-  (patterns ?? [ANY_PATTERN]).join("\n")
+// CUSTOM_PERIOD is the select's value for a period no preset names.
+const CUSTOM_PERIOD = "custom"
+
+const presetFor = (windowSeconds: string): string =>
+  WINDOW_PRESETS.some((preset) => String(preset.seconds) === windowSeconds)
+    ? windowSeconds
+    : CUSTOM_PERIOD
 
 export default function PaymentSpendRuleForm({
   initialRule,
@@ -65,21 +71,35 @@ export default function PaymentSpendRuleForm({
       name: initialRule?.name ?? "",
       method: initialRule?.method || X402_METHOD,
       maxAmountPerPayment: initialRule?.maxAmountPerPayment ?? "",
-      windowSeconds: initialRule?.windowSeconds
-        ? String(initialRule.windowSeconds)
-        : "",
-      maxAmountPerWindow:
-        initialRule?.maxAmountPerWindow &&
-        initialRule.maxAmountPerWindow !== "0"
-          ? initialRule.maxAmountPerWindow
-          : "",
+      windows: (initialRule?.windows ?? []).map((window) => ({
+        windowSeconds: String(window.windowSeconds),
+        maxAmount: window.maxAmount,
+      })),
       network: initialRule?.network ?? networkOptions[0] ?? "",
       asset: initialRule?.asset ?? "",
       assetTransferMethod: (initialRule?.assetTransferMethod ||
         ANY_TRANSFER_METHOD) as PaymentSpendRuleFormSchemaType["assetTransferMethod"],
-      payToPatterns: toLines(initialRule?.payToPatterns),
     },
   })
+
+  const windowRows = useFieldArray({ control: form.control, name: "windows" })
+
+  // Custom mode is per row, not derived from the value, so typing 3600 does not snap to "Hour".
+  const [customRows, setCustomRows] = React.useState<Record<string, boolean>>(
+    {}
+  )
+  const isCustomRow = (rowId: string, windowSeconds: string): boolean =>
+    customRows[rowId] ?? presetFor(windowSeconds) === CUSTOM_PERIOD
+
+  // The next preset not used yet, so "Add window" rarely needs a second click.
+  const addWindow = () => {
+    const used = new Set(form.getValues("windows").map((w) => w.windowSeconds))
+    const next = WINDOW_PRESETS.find((p) => !used.has(String(p.seconds)))
+    windowRows.append({
+      windowSeconds: next ? String(next.seconds) : "",
+      maxAmount: "",
+    })
+  }
 
   const onSubmit = async (values: PaymentSpendRuleFormSchemaType) => {
     const { error } = await onFormComplete(values)
@@ -142,56 +162,115 @@ export default function PaymentSpendRuleForm({
             <FormItem>
               <FormLabel>Cap per payment</FormLabel>
               <FormControl>
-                <Input className="font-mono text-xs" {...field} />
-              </FormControl>
-              <FormDescription>
-                Atomic units of the token. When several rules match a quote, the
-                smallest cap wins — 0 refuses anything priced.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="windowSeconds"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Recurring period (seconds)</FormLabel>
-              <FormControl>
                 <Input
                   className="font-mono text-xs"
-                  placeholder="86400"
+                  placeholder="Optional"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Leave empty to bound this rule per payment only. 86400 is a day,
-                604800 a week.
+                Atomic units of the token. Empty leaves the windows as the only
+                bound — 0 refuses anything priced.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="maxAmountPerWindow"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Budget per period</FormLabel>
-              <FormControl>
-                <Input className="font-mono text-xs" {...field} />
-              </FormControl>
-              <FormDescription>
-                Atomic units the rule may spend before the period rolls over.
-                Changing it restarts the period.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <FormLabel>Recurring budgets</FormLabel>
+          {windowRows.fields.map((row, index) => (
+            <div key={row.id} className="flex items-start gap-2">
+              <FormField
+                control={form.control}
+                name={`windows.${index}.windowSeconds`}
+                render={({ field }) => (
+                  <FormItem className="w-32 shrink-0">
+                    <Select
+                      value={
+                        isCustomRow(row.id, field.value)
+                          ? CUSTOM_PERIOD
+                          : field.value
+                      }
+                      onValueChange={(value) => {
+                        const custom = value === CUSTOM_PERIOD
+                        setCustomRows((rows) => ({ ...rows, [row.id]: custom }))
+                        field.onChange(custom ? "" : value)
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {WINDOW_PRESETS.map((preset) => (
+                          <SelectItem
+                            key={preset.seconds}
+                            value={String(preset.seconds)}
+                          >
+                            {preset.label}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value={CUSTOM_PERIOD}>Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {isCustomRow(row.id, field.value) ? (
+                      <FormControl>
+                        <Input
+                          className="font-mono text-xs"
+                          placeholder="Seconds"
+                          {...field}
+                        />
+                      </FormControl>
+                    ) : null}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`windows.${index}.maxAmount`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input
+                        className="font-mono text-xs"
+                        placeholder="Budget (atomic units)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove window"
+                onClick={() => windowRows.remove(index)}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addWindow}>
+            <Plus />
+            Add window
+          </Button>
+          <FormDescription>
+            Each window caps the total spent over its period. A window you keep
+            keeps what it has spent so far.
+          </FormDescription>
+          {form.formState.errors.windows?.root?.message ||
+          form.formState.errors.windows?.message ? (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.windows.root?.message ??
+                form.formState.errors.windows.message}
+            </p>
+          ) : null}
+        </div>
 
         <FormField
           control={form.control}
@@ -234,7 +313,7 @@ export default function PaymentSpendRuleForm({
                 />
               </FormControl>
               <FormDescription>
-                The caps are counted in this token's atomic units.
+                One rule per token; the caps are counted in its atomic units.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -262,24 +341,6 @@ export default function PaymentSpendRuleForm({
               <FormDescription>
                 eip3009 authorizes one transfer; permit2 grants a standing
                 allowance.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="payToPatterns"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Recipients</FormLabel>
-              <FormControl>
-                <Textarea rows={3} className="font-mono text-xs" {...field} />
-              </FormControl>
-              <FormDescription>
-                One regex per line, matched against the address being paid —
-                ".*" allows anyone.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -26,8 +26,8 @@ func NewCreatePaymentSpendRuleTool(
 func (t *CreatePaymentSpendRuleTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "create_payment_spend_rule",
-		Description: "Create a rule allowing yourself to pay. Every facet of config must match a quote for it " +
-			"to be authorized, and the smallest matching maxAmountPerPayment is the cap.",
+		Description: "Create the spend rule for one token. A quote is paid only if its payee is allowed by the " +
+			"policy, its token has a rule, and the amount fits the cap and every window.",
 		InputScheme: utils.ObjectScheme(
 			t.savePaymentSpendRuleProperties(),
 			t.savePaymentSpendRuleRequired(),

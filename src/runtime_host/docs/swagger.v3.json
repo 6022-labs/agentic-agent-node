@@ -322,13 +322,25 @@
                     "maxAmountPerPayment": {
                         "type": "string"
                     },
-                    "maxAmountPerWindow": {
-                        "type": "string"
-                    },
                     "method": {
                         "type": "string"
                     },
                     "name": {
+                        "type": "string"
+                    },
+                    "windows": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.SavePaymentSpendRuleWindowRequest"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "requests.SavePaymentSpendRuleWindowRequest": {
+                "properties": {
+                    "maxAmount": {
                         "type": "string"
                     },
                     "windowSeconds": {
@@ -398,6 +410,18 @@
                     },
                     "url": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "requests.UpdatePaymentSpendPolicyRequest": {
+                "properties": {
+                    "payToPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -1071,6 +1095,13 @@
                     "id": {
                         "type": "string"
                     },
+                    "payToPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
                     "updatedAt": {
                         "type": "string"
                     }
@@ -1091,9 +1122,6 @@
                     "maxAmountPerPayment": {
                         "type": "string"
                     },
-                    "maxAmountPerWindow": {
-                        "type": "string"
-                    },
                     "method": {
                         "type": "string"
                     },
@@ -1103,14 +1131,29 @@
                     "updatedAt": {
                         "type": "string"
                     },
-                    "windowResetsAt": {
+                    "windows": {
+                        "items": {
+                            "$ref": "#/components/schemas/responses.PaymentSpendRuleWindowResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "responses.PaymentSpendRuleWindowResponse": {
+                "properties": {
+                    "maxAmount": {
+                        "type": "string"
+                    },
+                    "resetsAt": {
+                        "type": "string"
+                    },
+                    "spent": {
                         "type": "string"
                     },
                     "windowSeconds": {
                         "type": "integer"
-                    },
-                    "windowSpent": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -2773,11 +2816,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_payment_spend_policy_failed"
+                        "description": "delete_failed"
                     }
                 },
                 "summary": "Internal delete payment spend policy",
@@ -2801,14 +2844,72 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "get_payment_spend_policy_failed"
+                        "description": "spend_policy_failed"
                     }
                 },
                 "summary": "Internal get payment spend policy",
+                "tags": [
+                    "Internal"
+                ]
+            },
+            "put": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/requests.UpdatePaymentSpendPolicyRequest",
+                                        "summary": "request",
+                                        "description": "payment spend policy"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "payment spend policy",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responses.PaymentSpendPolicyResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.InternalError"
+                                }
+                            }
+                        },
+                        "description": "spend_policy_failed or update_failed"
+                    }
+                },
+                "summary": "Internal update payment spend policy",
                 "tags": [
                     "Internal"
                 ]
@@ -2831,11 +2932,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "list_payment_spend_rules_failed"
+                        "description": "spend_policy_failed or list_failed"
                     }
                 },
                 "summary": "Internal list payment spend rules",
@@ -2885,15 +2986,25 @@
                         },
                         "description": "Bad Request"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "asset_already_has_rule"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "create_payment_spend_rule_failed"
+                        "description": "spend_policy_failed, rule_lookup_failed or create_failed"
                     }
                 },
                 "summary": "Internal create payment spend rule",
@@ -2933,11 +3044,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "delete_payment_spend_rule_failed"
+                        "description": "delete_failed"
                     }
                 },
                 "summary": "Internal delete payment spend rule",
@@ -3008,15 +3119,25 @@
                         },
                         "description": "Not Found"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "asset_already_has_rule"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fiber.Map"
+                                    "$ref": "#/components/schemas/errors.InternalError"
                                 }
                             }
                         },
-                        "description": "update_payment_spend_rule_failed"
+                        "description": "rule_lookup_failed or update_failed"
                     }
                 },
                 "summary": "Internal update payment spend rule",

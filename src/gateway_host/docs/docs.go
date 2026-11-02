@@ -1598,6 +1598,54 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Update payment spend policy",
+                "parameters": [
+                    {
+                        "description": "spend policy",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdatePaymentSpendPolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetPaymentSpendPolicyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "502": {
+                        "description": "runtime_unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -1693,6 +1741,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "409": {
+                        "description": "asset_already_has_rule",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "502": {
                         "description": "runtime_unavailable",
                         "schema": {
@@ -1754,6 +1808,12 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "asset_already_has_rule",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "502": {
@@ -2673,13 +2733,24 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
-                "maxAmountPerWindow": {
-                    "type": "string"
-                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.SavePaymentSpendRuleWindowRequest"
+                    }
+                }
+            }
+        },
+        "requests.SavePaymentSpendRuleWindowRequest": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
                     "type": "string"
                 },
                 "windowSeconds": {
@@ -2744,6 +2815,17 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "requests.UpdatePaymentSpendPolicyRequest": {
+            "type": "object",
+            "properties": {
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3192,6 +3274,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "updatedAt": {
                     "type": "string"
                 }
@@ -3448,23 +3536,34 @@ const docTemplate = `{
                 "maxAmountPerPayment": {
                     "type": "string"
                 },
-                "maxAmountPerWindow": {
-                    "type": "string"
-                },
                 "method": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
-                "windowResetsAt": {
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleWindowResponse"
+                    }
+                }
+            }
+        },
+        "responses.PaymentSpendRuleWindowResponse": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
+                    "type": "string"
+                },
+                "resetsAt": {
+                    "type": "string"
+                },
+                "spent": {
                     "type": "string"
                 },
                 "windowSeconds": {
                     "type": "integer"
-                },
-                "windowSpent": {
-                    "type": "string"
                 }
             }
         },

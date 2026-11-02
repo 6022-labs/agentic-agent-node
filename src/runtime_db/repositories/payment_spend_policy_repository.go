@@ -43,6 +43,16 @@ func (r *PaymentSpendPolicyRepository) Create(
 	return policy, nil
 }
 
+func (r *PaymentSpendPolicyRepository) Update(
+	ctx context.Context,
+	policy *models.PaymentSpendPolicy,
+) (*models.PaymentSpendPolicy, error) {
+	if err := r.client.GetDB(ctx).Save(policy).Error; err != nil {
+		return nil, err
+	}
+	return policy, nil
+}
+
 func (r *PaymentSpendPolicyRepository) DeleteByAgentId(ctx context.Context, agentId uuid.UUID) error {
 	return r.client.GetDB(ctx).Transaction(func(tx *gorm.DB) error {
 		var policy models.PaymentSpendPolicy

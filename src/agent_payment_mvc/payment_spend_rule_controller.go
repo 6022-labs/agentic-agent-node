@@ -37,12 +37,12 @@ func (c *PaymentSpendRuleController) RegisterRoutes(app fiber.Router) {
 	app.Delete(InternalPaymentSpendRulesEndpoint+"/:id", c.Delete)
 }
 
-// List returns the spend rules in table order.
+// List returns the spend rules, oldest first, with each window's spend this period.
 // @Summary Internal list payment spend rules
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.ListPaymentSpendRulesResponse
-// @Failure 500 {object} fiber.Map "list_payment_spend_rules_failed"
+// @Failure 500 {object} errors.InternalError "spend_policy_failed or list_failed"
 // @Router /internal/config/payment-spend-policy/rules [get]
 func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 	resp, err := c.listPaymentSpendRules.Execute(ctx.Context())
@@ -52,7 +52,7 @@ func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-// Create appends a spend rule.
+// Create adds the spend rule for one token.
 // @Summary Internal create payment spend rule
 // @Tags Internal
 // @Accept json
@@ -60,7 +60,8 @@ func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "payment spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 500 {object} fiber.Map "create_payment_spend_rule_failed"
+// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
+// @Failure 500 {object} errors.InternalError "spend_policy_failed, rule_lookup_failed or create_failed"
 // @Router /internal/config/payment-spend-policy/rules [post]
 func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
 	body := new(requests.SavePaymentSpendRuleRequest)
@@ -84,7 +85,8 @@ func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "update_payment_spend_rule_failed"
+// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
+// @Failure 500 {object} errors.InternalError "rule_lookup_failed or update_failed"
 // @Router /internal/config/payment-spend-policy/rules/{id} [put]
 func (c *PaymentSpendRuleController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdatePaymentSpendRuleRequest)
@@ -107,7 +109,7 @@ func (c *PaymentSpendRuleController) Update(ctx fiber.Ctx) error {
 // @Param id path string true "rule id"
 // @Success 204
 // @Failure 404 {object} errors.NotFoundError
-// @Failure 500 {object} fiber.Map "delete_payment_spend_rule_failed"
+// @Failure 500 {object} errors.InternalError "delete_failed"
 // @Router /internal/config/payment-spend-policy/rules/{id} [delete]
 func (c *PaymentSpendRuleController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeletePaymentSpendRuleRequest)

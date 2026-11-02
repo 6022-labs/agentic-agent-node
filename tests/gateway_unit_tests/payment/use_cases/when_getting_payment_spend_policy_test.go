@@ -40,8 +40,9 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 			suite.mockPaymentSpendPolicyClient.EXPECT().
 				Get(gomock.Any()).
 				Return(&models.ExternalPaymentSpendPolicyPayload{
-					Id:      "policy-id",
-					AgentId: "agent-id",
+					Id:            "policy-id",
+					AgentId:       "agent-id",
+					PayToPatterns: []string{".*"},
 				}, nil).
 				Times(1)
 		}
@@ -56,6 +57,7 @@ func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "policy-id", result.Id)
+			assert.Equal(t, []string{".*"}, result.PayToPatterns)
 		})
 	})
 

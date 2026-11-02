@@ -22,7 +22,7 @@ func NewGetPaymentSpendPolicyTool(
 func (t *GetPaymentSpendPolicyTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "get_payment_spend_policy",
-		Description: "Read the head of your own spending policy, which caps what you may pay others.",
+		Description: "Read your own spending policy: the payees you may pay, whatever the token.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{}, nil),
 	}
 }

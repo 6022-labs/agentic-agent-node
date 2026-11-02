@@ -26,6 +26,23 @@ func newUnsupportedMethodStrategies(
 	return mockStrategies
 }
 
+func newMockSpendStrategies(
+	mockController *gomock.Controller,
+) (*payment_interfaces_mocks.MockPaymentSpendMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentSpendMethodStrategyInterface) {
+	mockStrategy := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategyInterface(mockController)
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategiesInterface(mockController)
+	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
+	return mockStrategies, mockStrategy
+}
+
+func newUnsupportedSpendMethodStrategies(
+	mockController *gomock.Controller,
+) *payment_interfaces_mocks.MockPaymentSpendMethodStrategiesInterface {
+	mockStrategies := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategiesInterface(mockController)
+	mockStrategies.EXPECT().For(gomock.Any()).Return(nil, false).Times(1)
+	return mockStrategies
+}
+
 type unitOfWorkContextKey struct{}
 
 // newMockUnitOfWork carries a context distinct from the caller's, so a case can tell writes inside the scope apart.
@@ -37,14 +54,4 @@ func newMockUnitOfWork(
 	mockUnitOfWork.EXPECT().Context().Return(unitOfWorkCtx).AnyTimes()
 	mockUnitOfWork.EXPECT().Rollback().Return(nil).AnyTimes()
 	return mockUnitOfWork, unitOfWorkCtx
-}
-
-// newMockSpendStrategies is the spend twin of newMockStrategies.
-func newMockSpendStrategies(
-	mockController *gomock.Controller,
-) (*payment_interfaces_mocks.MockPaymentSpendMethodStrategiesInterface, *payment_interfaces_mocks.MockPaymentSpendMethodStrategyInterface) {
-	mockStrategy := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategyInterface(mockController)
-	mockStrategies := payment_interfaces_mocks.NewMockPaymentSpendMethodStrategiesInterface(mockController)
-	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
-	return mockStrategies, mockStrategy
 }

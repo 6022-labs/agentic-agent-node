@@ -18,14 +18,13 @@ func TestWhenReadingAPaymentSpendWindowReset(t *testing.T) {
 			t.Parallel()
 
 			startedAt := time.Now().Add(-time.Hour)
-			rule := model_builders.NewPaymentSpendRuleBuilder().
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().
 				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				WithWindowSpent("4000").
-				WithWindowStartedAt(startedAt).
+				WithSpent("4000").
+				WithStartedAt(startedAt).
 				Build()
 
-			resetsAt := rule.WindowResetsAt(time.Now())
+			resetsAt := window.ResetsAt(time.Now())
 
 			if assert.NotNil(t, resetsAt) {
 				assert.Equal(t, startedAt.Add(24*time.Hour).Unix(), resetsAt.Unix())
@@ -40,14 +39,26 @@ func TestWhenReadingAPaymentSpendWindowReset(t *testing.T) {
 		t.Run("Should report no reset pending", func(t *testing.T) {
 			t.Parallel()
 
-			rule := model_builders.NewPaymentSpendRuleBuilder().
-				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				WithWindowSpent("4000").
-				WithWindowStartedAt(time.Now().Add(-48 * time.Hour)).
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().
+				WithSpent("4000").
+				WithStartedAt(time.Now().Add(-48 * time.Hour)).
 				Build()
 
-			assert.Nil(t, rule.WindowResetsAt(time.Now()))
+			assert.Nil(t, window.ResetsAt(time.Now()))
+		})
+	})
+
+	// The end instant already belongs to the next period.
+	t.Run("Given the period ends exactly now", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should report no reset pending", func(t *testing.T) {
+			t.Parallel()
+
+			startedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().WithStartedAt(startedAt).Build()
+
+			assert.Nil(t, window.ResetsAt(startedAt.Add(24*time.Hour)))
 		})
 	})
 
@@ -57,24 +68,9 @@ func TestWhenReadingAPaymentSpendWindowReset(t *testing.T) {
 		t.Run("Should report no reset pending", func(t *testing.T) {
 			t.Parallel()
 
-			rule := model_builders.NewPaymentSpendRuleBuilder().
-				WithWindowSeconds(86400).
-				WithMaxAmountPerWindow("50000").
-				Build()
+			window := model_builders.NewPaymentSpendRuleWindowBuilder().Build()
 
-			assert.Nil(t, rule.WindowResetsAt(time.Now()))
-		})
-	})
-
-	t.Run("Given a rule bounded per payment only", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should report no reset pending", func(t *testing.T) {
-			t.Parallel()
-
-			rule := model_builders.NewPaymentSpendRuleBuilder().Build()
-
-			assert.Nil(t, rule.WindowResetsAt(time.Now()))
+			assert.Nil(t, window.ResetsAt(time.Now()))
 		})
 	})
 }
