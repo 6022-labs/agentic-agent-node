@@ -11,4 +11,5 @@ export const config = {
   gatewayApiBaseUrl: env.VITE_GATEWAY_API_BASE_URL || "/api",
   // Scales the network's suggested gas fees on every tx; 1 = no override.
   txGasMultiplier: Math.max(Number(env.VITE_TX_GAS_MULTIPLIER) || 1, 1),
+  docsBaseUrl: env.VITE_DOCS_BASE_URL || "https://docs.agentic.6022.io",
 }

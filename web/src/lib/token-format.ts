@@ -2,6 +2,7 @@
 // (CAIP-2 ids, atomic units, full addresses) — these only shape what the
 // operator reads.
 
+import { truncateEthAddress } from "@/lib/utils"
 import { findEvmNetwork } from "@/models/networks"
 
 // Known tokens by lowercase contract address — enough to render the prices
@@ -12,6 +13,11 @@ const KNOWN_TOKENS: Record<string, { symbol: string; decimals: number }> = {
   "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359": { symbol: "USDC", decimals: 6 },
   "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": { symbol: "USDC", decimals: 6 },
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": { symbol: "USDC", decimals: 6 },
+}
+
+// knownTokenSymbol is the symbol of a token the console knows, else undefined.
+export function knownTokenSymbol(asset: string): string | undefined {
+  return KNOWN_TOKENS[asset.toLowerCase()]?.symbol
 }
 
 export function formatNetwork(network: string): string {
@@ -73,3 +79,21 @@ const evmAddress = /^0x[0-9a-fA-F]{40}$/
 export function isPlainAddressPattern(pattern: string): boolean {
   return evmAddress.test(pattern)
 }
+
+const shortPattern = (pattern: string): string =>
+  isPlainAddressPattern(pattern)
+    ? truncateEthAddress(pattern)
+    : pattern.length > 14
+      ? `${pattern.slice(0, 14)}…`
+      : pattern
+
+// audienceLabel names who a pattern list covers in a few characters.
+export const audienceLabel = (
+  patterns: string[],
+  anyoneLabel: string
+): string =>
+  patterns.includes(".*")
+    ? anyoneLabel
+    : patterns.length === 1
+      ? shortPattern(patterns[0])
+      : `${patterns.length} callers`

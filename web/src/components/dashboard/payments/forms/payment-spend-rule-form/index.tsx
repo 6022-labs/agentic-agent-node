@@ -363,8 +363,7 @@ export default function PaymentSpendRuleForm({
                 ) : null}
                 {tokenLookup.status === "unsupported" ? (
                   <FormDescription>
-                    Token lookup isn't available for this network — only 0
-                    amounts can be converted without the token's decimals.
+                    No token lookup on this network: only 0 amounts.
                   </FormDescription>
                 ) : null}
                 <FormMessage />
@@ -391,10 +390,6 @@ export default function PaymentSpendRuleForm({
                     <SelectItem value="permit2">permit2</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>
-                  eip3009 authorizes one transfer; permit2 grants a standing
-                  allowance.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -418,7 +413,7 @@ export default function PaymentSpendRuleForm({
                   />
                 </FormControl>
                 <FormDescription>
-                  {amountHint(cap, "Empty: only the budgets bound a payment.")}
+                  {amountHint(cap, "Empty = no cap.")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -429,10 +424,6 @@ export default function PaymentSpendRuleForm({
           <FormLabel>
             Recurring budgets{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
           </FormLabel>
-          <p className="text-sm text-muted-foreground">
-            Each budget caps the total spent over its period; a kept one keeps
-            what it has spent.
-          </p>
           {windowRows.fields.map((row, index) => (
             <div
               key={row.id}

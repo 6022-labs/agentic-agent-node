@@ -72,8 +72,7 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
             {editing ? "Edit spend rule" : "Add spend rule"}
           </DialogTitle>
           <DialogDescription>
-            How much the agent may pay in one token. A payment must fit the cap
-            and every budget; who may be paid is set on the policy.
+            How much the agent may pay in one token.
           </DialogDescription>
         </DialogHeader>
         {/* Remount per open so an edited rule's values are re-derived fresh. */}

@@ -26,6 +26,8 @@ import {
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import PaymentSpendRuleDialog from "@/components/dashboard/payments/dialogs/payment-spend-rule-dialog"
+import TokenCell from "@/components/dashboard/payments/token-cell"
+import { DocsLink } from "@/components/dashboard/payments/address-chips"
 import {
   ANY_TRANSFER_METHOD,
   type PaymentSpendRuleFormField,
@@ -52,11 +54,7 @@ import {
   updatePaymentSpendRule,
 } from "@/queries/api/payment-spend-rule.queries"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import {
-  formatNetwork,
-  formatPrice,
-  isPlainAddressPattern,
-} from "@/lib/token-format"
+import { formatPrice, isPlainAddressPattern } from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
 
 // formatResetsIn is coarse on purpose: the exact second the period rolls is not actionable.
@@ -311,15 +309,13 @@ export default function PaymentSpendPolicySection() {
     payees.includes(ANY_PATTERN) && rules.some(isUnrestricted)
 
   return (
-    <Card>
+    <Card className="lg:h-full">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
             <CardTitle>Spend policy</CardTitle>
             <CardDescription>
-              What the agent may pay for. Every x402 quote it is asked to sign
-              must go to an allowed payee, in a token that has a rule, and fit
-              that rule's cap and every one of its windows.
+              What the agent may pay, and to whom. <DocsLink />
             </CardDescription>
           </div>
           <Badge
@@ -339,7 +335,7 @@ export default function PaymentSpendPolicySection() {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 space-y-3">
         {loading || !policy ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
@@ -352,8 +348,7 @@ export default function PaymentSpendPolicySection() {
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <p className="text-muted-foreground">
-                  Anyone can be paid, and a rule allows any amount of its token.
-                  Narrow it before the agent holds funds worth taking.
+                  Anyone can be paid any amount of a token. Narrow it first.
                 </p>
               </div>
             ) : null}
@@ -362,11 +357,7 @@ export default function PaymentSpendPolicySection() {
               disabled={mutating}
               onChange={savePayees}
             />
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-muted-foreground">
-                One rule per token. A token with no rule is refused, so removing
-                every rule stops the agent paying entirely.
-              </p>
+            <div className="flex items-center justify-end gap-2">
               <PaymentSpendRuleDialog onSave={onSaveRule()} />
             </div>
             {rules.length === 0 ? (
@@ -379,10 +370,8 @@ export default function PaymentSpendPolicySection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Network</TableHead>
+                    <TableHead>Rule</TableHead>
                     <TableHead>Token</TableHead>
-                    <TableHead>Transfer method</TableHead>
                     <TableHead>Cap per payment</TableHead>
                     <TableHead>Spent this period</TableHead>
                     <TableHead className="w-20" />
@@ -391,20 +380,24 @@ export default function PaymentSpendPolicySection() {
                 <TableBody>
                   {rules.map((rule) => (
                     <TableRow key={rule.id ?? rule.name}>
-                      <TableCell className="font-medium">{rule.name}</TableCell>
-                      <TableCell className="text-xs" title={rule.network}>
-                        {formatNetwork(rule.network)}
+                      <TableCell className="font-medium">
+                        {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
+                        <div className="max-w-40 truncate" title={rule.name}>
+                          {rule.name}
+                        </div>
                       </TableCell>
-                      <TableCell
-                        className="font-mono text-xs"
-                        title={rule.asset}
-                      >
-                        {truncateEthAddress(rule.asset)}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {rule.assetTransferMethod ?? (
-                          <span className="text-muted-foreground">either</span>
-                        )}
+                      <TableCell className="max-w-40">
+                        <TokenCell
+                          network={rule.network}
+                          asset={rule.asset}
+                          badge={
+                            rule.assetTransferMethod ? (
+                              <Badge variant="outline" className="text-xs">
+                                {rule.assetTransferMethod}
+                              </Badge>
+                            ) : null
+                          }
+                        />
                       </TableCell>
                       <TableCell>
                         {rule.maxAmountPerPayment === undefined ? (
@@ -566,8 +559,7 @@ function PayeesEditor({
         <div>
           <p className="text-sm font-medium">Payees</p>
           <p className="text-xs text-muted-foreground">
-            Who the agent may pay, whatever the token: an address in any case,
-            or a regex written in lowercase.
+            Addresses in any case, or regexes written in lowercase.
           </p>
         </div>
         {payees.includes(ANY_PATTERN) ? null : (
@@ -584,9 +576,7 @@ function PayeesEditor({
       {payees.length === 0 ? (
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
-          <p className="text-muted-foreground">
-            Nobody can be paid yet: add a payee for the rules to take effect.
-          </p>
+          <p className="text-muted-foreground">Nobody can be paid yet.</p>
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-1">

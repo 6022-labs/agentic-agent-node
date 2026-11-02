@@ -1,7 +1,7 @@
 import React from "react"
 import axios from "axios"
 import { toast } from "sonner"
-import { AlertTriangle, Coins, Globe, Trash2 } from "lucide-react"
+import { AlertTriangle, Coins, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,12 +27,21 @@ import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import NotMintedState from "@/components/dashboard/not-minted-state"
 import PaymentReceiveRuleDialog from "@/components/dashboard/payments/dialogs/payment-receive-rule-dialog"
+import TokenCell from "@/components/dashboard/payments/token-cell"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  AudienceBadge,
+  DocsLink,
+} from "@/components/dashboard/payments/address-chips"
 import type {
   PaymentReceiveRuleFormField,
   PaymentReceiveRuleFormSchemaType,
 } from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
 import {
-  EVERYONE_PATTERN,
   isPublicPrice,
   type PaymentReceivePolicy,
   type PaymentReceiveRule,
@@ -50,14 +59,11 @@ import {
 } from "@/queries/api/payment-receive-rule.queries"
 import { getFacilitatorNetworks } from "@/configs/app-config"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import {
-  formatNetwork,
-  formatPrice,
-  isPlainAddressPattern,
-} from "@/lib/token-format"
+import { audienceLabel, formatPrice } from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
 
-const MAX_CALLER_CHIPS = 3
+// MAX_PRICE_LINES keeps a row short; further prices fold into a "+N more prices" badge.
+const MAX_PRICE_LINES = 2
 
 // The fields the rule form actually renders; runtime errors on any other
 // (defaulted) config field are toasted instead of pinned to a control.
@@ -220,15 +226,13 @@ export default function PaymentReceivePolicySection() {
   const notMinted = !identityLoading && !isMinted
 
   return (
-    <Card>
+    <Card className="lg:h-full">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
             <CardTitle>Receive policy</CardTitle>
             <CardDescription>
-              What callers pay the agent: every /responses call costs the
-              cheapest price matching the caller's address (via x402), and is
-              refused when no price matches.
+              What callers pay the agent per call. <DocsLink />
             </CardDescription>
           </div>
           <Badge variant={acceptingPayments ? "default" : "secondary"}>
@@ -236,7 +240,7 @@ export default function PaymentReceivePolicySection() {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 space-y-3">
         {notMinted ? (
           <NotMintedState description="The payment policy is created once the agent's on-chain identity is minted." />
         ) : loading || !policy ? (
@@ -247,13 +251,7 @@ export default function PaymentReceivePolicySection() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-muted-foreground">
-                One rule per token. When several of its prices match a caller,
-                the cheapest wins — a free or discounted price always beats the
-                public one for its callers. Prices open to everyone are
-                advertised to anonymous callers; scoped ones are private offers.
-              </p>
+            <div className="flex items-center justify-end gap-2">
               <PaymentReceiveRuleDialog
                 agentWalletAddress={policy.agentWalletAddress}
                 onSave={onSaveRule()}
@@ -270,8 +268,8 @@ export default function PaymentReceivePolicySection() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Rule</TableHead>
+                    <TableHead>Token</TableHead>
                     <TableHead>Prices per call</TableHead>
-                    <TableHead>Network</TableHead>
                     <TableHead>Paid to</TableHead>
                     <TableHead className="w-20" />
                   </TableRow>
@@ -279,27 +277,33 @@ export default function PaymentReceivePolicySection() {
                 <TableBody>
                   {rules.map((rule) => (
                     <TableRow key={rule.id}>
-                      <TableCell className="font-medium">{rule.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
+                        <div className="max-w-40 truncate" title={rule.name}>
+                          {rule.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-40">
+                        <TokenCell
+                          network={rule.network}
+                          asset={rule.asset}
+                          badge={
+                            hasUnsettleablePrice(rule) ? (
+                              <Badge
+                                variant="destructive"
+                                title="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work."
+                              >
+                                <AlertTriangle />
+                              </Badge>
+                            ) : null
+                          }
+                        />
+                      </TableCell>
                       <TableCell>
                         <PricesCell
                           rule={rule}
                           settleable={hasFacilitator(rule)}
                         />
-                      </TableCell>
-                      <TableCell>
-                        {hasUnsettleablePrice(rule) ? (
-                          <Badge
-                            variant="destructive"
-                            title="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work."
-                          >
-                            <AlertTriangle />
-                            {formatNetwork(rule.network)}
-                          </Badge>
-                        ) : (
-                          <span title={rule.network}>
-                            {formatNetwork(rule.network)}
-                          </span>
-                        )}
                       </TableCell>
                       <TableCell>
                         {rule.payTo.toLowerCase() ===
@@ -362,7 +366,7 @@ export default function PaymentReceivePolicySection() {
   )
 }
 
-// PricesCell lists a rule's prices, cheapest first, each with the callers who pay it.
+// PricesCell lists a rule's cheapest prices, each with one badge for who pays it.
 function PricesCell({
   rule,
   settleable,
@@ -375,70 +379,75 @@ function PricesCell({
     const right = BigInt(b.price)
     return left < right ? -1 : left > right ? 1 : 0
   })
+  const visible = rows.slice(0, MAX_PRICE_LINES)
+  const hidden = rows.slice(MAX_PRICE_LINES)
   return (
     <div className="space-y-1">
-      {rows.map((row) => (
-        <div key={row.price} className="flex flex-wrap items-center gap-2">
-          {row.price === "0" ? (
-            <Badge variant="secondary">free</Badge>
-          ) : settleable ? (
-            <span
-              className="font-medium"
-              title={`${row.price} atomic units of ${rule.asset}`}
-            >
-              {formatPrice(row.price, rule.asset)}
-            </span>
-          ) : (
-            <Badge
-              variant="destructive"
-              title={`${row.price} atomic units of ${rule.asset} — no facilitator on this network, so this price can't be settled and isn't offered to callers.`}
-            >
-              <AlertTriangle />
-              {formatPrice(row.price, rule.asset)}
-            </Badge>
-          )}
-          <CallersCell patterns={row.addressPatterns} />
+      {visible.map((row) => (
+        <div key={row.price} className="flex min-w-0 items-center gap-2">
+          <PriceLabel
+            price={row.price}
+            asset={rule.asset}
+            settleable={settleable}
+          />
+          <AudienceBadge patterns={row.addressPatterns} anyoneLabel="public" />
         </div>
       ))}
+      {hidden.length > 0 ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Show ${hidden.length} more prices`}
+            >
+              <Badge variant="secondary">+{hidden.length} more prices</Badge>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="block max-w-sm p-2">
+            <ul className="max-h-60 space-y-0.5 overflow-y-auto text-xs select-text">
+              {hidden.map((row) => (
+                <li key={row.price}>
+                  {row.price === "0"
+                    ? "free"
+                    : formatPrice(row.price, rule.asset)}
+                  {" — "}
+                  {audienceLabel(row.addressPatterns, "public")}
+                </li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   )
 }
 
-// CallersCell renders "public" or MAX_CALLER_CHIPS chips plus a "+N" overflow chip.
-function CallersCell({ patterns }: { patterns: string[] }) {
-  if (patterns.includes(EVERYONE_PATTERN)) {
+function PriceLabel({
+  price,
+  asset,
+  settleable,
+}: {
+  price: string
+  asset: string
+  settleable: boolean
+}) {
+  if (price === "0") {
+    return <Badge variant="secondary">free</Badge>
+  }
+  if (settleable) {
     return (
-      <Badge>
-        <Globe />
-        public
-      </Badge>
+      <span className="font-medium" title={`${price} atomic units of ${asset}`}>
+        {formatPrice(price, asset)}
+      </span>
     )
   }
-
-  const visible = patterns.slice(0, MAX_CALLER_CHIPS)
-  const hidden = patterns.slice(MAX_CALLER_CHIPS)
-
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      {visible.map((pattern, index) => (
-        <Badge
-          key={`${pattern}-${index}`}
-          variant="outline"
-          className="font-mono"
-          title={pattern}
-        >
-          {isPlainAddressPattern(pattern)
-            ? truncateEthAddress(pattern)
-            : pattern.length > 14
-              ? `${pattern.slice(0, 14)}…`
-              : pattern}
-        </Badge>
-      ))}
-      {hidden.length > 0 ? (
-        <Badge variant="outline" title={hidden.join("\n")}>
-          +{hidden.length}
-        </Badge>
-      ) : null}
-    </div>
+    <Badge
+      variant="destructive"
+      title={`${price} atomic units of ${asset} — no facilitator on this network, so this price can't be settled and isn't offered to callers.`}
+    >
+      <AlertTriangle />
+      {formatPrice(price, asset)}
+    </Badge>
   )
 }

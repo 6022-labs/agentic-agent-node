@@ -320,8 +320,7 @@ export default function PaymentReceiveRuleForm({
                 ) : null}
                 {tokenLookup.status === "unsupported" ? (
                   <FormDescription>
-                    Token lookup isn't available for this network — the node
-                    validates the contract on save when it can.
+                    No token lookup on this network.
                   </FormDescription>
                 ) : null}
                 <FormMessage />
@@ -347,8 +346,7 @@ export default function PaymentReceiveRuleForm({
             Prices per call{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
           </FormLabel>
           <p className="text-sm text-muted-foreground">
-            Callers pay the cheapest price open to them; only prices open to
-            anyone are advertised. 0 = free.
+            Cheapest matching price wins. 0 = free.
           </p>
           {priceRows.fields.map((row, index) => (
             <div key={row.id} className="space-y-3 rounded-md border p-3">
@@ -469,7 +467,9 @@ function AddressPatternsEditor({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">Who pays</p>
+      <p className="text-sm font-medium">
+        Who pays{patterns.length > 5 ? ` (${patterns.length})` : ""}
+      </p>
       {/* ".*" already covers every caller, so nothing else can be added beside it. */}
       {isAnyone ? null : (
         <div className="flex items-center gap-2">
@@ -504,7 +504,7 @@ function AddressPatternsEditor({
         </div>
       )}
       {patterns.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex max-h-24 flex-wrap items-center gap-1 overflow-y-auto">
           {patterns.map((pattern, index) => (
             <Badge
               key={`${index}:${pattern}`}

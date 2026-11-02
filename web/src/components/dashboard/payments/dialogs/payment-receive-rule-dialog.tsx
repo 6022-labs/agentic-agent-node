@@ -80,10 +80,7 @@ export default function PaymentReceiveRuleDialog({
             {editing ? "Edit receive rule" : "Add receive rule"}
           </DialogTitle>
           <DialogDescription>
-            One token, and what each group of callers pays with it per call.
-            {editing
-              ? ""
-              : " Pre-filled with the node's chain and the $6022 token."}
+            One token, and what each group of callers pays per call.
           </DialogDescription>
         </DialogHeader>
         {/* Remount the form each time the dialog opens so an edited rule's
