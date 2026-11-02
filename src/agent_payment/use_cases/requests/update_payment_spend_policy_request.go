@@ -24,7 +24,7 @@ func (r *UpdatePaymentSpendPolicyRequest) ValidateAndSanitize() error {
 		if _, err := regexp.Compile(trimmed); err != nil {
 			return errors.NewValidationError(
 				"payToPatterns",
-				"must be valid regexes matched against the payee address",
+				"must be addresses or valid regexes",
 			)
 		}
 		// A pasted checksummed address would compile and then never match the lowercased payee.

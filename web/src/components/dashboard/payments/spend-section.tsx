@@ -544,8 +544,8 @@ function PayeesEditor({
         <div>
           <p className="text-sm font-medium">Payees</p>
           <p className="text-xs text-muted-foreground">
-            Who the agent may pay, whatever the token. Addresses or regexes,
-            full-matched ignoring case.
+            Who the agent may pay, whatever the token: an address in any case,
+            or a regex written in lowercase.
           </p>
         </div>
         {payees.includes(ANY_PATTERN) ? null : (

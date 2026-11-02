@@ -1,10 +1,9 @@
 package models
 
 import (
-	"regexp"
-	"strings"
 	"time"
 
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -23,19 +22,8 @@ func (PaymentSpendPolicy) TableName() string {
 	return "payment_spend_policies"
 }
 
-// AllowsPayee full-matches case-insensitively; lowercasing the pattern would rewrite \D into \d.
 func (m *PaymentSpendPolicy) AllowsPayee(payTo string) bool {
-	payTo = strings.TrimSpace(payTo)
-	for _, pattern := range m.PayToPatterns {
-		compiled, err := regexp.Compile("^(?i:" + strings.TrimSpace(pattern) + ")$")
-		if err != nil {
-			continue
-		}
-		if compiled.MatchString(payTo) {
-			return true
-		}
-	}
-	return false
+	return helpers.MatchesAddressPatterns(m.PayToPatterns, payTo)
 }
 
 func (m *PaymentSpendPolicy) BeforeCreate(_ *gorm.DB) error {

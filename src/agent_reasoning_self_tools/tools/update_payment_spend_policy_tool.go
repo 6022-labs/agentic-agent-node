@@ -27,7 +27,7 @@ func (t *UpdatePaymentSpendPolicyTool) Definition() *models.Tool {
 		InputScheme: utils.ObjectScheme(
 			map[string]models.ToolInputSchemeProperty{
 				"payToPatterns": utils.ArrayProperty(
-					"Recipient address regexes, full-matched ignoring case (\".*\" allows every payee).",
+					"Payee addresses in any case, or regexes written in lowercase (\".*\" allows every payee).",
 					utils.StringProperty("One payee regex."),
 				),
 			},

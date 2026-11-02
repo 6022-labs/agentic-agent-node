@@ -16,7 +16,7 @@ func NewAbstractPaymentReceiveRuleTool() *AbstractPaymentReceiveRuleTool {
 func (t *AbstractPaymentReceiveRuleTool) savePaymentReceiveRuleProperties() map[string]models.ToolInputSchemeProperty {
 	price := utils.ObjectProperty(
 		"{price (non-negative integer string in the asset's atomic units, 0 = free), " +
-			"addressPatterns (regexes full-matched against the lowercase 0x payer address; \".*\" = anyone)}.",
+			"addressPatterns (payer addresses in any case, or regexes written in lowercase; \".*\" = anyone)}.",
 	)
 	return map[string]models.ToolInputSchemeProperty{
 		"name": utils.StringProperty("Rule name (1-64 characters)."),

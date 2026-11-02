@@ -47,7 +47,7 @@ func (a *SavePaymentReceiveRulePriceRequest) ValidateAndSanitize(index int) erro
 		if _, err := regexp.Compile(trimmed); err != nil {
 			return errors.NewValidationError(
 				patternsField,
-				"must be valid regexes matched against the lowercase 0x address",
+				"must be addresses or valid regexes",
 			)
 		}
 		if common.IsHexAddress(trimmed) {

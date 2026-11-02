@@ -59,7 +59,7 @@ export type ListPaymentSpendRulesResponseWire = {
 export type PaymentSpendPolicy = {
   id: string
   agentId: string
-  // Payee regexes, full-matched ignoring case; empty pays nobody.
+  // Payee regexes, full-matched against the lowercase address; empty pays nobody.
   payToPatterns: string[]
   createdAt: string
   updatedAt: string
