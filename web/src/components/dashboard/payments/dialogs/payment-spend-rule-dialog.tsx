@@ -18,6 +18,7 @@ import type {
 } from "@/components/dashboard/payments/forms/payment-spend-rule-form/payment-spend-rule-form-schema"
 import type { PaymentSpendRule } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
+import { useErc20Lookup } from "@/components/dashboard/payments/use-erc20-lookup"
 
 type Props = {
   // When set, the dialog edits this rule (pencil trigger) instead of adding one.
@@ -30,7 +31,11 @@ type Props = {
 export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
   const [open, setOpen] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
+  const [values, setValues] =
+    React.useState<PaymentSpendRuleFormSchemaType | null>(null)
   const editing = initialRule !== undefined
+
+  const tokenLookup = useErc20Lookup(values?.network, values?.asset)
 
   const onFormComplete = async (
     values: PaymentSpendRuleFormSchemaType
@@ -61,20 +66,22 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit spend rule" : "Add spend rule"}
           </DialogTitle>
           <DialogDescription>
             How much the agent may pay in one token. A payment must fit the cap
-            and every window; who may be paid is set on the policy.
+            and every budget; who may be paid is set on the policy.
           </DialogDescription>
         </DialogHeader>
         {/* Remount per open so an edited rule's values are re-derived fresh. */}
         {open ? (
           <PaymentSpendRuleForm
             initialRule={initialRule}
+            tokenLookup={tokenLookup}
+            onValueChange={setValues}
             onFormComplete={onFormComplete}
           />
         ) : null}

@@ -52,7 +52,11 @@ import {
   updatePaymentSpendRule,
 } from "@/queries/api/payment-spend-rule.queries"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import { formatNetwork, isPlainAddressPattern } from "@/lib/token-format"
+import {
+  formatNetwork,
+  formatPrice,
+  isPlainAddressPattern,
+} from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
 
 // formatResetsIn is coarse on purpose: the exact second the period rolls is not actionable.
@@ -132,10 +136,18 @@ const toFormField = (path: string): PaymentSpendRuleFormField | null => {
 const normalizePayee = (pattern: string): string =>
   isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
 
-// AmountLabel shows an atomic amount the way the cap column does: badges for the sentinels, else truncated.
-function AmountLabel({ amount }: { amount: string }) {
+// AmountLabel shows an atomic amount in token units for known tokens, else truncated atomic.
+function AmountLabel({ amount, asset }: { amount: string; asset: string }) {
   if (isUnbounded(amount)) {
     return <Badge variant="destructive">unbounded</Badge>
+  }
+  const label = formatPrice(amount, asset)
+  if (label !== `${amount} units`) {
+    return (
+      <span className="font-mono text-xs" title={`${amount} atomic units`}>
+        {label}
+      </span>
+    )
   }
   return (
     <span className="font-mono text-xs" title={amount}>
@@ -303,7 +315,7 @@ export default function PaymentSpendPolicySection() {
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle>Spending policy</CardTitle>
+            <CardTitle>Spend policy</CardTitle>
             <CardDescription>
               What the agent may pay for. Every x402 quote it is asked to sign
               must go to an allowed payee, in a token that has a rule, and fit
@@ -402,7 +414,10 @@ export default function PaymentSpendPolicySection() {
                         ) : rule.maxAmountPerPayment === "0" ? (
                           <Badge variant="secondary">denies</Badge>
                         ) : (
-                          <AmountLabel amount={rule.maxAmountPerPayment} />
+                          <AmountLabel
+                            amount={rule.maxAmountPerPayment}
+                            asset={rule.asset}
+                          />
                         )}
                       </TableCell>
                       <TableCell>
@@ -416,6 +431,7 @@ export default function PaymentSpendPolicySection() {
                               <WindowUsage
                                 key={window.windowSeconds}
                                 window={window}
+                                asset={rule.asset}
                               />
                             ))}
                           </div>
@@ -455,7 +471,7 @@ export default function PaymentSpendPolicySection() {
       {policy ? (
         <CardFooter className="justify-end">
           <ConfirmDialog
-            title="Reset the spending policy?"
+            title="Reset the spend policy?"
             description="Every rule and payee is removed; the agent will not be able to pay anything until both are set again."
             confirmLabel="Reset"
             onConfirm={onResetPolicy}
@@ -472,7 +488,13 @@ export default function PaymentSpendPolicySection() {
 }
 
 // WindowUsage shows one window's spend against its budget and when the period rolls over.
-function WindowUsage({ window }: { window: PaymentSpendRuleWindow }) {
+function WindowUsage({
+  window,
+  asset,
+}: {
+  window: PaymentSpendRuleWindow
+  asset: string
+}) {
   const spent = window.spent ?? "0"
   return (
     <div className="space-y-1">
@@ -480,12 +502,12 @@ function WindowUsage({ window }: { window: PaymentSpendRuleWindow }) {
         className="flex flex-wrap items-center gap-1 text-xs"
         title={`${spent} of ${window.maxAmount} atomic units this period`}
       >
-        <AmountLabel amount={spent} />
+        <AmountLabel amount={spent} asset={asset} />
         <span>/</span>
         {window.maxAmount === "0" ? (
           <Badge variant="secondary">denies</Badge>
         ) : (
-          <AmountLabel amount={window.maxAmount} />
+          <AmountLabel amount={window.maxAmount} asset={asset} />
         )}
         <span className="text-muted-foreground">
           per {formatPeriod(window.windowSeconds)}

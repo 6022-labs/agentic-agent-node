@@ -1,23 +1,17 @@
 import type { FieldPath } from "react-hook-form"
 import { z } from "zod"
 
-import { UNBOUNDED_MAX_AMOUNT } from "@/models/payment-spend-policy"
-
 // ANY_TRANSFER_METHOD is the select's stand-in for "either"; the wire omits the field.
 export const ANY_TRANSFER_METHOD = "any"
 
 // MAX_WINDOW_SECONDS mirrors the runtime's 10-year cap on a period.
 export const MAX_WINDOW_SECONDS = 315360000
 
-// fitsUint256 mirrors the runtime: an amount must fit an ERC-20 transfer.
-const fitsUint256 = (value: string): boolean =>
-  !/^\d+$/.test(value) || BigInt(value) <= BigInt(UNBOUNDED_MAX_AMOUNT)
-
-const atomicAmount = z
+// Token units; the form converts to atomic units on submit, where the uint256 bound is checked.
+const tokenAmount = z
   .string()
   .trim()
-  .regex(/^\d+$/, "Whole atomic units, e.g. 1000000 (0 = deny)")
-  .refine(fitsUint256, "At most 2^256-1 atomic units")
+  .regex(/^\d+(\.\d+)?$/, "Token units, e.g. 10 (0 = deny)")
 
 export const paymentSpendRuleFormSchema = z
   .object({
@@ -27,12 +21,11 @@ export const paymentSpendRuleFormSchema = z
       .min(1, "Name is required")
       .max(64, "Max 64 characters"),
     method: z.string().min(1),
-    // Atomic units, matching the runtime; empty leaves payments bounded by the windows only.
+    // Empty leaves payments bounded by the windows only.
     maxAmountPerPayment: z
       .string()
       .trim()
-      .regex(/^\d*$/, "Whole atomic units, e.g. 1000000 (empty = no cap)")
-      .refine(fitsUint256, "At most 2^256-1 atomic units"),
+      .regex(/^(\d+(\.\d+)?)?$/, "Token units, e.g. 0.5 (empty = no cap)"),
     windows: z.array(
       z.object({
         windowSeconds: z
@@ -44,7 +37,7 @@ export const paymentSpendRuleFormSchema = z
               !/^\d+$/.test(value) || Number(value) <= MAX_WINDOW_SECONDS,
             "At most 10 years (315360000 seconds)"
           ),
-        maxAmount: atomicAmount,
+        maxAmount: tokenAmount,
       })
     ),
     network: z
@@ -80,19 +73,6 @@ export const paymentSpendRuleFormSchema = z
         })
       }
       seen.add(window.windowSeconds)
-
-      // Atomic amounts run to 78 digits, past Number's exact range.
-      if (
-        values.maxAmountPerPayment.length > 0 &&
-        /^\d+$/.test(window.maxAmount) &&
-        BigInt(values.maxAmountPerPayment) > BigInt(window.maxAmount)
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["maxAmountPerPayment"],
-          message: "Cannot exceed any window's budget",
-        })
-      }
     })
   })
 

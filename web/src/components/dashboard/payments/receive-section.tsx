@@ -224,11 +224,11 @@ export default function PaymentReceivePolicySection() {
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle>Payment policy</CardTitle>
+            <CardTitle>Receive policy</CardTitle>
             <CardDescription>
-              Every /responses call is priced by this policy: callers pay the
-              cheapest price matching their address (via x402), and are refused
-              when no price matches.
+              What callers pay the agent: every /responses call costs the
+              cheapest price matching the caller's address (via x402), and is
+              refused when no price matches.
             </CardDescription>
           </div>
           <Badge variant={acceptingPayments ? "default" : "secondary"}>
@@ -344,16 +344,16 @@ export default function PaymentReceivePolicySection() {
         )}
       </CardContent>
       {notMinted ? null : (
-        <CardFooter>
+        <CardFooter className="justify-end">
           <ConfirmDialog
-            title="Reset the payment policy?"
+            title="Reset the receive policy?"
             description="The policy goes back to the default: a single free price for the agent wallet and owner."
             confirmLabel="Reset"
             onConfirm={onReset}
           >
             <Button type="button" variant="destructive" size="sm">
               <Trash2 />
-              Reset
+              Reset policy
             </Button>
           </ConfirmDialog>
         </CardFooter>

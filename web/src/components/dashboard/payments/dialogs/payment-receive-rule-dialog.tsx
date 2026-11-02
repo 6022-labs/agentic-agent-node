@@ -77,7 +77,7 @@ export default function PaymentReceiveRuleDialog({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Edit pricing rule" : "Add pricing rule"}
+            {editing ? "Edit receive rule" : "Add receive rule"}
           </DialogTitle>
           <DialogDescription>
             One token, and what each group of callers pays with it per call.
