@@ -15,12 +15,13 @@ CREATE UNIQUE INDEX "uq_payment_receive_rule_prices_rule_price" ON "public"."pay
 ALTER TABLE "public"."payment_receive_rule_x402_configs" ADD COLUMN "policy_id" character varying(36) NULL;
 -- canonicalize like the API so equal values group
 UPDATE "public"."payment_receive_rules"
-SET "price" = COALESCE(NULLIF(LTRIM("price", '0'), ''), '0');
+SET "price" = COALESCE(NULLIF(LTRIM("price", '0'), ''), '0')
+WHERE "price" ~ '^[0-9]+$';
 UPDATE "public"."payment_receive_rule_x402_configs" AS c
 SET "policy_id" = r."policy_id",
     "asset" = LOWER(c."asset"),
     "network" = CASE
-      WHEN c."network" LIKE 'eip155:%' AND LTRIM(SUBSTRING(c."network" FROM 8), '0') <> '' THEN 'eip155:' || LTRIM(SUBSTRING(c."network" FROM 8), '0')
+      WHEN SUBSTRING(c."network" FROM 1 FOR 7) = 'eip155:' AND LTRIM(SUBSTRING(c."network" FROM 8), '0') <> '' THEN 'eip155:' || LTRIM(SUBSTRING(c."network" FROM 8), '0')
       ELSE c."network"
     END
 FROM "public"."payment_receive_rules" AS r
@@ -28,7 +29,9 @@ WHERE r."id" = c."payment_receive_rule_id";
 
 INSERT INTO "public"."payment_receive_rule_prices" ("id", "payment_receive_rule_id", "price", "address_patterns", "created_at", "updated_at")
 WITH "ranked" AS (
-  SELECT r."id", r."price", r."created_at", c."address_patterns",
+  -- empty or null patterns matched nobody, so they yield no price row
+  SELECT r."id", r."price", r."created_at",
+         CASE WHEN BTRIM(c."address_patterns", E' \t\r\n') IN ('', 'null') THEN '[]' ELSE c."address_patterns" END AS "address_patterns",
          ROW_NUMBER() OVER (PARTITION BY c."policy_id", c."network", c."asset" ORDER BY r."position", r."created_at", r."id") AS "rank",
          FIRST_VALUE(r."id") OVER (PARTITION BY c."policy_id", c."network", c."asset" ORDER BY r."position", r."created_at", r."id") AS "keeper_id"
   FROM "public"."payment_receive_rules" AS r
@@ -37,9 +40,13 @@ WITH "ranked" AS (
 "patterns" AS (
   SELECT "keeper_id", "price", p."value" AS "pattern", MIN("rank" * 100000 + p."ordinality") AS "sort", MIN("created_at") AS "created_at"
   FROM "ranked", jsonb_array_elements_text("ranked"."address_patterns"::jsonb) WITH ORDINALITY AS p("value", "ordinality")
+  WHERE p."value" IS NOT NULL
   GROUP BY "keeper_id", "price", p."value"
 )
-SELECT gen_random_uuid()::text, "keeper_id", "price", jsonb_agg("pattern" ORDER BY "sort")::text, MIN("created_at"), NOW()
+-- md5-based ids: gen_random_uuid() needs Postgres 13+
+SELECT md5(random()::text || clock_timestamp()::text || "keeper_id" || "price")::uuid::text, "keeper_id", "price",
+       CASE WHEN bool_or("pattern" = '.*') THEN '[".*"]' ELSE jsonb_agg("pattern" ORDER BY "sort")::text END,
+       MIN("created_at"), NOW()
 FROM "patterns"
 GROUP BY "keeper_id", "price";
 

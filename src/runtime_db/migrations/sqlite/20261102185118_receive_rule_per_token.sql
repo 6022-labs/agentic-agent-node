@@ -4,26 +4,32 @@
 PRAGMA foreign_keys = off;
 -- canonicalize like the API so equal values group
 UPDATE `payment_receive_rules`
-SET `price` = CASE WHEN LTRIM(`price`, '0') = '' THEN '0' ELSE LTRIM(`price`, '0') END;
+SET `price` = CASE WHEN LTRIM(`price`, '0') = '' THEN '0' ELSE LTRIM(`price`, '0') END
+WHERE `price` <> '' AND `price` NOT GLOB '*[^0-9]*';
 UPDATE `payment_receive_rule_x402_configs`
 SET `asset` = LOWER(`asset`),
     `network` = CASE
-      WHEN `network` LIKE 'eip155:%' AND LTRIM(SUBSTR(`network`, 8), '0') <> '' THEN 'eip155:' || LTRIM(SUBSTR(`network`, 8), '0')
+      WHEN SUBSTR(`network`, 1, 7) = 'eip155:' AND LTRIM(SUBSTR(`network`, 8), '0') <> '' THEN 'eip155:' || LTRIM(SUBSTR(`network`, 8), '0')
       ELSE `network`
     END;
 CREATE TABLE `receive_rule_price_migration` AS
-SELECT g.`keeper_id`, g.`price`, json_group_array(g.`pattern` ORDER BY g.`sort`) AS `address_patterns`, MIN(g.`created_at`) AS `created_at`
+SELECT g.`keeper_id`, g.`price`,
+       CASE WHEN MAX(g.`pattern` = '.*') THEN '[".*"]' ELSE json_group_array(g.`pattern` ORDER BY g.`sort`) END AS `address_patterns`,
+       MIN(g.`created_at`) AS `created_at`
 FROM (
-  SELECT k.`keeper_id`, k.`price`, j.`value` AS `pattern`, MIN(k.`rnk` * 100000 + j.`key`) AS `sort`, MIN(k.`created_at`) AS `created_at`
+  SELECT k.`keeper_id`, k.`price`, CAST(j.`value` AS TEXT) AS `pattern`, MIN(k.`rnk` * 100000 + j.`key`) AS `sort`, MIN(k.`created_at`) AS `created_at`
   FROM (
-    SELECT r.`id`, r.`price`, r.`created_at`, c.`address_patterns`,
+    -- empty or null patterns matched nobody, so they yield no price row
+    SELECT r.`id`, r.`price`, r.`created_at`,
+           CASE WHEN TRIM(c.`address_patterns`, ' ' || char(9, 10, 13)) IN ('', 'null') THEN '[]' ELSE c.`address_patterns` END AS `address_patterns`,
            ROW_NUMBER() OVER w AS `rnk`,
            FIRST_VALUE(r.`id`) OVER w AS `keeper_id`
     FROM `payment_receive_rules` AS r
     JOIN `payment_receive_rule_x402_configs` AS c ON c.`payment_receive_rule_id` = r.`id`
     WINDOW w AS (PARTITION BY r.`policy_id`, c.`network`, c.`asset` ORDER BY r.`position`, r.`created_at`, r.`id`)
-  ) AS k, json_each(k.`address_patterns`) AS j
-  GROUP BY k.`keeper_id`, k.`price`, j.`value`
+  ) AS k, json_each(CASE WHEN json_type(k.`address_patterns`) = 'array' THEN k.`address_patterns` ELSE '[]' END) AS j
+  WHERE j.`value` IS NOT NULL
+  GROUP BY k.`keeper_id`, k.`price`, CAST(j.`value` AS TEXT)
 ) AS g
 GROUP BY g.`keeper_id`, g.`price`;
 -- merged rules' configs first, so deleting the rules cascades nothing
