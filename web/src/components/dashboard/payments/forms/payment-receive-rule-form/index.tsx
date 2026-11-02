@@ -219,109 +219,112 @@ export default function PaymentReceiveRuleForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Public price" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="method"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Payment method</FormLabel>
-              {/* Locked to x402 — the seam is in place for future methods. */}
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled
-              >
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <Input placeholder="Public price" {...field} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value={X402_METHOD}>x402</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>Only x402 is supported today.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="network"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Network</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="method"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Payment method</FormLabel>
+                {/* Locked to x402 — the seam is in place for future methods. */}
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={X402_METHOD}>x402</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="network"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Network</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a network" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {networkOptions.map((id) => (
+                      <SelectItem key={id} value={id}>
+                        {formatNetwork(id) === id
+                          ? id
+                          : `${formatNetwork(id)} (${id})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="asset"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Token contract</FormLabel>
                 <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a network" />
-                  </SelectTrigger>
+                  <Input placeholder="0x…" {...field} />
                 </FormControl>
-                <SelectContent>
-                  {networkOptions.map((id) => (
-                    <SelectItem key={id} value={id}>
-                      {formatNetwork(id) === id
-                        ? id
-                        : `${formatNetwork(id)} (${id})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="asset"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Token contract</FormLabel>
-              <FormControl>
-                <Input placeholder="0x…" {...field} />
-              </FormControl>
-              {tokenLookup.status === "loading" ? (
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" />
-                  Looking up the token…
-                </p>
-              ) : null}
-              {tokenInfo ? (
-                <p className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-500">
-                  <CircleCheck className="size-3.5" />
-                  {tokenInfo.name || tokenInfo.symbol} (${tokenInfo.symbol}) —{" "}
-                  {tokenInfo.decimals} decimals
-                </p>
-              ) : null}
-              {tokenLookup.status === "not-found" ? (
-                <p className="flex items-center gap-1 text-sm text-destructive">
-                  <CircleX className="size-3.5" />
-                  No ERC-20 token answers at this address on this network.
-                </p>
-              ) : null}
-              {tokenLookup.status === "unsupported" ? (
-                <FormDescription>
-                  Token lookup isn't available for this network — the node
-                  validates the contract on save when it can.
-                </FormDescription>
-              ) : null}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                {tokenLookup.status === "loading" ? (
+                  <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Looking up the token…
+                  </p>
+                ) : null}
+                {tokenInfo ? (
+                  <p className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-500">
+                    <CircleCheck className="size-3.5" />
+                    {tokenInfo.name || tokenInfo.symbol} (${tokenInfo.symbol}) —{" "}
+                    {tokenInfo.decimals} decimals
+                  </p>
+                ) : null}
+                {tokenLookup.status === "not-found" ? (
+                  <p className="flex items-center gap-1 text-sm text-destructive">
+                    <CircleX className="size-3.5" />
+                    No ERC-20 token answers at this address on this network.
+                  </p>
+                ) : null}
+                {tokenLookup.status === "unsupported" ? (
+                  <FormDescription>
+                    Token lookup isn't available for this network — the node
+                    validates the contract on save when it can.
+                  </FormDescription>
+                ) : null}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name="payTo"
@@ -340,46 +343,50 @@ export default function PaymentReceiveRuleForm({
             Prices per call{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
           </FormLabel>
           <p className="text-sm text-muted-foreground">
-            Each caller pays the cheapest price whose callers match their
-            address. A price open to anyone is advertised to anonymous callers;
-            the others are private offers. 0 = free.
+            Callers pay the cheapest price open to them; only prices open to
+            anyone are advertised. 0 = free.
           </p>
           {priceRows.fields.map((row, index) => (
-            <div key={row.id} className="space-y-2 rounded-md border p-3">
+            <div key={row.id} className="space-y-3 rounded-md border p-3">
               <div className="flex items-start gap-2">
                 <FormField
                   control={form.control}
                   name={`prices.${index}.price`}
                   render={({ field }) => (
                     <FormItem className="flex-1">
-                      <FormControl>
-                        {/* Keystroke filter: digits and a single dot only. */}
-                        <Input
-                          placeholder="0.01"
-                          inputMode="decimal"
-                          aria-label="Price per call"
-                          {...field}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value
-                                .replace(/[^0-9.]/g, "")
-                                .replace(/(\..*)\./g, "$1")
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {tokenInfo && !isZeroAmount(prices[index]?.price ?? "")
-                          ? parseTokenAmount(
-                              prices[index]?.price ?? "",
-                              tokenInfo.decimals
-                            )
-                            ? `${parseTokenAmount(prices[index]?.price ?? "", tokenInfo.decimals)} atomic units`
-                            : `Up to ${tokenInfo.decimals} decimal places`
-                          : isZeroAmount(prices[index]?.price ?? "")
-                            ? "Free for the callers below."
-                            : "In token units, converted on save."}
-                      </FormDescription>
+                      <FormLabel>Price</FormLabel>
+                      <div className="flex items-center gap-3">
+                        <FormControl>
+                          {/* Keystroke filter: digits and a single dot only. */}
+                          <Input
+                            className="w-44"
+                            placeholder="0.01"
+                            inputMode="decimal"
+                            aria-label="Price per call"
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value
+                                  .replace(/[^0-9.]/g, "")
+                                  .replace(/(\..*)\./g, "$1")
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {tokenInfo &&
+                          !isZeroAmount(prices[index]?.price ?? "")
+                            ? parseTokenAmount(
+                                prices[index]?.price ?? "",
+                                tokenInfo.decimals
+                              )
+                              ? `${parseTokenAmount(prices[index]?.price ?? "", tokenInfo.decimals)} atomic units`
+                              : `Up to ${tokenInfo.decimals} decimal places`
+                            : isZeroAmount(prices[index]?.price ?? "")
+                              ? "Free for these callers."
+                              : "In token units, converted on save."}
+                        </FormDescription>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -388,6 +395,7 @@ export default function PaymentReceiveRuleForm({
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="mt-7"
                   aria-label="Remove price"
                   disabled={priceRows.fields.length === 1}
                   onClick={() => priceRows.remove(index)}
@@ -453,21 +461,44 @@ function AddressPatternsEditor({
     setDraft("")
   }
 
+  const isAnyone = patterns.includes(EVERYONE_PATTERN)
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">Who pays this price</p>
-        {patterns.includes(EVERYONE_PATTERN) ? null : (
+      <p className="text-sm font-medium">Who pays</p>
+      {/* ".*" already covers every caller, so nothing else can be added beside it. */}
+      {isAnyone ? null : (
+        <div className="flex items-center gap-2">
+          <Input
+            className="font-mono text-xs"
+            placeholder="0x… or a regex"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                add()
+              }
+            }}
+          />
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            disabled={draft.trim().length === 0}
+            onClick={add}
+          >
+            <Plus />
+            Add
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => onChange([EVERYONE_PATTERN])}
           >
-            Anyone (.*)
+            Anyone
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {patterns.length > 0 ? (
         <div className="flex flex-wrap items-center gap-1">
           {patterns.map((pattern, index) => (
@@ -495,30 +526,6 @@ function AddressPatternsEditor({
           ))}
         </div>
       ) : null}
-      <div className="flex items-center gap-2">
-        <Input
-          className="font-mono text-xs"
-          placeholder="0x… or a regex"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault()
-              add()
-            }
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={draft.trim().length === 0}
-          onClick={add}
-        >
-          <Plus />
-          Add
-        </Button>
-      </div>
     </div>
   )
 }

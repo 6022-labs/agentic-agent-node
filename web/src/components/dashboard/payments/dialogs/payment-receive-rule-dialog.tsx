@@ -74,7 +74,7 @@ export default function PaymentReceiveRuleDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit pricing rule" : "Add pricing rule"}
