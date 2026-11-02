@@ -331,7 +331,7 @@ export default function PaymentSpendPolicySection() {
     payees.includes(ANY_PATTERN) && rules.some(isUnrestricted)
 
   return (
-    <Card className="lg:h-full">
+    <Card className="lg:h-full lg:min-h-0 lg:overflow-hidden">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -357,7 +357,7 @@ export default function PaymentSpendPolicySection() {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-3">
+      <CardContent className="space-y-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
         {loading || !policy ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (

@@ -3,7 +3,7 @@ import PaymentSpendPolicySection from "@/components/dashboard/payments/spend-sec
 
 export default function DashboardPaymentsPage() {
   return (
-    <div className="grid w-full items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+    <div className="grid w-full items-start gap-6 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
       <PaymentReceivePolicySection />
       <PaymentSpendPolicySection />
     </div>
