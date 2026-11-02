@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
+func TestWhenMatchingAPaymentReceiveRulePrice(t *testing.T) {
 	t.Parallel()
 
-	// The EIP-55 checksummed form of the address the seeded rule stores lowercased.
+	// The EIP-55 checksummed form of the address the seeded price stores lowercased.
 	checksummed := common_tests.RandomEthAddress().Hex()
 
-	config := func(patterns ...string) *models.PaymentReceiveRuleX402Config {
-		return &models.PaymentReceiveRuleX402Config{AddressPatterns: patterns}
+	price := func(patterns ...string) *models.PaymentReceiveRulePrice {
+		return &models.PaymentReceiveRulePrice{AddressPatterns: patterns}
 	}
 
 	t.Run("Given the pattern is the lowercase address the seed stores", func(t *testing.T) {
@@ -25,21 +25,19 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 		t.Run("Should match the caller whatever case they present", func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, config(strings.ToLower(checksummed)).Matches(checksummed))
-			assert.True(t, config(strings.ToLower(checksummed)).Matches(strings.ToLower(checksummed)))
+			assert.True(t, price(strings.ToLower(checksummed)).Matches(checksummed))
+			assert.True(t, price(strings.ToLower(checksummed)).Matches(strings.ToLower(checksummed)))
 		})
 	})
 
 	t.Run("Given the pattern spells the address in checksummed case", func(t *testing.T) {
 		t.Parallel()
 
-		// Patterns are matched case-sensitively against the lowercased address, so an
-		// uppercase-hex pattern has never matched. Widening it would hand free rules to
-		// payers who previously had to pay, so it stays a deliberate non-match.
+		// Deliberate: folding case would hand free prices to payers who used to pay.
 		t.Run("Should not match", func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, config(checksummed).Matches(checksummed))
+			assert.False(t, price(checksummed).Matches(checksummed))
 		})
 	})
 
@@ -51,19 +49,19 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 		t.Run("Should still match every address", func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, config("0x[^A-F]{40}").Matches(checksummed))
+			assert.True(t, price("0x[^A-F]{40}").Matches(checksummed))
 		})
 	})
 
 	t.Run("Given a pattern that is only a prefix of the address", func(t *testing.T) {
 		t.Parallel()
 
-		// Patterns are full-matched; a prefix would let one rule capture every address sharing it.
+		// Patterns are full-matched; a prefix would let one price capture every address sharing it.
 		t.Run("Should not match", func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, config("0xf39f").Matches(checksummed))
-			assert.False(t, config("f39fd6e51aad88f6f4ce6ab8827279cfffb92266").Matches(checksummed))
+			assert.False(t, price("0xf39f").Matches(checksummed))
+			assert.False(t, price("f39fd6e51aad88f6f4ce6ab8827279cfffb92266").Matches(checksummed))
 		})
 	})
 
@@ -73,7 +71,7 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 		t.Run("Should match anyone", func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, config(".*").Matches(checksummed))
+			assert.True(t, price(".*").Matches(checksummed))
 		})
 	})
 
@@ -83,7 +81,7 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 		t.Run("Should be skipped rather than match", func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, config("0x[(").Matches(checksummed))
+			assert.False(t, price("0x[(").Matches(checksummed))
 		})
 	})
 
@@ -93,7 +91,7 @@ func TestWhenMatchingAPaymentReceiveRule(t *testing.T) {
 		t.Run("Should match nobody", func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, config().Matches(checksummed))
+			assert.False(t, price().Matches(checksummed))
 		})
 	})
 }

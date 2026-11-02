@@ -62,6 +62,19 @@ components:
           type: string
         name:
           type: string
+        prices:
+          items:
+            $ref: '#/components/schemas/models.ExternalPaymentReceiveRulePrice'
+          type: array
+          uniqueItems: false
+      type: object
+    models.ExternalPaymentReceiveRulePrice:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
         price:
           type: string
       type: object
@@ -204,6 +217,16 @@ components:
             $ref: '#/components/schemas/requests.InputMessage'
           type: array
       type: object
+    requests.SavePaymentReceiveRulePriceRequest:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price:
+          type: string
+      type: object
     requests.SavePaymentReceiveRuleRequest:
       properties:
         config:
@@ -212,8 +235,11 @@ components:
           type: string
         name:
           type: string
-        price:
-          type: string
+        prices:
+          items:
+            $ref: '#/components/schemas/requests.SavePaymentReceiveRulePriceRequest'
+          type: array
+          uniqueItems: false
       type: object
     requests.SetAgentGuidanceRequest:
       properties:
@@ -1987,7 +2013,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
         "502":
           content:
             application/json:
@@ -2088,7 +2114,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
         "502":
           content:
             application/json:

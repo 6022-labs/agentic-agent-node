@@ -27,18 +27,19 @@ func NewUpdatePaymentReceiveRuleTool(
 func (t *UpdatePaymentReceiveRuleTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "update_payment_receive_rule",
-		Description: "Replace one of your pricing rules (identity and position preserved).",
-		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
-			"id":     utils.StringProperty("Id of the rule to update (see list_payment_receive_rules)."),
-			"name":   utils.StringProperty("Rule name (1-64 characters)."),
-			"price":  utils.StringProperty("Non-negative integer price in the asset's atomic units (0 = free)."),
-			"method": utils.StringProperty("Payment method; defaults to x402."),
-			"config": utils.ObjectProperty(
-				"Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), " +
-					"payTo (address), assetTransferMethod, addressPatterns}.",
-			),
-		}, []string{"id", "name", "price", "config"}),
+		Description: "Replace one of your pricing rules: its name, token and every price.",
+		InputScheme: utils.ObjectScheme(
+			t.propertiesWithId(),
+			append([]string{"id"}, t.savePaymentReceiveRuleRequired()...),
+		),
 	}
+}
+
+// propertiesWithId adds the route id the update tool needs on top of the shared rule scheme.
+func (t *UpdatePaymentReceiveRuleTool) propertiesWithId() map[string]models.ToolInputSchemeProperty {
+	properties := t.savePaymentReceiveRuleProperties()
+	properties["id"] = utils.StringProperty("Id of the rule to update (see list_payment_receive_rules).")
+	return properties
 }
 
 func (t *UpdatePaymentReceiveRuleTool) Execute(ctx context.Context, args map[string]any) (map[string]any, error) {

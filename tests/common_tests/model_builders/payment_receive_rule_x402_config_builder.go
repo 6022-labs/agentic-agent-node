@@ -11,25 +11,25 @@ import (
 
 type PaymentReceiveRuleX402ConfigBuilder struct {
 	paymentReceiveRuleId uuid.UUID
+	policyId             uuid.UUID
 	network              string
 	asset                string
 	payTo                string
 	assetTransferMethod  enums.AssetTransferMethod
 	eip712Name           string
 	eip712Version        string
-	addressPatterns      []string
 }
 
 func NewPaymentReceiveRuleX402ConfigBuilder() *PaymentReceiveRuleX402ConfigBuilder {
 	return &PaymentReceiveRuleX402ConfigBuilder{
 		paymentReceiveRuleId: uuid.New(),
+		policyId:             uuid.New(),
 		network:              "eip155:80002",
-		asset:                common_tests.RandomEthAddress().Hex(),
+		asset:                strings.ToLower(common_tests.RandomEthAddress().Hex()),
 		payTo:                common_tests.RandomEthAddress().Hex(),
 		assetTransferMethod:  enums.AssetTransferMethodEip3009,
 		eip712Name:           "USDC",
 		eip712Version:        "2",
-		addressPatterns:      []string{strings.ToLower(common_tests.RandomEthAddress().Hex())},
 	}
 }
 
@@ -40,10 +40,23 @@ func (b *PaymentReceiveRuleX402ConfigBuilder) WithPaymentReceiveRuleId(
 	return b
 }
 
-func (b *PaymentReceiveRuleX402ConfigBuilder) WithAddressPatterns(
-	patterns []string,
-) *PaymentReceiveRuleX402ConfigBuilder {
-	b.addressPatterns = patterns
+func (b *PaymentReceiveRuleX402ConfigBuilder) WithPolicyId(policyId uuid.UUID) *PaymentReceiveRuleX402ConfigBuilder {
+	b.policyId = policyId
+	return b
+}
+
+func (b *PaymentReceiveRuleX402ConfigBuilder) WithNetwork(network string) *PaymentReceiveRuleX402ConfigBuilder {
+	b.network = network
+	return b
+}
+
+func (b *PaymentReceiveRuleX402ConfigBuilder) WithAsset(asset string) *PaymentReceiveRuleX402ConfigBuilder {
+	b.asset = asset
+	return b
+}
+
+func (b *PaymentReceiveRuleX402ConfigBuilder) WithPayTo(payTo string) *PaymentReceiveRuleX402ConfigBuilder {
+	b.payTo = payTo
 	return b
 }
 
@@ -57,11 +70,11 @@ func (b *PaymentReceiveRuleX402ConfigBuilder) WithAssetTransferMethod(
 func (b *PaymentReceiveRuleX402ConfigBuilder) Build() *models.PaymentReceiveRuleX402Config {
 	config := &models.PaymentReceiveRuleX402Config{
 		PaymentReceiveRuleId: b.paymentReceiveRuleId,
+		PolicyId:             b.policyId,
 		Network:              b.network,
 		Asset:                b.asset,
 		PayTo:                b.payTo,
 		AssetTransferMethod:  b.assetTransferMethod,
-		AddressPatterns:      b.addressPatterns,
 	}
 	// permit2 signs over Permit2's fixed domain, so the token domain stays nil.
 	if b.assetTransferMethod == enums.AssetTransferMethodEip3009 {

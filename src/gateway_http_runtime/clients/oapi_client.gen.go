@@ -164,12 +164,18 @@ type RequestsInputMessage struct {
 	Type    *string `json:"type,omitempty"`
 }
 
+// RequestsSavePaymentReceiveRulePriceRequest defines model for requests.SavePaymentReceiveRulePriceRequest.
+type RequestsSavePaymentReceiveRulePriceRequest struct {
+	AddressPatterns *[]string `json:"addressPatterns,omitempty"`
+	Price           *string   `json:"price,omitempty"`
+}
+
 // RequestsSavePaymentReceiveRuleRequest defines model for requests.SavePaymentReceiveRuleRequest.
 type RequestsSavePaymentReceiveRuleRequest struct {
-	Config *map[string]interface{} `json:"config,omitempty"`
-	Method *string                 `json:"method,omitempty"`
-	Name   *string                 `json:"name,omitempty"`
-	Price  *string                 `json:"price,omitempty"`
+	Config *map[string]interface{}                       `json:"config,omitempty"`
+	Method *string                                       `json:"method,omitempty"`
+	Name   *string                                       `json:"name,omitempty"`
+	Prices *[]RequestsSavePaymentReceiveRulePriceRequest `json:"prices,omitempty"`
 }
 
 // RequestsSetAgentGuidanceRequest defines model for requests.SetAgentGuidanceRequest.
@@ -450,15 +456,21 @@ type ResponsesPaymentReceivePolicyResponse struct {
 	UpdatedAt          *string `json:"updatedAt,omitempty"`
 }
 
+// ResponsesPaymentReceiveRulePriceResponse defines model for responses.PaymentReceiveRulePriceResponse.
+type ResponsesPaymentReceiveRulePriceResponse struct {
+	AddressPatterns *[]string `json:"addressPatterns,omitempty"`
+	Price           *string   `json:"price,omitempty"`
+}
+
 // ResponsesPaymentReceiveRuleResponse defines model for responses.PaymentReceiveRuleResponse.
 type ResponsesPaymentReceiveRuleResponse struct {
-	Config    *map[string]interface{} `json:"config,omitempty"`
-	CreatedAt *string                 `json:"createdAt,omitempty"`
-	Id        *string                 `json:"id,omitempty"`
-	Method    *string                 `json:"method,omitempty"`
-	Name      *string                 `json:"name,omitempty"`
-	Price     *string                 `json:"price,omitempty"`
-	UpdatedAt *string                 `json:"updatedAt,omitempty"`
+	Config    *map[string]interface{}                     `json:"config,omitempty"`
+	CreatedAt *string                                     `json:"createdAt,omitempty"`
+	Id        *string                                     `json:"id,omitempty"`
+	Method    *string                                     `json:"method,omitempty"`
+	Name      *string                                     `json:"name,omitempty"`
+	Prices    *[]ResponsesPaymentReceiveRulePriceResponse `json:"prices,omitempty"`
+	UpdatedAt *string                                     `json:"updatedAt,omitempty"`
 }
 
 // ResponsesPaymentReceiveSettlementResponse Settlement is set only when the outcome is payable.

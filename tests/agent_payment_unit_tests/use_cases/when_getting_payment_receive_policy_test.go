@@ -7,7 +7,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +17,6 @@ type WhenGettingPaymentReceivePolicyTestingSuite struct {
 	sut *use_cases.GetPaymentReceivePolicy
 
 	mockPaymentReceivePolicyProvider *payment_interfaces_mocks.MockPaymentReceivePolicyProviderInterface
-	mockPaymentReceiveRuleRepository *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
-	mockStrategy                     *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
 }
 
 func WhenGettingPaymentReceivePolicyBeforeEach(t *testing.T) *WhenGettingPaymentReceivePolicyTestingSuite {
@@ -28,22 +25,10 @@ func WhenGettingPaymentReceivePolicyBeforeEach(t *testing.T) *WhenGettingPayment
 	mockPaymentReceivePolicyProvider := payment_interfaces_mocks.NewMockPaymentReceivePolicyProviderInterface(
 		mockController,
 	)
-	mockPaymentReceiveRuleRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleRepositoryInterface(
-		mockController,
-	)
-
-	strategies, mockStrategy := newMockStrategies(mockController)
 
 	return &WhenGettingPaymentReceivePolicyTestingSuite{
-		sut: use_cases.NewGetPaymentReceivePolicy(
-			mockPaymentReceivePolicyProvider,
-			mockPaymentReceiveRuleRepository,
-			strategies,
-		),
-
+		sut:                              use_cases.NewGetPaymentReceivePolicy(mockPaymentReceivePolicyProvider),
 		mockPaymentReceivePolicyProvider: mockPaymentReceivePolicyProvider,
-		mockPaymentReceiveRuleRepository: mockPaymentReceiveRuleRepository,
-		mockStrategy:                     mockStrategy,
 	}
 }
 
@@ -92,7 +77,7 @@ func TestWhenGettingPaymentReceivePolicy(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingPaymentReceivePolicyBeforeEach(t)

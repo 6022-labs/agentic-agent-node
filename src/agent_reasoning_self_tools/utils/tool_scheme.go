@@ -48,3 +48,11 @@ func ObjectProperty(description string) models.ToolInputSchemeProperty {
 		AdditionalProperties: &additionalProperties,
 	}
 }
+
+func ArrayProperty(description string, items models.ToolInputSchemeProperty) models.ToolInputSchemeProperty {
+	return models.ToolInputSchemeProperty{
+		Type:        "array",
+		Description: &description,
+		Items:       &items,
+	}
+}

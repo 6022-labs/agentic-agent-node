@@ -114,6 +114,32 @@ func TestWhenDeletingPaymentReceiveRuleById(t *testing.T) {
 					}
 				})
 			})
+
+			t.Run("Given the rule has prices", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should delete its prices too", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenDeletingPaymentReceiveRuleByIdBeforeEach(tc)
+					defer WhenDeletingPaymentReceiveRuleByIdAfterEach(suite)
+
+					rule, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(suite.policy.Id).Build())
+					assert.NoError(t, err)
+					paymentReceiveRulePriceRepository := repositories.NewPaymentReceiveRulePriceRepository(
+						suite.dbClient,
+					)
+					_, err = paymentReceiveRulePriceRepository.Create(context.Background(),
+						model_builders.NewPaymentReceiveRulePriceBuilder().WithPaymentReceiveRuleId(rule.Id).Build())
+					assert.NoError(t, err)
+
+					assert.NoError(t, suite.sut.DeleteById(context.Background(), rule.Id))
+
+					prices, err := paymentReceiveRulePriceRepository.ListByRuleId(context.Background(), rule.Id)
+					assert.NoError(t, err)
+					assert.Empty(t, prices)
+				})
+			})
 		})
 	}
 }

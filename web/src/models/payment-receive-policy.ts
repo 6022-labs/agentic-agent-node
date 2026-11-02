@@ -1,6 +1,10 @@
-// PaymentReceiveRule is the flat view model the UI works with. The wire format is
-// method-neutral (name/price/method + a per-method config blob); the query
-// layer maps between the two so the table and form keep flat fields.
+// PaymentReceiveRulePrice is what callers matching addressPatterns pay per call, in atomic units; "0" is free.
+export type PaymentReceiveRulePrice = {
+  price: string
+  addressPatterns: string[]
+}
+
+// PaymentReceiveRule is the flat view model of one token's rule; the query layer maps the wire config blob.
 export type PaymentReceiveRule = {
   id?: string
   name: string
@@ -10,22 +14,18 @@ export type PaymentReceiveRule = {
   network: string
   asset: string
   payTo: string
-  price: string
+  // Read-only: detected from the token on-chain at save.
   assetTransferMethod?: string
   eip712Name?: string
   eip712Version?: string
-  // Regexes full-matched against the caller's lowercase 0x address;
-  // EVERYONE_PATTERN opens the rule to everyone. Price "0" makes the rule a
-  // free pass for the matched addresses.
-  addressPatterns: string[]
+  prices: PaymentReceiveRulePrice[]
 }
 
 export type ListPaymentReceiveRulesResponse = {
   rules: PaymentReceiveRule[]
 }
 
-// PaymentReceiveRuleConfig is the x402 method's per-rule settings, carried in the
-// wire rule's method-specific config blob.
+// PaymentReceiveRuleConfig is the x402 token in the wire rule's config blob.
 export type PaymentReceiveRuleConfig = {
   network: string
   asset: string
@@ -33,7 +33,6 @@ export type PaymentReceiveRuleConfig = {
   assetTransferMethod?: string
   eip712Name?: string
   eip712Version?: string
-  addressPatterns: string[]
 }
 
 // PaymentReceiveRuleWire mirrors the gateway's rule: method-neutral fields plus a
@@ -41,8 +40,8 @@ export type PaymentReceiveRuleConfig = {
 export type PaymentReceiveRuleWire = {
   id?: string
   name: string
-  price: string
   method: string
+  prices: PaymentReceiveRulePrice[]
   config: PaymentReceiveRuleConfig
 }
 
@@ -69,8 +68,7 @@ export type PaymentReceivePolicy = {
 
 export const EVERYONE_PATTERN = ".*"
 
-// matchesAddressPatterns mirrors the gateway's rule: full-match regexes
-// against the lowercase address; invalid patterns never match.
+// matchesAddressPatterns mirrors the runtime: full-match against the lowercased address.
 export function matchesAddressPatterns(
   patterns: string[],
   address: string
@@ -85,14 +83,25 @@ export function matchesAddressPatterns(
   })
 }
 
+// isPublicPrice reports a price open to everyone, which the runtime advertises.
+export function isPublicPrice(price: PaymentReceiveRulePrice): boolean {
+  return price.addressPatterns.includes(EVERYONE_PATTERN)
+}
+
 // findFreeRule returns the rule granting the address free access, if any.
 export function findFreeRule(
   rules: PaymentReceiveRule[],
   address: string
 ): PaymentReceiveRule | undefined {
-  return rules.find(
-    (rule) =>
-      rule.price === "0" &&
-      matchesAddressPatterns(rule.addressPatterns ?? [], address)
+  return rules.find((rule) =>
+    rule.prices.some(
+      (price) =>
+        price.price === "0" &&
+        matchesAddressPatterns(price.addressPatterns, address)
+    )
   )
 }
+
+// Max uint256: the largest price the runtime stores.
+export const MAX_UINT256 =
+  115792089237316195423570985008687907853269984665640564039457584007913129639935n

@@ -66,7 +66,7 @@ func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 // @Success 200 {object} models.ExternalPaymentReceiveRule
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
-// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
 // @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-receive-policy/rules [post]
@@ -93,7 +93,7 @@ func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 // @Failure 400 {object} errors.ValidationError
 // @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
 // @Failure 404 {object} errors.NotFoundError "rule_not_found"
-// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
 // @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-receive-policy/rules/{id} [put]

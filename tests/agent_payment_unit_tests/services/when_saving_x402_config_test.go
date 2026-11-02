@@ -53,7 +53,7 @@ func TestWhenSavingX402Config(t *testing.T) {
 
 			suite := WhenSavingX402ConfigBeforeEach(t)
 
-			err := suite.sut.SaveConfig(context.Background(), uuid.New(), json.RawMessage("{not-json"))
+			err := suite.sut.SaveConfig(context.Background(), uuid.New(), uuid.New(), json.RawMessage("{not-json"))
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
@@ -77,7 +77,8 @@ func TestWhenSavingX402Config(t *testing.T) {
 			err := suite.sut.SaveConfig(
 				context.Background(),
 				uuid.New(),
-				json.RawMessage(`{"network":"eip155:80002","addressPatterns":[".*"]}`),
+				uuid.New(),
+				json.RawMessage(`{"network":"eip155:80002"}`),
 			)
 
 			assert.ErrorIs(t, err, assert.AnError)
@@ -87,6 +88,7 @@ func TestWhenSavingX402Config(t *testing.T) {
 	t.Run("Given a valid config blob", func(t *testing.T) {
 		t.Parallel()
 
+		policyId := uuid.New()
 		ruleId := uuid.New()
 
 		initSuite := func(suite *WhenSavingX402ConfigTestingSuite) {
@@ -95,13 +97,13 @@ func TestWhenSavingX402Config(t *testing.T) {
 				DoAndReturn(func(_ context.Context, config *models.PaymentReceiveRuleX402Config) error {
 					assert.Equal(t, ruleId, config.PaymentReceiveRuleId)
 					assert.Equal(t, "eip155:80002", config.Network)
-					assert.Equal(t, []string{".*"}, config.AddressPatterns)
+					assert.Equal(t, policyId, config.PolicyId)
 					return nil
 				}).
 				Times(1)
 		}
 
-		t.Run("Should upsert the typed config keyed by the rule id", func(t *testing.T) {
+		t.Run("Should save the config under its rule and policy", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSavingX402ConfigBeforeEach(t)
@@ -109,10 +111,11 @@ func TestWhenSavingX402Config(t *testing.T) {
 
 			err := suite.sut.SaveConfig(
 				context.Background(),
+				policyId,
 				ruleId,
 				json.RawMessage(
 					`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-						`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+						`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 				),
 			)
 

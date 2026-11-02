@@ -25,5 +25,6 @@ func Models() []any {
 		&paymentReceivePolicyWithCrossDomainFK{},
 		&agent_payment_models.PaymentReceiveRule{},
 		&agent_payment_models.PaymentReceiveRuleX402Config{},
+		&agent_payment_models.PaymentReceiveRulePrice{},
 	}
 }

@@ -3,8 +3,6 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"math/big"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -70,6 +68,8 @@ func (s *X402PaymentReceiveMethodStrategy) Validate(
 	if err != nil {
 		return errors.NewValidationError("config.network", err.Error())
 	}
+	// Canonical: part of the one-rule-per-token key.
+	config.Network = helpers.FormatCaip2(parsedChainId)
 	chainId := strconv.FormatUint(parsedChainId, 10)
 	// Rules can only target a reachable chain (needed to validate the asset).
 	if !s.evmChainsSettings.Has(chainId) {
@@ -78,30 +78,10 @@ func (s *X402PaymentReceiveMethodStrategy) Validate(
 	if !common.IsHexAddress(config.Asset) {
 		return errors.NewValidationError("config.asset", "must be a hex address")
 	}
+	// Lowercased: part of the one-rule-per-token key.
+	config.Asset = strings.ToLower(config.Asset)
 	if !common.IsHexAddress(config.PayTo) {
 		return errors.NewValidationError("config.payTo", "must be a hex address")
-	}
-	if len(config.AddressPatterns) == 0 {
-		return errors.NewValidationError(
-			"config.addressPatterns",
-			"at least one pattern is required (\".*\" opens the rule to everyone)",
-		)
-	}
-	for i, pattern := range config.AddressPatterns {
-		trimmed := strings.TrimSpace(pattern)
-		if len(trimmed) == 0 {
-			return errors.NewValidationError("config.addressPatterns", "patterns cannot be empty")
-		}
-		if _, err := regexp.Compile(trimmed); err != nil {
-			return errors.NewValidationError(
-				"config.addressPatterns",
-				"must be valid regexes matched against the lowercase 0x address",
-			)
-		}
-		if common.IsHexAddress(trimmed) {
-			trimmed = strings.ToLower(trimmed)
-		}
-		config.AddressPatterns[i] = trimmed
 	}
 
 	// Detect the transfer method + domain on-chain; a wrong domain silently fails settlement.
@@ -119,8 +99,10 @@ func (s *X402PaymentReceiveMethodStrategy) Validate(
 		config.Eip712Version = nil
 	}
 
-	if err := s.requireFacilitatorForPaidRule(request.Price, config.Network); err != nil {
-		return err
+	if request.HasPaidPrice() {
+		if _, configured := s.paymentFacilitatorsSettings.BaseUrlFor(config.Network); !configured {
+			return errors.NewValidationError("config.network", "no facilitator configured for this network")
+		}
 	}
 
 	sanitized, err := config.Marshal()
@@ -131,8 +113,33 @@ func (s *X402PaymentReceiveMethodStrategy) Validate(
 	return nil
 }
 
+func (s *X402PaymentReceiveMethodStrategy) RuleIdForAsset(
+	ctx context.Context,
+	policyId uuid.UUID,
+	raw json.RawMessage,
+) (uuid.UUID, error) {
+	config := &models.PaymentReceiveRuleX402Config{}
+	if err := config.Parse(raw); err != nil {
+		return uuid.Nil, err
+	}
+	existing, err := s.paymentReceiveRuleX402ConfigRepository.GetByPolicyIdAndAsset(
+		ctx,
+		policyId,
+		config.Network,
+		config.Asset,
+	)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if existing == nil {
+		return uuid.Nil, nil
+	}
+	return existing.PaymentReceiveRuleId, nil
+}
+
 func (s *X402PaymentReceiveMethodStrategy) SaveConfig(
 	ctx context.Context,
+	policyId uuid.UUID,
 	ruleId uuid.UUID,
 	raw json.RawMessage,
 ) error {
@@ -141,9 +148,9 @@ func (s *X402PaymentReceiveMethodStrategy) SaveConfig(
 		return err
 	}
 	config.PaymentReceiveRuleId = ruleId
+	config.PolicyId = policyId
 	return s.paymentReceiveRuleX402ConfigRepository.Upsert(ctx, config)
 }
-
 func (s *X402PaymentReceiveMethodStrategy) LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error) {
 	row, err := s.paymentReceiveRuleX402ConfigRepository.GetByRuleId(ctx, ruleId)
 	if err != nil {
@@ -153,16 +160,4 @@ func (s *X402PaymentReceiveMethodStrategy) LoadConfig(ctx context.Context, ruleI
 		return nil, nil
 	}
 	return row.Marshal()
-}
-
-// requireFacilitatorForPaidRule rejects a paid rule with no facilitator; free rules never settle.
-func (s *X402PaymentReceiveMethodStrategy) requireFacilitatorForPaidRule(price string, network string) error {
-	parsed, ok := new(big.Int).SetString(price, 10)
-	if !ok || parsed.Sign() == 0 {
-		return nil
-	}
-	if _, configured := s.paymentFacilitatorsSettings.BaseUrlFor(network); !configured {
-		return errors.NewValidationError("config.network", "no facilitator configured for this network")
-	}
-	return nil
 }

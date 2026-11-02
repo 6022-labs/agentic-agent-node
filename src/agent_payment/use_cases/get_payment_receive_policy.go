@@ -3,36 +3,27 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type GetPaymentReceivePolicy struct {
-	*AbstractPaymentUseCase
+	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface
 }
 
 func NewGetPaymentReceivePolicy(
 	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
-	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
-	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 ) *GetPaymentReceivePolicy {
-	return &GetPaymentReceivePolicy{
-		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
-			paymentReceivePolicyProvider,
-			paymentReceiveRuleRepository,
-			paymentReceiveMethodStrategies,
-		),
-	}
+	return &GetPaymentReceivePolicy{paymentReceivePolicyProvider: paymentReceivePolicyProvider}
 }
 
 func (u *GetPaymentReceivePolicy) Execute(ctx context.Context) (*responses.PaymentReceivePolicyResponse, error) {
-	policy, agent, err := u.ensurePaymentReceivePolicy(ctx)
+	policy, agent, err := u.paymentReceivePolicyProvider.Ensure(ctx)
 	if err != nil {
 		return nil, err
 	}
-	evmAddress, err := u.evmAddress(ctx, agent.Id)
+	evmAddress, err := u.paymentReceivePolicyProvider.EvmAddress(ctx, agent.Id)
 	if err != nil {
 		return nil, errors.NewInternalError("policy_failed", err.Error())
 	}

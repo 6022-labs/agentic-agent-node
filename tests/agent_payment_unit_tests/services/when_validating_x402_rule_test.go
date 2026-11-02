@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
@@ -56,8 +57,7 @@ func validatingX402RuleSuite(
 }
 
 const validConfig = `{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",` +
-	`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*",` +
-	`" 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 "]}`
+	`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`
 
 func TestWhenValidatingX402Rule(t *testing.T) {
 	t.Parallel()
@@ -72,7 +72,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			request := generateSaveRequest(
 				`{"network":"solana:mainnet","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -94,7 +94,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 				request := generateSaveRequest(
 					`{"network":"`+network+`","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-						`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+						`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 					"10000",
 				)
 				err := suite.sut.Validate(context.Background(), request)
@@ -116,7 +116,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			request := generateSaveRequest(
 				`{"network":"eip155:1","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -136,8 +136,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",`+
-					`"addressPatterns":[".*"]}`,
+				`{"network":"eip155:80002","asset":"not-hex","payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -157,8 +156,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			suite := WhenValidatingX402RuleBeforeEach(t)
 
 			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex",`+
-					`"addressPatterns":[".*"]}`,
+				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582","payTo":"not-hex"}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -166,97 +164,6 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "config.payTo", validationErr.Field)
-		})
-	})
-
-	t.Run("Given no address patterns", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on config.addressPatterns", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[]}`,
-				"10000",
-			)
-			err := suite.sut.Validate(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.addressPatterns", validationErr.Field)
-		})
-	})
-
-	t.Run("Given a blank address pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on config.addressPatterns", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["  "]}`,
-				"10000",
-			)
-			err := suite.sut.Validate(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.addressPatterns", validationErr.Field)
-		})
-	})
-
-	t.Run("Given an invalid regex pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on config.addressPatterns", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":["[invalid"]}`,
-				"10000",
-			)
-			err := suite.sut.Validate(context.Background(), request)
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "config.addressPatterns", validationErr.Field)
-		})
-	})
-
-	t.Run("Given an address pattern spelled as a checksummed address", func(t *testing.T) {
-		t.Parallel()
-
-		// Matching lowercases the payer, so a checksummed pattern would compile and never match.
-		t.Run("Should be stored lowercased", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenValidatingX402RuleBeforeEach(t)
-			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
-				Times(1)
-
-			request := generateSaveRequest(
-				`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",`+
-					`"addressPatterns":["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]}`,
-				"10000",
-			)
-
-			assert.NoError(t, suite.sut.Validate(context.Background(), request))
-
-			sanitized := &models.PaymentReceiveRuleX402Config{}
-			assert.NoError(t, sanitized.Parse(request.Config))
-			assert.Equal(t, []string{"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"}, sanitized.AddressPatterns)
 		})
 	})
 
@@ -315,7 +222,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
 			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				ValidateErc20(gomock.Any(), "80002", "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582").
 				Return(enums.AssetTransferMethodPermit2, "", "", nil).
 				Times(1)
 		}
@@ -369,13 +276,13 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 
 			suite := WhenValidatingX402RuleBeforeEach(t)
 			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "84532", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				ValidateErc20(gomock.Any(), "84532", "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582").
 				Return(enums.AssetTransferMethodEip3009, "USD Coin", "2", nil).
 				Times(1)
 
 			request := generateSaveRequest(
 				`{"network":"eip155:84532","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+					`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 				"10000",
 			)
 			err := suite.sut.Validate(context.Background(), request)
@@ -390,7 +297,7 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
 			// Distinct from the seed defaults to prove the derived domain wins.
 			suite.mockErc20Validator.EXPECT().
-				ValidateErc20(gomock.Any(), "80002", "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582").
+				ValidateErc20(gomock.Any(), "80002", "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582").
 				Return(enums.AssetTransferMethodEip3009, "USD Coin", "7", nil).
 				Times(1)
 		}
@@ -407,11 +314,54 @@ func TestWhenValidatingX402Rule(t *testing.T) {
 			assert.NoError(t, err)
 			config := &models.PaymentReceiveRuleX402Config{}
 			assert.NoError(t, config.Parse(request.Config))
-			assert.Equal(t, ".*", config.AddressPatterns[0])
-			assert.Equal(t, "0x70997970c51812dc3a010c7d01b50e0d17dc79c8", config.AddressPatterns[1])
 			assert.Equal(t, enums.AssetTransferMethodEip3009, config.AssetTransferMethod)
 			assert.Equal(t, "USD Coin", *config.Eip712Name)
 			assert.Equal(t, "7", *config.Eip712Version)
+		})
+
+		// The asset is the one-rule-per-token lookup key, so every pasted case must store alike.
+		t.Run("Should store the asset lowercased", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			initSuite(suite)
+
+			request := generateSaveRequest(validConfig, "10000")
+
+			assert.NoError(t, suite.sut.Validate(context.Background(), request))
+			config := &models.PaymentReceiveRuleX402Config{}
+			assert.NoError(t, config.Parse(request.Config))
+			assert.Equal(t, "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582", config.Asset)
+		})
+	})
+
+	t.Run("Given a network whose chain id has leading zeros", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenValidatingX402RuleTestingSuite) {
+			suite.mockErc20Validator.EXPECT().
+				ValidateErc20(gomock.Any(), "80002", gomock.Any()).
+				Return(enums.AssetTransferMethodEip3009, "USDC", "2", nil).
+				Times(1)
+		}
+
+		// Otherwise "eip155:080002" would name the same token as a second rule.
+		t.Run("Should store the network without the leading zeros", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402RuleBeforeEach(t)
+			initSuite(suite)
+
+			request := generateSaveRequest(
+				`{"network":"eip155:080002","asset":"`+common_tests.RandomEthAddress().Hex()+
+					`","payTo":"`+common_tests.RandomEthAddress().Hex()+`"}`,
+				"10000",
+			)
+
+			assert.NoError(t, suite.sut.Validate(context.Background(), request))
+			config := &models.PaymentReceiveRuleX402Config{}
+			assert.NoError(t, config.Parse(request.Config))
+			assert.Equal(t, "eip155:80002", config.Network)
 		})
 	})
 }

@@ -1,8 +1,9 @@
 import React from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CircleCheck, CircleX, Loader2, Plus, Trash2 } from "lucide-react"
+import { CircleCheck, CircleX, Loader2, Plus, Trash2, X } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select"
 import {
   EVERYONE_PATTERN,
+  MAX_UINT256,
   X402_METHOD,
   type PaymentReceiveRule,
 } from "@/models/payment-receive-policy"
@@ -33,6 +35,7 @@ import {
 } from "@/configs/app-config"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import type { Erc20Lookup } from "@/lib/erc20"
+import { truncateEthAddress } from "@/lib/utils"
 import {
   formatAtomicAmount,
   formatNetwork,
@@ -42,6 +45,7 @@ import {
 } from "@/lib/token-format"
 import {
   paymentReceiveRuleFormSchema,
+  type PaymentReceiveRuleFormField,
   type PaymentReceiveRuleFormSchemaType,
 } from "./payment-receive-rule-form-schema"
 
@@ -50,21 +54,17 @@ type Props = {
   agentWalletAddress: string
   // When set, the form edits this rule instead of creating one.
   initialRule?: PaymentReceiveRule
-  // Non-address regex patterns of the edited rule (kept verbatim by the
-  // caller on save); surfaced so the operator knows they exist.
-  preservedPatternCount?: number
   // Token metadata for the entered network + asset, resolved by the caller.
   tokenLookup: Erc20Lookup
   onValueChange: (values: PaymentReceiveRuleFormSchemaType) => void
   onFormComplete: (
     values: PaymentReceiveRuleFormSchemaType
-  ) => Promise<FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>>
+  ) => Promise<FormCompletionResult<PaymentReceiveRuleFormField>>
 }
 
 export default function PaymentReceiveRuleForm({
   agentWalletAddress,
   initialRule,
-  preservedPatternCount = 0,
   tokenLookup,
   onValueChange,
   onFormComplete,
@@ -94,11 +94,10 @@ export default function PaymentReceiveRuleForm({
           payTo: initialRule.payTo,
           // Non-zero prices are atomic on the wire; they are converted to
           // token units below once the token's decimals are known.
-          price: initialRule.price === "0" ? "0" : "",
-          allowEveryone: initialRule.addressPatterns.includes(EVERYONE_PATTERN),
-          addresses: initialRule.addressPatterns
-            .filter(isPlainAddressPattern)
-            .map((address) => ({ address })),
+          prices: initialRule.prices.map((row) => ({
+            price: row.price === "0" ? "0" : "",
+            addressPatterns: row.addressPatterns,
+          })),
         }
       : // New rules default to a facilitator network and the $6022 token.
         {
@@ -107,19 +106,13 @@ export default function PaymentReceiveRuleForm({
           network: defaultNewRuleNetwork,
           asset: defaultToken,
           payTo: agentWalletAddress,
-          price: "0.01",
-          allowEveryone: false,
-          addresses: [],
+          prices: [{ price: "0.01", addressPatterns: [] }],
         },
   })
 
-  const addressRows = useFieldArray({
-    control: form.control,
-    name: "addresses",
-  })
-  const allowEveryone = form.watch("allowEveryone")
-
-  const price = form.watch("price")
+  const priceRows = useFieldArray({ control: form.control, name: "prices" })
+  const prices = form.watch("prices")
+  const allFree = prices.every((row) => isZeroAmount(row.price))
 
   React.useEffect(() => {
     onValueChange(form.getValues())
@@ -128,67 +121,95 @@ export default function PaymentReceiveRuleForm({
     return () => subscription.unsubscribe()
   }, [form, onValueChange])
 
-  // Paid rules can only target a configured-facilitator network; free rules
-  // never settle, so they offer every reachable chain. The edited rule's
-  // network is always kept so editing never drops it.
+  // Paid prices need a facilitator network; all-free rules may use any reachable chain; the edited one is kept.
   const networkOptions = React.useMemo(() => {
     const ids = new Set<string>(facilitatorNetworks)
-    if (isZeroAmount(price)) reachableNetworks.forEach((n) => ids.add(n))
+    if (allFree) reachableNetworks.forEach((n) => ids.add(n))
     if (initialRule) ids.add(initialRule.network)
     return [...ids]
-  }, [price, initialRule, facilitatorNetworks, reachableNetworks])
+  }, [allFree, initialRule, facilitatorNetworks, reachableNetworks])
 
   const tokenInfo = tokenLookup.status === "found" ? tokenLookup.info : null
 
-  // When editing a paid rule, the stored atomic price becomes token units as
-  // soon as the token's decimals are known (one-shot).
-  const priceInitialized = React.useRef(false)
+  // Editing: atomic prices become token units once the token's decimals load.
+  const pricesInitialized = React.useRef(false)
   React.useEffect(() => {
-    if (
-      initialRule &&
-      initialRule.price !== "0" &&
-      tokenInfo &&
-      !priceInitialized.current
-    ) {
-      priceInitialized.current = true
-      form.setValue(
-        "price",
-        formatAtomicAmount(initialRule.price, tokenInfo.decimals)
-      )
+    if (initialRule && tokenInfo && !pricesInitialized.current) {
+      pricesInitialized.current = true
+      initialRule.prices.forEach((row, index) => {
+        if (row.price !== "0") {
+          form.setValue(
+            `prices.${index}.price`,
+            formatAtomicAmount(row.price, tokenInfo.decimals)
+          )
+        }
+      })
     }
   }, [initialRule, tokenInfo, form])
 
-  // No reset on success: the dialog closes and unmounts the form. Values are
-  // kept on failure so the user can correct and retry. The price is entered
-  // in token units and converted to the atomic units the gateway stores.
+  // No reset: success unmounts the form, failure keeps values for a retry. Prices go out in atomic units.
   const onSubmit = async (values: PaymentReceiveRuleFormSchemaType) => {
-    let atomicPrice: string
-    if (isZeroAmount(values.price)) {
-      atomicPrice = "0"
-    } else if (!tokenInfo) {
-      form.setError("price", {
-        type: "manual",
-        message:
-          "Resolve the token contract first — its decimals are needed to convert the price",
-      })
-      return
-    } else {
-      const parsed = parseTokenAmount(values.price, tokenInfo.decimals)
+    const atomicPrices: string[] = []
+    for (const [index, row] of values.prices.entries()) {
+      const field = `prices.${index}.price` as const
+      if (isZeroAmount(row.price)) {
+        atomicPrices.push("0")
+        continue
+      }
+      if (!tokenInfo) {
+        form.setError(field, {
+          type: "manual",
+          message:
+            "Resolve the token contract first — its decimals are needed to convert the price",
+        })
+        return
+      }
+      const parsed = parseTokenAmount(row.price, tokenInfo.decimals)
       if (!parsed) {
-        form.setError("price", {
+        form.setError(field, {
           type: "manual",
           message: `Too many decimal places for $${tokenInfo.symbol} (max ${tokenInfo.decimals})`,
         })
         return
       }
-      atomicPrice = parsed
+      if (BigInt(parsed) > MAX_UINT256) {
+        form.setError(field, {
+          type: "manual",
+          message: "Too large for a token amount (max 2^256-1 atomic units)",
+        })
+        return
+      }
+      atomicPrices.push(parsed)
     }
 
-    const { error } = await onFormComplete({ ...values, price: atomicPrice })
+    const { error } = await onFormComplete({
+      ...values,
+      prices: values.prices.map((row, index) => ({
+        price: atomicPrices[index],
+        addressPatterns: row.addressPatterns,
+      })),
+    })
 
     if (error) {
       form.setError(error.field, { type: "server", message: error.message })
     }
+  }
+
+  const pricesError =
+    form.formState.errors.prices?.root?.message ??
+    form.formState.errors.prices?.message
+
+  // A row's pattern error is either the list's own (none given) or the first invalid pattern's.
+  const patternsError = (index: number): string | undefined => {
+    const errors = form.formState.errors.prices?.[index]?.addressPatterns
+    if (!errors) return undefined
+    if (errors.message) return errors.message
+    return Object.values(errors).find(
+      (entry): entry is { message: string } =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof (entry as { message?: unknown }).message === "string"
+    )?.message
   }
 
   return (
@@ -314,129 +335,190 @@ export default function PaymentReceiveRuleForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Price per call{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
-              </FormLabel>
-              <FormControl>
-                {/* Keystroke filter: digits and a single dot only. */}
-                <Input
-                  placeholder="0.01"
-                  inputMode="decimal"
-                  {...field}
-                  onChange={(event) =>
-                    field.onChange(
-                      event.target.value
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*)\./g, "$1")
-                    )
-                  }
-                />
-              </FormControl>
-              <FormDescription>
-                {tokenInfo
-                  ? `${
-                      parseTokenAmount(price, tokenInfo.decimals)
-                        ? `${price} $${tokenInfo.symbol} = ${parseTokenAmount(price, tokenInfo.decimals)} atomic units (${tokenInfo.decimals} decimals)`
-                        : `Up to ${tokenInfo.decimals} decimal places`
-                    }. 0 = free for the matched addresses.`
-                  : "In token units, converted on save. 0 = free for the matched addresses."}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className="space-y-2">
-          <FormLabel>Allowed callers</FormLabel>
-          <FormField
-            control={form.control}
-            name="allowEveryone"
-            render={({ field }) => (
-              <FormItem>
-                <label className="flex items-center gap-2 text-sm font-normal">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={field.value}
-                      onChange={(event) => {
-                        field.onChange(event.target.checked)
-                        // Switching modes resets the list: a fresh empty row
-                        // when scoping, nothing when opening to everyone.
-                        addressRows.replace(
-                          event.target.checked ? [] : [{ address: "" }]
-                        )
-                      }}
+          <FormLabel>
+            Prices per call{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
+          </FormLabel>
+          <p className="text-sm text-muted-foreground">
+            Each caller pays the cheapest price whose callers match their
+            address. A price open to anyone is advertised to anonymous callers;
+            the others are private offers. 0 = free.
+          </p>
+          {priceRows.fields.map((row, index) => (
+            <div key={row.id} className="space-y-2 rounded-md border p-3">
+              <div className="flex items-start gap-2">
+                <FormField
+                  control={form.control}
+                  name={`prices.${index}.price`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        {/* Keystroke filter: digits and a single dot only. */}
+                        <Input
+                          placeholder="0.01"
+                          inputMode="decimal"
+                          aria-label="Price per call"
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(
+                              event.target.value
+                                .replace(/[^0-9.]/g, "")
+                                .replace(/(\..*)\./g, "$1")
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {tokenInfo && !isZeroAmount(prices[index]?.price ?? "")
+                          ? parseTokenAmount(
+                              prices[index]?.price ?? "",
+                              tokenInfo.decimals
+                            )
+                            ? `${parseTokenAmount(prices[index]?.price ?? "", tokenInfo.decimals)} atomic units`
+                            : `Up to ${tokenInfo.decimals} decimal places`
+                          : isZeroAmount(prices[index]?.price ?? "")
+                            ? "Free for the callers below."
+                            : "In token units, converted on save."}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remove price"
+                  disabled={priceRows.fields.length === 1}
+                  onClick={() => priceRows.remove(index)}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+              <FormField
+                control={form.control}
+                name={`prices.${index}.addressPatterns`}
+                render={({ field }) => (
+                  <FormItem>
+                    <AddressPatternsEditor
+                      patterns={field.value}
+                      onChange={field.onChange}
                     />
-                  </FormControl>
-                  Allow everyone
-                </label>
-                <FormDescription>
-                  {field.value
-                    ? "Anyone can pay this price; the rule is advertised to anonymous callers."
-                    : "Only the addresses below get this price — a private offer, never advertised."}
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-          {allowEveryone ? null : (
-            <>
-              {addressRows.fields.map((row, index) => (
-                <div key={row.id} className="flex items-start gap-2">
-                  <FormField
-                    control={form.control}
-                    name={`addresses.${index}.address`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input placeholder="0x…" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Remove address"
-                    onClick={() => addressRows.remove(index)}
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addressRows.append({ address: "" })}
-              >
-                <Plus />
-                Add address
-              </Button>
-              {preservedPatternCount > 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {preservedPatternCount} custom regex pattern
-                  {preservedPatternCount === 1 ? "" : "s"} set via the API are
-                  kept as-is.
-                </p>
-              ) : null}
-            </>
-          )}
-          {form.formState.errors.addresses?.root?.message ||
-          form.formState.errors.addresses?.message ? (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.addresses.root?.message ??
-                form.formState.errors.addresses.message}
-            </p>
+                    {patternsError(index) ? (
+                      <p className="text-sm text-destructive">
+                        {patternsError(index)}
+                      </p>
+                    ) : null}
+                  </FormItem>
+                )}
+              />
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => priceRows.append({ price: "", addressPatterns: [] })}
+          >
+            <Plus />
+            Add price
+          </Button>
+          {pricesError ? (
+            <p className="text-sm text-destructive">{pricesError}</p>
           ) : null}
         </div>
       </form>
     </Form>
+  )
+}
+
+// normalizePattern lowercases a plain address, as the runtime matches lowercase.
+const normalizePattern = (pattern: string): string =>
+  isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
+
+// AddressPatternsEditor edits who pays one price: addresses or full-match regexes.
+function AddressPatternsEditor({
+  patterns,
+  onChange,
+}: {
+  patterns: string[]
+  onChange: (patterns: string[]) => void
+}) {
+  const [draft, setDraft] = React.useState("")
+
+  const add = () => {
+    const pattern = normalizePattern(draft.trim())
+    if (pattern.length === 0) return
+    if (!patterns.includes(pattern)) onChange([...patterns, pattern])
+    setDraft("")
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">Who pays this price</p>
+        {patterns.includes(EVERYONE_PATTERN) ? null : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange([EVERYONE_PATTERN])}
+          >
+            Anyone (.*)
+          </Button>
+        )}
+      </div>
+      {patterns.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1">
+          {patterns.map((pattern, index) => (
+            <Badge
+              key={`${index}:${pattern}`}
+              variant={pattern === EVERYONE_PATTERN ? "default" : "outline"}
+              className="gap-1 font-mono text-xs"
+              title={pattern}
+            >
+              {pattern === EVERYONE_PATTERN
+                ? "anyone"
+                : isPlainAddressPattern(pattern)
+                  ? truncateEthAddress(pattern)
+                  : pattern}
+              <button
+                type="button"
+                aria-label={`Remove ${pattern}`}
+                onClick={() =>
+                  onChange(patterns.filter((_, other) => other !== index))
+                }
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+      <div className="flex items-center gap-2">
+        <Input
+          className="font-mono text-xs"
+          placeholder="0x… or a regex"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+              add()
+            }
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={draft.trim().length === 0}
+          onClick={add}
+        >
+          <Plus />
+          Add
+        </Button>
+      </div>
+    </div>
   )
 }

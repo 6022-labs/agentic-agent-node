@@ -88,7 +88,7 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 		initSuite := func(suite *WhenCreatingPaymentReceiveRuleTestingSuite) {
 			suite.mockPaymentReceiveRuleClient.EXPECT().
 				Create(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewConflictError("rule_conflict", "rule already exists"))
+				Return(nil, apperrors.NewConflictError("asset_already_has_rule", "another rule already prices this token"))
 		}
 
 		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
-			assert.Equal(t, "rule_conflict", conflictErr.Code)
+			assert.Equal(t, "asset_already_has_rule", conflictErr.Code)
 		})
 	})
 
@@ -136,6 +136,10 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 				Create(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, rule *models.ExternalPaymentReceiveRule) (*models.ExternalPaymentReceiveRule, error) {
 					assert.Equal(t, "Public price", rule.Name)
+					assert.Equal(t, []models.ExternalPaymentReceiveRulePrice{
+						{Price: "0", AddressPatterns: []string{"0xowner"}},
+						{Price: "1000", AddressPatterns: []string{".*"}},
+					}, rule.Prices)
 					assert.Equal(t, "x402", rule.Method)
 					assert.JSONEq(t, `{"network":"eip155:80002"}`, string(rule.Config))
 					rule.Id = "rule-id"
@@ -153,6 +157,10 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 			rule, err := suite.sut.Execute(context.Background(), &requests.SavePaymentReceiveRuleRequest{
 				Name:   "Public price",
 				Method: "x402",
+				Prices: []requests.SavePaymentReceiveRulePriceRequest{
+					{Price: "0", AddressPatterns: []string{"0xowner"}},
+					{Price: "1000", AddressPatterns: []string{".*"}},
+				},
 				Config: json.RawMessage(`{"network":"eip155:80002"}`),
 			})
 

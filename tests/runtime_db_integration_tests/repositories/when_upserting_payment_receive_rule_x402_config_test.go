@@ -2,6 +2,7 @@ package repositories_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
@@ -94,7 +95,7 @@ func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 
 					config := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
 						WithPaymentReceiveRuleId(suite.rule.Id).
-						WithAddressPatterns([]string{".*"}).
+						WithPolicyId(suite.rule.PolicyId).
 						Build()
 					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
 
@@ -104,21 +105,23 @@ func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 					assert.Equal(t, config.Network, stored.Network)
 				})
 
-				t.Run("Should read back the patterns decoded", func(t *testing.T) {
+				t.Run("Should read back its policy and token", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(tc)
 					defer WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite)
 
 					config := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
 						WithPaymentReceiveRuleId(suite.rule.Id).
-						WithAddressPatterns([]string{".*"}).
+						WithPolicyId(suite.rule.PolicyId).
 						Build()
 					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
 
 					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
 
 					assert.NoError(t, err)
-					assert.Equal(t, []string{".*"}, stored.AddressPatterns)
+					assert.Equal(t, suite.rule.PolicyId, stored.PolicyId)
+					assert.Equal(t, config.Asset, stored.Asset)
+					assert.Equal(t, config.PayTo, stored.PayTo)
 				})
 
 				t.Run("Should read back the EIP-712 domain", func(t *testing.T) {
@@ -128,7 +131,7 @@ func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 
 					config := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
 						WithPaymentReceiveRuleId(suite.rule.Id).
-						WithAddressPatterns([]string{".*"}).
+						WithPolicyId(suite.rule.PolicyId).
 						Build()
 					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
 
@@ -150,6 +153,7 @@ func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 
 					config := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
 						WithPaymentReceiveRuleId(suite.rule.Id).
+						WithPolicyId(suite.rule.PolicyId).
 						WithAssetTransferMethod(enums.AssetTransferMethodPermit2).
 						Build()
 					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
@@ -171,21 +175,126 @@ func TestWhenUpsertingPaymentReceiveRuleX402Config(t *testing.T) {
 					suite := WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(tc)
 					defer WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite)
 
-					first := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
-						WithPaymentReceiveRuleId(suite.rule.Id).
-						Build()
-					assert.NoError(t, suite.sut.Upsert(context.Background(), first))
-
-					second := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
-						WithPaymentReceiveRuleId(suite.rule.Id).
-						WithAddressPatterns([]string{"0x1111111111111111111111111111111111111111"}).
-						Build()
-					assert.NoError(t, suite.sut.Upsert(context.Background(), second))
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithNetwork("eip155:80002").
+							Build()))
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithNetwork("eip155:8453").
+							Build()))
 
 					stored, err := suite.sut.GetByRuleId(context.Background(), suite.rule.Id)
 
 					assert.NoError(t, err)
-					assert.Equal(t, []string{"0x1111111111111111111111111111111111111111"}, stored.AddressPatterns)
+					assert.Equal(t, "eip155:8453", stored.Network)
+				})
+
+				t.Run("Should keep a single row", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite)
+
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							Build()))
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							Build()))
+
+					var count int64
+					assert.NoError(t, suite.dbClient.GetDB(context.Background()).
+						Model(&models.PaymentReceiveRuleX402Config{}).
+						Where("payment_receive_rule_id = ?", suite.rule.Id).
+						Count(&count).Error)
+					assert.Equal(t, int64(1), count)
+				})
+			})
+
+			t.Run("Given another rule already prices the token", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should refuse a second rule for that token", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite)
+
+					other, err := repositories.NewPaymentReceiveRuleRepository(suite.dbClient).Create(
+						context.Background(),
+						model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(suite.rule.PolicyId).Build(),
+					)
+					assert.NoError(t, err)
+					pricedAsset := strings.ToLower(common_tests.RandomEthAddress().Hex())
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(other.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(pricedAsset).
+							Build()))
+
+					err = suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(pricedAsset).
+							Build())
+
+					assert.Error(t, err)
+					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
+					assert.NoError(t, getErr)
+					assert.Equal(t, other.Id, stored.PaymentReceiveRuleId)
+				})
+			})
+
+			// The rule already has a config, so the upsert takes its update path rather than an insert.
+			t.Run("Given a rule moves to a token another rule already prices", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should refuse it and leave the other rule untouched", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingPaymentReceiveRuleX402ConfigBeforeEach(tc)
+					defer WhenUpsertingPaymentReceiveRuleX402ConfigAfterEach(suite)
+
+					other, err := repositories.NewPaymentReceiveRuleRepository(suite.dbClient).Create(
+						context.Background(),
+						model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(suite.rule.PolicyId).Build(),
+					)
+					assert.NoError(t, err)
+					pricedAsset := strings.ToLower(common_tests.RandomEthAddress().Hex())
+					otherPayTo := common_tests.RandomEthAddress().Hex()
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(other.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(pricedAsset).
+							WithPayTo(otherPayTo).
+							Build()))
+					assert.NoError(t, suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							Build()))
+
+					err = suite.sut.Upsert(context.Background(),
+						model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+							WithPaymentReceiveRuleId(suite.rule.Id).
+							WithPolicyId(suite.rule.PolicyId).
+							WithAsset(pricedAsset).
+							Build())
+
+					assert.Error(t, err)
+					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
+					assert.NoError(t, getErr)
+					assert.Equal(t, pricedAsset, stored.Asset)
+					assert.Equal(t, otherPayTo, stored.PayTo)
 				})
 			})
 		})

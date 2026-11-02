@@ -1431,7 +1431,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "agent_not_minted",
+                        "description": "agent_not_minted or asset_already_has_rule",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1506,7 +1506,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "agent_not_minted",
+                        "description": "agent_not_minted or asset_already_has_rule",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -2193,6 +2193,23 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalPaymentReceiveRulePrice"
+                    }
+                }
+            }
+        },
+        "models.ExternalPaymentReceiveRulePrice": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "price": {
                     "type": "string"
                 }
@@ -2407,6 +2424,20 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SavePaymentReceiveRulePriceRequest": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SavePaymentReceiveRuleRequest": {
             "type": "object",
             "properties": {
@@ -2419,8 +2450,11 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "string"
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.SavePaymentReceiveRulePriceRequest"
+                    }
                 }
             }
         },

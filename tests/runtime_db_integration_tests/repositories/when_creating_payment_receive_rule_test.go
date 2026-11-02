@@ -78,7 +78,7 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("Given rules exist in insertion order", func(t *testing.T) {
+			t.Run("Given a rule for the policy", func(t *testing.T) {
 				t.Parallel()
 
 				t.Run("Should generate an id", func(t *testing.T) {
@@ -96,27 +96,6 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.NotEqual(t, uuid.Nil, first.Id)
-				})
-
-				t.Run("Should append the position", func(t *testing.T) {
-					t.Parallel()
-					suite := WhenCreatingPaymentReceiveRuleBeforeEach(tc)
-					defer WhenCreatingPaymentReceiveRuleAfterEach(suite)
-
-					first, err := suite.sut.Create(
-						context.Background(),
-						model_builders.NewPaymentReceiveRuleBuilder().
-							WithId(uuid.Nil).
-							WithPolicyId(suite.policy.Id).
-							Build(),
-					)
-					assert.NoError(t, err)
-
-					second, err := suite.sut.Create(context.Background(),
-						model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(suite.policy.Id).Build())
-
-					assert.NoError(t, err)
-					assert.Greater(t, second.Position, first.Position)
 				})
 			})
 		})

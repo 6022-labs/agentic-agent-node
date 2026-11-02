@@ -136,6 +136,41 @@ func TestWhenDeletingPaymentReceivePolicyByAgentId(t *testing.T) {
 					assert.NoError(t, err)
 					assert.Empty(t, rules)
 				})
+
+				t.Run("Should remove its rules' prices", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenDeletingPaymentReceivePolicyByAgentIdBeforeEach(tc)
+					defer WhenDeletingPaymentReceivePolicyByAgentIdAfterEach(suite)
+
+					agentId := uuid.New()
+					seeds.SeedAgent(suite.dbClient, agentId)
+
+					policy, err := suite.sut.Create(
+						context.Background(),
+						model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agentId).Build(),
+					)
+					assert.NoError(t, err)
+					rule, err := suite.paymentReceiveRuleRepository.Create(
+						context.Background(),
+						model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(policy.Id).Build(),
+					)
+					assert.NoError(t, err)
+					paymentReceiveRulePriceRepository := repositories.NewPaymentReceiveRulePriceRepository(
+						suite.dbClient,
+					)
+					_, err = paymentReceiveRulePriceRepository.Create(
+						context.Background(),
+						model_builders.NewPaymentReceiveRulePriceBuilder().WithPaymentReceiveRuleId(rule.Id).Build(),
+					)
+					assert.NoError(t, err)
+
+					assert.NoError(t, suite.sut.DeleteByAgentId(context.Background(), policy.AgentId))
+
+					prices, err := paymentReceiveRulePriceRepository.ListByRuleId(context.Background(), rule.Id)
+
+					assert.NoError(t, err)
+					assert.Empty(t, prices)
+				})
 			})
 		})
 	}

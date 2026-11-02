@@ -185,6 +185,15 @@ definitions:
       type:
         type: string
     type: object
+  requests.SavePaymentReceiveRulePriceRequest:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      price:
+        type: string
+    type: object
   requests.SavePaymentReceiveRuleRequest:
     properties:
       config:
@@ -193,8 +202,10 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        type: string
+      prices:
+        items:
+          $ref: '#/definitions/requests.SavePaymentReceiveRulePriceRequest'
+        type: array
     type: object
   requests.SetAgentGuidanceRequest:
     properties:
@@ -611,6 +622,15 @@ definitions:
       updatedAt:
         type: string
     type: object
+  responses.PaymentReceiveRulePriceResponse:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      price:
+        type: string
+    type: object
   responses.PaymentReceiveRuleResponse:
     properties:
       config:
@@ -623,8 +643,10 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        type: string
+      prices:
+        items:
+          $ref: '#/definitions/responses.PaymentReceiveRulePriceResponse'
+        type: array
       updatedAt:
         type: string
     type: object
@@ -1391,11 +1413,11 @@ paths:
           schema:
             $ref: '#/definitions/errors.ValidationError'
         "409":
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "500":
-          description: policy_failed or create_failed
+          description: policy_failed, rule_lookup_failed or create_failed
           schema:
             $ref: '#/definitions/errors.InternalError'
       summary: Internal create payment rule
@@ -1458,11 +1480,11 @@ paths:
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "409":
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "500":
-          description: policy_failed or update_failed
+          description: policy_failed, rule_lookup_failed or update_failed
           schema:
             $ref: '#/definitions/errors.InternalError'
       summary: Internal update payment rule

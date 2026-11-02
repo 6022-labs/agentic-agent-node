@@ -9,18 +9,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// PaymentReceiveMethodStrategyInterface owns one payment method: it validates the
-// request's Config blob and persists/loads that method's typed config row. The
-// generic payment domain dispatches to it by the rule's Method discriminator,
-// so adding a method (e.g. Lightning) is a new strategy + its own config table,
-// nothing in the generic layer.
+// PaymentReceiveMethodStrategyInterface owns one payment method: validates its Config blob and persists its config row.
 type PaymentReceiveMethodStrategyInterface interface {
 	Method() enums.PaymentMethod
-	// Validate checks and sanitizes the request's Config blob in place.
+	// Validate checks and sanitizes the request's Config blob in place, given the rule's prices.
 	Validate(ctx context.Context, request *requests.SavePaymentReceiveRuleRequest) error
+	// RuleIdForAsset returns the policy's rule already pricing the validated blob's token, or uuid.Nil.
+	RuleIdForAsset(ctx context.Context, policyId uuid.UUID, config json.RawMessage) (uuid.UUID, error)
 	// SaveConfig persists the rule's method config from the validated blob,
 	// replacing any existing one.
-	SaveConfig(ctx context.Context, ruleId uuid.UUID, config json.RawMessage) error
+	SaveConfig(ctx context.Context, policyId uuid.UUID, ruleId uuid.UUID, config json.RawMessage) error
 	// LoadConfig returns the rule's method config as the wire JSON blob.
 	LoadConfig(ctx context.Context, ruleId uuid.UUID) (json.RawMessage, error)
 }

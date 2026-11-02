@@ -62,6 +62,17 @@ definitions:
         type: string
       name:
         type: string
+      prices:
+        items:
+          $ref: '#/definitions/models.ExternalPaymentReceiveRulePrice'
+        type: array
+    type: object
+  models.ExternalPaymentReceiveRulePrice:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
       price:
         type: string
     type: object
@@ -200,6 +211,15 @@ definitions:
           $ref: '#/definitions/requests.InputMessage'
         type: array
     type: object
+  requests.SavePaymentReceiveRulePriceRequest:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      price:
+        type: string
+    type: object
   requests.SavePaymentReceiveRuleRequest:
     properties:
       config:
@@ -208,8 +228,10 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        type: string
+      prices:
+        items:
+          $ref: '#/definitions/requests.SavePaymentReceiveRulePriceRequest'
+        type: array
     type: object
   requests.SetAgentGuidanceRequest:
     properties:
@@ -1751,7 +1773,7 @@ paths:
           schema:
             $ref: '#/definitions/errors.UnauthorizedError'
         "409":
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
@@ -1830,7 +1852,7 @@ paths:
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "409":
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":

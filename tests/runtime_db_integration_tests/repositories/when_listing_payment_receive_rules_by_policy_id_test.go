@@ -3,6 +3,7 @@ package repositories_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
@@ -96,26 +97,25 @@ func TestWhenListingPaymentReceiveRulesByPolicyId(t *testing.T) {
 			t.Run("Given several rules exist", func(t *testing.T) {
 				t.Parallel()
 
-				t.Run("Should return them in creation order", func(t *testing.T) {
+				t.Run("Should return them oldest first", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenListingPaymentReceiveRulesByPolicyIdBeforeEach(tc)
 					defer WhenListingPaymentReceiveRulesByPolicyIdAfterEach(suite)
 
-					_, err := suite.sut.Create(
-						context.Background(),
-						model_builders.NewPaymentReceiveRuleBuilder().
-							WithPolicyId(suite.policy.Id).
-							WithName("first").
-							Build(),
-					)
+					// The builder dates rules at random, so the order is pinned here.
+					first := model_builders.NewPaymentReceiveRuleBuilder().
+						WithPolicyId(suite.policy.Id).
+						WithName("first").
+						Build()
+					first.CreatedAt = time.Now().Add(-time.Hour)
+					second := model_builders.NewPaymentReceiveRuleBuilder().
+						WithPolicyId(suite.policy.Id).
+						WithName("second").
+						Build()
+					second.CreatedAt = time.Now()
+					_, err := suite.sut.Create(context.Background(), second)
 					assert.NoError(t, err)
-					_, err = suite.sut.Create(
-						context.Background(),
-						model_builders.NewPaymentReceiveRuleBuilder().
-							WithPolicyId(suite.policy.Id).
-							WithName("second").
-							Build(),
-					)
+					_, err = suite.sut.Create(context.Background(), first)
 					assert.NoError(t, err)
 
 					rules, err := suite.sut.ListByPolicyId(context.Background(), suite.policy.Id)

@@ -107,6 +107,12 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		repositories.NewPaymentReceiveRulePriceRepository,
+		dig.As(new(payment_repositories.PaymentReceiveRulePriceRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		runtime_db_services.NewUnitOfWorkFactory,
 		dig.As(new(runtime_common_interfaces.UnitOfWorkFactoryInterface)),
 	); err != nil {

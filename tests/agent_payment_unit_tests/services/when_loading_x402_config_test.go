@@ -90,9 +90,7 @@ func TestWhenLoadingX402Config(t *testing.T) {
 	t.Run("Given the rule has a config", func(t *testing.T) {
 		t.Parallel()
 
-		row := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
-			WithAddressPatterns([]string{".*"}).
-			Build()
+		row := model_builders.NewPaymentReceiveRuleX402ConfigBuilder().Build()
 
 		initSuite := func(suite *WhenLoadingX402ConfigTestingSuite) {
 			suite.mockConfigRepository.EXPECT().
@@ -113,7 +111,8 @@ func TestWhenLoadingX402Config(t *testing.T) {
 			config := &models.PaymentReceiveRuleX402Config{}
 			assert.NoError(t, config.Parse(raw))
 			assert.Equal(t, row.Network, config.Network)
-			assert.Equal(t, []string{".*"}, config.AddressPatterns)
+			assert.Equal(t, row.Asset, config.Asset)
+			assert.Equal(t, row.PayTo, config.PayTo)
 		})
 	})
 }

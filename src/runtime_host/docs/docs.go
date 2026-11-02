@@ -1044,13 +1044,13 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "agent_not_minted",
+                        "description": "agent_not_minted or asset_already_has_rule",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
-                        "description": "policy_failed or create_failed",
+                        "description": "policy_failed, rule_lookup_failed or create_failed",
                         "schema": {
                             "$ref": "#/definitions/errors.InternalError"
                         }
@@ -1108,13 +1108,13 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "agent_not_minted",
+                        "description": "agent_not_minted or asset_already_has_rule",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
-                        "description": "policy_failed or update_failed",
+                        "description": "policy_failed, rule_lookup_failed or update_failed",
                         "schema": {
                             "$ref": "#/definitions/errors.InternalError"
                         }
@@ -2055,6 +2055,20 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.SavePaymentReceiveRulePriceRequest": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.SavePaymentReceiveRuleRequest": {
             "type": "object",
             "properties": {
@@ -2067,8 +2081,11 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "string"
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.SavePaymentReceiveRulePriceRequest"
+                    }
                 }
             }
         },
@@ -2711,6 +2728,20 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.PaymentReceiveRulePriceResponse": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.PaymentReceiveRuleResponse": {
             "type": "object",
             "properties": {
@@ -2729,8 +2760,11 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "string"
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentReceiveRulePriceResponse"
+                    }
                 },
                 "updatedAt": {
                     "type": "string"

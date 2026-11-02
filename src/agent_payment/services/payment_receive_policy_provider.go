@@ -15,6 +15,7 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -22,12 +23,14 @@ import (
 
 // PaymentReceivePolicyProvider materializes the receive policy lazily; unlike spend it requires a minted identity.
 type PaymentReceivePolicyProvider struct {
-	agentRepository                identity_repositories.AgentRepositoryInterface
-	agentAddressRepository         identity_repositories.AgentAddressRepositoryInterface
-	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface
-	paymentReceiveRuleRepository   repositories.PaymentReceiveRuleRepositoryInterface
-	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface
-	token6022Settings              *runtime_common_settings.Token6022Settings
+	agentRepository                   identity_repositories.AgentRepositoryInterface
+	agentAddressRepository            identity_repositories.AgentAddressRepositoryInterface
+	paymentReceivePolicyRepository    repositories.PaymentReceivePolicyRepositoryInterface
+	paymentReceiveRuleRepository      repositories.PaymentReceiveRuleRepositoryInterface
+	paymentReceiveRulePriceRepository repositories.PaymentReceiveRulePriceRepositoryInterface
+	paymentReceiveMethodStrategies    payment_interfaces.PaymentReceiveMethodStrategiesInterface
+	token6022Settings                 *runtime_common_settings.Token6022Settings
+	unitOfWorkFactory                 runtime_common_interfaces.UnitOfWorkFactoryInterface
 }
 
 func NewPaymentReceivePolicyProvider(
@@ -35,16 +38,20 @@ func NewPaymentReceivePolicyProvider(
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
+	paymentReceiveRulePriceRepository repositories.PaymentReceiveRulePriceRepositoryInterface,
 	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
 	token6022Settings *runtime_common_settings.Token6022Settings,
+	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *PaymentReceivePolicyProvider {
 	return &PaymentReceivePolicyProvider{
-		agentRepository:                agentRepository,
-		agentAddressRepository:         agentAddressRepository,
-		paymentReceivePolicyRepository: paymentReceivePolicyRepository,
-		paymentReceiveRuleRepository:   paymentReceiveRuleRepository,
-		paymentReceiveMethodStrategies: paymentReceiveMethodStrategies,
-		token6022Settings:              token6022Settings,
+		agentRepository:                   agentRepository,
+		agentAddressRepository:            agentAddressRepository,
+		paymentReceivePolicyRepository:    paymentReceivePolicyRepository,
+		paymentReceiveRuleRepository:      paymentReceiveRuleRepository,
+		paymentReceiveRulePriceRepository: paymentReceiveRulePriceRepository,
+		paymentReceiveMethodStrategies:    paymentReceiveMethodStrategies,
+		token6022Settings:                 token6022Settings,
+		unitOfWorkFactory:                 unitOfWorkFactory,
 	}
 }
 
@@ -71,32 +78,60 @@ func (p *PaymentReceivePolicyProvider) Ensure(
 		return policy, agent, nil
 	}
 
-	policy, err = p.paymentReceivePolicyRepository.Create(ctx, &models.PaymentReceivePolicy{AgentId: agent.Id})
+	policy, err = p.createSeededPolicy(ctx, agent)
 	if err != nil {
 		// A concurrent first request may have won the insert race; re-read before failing.
 		existing, getErr := p.paymentReceivePolicyRepository.GetByAgentId(ctx, agent.Id)
 		if getErr == nil && existing != nil {
 			return existing, agent, nil
 		}
-		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
-	}
-
-	if err := p.seedDefaultRule(ctx, policy, agent); err != nil {
 		return nil, nil, err
 	}
 	return policy, agent, nil
+}
+
+// createSeededPolicy writes policy and seed atomically, so a failed seed is retried on the next call.
+func (p *PaymentReceivePolicyProvider) createSeededPolicy(
+	ctx context.Context,
+	agent *identity_models.Agent,
+) (*models.PaymentReceivePolicy, error) {
+	evmAddress, err := p.EvmAddress(ctx, agent.Id)
+	if err != nil {
+		return nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+
+	unitOfWork, err := p.unitOfWorkFactory.Start(ctx)
+	if err != nil {
+		return nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+	defer func() { _ = unitOfWork.Rollback() }()
+
+	policy, err := p.paymentReceivePolicyRepository.Create(
+		unitOfWork.Context(),
+		&models.PaymentReceivePolicy{AgentId: agent.Id},
+	)
+	if err != nil {
+		return nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+	if err := p.seedDefaultRule(unitOfWork.Context(), policy, agent, evmAddress); err != nil {
+		return nil, err
+	}
+	if err := unitOfWork.Commit(); err != nil {
+		return nil, errors.NewInternalError("policy_failed", err.Error())
+	}
+	return policy, nil
 }
 
 func (p *PaymentReceivePolicyProvider) seedDefaultRule(
 	ctx context.Context,
 	policy *models.PaymentReceivePolicy,
 	agent *identity_models.Agent,
+	evmAddress string,
 ) error {
-	evmAddress, err := p.EvmAddress(ctx, agent.Id)
+	rule, config, price, err := p.defaultRule(policy, agent, evmAddress)
 	if err != nil {
 		return errors.NewInternalError("policy_failed", err.Error())
 	}
-	rule, config := p.defaultRule(policy, agent, evmAddress)
 	if rule == nil {
 		return nil
 	}
@@ -105,19 +140,23 @@ func (p *PaymentReceivePolicyProvider) seedDefaultRule(
 		return errors.NewInternalError("policy_failed", err.Error())
 	}
 	if strategy, ok := p.paymentReceiveMethodStrategies.For(created.Method); ok {
-		if err := strategy.SaveConfig(ctx, created.Id, config); err != nil {
+		if err := strategy.SaveConfig(ctx, policy.Id, created.Id, config); err != nil {
 			return errors.NewInternalError("policy_failed", err.Error())
 		}
+	}
+	price.PaymentReceiveRuleId = created.Id
+	if _, err := p.paymentReceiveRulePriceRepository.Create(ctx, price); err != nil {
+		return errors.NewInternalError("policy_failed", err.Error())
 	}
 	return nil
 }
 
-// defaultRule seeds a zero-price rule scoped to the agent wallet + owner; (nil, nil) when it has no addresses.
+// defaultRule is a free price on the agent token for wallet and owner; nil without addresses.
 func (p *PaymentReceivePolicyProvider) defaultRule(
 	policy *models.PaymentReceivePolicy,
 	agent *identity_models.Agent,
 	evmAddress string,
-) (*models.PaymentReceiveRule, json.RawMessage) {
+) (*models.PaymentReceiveRule, json.RawMessage, *models.PaymentReceiveRulePrice, error) {
 	patterns := []string{}
 	if len(evmAddress) != 0 {
 		patterns = append(patterns, strings.ToLower(evmAddress))
@@ -126,7 +165,7 @@ func (p *PaymentReceivePolicyProvider) defaultRule(
 		patterns = append(patterns, strings.ToLower(*agent.Owner))
 	}
 	if len(patterns) == 0 {
-		return nil, nil
+		return nil, nil, nil, nil
 	}
 	eip712Name := DefaultEip712Name
 	eip712Version := DefaultEip712Version
@@ -135,23 +174,24 @@ func (p *PaymentReceivePolicyProvider) defaultRule(
 	evmChainId, _ := strconv.ParseUint(lo.FromPtr(agent.ChainId), 10, 64)
 	config := &models.PaymentReceiveRuleX402Config{
 		Network:             helpers.FormatCaip2(evmChainId),
-		Asset:               asset.Hex(),
+		Asset:               strings.ToLower(asset.Hex()),
 		PayTo:               evmAddress,
 		AssetTransferMethod: enums.AssetTransferMethodEip3009,
 		Eip712Name:          &eip712Name,
 		Eip712Version:       &eip712Version,
-		AddressPatterns:     patterns,
 	}
 	rawConfig, err := config.Marshal()
 	if err != nil {
-		return nil, nil
+		return nil, nil, nil, err
 	}
 	return &models.PaymentReceiveRule{
 		PolicyId: policy.Id,
 		Name:     "Owner free access",
-		Price:    "0",
 		Method:   enums.PaymentMethodX402,
-	}, rawConfig
+	}, rawConfig, &models.PaymentReceiveRulePrice{
+		Price:           "0",
+		AddressPatterns: patterns,
+	}, nil
 }
 
 func (p *PaymentReceivePolicyProvider) EvmAddress(ctx context.Context, agentId uuid.UUID) (string, error) {

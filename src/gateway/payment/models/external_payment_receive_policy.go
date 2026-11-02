@@ -7,13 +7,19 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 )
 
-// ExternalPaymentReceiveRule mirrors a runtime rule; Id is empty in create/update bodies.
+// ExternalPaymentReceiveRule mirrors a runtime rule, one per token; Id is empty in create/update bodies.
 type ExternalPaymentReceiveRule struct {
-	Id     string          `json:"id,omitempty"`
-	Name   string          `json:"name"`
-	Price  string          `json:"price"`
-	Method string          `json:"method"`
-	Config json.RawMessage `json:"config"       swaggertype:"object"`
+	Id     string                            `json:"id,omitempty"`
+	Name   string                            `json:"name"`
+	Method string                            `json:"method"`
+	Prices []ExternalPaymentReceiveRulePrice `json:"prices"`
+	Config json.RawMessage                   `json:"config"       swaggertype:"object"`
+}
+
+// ExternalPaymentReceiveRulePrice mirrors one price of a runtime rule and the payers it applies to.
+type ExternalPaymentReceiveRulePrice struct {
+	Price           string   `json:"price"`
+	AddressPatterns []string `json:"addressPatterns"`
 }
 
 // ExternalPaymentReceivePolicyPayload mirrors the runtime's policy head.
