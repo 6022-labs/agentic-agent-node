@@ -96,7 +96,9 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 				PostInternalConfigPaymentReceivePolicyRulesWithBodyWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(&clients.PostInternalConfigPaymentReceivePolicyRulesResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+					Body: []byte(
+						`{"code":"asset_already_has_rule","message":"another rule already prices this token"}`,
+					),
 				}, nil)
 		}
 
@@ -109,7 +111,9 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 			_, err := suite.sut.Create(context.Background(), &models.ExternalPaymentReceiveRule{Name: "Public price"})
 
 			var target *apperrors.ConflictError
-			assert.ErrorAs(t, err, &target)
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "asset_already_has_rule", target.Code)
+			}
 		})
 	})
 
@@ -150,6 +154,9 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 					var sent models.ExternalPaymentReceiveRule
 					assert.NoError(t, json.NewDecoder(body).Decode(&sent))
 					assert.Equal(t, "Public price", sent.Name)
+					assert.Equal(t, []models.ExternalPaymentReceiveRulePrice{
+						{Price: "1000", AddressPatterns: []string{".*"}},
+					}, sent.Prices)
 					return &clients.PostInternalConfigPaymentReceivePolicyRulesResponse{
 						HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 						Body:         []byte(`{"id":"r1","name":"Public price"}`),
@@ -165,7 +172,10 @@ func TestWhenCreatingPaymentReceiveRule(t *testing.T) {
 
 			rule, err := suite.sut.Create(
 				context.Background(),
-				&models.ExternalPaymentReceiveRule{Name: "Public price"},
+				&models.ExternalPaymentReceiveRule{
+					Name:   "Public price",
+					Prices: []models.ExternalPaymentReceiveRulePrice{{Price: "1000", AddressPatterns: []string{".*"}}},
+				},
 			)
 
 			assert.NoError(t, err)

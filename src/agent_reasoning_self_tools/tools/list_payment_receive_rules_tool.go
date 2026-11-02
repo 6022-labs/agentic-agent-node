@@ -22,7 +22,7 @@ func NewListPaymentReceiveRulesTool(
 func (t *ListPaymentReceiveRulesTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "list_payment_receive_rules",
-		Description: "List your payment rules (pricing for callers).",
+		Description: "List your pricing rules for callers: one per token, each with its prices and who pays them.",
 		InputScheme: utils.EmptyObjectScheme(),
 	}
 }

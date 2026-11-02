@@ -32,6 +32,7 @@ type WhenEvaluatingX402AccessTestingSuite struct {
 	mockPaymentReceivePolicyProvider           *payment_interfaces_mocks.MockPaymentReceivePolicyProviderInterface
 	mockPaymentReceiveRuleRepository           *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
 	mockPaymentReceiveRuleX402ConfigRepository *payment_repositories_mocks.MockPaymentReceiveRuleX402ConfigRepositoryInterface
+	mockPaymentReceiveRulePriceRepository      *payment_repositories_mocks.MockPaymentReceiveRulePriceRepositoryInterface
 	callerKey                                  *ecdsa.PrivateKey
 }
 
@@ -49,6 +50,9 @@ func WhenEvaluatingX402AccessBeforeEach(t *testing.T) *WhenEvaluatingX402AccessT
 	)
 	mockPaymentReceiveRuleX402ConfigRepository :=
 		payment_repositories_mocks.NewMockPaymentReceiveRuleX402ConfigRepositoryInterface(mockController)
+	mockPaymentReceiveRulePriceRepository := payment_repositories_mocks.NewMockPaymentReceiveRulePriceRepositoryInterface(
+		mockController,
+	)
 
 	// The node can settle on the rules' network; an unsettleable rule overrides this per Given.
 	facilitators := &runtime_common_settings.PaymentReceiveSettings{
@@ -65,6 +69,7 @@ func WhenEvaluatingX402AccessBeforeEach(t *testing.T) *WhenEvaluatingX402AccessT
 			mockPaymentReceivePolicyProvider,
 			mockPaymentReceiveRuleRepository,
 			mockPaymentReceiveRuleX402ConfigRepository,
+			mockPaymentReceiveRulePriceRepository,
 			services.NewX402PaymentVerifier(),
 			facilitators,
 		),
@@ -72,30 +77,36 @@ func WhenEvaluatingX402AccessBeforeEach(t *testing.T) *WhenEvaluatingX402AccessT
 		mockPaymentReceivePolicyProvider:           mockPaymentReceivePolicyProvider,
 		mockPaymentReceiveRuleRepository:           mockPaymentReceiveRuleRepository,
 		mockPaymentReceiveRuleX402ConfigRepository: mockPaymentReceiveRuleX402ConfigRepository,
-		callerKey: callerKey,
+		mockPaymentReceiveRulePriceRepository:      mockPaymentReceiveRulePriceRepository,
+		callerKey:                                  callerKey,
 	}
 }
 
-// expectRules stubs the policy plus one rule per (price, config) pair.
-func (s *WhenEvaluatingX402AccessTestingSuite) expectRules(
-	prices []string,
-	configs []*models.PaymentReceiveRuleX402Config,
-) {
+// x402TestRule is one token's rule with its config and prices.
+type x402TestRule struct {
+	config *models.PaymentReceiveRuleX402Config
+	prices []models.PaymentReceiveRulePrice
+}
+
+// expectRules stubs the policy and one x402 rule per entry.
+func (s *WhenEvaluatingX402AccessTestingSuite) expectRules(entries ...x402TestRule) {
 	agent := model_builders.NewAgentBuilder().Build()
 	policy := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
 
 	s.mockPaymentReceivePolicyProvider.EXPECT().Ensure(gomock.Any()).Return(policy, agent, nil).Times(1)
 
-	rules := make([]models.PaymentReceiveRule, 0, len(prices))
-	for i := range prices {
+	rules := make([]models.PaymentReceiveRule, 0, len(entries))
+	for i := range entries {
 		rule := model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(policy.Id).Build()
-		rule.Price = prices[i]
 		rule.Method = enums.PaymentMethodX402
 		rules = append(rules, *rule)
 
-		config := configs[i]
+		config := entries[i].config
 		config.PaymentReceiveRuleId = rule.Id
 		s.mockPaymentReceiveRuleX402ConfigRepository.EXPECT().GetByRuleId(gomock.Any(), rule.Id).Return(config, nil)
+		s.mockPaymentReceiveRulePriceRepository.EXPECT().
+			ListByRuleId(gomock.Any(), rule.Id).
+			Return(entries[i].prices, nil)
 	}
 	s.mockPaymentReceiveRuleRepository.EXPECT().ListByPolicyId(gomock.Any(), policy.Id).Return(rules, nil).Times(1)
 }
@@ -114,16 +125,15 @@ func (s *WhenEvaluatingX402AccessTestingSuite) signedHeader(
 	return header
 }
 
-func publicConfig() *models.PaymentReceiveRuleX402Config {
-	config := x402TestAcceptOption()
-	config.AddressPatterns = []string{".*"}
-	return config
+func publicRule(price string) x402TestRule {
+	return scopedRule(price, ".*")
 }
 
-func scopedConfig(patterns ...string) *models.PaymentReceiveRuleX402Config {
-	config := x402TestAcceptOption()
-	config.AddressPatterns = patterns
-	return config
+func scopedRule(price string, patterns ...string) x402TestRule {
+	return x402TestRule{
+		config: x402TestAcceptOption(),
+		prices: []models.PaymentReceiveRulePrice{{Price: price, AddressPatterns: patterns}},
+	}
 }
 
 func TestWhenEvaluatingX402Access(t *testing.T) {
@@ -155,7 +165,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 	t.Run("Given listing the rules fails", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an internal error rather than a refusal", func(t *testing.T) {
+		t.Run("Should return an InternalError rather than a refusal", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
@@ -178,7 +188,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 	t.Run("Given a rule whose x402 config cannot be read", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should skip it and still answer payment required", func(t *testing.T) {
+		t.Run("Should return an InternalError rather than a refusal", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
@@ -196,9 +206,41 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
 
-			assert.NoError(t, err)
-			assert.Equal(t, enums.PaymentReceiveAccessOutcomePaymentRequired, decision.Outcome)
-			assert.Empty(t, decision.Accepts)
+			assert.Nil(t, decision)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "access_evaluation_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given listing a rule's prices fails", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return an InternalError rather than a refusal", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEvaluatingX402AccessBeforeEach(t)
+			agent := model_builders.NewAgentBuilder().Build()
+			policy := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
+			rule := model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(policy.Id).Build()
+			rule.Method = enums.PaymentMethodX402
+			suite.mockPaymentReceivePolicyProvider.EXPECT().Ensure(gomock.Any()).Return(policy, agent, nil)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				ListByPolicyId(gomock.Any(), policy.Id).
+				Return([]models.PaymentReceiveRule{*rule}, nil)
+			suite.mockPaymentReceiveRuleX402ConfigRepository.EXPECT().
+				GetByRuleId(gomock.Any(), rule.Id).
+				Return(x402TestAcceptOption(), nil)
+			suite.mockPaymentReceiveRulePriceRepository.EXPECT().
+				ListByRuleId(gomock.Any(), rule.Id).
+				Return(nil, assert.AnError)
+
+			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
+
+			assert.Nil(t, decision)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "access_evaluation_failed", internalError.Code)
 		})
 	})
 
@@ -210,10 +252,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
 			caller := crypto.PubkeyToAddress(suite.callerKey.PublicKey)
-			suite.expectRules(
-				[]string{"0"},
-				[]*models.PaymentReceiveRuleX402Config{scopedConfig(strings.ToLower(caller.Hex()))},
-			)
+			suite.expectRules(scopedRule("0", strings.ToLower(caller.Hex())))
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				Address: caller.Hex(),
@@ -232,9 +271,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			suite.expectRules([]string{"0"}, []*models.PaymentReceiveRuleX402Config{
-				scopedConfig(strings.ToLower(common_tests.RandomEthAddress().Hex())),
-			})
+			suite.expectRules(scopedRule("0", strings.ToLower(common_tests.RandomEthAddress().Hex())))
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				Address: crypto.PubkeyToAddress(suite.callerKey.PublicKey).Hex(),
@@ -252,24 +289,65 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			scoped := scopedConfig(strings.ToLower(common_tests.RandomEthAddress().Hex()))
+			scoped := scopedRule("10000", strings.ToLower(common_tests.RandomEthAddress().Hex()))
 			// Distinct payTo so the advertised entry identifies which rule was chosen.
-			scoped.PayTo = common_tests.RandomEthAddress().Hex()
-			suite.expectRules(
-				[]string{"10000", "10000"},
-				[]*models.PaymentReceiveRuleX402Config{publicConfig(), scoped},
-			)
+			scoped.config.PayTo = common_tests.RandomEthAddress().Hex()
+			suite.expectRules(publicRule("10000"), scoped)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
 
 			assert.NoError(t, err)
 			assert.Equal(t, enums.PaymentReceiveAccessOutcomePaymentRequired, decision.Outcome)
 			// The scoped rule stays hidden: advertising it would leak its address patterns.
-			assert.Len(t, decision.Accepts, 1)
-			assert.Equal(t, publicConfig().PayTo, decision.Accepts[0].PayTo)
-			assert.Equal(t, 90, decision.Accepts[0].MaxTimeoutSeconds)
-			// eip3009 needs the token's domain to sign; permit2 rules carry none.
-			assert.Equal(t, "eip3009", decision.Accepts[0].Extra["assetTransferMethod"])
+			if assert.Len(t, decision.Accepts, 1) {
+				assert.Equal(t, x402TestAcceptOption().PayTo, decision.Accepts[0].PayTo)
+				assert.Equal(t, 90, decision.Accepts[0].MaxTimeoutSeconds)
+				// eip3009 needs the token's domain to sign; permit2 rules carry none.
+				assert.Equal(t, "eip3009", decision.Accepts[0].Extra["assetTransferMethod"])
+			}
+		})
+	})
+
+	t.Run("Given a rule with a public price and a private one", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEvaluatingX402AccessTestingSuite) {
+			rule := publicRule("10000")
+			// Stored lowercased as the one-rule-per-token key.
+			rule.config.Asset = strings.ToLower(rule.config.Asset)
+			rule.prices = append(rule.prices, models.PaymentReceiveRulePrice{
+				Price:           "0",
+				AddressPatterns: []string{strings.ToLower(common_tests.RandomEthAddress().Hex())},
+			})
+			suite.expectRules(rule)
+		}
+
+		t.Run("Should advertise only the public price", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEvaluatingX402AccessBeforeEach(t)
+			initSuite(suite)
+
+			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
+
+			assert.NoError(t, err)
+			if assert.Len(t, decision.Accepts, 1) {
+				assert.Equal(t, "10000", decision.Accepts[0].Amount)
+			}
+		})
+
+		t.Run("Should advertise the token address checksummed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEvaluatingX402AccessBeforeEach(t)
+			initSuite(suite)
+
+			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
+
+			assert.NoError(t, err)
+			if assert.Len(t, decision.Accepts, 1) {
+				assert.Equal(t, x402TestAcceptOption().Asset, decision.Accepts[0].Asset)
+			}
 		})
 	})
 
@@ -280,9 +358,9 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			unsettleable := publicConfig()
-			unsettleable.Network = "eip155:1"
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{unsettleable})
+			unsettleable := publicRule("10000")
+			unsettleable.config.Network = "eip155:1"
+			suite.expectRules(unsettleable)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{})
 
@@ -298,7 +376,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{publicConfig()})
+			suite.expectRules(publicRule("10000"))
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: "not-base64-json",
@@ -317,11 +395,11 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			signedAgainst := publicConfig()
+			signedAgainst := x402TestAcceptOption()
 			signedAgainst.PayTo = common_tests.RandomEthAddress().Hex()
 			header := suite.signedHeader(t, signedAgainst)
 
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{publicConfig()})
+			suite.expectRules(publicRule("10000"))
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -339,13 +417,13 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			config := publicConfig()
+			rule := publicRule("10000")
 			from := crypto.PubkeyToAddress(suite.callerKey.PublicKey)
-			authorization := x402TestAuthorization(from.Hex(), config)
+			authorization := x402TestAuthorization(from.Hex(), rule.config)
 			authorization.ValidBefore = fmt.Sprintf("%d", time.Now().Unix()-30)
-			header, encodeErr := x402.EncodeBase64Json(signX402Payment(t, suite.callerKey, authorization, config))
+			header, encodeErr := x402.EncodeBase64Json(signX402Payment(t, suite.callerKey, authorization, rule.config))
 			assert.NoError(t, encodeErr)
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{config})
+			suite.expectRules(rule)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -363,13 +441,13 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			config := publicConfig()
+			rule := publicRule("10000")
 			payload := signX402Payment(t, suite.callerKey, x402TestAuthorization(
-				common_tests.RandomEthAddress().Hex(), config,
-			), config)
+				common_tests.RandomEthAddress().Hex(), rule.config,
+			), rule.config)
 			header, encodeErr := x402.EncodeBase64Json(payload)
 			assert.NoError(t, encodeErr)
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{config})
+			suite.expectRules(rule)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -387,7 +465,8 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 		// genuine eip3009 one used to hijack the amount check, since the method-neutral reader
 		// takes permit2 first while the eip3009 verifier never looks at it.
 		initSuite := func(suite *WhenEvaluatingX402AccessTestingSuite) string {
-			config := publicConfig()
+			rule := publicRule(testPrice)
+			config := rule.config
 
 			from := crypto.PubkeyToAddress(suite.callerKey.PublicKey)
 			auth := x402TestAuthorization(from.Hex(), config)
@@ -406,7 +485,7 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			header, err := x402.EncodeBase64Json(json.RawMessage(raw))
 			assert.NoError(t, err)
 
-			suite.expectRules([]string{testPrice}, []*models.PaymentReceiveRuleX402Config{config})
+			suite.expectRules(rule)
 			return header
 		}
 
@@ -433,9 +512,9 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			scoped := scopedConfig(strings.ToLower(common_tests.RandomEthAddress().Hex()))
-			header := suite.signedHeader(t, scoped)
-			suite.expectRules([]string{"10000"}, []*models.PaymentReceiveRuleX402Config{scoped})
+			scoped := scopedRule("10000", strings.ToLower(common_tests.RandomEthAddress().Hex()))
+			header := suite.signedHeader(t, scoped.config)
+			suite.expectRules(scoped)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -453,10 +532,10 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			config := publicConfig()
-			header := suite.signedHeader(t, config)
+			rule := publicRule("999999999")
 			// The signature is worth testPrice; the rule now asks for more.
-			suite.expectRules([]string{"999999999"}, []*models.PaymentReceiveRuleX402Config{config})
+			header := suite.signedHeader(t, rule.config)
+			suite.expectRules(rule)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -467,21 +546,51 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the payer is entitled to a free rule as well", func(t *testing.T) {
+	t.Run("Given another token's rule has a free price for the payer", func(t *testing.T) {
 		t.Parallel()
 
-		// The cheapest entitled rule wins, so a payer covered by a free rule is never charged.
+		// Only the token the payer signed for can entitle them; another token's free price must not leak in.
+		t.Run("Should charge the signed token's price instead of granting free access", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEvaluatingX402AccessBeforeEach(t)
+			caller := crypto.PubkeyToAddress(suite.callerKey.PublicKey)
+			signed := publicRule(testPrice)
+			// Same network and payee, so both rules are candidates until the signature is checked.
+			other := scopedRule("0", strings.ToLower(caller.Hex()))
+			other.config.Asset = common_tests.RandomEthAddress().Hex()
+			header := suite.signedHeader(t, signed.config)
+			suite.expectRules(signed, other)
+
+			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
+				PaymentSignature: header,
+			})
+
+			assert.NoError(t, err)
+			assert.Equal(t, enums.PaymentReceiveAccessOutcomePayable, decision.Outcome)
+			if assert.NotNil(t, decision.Settlement) {
+				assert.Equal(t, testPrice, decision.Settlement.Requirements.Amount)
+				assert.Equal(t, x402TestAcceptOption().Asset, decision.Settlement.Requirements.Asset)
+			}
+		})
+	})
+
+	t.Run("Given the payer is entitled to a free price as well", func(t *testing.T) {
+		t.Parallel()
+
+		// The cheapest entitled price wins, so a payer covered by a free price is never charged.
 		t.Run("Should grant free access rather than settle", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
 			caller := crypto.PubkeyToAddress(suite.callerKey.PublicKey)
-			paid := publicConfig()
-			header := suite.signedHeader(t, paid)
-			suite.expectRules(
-				[]string{testPrice, "0"},
-				[]*models.PaymentReceiveRuleX402Config{paid, scopedConfig(strings.ToLower(caller.Hex()))},
-			)
+			rule := publicRule(testPrice)
+			rule.prices = append(rule.prices, models.PaymentReceiveRulePrice{
+				Price:           "0",
+				AddressPatterns: []string{strings.ToLower(caller.Hex())},
+			})
+			header := suite.signedHeader(t, rule.config)
+			suite.expectRules(rule)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,
@@ -500,9 +609,9 @@ func TestWhenEvaluatingX402Access(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEvaluatingX402AccessBeforeEach(t)
-			config := publicConfig()
-			header := suite.signedHeader(t, config)
-			suite.expectRules([]string{testPrice}, []*models.PaymentReceiveRuleX402Config{config})
+			rule := publicRule(testPrice)
+			header := suite.signedHeader(t, rule.config)
+			suite.expectRules(rule)
 
 			decision, err := suite.sut.Evaluate(ctx, &payment_interfaces.PaymentReceiveAccessCredentials{
 				PaymentSignature: header,

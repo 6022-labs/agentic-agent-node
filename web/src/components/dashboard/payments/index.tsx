@@ -27,9 +27,13 @@ import ConfirmDialog from "@/components/dashboard/confirm-dialog"
 import EmptyState from "@/components/dashboard/empty-state"
 import NotMintedState from "@/components/dashboard/not-minted-state"
 import PaymentReceiveRuleDialog from "@/components/dashboard/payments/dialogs/payment-receive-rule-dialog"
-import type { PaymentReceiveRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
+import type {
+  PaymentReceiveRuleFormField,
+  PaymentReceiveRuleFormSchemaType,
+} from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
 import {
   EVERYONE_PATTERN,
+  isPublicPrice,
   type PaymentReceivePolicy,
   type PaymentReceiveRule,
 } from "@/models/payment-receive-policy"
@@ -63,9 +67,24 @@ const FORM_FIELDS: Array<keyof PaymentReceiveRuleFormSchemaType> = [
   "network",
   "asset",
   "payTo",
-  "price",
-  "addresses",
+  "prices",
 ]
+
+// toFormField maps a runtime error path ("config.asset", "prices[0].price") to a form control.
+const toFormField = (path: string): PaymentReceiveRuleFormField | null => {
+  const field = path.replace(/^config\./, "").replace(/\[(\d+)\]/g, ".$1")
+  const root = field.split(".")[0] as keyof PaymentReceiveRuleFormSchemaType
+  return FORM_FIELDS.includes(root)
+    ? (field as PaymentReceiveRuleFormField)
+    : null
+}
+
+// isAssetTaken reports the runtime's refusal of a second rule on one token.
+const isAssetTaken = (error: unknown): boolean =>
+  axios.isAxiosError(error) &&
+  error.response?.status === 409 &&
+  (error.response.data as { code?: string } | undefined)?.code ===
+    "asset_already_has_rule"
 
 const isNotMintedError = (error: unknown) =>
   axios.isAxiosError(error) &&
@@ -107,42 +126,25 @@ export default function PaymentReceivePolicySection() {
     setRules(rules)
   }
 
-  // The form deals in plain addresses; custom regex patterns set via the API
-  // on an edited rule are preserved verbatim.
   const toRule = (
-    values: PaymentReceiveRuleFormSchemaType,
-    existing?: PaymentReceiveRule
+    values: PaymentReceiveRuleFormSchemaType
   ): PaymentReceiveRule => ({
     name: values.name,
     method: values.method,
     network: values.network,
     asset: values.asset,
     payTo: values.payTo,
-    price: values.price,
-    addressPatterns: values.allowEveryone
-      ? [EVERYONE_PATTERN]
-      : [
-          ...values.addresses.map((entry) => entry.address.toLowerCase()),
-          ...(existing ? customPatternsOf(existing) : []),
-        ],
+    prices: values.prices,
   })
-
-  const customPatternsOf = (rule: PaymentReceiveRule): string[] =>
-    (rule.addressPatterns ?? []).filter(
-      (pattern) =>
-        pattern !== EVERYONE_PATTERN && !isPlainAddressPattern(pattern)
-    )
 
   const onSaveRule =
     (existing?: PaymentReceiveRule) =>
     async (
       values: PaymentReceiveRuleFormSchemaType
-    ): Promise<
-      FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>
-    > => {
+    ): Promise<FormCompletionResult<PaymentReceiveRuleFormField>> => {
       setMutating(true)
       try {
-        const rule = toRule(values, existing)
+        const rule = toRule(values)
         if (existing?.id) {
           await updatePaymentReceiveRule(existing.id, rule)
         } else {
@@ -152,24 +154,20 @@ export default function PaymentReceivePolicySection() {
         toast.success(existing ? "Pricing rule updated" : "Pricing rule added")
         return {}
       } catch (error) {
+        if (isAssetTaken(error)) {
+          return {
+            error: {
+              field: "asset",
+              message:
+                "This token already has a pricing rule — edit that rule to add prices",
+            },
+          }
+        }
         const validation = extractValidationError(error)
         if (validation) {
-          // Runtime errors on the x402 config come back prefixed (e.g.
-          // "config.network"); strip it and re-home patterns onto the form's
-          // address list.
-          const bare = validation.field.replace(/^config\./, "")
-          const field = bare === "addressPatterns" ? "addresses" : bare
-          if (
-            FORM_FIELDS.includes(
-              field as keyof PaymentReceiveRuleFormSchemaType
-            )
-          ) {
-            return {
-              error: {
-                field: field as keyof PaymentReceiveRuleFormSchemaType,
-                message: validation.message,
-              },
-            }
+          const field = toFormField(validation.field)
+          if (field) {
+            return { error: { field, message: validation.message } }
           }
           // A config field with no form control (e.g. a defaulted one): toast
           // it rather than silently swallow the error.
@@ -207,15 +205,16 @@ export default function PaymentReceivePolicySection() {
     }
   }
 
-  const isPublic = (rule: PaymentReceiveRule) =>
-    rule.addressPatterns?.includes(EVERYONE_PATTERN)
-  // A paid rule whose network has no configured facilitator can't be settled,
-  // so callers can never pay it — flag it.
+  // Paid prices without a facilitator are never offered; free ones still work.
   const facilitatorNetworks = getFacilitatorNetworks()
-  const isUnsettleable = (rule: PaymentReceiveRule) =>
-    rule.price !== "0" && !facilitatorNetworks.includes(rule.network)
+  const hasFacilitator = (rule: PaymentReceiveRule) =>
+    facilitatorNetworks.includes(rule.network)
+  const hasUnsettleablePrice = (rule: PaymentReceiveRule) =>
+    !hasFacilitator(rule) && rule.prices.some((row) => row.price !== "0")
   const acceptingPayments = rules.some(
-    (rule) => isPublic(rule) && rule.price !== "0"
+    (rule) =>
+      hasFacilitator(rule) &&
+      rule.prices.some((row) => isPublicPrice(row) && row.price !== "0")
   )
 
   const notMinted = !identityLoading && !isMinted
@@ -228,8 +227,8 @@ export default function PaymentReceivePolicySection() {
             <CardTitle>Payment policy</CardTitle>
             <CardDescription>
               Every /responses call is priced by this policy: callers pay the
-              cheapest rule matching their address (via x402), and are refused
-              when no rule matches.
+              cheapest price matching their address (via x402), and are refused
+              when no price matches.
             </CardDescription>
           </div>
           <Badge variant={acceptingPayments ? "default" : "secondary"}>
@@ -250,11 +249,10 @@ export default function PaymentReceivePolicySection() {
           <>
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground">
-                When several rules match the same caller for the same token and
-                network, the cheapest price wins — a free or discounted rule
-                always beats the public price for its callers. Rules open to
-                everyone are advertised to anonymous callers; scoped rules are
-                private offers.
+                One rule per token. When several of its prices match a caller,
+                the cheapest wins — a free or discounted price always beats the
+                public one for its callers. Prices open to everyone are
+                advertised to anonymous callers; scoped ones are private offers.
               </p>
               <PaymentReceiveRuleDialog
                 agentWalletAddress={policy.agentWalletAddress}
@@ -272,8 +270,7 @@ export default function PaymentReceivePolicySection() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Rule</TableHead>
-                    <TableHead>Callers</TableHead>
-                    <TableHead>Price per call</TableHead>
+                    <TableHead>Prices per call</TableHead>
                     <TableHead>Network</TableHead>
                     <TableHead>Paid to</TableHead>
                     <TableHead className="w-20" />
@@ -284,25 +281,16 @@ export default function PaymentReceivePolicySection() {
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium">{rule.name}</TableCell>
                       <TableCell>
-                        <CallersCell patterns={rule.addressPatterns ?? []} />
+                        <PricesCell
+                          rule={rule}
+                          settleable={hasFacilitator(rule)}
+                        />
                       </TableCell>
                       <TableCell>
-                        {rule.price === "0" ? (
-                          <Badge variant="secondary">Free</Badge>
-                        ) : (
-                          <span
-                            className="font-medium"
-                            title={`${rule.price} atomic units of ${rule.asset}`}
-                          >
-                            {formatPrice(rule.price, rule.asset)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isUnsettleable(rule) ? (
+                        {hasUnsettleablePrice(rule) ? (
                           <Badge
                             variant="destructive"
-                            title="No facilitator configured for this network — callers can't pay this rule, and it isn't offered to them."
+                            title="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work."
                           >
                             <AlertTriangle />
                             {formatNetwork(rule.network)}
@@ -329,12 +317,11 @@ export default function PaymentReceivePolicySection() {
                         <PaymentReceiveRuleDialog
                           agentWalletAddress={policy.agentWalletAddress}
                           initialRule={rule}
-                          preservedPatternCount={customPatternsOf(rule).length}
                           onSave={onSaveRule(rule)}
                         />
                         <ConfirmDialog
                           title="Remove this pricing rule?"
-                          description="The matched callers lose this price — they fall back to other rules or get refused."
+                          description="Callers lose every price of this token — they fall back to other tokens or get refused."
                           confirmLabel="Remove"
                           onConfirm={() => onRemoveRule(rule)}
                         >
@@ -360,7 +347,7 @@ export default function PaymentReceivePolicySection() {
         <CardFooter>
           <ConfirmDialog
             title="Reset the payment policy?"
-            description="The policy goes back to the default: a single free rule for the agent wallet and owner."
+            description="The policy goes back to the default: a single free price for the agent wallet and owner."
             confirmLabel="Reset"
             onConfirm={onReset}
           >
@@ -375,14 +362,55 @@ export default function PaymentReceivePolicySection() {
   )
 }
 
-// CallersCell renders "Everyone" or up to MAX_CALLER_CHIPS address/pattern
-// chips, collapsing the rest into a "+N" chip whose tooltip lists them all.
+// PricesCell lists a rule's prices, cheapest first, each with the callers who pay it.
+function PricesCell({
+  rule,
+  settleable,
+}: {
+  rule: PaymentReceiveRule
+  settleable: boolean
+}) {
+  const rows = [...rule.prices].sort((a, b) => {
+    const left = BigInt(a.price)
+    const right = BigInt(b.price)
+    return left < right ? -1 : left > right ? 1 : 0
+  })
+  return (
+    <div className="space-y-1">
+      {rows.map((row) => (
+        <div key={row.price} className="flex flex-wrap items-center gap-2">
+          {row.price === "0" ? (
+            <Badge variant="secondary">free</Badge>
+          ) : settleable ? (
+            <span
+              className="font-medium"
+              title={`${row.price} atomic units of ${rule.asset}`}
+            >
+              {formatPrice(row.price, rule.asset)}
+            </span>
+          ) : (
+            <Badge
+              variant="destructive"
+              title={`${row.price} atomic units of ${rule.asset} — no facilitator on this network, so this price can't be settled and isn't offered to callers.`}
+            >
+              <AlertTriangle />
+              {formatPrice(row.price, rule.asset)}
+            </Badge>
+          )}
+          <CallersCell patterns={row.addressPatterns} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// CallersCell renders "public" or MAX_CALLER_CHIPS chips plus a "+N" overflow chip.
 function CallersCell({ patterns }: { patterns: string[] }) {
   if (patterns.includes(EVERYONE_PATTERN)) {
     return (
       <Badge>
         <Globe />
-        Everyone
+        public
       </Badge>
     )
   }

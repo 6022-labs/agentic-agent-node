@@ -7,13 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// PaymentReceiveRuleRepositoryInterface persists the policy's pricing rules.
+// PaymentReceiveRuleRepositoryInterface persists the policy's pricing rules, one per token.
 type PaymentReceiveRuleRepositoryInterface interface {
-	// ListByPolicyId returns the policy's rules, ordered by position.
+	// ListByPolicyId returns the policy's rules, oldest first.
 	ListByPolicyId(ctx context.Context, policyId uuid.UUID) ([]models.PaymentReceiveRule, error)
 	// GetById returns the rule, or (nil, nil) if it does not exist.
 	GetById(ctx context.Context, id uuid.UUID) (*models.PaymentReceiveRule, error)
-	// Create appends the rule at the end of the table order.
 	Create(ctx context.Context, rule *models.PaymentReceiveRule) (*models.PaymentReceiveRule, error)
 	Update(ctx context.Context, rule *models.PaymentReceiveRule) (*models.PaymentReceiveRule, error)
 	DeleteById(ctx context.Context, id uuid.UUID) error

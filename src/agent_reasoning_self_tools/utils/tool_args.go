@@ -119,3 +119,33 @@ func JsonObjectArg[T any](args map[string]any, key string) (*T, error) {
 	}
 	return &value, nil
 }
+
+// JsonArrayArg decodes a required array argument into []T; an empty array is a valid value.
+func JsonArrayArg[T any](args map[string]any, key string) ([]T, error) {
+	value, found := args[key]
+	if !found || value == nil {
+		return nil, fmt.Errorf("argument %q is required", key)
+	}
+	return OptionalJsonArrayArg[T](args, key)
+}
+
+// OptionalJsonArrayArg decodes an array argument into []T, returning nil when it is absent.
+func OptionalJsonArrayArg[T any](args map[string]any, key string) ([]T, error) {
+	value, found := args[key]
+	if !found || value == nil {
+		return nil, nil
+	}
+	array, ok := value.([]any)
+	if !ok {
+		return nil, fmt.Errorf("argument %q must be a json array", key)
+	}
+	encoded, err := json.Marshal(array)
+	if err != nil {
+		return nil, fmt.Errorf("argument %q must be a json array: %w", key, err)
+	}
+	var out []T
+	if err := json.Unmarshal(encoded, &out); err != nil {
+		return nil, fmt.Errorf("argument %q has the wrong shape: %w", key, err)
+	}
+	return out, nil
+}

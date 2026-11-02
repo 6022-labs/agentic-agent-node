@@ -8,7 +8,7 @@ import (
 
 func generateSaveRequest(config string, price string) *requests.SavePaymentReceiveRuleRequest {
 	return &requests.SavePaymentReceiveRuleRequest{
-		Price:  price,
+		Prices: []requests.SavePaymentReceiveRulePriceRequest{{Price: price, AddressPatterns: []string{".*"}}},
 		Config: json.RawMessage(config),
 	}
 }

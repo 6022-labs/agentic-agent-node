@@ -15,4 +15,11 @@ type PaymentReceiveRuleX402ConfigRepositoryInterface interface {
 	Upsert(ctx context.Context, config *models.PaymentReceiveRuleX402Config) error
 	// GetByRuleId returns the config, or (nil, nil) if none exists.
 	GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentReceiveRuleX402Config, error)
+	// GetByPolicyIdAndAsset returns the config naming this token, or (nil, nil) if no rule prices it.
+	GetByPolicyIdAndAsset(
+		ctx context.Context,
+		policyId uuid.UUID,
+		network string,
+		asset string,
+	) (*models.PaymentReceiveRuleX402Config, error)
 }

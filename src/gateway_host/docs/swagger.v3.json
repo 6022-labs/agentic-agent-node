@@ -94,6 +94,25 @@
                     "name": {
                         "type": "string"
                     },
+                    "prices": {
+                        "items": {
+                            "$ref": "#/components/schemas/models.ExternalPaymentReceiveRulePrice"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "models.ExternalPaymentReceiveRulePrice": {
+                "properties": {
+                    "addressPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
                     "price": {
                         "type": "string"
                     }
@@ -313,6 +332,21 @@
                 },
                 "type": "object"
             },
+            "requests.SavePaymentReceiveRulePriceRequest": {
+                "properties": {
+                    "addressPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "price": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.SavePaymentReceiveRuleRequest": {
                 "properties": {
                     "config": {
@@ -324,8 +358,12 @@
                     "name": {
                         "type": "string"
                     },
-                    "price": {
-                        "type": "string"
+                    "prices": {
+                        "items": {
+                            "$ref": "#/components/schemas/requests.SavePaymentReceiveRulePriceRequest"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -3207,7 +3245,7 @@
                                 }
                             }
                         },
-                        "description": "agent_not_minted"
+                        "description": "agent_not_minted or asset_already_has_rule"
                     },
                     "502": {
                         "content": {
@@ -3378,7 +3416,7 @@
                                 }
                             }
                         },
-                        "description": "agent_not_minted"
+                        "description": "agent_not_minted or asset_already_has_rule"
                     },
                     "502": {
                         "content": {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,12 +50,12 @@ func TestWhenParsingPaymentReceiveRuleX402Config(t *testing.T) {
 				config.Parse(
 					[]byte(
 						`{"network":"eip155:80002","asset":"0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",`+
-							`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","addressPatterns":[".*"]}`,
+							`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,
 					),
 				),
 			)
 			assert.Equal(t, "eip155:80002", config.Network)
-			assert.Equal(t, []string{".*"}, config.AddressPatterns)
+			assert.Equal(t, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", config.PayTo)
 
 			raw, err := config.Marshal()
 			assert.NoError(t, err)
@@ -71,12 +72,13 @@ func TestWhenParsingPaymentReceiveRuleX402Config(t *testing.T) {
 		t.Run("Should omit them from the wire encoding", func(t *testing.T) {
 			t.Parallel()
 
-			config := &models.PaymentReceiveRuleX402Config{Network: "eip155:80002", AddressPatterns: []string{".*"}}
+			config := &models.PaymentReceiveRuleX402Config{Network: "eip155:80002", PolicyId: uuid.New()}
 
 			raw, err := config.Marshal()
 			assert.NoError(t, err)
 			assert.NotContains(t, string(raw), "paymentReceiveRuleId")
 			assert.NotContains(t, string(raw), "PaymentReceiveRule")
+			assert.NotContains(t, string(raw), "olicyId")
 		})
 	})
 }

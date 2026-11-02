@@ -1,9 +1,30 @@
+import type { FieldPath } from "react-hook-form"
 import { z } from "zod"
 
 import { getFacilitatorNetworks } from "@/configs/app-config"
 import { isZeroAmount } from "@/lib/token-format"
 
 const evmAddress = /^0x[0-9a-fA-F]{40}$/
+
+// isValidPattern mirrors the runtime's check that a pattern compiles; RE2 may still refuse rare syntax.
+const isValidPattern = (pattern: string): boolean => {
+  try {
+    new RegExp(pattern)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// canonicalUnits drops leading and trailing zeros so "1", "01" and "1.0" read as one price.
+export const canonicalUnits = (amount: string): string => {
+  const [whole, fraction = ""] = amount.trim().split(".")
+  const trimmedWhole = whole.replace(/^0+(?=\d)/, "")
+  const trimmedFraction = fraction.replace(/0+$/, "")
+  return trimmedFraction.length > 0
+    ? `${trimmedWhole}.${trimmedFraction}`
+    : trimmedWhole
+}
 
 export const paymentReceiveRuleFormSchema = z
   .object({
@@ -18,38 +39,43 @@ export const paymentReceiveRuleFormSchema = z
       .regex(/^eip155:\d+$/, "Must be a CAIP-2 id, e.g. eip155:80002"),
     asset: z.string().regex(evmAddress, "Must be the token contract address"),
     payTo: z.string().regex(evmAddress, "Must be the receiving wallet address"),
-    // Entered in token units; the form converts to atomic units on submit
-    // using the resolved token's decimals.
-    price: z
-      .string()
-      .regex(/^\d+(\.\d+)?$/, "Token units, e.g. 0.01 (0 = free)"),
-    // The wire format is regex patterns, but the form only deals in plain
-    // addresses — "allow everyone" maps to the ".*" pattern on submit.
-    allowEveryone: z.boolean(),
-    addresses: z.array(
-      z.object({
-        address: z.string().regex(evmAddress, "Must be a 0x address"),
-      })
-    ),
+    prices: z
+      .array(
+        z.object({
+          // Token units; converted to atomic units on submit.
+          price: z
+            .string()
+            .trim()
+            .regex(/^\d+(\.\d+)?$/, "Token units, e.g. 0.01 (0 = free)"),
+          addressPatterns: z
+            .array(z.string().refine(isValidPattern, "Not a valid regex"))
+            .min(1, "Add at least one caller, or allow anyone"),
+        })
+      )
+      .min(1, "Add at least one price"),
   })
   .superRefine((data, ctx) => {
-    if (!data.allowEveryone && data.addresses.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Add at least one address, or allow everyone",
-        path: ["addresses"],
-      })
-    }
-    // Paid rules settle through a facilitator, which only exists for some
-    // networks; free rules never contact one.
+    const seen = new Set<string>()
+    data.prices.forEach((row, index) => {
+      const price = canonicalUnits(row.price)
+      if (seen.has(price)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "This price already has a row — add its callers there",
+          path: ["prices", index, "price"],
+        })
+      }
+      seen.add(price)
+    })
+    // Only paid prices need a facilitator network.
     if (
-      !isZeroAmount(data.price) &&
+      data.prices.some((row) => !isZeroAmount(row.price)) &&
       !getFacilitatorNetworks().includes(data.network)
     ) {
       ctx.addIssue({
         code: "custom",
         message:
-          "No payment facilitator is available for this network — only free rules can use it",
+          "No payment facilitator is available for this network — only free prices can use it",
         path: ["network"],
       })
     }
@@ -58,3 +84,7 @@ export const paymentReceiveRuleFormSchema = z
 export type PaymentReceiveRuleFormSchemaType = z.infer<
   typeof paymentReceiveRuleFormSchema
 >
+
+// PaymentReceiveRuleFormField names any form control, including one price row's field.
+export type PaymentReceiveRuleFormField =
+  FieldPath<PaymentReceiveRuleFormSchemaType>

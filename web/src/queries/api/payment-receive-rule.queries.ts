@@ -13,13 +13,12 @@ import {
 const toWire = (rule: PaymentReceiveRule): PaymentReceiveRuleWire => ({
   id: rule.id,
   name: rule.name,
-  price: rule.price,
   method: rule.method || X402_METHOD,
+  prices: rule.prices,
   config: {
     network: rule.network,
     asset: rule.asset,
     payTo: rule.payTo,
-    addressPatterns: rule.addressPatterns,
   },
 })
 
@@ -27,7 +26,6 @@ const toWire = (rule: PaymentReceiveRule): PaymentReceiveRuleWire => ({
 const fromWire = (wire: PaymentReceiveRuleWire): PaymentReceiveRule => ({
   id: wire.id,
   name: wire.name,
-  price: wire.price,
   method: wire.method,
   network: wire.config.network,
   asset: wire.config.asset,
@@ -35,12 +33,13 @@ const fromWire = (wire: PaymentReceiveRuleWire): PaymentReceiveRule => ({
   assetTransferMethod: wire.config.assetTransferMethod,
   eip712Name: wire.config.eip712Name,
   eip712Version: wire.config.eip712Version,
-  addressPatterns: wire.config.addressPatterns ?? [],
+  prices: (wire.prices ?? []).map((price) => ({
+    price: price.price,
+    addressPatterns: price.addressPatterns ?? [],
+  })),
 })
 
-// GET /config/payment-receive-policy/rules — the pricing rules in table order. Unlike
-// the passthrough queries, this maps the wire rules' config blob into the flat
-// view model, so it returns the model directly rather than the axios response.
+// GET /config/payment-receive-policy/rules — one rule per token, mapped to the flat view model.
 export const listPaymentReceiveRules =
   async (): Promise<ListPaymentReceiveRulesResponse> => {
     const response = await axios.get<ListPaymentReceiveRulesResponseWire>(
@@ -49,7 +48,7 @@ export const listPaymentReceiveRules =
     return { rules: (response.data.rules ?? []).map(fromWire) }
   }
 
-// POST /config/payment-receive-policy/rules — appends a rule.
+// POST /config/payment-receive-policy/rules — prices a token; 409 if a rule already prices it.
 export const createPaymentReceiveRule = async (rule: PaymentReceiveRule) => {
   return await axios.post<PaymentReceiveRuleWire>(
     "/config/payment-receive-policy/rules",
@@ -57,7 +56,7 @@ export const createPaymentReceiveRule = async (rule: PaymentReceiveRule) => {
   )
 }
 
-// PUT /config/payment-receive-policy/rules/:id — replaces a rule's fields.
+// PUT /config/payment-receive-policy/rules/:id — replaces a rule's fields and prices.
 export const updatePaymentReceiveRule = async (
   id: string,
   rule: PaymentReceiveRule

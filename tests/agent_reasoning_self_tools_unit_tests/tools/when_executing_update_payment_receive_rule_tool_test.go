@@ -45,15 +45,18 @@ func TestWhenExecutingUpdatePaymentReceiveRuleTool(t *testing.T) {
 	id := uuid.New()
 	ruleArgs := func() map[string]any {
 		return map[string]any{
-			"id":     id.String(),
-			"name":   "premium",
-			"price":  "2000",
+			"id":   id.String(),
+			"name": "premium",
+			"prices": []any{
+				map[string]any{"price": "0", "addressPatterns": []any{"0xowner"}},
+				map[string]any{"price": "1000", "addressPatterns": []any{".*"}},
+			},
 			"method": "x402",
 			"config": map[string]any{"network": "eip155:80002"},
 		}
 	}
 
-	t.Run("Given the id argument is missing", func(t *testing.T) {
+	t.Run("Given the prices argument is missing", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should fail without calling the use case", func(t *testing.T) {
@@ -62,11 +65,28 @@ func TestWhenExecutingUpdatePaymentReceiveRuleTool(t *testing.T) {
 			suite := WhenExecutingUpdatePaymentReceiveRuleToolBeforeEach(t)
 
 			args := ruleArgs()
-			delete(args, "id")
+			delete(args, "prices")
 			out, err := suite.sut.Execute(ctx, args)
 
 			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "id")
+			assert.ErrorContains(t, err, `argument "prices" is required`)
+		})
+	})
+
+	t.Run("Given the prices argument is not an array", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail without calling the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingUpdatePaymentReceiveRuleToolBeforeEach(t)
+
+			args := ruleArgs()
+			args["prices"] = "1000"
+			out, err := suite.sut.Execute(ctx, args)
+
+			assert.Nil(t, out)
+			assert.ErrorContains(t, err, "must be a json array")
 		})
 	})
 
@@ -100,7 +120,10 @@ func TestWhenExecutingUpdatePaymentReceiveRuleTool(t *testing.T) {
 				DoAndReturn(func(_ context.Context, request *payment_requests.UpdatePaymentReceiveRuleRequest) (*payment_responses.PaymentReceiveRuleResponse, error) {
 					assert.Equal(t, id, request.Id)
 					assert.Equal(t, "premium", request.Name)
-					assert.Equal(t, "2000", request.Price)
+					assert.Equal(t, []payment_requests.SavePaymentReceiveRulePriceRequest{
+						{Price: "0", AddressPatterns: []string{"0xowner"}},
+						{Price: "1000", AddressPatterns: []string{".*"}},
+					}, request.Prices)
 					assert.Equal(t, "x402", request.Method)
 					return &payment_responses.PaymentReceiveRuleResponse{}, nil
 				})

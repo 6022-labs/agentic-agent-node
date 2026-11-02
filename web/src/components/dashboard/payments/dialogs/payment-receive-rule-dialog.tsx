@@ -12,7 +12,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import PaymentReceiveRuleForm from "@/components/dashboard/payments/forms/payment-receive-rule-form"
-import type { PaymentReceiveRuleFormSchemaType } from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
+import type {
+  PaymentReceiveRuleFormField,
+  PaymentReceiveRuleFormSchemaType,
+} from "@/components/dashboard/payments/forms/payment-receive-rule-form/payment-receive-rule-form-schema"
 import type { PaymentReceiveRule } from "@/models/payment-receive-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { useErc20Lookup } from "@/components/dashboard/payments/use-erc20-lookup"
@@ -22,18 +25,16 @@ type Props = {
   // When set, the dialog edits this rule (pencil trigger) instead of adding
   // one (Add trigger).
   initialRule?: PaymentReceiveRule
-  preservedPatternCount?: number
   // Persists the rule into the policy; returns a field error to keep the
   // dialog open for correction.
   onSave: (
     values: PaymentReceiveRuleFormSchemaType
-  ) => Promise<FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>>
+  ) => Promise<FormCompletionResult<PaymentReceiveRuleFormField>>
 }
 
 export default function PaymentReceiveRuleDialog({
   agentWalletAddress,
   initialRule,
-  preservedPatternCount,
   onSave,
 }: Props) {
   const [open, setOpen] = React.useState(false)
@@ -46,7 +47,7 @@ export default function PaymentReceiveRuleDialog({
 
   const onFormComplete = async (
     values: PaymentReceiveRuleFormSchemaType
-  ): Promise<FormCompletionResult<keyof PaymentReceiveRuleFormSchemaType>> => {
+  ): Promise<FormCompletionResult<PaymentReceiveRuleFormField>> => {
     setSaving(true)
     try {
       const result = await onSave(values)
@@ -73,13 +74,13 @@ export default function PaymentReceiveRuleDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit pricing rule" : "Add pricing rule"}
           </DialogTitle>
           <DialogDescription>
-            A network + token the matched callers pay with, per call.
+            One token, and what each group of callers pays with it per call.
             {editing
               ? ""
               : " Pre-filled with the node's chain and the $6022 token."}
@@ -91,7 +92,6 @@ export default function PaymentReceiveRuleDialog({
           <PaymentReceiveRuleForm
             agentWalletAddress={agentWalletAddress}
             initialRule={initialRule}
-            preservedPatternCount={preservedPatternCount}
             tokenLookup={tokenLookup}
             onValueChange={setValues}
             onFormComplete={onFormComplete}

@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,8 +17,11 @@ func TestWhenValidatingSavePaymentReceiveRuleRequest(t *testing.T) {
 
 	generateSavePaymentReceiveRuleRequest := func() *requests.SavePaymentReceiveRuleRequest {
 		return &requests.SavePaymentReceiveRuleRequest{
-			Name:   "  Public price  ",
-			Price:  "10000",
+			Name: "  Public price  ",
+			Prices: []requests.SavePaymentReceiveRulePriceRequest{
+				{Price: "0", AddressPatterns: []string{strings.ToLower(common_tests.RandomEthAddress().Hex())}},
+				{Price: "10000", AddressPatterns: []string{".*"}},
+			},
 			Config: json.RawMessage(`{"network":"eip155:80002"}`),
 		}
 	}
@@ -52,33 +56,48 @@ func TestWhenValidatingSavePaymentReceiveRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the rule has a non-numeric price", func(t *testing.T) {
+	t.Run("Given the rule has no price", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError on the price field", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the prices field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentReceiveRuleRequest()
-			req.Price = "abc"
+			req.Prices = nil
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
-			assert.Equal(t, "price", validationErr.Field)
+			assert.Equal(t, "prices", validationErr.Field)
 		})
 	})
 
-	t.Run("Given the rule has a negative price", func(t *testing.T) {
+	t.Run("Given a price row is invalid", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a ValidationError on the price field", func(t *testing.T) {
+		t.Run("Should return a ValidationError on that row's field", func(t *testing.T) {
 			t.Parallel()
 
 			req := generateSavePaymentReceiveRuleRequest()
-			req.Price = "-1"
+			req.Prices[1].Price = "-1"
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
-			assert.Equal(t, "price", validationErr.Field)
+			assert.Equal(t, "prices[1].price", validationErr.Field)
+		})
+	})
+
+	t.Run("Given two rows with the same price", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on the prices field", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentReceiveRuleRequest()
+			req.Prices[1].Price = "00"
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, req.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "prices", validationErr.Field)
 		})
 	})
 
@@ -134,19 +153,6 @@ func TestWhenValidatingSavePaymentReceiveRuleRequest(t *testing.T) {
 
 			assert.NoError(t, req.ValidateAndSanitize())
 			assert.Equal(t, enums.PaymentMethodX402.String(), req.Method)
-		})
-	})
-
-	t.Run("Given the rule is free", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should accept a zero price", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentReceiveRuleRequest()
-			req.Price = "0"
-
-			assert.NoError(t, req.ValidateAndSanitize())
 		})
 	})
 }

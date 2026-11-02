@@ -2,46 +2,25 @@ package models
 
 import (
 	"encoding/json"
-	"regexp"
-	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/google/uuid"
 )
 
-// PaymentReceiveRuleX402Config is the x402 method's typed settings for one rule — both
-// the DB row (gorm tags) and the wire shape of the config blob (json tags);
-// PaymentReceiveRuleId/PaymentReceiveRule are persistence-only (json:"-"). AssetTransferMethod
-// + the EIP-712 domain are detected from the asset on-chain at save.
-// Eip712Name/Version are nil for permit2, which signs over Permit2's own fixed
-// domain rather than the token's.
+// PaymentReceiveRuleX402Config is the token a rule prices; its transfer method and EIP-712 domain are read on-chain.
 type PaymentReceiveRuleX402Config struct {
-	PaymentReceiveRuleId uuid.UUID                 `gorm:"primaryKey;size:36"                                                        json:"-"`
-	PaymentReceiveRule   PaymentReceiveRule        `gorm:"foreignKey:PaymentReceiveRuleId;references:Id;constraint:OnDelete:CASCADE" json:"-"`
-	Network              string                    `gorm:"not null;size:64"                                                          json:"network"`
-	Asset                string                    `gorm:"not null;size:42"                                                          json:"asset"`
-	PayTo                string                    `gorm:"not null;size:42"                                                          json:"payTo"`
-	AssetTransferMethod  enums.AssetTransferMethod `gorm:"not null;size:16"                                                          json:"assetTransferMethod"`
-	Eip712Name           *string                   `gorm:"size:64"                                                                   json:"eip712Name,omitempty"`
-	Eip712Version        *string                   `gorm:"size:16"                                                                   json:"eip712Version,omitempty"`
-	AddressPatterns      []string                  `gorm:"serializer:json;not null"                                                  json:"addressPatterns"`
-}
+	PaymentReceiveRuleId uuid.UUID          `gorm:"primaryKey;size:36"                                                        json:"-"`
+	PaymentReceiveRule   PaymentReceiveRule `gorm:"foreignKey:PaymentReceiveRuleId;references:Id;constraint:OnDelete:CASCADE" json:"-"`
+	// Copied from the rule so the database can hold one rule per token.
+	PolicyId uuid.UUID `gorm:"not null;size:36;uniqueIndex:uq_payment_receive_rule_x402_configs_policy_asset,priority:1" json:"-"`
 
-// Matches reports whether the rule is open to this address.
-func (c *PaymentReceiveRuleX402Config) Matches(address string) bool {
-	// The address is lowercased; patterns are matched as written, so uppercase-hex patterns never match.
-	lowered := strings.ToLower(strings.TrimSpace(address))
-	for _, pattern := range c.AddressPatterns {
-		compiled, err := regexp.Compile("^(?:" + pattern + ")$")
-		if err != nil {
-			continue
-		}
-		if compiled.MatchString(lowered) {
-			return true
-		}
-	}
-	return false
+	Network             string                    `gorm:"not null;size:64;uniqueIndex:uq_payment_receive_rule_x402_configs_policy_asset,priority:2" json:"network"`
+	Asset               string                    `gorm:"not null;size:42;uniqueIndex:uq_payment_receive_rule_x402_configs_policy_asset,priority:3" json:"asset"`
+	PayTo               string                    `gorm:"not null;size:42"                                                                          json:"payTo"`
+	AssetTransferMethod enums.AssetTransferMethod `gorm:"not null;size:16"                                                                          json:"assetTransferMethod"`
+	Eip712Name          *string                   `gorm:"size:64"                                                                                   json:"eip712Name,omitempty"`
+	Eip712Version       *string                   `gorm:"size:16"                                                                                   json:"eip712Version,omitempty"`
 }
 
 func (PaymentReceiveRuleX402Config) TableName() string {

@@ -19,8 +19,8 @@ import (
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -36,12 +36,18 @@ var (
 type WhenEnsuringPaymentReceivePolicyTestingSuite struct {
 	sut *services.PaymentReceivePolicyProvider
 
-	mockAgentRepository                *identity_repositories_mocks.MockAgentRepositoryInterface
-	mockAgentAddressRepository         *identity_repositories_mocks.MockAgentAddressRepositoryInterface
-	mockPaymentReceivePolicyRepository *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
-	mockPaymentReceiveRuleRepository   *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
-	mockStrategy                       *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
+	mockAgentRepository                   *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentAddressRepository            *identity_repositories_mocks.MockAgentAddressRepositoryInterface
+	mockPaymentReceivePolicyRepository    *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
+	mockPaymentReceiveRuleRepository      *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
+	mockPaymentReceiveRulePriceRepository *payment_repositories_mocks.MockPaymentReceiveRulePriceRepositoryInterface
+	mockStrategy                          *payment_interfaces_mocks.MockPaymentReceiveMethodStrategyInterface
+	mockUnitOfWorkFactory                 *runtime_common_mocks.MockUnitOfWorkFactoryInterface
+	mockUnitOfWork                        *runtime_common_mocks.MockUnitOfWorkInterface
+	unitOfWorkCtx                         context.Context
 }
+
+type receiveSeedUnitOfWorkContextKey struct{}
 
 func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPaymentReceivePolicyTestingSuite {
 	mockController := gomock.NewController(t)
@@ -54,9 +60,18 @@ func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPayme
 	mockPaymentReceiveRuleRepository := payment_repositories_mocks.NewMockPaymentReceiveRuleRepositoryInterface(
 		mockController,
 	)
+	mockPaymentReceiveRulePriceRepository := payment_repositories_mocks.NewMockPaymentReceiveRulePriceRepositoryInterface(
+		mockController,
+	)
 	mockStrategy := payment_interfaces_mocks.NewMockPaymentReceiveMethodStrategyInterface(mockController)
 	mockStrategies := payment_interfaces_mocks.NewMockPaymentReceiveMethodStrategiesInterface(mockController)
 	mockStrategies.EXPECT().For(gomock.Any()).Return(mockStrategy, true).AnyTimes()
+
+	mockUnitOfWorkFactory := runtime_common_mocks.NewMockUnitOfWorkFactoryInterface(mockController)
+	unitOfWorkCtx := context.WithValue(context.Background(), receiveSeedUnitOfWorkContextKey{}, "unit_of_work")
+	mockUnitOfWork := runtime_common_mocks.NewMockUnitOfWorkInterface(mockController)
+	mockUnitOfWork.EXPECT().Context().Return(unitOfWorkCtx).AnyTimes()
+	mockUnitOfWork.EXPECT().Rollback().Return(nil).AnyTimes()
 
 	token6022Settings := &runtime_common_settings.Token6022Settings{
 		receiveSeedChainId: common.HexToAddress(receiveSeedAsset),
@@ -68,15 +83,21 @@ func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPayme
 			mockAgentAddressRepository,
 			mockPaymentReceivePolicyRepository,
 			mockPaymentReceiveRuleRepository,
+			mockPaymentReceiveRulePriceRepository,
 			mockStrategies,
 			token6022Settings,
+			mockUnitOfWorkFactory,
 		),
 
-		mockAgentRepository:                mockAgentRepository,
-		mockAgentAddressRepository:         mockAgentAddressRepository,
-		mockPaymentReceivePolicyRepository: mockPaymentReceivePolicyRepository,
-		mockPaymentReceiveRuleRepository:   mockPaymentReceiveRuleRepository,
-		mockStrategy:                       mockStrategy,
+		mockAgentRepository:                   mockAgentRepository,
+		mockAgentAddressRepository:            mockAgentAddressRepository,
+		mockPaymentReceivePolicyRepository:    mockPaymentReceivePolicyRepository,
+		mockPaymentReceiveRuleRepository:      mockPaymentReceiveRuleRepository,
+		mockPaymentReceiveRulePriceRepository: mockPaymentReceiveRulePriceRepository,
+		mockStrategy:                          mockStrategy,
+		mockUnitOfWorkFactory:                 mockUnitOfWorkFactory,
+		mockUnitOfWork:                        mockUnitOfWork,
+		unitOfWorkCtx:                         unitOfWorkCtx,
 	}
 }
 
@@ -86,6 +107,12 @@ func (s *WhenEnsuringPaymentReceivePolicyTestingSuite) expectWallet(address stri
 		GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
 		Return(&identity_models.AgentAddress{Address: address, Type: identity_enums.AddressTypeEvm}, nil).
 		AnyTimes()
+}
+
+// expectNoPolicy stubs an agent with no policy yet, read again after a failed creation.
+func (s *WhenEnsuringPaymentReceivePolicyTestingSuite) expectNoPolicy(agent *identity_models.Agent, reads int) {
+	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+	s.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(gomock.Any(), agent.Id).Return(nil, nil).Times(reads)
 }
 
 func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
@@ -138,67 +165,6 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a concurrent request won the insert race", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) *models.PaymentReceivePolicy {
-			agent := model_builders.NewAgentBuilder().Build()
-			winner := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
-
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().
-				Create(ctx, gomock.Any()).
-				Return(nil, errors.New("duplicate key")).
-				Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(winner, nil).Times(1)
-			return winner
-		}
-
-		t.Run("Should return the row that won rather than fail", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
-			winner := initSuite(suite)
-
-			policy, _, err := suite.sut.Ensure(ctx)
-
-			assert.NoError(t, err)
-			assert.Equal(t, winner.Id, policy.Id)
-		})
-	})
-
-	t.Run("Given seeding the rule fails", func(t *testing.T) {
-		t.Parallel()
-
-		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
-			agent := model_builders.NewAgentBuilder().WithChainId(receiveSeedChainId).Build()
-			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
-
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().Create(ctx, gomock.Any()).Return(created, nil).Times(1)
-			suite.expectWallet(receiveSeedWallet)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().
-				Create(ctx, gomock.Any()).
-				Return(nil, assert.AnError).
-				Times(1)
-		}
-
-		t.Run("Should return an internal error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
-			initSuite(suite)
-
-			policy, _, err := suite.sut.Ensure(ctx)
-
-			assert.Nil(t, policy)
-			var internalError *apperrors.InternalError
-			assert.ErrorAs(t, err, &internalError)
-		})
-	})
-
 	t.Run("Given the agent already has a policy", func(t *testing.T) {
 		t.Parallel()
 
@@ -228,6 +194,88 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 		})
 	})
 
+	t.Run("Given reading the agent wallet fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
+			suite.expectNoPolicy(model_builders.NewAgentBuilder().Build(), 2)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetByAgentIdAndType(ctx, gomock.Any(), identity_enums.AddressTypeEvm).
+				Return(nil, assert.AnError).
+				Times(1)
+		}
+
+		t.Run("Should return an InternalError without opening a unit of work", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.Nil(t, policy)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given the unit of work cannot start", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
+			suite.expectNoPolicy(model_builders.NewAgentBuilder().Build(), 2)
+			suite.expectWallet(receiveSeedWallet)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(nil, assert.AnError).Times(1)
+		}
+
+		t.Run("Should return an InternalError without creating the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.Nil(t, policy)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given a concurrent request won the insert race", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) *models.PaymentReceivePolicy {
+			agent := model_builders.NewAgentBuilder().Build()
+			winner := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
+
+			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
+			suite.expectWallet(receiveSeedWallet)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(nil, errors.New("duplicate key")).
+				Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(winner, nil).Times(1)
+			return winner
+		}
+
+		t.Run("Should return the row that won rather than fail", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			winner := initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.NoError(t, err)
+			assert.Equal(t, winner.Id, policy.Id)
+		})
+	})
+
 	t.Run("Given the agent has neither a wallet nor an owner", func(t *testing.T) {
 		t.Parallel()
 
@@ -236,13 +284,17 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 			agent.Owner = nil
 			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().Create(ctx, gomock.Any()).Return(created, nil).Times(1)
+			suite.expectNoPolicy(agent, 1)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetByAgentIdAndType(gomock.Any(), gomock.Any(), identity_enums.AddressTypeEvm).
 				Return(nil, nil).
 				Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(created, nil).
+				Times(1)
+			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
 		}
 
 		// A rule scoped to nobody would be a rule anyone matches, so no rule is seeded at all.
@@ -259,12 +311,147 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 		})
 	})
 
+	t.Run("Given seeding the rule fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithChainId(receiveSeedChainId).Build()
+			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
+
+			suite.expectNoPolicy(agent, 2)
+			suite.expectWallet(receiveSeedWallet)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(created, nil).
+				Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
+			suite.mockUnitOfWork.EXPECT().Commit().Times(0)
+		}
+
+		// Nothing is committed, so the next call finds no policy and seeds again.
+		t.Run("Should return an InternalError without committing the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.Nil(t, policy)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given seeding the price fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithChainId(receiveSeedChainId).Build()
+			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
+			seededRule := model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(created.Id).Build()
+
+			suite.expectNoPolicy(agent, 2)
+			suite.expectWallet(receiveSeedWallet)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(created, nil).
+				Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(seededRule, nil).
+				Times(1)
+			suite.mockStrategy.EXPECT().
+				SaveConfig(suite.unitOfWorkCtx, created.Id, seededRule.Id, gomock.Any()).
+				Return(nil).
+				Times(1)
+			suite.mockPaymentReceiveRulePriceRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
+			suite.mockUnitOfWork.EXPECT().Commit().Times(0)
+		}
+
+		t.Run("Should return an InternalError without committing the policy", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.Nil(t, policy)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given committing the seed fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithChainId(receiveSeedChainId).Build()
+			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
+			seededRule := model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(created.Id).Build()
+
+			suite.expectNoPolicy(agent, 2)
+			suite.expectWallet(receiveSeedWallet)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(created, nil).
+				Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(seededRule, nil).
+				Times(1)
+			suite.mockStrategy.EXPECT().
+				SaveConfig(suite.unitOfWorkCtx, created.Id, seededRule.Id, gomock.Any()).
+				Return(nil).
+				Times(1)
+			suite.mockPaymentReceiveRulePriceRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				DoAndReturn(func(
+					_ context.Context,
+					price *models.PaymentReceiveRulePrice,
+				) (*models.PaymentReceiveRulePrice, error) {
+					return price, nil
+				}).
+				Times(1)
+			suite.mockUnitOfWork.EXPECT().Commit().Return(assert.AnError).Times(1)
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(suite)
+
+			policy, _, err := suite.sut.Ensure(ctx)
+
+			assert.Nil(t, policy)
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "policy_failed", internalError.Code)
+		})
+	})
+
 	t.Run("Given the agent has no policy yet", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(
 			suite *WhenEnsuringPaymentReceivePolicyTestingSuite,
-		) (**models.PaymentReceiveRule, *json.RawMessage) {
+			ruleMatcher gomock.Matcher,
+			configMatcher gomock.Matcher,
+			priceMatcher gomock.Matcher,
+		) {
 			agent := model_builders.NewAgentBuilder().
 				WithChainId(receiveSeedChainId).
 				WithOwner(receiveSeedOwner).
@@ -272,65 +459,94 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 			created := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
 			seededRule := model_builders.NewPaymentReceiveRuleBuilder().WithPolicyId(created.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
-			suite.mockPaymentReceivePolicyRepository.EXPECT().Create(ctx, gomock.Any()).Return(created, nil).Times(1)
+			suite.expectNoPolicy(agent, 1)
 			suite.expectWallet(receiveSeedWallet)
-
-			seeded := new(*models.PaymentReceiveRule)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentReceivePolicyRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, gomock.Any()).
+				Return(created, nil).
+				Times(1)
 			suite.mockPaymentReceiveRuleRepository.EXPECT().
-				Create(ctx, gomock.Any()).
-				DoAndReturn(func(_ context.Context, rule *models.PaymentReceiveRule) (*models.PaymentReceiveRule, error) {
-					*seeded = rule
-					return seededRule, nil
-				}).
+				Create(suite.unitOfWorkCtx, ruleMatcher).
+				Return(seededRule, nil).
 				Times(1)
-
-			seededConfig := new(json.RawMessage)
 			suite.mockStrategy.EXPECT().
-				SaveConfig(ctx, seededRule.Id, gomock.Any()).
-				DoAndReturn(func(_ context.Context, _ uuid.UUID, raw json.RawMessage) error {
-					*seededConfig = raw
-					return nil
+				SaveConfig(suite.unitOfWorkCtx, created.Id, seededRule.Id, configMatcher).
+				Return(nil).
+				Times(1)
+			suite.mockPaymentReceiveRulePriceRepository.EXPECT().
+				Create(suite.unitOfWorkCtx, priceMatcher).
+				DoAndReturn(func(
+					_ context.Context,
+					price *models.PaymentReceiveRulePrice,
+				) (*models.PaymentReceiveRulePrice, error) {
+					return price, nil
 				}).
 				Times(1)
-			return seeded, seededConfig
+			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
 		}
 
 		t.Run("Should seed a free rule so the owner never pays their own agent", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
-			seeded, _ := initSuite(suite)
+			initSuite(
+				suite,
+				gomock.Cond(func(rule *models.PaymentReceiveRule) bool {
+					return rule.Name == "Owner free access" && rule.Method == enums.PaymentMethodX402
+				}),
+				gomock.Any(),
+				gomock.Cond(func(price *models.PaymentReceiveRulePrice) bool { return price.Price == "0" }),
+			)
 
 			_, _, err := suite.sut.Ensure(ctx)
 
 			assert.NoError(t, err)
-			assert.Equal(t, "0", (*seeded).Price)
-			assert.Equal(t, "Owner free access", (*seeded).Name)
-			assert.Equal(t, enums.PaymentMethodX402, (*seeded).Method)
 		})
 
 		t.Run("Should scope the seed to the agent wallet and the owner, lowercased", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
-			_, seededConfig := initSuite(suite)
+			// Patterns are stored the way a lowercased payer address is written.
+			initSuite(
+				suite,
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Cond(func(price *models.PaymentReceiveRulePrice) bool {
+					return assert.ObjectsAreEqual([]string{
+						strings.ToLower(receiveSeedWallet),
+						strings.ToLower(receiveSeedOwner),
+					}, price.AddressPatterns)
+				}),
+			)
 
 			_, _, err := suite.sut.Ensure(ctx)
 
 			assert.NoError(t, err)
-			config := &models.PaymentReceiveRuleX402Config{}
-			assert.NoError(t, config.Parse(*seededConfig))
-			// Patterns are matched against the lowercased address, so the seed must store them that way.
-			assert.Equal(t, []string{
-				strings.ToLower(receiveSeedWallet),
-				strings.ToLower(receiveSeedOwner),
-			}, config.AddressPatterns)
-			assert.Equal(t, "eip155:80002", config.Network)
-			assert.Equal(t, receiveSeedAsset, config.Asset)
-			assert.Equal(t, receiveSeedWallet, config.PayTo)
-			assert.Equal(t, enums.AssetTransferMethodEip3009, config.AssetTransferMethod)
+		})
+
+		t.Run("Should price the agent's token and pay the agent wallet", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenEnsuringPaymentReceivePolicyBeforeEach(t)
+			initSuite(
+				suite,
+				gomock.Any(),
+				gomock.Cond(func(raw json.RawMessage) bool {
+					config := &models.PaymentReceiveRuleX402Config{}
+					return config.Parse(raw) == nil &&
+						config.Network == "eip155:80002" &&
+						config.Asset == strings.ToLower(receiveSeedAsset) &&
+						config.PayTo == receiveSeedWallet &&
+						config.AssetTransferMethod == enums.AssetTransferMethodEip3009
+				}),
+				gomock.Any(),
+			)
+
+			_, _, err := suite.sut.Ensure(ctx)
+
+			assert.NoError(t, err)
 		})
 	})
 }

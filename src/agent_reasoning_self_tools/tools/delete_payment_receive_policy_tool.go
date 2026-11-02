@@ -21,8 +21,9 @@ func NewDeletePaymentReceivePolicyTool(
 
 func (t *DeletePaymentReceivePolicyTool) Definition() *models.Tool {
 	return &models.Tool{
-		Name:        "delete_payment_receive_policy",
-		Description: "Delete your payment policy; a default free rule is re-materialized on next access.",
+		Name: "delete_payment_receive_policy",
+		Description: "Reset your payment policy. Every pricing rule and every price is removed; a free rule " +
+			"for your wallet and your owner is re-created on next access.",
 		InputScheme: utils.EmptyObjectScheme(),
 	}
 }

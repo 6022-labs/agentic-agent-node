@@ -188,6 +188,16 @@ components:
         type:
           type: string
       type: object
+    requests.SavePaymentReceiveRulePriceRequest:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price:
+          type: string
+      type: object
     requests.SavePaymentReceiveRuleRequest:
       properties:
         config:
@@ -196,8 +206,11 @@ components:
           type: string
         name:
           type: string
-        price:
-          type: string
+        prices:
+          items:
+            $ref: '#/components/schemas/requests.SavePaymentReceiveRulePriceRequest'
+          type: array
+          uniqueItems: false
       type: object
     requests.SetAgentGuidanceRequest:
       properties:
@@ -629,6 +642,16 @@ components:
         updatedAt:
           type: string
       type: object
+    responses.PaymentReceiveRulePriceResponse:
+      properties:
+        addressPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price:
+          type: string
+      type: object
     responses.PaymentReceiveRuleResponse:
       properties:
         config:
@@ -641,8 +664,11 @@ components:
           type: string
         name:
           type: string
-        price:
-          type: string
+        prices:
+          items:
+            $ref: '#/components/schemas/responses.PaymentReceiveRulePriceResponse'
+          type: array
+          uniqueItems: false
         updatedAt:
           type: string
       type: object
@@ -1559,13 +1585,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.InternalError'
-          description: policy_failed or create_failed
+          description: policy_failed, rule_lookup_failed or create_failed
       summary: Internal create payment rule
       tags:
       - Internal
@@ -1645,13 +1671,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: agent_not_minted
+          description: agent_not_minted or asset_already_has_rule
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.InternalError'
-          description: policy_failed or update_failed
+          description: policy_failed, rule_lookup_failed or update_failed
       summary: Internal update payment rule
       tags:
       - Internal

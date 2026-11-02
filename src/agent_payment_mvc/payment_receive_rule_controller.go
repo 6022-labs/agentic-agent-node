@@ -53,7 +53,7 @@ func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-// Create appends a pricing rule.
+// Create adds the pricing rule of one token.
 // @Summary Internal create payment rule
 // @Tags Internal
 // @Accept json
@@ -61,8 +61,8 @@ func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentReceiveRuleRequest true "payment rule"
 // @Success 200 {object} responses.PaymentReceiveRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 409 {object} errors.ConflictError "agent_not_minted"
-// @Failure 500 {object} errors.InternalError "policy_failed or create_failed"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
+// @Failure 500 {object} errors.InternalError "policy_failed, rule_lookup_failed or create_failed"
 // @Router /internal/config/payment-receive-policy/rules [post]
 func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 	body := new(requests.SavePaymentReceiveRuleRequest)
@@ -86,8 +86,8 @@ func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 // @Success 200 {object} responses.PaymentReceiveRuleResponse
 // @Failure 400 {object} errors.ValidationError
 // @Failure 404 {object} errors.NotFoundError "rule_not_found"
-// @Failure 409 {object} errors.ConflictError "agent_not_minted"
-// @Failure 500 {object} errors.InternalError "policy_failed or update_failed"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
+// @Failure 500 {object} errors.InternalError "policy_failed, rule_lookup_failed or update_failed"
 // @Router /internal/config/payment-receive-policy/rules/{id} [put]
 func (c *PaymentReceiveRuleController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdatePaymentReceiveRuleRequest)

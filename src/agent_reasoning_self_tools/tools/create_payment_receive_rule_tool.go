@@ -26,17 +26,13 @@ func NewCreatePaymentReceiveRuleTool(
 
 func (t *CreatePaymentReceiveRuleTool) Definition() *models.Tool {
 	return &models.Tool{
-		Name:        "create_payment_receive_rule",
-		Description: "Create a pricing rule for your callers. Config carries the method-specific settings (x402 by default).",
-		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
-			"name":   utils.StringProperty("Rule name (1-64 characters)."),
-			"price":  utils.StringProperty("Non-negative integer price in the asset's atomic units (0 = free)."),
-			"method": utils.StringProperty("Payment method; defaults to x402."),
-			"config": utils.ObjectProperty(
-				"Method-specific rule configuration. For x402: {network (CAIP-2), asset (ERC-20 address), " +
-					"payTo (address), assetTransferMethod, addressPatterns}.",
-			),
-		}, []string{"name", "price", "config"}),
+		Name: "create_payment_receive_rule",
+		Description: "Create the pricing rule of one token for your callers; a token already priced " +
+			"must be updated instead. Config names the token (x402 by default).",
+		InputScheme: utils.ObjectScheme(
+			t.savePaymentReceiveRuleProperties(),
+			t.savePaymentReceiveRuleRequired(),
+		),
 	}
 }
 

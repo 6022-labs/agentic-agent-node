@@ -23,7 +23,7 @@ func (r *PaymentReceiveRuleRepository) ListByPolicyId(
 	policyId uuid.UUID,
 ) ([]models.PaymentReceiveRule, error) {
 	rules := []models.PaymentReceiveRule{}
-	err := r.client.GetDB(ctx).Where("policy_id = ?", policyId).Order("position ASC").Find(&rules).Error
+	err := r.client.GetDB(ctx).Where("policy_id = ?", policyId).Order("created_at ASC, id ASC").Find(&rules).Error
 	if err != nil {
 		return nil, err
 	}
@@ -46,21 +46,7 @@ func (r *PaymentReceiveRuleRepository) Create(
 	ctx context.Context,
 	rule *models.PaymentReceiveRule,
 ) (*models.PaymentReceiveRule, error) {
-	err := r.client.GetDB(ctx).Transaction(func(tx *gorm.DB) error {
-		var maxPosition *int
-		if err := tx.Model(&models.PaymentReceiveRule{}).
-			Where("policy_id = ?", rule.PolicyId).
-			Select("MAX(position)").
-			Scan(&maxPosition).
-			Error; err != nil {
-			return err
-		}
-		if maxPosition != nil {
-			rule.Position = *maxPosition + 1
-		}
-		return tx.Omit("Policy").Create(rule).Error
-	})
-	if err != nil {
+	if err := r.client.GetDB(ctx).Omit("Policy").Create(rule).Error; err != nil {
 		return nil, err
 	}
 	return rule, nil

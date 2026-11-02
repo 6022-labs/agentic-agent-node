@@ -126,7 +126,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
-					Body:         []byte(`{"code":"x","field":"f","message":"m"}`),
+					Body: []byte(
+						`{"code":"asset_already_has_rule","message":"another rule already prices this token"}`,
+					),
 				}, nil)
 		}
 
@@ -139,7 +141,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			_, err := suite.sut.Update(context.Background(), "r1", &models.ExternalPaymentReceiveRule{Name: "Renamed"})
 
 			var target *apperrors.ConflictError
-			assert.ErrorAs(t, err, &target)
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "asset_already_has_rule", target.Code)
+			}
 		})
 	})
 
@@ -182,7 +186,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 				).
 				Return(&clients.PutInternalConfigPaymentReceivePolicyRulesIdResponse{
 					HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-					Body:         []byte(`{"id":"r1","name":"Renamed"}`),
+					Body: []byte(
+						`{"id":"r1","name":"Renamed","prices":[{"price":"0","addressPatterns":["0xowner"]}]}`,
+					),
 				}, nil)
 		}
 
@@ -200,6 +206,9 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Renamed", rule.Name)
+			assert.Equal(t, []models.ExternalPaymentReceiveRulePrice{
+				{Price: "0", AddressPatterns: []string{"0xowner"}},
+			}, rule.Prices)
 		})
 	})
 }

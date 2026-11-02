@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 )
 
 type UpdatePaymentReceiveRule struct {
@@ -18,19 +19,22 @@ type UpdatePaymentReceiveRule struct {
 func NewUpdatePaymentReceiveRule(
 	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
+	paymentReceiveRulePriceRepository repositories.PaymentReceiveRulePriceRepositoryInterface,
 	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
+	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *UpdatePaymentReceiveRule {
 	return &UpdatePaymentReceiveRule{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
 			paymentReceivePolicyProvider,
 			paymentReceiveRuleRepository,
+			paymentReceiveRulePriceRepository,
 			paymentReceiveMethodStrategies,
+			unitOfWorkFactory,
 		),
 	}
 }
 
-// Execute replaces the rule's fields; identity, position and policy binding are
-// preserved.
+// Execute replaces the rule's token and prices, keeping its id.
 func (u *UpdatePaymentReceiveRule) Execute(
 	ctx context.Context,
 	request *requests.UpdatePaymentReceiveRuleRequest,
@@ -53,17 +57,35 @@ func (u *UpdatePaymentReceiveRule) Execute(
 	if rule == nil {
 		return nil, errors.NewNotFoundError("rule_not_found", "")
 	}
+	if err := u.claimAsset(ctx, strategy, rule.PolicyId, rule.Id, request.Config); err != nil {
+		return nil, err
+	}
 
-	rule.Name = request.Name
-	rule.Price = request.Price
-	rule.Method = enums.PaymentMethod(request.Method)
-
-	updated, err := u.paymentReceiveRuleRepository.Update(ctx, rule)
+	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
-	if err := strategy.SaveConfig(ctx, updated.Id, request.Config); err != nil {
+	defer func() { _ = unitOfWork.Rollback() }()
+
+	rule.Name = request.Name
+	rule.Method = enums.PaymentMethod(request.Method)
+	updated, err := u.paymentReceiveRuleRepository.Update(unitOfWork.Context(), rule)
+	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err.Error())
 	}
-	return responses.ToPaymentReceiveRuleResponse(updated, request.Config), nil
+	if err := strategy.SaveConfig(unitOfWork.Context(), rule.PolicyId, rule.Id, request.Config); err != nil {
+		return nil, errors.NewInternalError("update_failed", err.Error())
+	}
+	// Prices carry no state, so they are replaced wholesale.
+	if err := u.paymentReceiveRulePriceRepository.DeleteByRuleId(unitOfWork.Context(), rule.Id); err != nil {
+		return nil, errors.NewInternalError("update_failed", err.Error())
+	}
+	prices, err := u.createPrices(unitOfWork.Context(), rule.Id, request.Prices)
+	if err != nil {
+		return nil, errors.NewInternalError("update_failed", err.Error())
+	}
+	if err := unitOfWork.Commit(); err != nil {
+		return nil, errors.NewInternalError("update_failed", err.Error())
+	}
+	return responses.ToPaymentReceiveRuleResponse(updated, prices, request.Config), nil
 }

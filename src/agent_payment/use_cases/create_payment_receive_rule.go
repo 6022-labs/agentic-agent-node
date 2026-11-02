@@ -10,6 +10,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
+	"github.com/google/uuid"
 )
 
 type CreatePaymentReceiveRule struct {
@@ -19,13 +21,17 @@ type CreatePaymentReceiveRule struct {
 func NewCreatePaymentReceiveRule(
 	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
+	paymentReceiveRulePriceRepository repositories.PaymentReceiveRulePriceRepositoryInterface,
 	paymentReceiveMethodStrategies payment_interfaces.PaymentReceiveMethodStrategiesInterface,
+	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *CreatePaymentReceiveRule {
 	return &CreatePaymentReceiveRule{
 		AbstractPaymentUseCase: NewAbstractPaymentUseCase(
 			paymentReceivePolicyProvider,
 			paymentReceiveRuleRepository,
+			paymentReceiveRulePriceRepository,
 			paymentReceiveMethodStrategies,
+			unitOfWorkFactory,
 		),
 	}
 }
@@ -49,28 +55,33 @@ func (u *CreatePaymentReceiveRule) Execute(
 	if err != nil {
 		return nil, err
 	}
+	if err := u.claimAsset(ctx, strategy, policy.Id, uuid.Nil, request.Config); err != nil {
+		return nil, err
+	}
 
-	rule, err := u.paymentReceiveRuleRepository.Create(ctx, u.toPaymentReceiveRule(policy, request))
+	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
-	// Persist the method config after the rule (it needs the rule id); roll the
-	// rule back if that fails so we never leave an orphan without config.
-	if err := strategy.SaveConfig(ctx, rule.Id, request.Config); err != nil {
-		_ = u.paymentReceiveRuleRepository.DeleteById(ctx, rule.Id)
-		return nil, errors.NewInternalError("create_failed", err.Error())
-	}
-	return responses.ToPaymentReceiveRuleResponse(rule, request.Config), nil
-}
+	defer func() { _ = unitOfWork.Rollback() }()
 
-func (u *CreatePaymentReceiveRule) toPaymentReceiveRule(
-	policy *models.PaymentReceivePolicy,
-	request *requests.SavePaymentReceiveRuleRequest,
-) *models.PaymentReceiveRule {
-	return &models.PaymentReceiveRule{
+	rule, err := u.paymentReceiveRuleRepository.Create(unitOfWork.Context(), &models.PaymentReceiveRule{
 		PolicyId: policy.Id,
 		Name:     request.Name,
-		Price:    request.Price,
 		Method:   enums.PaymentMethod(request.Method),
+	})
+	if err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
 	}
+	if err := strategy.SaveConfig(unitOfWork.Context(), policy.Id, rule.Id, request.Config); err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
+	}
+	prices, err := u.createPrices(unitOfWork.Context(), rule.Id, request.Prices)
+	if err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
+	}
+	if err := unitOfWork.Commit(); err != nil {
+		return nil, errors.NewInternalError("create_failed", err.Error())
+	}
+	return responses.ToPaymentReceiveRuleResponse(rule, prices, request.Config), nil
 }
