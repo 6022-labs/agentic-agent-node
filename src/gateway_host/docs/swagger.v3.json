@@ -84,6 +84,21 @@
                 "additionalProperties": {},
                 "type": "object"
             },
+            "models.ExternalPaymentReceiveRulePrice": {
+                "properties": {
+                    "addressPatterns": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "price": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "requests.A2AMessage": {
                 "properties": {
                     "contextId": {
@@ -1153,8 +1168,12 @@
                     "name": {
                         "type": "string"
                     },
-                    "price": {
-                        "type": "string"
+                    "prices": {
+                        "items": {
+                            "$ref": "#/components/schemas/models.ExternalPaymentReceiveRulePrice"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"

@@ -55,6 +55,15 @@ definitions:
   fiber.Map:
     additionalProperties: {}
     type: object
+  models.ExternalPaymentReceiveRulePrice:
+    properties:
+      addressPatterns:
+        items:
+          type: string
+        type: array
+      price:
+        type: string
+    type: object
   requests.A2AMessage:
     properties:
       contextId:
@@ -727,8 +736,10 @@ definitions:
         type: string
       name:
         type: string
-      price:
-        type: string
+      prices:
+        items:
+          $ref: '#/definitions/models.ExternalPaymentReceiveRulePrice'
+        type: array
     type: object
   responses.PaymentSpendRuleResponse:
     properties:

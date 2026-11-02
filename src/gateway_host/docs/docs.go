@@ -2481,6 +2481,20 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {}
         },
+        "models.ExternalPaymentReceiveRulePrice": {
+            "type": "object",
+            "properties": {
+                "addressPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.A2AMessage": {
             "type": "object",
             "properties": {
@@ -3519,8 +3533,11 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "string"
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExternalPaymentReceiveRulePrice"
+                    }
                 }
             }
         },
