@@ -147,10 +147,24 @@ func TestWhenValidatingSavePaymentReceiveRulePriceRequest(t *testing.T) {
 
 			address := common_tests.RandomEthAddress().Hex()
 			req := generateSavePaymentReceiveRulePriceRequest()
-			req.AddressPatterns = []string{address, strings.ToLower(address), ".*"}
+			req.AddressPatterns = []string{address, strings.ToLower(address)}
 
 			assert.NoError(t, req.ValidateAndSanitize(0))
-			assert.Equal(t, []string{strings.ToLower(address), ".*"}, req.AddressPatterns)
+			assert.Equal(t, []string{strings.ToLower(address)}, req.AddressPatterns)
+		})
+	})
+
+	t.Run("Given anyone among other address patterns", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should keep only anyone", func(t *testing.T) {
+			t.Parallel()
+
+			req := generateSavePaymentReceiveRulePriceRequest()
+			req.AddressPatterns = []string{strings.ToLower(common_tests.RandomEthAddress().Hex()), ".*"}
+
+			assert.NoError(t, req.ValidateAndSanitize(0))
+			assert.Equal(t, []string{".*"}, req.AddressPatterns)
 		})
 	})
 }

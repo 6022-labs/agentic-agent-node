@@ -59,6 +59,10 @@ func (a *SavePaymentReceiveRulePriceRequest) ValidateAndSanitize(index int) erro
 		seen[trimmed] = true
 		patterns = append(patterns, trimmed)
 	}
+	// ".*" already covers every caller, so the others are noise.
+	if seen[".*"] {
+		patterns = []string{".*"}
+	}
 	a.AddressPatterns = patterns
 	return nil
 }
