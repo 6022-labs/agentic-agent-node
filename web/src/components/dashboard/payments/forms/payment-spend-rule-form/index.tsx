@@ -262,7 +262,7 @@ export default function PaymentSpendRuleForm({
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="space-y-4"
       >
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <FormField
             control={form.control}
             name="name"
@@ -302,7 +302,7 @@ export default function PaymentSpendRuleForm({
             )}
           />
         </div>
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <FormField
             control={form.control}
             name="network"
@@ -311,8 +311,12 @@ export default function PaymentSpendRuleForm({
                 <FormLabel>Network</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a network" />
+                    <SelectTrigger className="w-full min-w-0">
+                      {/* The trigger's flex layout defeats line-clamp, so a long chain name would overflow. */}
+                      <SelectValue
+                        className="!block min-w-0 truncate"
+                        placeholder="Select a network"
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -368,7 +372,7 @@ export default function PaymentSpendRuleForm({
             )}
           />
         </div>
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <FormField
             control={form.control}
             name="assetTransferMethod"
