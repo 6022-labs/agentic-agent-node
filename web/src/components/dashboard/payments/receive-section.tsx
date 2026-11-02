@@ -59,8 +59,15 @@ import {
 } from "@/queries/api/payment-receive-rule.queries"
 import { getFacilitatorNetworks } from "@/configs/app-config"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import { audienceLabel, formatPrice } from "@/lib/token-format"
+import {
+  audienceLabel,
+  formatTokenAmount,
+  type TokenUnits,
+} from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
+
+import HoverHint from "./hover-hint"
+import { useTokenInfo } from "./use-token-info"
 
 // MAX_PRICE_LINES keeps a row short; further prices fold into a "+N more prices" badge.
 const MAX_PRICE_LINES = 2
@@ -279,9 +286,12 @@ export default function PaymentReceivePolicySection() {
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium">
                         {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
-                        <div className="max-w-40 truncate" title={rule.name}>
+                        <HoverHint
+                          className="block max-w-40 truncate"
+                          content={rule.name}
+                        >
                           {rule.name}
-                        </div>
+                        </HoverHint>
                       </TableCell>
                       <TableCell className="max-w-40">
                         <TokenCell
@@ -289,12 +299,11 @@ export default function PaymentReceivePolicySection() {
                           asset={rule.asset}
                           badge={
                             hasUnsettleablePrice(rule) ? (
-                              <Badge
-                                variant="destructive"
-                                title="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work."
-                              >
-                                <AlertTriangle />
-                              </Badge>
+                              <HoverHint content="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work.">
+                                <Badge variant="destructive">
+                                  <AlertTriangle />
+                                </Badge>
+                              </HoverHint>
                             ) : null
                           }
                         />
@@ -308,13 +317,26 @@ export default function PaymentReceivePolicySection() {
                       <TableCell>
                         {rule.payTo.toLowerCase() ===
                         policy.agentWalletAddress.toLowerCase() ? (
-                          <Badge variant="outline" title={rule.payTo}>
-                            agent wallet
-                          </Badge>
+                          <HoverHint
+                            content={
+                              <span className="font-mono break-all">
+                                {rule.payTo}
+                              </span>
+                            }
+                          >
+                            <Badge variant="outline">agent wallet</Badge>
+                          </HoverHint>
                         ) : (
-                          <span className="font-mono" title={rule.payTo}>
+                          <HoverHint
+                            className="font-mono"
+                            content={
+                              <span className="font-mono break-all">
+                                {rule.payTo}
+                              </span>
+                            }
+                          >
                             {truncateEthAddress(rule.payTo)}
-                          </span>
+                          </HoverHint>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -374,6 +396,7 @@ function PricesCell({
   rule: PaymentReceiveRule
   settleable: boolean
 }) {
+  const token = useTokenInfo(rule.network, rule.asset)
   const rows = [...rule.prices].sort((a, b) => {
     const left = BigInt(a.price)
     const right = BigInt(b.price)
@@ -385,11 +408,7 @@ function PricesCell({
     <div className="space-y-1">
       {visible.map((row) => (
         <div key={row.price} className="flex min-w-0 items-center gap-2">
-          <PriceLabel
-            price={row.price}
-            asset={rule.asset}
-            settleable={settleable}
-          />
+          <PriceLabel price={row.price} token={token} settleable={settleable} />
           <AudienceBadge patterns={row.addressPatterns} anyoneLabel="public" />
         </div>
       ))}
@@ -409,7 +428,7 @@ function PricesCell({
                 <li key={row.price}>
                   {row.price === "0"
                     ? "free"
-                    : formatPrice(row.price, rule.asset)}
+                    : formatTokenAmount(row.price, token)}
                   {" — "}
                   {audienceLabel(row.addressPatterns, "public")}
                 </li>
@@ -424,11 +443,11 @@ function PricesCell({
 
 function PriceLabel({
   price,
-  asset,
+  token,
   settleable,
 }: {
   price: string
-  asset: string
+  token?: TokenUnits
   settleable: boolean
 }) {
   if (price === "0") {
@@ -436,18 +455,15 @@ function PriceLabel({
   }
   if (settleable) {
     return (
-      <span className="font-medium" title={`${price} atomic units of ${asset}`}>
-        {formatPrice(price, asset)}
-      </span>
+      <span className="font-medium">{formatTokenAmount(price, token)}</span>
     )
   }
   return (
-    <Badge
-      variant="destructive"
-      title={`${price} atomic units of ${asset} — no facilitator on this network, so this price can't be settled and isn't offered to callers.`}
-    >
-      <AlertTriangle />
-      {formatPrice(price, asset)}
-    </Badge>
+    <HoverHint content="No facilitator on this network, so this price can't be settled and isn't offered to callers.">
+      <Badge variant="destructive">
+        <AlertTriangle />
+        {formatTokenAmount(price, token)}
+      </Badge>
+    </HoverHint>
   )
 }

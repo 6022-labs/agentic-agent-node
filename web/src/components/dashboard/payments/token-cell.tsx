@@ -1,7 +1,10 @@
 import type { ReactNode } from "react"
 
-import { formatNetwork, knownTokenSymbol } from "@/lib/token-format"
+import { formatNetwork } from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
+
+import HoverHint from "./hover-hint"
+import { useTokenInfo } from "./use-token-info"
 
 // TokenCell shows a rule's token over its chain, shared by the receive and spend tables.
 export default function TokenCell({
@@ -13,23 +16,32 @@ export default function TokenCell({
   asset: string
   badge?: ReactNode
 }) {
-  const symbol = knownTokenSymbol(asset)
+  const symbol = useTokenInfo(network, asset)?.symbol
   return (
-    <div className="min-w-0">
-      <div className="flex min-w-0 items-center gap-1">
+    <div className="flex min-w-0 items-start gap-1">
+      <HoverHint
+        className="block min-w-0"
+        content={
+          <>
+            <p className="font-mono break-all">{asset}</p>
+            <p className="text-muted-foreground">{network}</p>
+          </>
+        }
+      >
         <span
           className={
-            symbol ? "truncate font-medium" : "truncate font-mono text-xs"
+            symbol
+              ? "block truncate font-medium"
+              : "block truncate font-mono text-xs"
           }
-          title={asset}
         >
           {symbol ? `$${symbol}` : truncateEthAddress(asset)}
         </span>
-        {badge}
-      </div>
-      <div className="truncate text-xs text-muted-foreground" title={network}>
-        {formatNetwork(network)}
-      </div>
+        <span className="block truncate text-xs text-muted-foreground">
+          {formatNetwork(network)}
+        </span>
+      </HoverHint>
+      {badge}
     </div>
   )
 }

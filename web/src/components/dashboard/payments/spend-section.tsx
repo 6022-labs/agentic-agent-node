@@ -54,8 +54,15 @@ import {
   updatePaymentSpendRule,
 } from "@/queries/api/payment-spend-rule.queries"
 import { extractErrorMessage, extractValidationError } from "@/lib/api-errors"
-import { formatPrice, isPlainAddressPattern } from "@/lib/token-format"
+import {
+  formatAtomicAmount,
+  formatTokenAmount,
+  isPlainAddressPattern,
+} from "@/lib/token-format"
 import { truncateEthAddress } from "@/lib/utils"
+
+import HoverHint from "./hover-hint"
+import { useTokenInfo } from "./use-token-info"
 
 // formatResetsIn is coarse on purpose: the exact second the period rolls is not actionable.
 const formatResetsIn = (resetsAt: string): string => {
@@ -134,23 +141,38 @@ const toFormField = (path: string): PaymentSpendRuleFormField | null => {
 const normalizePayee = (pattern: string): string =>
   isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
 
-// AmountLabel shows an atomic amount in token units for known tokens, else truncated atomic.
-function AmountLabel({ amount, asset }: { amount: string; asset: string }) {
+// AmountLabel shows an atomic amount in token units once the token resolves, else truncated atomic.
+function AmountLabel({
+  amount,
+  network,
+  asset,
+  bare,
+}: {
+  amount: string
+  network: string
+  asset: string
+  // bare drops the symbol, for a spent amount shown right before its budget.
+  bare?: boolean
+}) {
+  const token = useTokenInfo(network, asset)
   if (isUnbounded(amount)) {
     return <Badge variant="destructive">unbounded</Badge>
   }
-  const label = formatPrice(amount, asset)
-  if (label !== `${amount} units`) {
+  if (token || amount.length <= 12) {
     return (
-      <span className="font-mono text-xs" title={`${amount} atomic units`}>
-        {label}
+      <span className="font-mono text-xs">
+        {token
+          ? bare
+            ? formatAtomicAmount(amount, token.decimals)
+            : formatTokenAmount(amount, token)
+          : amount}
       </span>
     )
   }
   return (
-    <span className="font-mono text-xs" title={amount}>
-      {amount.length > 12 ? `${amount.slice(0, 12)}…` : amount}
-    </span>
+    <HoverHint className="font-mono text-xs" content={amount}>
+      {`${amount.slice(0, 12)}…`}
+    </HoverHint>
   )
 }
 
@@ -382,9 +404,12 @@ export default function PaymentSpendPolicySection() {
                     <TableRow key={rule.id ?? rule.name}>
                       <TableCell className="font-medium">
                         {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
-                        <div className="max-w-40 truncate" title={rule.name}>
+                        <HoverHint
+                          className="block max-w-40 truncate"
+                          content={rule.name}
+                        >
                           {rule.name}
-                        </div>
+                        </HoverHint>
                       </TableCell>
                       <TableCell className="max-w-40">
                         <TokenCell
@@ -409,6 +434,7 @@ export default function PaymentSpendPolicySection() {
                         ) : (
                           <AmountLabel
                             amount={rule.maxAmountPerPayment}
+                            network={rule.network}
                             asset={rule.asset}
                           />
                         )}
@@ -424,6 +450,7 @@ export default function PaymentSpendPolicySection() {
                               <WindowUsage
                                 key={window.windowSeconds}
                                 window={window}
+                                network={rule.network}
                                 asset={rule.asset}
                               />
                             ))}
@@ -483,40 +510,43 @@ export default function PaymentSpendPolicySection() {
 // WindowUsage shows one window's spend against its budget and when the period rolls over.
 function WindowUsage({
   window,
+  network,
   asset,
 }: {
   window: PaymentSpendRuleWindow
+  network: string
   asset: string
 }) {
   const spent = window.spent ?? "0"
   return (
-    <div className="space-y-1">
-      <div
-        className="flex flex-wrap items-center gap-1 text-xs"
-        title={`${spent} of ${window.maxAmount} atomic units this period`}
-      >
-        <AmountLabel amount={spent} asset={asset} />
+    <div className="flex min-w-0 items-center gap-2 text-xs">
+      <span className="flex min-w-0 items-center gap-1">
+        <AmountLabel bare amount={spent} network={network} asset={asset} />
         <span>/</span>
         {window.maxAmount === "0" ? (
           <Badge variant="secondary">denies</Badge>
         ) : (
-          <AmountLabel amount={window.maxAmount} asset={asset} />
+          <AmountLabel
+            amount={window.maxAmount}
+            network={network}
+            asset={asset}
+          />
         )}
         <span className="text-muted-foreground">
-          per {formatPeriod(window.windowSeconds)}
+          · {formatPeriod(window.windowSeconds)}
         </span>
-      </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+      </span>
+      <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
         <div
           className="h-full bg-primary"
           style={{ width: `${spentPercent(spent, window.maxAmount)}%` }}
         />
       </div>
-      <div className="text-xs text-muted-foreground">
-        {window.resetsAt
-          ? `resets in ${formatResetsIn(window.resetsAt)}`
-          : "nothing spent yet"}
-      </div>
+      {window.resetsAt ? (
+        <span className="shrink-0 text-muted-foreground">
+          resets in {formatResetsIn(window.resetsAt)}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -581,28 +611,31 @@ function PayeesEditor({
       ) : (
         <div className="flex flex-wrap items-center gap-1">
           {payees.map((pattern, index) => (
-            <Badge
+            <HoverHint
               key={`${index}:${pattern}`}
-              variant={pattern === ANY_PATTERN ? "default" : "outline"}
-              className="gap-1 font-mono text-xs"
-              title={pattern}
+              content={<span className="font-mono break-all">{pattern}</span>}
             >
-              {pattern === ANY_PATTERN
-                ? "anyone"
-                : isPlainAddressPattern(pattern)
-                  ? truncateEthAddress(pattern)
-                  : pattern}
-              <button
-                type="button"
-                aria-label={`Remove ${pattern}`}
-                disabled={disabled}
-                onClick={() =>
-                  void save(payees.filter((_, other) => other !== index))
-                }
+              <Badge
+                variant={pattern === ANY_PATTERN ? "default" : "outline"}
+                className="gap-1 font-mono text-xs"
               >
-                <X className="size-3" />
-              </button>
-            </Badge>
+                {pattern === ANY_PATTERN
+                  ? "anyone"
+                  : isPlainAddressPattern(pattern)
+                    ? truncateEthAddress(pattern)
+                    : pattern}
+                <button
+                  type="button"
+                  aria-label={`Remove ${pattern}`}
+                  disabled={disabled}
+                  onClick={() =>
+                    void save(payees.filter((_, other) => other !== index))
+                  }
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            </HoverHint>
           ))}
         </div>
       )}

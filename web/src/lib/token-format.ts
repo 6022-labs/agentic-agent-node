@@ -15,23 +15,22 @@ const KNOWN_TOKENS: Record<string, { symbol: string; decimals: number }> = {
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": { symbol: "USDC", decimals: 6 },
 }
 
-// knownTokenSymbol is the symbol of a token the console knows, else undefined.
-export function knownTokenSymbol(asset: string): string | undefined {
-  return KNOWN_TOKENS[asset.toLowerCase()]?.symbol
+export type TokenUnits = { symbol: string; decimals: number }
+
+export function knownToken(asset: string): TokenUnits | undefined {
+  return KNOWN_TOKENS[asset.toLowerCase()]
+}
+
+// formatTokenAmount renders "0.25 $USDC" once the token is resolved, else "250000 units".
+export function formatTokenAmount(amount: string, token?: TokenUnits): string {
+  if (!token) {
+    return `${amount} units`
+  }
+  return `${formatAtomicAmount(amount, token.decimals)} $${token.symbol}`
 }
 
 export function formatNetwork(network: string): string {
   return findEvmNetwork(network)?.name ?? network
-}
-
-// formatPrice renders "0.01 $USDC" for known tokens and "10000 units"
-// otherwise. Zero is the caller's "Free" — handled by the view, not here.
-export function formatPrice(price: string, asset: string): string {
-  const token = KNOWN_TOKENS[asset.toLowerCase()]
-  if (!token) {
-    return `${price} units`
-  }
-  return `${formatAtomicAmount(price, token.decimals)} $${token.symbol}`
 }
 
 export function formatAtomicAmount(amount: string, decimals: number): string {
