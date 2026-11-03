@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/payment/use_cases"
@@ -56,13 +55,13 @@ func TestWhenDeletingPaymentSpendRule(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the delete fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentSpendRuleTestingSuite) {
 			suite.mockPaymentSpendRuleClient.EXPECT().
 				Delete(gomock.Any(), ruleId.String()).
-				Return(errors.New("runtime down")).
+				Return(assert.AnError).
 				Times(1)
 		}
 
@@ -72,9 +71,10 @@ func TestWhenDeletingPaymentSpendRule(t *testing.T) {
 			suite := WhenDeletingPaymentSpendRuleBeforeEach(t)
 			initSuite(suite)
 
-			assert.Error(
+			assert.ErrorIs(
 				t,
 				suite.sut.Execute(context.Background(), &requests.DeletePaymentSpendRuleRequest{Id: ruleId}),
+				assert.AnError,
 			)
 		})
 	})

@@ -52,7 +52,6 @@ func ToPaymentReceiveRuleResponse(rule *models.ExternalPaymentReceiveRule) *Paym
 }
 
 // ListPaymentReceiveRulesResponse is the wire shape of /config/payment-receive-policy/rules.
-// Rules carry no facilitator URL, so the model is returned directly.
 type ListPaymentReceiveRulesResponse struct {
 	Rules []PaymentReceiveRuleResponse `json:"rules"`
 }

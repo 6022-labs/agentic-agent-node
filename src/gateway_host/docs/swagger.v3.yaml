@@ -52,9 +52,6 @@ components:
         message:
           type: string
       type: object
-    fiber.Map:
-      additionalProperties: {}
-      type: object
     models.ExternalPaymentReceiveRulePrice:
       properties:
         addressPatterns:
@@ -2217,11 +2214,17 @@ paths:
     delete:
       responses:
         "204": {}
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2236,11 +2239,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.GetPaymentSpendPolicyResponse'
           description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2272,11 +2287,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2292,11 +2319,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/responses.ListPaymentSpendRulesResponse'
           description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2328,17 +2367,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
         "409":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.ConflictError'
-          description: asset_already_has_rule
+          description: agent_not_minted or asset_already_has_rule
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2362,17 +2407,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
         "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: rule_not_found
         "502":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []
@@ -2411,12 +2462,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors.ValidationError'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
         "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errors.NotFoundError'
-          description: Not Found
+          description: rule_not_found
         "409":
           content:
             application/json:
@@ -2427,7 +2484,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/fiber.Map'
+                $ref: '#/components/schemas/errors.UnavailableError'
           description: runtime_unavailable
       security:
       - BearerAuth: []

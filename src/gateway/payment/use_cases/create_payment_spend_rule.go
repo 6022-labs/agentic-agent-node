@@ -18,7 +18,6 @@ func NewCreatePaymentSpendRule(
 	return &CreatePaymentSpendRule{paymentSpendRuleClient: paymentSpendRuleClient}
 }
 
-// Execute forwards as-is: validation is owned by the runtime, and the client maps its 400 back to a ValidationError.
 func (u *CreatePaymentSpendRule) Execute(
 	ctx context.Context,
 	request *requests.SavePaymentSpendRuleRequest,

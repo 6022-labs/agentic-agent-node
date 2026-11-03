@@ -52,9 +52,6 @@ definitions:
       message:
         type: string
     type: object
-  fiber.Map:
-    additionalProperties: {}
-    type: object
   models.ExternalPaymentReceiveRulePrice:
     properties:
       addressPatterns:
@@ -1953,10 +1950,14 @@ paths:
       responses:
         "204":
           description: ""
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete payment spend policy
@@ -1970,10 +1971,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.GetPaymentSpendPolicyResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Get payment spend policy
@@ -2000,10 +2009,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Update payment spend policy
@@ -2018,10 +2035,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ListPaymentSpendRulesResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: List payment spend rules
@@ -2048,14 +2073,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "409":
-          description: asset_already_has_rule
+          description: agent_not_minted or asset_already_has_rule
           schema:
             $ref: '#/definitions/errors.ConflictError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Create payment spend rule
@@ -2076,14 +2105,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: rule_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Delete payment spend rule
@@ -2115,8 +2148,12 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
         "404":
-          description: Not Found
+          description: rule_not_found
           schema:
             $ref: '#/definitions/errors.NotFoundError'
         "409":
@@ -2126,7 +2163,7 @@ paths:
         "502":
           description: runtime_unavailable
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/errors.UnavailableError'
       security:
       - BearerAuth: []
       summary: Update payment spend rule

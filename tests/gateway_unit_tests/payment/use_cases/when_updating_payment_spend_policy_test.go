@@ -105,7 +105,7 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime is unavailable", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingPaymentSpendPolicyTestingSuite) {
@@ -126,6 +126,7 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 			assert.Nil(t, result)
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 }

@@ -24,8 +24,8 @@ func (c *HttpPaymentSpendPolicyClient) Get(ctx context.Context) (*models.Externa
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentSpendPolicyPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -47,8 +47,8 @@ func (c *HttpPaymentSpendPolicyClient) Update(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var policy models.ExternalPaymentSpendPolicyPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &policy, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &policy, nil); err != nil {
+		return nil, err
 	}
 	return &policy, nil
 }
@@ -58,8 +58,8 @@ func (c *HttpPaymentSpendPolicyClient) Delete(ctx context.Context) error {
 	if err != nil {
 		return helpers.MapRuntimeError(err)
 	}
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
-		return helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
+		return err
 	}
 	return nil
 }

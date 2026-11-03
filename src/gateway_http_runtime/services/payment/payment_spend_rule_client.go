@@ -24,8 +24,8 @@ func (c *HttpPaymentSpendRuleClient) List(ctx context.Context) ([]models.Externa
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalListPaymentSpendRulesPayload
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return payload.Rules, nil
 }
@@ -47,8 +47,8 @@ func (c *HttpPaymentSpendRuleClient) Create(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentSpendRule
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -72,8 +72,8 @@ func (c *HttpPaymentSpendRuleClient) Update(
 		return nil, helpers.MapRuntimeError(err)
 	}
 	var payload models.ExternalPaymentSpendRule
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
-		return nil, helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, &payload, nil); err != nil {
+		return nil, err
 	}
 	return &payload, nil
 }
@@ -83,8 +83,8 @@ func (c *HttpPaymentSpendRuleClient) Delete(ctx context.Context, id string) erro
 	if err != nil {
 		return helpers.MapRuntimeError(err)
 	}
-	if err := helpers.DecodeRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
-		return helpers.MapRuntimeError(err)
+	if err := helpers.DecodeAndMapRuntimeResponse(resp.HTTPResponse, resp.Body, nil, nil); err != nil {
+		return err
 	}
 	return nil
 }

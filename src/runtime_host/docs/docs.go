@@ -1176,6 +1176,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.PaymentSpendPolicyResponse"
                         }
                     },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "500": {
                         "description": "spend_policy_failed",
                         "schema": {
@@ -1219,6 +1225,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/errors.ValidationError"
                         }
                     },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
                     "500": {
                         "description": "spend_policy_failed or update_failed",
                         "schema": {
@@ -1259,6 +1271,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.ListPaymentSpendRulesResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
                         }
                     },
                     "500": {
@@ -1305,7 +1323,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "asset_already_has_rule",
+                        "description": "agent_not_minted or asset_already_has_rule",
                         "schema": {
                             "$ref": "#/definitions/errors.ConflictError"
                         }
@@ -1363,7 +1381,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }
@@ -1400,8 +1418,14 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "400": {
+                        "description": "invalid_params",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "rule_not_found",
                         "schema": {
                             "$ref": "#/definitions/errors.NotFoundError"
                         }

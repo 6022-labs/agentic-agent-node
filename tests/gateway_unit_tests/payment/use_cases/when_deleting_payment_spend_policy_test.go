@@ -54,7 +54,7 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime is unreachable", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
@@ -74,6 +74,7 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 		})
 	})
 
@@ -98,6 +99,7 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
 		})
 	})
 }

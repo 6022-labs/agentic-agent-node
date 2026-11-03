@@ -56,7 +56,7 @@ func TestWhenListingPaymentSpendRules(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime fails", func(t *testing.T) {
+	t.Run("Given the runtime call fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingPaymentSpendRulesTestingSuite) {
@@ -72,7 +72,7 @@ func TestWhenListingPaymentSpendRules(t *testing.T) {
 			response, err := suite.sut.Execute(context.Background())
 
 			assert.Nil(t, response)
-			assert.Error(t, err)
+			assert.ErrorIs(t, err, assert.AnError)
 		})
 	})
 }

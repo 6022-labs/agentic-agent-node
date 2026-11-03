@@ -4559,6 +4559,7 @@ type GetInternalConfigPaymentSpendPolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesPaymentSpendPolicyResponse
+	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
@@ -4583,6 +4584,7 @@ type PutInternalConfigPaymentSpendPolicyResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ResponsesPaymentSpendPolicyResponse
 	JSON400      *ErrorsValidationError
+	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
@@ -4606,6 +4608,7 @@ type GetInternalConfigPaymentSpendPolicyRulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ResponsesListPaymentSpendRulesResponse
+	JSON409      *ErrorsConflictError
 	JSON500      *ErrorsInternalError
 }
 
@@ -4653,6 +4656,7 @@ func (r PostInternalConfigPaymentSpendPolicyRulesResponse) StatusCode() int {
 type DeleteInternalConfigPaymentSpendPolicyRulesIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON400      *ErrorsValidationError
 	JSON404      *ErrorsNotFoundError
 	JSON500      *ErrorsInternalError
 }
@@ -6847,6 +6851,13 @@ func ParseGetInternalConfigPaymentSpendPolicyResponse(rsp *http.Response) (*GetI
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -6887,6 +6898,13 @@ func ParsePutInternalConfigPaymentSpendPolicyResponse(rsp *http.Response) (*PutI
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest ErrorsInternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -6919,6 +6937,13 @@ func ParseGetInternalConfigPaymentSpendPolicyRulesResponse(rsp *http.Response) (
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorsConflictError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest ErrorsInternalError
@@ -6993,6 +7018,13 @@ func ParseDeleteInternalConfigPaymentSpendPolicyRulesIdResponse(rsp *http.Respon
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorsValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ErrorsNotFoundError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

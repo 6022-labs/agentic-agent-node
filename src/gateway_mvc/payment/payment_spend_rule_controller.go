@@ -44,7 +44,9 @@ func (c *PaymentSpendRuleController) RegisterAuthenticatedRoutes(app fiber.Route
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.ListPaymentSpendRulesResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules [get]
 func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
@@ -63,8 +65,9 @@ func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules [post]
 func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
@@ -88,9 +91,10 @@ func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
 // @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules/{id} [put]
 func (c *PaymentSpendRuleController) Update(ctx fiber.Ctx) error {
@@ -114,8 +118,9 @@ func (c *PaymentSpendRuleController) Update(ctx fiber.Ctx) error {
 // @Param id path string true "rule id"
 // @Success 204 ""
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy/rules/{id} [delete]
 func (c *PaymentSpendRuleController) Delete(ctx fiber.Ctx) error {

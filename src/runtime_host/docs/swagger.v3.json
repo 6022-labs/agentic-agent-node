@@ -2840,6 +2840,16 @@
                         },
                         "description": "OK"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
@@ -2898,6 +2908,16 @@
                         },
                         "description": "Bad Request"
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
@@ -2927,6 +2947,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ConflictError"
+                                }
+                            }
+                        },
+                        "description": "agent_not_minted"
                     },
                     "500": {
                         "content": {
@@ -2994,7 +3024,7 @@
                                 }
                             }
                         },
-                        "description": "asset_already_has_rule"
+                        "description": "agent_not_minted or asset_already_has_rule"
                     },
                     "500": {
                         "content": {
@@ -3030,6 +3060,16 @@
                     "204": {
                         "description": "No Content"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ValidationError"
+                                }
+                            }
+                        },
+                        "description": "invalid_params"
+                    },
                     "404": {
                         "content": {
                             "application/json": {
@@ -3038,7 +3078,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
                     },
                     "500": {
                         "content": {
@@ -3117,7 +3157,7 @@
                                 }
                             }
                         },
-                        "description": "Not Found"
+                        "description": "rule_not_found"
                     },
                     "409": {
                         "content": {

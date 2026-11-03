@@ -40,7 +40,9 @@ func (c *PaymentSpendPolicyController) RegisterAuthenticatedRoutes(app fiber.Rou
 // @Tags Config
 // @Produce json
 // @Success 200 {object} responses.GetPaymentSpendPolicyResponse
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy [get]
 func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
@@ -59,7 +61,9 @@ func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 // @Param request body requests.UpdatePaymentSpendPolicyRequest true "spend policy"
 // @Success 200 {object} responses.GetPaymentSpendPolicyResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy [put]
 func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {
@@ -79,7 +83,8 @@ func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {
 // @Tags Config
 // @Produce json
 // @Success 204 ""
-// @Failure 502 {object} fiber.Map "runtime_unavailable"
+// @Failure 401 {object} errors.UnauthorizedError "missing_authorization or invalid_token"
+// @Failure 502 {object} errors.UnavailableError "runtime_unavailable"
 // @Security BearerAuth
 // @Router /config/payment-spend-policy [delete]
 func (c *PaymentSpendPolicyController) Delete(ctx fiber.Ctx) error {

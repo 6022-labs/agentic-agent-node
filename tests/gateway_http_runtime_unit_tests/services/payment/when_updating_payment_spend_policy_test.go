@@ -94,6 +94,37 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenUpdatingPaymentSpendPolicyTestingSuite) {
+			suite.mockClient.EXPECT().
+				PutInternalConfigPaymentSpendPolicyWithBodyWithResponse(gomock.Any(), "application/json", gomock.Any()).
+				Return(&clients.PutInternalConfigPaymentSpendPolicyResponse{
+					HTTPResponse: &http.Response{StatusCode: http.StatusConflict},
+					Body:         []byte(`{"code":"agent_not_minted","message":"agent identity is not minted yet"}`),
+				}, nil)
+		}
+
+		t.Run("Should map the 409 onto a ConflictError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenUpdatingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			payload, err := suite.sut.Update(
+				context.Background(),
+				&models.ExternalUpdatePaymentSpendPolicyPayload{PayToPatterns: []string{".*"}},
+			)
+
+			assert.Nil(t, payload)
+			var conflictErr *apperrors.ConflictError
+			if assert.ErrorAs(t, err, &conflictErr) {
+				assert.Equal(t, "agent_not_minted", conflictErr.Code)
+			}
+		})
+	})
+
 	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
