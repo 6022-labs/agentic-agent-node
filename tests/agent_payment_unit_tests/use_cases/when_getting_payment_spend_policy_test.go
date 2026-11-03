@@ -35,6 +35,31 @@ func WhenGettingPaymentSpendPolicyBeforeEach(t *testing.T) *WhenGettingPaymentSp
 func TestWhenGettingPaymentSpendPolicy(t *testing.T) {
 	t.Parallel()
 
+	t.Run("Given the provider refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenGettingPaymentSpendPolicyTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().
+				Ensure(gomock.Any()).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "")).
+				Times(1)
+		}
+
+		t.Run("Should propagate the conflict", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			response, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, response)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
+
 	t.Run("Given materializing the policy fails", func(t *testing.T) {
 		t.Parallel()
 

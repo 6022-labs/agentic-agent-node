@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	stderrors "errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -68,25 +69,25 @@ func (s *X402PaymentSigner) Sign(
 
 	reservation, err := s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
 	if err != nil {
+		var refusal *errors.UnauthorizedError
+		if stderrors.As(err, &refusal) {
+			s.logger.Info("x402 payment refused", append(quote.AuditFields(), zap.String("code", refusal.Code))...)
+		}
 		return nil, err
-	}
-	if reservation == nil {
-		return nil, errors.NewUnauthorizedError("spend_refused", "the agent's spend policy does not cover this quote")
 	}
 
 	signed, err := s.signAuthorized(ctx, quote, amount, int64(chainId))
 	if err != nil {
-		s.release(ctx, reservation)
+		// The caller's error matters more than a failed refund.
+		if releaseErr := s.x402PaymentSpendPolicyEvaluator.Release(ctx, reservation); releaseErr != nil {
+			s.logger.Error("failed to release an unsigned payment's spend", zap.Error(releaseErr))
+		}
 		return nil, err
 	}
+	s.logger.Info(
+		"x402 payment signed",
+		append(quote.AuditFields(), zap.String("ruleId", reservation.RuleId.String()))...)
 	return signed, nil
-}
-
-// release gives the spend back when no signature came out; the caller's error matters more than a failed refund.
-func (s *X402PaymentSigner) release(ctx context.Context, reservation *interfaces.X402PaymentSpendReservation) {
-	if err := s.x402PaymentSpendPolicyEvaluator.Release(context.WithoutCancel(ctx), reservation); err != nil {
-		s.logger.Error("failed to release an unsigned payment's spend", zap.Error(err))
-	}
 }
 
 func (s *X402PaymentSigner) signAuthorized(
@@ -102,7 +103,11 @@ func (s *X402PaymentSigner) signAuthorized(
 
 	now := time.Now().Unix()
 	validAfter := now - s.paymentSpendSettings.ValidAfterSkew
-	validBefore := now + s.paymentSpendSettings.ValiditySeconds
+	validity := s.paymentSpendSettings.ValiditySeconds
+	if quote.MaxTimeoutSeconds > 0 && quote.MaxTimeoutSeconds < validity {
+		validity = quote.MaxTimeoutSeconds
+	}
+	validBefore := now + validity
 
 	nonce, err := s.randomNonce()
 	if err != nil {

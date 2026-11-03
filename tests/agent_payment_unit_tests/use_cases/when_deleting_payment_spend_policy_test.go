@@ -40,21 +40,42 @@ func WhenDeletingPaymentSpendPolicyBeforeEach(t *testing.T) *WhenDeletingPayment
 func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the delete succeeds", func(t *testing.T) {
+	t.Run("Given the agent lookup fails", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
 			suite.mockAgentRepository.EXPECT().
 				Get(gomock.Any()).
-				Return(model_builders.NewAgentBuilder().Build(), nil).
-				Times(1)
-			suite.mockPaymentSpendPolicyRepository.EXPECT().
-				DeleteByAgentId(gomock.Any(), gomock.Any()).
-				Return(nil).
+				Return(nil, errors.New("db down")).
 				Times(1)
 		}
 
-		t.Run("Should not return an error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			var internalErr *apperrors.InternalError
+			if assert.ErrorAs(t, err, &internalErr) {
+				assert.Equal(t, "delete_failed", internalErr.Code)
+			}
+		})
+	})
+
+	t.Run("Given the agent identity does not exist yet", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(nil, nil).
+				Times(1)
+		}
+
+		t.Run("Should succeed without deleting anything", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
@@ -80,7 +101,7 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
@@ -90,6 +111,33 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "delete_failed", internalErr.Code)
+		})
+	})
+
+	t.Run("Given the delete succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().Build(), nil).
+				Times(1)
+			suite.mockPaymentSpendPolicyRepository.EXPECT().
+				DeleteByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil).
+				Times(1)
+		}
+
+		t.Run("Should not return an error", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendPolicyBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			assert.NoError(t, err)
 		})
 	})
 }

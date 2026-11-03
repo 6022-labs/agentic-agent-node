@@ -108,6 +108,26 @@ func TestWhenValidatingX402SpendRule(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the asset has no 0x prefix", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on config.asset", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			asset := strings.TrimPrefix(strings.ToLower(common_tests.RandomEthAddress().Hex()), "0x")
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().WithAsset(asset).Build()
+
+			err := suite.sut.Validate(ctx, &requests.SavePaymentSpendRuleRequest{
+				Config: spendConfigJson(t, config),
+			})
+
+			var validationError *apperrors.ValidationError
+			assert.ErrorAs(t, err, &validationError)
+			assert.Equal(t, "config.asset", validationError.Field)
+		})
+	})
+
 	t.Run("Given an unsupported transfer-method constraint", func(t *testing.T) {
 		t.Parallel()
 
@@ -126,6 +146,26 @@ func TestWhenValidatingX402SpendRule(t *testing.T) {
 			var validationError *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationError)
 			assert.Equal(t, "config.assetTransferMethod", validationError.Field)
+		})
+	})
+
+	t.Run("Given a supported transfer-method constraint in another case", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should store the canonical transfer method", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingX402SpendRuleBeforeEach(t)
+			mixedCase := enums.AssetTransferMethod("Permit2")
+			config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().Build()
+			config.AssetTransferMethod = &mixedCase
+
+			request := &requests.SavePaymentSpendRuleRequest{Config: spendConfigJson(t, config)}
+			assert.NoError(t, suite.sut.Validate(ctx, request))
+
+			var sanitized models.PaymentSpendRuleX402Config
+			assert.NoError(t, sanitized.Parse(request.Config))
+			assert.Equal(t, enums.AssetTransferMethodPermit2, *sanitized.AssetTransferMethod)
 		})
 	})
 

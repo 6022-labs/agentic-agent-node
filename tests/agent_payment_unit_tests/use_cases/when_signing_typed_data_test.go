@@ -74,6 +74,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 		AssetTransferMethod: enums.AssetTransferMethodEip3009,
 	}
 	amount := big.NewInt(10000)
+	walletAddress := common_tests.RandomEthAddress()
 	reservation := &payment_interfaces.X402PaymentSpendReservation{
 		RuleId:       uuid.New(),
 		Amount:       amount,
@@ -95,6 +96,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 			assert.Nil(t, response)
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "typedData", validationErr.Field)
 		})
 	})
 
@@ -126,12 +128,42 @@ func TestWhenSigningTypedData(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the wallet address is unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		request := &requests.SignTypedDataRequest{TypedData: typedData}
+		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
+			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().
+				WalletAddress(ctx).
+				Return(common.Address{}, errors.New("node wallet not bootstrapped")).
+				Times(1)
+		}
+
+		// No Authorize expectation: the address is read first, so no spend is left to give back.
+		t.Run("Should return an InternalError without recording a spend", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningTypedDataBeforeEach(t)
+			initSuite(suite)
+
+			response, err := suite.sut.Execute(ctx, request)
+
+			assert.Nil(t, response)
+			var internalErr *apperrors.InternalError
+			if assert.ErrorAs(t, err, &internalErr) {
+				assert.Equal(t, "wallet_address_unavailable", internalErr.Code)
+			}
+		})
+	})
+
 	t.Run("Given authorizing the spend fails", func(t *testing.T) {
 		t.Parallel()
 
 		request := &requests.SignTypedDataRequest{TypedData: typedData}
 		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
 			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
 			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
 				Authorize(ctx, quote, amount).
 				Return(nil, apperrors.NewInternalError("spend_policy_failed", "")).
@@ -160,10 +192,14 @@ func TestWhenSigningTypedData(t *testing.T) {
 		request := &requests.SignTypedDataRequest{TypedData: typedData}
 		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
 			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
-			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().Authorize(ctx, quote, amount).Return(nil, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
+			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
+				Authorize(ctx, quote, amount).
+				Return(nil, apperrors.NewUnauthorizedError("spend_cap_exceeded", "")).
+				Times(1)
 		}
 
-		t.Run("Should return an unauthorized error without signing", func(t *testing.T) {
+		t.Run("Should return the refusal without signing", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningTypedDataBeforeEach(t)
@@ -174,7 +210,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 			assert.Nil(t, response)
 			var unauthorizedErr *apperrors.UnauthorizedError
 			if assert.ErrorAs(t, err, &unauthorizedErr) {
-				assert.Equal(t, "spend_refused", unauthorizedErr.Code)
+				assert.Equal(t, "spend_cap_exceeded", unauthorizedErr.Code)
 			}
 		})
 	})
@@ -185,6 +221,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 		request := &requests.SignTypedDataRequest{TypedData: typedData}
 		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
 			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
 			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
 				Authorize(ctx, quote, amount).
 				Return(reservation, nil).
@@ -195,7 +232,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningTypedDataBeforeEach(t)
@@ -239,6 +276,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 		request := &requests.SignTypedDataRequest{TypedData: typedData}
 		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
 			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
 			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
 				Authorize(ctx, quote, amount).
 				Return(reservation, nil).
@@ -276,6 +314,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 		request := &requests.SignTypedDataRequest{TypedData: typedData}
 		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
 			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(nil, nil, nil).Times(1)
+			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
 			suite.mockTypedDataSigner.EXPECT().
 				SignTypedData(ctx, typedData).
 				Return("", errors.New("node wallet not bootstrapped")).
@@ -283,7 +322,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 		}
 
 		// No Release expectation: nothing was charged, so there is nothing to give back.
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningTypedDataBeforeEach(t)
@@ -295,40 +334,6 @@ func TestWhenSigningTypedData(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			if assert.ErrorAs(t, err, &internalErr) {
 				assert.Equal(t, "typed_data_signing_failed", internalErr.Code)
-			}
-		})
-	})
-
-	t.Run("Given the wallet address is unavailable after signing", func(t *testing.T) {
-		t.Parallel()
-
-		request := &requests.SignTypedDataRequest{TypedData: typedData}
-		initSuite := func(suite *WhenSigningTypedDataTestingSuite) {
-			suite.mockTypedDataSpendQuoter.EXPECT().Quote(typedData).Return(quote, amount, nil).Times(1)
-			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
-				Authorize(ctx, quote, amount).
-				Return(reservation, nil).
-				Times(1)
-			suite.mockTypedDataSigner.EXPECT().SignTypedData(ctx, typedData).Return("0xdead", nil).Times(1)
-			suite.mockTypedDataSigner.EXPECT().
-				WalletAddress(ctx).
-				Return(common.Address{}, errors.New("node wallet not bootstrapped")).
-				Times(1)
-		}
-
-		// No Release expectation: a signature exists, so the spend stays charged.
-		t.Run("Should return an internal error", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenSigningTypedDataBeforeEach(t)
-			initSuite(suite)
-
-			response, err := suite.sut.Execute(ctx, request)
-
-			assert.Nil(t, response)
-			var internalErr *apperrors.InternalError
-			if assert.ErrorAs(t, err, &internalErr) {
-				assert.Equal(t, "wallet_address_unavailable", internalErr.Code)
 			}
 		})
 	})

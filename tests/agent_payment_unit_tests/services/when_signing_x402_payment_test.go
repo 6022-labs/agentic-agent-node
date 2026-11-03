@@ -10,7 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
@@ -25,7 +26,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/v2"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -241,7 +241,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, nil).
+				Return(nil, apperrors.NewUnauthorizedError("spend_payee_not_allowed", "")).
 				Times(1)
 		}
 
@@ -264,6 +264,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.Nil(t, signed)
 			var unauthorizedError *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_payee_not_allowed", unauthorizedError.Code)
 		})
 
 		// The gate runs before EnsureApproval so a refusal never costs gas.
@@ -284,7 +285,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.Nil(t, signed)
 			var unauthorizedError *apperrors.UnauthorizedError
 			assert.ErrorAs(t, err, &unauthorizedError)
-			assert.Equal(t, "spend_refused", unauthorizedError.Code)
+			assert.Equal(t, "spend_payee_not_allowed", unauthorizedError.Code)
 		})
 	})
 
@@ -508,6 +509,41 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 	})
 
+	t.Run("Given a quote whose seller allows a shorter signature life", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(signingReservation(), nil).
+				Times(1)
+			suite.expectWalletSigning()
+		}
+
+		t.Run("Should expire the signature within the seller's limit", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			before := time.Now().Unix()
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "10000",
+				AssetTransferMethod: enums.AssetTransferMethodEip3009,
+				Eip712Name:          "USDC",
+				Eip712Version:       "2",
+				MaxTimeoutSeconds:   30,
+			})
+
+			assert.NoError(t, err)
+			assert.LessOrEqual(t, signed.ValidBefore, time.Now().Unix()+30)
+			assert.GreaterOrEqual(t, signed.ValidBefore, before+30)
+		})
+	})
+
 	t.Run("Given the same eip3009 quote is signed twice", func(t *testing.T) {
 		t.Parallel()
 
@@ -650,14 +686,12 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 			payer, err := services.NewX402PaymentVerifier().RecoverPayer(
 				suite.decodePaymentPayload(t, signed.PaymentSignature),
-				&models.PaymentReceiveRuleX402Config{
-					Network:             signingNetwork,
-					Asset:               signingAsset,
-					PayTo:               signingPayTo,
-					AssetTransferMethod: enums.AssetTransferMethodEip3009,
-					Eip712Name:          lo.ToPtr("USDC"),
-					Eip712Version:       lo.ToPtr("2"),
-				},
+				model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+					WithNetwork(signingNetwork).
+					WithAsset(signingAsset).
+					WithPayTo(signingPayTo).
+					WithAssetTransferMethod(enums.AssetTransferMethodEip3009).
+					Build(),
 			)
 
 			assert.NoError(t, err)
@@ -694,12 +728,12 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 			payer, err := services.NewX402PaymentVerifier().RecoverPayer(
 				suite.decodePaymentPayload(t, signed.PaymentSignature),
-				&models.PaymentReceiveRuleX402Config{
-					Network:             signingNetwork,
-					Asset:               signingAsset,
-					PayTo:               signingPayTo,
-					AssetTransferMethod: enums.AssetTransferMethodPermit2,
-				},
+				model_builders.NewPaymentReceiveRuleX402ConfigBuilder().
+					WithNetwork(signingNetwork).
+					WithAsset(signingAsset).
+					WithPayTo(signingPayTo).
+					WithAssetTransferMethod(enums.AssetTransferMethodPermit2).
+					Build(),
 			)
 
 			assert.NoError(t, err)

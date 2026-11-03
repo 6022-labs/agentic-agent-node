@@ -9,11 +9,13 @@ import (
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 )
 
 type ListPaymentSpendRules struct {
-	*AbstractPaymentSpendUseCase
+	paymentSpendPolicyProvider       payment_interfaces.PaymentSpendPolicyProviderInterface
+	paymentSpendRuleRepository       repositories.PaymentSpendRuleRepositoryInterface
+	paymentSpendRuleWindowRepository repositories.PaymentSpendRuleWindowRepositoryInterface
+	paymentSpendMethodStrategies     payment_interfaces.PaymentSpendMethodStrategiesInterface
 }
 
 func NewListPaymentSpendRules(
@@ -21,16 +23,12 @@ func NewListPaymentSpendRules(
 	paymentSpendRuleRepository repositories.PaymentSpendRuleRepositoryInterface,
 	paymentSpendRuleWindowRepository repositories.PaymentSpendRuleWindowRepositoryInterface,
 	paymentSpendMethodStrategies payment_interfaces.PaymentSpendMethodStrategiesInterface,
-	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *ListPaymentSpendRules {
 	return &ListPaymentSpendRules{
-		AbstractPaymentSpendUseCase: NewAbstractPaymentSpendUseCase(
-			paymentSpendPolicyProvider,
-			paymentSpendRuleRepository,
-			paymentSpendRuleWindowRepository,
-			paymentSpendMethodStrategies,
-			unitOfWorkFactory,
-		),
+		paymentSpendPolicyProvider:       paymentSpendPolicyProvider,
+		paymentSpendRuleRepository:       paymentSpendRuleRepository,
+		paymentSpendRuleWindowRepository: paymentSpendRuleWindowRepository,
+		paymentSpendMethodStrategies:     paymentSpendMethodStrategies,
 	}
 }
 

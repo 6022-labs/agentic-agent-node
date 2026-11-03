@@ -139,7 +139,14 @@ func eip712DomainSeparator(t *testing.T, name, version string) [32]byte {
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 
 // approvalRpcServer answers the reads bind needs to send a tx and records every approve.
-func approvalRpcServer(t *testing.T, allowances []*big.Int) (*httptest.Server, *[]approveCall) {
+// rpcFaults injects chain failures; failSend and revertTx are 1-based transaction counts, 0 never.
+type rpcFaults struct {
+	failAllowanceRead bool
+	failSend          int
+	revertTx          int
+}
+
+func approvalRpcServer(t *testing.T, allowances []*big.Int, faults rpcFaults) (*httptest.Server, *[]approveCall) {
 	t.Helper()
 
 	parsed, err := abi.JSON(strings.NewReader(contract_abi.Erc20MetaData.ABI))
@@ -149,6 +156,8 @@ func approvalRpcServer(t *testing.T, allowances []*big.Int) (*httptest.Server, *
 
 	submitted := &[]approveCall{}
 	allowanceReads := 0
+	sends := 0
+	reverted := map[string]bool{}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request struct {
@@ -173,14 +182,21 @@ func approvalRpcServer(t *testing.T, allowances []*big.Int) (*httptest.Server, *
 		case "eth_estimateGas":
 			writeRpcResult(t, w, request.Id, "0x186a0")
 		case "eth_sendRawTransaction":
+			sends++
+			if sends == faults.failSend {
+				writeRpcRevert(t, w, request.Id)
+				return
+			}
 			var raw string
 			assert.NoError(t, json.Unmarshal(request.Params[0], &raw))
 			*submitted = append(*submitted, decodeApprove(t, parsed, raw))
-			writeRpcResult(t, w, request.Id, (*submitted)[len(*submitted)-1].hash)
+			hash := (*submitted)[len(*submitted)-1].hash
+			reverted[hash] = len(*submitted) == faults.revertTx
+			writeRpcResult(t, w, request.Id, hash)
 		case "eth_getTransactionReceipt":
 			var hash string
 			assert.NoError(t, json.Unmarshal(request.Params[0], &hash))
-			writeRpcRaw(t, w, request.Id, receiptJson(hash))
+			writeRpcRaw(t, w, request.Id, receiptJson(hash, reverted[hash]))
 		case "eth_call":
 			var call struct {
 				Data  string `json:"data"`
@@ -193,6 +209,10 @@ func approvalRpcServer(t *testing.T, allowances []*big.Int) (*httptest.Server, *
 			}
 			switch data[:10] {
 			case allowanceId:
+				if faults.failAllowanceRead {
+					writeRpcRevert(t, w, request.Id)
+					return
+				}
 				value := allowances[min(allowanceReads, len(allowances)-1)]
 				allowanceReads++
 				writeRpcResult(t, w, request.Id, hexutil.Encode(packErc20Output(t, "allowance", value)))
@@ -233,8 +253,12 @@ func decodeApprove(t *testing.T, parsed abi.ABI, rawTx string) approveCall {
 	}
 }
 
-func receiptJson(hash string) string {
-	return `{"transactionHash":"` + hash + `","status":"0x1","blockNumber":"0x1",` +
+func receiptJson(hash string, reverted bool) string {
+	status := "0x1"
+	if reverted {
+		status = "0x0"
+	}
+	return `{"transactionHash":"` + hash + `","status":"` + status + `","blockNumber":"0x1",` +
 		`"blockHash":"0x` + strings.Repeat("11", 32) + `","transactionIndex":"0x0",` +
 		`"cumulativeGasUsed":"0x1","gasUsed":"0x1","logs":[],"logsBloom":"0x` + strings.Repeat("00", 256) + `","type":"0x2"}`
 }

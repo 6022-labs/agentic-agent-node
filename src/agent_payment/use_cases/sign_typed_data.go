@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"context"
+	stderrors "errors"
 
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
@@ -45,46 +46,42 @@ func (u *SignTypedData) Execute(
 	if err != nil {
 		return nil, err
 	}
+	// Read before any spend is recorded, so this failure never leaves one to give back.
+	address, err := u.typedDataSigner.WalletAddress(ctx)
+	if err != nil {
+		return nil, errors.NewInternalError("wallet_address_unavailable", err.Error())
+	}
 	var reservation *payment_interfaces.X402PaymentSpendReservation
 	if quote != nil {
 		reservation, err = u.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
 		if err != nil {
+			var refusal *errors.UnauthorizedError
+			if stderrors.As(err, &refusal) {
+				u.logger.Info(
+					"typed data payment refused",
+					append(quote.AuditFields(), zap.String("code", refusal.Code))...)
+			}
 			return nil, err
-		}
-		if reservation == nil {
-			return nil, errors.NewUnauthorizedError(
-				"spend_refused",
-				"the agent's spend policy does not cover this token payload",
-			)
 		}
 	}
 
 	signature, err := u.typedDataSigner.SignTypedData(ctx, request.TypedData)
 	if err != nil {
-		u.release(ctx, reservation)
+		// The caller's error matters more than a failed refund.
+		if reservation != nil {
+			if releaseErr := u.x402PaymentSpendPolicyEvaluator.Release(ctx, reservation); releaseErr != nil {
+				u.logger.Error("failed to release an unsigned payload's spend", zap.Error(releaseErr))
+			}
+		}
 		return nil, errors.NewInternalError("typed_data_signing_failed", err.Error())
 	}
 
-	address, err := u.typedDataSigner.WalletAddress(ctx)
-	if err != nil {
-		return nil, errors.NewInternalError("wallet_address_unavailable", err.Error())
+	if reservation != nil {
+		u.logger.Info("typed data payment signed",
+			append(quote.AuditFields(), zap.String("ruleId", reservation.RuleId.String()))...)
 	}
-
 	return &responses.TypedDataSignatureResponse{
 		Signature: signature,
 		Address:   address.Hex(),
 	}, nil
-}
-
-// release gives the spend back when no signature came out; the caller's error matters more than a failed refund.
-func (u *SignTypedData) release(
-	ctx context.Context,
-	reservation *payment_interfaces.X402PaymentSpendReservation,
-) {
-	if reservation == nil {
-		return
-	}
-	if err := u.x402PaymentSpendPolicyEvaluator.Release(context.WithoutCancel(ctx), reservation); err != nil {
-		u.logger.Error("failed to release an unsigned payload's spend", zap.Error(err))
-	}
 }

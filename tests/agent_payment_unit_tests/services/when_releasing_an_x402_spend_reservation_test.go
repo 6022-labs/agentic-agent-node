@@ -61,6 +61,8 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	// Release detaches from the caller, so the scope opens on a context that cannot be cancelled.
+	detached := gomock.Cond(func(scope context.Context) bool { return scope.Done() == nil })
 	ruleId := uuid.New()
 	periodStartedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
 
@@ -96,10 +98,10 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(nil, assert.AnError).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(nil, assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
@@ -124,14 +126,14 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
@@ -160,14 +162,14 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
@@ -196,7 +198,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
@@ -207,7 +209,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
@@ -236,7 +238,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
@@ -248,7 +250,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 			suite.mockUnitOfWork.EXPECT().Commit().Return(assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
@@ -286,7 +288,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return([]models.PaymentSpendRuleWindow{*chargedWindow, *rolledWindow}, nil).
@@ -345,7 +347,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
 				Return([]models.PaymentSpendRuleWindow{*dailyWindow, *weeklyWindow, *uncharged}, nil).
@@ -369,6 +371,47 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 				Times(1)
 
 			err := suite.sut.Release(ctx, reservation)
+
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Given the caller's context is already cancelled", func(t *testing.T) {
+		t.Parallel()
+
+		window := model_builders.NewPaymentSpendRuleWindowBuilder().
+			WithPaymentSpendRuleId(ruleId).
+			WithSpent("10000").
+			WithStartedAt(periodStartedAt).
+			Build()
+		reservation := &payment_interfaces.X402PaymentSpendReservation{
+			RuleId:       ruleId,
+			Amount:       big.NewInt(10000),
+			WindowStarts: map[uuid.UUID]time.Time{window.Id: periodStartedAt},
+		}
+		cancelled, cancel := context.WithCancel(ctx)
+		cancel()
+
+		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
+			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
+				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				Return([]models.PaymentSpendRuleWindow{*window}, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
+				Update(suite.unitOfWorkCtx, windowWithSpend{id: window.Id.String(), spent: "0"}).
+				Return(window, nil).
+				Times(1)
+			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
+		}
+
+		t.Run("Should still give the amount back", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenReleasingAnX402SpendReservationBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Release(cancelled, reservation)
 
 			assert.NoError(t, err)
 		})

@@ -39,12 +39,12 @@ func NewAbstractPaymentSpendUseCase(
 // claimAsset fails when another rule already spends the token; owned reports that ruleId spends it already.
 func (u *AbstractPaymentSpendUseCase) claimAsset(
 	ctx context.Context,
-	strategy payment_interfaces.PaymentSpendMethodStrategyInterface,
+	paymentSpendMethodStrategy payment_interfaces.PaymentSpendMethodStrategyInterface,
 	policyId uuid.UUID,
 	ruleId uuid.UUID,
 	config json.RawMessage,
 ) (owned bool, err error) {
-	ownerId, err := strategy.RuleIdForAsset(ctx, policyId, config)
+	ownerId, err := paymentSpendMethodStrategy.RuleIdForAsset(ctx, policyId, config)
 	if err != nil {
 		return false, errors.NewInternalError("rule_lookup_failed", err.Error())
 	}

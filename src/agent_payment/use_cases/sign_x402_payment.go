@@ -34,6 +34,7 @@ func (u *SignX402Payment) Execute(
 		AssetTransferMethod: request.ParsedAssetTransferMethod(),
 		Eip712Name:          request.Eip712Name,
 		Eip712Version:       request.Eip712Version,
+		MaxTimeoutSeconds:   request.MaxTimeoutSeconds,
 	})
 	if err != nil {
 		return nil, u.mapSignError(err)
@@ -44,10 +45,18 @@ func (u *SignX402Payment) Execute(
 	return response, nil
 }
 
-// mapSignError keeps a typed refusal typed; only an untyped signer failure reads as an upstream problem.
+// mapSignError keeps a typed domain error typed; only an untyped signer failure reads as an upstream problem.
 func (u *SignX402Payment) mapSignError(err error) error {
 	var validationError *errors.ValidationError
-	if stderrors.As(err, &validationError) {
+	var unauthorizedError *errors.UnauthorizedError
+	var internalError *errors.InternalError
+	var conflictError *errors.ConflictError
+	var notFoundError *errors.NotFoundError
+	if stderrors.As(err, &validationError) ||
+		stderrors.As(err, &unauthorizedError) ||
+		stderrors.As(err, &internalError) ||
+		stderrors.As(err, &conflictError) ||
+		stderrors.As(err, &notFoundError) {
 		return err
 	}
 	return errors.NewUnavailableError("x402_payment_signing_failed", err.Error())

@@ -33,6 +33,10 @@ func (p *PaymentSpendPolicyProvider) Ensure(ctx context.Context) (*models.Paymen
 	if agent == nil {
 		return nil, errors.NewInternalError("spend_policy_failed", "agent identity is not initialized yet")
 	}
+	// Before mint anyone can sign in to the console, so only a minted owner may configure spending.
+	if agent.CollectionTokenId == nil {
+		return nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
+	}
 
 	policy, err := p.paymentSpendPolicyRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {

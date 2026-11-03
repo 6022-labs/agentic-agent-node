@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stderrors "errors"
 	"math/big"
 	"strings"
 	"time"
@@ -47,10 +48,18 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 ) (*payment_interfaces.X402PaymentSpendReservation, error) {
 	policy, err := e.paymentSpendPolicyProvider.Ensure(ctx)
 	if err != nil {
+		// An unminted agent has no policy anyone could have set, so it spends nothing.
+		var notMinted *errors.ConflictError
+		if stderrors.As(err, &notMinted) {
+			return nil, errors.NewUnauthorizedError(
+				"spend_agent_not_minted",
+				"the agent is not minted, so it spends nothing",
+			)
+		}
 		return nil, err
 	}
 	if !policy.AllowsPayee(quote.PayTo) {
-		return nil, nil
+		return nil, errors.NewUnauthorizedError("spend_payee_not_allowed", "the payee is not in the spend policy")
 	}
 
 	// Deciding and recording share one transaction, so concurrent signatures cannot overrun a window.
@@ -62,11 +71,12 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 
 	reservation, err := e.recordSpend(unitOfWork.Context(), policy, quote, amount)
 	if err != nil {
+		// A refusal wrote nothing, so it rolls back as is.
+		var refusal *errors.UnauthorizedError
+		if stderrors.As(err, &refusal) {
+			return nil, err
+		}
 		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
-	}
-	// A refusal wrote nothing, so there is nothing worth keeping.
-	if reservation == nil {
-		return nil, nil
 	}
 	if err := unitOfWork.Commit(); err != nil {
 		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
@@ -78,6 +88,8 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 	ctx context.Context,
 	reservation *payment_interfaces.X402PaymentSpendReservation,
 ) error {
+	// Runs after the caller's work failed, so the caller's cancellation must not skip the refund.
+	ctx = context.WithoutCancel(ctx)
 	if len(reservation.WindowStarts) == 0 {
 		return nil
 	}
@@ -110,37 +122,51 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 	return nil
 }
 
-// recordSpend checks the token's rule and records the amount on each of its windows, all or none.
+// recordSpend records the amount on every window of the token's rule, all or none; a refusal is an UnauthorizedError.
 func (e *X402PaymentSpendPolicyEvaluator) recordSpend(
 	ctx context.Context,
 	policy *models.PaymentSpendPolicy,
 	quote *payment_interfaces.X402PaymentQuote,
 	amount *big.Int,
 ) (*payment_interfaces.X402PaymentSpendReservation, error) {
+	network := strings.TrimSpace(quote.Network)
 	// Stored lowercased by the strategy, so the lookup must match that form.
-	config, err := e.paymentSpendRuleX402ConfigRepository.GetByPolicyIdAndAsset(
-		ctx,
-		policy.Id,
-		strings.TrimSpace(quote.Network),
-		strings.ToLower(strings.TrimSpace(quote.Asset)),
-	)
+	asset := strings.ToLower(strings.TrimSpace(quote.Asset))
+	found, err := e.paymentSpendRuleX402ConfigRepository.GetByPolicyIdAndAsset(ctx, policy.Id, network, asset)
 	if err != nil {
 		return nil, err
 	}
-	if config == nil || !config.AcceptsAssetTransferMethod(quote.AssetTransferMethod.String()) {
-		return nil, nil
+	if found == nil {
+		return nil, e.noRule()
 	}
 
-	rule, err := e.paymentSpendRuleRepository.GetById(ctx, config.PaymentSpendRuleId)
+	// Locked in the order rule updates take them (rule, token, windows), so an edit is read once committed.
+	rule, err := e.paymentSpendRuleRepository.GetByIdForUpdate(ctx, found.PaymentSpendRuleId)
 	if err != nil {
 		return nil, err
 	}
 	if rule == nil || rule.Method != enums.PaymentMethodX402 {
-		return nil, nil
+		return nil, e.noRule()
+	}
+	config, err := e.paymentSpendRuleX402ConfigRepository.GetByRuleIdForUpdate(ctx, rule.Id)
+	if err != nil {
+		return nil, err
+	}
+	if config == nil || config.Network != found.Network || config.Asset != found.Asset {
+		return nil, e.noRule()
+	}
+	if !config.AcceptsAssetTransferMethod(quote.AssetTransferMethod.String()) {
+		return nil, errors.NewUnauthorizedError(
+			"spend_transfer_method_not_allowed",
+			"the token's spend rule does not allow this transfer method",
+		)
 	}
 	covered, err := rule.CoversPayment(amount)
-	if err != nil || !covered {
+	if err != nil {
 		return nil, err
+	}
+	if !covered {
+		return nil, errors.NewUnauthorizedError("spend_cap_exceeded", "the amount exceeds the rule's cap per payment")
 	}
 
 	windows, err := e.paymentSpendRuleWindowRepository.ListByRuleIdForUpdate(ctx, rule.Id)
@@ -155,8 +181,14 @@ func (e *X402PaymentSpendPolicyEvaluator) recordSpend(
 	}
 	for i := range windows {
 		recorded, err := windows[i].RecordSpend(amount, now)
-		if err != nil || !recorded {
+		if err != nil {
 			return nil, err
+		}
+		if !recorded {
+			return nil, errors.NewUnauthorizedError(
+				"spend_window_exhausted",
+				"the amount exceeds what is left of a budget this period",
+			)
 		}
 		reservation.WindowStarts[windows[i].Id] = *windows[i].StartedAt
 	}
@@ -166,4 +198,8 @@ func (e *X402PaymentSpendPolicyEvaluator) recordSpend(
 		}
 	}
 	return reservation, nil
+}
+
+func (e *X402PaymentSpendPolicyEvaluator) noRule() error {
+	return errors.NewUnauthorizedError("spend_token_has_no_rule", "no spend rule covers this token on this network")
 }

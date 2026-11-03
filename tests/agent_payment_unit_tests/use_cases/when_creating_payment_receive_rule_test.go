@@ -67,8 +67,10 @@ func WhenCreatingPaymentReceiveRuleBeforeEach(t *testing.T) *WhenCreatingPayment
 
 func generateSavePaymentReceiveRuleRequest() *requests.SavePaymentReceiveRuleRequest {
 	return &requests.SavePaymentReceiveRuleRequest{
-		Name:   "Public price",
-		Prices: []requests.SavePaymentReceiveRulePriceRequest{{Price: "10000", AddressPatterns: []string{".*"}}},
+		SavePaymentRuleRequest: requests.SavePaymentRuleRequest{Name: "Public price"},
+		Prices: []requests.SavePaymentReceiveRulePriceRequest{
+			{Price: "10000", AddressPatterns: []string{".*"}},
+		},
 		Config: json.RawMessage(
 			`{"network":"eip155:80002","asset":"0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582",` +
 				`"payTo":"0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}`,

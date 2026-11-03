@@ -38,6 +38,7 @@ func (c *PaymentSpendPolicyController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.PaymentSpendPolicyResponse
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
 // @Failure 500 {object} errors.InternalError "spend_policy_failed"
 // @Router /internal/config/payment-spend-policy [get]
 func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
@@ -56,6 +57,7 @@ func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 // @Param request body requests.UpdatePaymentSpendPolicyRequest true "payment spend policy"
 // @Success 200 {object} responses.PaymentSpendPolicyResponse
 // @Failure 400 {object} errors.ValidationError
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
 // @Failure 500 {object} errors.InternalError "spend_policy_failed or update_failed"
 // @Router /internal/config/payment-spend-policy [put]
 func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {

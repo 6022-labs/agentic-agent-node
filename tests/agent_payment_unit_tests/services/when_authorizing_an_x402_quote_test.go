@@ -123,6 +123,31 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().
+				Ensure(ctx).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "")).
+				Times(1)
+		}
+
+		t.Run("Should refuse the quote", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
+
+			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_agent_not_minted", unauthorizedError.Code)
+		})
+	})
+
 	t.Run("Given the payee is not on the policy's list", func(t *testing.T) {
 		t.Parallel()
 
@@ -140,8 +165,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_payee_not_allowed", unauthorizedError.Code)
 		})
 	})
 
@@ -155,7 +182,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(nil, assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -183,7 +210,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -220,39 +247,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
-		})
-	})
-
-	t.Run("Given the token's rule refuses the quote's transfer method", func(t *testing.T) {
-		t.Parallel()
-
-		policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
-		config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
-			WithPolicyId(policy.Id).
-			WithAssetTransferMethod(enums.AssetTransferMethodPermit2).
-			Build()
-
-		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
-			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
-			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
-			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByPolicyIdAndAsset(suite.unitOfWorkCtx, policy.Id, quoteNetwork, storedQuoteAsset).
-				Return(config, nil).
-				Times(1)
-		}
-
-		t.Run("Should refuse the quote", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
-			initSuite(suite)
-
-			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
-
-			assert.NoError(t, err)
-			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_token_has_no_rule", unauthorizedError.Code)
 		})
 	})
 
@@ -270,12 +268,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
+				GetByIdForUpdate(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -303,7 +301,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
+				GetByIdForUpdate(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
 				Return(nil, nil).
 				Times(1)
 		}
@@ -316,8 +314,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_token_has_no_rule", unauthorizedError.Code)
 		})
 	})
 
@@ -340,7 +340,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
 				Times(1)
 		}
@@ -353,8 +353,183 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_token_has_no_rule", unauthorizedError.Code)
+		})
+	})
+
+	t.Run("Given reading the locked token fails", func(t *testing.T) {
+		t.Parallel()
+
+		policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+		rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+		config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+			WithPolicyId(policy.Id).
+			WithPaymentSpendRuleId(rule.Id).
+			Build()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByPolicyIdAndAsset(suite.unitOfWorkCtx, policy.Id, quoteNetwork, storedQuoteAsset).
+				Return(config, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(nil, assert.AnError).
+				Times(1)
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
+
+			var internalError *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
+		})
+	})
+
+	t.Run("Given the token's config was removed before it was locked", func(t *testing.T) {
+		t.Parallel()
+
+		policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+		rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+		config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+			WithPolicyId(policy.Id).
+			WithPaymentSpendRuleId(rule.Id).
+			Build()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByPolicyIdAndAsset(suite.unitOfWorkCtx, policy.Id, quoteNetwork, storedQuoteAsset).
+				Return(config, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(nil, nil).
+				Times(1)
+		}
+
+		t.Run("Should refuse the quote without touching the windows", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
+
+			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			if assert.ErrorAs(t, err, &unauthorizedError) {
+				assert.Equal(t, "spend_token_has_no_rule", unauthorizedError.Code)
+			}
+		})
+	})
+
+	t.Run("Given the rule moved to another token before it was locked", func(t *testing.T) {
+		t.Parallel()
+
+		policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+		rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+		config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+			WithPolicyId(policy.Id).
+			WithPaymentSpendRuleId(rule.Id).
+			Build()
+		moved := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+			WithPolicyId(policy.Id).
+			WithPaymentSpendRuleId(rule.Id).
+			Build()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByPolicyIdAndAsset(suite.unitOfWorkCtx, policy.Id, quoteNetwork, storedQuoteAsset).
+				Return(config, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(moved, nil).
+				Times(1)
+		}
+
+		t.Run("Should refuse the quote", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
+
+			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_token_has_no_rule", unauthorizedError.Code)
+		})
+	})
+
+	t.Run("Given the token's rule refuses the quote's transfer method", func(t *testing.T) {
+		t.Parallel()
+
+		policy := model_builders.NewPaymentSpendPolicyBuilder().Build()
+		rule := model_builders.NewPaymentSpendRuleBuilder().WithPolicyId(policy.Id).Build()
+		config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+			WithPolicyId(policy.Id).
+			WithPaymentSpendRuleId(rule.Id).
+			WithAssetTransferMethod(enums.AssetTransferMethodPermit2).
+			Build()
+
+		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().Ensure(ctx).Return(policy, nil).Times(1)
+			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByPolicyIdAndAsset(suite.unitOfWorkCtx, policy.Id, quoteNetwork, storedQuoteAsset).
+				Return(config, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
+				Times(1)
+		}
+
+		t.Run("Should refuse the quote", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
+			initSuite(suite)
+
+			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
+
+			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_transfer_method_not_allowed", unauthorizedError.Code)
 		})
 	})
 
@@ -379,12 +554,16 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -419,8 +598,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 		}
 
@@ -432,8 +615,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_cap_exceeded", unauthorizedError.Code)
 		})
 	})
 
@@ -455,8 +640,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -464,7 +653,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -500,8 +689,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -509,7 +702,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -551,8 +744,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -568,8 +765,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_window_exhausted", unauthorizedError.Code)
 		})
 	})
 
@@ -598,8 +797,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -615,8 +818,10 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 
 			reservation, err := suite.sut.Authorize(ctx, authorizedQuote(), big.NewInt(10000))
 
-			assert.NoError(t, err)
 			assert.Nil(t, reservation)
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_window_exhausted", unauthorizedError.Code)
 		})
 	})
 
@@ -639,8 +844,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -652,7 +861,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -684,8 +893,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -694,7 +907,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 			suite.mockUnitOfWork.EXPECT().Commit().Return(assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenAuthorizingAnX402QuoteBeforeEach(t)
@@ -729,8 +942,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -776,8 +993,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -877,8 +1098,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
@@ -947,8 +1172,12 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetById(suite.unitOfWorkCtx, rule.Id).
+				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
 				Return(rule, nil).
+				Times(1)
+			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
+				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
 				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).

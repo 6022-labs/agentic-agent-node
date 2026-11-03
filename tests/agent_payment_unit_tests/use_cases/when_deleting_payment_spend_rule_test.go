@@ -37,27 +37,28 @@ func WhenDeletingPaymentSpendRuleBeforeEach(t *testing.T) *WhenDeletingPaymentSp
 func TestWhenDeletingPaymentSpendRule(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the rule exists", func(t *testing.T) {
+	t.Run("Given the rule lookup fails", func(t *testing.T) {
 		t.Parallel()
 
-		initSuite := func(suite *WhenDeletingPaymentSpendRuleTestingSuite) *uuid.UUID {
-			rule := model_builders.NewPaymentSpendRuleBuilder().Build()
-
-			suite.mockPaymentSpendRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
-			suite.mockPaymentSpendRuleRepository.EXPECT().DeleteById(gomock.Any(), rule.Id).Return(nil).Times(1)
-			return &rule.Id
+		initSuite := func(suite *WhenDeletingPaymentSpendRuleTestingSuite) {
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				GetById(gomock.Any(), gomock.Any()).
+				Return(nil, assert.AnError).
+				Times(1)
 		}
 
-		t.Run("Should delete the rule", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingPaymentSpendRuleBeforeEach(t)
-			id := initSuite(suite)
+			initSuite(suite)
 
-			assert.NoError(
-				t,
-				suite.sut.Execute(context.Background(), &requests.DeletePaymentSpendRuleRequest{Id: *id}),
-			)
+			err := suite.sut.Execute(context.Background(), &requests.DeletePaymentSpendRuleRequest{Id: uuid.New()})
+
+			var internalErr *apperrors.InternalError
+			if assert.ErrorAs(t, err, &internalErr) {
+				assert.Equal(t, "delete_failed", internalErr.Code)
+			}
 		})
 	})
 
@@ -81,6 +82,60 @@ func TestWhenDeletingPaymentSpendRule(t *testing.T) {
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
+			assert.Equal(t, "rule_not_found", notFoundErr.Code)
+		})
+	})
+
+	t.Run("Given deleting the rule fails", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendRuleTestingSuite) *uuid.UUID {
+			rule := model_builders.NewPaymentSpendRuleBuilder().Build()
+
+			suite.mockPaymentSpendRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().
+				DeleteById(gomock.Any(), rule.Id).
+				Return(assert.AnError).
+				Times(1)
+			return &rule.Id
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendRuleBeforeEach(t)
+			id := initSuite(suite)
+
+			err := suite.sut.Execute(context.Background(), &requests.DeletePaymentSpendRuleRequest{Id: *id})
+
+			var internalErr *apperrors.InternalError
+			if assert.ErrorAs(t, err, &internalErr) {
+				assert.Equal(t, "delete_failed", internalErr.Code)
+			}
+		})
+	})
+
+	t.Run("Given the rule exists", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenDeletingPaymentSpendRuleTestingSuite) *uuid.UUID {
+			rule := model_builders.NewPaymentSpendRuleBuilder().Build()
+
+			suite.mockPaymentSpendRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentSpendRuleRepository.EXPECT().DeleteById(gomock.Any(), rule.Id).Return(nil).Times(1)
+			return &rule.Id
+		}
+
+		t.Run("Should delete the rule", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingPaymentSpendRuleBeforeEach(t)
+			id := initSuite(suite)
+
+			assert.NoError(
+				t,
+				suite.sut.Execute(context.Background(), &requests.DeletePaymentSpendRuleRequest{Id: *id}),
+			)
 		})
 	})
 }

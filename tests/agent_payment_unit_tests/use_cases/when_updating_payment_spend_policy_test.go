@@ -105,7 +105,7 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendPolicyBeforeEach(t)

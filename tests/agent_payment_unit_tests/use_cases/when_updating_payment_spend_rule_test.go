@@ -137,7 +137,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return the validation error before reading the rule", func(t *testing.T) {
+		t.Run("Should return a validation error before reading the rule", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -165,7 +165,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -220,7 +220,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -281,7 +281,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -316,7 +316,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -352,7 +352,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -392,7 +392,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -436,7 +436,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -481,7 +481,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -535,7 +535,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)
@@ -582,7 +582,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 			return rule
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenUpdatingPaymentSpendRuleBeforeEach(t)

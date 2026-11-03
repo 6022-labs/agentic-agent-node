@@ -42,6 +42,7 @@ func (c *PaymentSpendRuleController) RegisterRoutes(app fiber.Router) {
 // @Tags Internal
 // @Produce json
 // @Success 200 {object} responses.ListPaymentSpendRulesResponse
+// @Failure 409 {object} errors.ConflictError "agent_not_minted"
 // @Failure 500 {object} errors.InternalError "spend_policy_failed or list_failed"
 // @Router /internal/config/payment-spend-policy/rules [get]
 func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
@@ -60,7 +61,7 @@ func (c *PaymentSpendRuleController) List(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "payment spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
+// @Failure 409 {object} errors.ConflictError "agent_not_minted or asset_already_has_rule"
 // @Failure 500 {object} errors.InternalError "spend_policy_failed, rule_lookup_failed or create_failed"
 // @Router /internal/config/payment-spend-policy/rules [post]
 func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
@@ -84,7 +85,7 @@ func (c *PaymentSpendRuleController) Create(ctx fiber.Ctx) error {
 // @Param request body requests.SavePaymentSpendRuleRequest true "payment spend rule"
 // @Success 200 {object} responses.PaymentSpendRuleResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 404 {object} errors.NotFoundError
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
 // @Failure 409 {object} errors.ConflictError "asset_already_has_rule"
 // @Failure 500 {object} errors.InternalError "rule_lookup_failed or update_failed"
 // @Router /internal/config/payment-spend-policy/rules/{id} [put]
@@ -108,7 +109,8 @@ func (c *PaymentSpendRuleController) Update(ctx fiber.Ctx) error {
 // @Tags Internal
 // @Param id path string true "rule id"
 // @Success 204
-// @Failure 404 {object} errors.NotFoundError
+// @Failure 400 {object} errors.ValidationError "invalid_params"
+// @Failure 404 {object} errors.NotFoundError "rule_not_found"
 // @Failure 500 {object} errors.InternalError "delete_failed"
 // @Router /internal/config/payment-spend-policy/rules/{id} [delete]
 func (c *PaymentSpendRuleController) Delete(ctx fiber.Ctx) error {

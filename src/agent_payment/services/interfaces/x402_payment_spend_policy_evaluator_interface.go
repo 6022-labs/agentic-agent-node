@@ -18,9 +18,10 @@ type X402PaymentSpendReservation struct {
 
 // X402PaymentSpendPolicyEvaluatorInterface gates one x402 quote against the agent's spend policy.
 type X402PaymentSpendPolicyEvaluatorInterface interface {
-	// Authorize records the spend and returns its reservation, or nil when the policy refuses the quote.
+	// Authorize records the spend and returns its reservation; a refusal is an UnauthorizedError naming why.
 	// It is not a predicate: call Release if the payment is then not signed.
 	Authorize(ctx context.Context, quote *X402PaymentQuote, amount *big.Int) (*X402PaymentSpendReservation, error)
-	// Release gives a reservation back; a period that rolled over since keeps the spend it now holds.
+	// Release gives a reservation back, even once ctx is cancelled; a period that rolled over since
+	// keeps the spend it now holds.
 	Release(ctx context.Context, reservation *X402PaymentSpendReservation) error
 }

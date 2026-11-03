@@ -37,7 +37,6 @@ func NewUpdatePaymentSpendRule(
 	}
 }
 
-// Execute replaces the rule; a window keeps its running spend while its period and token stay the same.
 func (u *UpdatePaymentSpendRule) Execute(
 	ctx context.Context,
 	request *requests.UpdatePaymentSpendRuleRequest,

@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/abi"
 	factory_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/factory/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
@@ -22,6 +24,7 @@ var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewI
 type Permit2ApprovalEnsurer struct {
 	ethClientFactory  factory_interfaces.EthClientFactoryInterface
 	transactorFactory factory_interfaces.TransactorFactoryInterface
+	logger            *zap.Logger
 
 	// Concurrent turns would both read allowance 0 and reuse one wallet nonce, dropping an approval.
 	approvalMutex sync.Mutex
@@ -30,10 +33,12 @@ type Permit2ApprovalEnsurer struct {
 func NewPermit2ApprovalEnsurer(
 	ethClientFactory factory_interfaces.EthClientFactoryInterface,
 	transactorFactory factory_interfaces.TransactorFactoryInterface,
+	logger *zap.Logger,
 ) *Permit2ApprovalEnsurer {
 	return &Permit2ApprovalEnsurer{
 		ethClientFactory:  ethClientFactory,
 		transactorFactory: transactorFactory,
+		logger:            logger,
 	}
 }
 
@@ -90,5 +95,10 @@ func (e *Permit2ApprovalEnsurer) EnsureApproval(
 	if err != nil {
 		return fmt.Errorf("failed to approve permit2: %w", err)
 	}
+	e.logger.Info("permit2 approval sent",
+		zap.String("network", network),
+		zap.String("asset", asset),
+		zap.String("txHash", tx.Hash().Hex()),
+	)
 	return helper.WaitForSuccess(ctx, client, tx)
 }

@@ -11,7 +11,6 @@ import (
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
-	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -44,7 +43,6 @@ func WhenListingPaymentSpendRulesBeforeEach(t *testing.T) *WhenListingPaymentSpe
 			mockPaymentSpendRuleRepository,
 			mockPaymentSpendRuleWindowRepository,
 			strategies,
-			runtime_common_mocks.NewMockUnitOfWorkFactoryInterface(mockController),
 		),
 
 		mockPaymentSpendPolicyProvider:       mockPaymentSpendPolicyProvider,
@@ -56,6 +54,31 @@ func WhenListingPaymentSpendRulesBeforeEach(t *testing.T) *WhenListingPaymentSpe
 
 func TestWhenListingPaymentSpendRules(t *testing.T) {
 	t.Parallel()
+
+	t.Run("Given the provider refuses because the agent is not minted", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenListingPaymentSpendRulesTestingSuite) {
+			suite.mockPaymentSpendPolicyProvider.EXPECT().
+				Ensure(gomock.Any()).
+				Return(nil, apperrors.NewConflictError("agent_not_minted", "")).
+				Times(1)
+		}
+
+		t.Run("Should propagate the conflict", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenListingPaymentSpendRulesBeforeEach(t)
+			initSuite(suite)
+
+			response, err := suite.sut.Execute(context.Background())
+
+			assert.Nil(t, response)
+			var conflictErr *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictErr)
+			assert.Equal(t, "agent_not_minted", conflictErr.Code)
+		})
+	})
 
 	t.Run("Given materializing the policy fails", func(t *testing.T) {
 		t.Parallel()
@@ -95,7 +118,7 @@ func TestWhenListingPaymentSpendRules(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingPaymentSpendRulesBeforeEach(t)
@@ -154,7 +177,7 @@ func TestWhenListingPaymentSpendRules(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingPaymentSpendRulesBeforeEach(t)
@@ -188,7 +211,7 @@ func TestWhenListingPaymentSpendRules(t *testing.T) {
 			suite.mockStrategy.EXPECT().LoadConfig(gomock.Any(), rule.Id).Return(nil, assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenListingPaymentSpendRulesBeforeEach(t)

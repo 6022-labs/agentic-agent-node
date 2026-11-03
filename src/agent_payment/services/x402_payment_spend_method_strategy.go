@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
-	"github.com/ethereum/go-ethereum/common"
 	"strings"
+
+	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
@@ -51,8 +51,9 @@ func (s *X402PaymentSpendMethodStrategy) Validate(
 	}
 	// Canonical because it is part of the one-rule-per-token key.
 	config.Network = helpers.FormatCaip2(chainId)
-	if !common.IsHexAddress(config.Asset) {
-		return errors.NewValidationError("config.asset", "must be the token contract address")
+	// The 0x prefix is required, as on the quote, or the rule could never match one.
+	if !helpers.IsEthAddress(config.Asset) {
+		return errors.NewValidationError("config.asset", "must be the 0x-prefixed token contract address")
 	}
 	// Lowercased because it is the lookup key: every pasted case must store alike.
 	config.Asset = strings.ToLower(config.Asset)

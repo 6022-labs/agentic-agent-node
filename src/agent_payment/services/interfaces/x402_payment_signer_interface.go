@@ -3,6 +3,8 @@ package interfaces
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 )
 
@@ -15,6 +17,18 @@ type X402PaymentQuote struct {
 	AssetTransferMethod enums.AssetTransferMethod
 	Eip712Name          string
 	Eip712Version       string
+	// MaxTimeoutSeconds is the seller's longest signature life; 0 leaves the node's own validity.
+	MaxTimeoutSeconds int64
+}
+
+// AuditFields is a payment's audit trail: what, to whom, how much; never the signature.
+func (q *X402PaymentQuote) AuditFields() []zap.Field {
+	return []zap.Field{
+		zap.String("network", q.Network),
+		zap.String("asset", q.Asset),
+		zap.String("payTo", q.PayTo),
+		zap.String("amount", q.Amount),
+	}
 }
 
 // X402SignedPayment is a ready-to-send PAYMENT-SIGNATURE header and what it commits to.

@@ -98,20 +98,15 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 		})
 	})
 
-	// No mint gate, unlike receive: the wallet exists before mint and the agent may need to pay first.
 	t.Run("Given the agent is not minted", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			created := model_builders.NewPaymentSpendPolicyBuilder().WithAgentId(agent.Id).Build()
-
 			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
-			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
-			suite.mockPaymentSpendPolicyRepository.EXPECT().Create(ctx, gomock.Any()).Return(created, nil).Times(1)
 		}
 
-		t.Run("Should materialize the policy anyway", func(t *testing.T) {
+		t.Run("Should return a conflict without touching the policy", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentSpendPolicyBeforeEach(t)
@@ -119,8 +114,10 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 
 			policy, err := suite.sut.Ensure(ctx)
 
-			assert.NoError(t, err)
-			assert.NotNil(t, policy)
+			assert.Nil(t, policy)
+			var conflictError *apperrors.ConflictError
+			assert.ErrorAs(t, err, &conflictError)
+			assert.Equal(t, "agent_not_minted", conflictError.Code)
 		})
 	})
 
@@ -169,7 +166,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentSpendPolicyBeforeEach(t)
@@ -180,6 +177,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			assert.Nil(t, policy)
 			var internalError *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
 		})
 	})
 
@@ -190,7 +188,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentSpendPolicyBeforeEach(t)
@@ -201,6 +199,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			assert.Nil(t, policy)
 			var internalError *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
 		})
 	})
 
@@ -222,6 +221,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			assert.Nil(t, policy)
 			var internalError *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
 		})
 	})
 
@@ -238,7 +238,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenEnsuringPaymentSpendPolicyBeforeEach(t)
@@ -249,6 +249,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			assert.Nil(t, policy)
 			var internalError *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalError)
+			assert.Equal(t, "spend_policy_failed", internalError.Code)
 		})
 	})
 }

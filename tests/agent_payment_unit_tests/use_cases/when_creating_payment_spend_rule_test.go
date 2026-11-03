@@ -72,10 +72,12 @@ func generateSavePaymentSpendRuleRequest(t *testing.T) *requests.SavePaymentSpen
 
 	maxAmountPerPayment := "10000"
 	return &requests.SavePaymentSpendRuleRequest{
-		Name:                "Test token",
-		MaxAmountPerPayment: &maxAmountPerPayment,
-		Windows:             []requests.SavePaymentSpendRuleWindowRequest{{WindowSeconds: 86400, MaxAmount: "50000"}},
-		Config:              config,
+		SavePaymentRuleRequest: requests.SavePaymentRuleRequest{Name: "Test token"},
+		MaxAmountPerPayment:    &maxAmountPerPayment,
+		Windows: []requests.SavePaymentSpendRuleWindowRequest{
+			{WindowSeconds: 86400, MaxAmount: "50000"},
+		},
+		Config: config,
 	}
 }
 
@@ -137,7 +139,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return the validation error before touching the policy", func(t *testing.T) {
+		t.Run("Should return a validation error before touching the policy", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -192,7 +194,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -251,7 +253,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(gomock.Any()).Return(nil, assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -285,7 +287,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -321,7 +323,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -358,7 +360,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)
@@ -397,7 +399,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			suite.mockUnitOfWork.EXPECT().Commit().Return(assert.AnError).Times(1)
 		}
 
-		t.Run("Should return an internal error", func(t *testing.T) {
+		t.Run("Should return an InternalError", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenCreatingPaymentSpendRuleBeforeEach(t)

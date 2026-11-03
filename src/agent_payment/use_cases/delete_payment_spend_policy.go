@@ -28,8 +28,9 @@ func (u *DeletePaymentSpendPolicy) Execute(ctx context.Context) error {
 	if err != nil {
 		return errors.NewInternalError("delete_failed", err.Error())
 	}
+	// No agent yet means no policy either, so there is nothing to delete.
 	if agent == nil {
-		return errors.NewInternalError("delete_failed", "agent identity is not initialized yet")
+		return nil
 	}
 	if err := u.paymentSpendPolicyRepository.DeleteByAgentId(ctx, agent.Id); err != nil {
 		return errors.NewInternalError("delete_failed", err.Error())

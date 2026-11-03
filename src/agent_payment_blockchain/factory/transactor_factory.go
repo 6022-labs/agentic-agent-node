@@ -13,17 +13,17 @@ import (
 
 // TransactorFactory produces chain-bound transactors signed by the node's Vault wallet.
 type TransactorFactory struct {
-	walletStorage   identity_interfaces.WalletCredentialsStorageInterface
-	agentRepository repositories.AgentRepositoryInterface
+	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
+	agentRepository          repositories.AgentRepositoryInterface
 }
 
 func NewTransactorFactory(
-	walletStorage identity_interfaces.WalletCredentialsStorageInterface,
+	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 	agentRepository repositories.AgentRepositoryInterface,
 ) *TransactorFactory {
 	return &TransactorFactory{
-		walletStorage:   walletStorage,
-		agentRepository: agentRepository,
+		walletCredentialsStorage: walletCredentialsStorage,
+		agentRepository:          agentRepository,
 	}
 }
 
@@ -35,7 +35,7 @@ func (f *TransactorFactory) Create(ctx context.Context, chainId uint64) (*bind.T
 	if agent == nil {
 		return nil, fmt.Errorf("agent not bootstrapped")
 	}
-	cred, found, err := f.walletStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
+	cred, found, err := f.walletCredentialsStorage.GetForId(ctx, agent.Id.String(), enums.AddressTypeEvm)
 	if err != nil {
 		return nil, fmt.Errorf("load wallet credentials: %w", err)
 	}
