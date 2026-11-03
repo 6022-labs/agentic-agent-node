@@ -8,6 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
+	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 // SignX402PaymentTool exposes the SignX402Payment use case as a built-in self tool.
@@ -24,9 +25,9 @@ func NewSignX402PaymentTool(
 func (t *SignX402PaymentTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "sign_x402_payment",
-		Description: "Authorize an x402 payment from your own wallet and get back a paymentSignature to send with " +
-			"the paid call. Pass one entry of a paymentRequired.accepts list exactly as you received it. " +
-			"This spends your own funds, so only sign a quote you decided is worth paying.",
+		Description: "Pay an x402 quote from your wallet; returns the paymentSignature for the paid call. " +
+			"Pass one accepts entry as received. Refused, with no spend, unless the payee is allowed and " +
+			"the token's rule fits. Spend counts when signed, so don't sign again for the same call.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"accept": utils.ObjectProperty(
 				"One accepts entry from a 402 quote: network, asset, payTo, amount and its extra.",
@@ -43,12 +44,11 @@ func (t *SignX402PaymentTool) Execute(ctx context.Context, args map[string]any) 
 
 	request := &payment_requests.SignX402PaymentRequest{}
 	if err := json.Unmarshal(raw, request); err != nil {
-		return nil, err
+		return nil, errors.NewValidationError("accept", "must be one x402 accepts entry, amount as a string")
 	}
 	return utils.ToToolResult(t.signX402PaymentExecutor.Execute(ctx, request))
 }
 
-// Off by default like every other funds-touching tool.
 func (t *SignX402PaymentTool) IsEnabledByDefault() bool {
 	return false
 }

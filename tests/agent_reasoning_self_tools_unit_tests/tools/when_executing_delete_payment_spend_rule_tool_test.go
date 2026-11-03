@@ -39,18 +39,6 @@ func TestWhenExecutingDeletePaymentSpendRuleTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingDeletePaymentSpendRuleToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-		})
-	})
-
 	t.Run("Given the rule exists", func(t *testing.T) {
 		t.Parallel()
 

@@ -23,7 +23,7 @@ func NewDeletePaymentSpendRuleTool(
 func (t *DeletePaymentSpendRuleTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name:        "delete_payment_spend_rule",
-		Description: "Remove one of your spend rules by id. Quotes only that rule allowed will be refused.",
+		Description: "Remove one of your spend rules by id; its token is refused until a new rule covers it.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"id": utils.StringProperty("The rule id."),
 		}, []string{"id"}),

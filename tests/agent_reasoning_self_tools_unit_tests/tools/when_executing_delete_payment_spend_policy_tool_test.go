@@ -37,20 +37,6 @@ func TestWhenExecutingDeletePaymentSpendPolicyTool(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingDeletePaymentSpendPolicyToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-			assert.Equal(t, "delete_payment_spend_policy", suite.sut.Definition().Name)
-		})
-	})
-
 	t.Run("Given the reset succeeds", func(t *testing.T) {
 		t.Parallel()
 

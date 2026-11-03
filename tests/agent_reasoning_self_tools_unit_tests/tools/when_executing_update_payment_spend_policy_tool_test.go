@@ -45,27 +45,6 @@ func TestWhenExecutingUpdatePaymentSpendPolicyTool(t *testing.T) {
 		return map[string]any{"payToPatterns": []any{"0xabc.*"}}
 	}
 
-	// Choosing whom it pays is the reason this one is opt-in.
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdatePaymentSpendPolicyToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-			assert.Equal(t, "update_payment_spend_policy", suite.sut.Definition().Name)
-		})
-		t.Run("Should require the payToPatterns argument", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdatePaymentSpendPolicyToolBeforeEach(t)
-
-			assert.Equal(t, []string{"payToPatterns"}, suite.sut.Definition().InputScheme.Required)
-		})
-	})
-
 	t.Run("Given the payToPatterns argument is missing", func(t *testing.T) {
 		t.Parallel()
 

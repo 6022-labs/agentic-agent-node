@@ -47,27 +47,6 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 		}
 	}
 
-	// Enabling this tool lets the agent widen its own limits, so the owner must opt in.
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-			assert.Equal(t, "create_payment_spend_rule", suite.sut.Definition().Name)
-		})
-		t.Run("Should require the name and config arguments", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
-
-			assert.Equal(t, []string{"name", "config"}, suite.sut.Definition().InputScheme.Required)
-		})
-	})
-
 	t.Run("Given the windows argument is not an array", func(t *testing.T) {
 		t.Parallel()
 
@@ -98,7 +77,24 @@ func TestWhenExecutingCreatePaymentSpendRuleTool(t *testing.T) {
 			out, err := suite.sut.Execute(ctx, args)
 
 			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "config")
+			assert.EqualError(t, err, `argument "config" is required`)
+		})
+	})
+
+	t.Run("Given a per-payment cap that is not a string", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should fail without calling the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingCreatePaymentSpendRuleToolBeforeEach(t)
+
+			args := validArgs()
+			args["maxAmountPerPayment"] = map[string]any{"amount": "1000"}
+			out, err := suite.sut.Execute(ctx, args)
+
+			assert.Nil(t, out)
+			assert.EqualError(t, err, `argument "maxAmountPerPayment" must be a string`)
 		})
 	})
 

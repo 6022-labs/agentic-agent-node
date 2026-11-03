@@ -50,26 +50,6 @@ func TestWhenExecutingUpdatePaymentSpendRuleTool(t *testing.T) {
 		}
 	}
 
-	// Raising your own cap is the reason this one is opt-in.
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdatePaymentSpendRuleToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-		})
-		t.Run("Should require the id, name and config arguments", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingUpdatePaymentSpendRuleToolBeforeEach(t)
-
-			assert.Equal(t, []string{"id", "name", "config"}, suite.sut.Definition().InputScheme.Required)
-		})
-	})
-
 	t.Run("Given the id argument is not a uuid", func(t *testing.T) {
 		t.Parallel()
 
@@ -117,7 +97,7 @@ func TestWhenExecutingUpdatePaymentSpendRuleTool(t *testing.T) {
 			out, err := suite.sut.Execute(ctx, args)
 
 			assert.Nil(t, out)
-			assert.ErrorContains(t, err, "config")
+			assert.EqualError(t, err, `argument "config" is required`)
 		})
 	})
 

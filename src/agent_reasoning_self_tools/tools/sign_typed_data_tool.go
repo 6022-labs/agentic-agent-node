@@ -24,9 +24,8 @@ func NewSignTypedDataTool(
 func (t *SignTypedDataTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "sign_typed_data",
-		Description: "Sign an arbitrary EIP-712 typed-data payload with your wallet key. Token transfers and " +
-			"permits are charged against your spend policy like a payment, and batch permits are refused. " +
-			"Anything you sign here is binding on chain — prefer sign_x402_payment for paying another agent.",
+		Description: "Sign EIP-712 typed data with your wallet key. Token transfers and permits count against " +
+			"your spend policy; batch permits are refused. Prefer sign_x402_payment to pay an agent.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"typedData": utils.ObjectProperty("The EIP-712 payload: types, primaryType, domain and message."),
 		}, []string{"typedData"}),

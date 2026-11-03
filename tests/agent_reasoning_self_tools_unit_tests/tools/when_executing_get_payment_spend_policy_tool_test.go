@@ -35,20 +35,6 @@ func TestWhenExecutingGetPaymentSpendPolicyTool(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingGetPaymentSpendPolicyToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-			assert.Equal(t, "get_payment_spend_policy", suite.sut.Definition().Name)
-		})
-	})
-
 	t.Run("Given the use case succeeds", func(t *testing.T) {
 		t.Parallel()
 

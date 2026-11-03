@@ -54,8 +54,10 @@ func (t *AbstractPaymentReceiveRuleTool) savePaymentReceiveRuleRequestFromArgs(
 		return nil, err
 	}
 	return &payment_requests.SavePaymentReceiveRuleRequest{
-		Name:   name,
-		Method: utils.OptionalStringArg(args, "method"),
+		SavePaymentRuleRequest: payment_requests.SavePaymentRuleRequest{
+			Name:   name,
+			Method: utils.OptionalStringArg(args, "method"),
+		},
 		Prices: prices,
 		Config: config,
 	}, nil

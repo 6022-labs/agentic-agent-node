@@ -101,15 +101,11 @@ func provideIdentityExecutors(container *dig.Container) {
 	asCheckAgentEns := func(u *identity_use_cases.CheckAgentEns) tool_interfaces.CheckAgentEnsExecutorInterface {
 		return u
 	}
-	asSignTypedData := func(u *payment_use_cases.SignTypedData) tool_interfaces.SignTypedDataExecutorInterface {
-		return u
-	}
 
 	provideExecutor(container, asGetAgentRegistration)
 	provideExecutor(container, asListAgentCollections)
 	provideExecutor(container, asCheckAgentMint)
 	provideExecutor(container, asCheckAgentEns)
-	provideExecutor(container, asSignTypedData)
 }
 
 func provideKnowledgeExecutors(container *dig.Container) {
@@ -177,6 +173,9 @@ func providePaymentExecutors(container *dig.Container) {
 	asSignX402Payment := func(u *payment_use_cases.SignX402Payment) tool_interfaces.SignX402PaymentExecutorInterface {
 		return u
 	}
+	asSignTypedData := func(u *payment_use_cases.SignTypedData) tool_interfaces.SignTypedDataExecutorInterface {
+		return u
+	}
 	asGetPaymentSpendPolicy := func(u *payment_use_cases.GetPaymentSpendPolicy) tool_interfaces.GetPaymentSpendPolicyExecutorInterface {
 		return u
 	}
@@ -214,6 +213,7 @@ func providePaymentExecutors(container *dig.Container) {
 	provideExecutor(container, asDeletePaymentSpendRule)
 	provideExecutor(container, asDeletePaymentSpendPolicy)
 	provideExecutor(container, asSignX402Payment)
+	provideExecutor(container, asSignTypedData)
 }
 
 func provideCommonExecutors(container *dig.Container) {

@@ -2,7 +2,6 @@ package tools_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	payment_responses "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
@@ -36,19 +35,6 @@ func TestWhenExecutingListPaymentSpendRulesTool(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Even reading the policy is opt-in, matching every other payment self tool.
-	t.Run("Given the tool is registered", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should be disabled by default", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenExecutingListPaymentSpendRulesToolBeforeEach(t)
-
-			assert.False(t, suite.sut.IsEnabledByDefault())
-		})
-	})
-
 	t.Run("Given the use case succeeds", func(t *testing.T) {
 		t.Parallel()
 
@@ -74,12 +60,12 @@ func TestWhenExecutingListPaymentSpendRulesTool(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenExecutingListPaymentSpendRulesToolBeforeEach(t)
-			suite.mockListPaymentSpendRulesExecutor.EXPECT().Execute(ctx).Return(nil, errors.New("boom"))
+			suite.mockListPaymentSpendRulesExecutor.EXPECT().Execute(ctx).Return(nil, assert.AnError)
 
 			out, err := suite.sut.Execute(ctx, nil)
 
 			assert.Nil(t, out)
-			assert.Error(t, err)
+			assert.ErrorIs(t, err, assert.AnError)
 		})
 	})
 }

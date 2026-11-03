@@ -5,9 +5,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
+
 	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	payment_responses "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_self_tools_mocks/tools_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -34,6 +37,8 @@ func TestWhenExecutingSignX402PaymentTool(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	asset := common_tests.RandomEthAddress().Hex()
+	payTo := common_tests.RandomEthAddress().Hex()
 
 	t.Run("Given a quote entry forwarded verbatim from a 402", func(t *testing.T) {
 		t.Parallel()
@@ -45,8 +50,8 @@ func TestWhenExecutingSignX402PaymentTool(t *testing.T) {
 			suite.mockSignX402PaymentExecutor.EXPECT().
 				Execute(ctx, &payment_requests.SignX402PaymentRequest{
 					Network: "eip155:80002",
-					Asset:   "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-					PayTo:   "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+					Asset:   asset,
+					PayTo:   payTo,
 					Amount:  "10000",
 					Extra: map[string]any{
 						"assetTransferMethod": "eip3009",
@@ -59,8 +64,8 @@ func TestWhenExecutingSignX402PaymentTool(t *testing.T) {
 			out, err := suite.sut.Execute(ctx, map[string]any{
 				"accept": map[string]any{
 					"network": "eip155:80002",
-					"asset":   "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-					"payTo":   "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+					"asset":   asset,
+					"payTo":   payTo,
 					"amount":  "10000",
 					"extra": map[string]any{
 						"assetTransferMethod": "eip3009",
@@ -87,6 +92,24 @@ func TestWhenExecutingSignX402PaymentTool(t *testing.T) {
 
 			assert.Nil(t, out)
 			assert.ErrorContains(t, err, "accept")
+		})
+	})
+
+	t.Run("Given an accept entry that does not decode", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a ValidationError on accept without calling the use case", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenExecutingSignX402PaymentToolBeforeEach(t)
+
+			out, err := suite.sut.Execute(ctx, map[string]any{"accept": map[string]any{"amount": 1000}})
+
+			assert.Nil(t, out)
+			var validationErr *apperrors.ValidationError
+			if assert.ErrorAs(t, err, &validationErr) {
+				assert.Equal(t, "accept", validationErr.Field)
+			}
 		})
 	})
 
