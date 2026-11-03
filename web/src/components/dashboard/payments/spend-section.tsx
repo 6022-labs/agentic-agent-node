@@ -1,7 +1,6 @@
 import React from "react"
 import { toast } from "sonner"
-import axios from "axios"
-import { AlertTriangle, Plus, Trash2, Wallet, X } from "lucide-react"
+import { AlertTriangle, Plus, RefreshCw, Trash2, Wallet, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,9 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import ConfirmDialog from "@/components/dashboard/confirm-dialog"
+import NotMintedState from "@/components/dashboard/not-minted-state"
 import EmptyState from "@/components/dashboard/empty-state"
+import { useAgentIdentity } from "@/contexts/agent-identity-context"
 import PaymentSpendRuleDialog from "@/components/dashboard/payments/dialogs/payment-spend-rule-dialog"
 import TokenCell from "@/components/dashboard/payments/token-cell"
+import {
+  isAssetTaken,
+  normalizePattern,
+  toFormField,
+} from "@/components/dashboard/payments/rule-form-errors"
 import { DocsLink } from "@/components/dashboard/payments/address-chips"
 import {
   ANY_TRANSFER_METHOD,
@@ -40,6 +46,7 @@ import {
   type PaymentSpendPolicy,
   type PaymentSpendRule,
   type PaymentSpendRuleWindow,
+  WINDOW_PRESETS,
 } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import {
@@ -82,35 +89,25 @@ const formatResetsIn = (resetsAt: string): string => {
 // spentPercent stays in BigInt until the last step; atomic amounts overflow Number.
 const spentPercent = (spent: string, budget: string): number => {
   try {
-    const total = BigInt(budget)
-    if (total === 0n) {
-      return 100
-    }
-    return Math.min(100, Number((BigInt(spent) * 100n) / total))
+    return Math.min(100, Number((BigInt(spent) * 100n) / BigInt(budget)))
   } catch {
     return 0
   }
 }
 
-// formatPeriod names the common periods and falls back to raw seconds.
+// formatPeriod reuses the form's preset names and falls back to raw seconds.
 const formatPeriod = (seconds: number): string => {
+  const preset = WINDOW_PRESETS.find((p) => p.seconds === seconds)
+  if (preset) {
+    return preset.label.toLowerCase()
+  }
   if (seconds % 86400 === 0) {
-    const days = seconds / 86400
-    if (days === 1) {
-      return "day"
-    }
-    if (days === 7) {
-      return "week"
-    }
-    if (days === 30) {
-      return "30 days"
-    }
-    return `${days}d`
+    return `${seconds / 86400} days`
   }
   if (seconds % 3600 === 0) {
-    return `${seconds / 3600}h`
+    return `${seconds / 3600} hours`
   }
-  return `${seconds}s`
+  return `${seconds} seconds`
 }
 
 // The fields the rule form renders; errors on anything else are toasted.
@@ -123,23 +120,6 @@ const FORM_FIELDS: Array<keyof PaymentSpendRuleFormSchemaType> = [
   "asset",
   "assetTransferMethod",
 ]
-
-// isAssetTaken reports the runtime's refusal of a second rule on one token.
-const isAssetTaken = (error: unknown): boolean =>
-  axios.isAxiosError(error) && error.response?.status === 409
-
-// toFormField maps a runtime error path ("config.network", "windows[0].maxAmount") to a form control.
-const toFormField = (path: string): PaymentSpendRuleFormField | null => {
-  const field = path.replace(/^config\./, "").replace(/\[(\d+)\]/g, ".$1")
-  const root = field.split(".")[0] as keyof PaymentSpendRuleFormSchemaType
-  return FORM_FIELDS.includes(root)
-    ? (field as PaymentSpendRuleFormField)
-    : null
-}
-
-// normalizePayee lowercases a plain address, as the runtime stores it, so duplicates are caught.
-const normalizePayee = (pattern: string): string =>
-  isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
 
 // AmountLabel shows an atomic amount in token units once the token resolves, else truncated atomic.
 function AmountLabel({
@@ -158,48 +138,62 @@ function AmountLabel({
   if (isUnbounded(amount)) {
     return <Badge variant="destructive">unbounded</Badge>
   }
-  if (token || amount.length <= 12) {
+  if (token) {
     return (
       <span className="font-mono text-xs">
-        {token
-          ? bare
-            ? formatAtomicAmount(amount, token.decimals)
-            : formatTokenAmount(amount, token)
-          : amount}
+        {bare
+          ? formatAtomicAmount(amount, token.decimals)
+          : formatTokenAmount(amount, token)}
       </span>
     )
   }
+  if (amount.length <= 12) {
+    return (
+      <span className="font-mono text-xs">{formatTokenAmount(amount)}</span>
+    )
+  }
   return (
-    <HoverHint className="font-mono text-xs" content={amount}>
-      {`${amount.slice(0, 12)}…`}
+    <HoverHint
+      className="font-mono text-xs"
+      content={formatTokenAmount(amount)}
+    >
+      {`${amount.slice(0, 12)}… units`}
     </HoverHint>
   )
 }
 
 export default function PaymentSpendPolicySection() {
+  const { loading: identityLoading, isMinted } = useAgentIdentity()
   const [policy, setPolicy] = React.useState<PaymentSpendPolicy | null>(null)
   const [rules, setRules] = React.useState<PaymentSpendRule[]>([])
   const [loading, setLoading] = React.useState(true)
+  const [loadFailed, setLoadFailed] = React.useState(false)
   const [mutating, setMutating] = React.useState(false)
 
-  const load = React.useCallback(async () => {
+  // load reports whether it succeeded; on failure it already shows the retry state.
+  const load = React.useCallback(async (): Promise<boolean> => {
     setLoading(true)
+    setLoadFailed(false)
     try {
       // Sequential on purpose: both calls lazily materialize the policy server-side.
       const policyResponse = await getPaymentSpendPolicy()
       const rulesResponse = await listPaymentSpendRules()
       setPolicy(policyResponse.data)
       setRules(rulesResponse.rules)
+      return true
     } catch (error) {
+      setLoadFailed(true)
+      setPolicy(null)
       toast.error(extractErrorMessage(error, "Failed to load spend policy"))
+      return false
     } finally {
       setLoading(false)
     }
   }, [])
 
   React.useEffect(() => {
-    void load()
-  }, [load])
+    if (isMinted) void load()
+  }, [load, isMinted])
 
   const reloadRules = async () => {
     const { rules } = await listPaymentSpendRules()
@@ -231,7 +225,7 @@ export default function PaymentSpendPolicySection() {
     (existing?: PaymentSpendRule) =>
     async (
       values: PaymentSpendRuleFormSchemaType
-    ): Promise<FormCompletionResult<PaymentSpendRuleFormField>> => {
+    ): Promise<FormCompletionResult<PaymentSpendRuleFormField, "saved">> => {
       setMutating(true)
       try {
         const rule = toRule(values)
@@ -247,7 +241,7 @@ export default function PaymentSpendPolicySection() {
         } catch (error) {
           toast.error(extractErrorMessage(error, "Failed to refresh the rules"))
         }
-        return {}
+        return { result: "saved" }
       } catch (error) {
         if (isAssetTaken(error)) {
           return {
@@ -259,7 +253,10 @@ export default function PaymentSpendPolicySection() {
         }
         const validation = extractValidationError(error)
         if (validation) {
-          const field = toFormField(validation.field)
+          const field = toFormField<PaymentSpendRuleFormField>(
+            validation.field,
+            FORM_FIELDS
+          )
           if (field) {
             return { error: { field, message: validation.message } }
           }
@@ -281,10 +278,17 @@ export default function PaymentSpendPolicySection() {
     setMutating(true)
     try {
       await deletePaymentSpendRule(rule.id)
-      await reloadRules()
-      toast.success("Spend rule removed")
     } catch (error) {
       toast.error(extractErrorMessage(error, "Failed to remove the spend rule"))
+      setMutating(false)
+      return
+    }
+    toast.success("Spend rule removed")
+    // The rule is gone even if the refresh fails; reporting it as a removal failure invites a 404 on retry.
+    try {
+      await reloadRules()
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "Failed to refresh the rules"))
     } finally {
       setMutating(false)
     }
@@ -313,8 +317,8 @@ export default function PaymentSpendPolicySection() {
     setMutating(true)
     try {
       await deletePaymentSpendPolicy()
-      await load()
       toast.success("Spend policy reset")
+      await load()
     } catch (error) {
       toast.error(
         extractErrorMessage(error, "Failed to reset the spend policy")
@@ -340,25 +344,45 @@ export default function PaymentSpendPolicySection() {
               What the agent may pay, and to whom. <DocsLink />
             </CardDescription>
           </div>
-          <Badge
-            variant={
-              unrestricted
-                ? "destructive"
+          {policy ? (
+            <Badge
+              variant={
+                unrestricted
+                  ? "destructive"
+                  : cannotSpend
+                    ? "secondary"
+                    : "default"
+              }
+            >
+              {unrestricted
+                ? "unrestricted"
                 : cannotSpend
-                  ? "secondary"
-                  : "default"
-            }
-          >
-            {unrestricted
-              ? "unrestricted"
-              : cannotSpend
-                ? "cannot spend"
-                : "restricted"}
-          </Badge>
+                  ? "cannot spend"
+                  : "restricted"}
+            </Badge>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-        {loading || !policy ? (
+        {!identityLoading && !isMinted ? (
+          <NotMintedState description="The spend policy is set once the agent's on-chain identity is minted." />
+        ) : loadFailed && !loading ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="Couldn't load the spend policy"
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void load()}
+              >
+                <RefreshCw />
+                Retry
+              </Button>
+            }
+          />
+        ) : loading || !policy ? (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-10 w-full" />
@@ -472,7 +496,7 @@ export default function PaymentSpendPolicySection() {
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              aria-label="Remove rule"
+                              aria-label={`Remove rule ${rule.name}`}
                               disabled={mutating}
                             >
                               <Trash2 />
@@ -488,7 +512,7 @@ export default function PaymentSpendPolicySection() {
           </>
         )}
       </CardContent>
-      {policy ? (
+      {policy && isMinted ? (
         <CardFooter className="justify-end">
           <ConfirmDialog
             title="Reset the spend policy?"
@@ -536,12 +560,14 @@ function WindowUsage({
           · {formatPeriod(window.windowSeconds)}
         </span>
       </span>
-      <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full bg-primary"
-          style={{ width: `${spentPercent(spent, window.maxAmount)}%` }}
-        />
-      </div>
+      {window.maxAmount === "0" ? null : (
+        <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full bg-primary"
+            style={{ width: `${spentPercent(spent, window.maxAmount)}%` }}
+          />
+        </div>
+      )}
       {window.resetsAt ? (
         <span className="shrink-0 text-muted-foreground">
           resets in {formatResetsIn(window.resetsAt)}
@@ -572,7 +598,7 @@ function PayeesEditor({
   }
 
   const add = async () => {
-    const pattern = normalizePayee(draft.trim())
+    const pattern = normalizePattern(draft.trim())
     // Enter bypasses the button's disabled state, so a save in flight is checked here.
     if (pattern.length === 0 || disabled) {
       return
@@ -592,15 +618,26 @@ function PayeesEditor({
             Addresses in any case, or regexes written in lowercase.
           </p>
         </div>
-        {payees.includes(ANY_PATTERN) ? null : (
+        {payees.includes(ANY_PATTERN) ? null : payees.length === 0 ? (
           <Button
             variant="outline"
             size="sm"
             disabled={disabled}
             onClick={() => void save([ANY_PATTERN])}
           >
-            Allow anyone (.*)
+            Allow anyone
           </Button>
+        ) : (
+          <ConfirmDialog
+            title={`Replace ${payees.length} ${payees.length === 1 ? "payee" : "payees"} with anyone?`}
+            description="The agent will be able to pay any address its rules allow."
+            confirmLabel="Allow anyone"
+            onConfirm={() => save([ANY_PATTERN])}
+          >
+            <Button variant="outline" size="sm" disabled={disabled}>
+              Allow anyone
+            </Button>
+          </ConfirmDialog>
         )}
       </div>
       {payees.length === 0 ? (
@@ -613,17 +650,20 @@ function PayeesEditor({
           {payees.map((pattern, index) => (
             <HoverHint
               key={`${index}:${pattern}`}
+              className="inline-flex max-w-full min-w-0"
               content={<span className="font-mono break-all">{pattern}</span>}
             >
               <Badge
                 variant={pattern === ANY_PATTERN ? "default" : "outline"}
-                className="gap-1 font-mono text-xs"
+                className="max-w-full gap-1 font-mono text-xs"
               >
-                {pattern === ANY_PATTERN
-                  ? "anyone"
-                  : isPlainAddressPattern(pattern)
-                    ? truncateEthAddress(pattern)
-                    : pattern}
+                <span className="truncate">
+                  {pattern === ANY_PATTERN
+                    ? "anyone"
+                    : isPlainAddressPattern(pattern)
+                      ? truncateEthAddress(pattern)
+                      : pattern}
+                </span>
                 <button
                   type="button"
                   aria-label={`Remove ${pattern}`}
@@ -642,6 +682,7 @@ function PayeesEditor({
       <div className="flex items-center gap-2">
         <Input
           className="font-mono text-xs"
+          aria-label="Payee address or regex"
           placeholder="0x… or a regex"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

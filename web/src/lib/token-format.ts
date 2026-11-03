@@ -5,20 +5,34 @@
 import { truncateEthAddress } from "@/lib/utils"
 import { findEvmNetwork } from "@/models/networks"
 
-// Known tokens by lowercase contract address — enough to render the prices
-// the console itself sets up; anything else falls back to atomic units.
+// Known tokens by CAIP-2 network and lowercase address: one address can be another token on another chain.
 const KNOWN_TOKENS: Record<string, { symbol: string; decimals: number }> = {
   // Circle USDC: Polygon Amoy, Polygon, Base, Ethereum.
-  "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582": { symbol: "USDC", decimals: 6 },
-  "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359": { symbol: "USDC", decimals: 6 },
-  "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": { symbol: "USDC", decimals: 6 },
-  "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": { symbol: "USDC", decimals: 6 },
+  "eip155:80002:0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582": {
+    symbol: "USDC",
+    decimals: 6,
+  },
+  "eip155:137:0x3c499c542cef5e3811e1192ce70d8cc03d5c3359": {
+    symbol: "USDC",
+    decimals: 6,
+  },
+  "eip155:8453:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": {
+    symbol: "USDC",
+    decimals: 6,
+  },
+  "eip155:1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": {
+    symbol: "USDC",
+    decimals: 6,
+  },
 }
 
 export type TokenUnits = { symbol: string; decimals: number }
 
-export function knownToken(asset: string): TokenUnits | undefined {
-  return KNOWN_TOKENS[asset.toLowerCase()]
+export function knownToken(
+  network: string,
+  asset: string
+): TokenUnits | undefined {
+  return KNOWN_TOKENS[`${network}:${asset.toLowerCase()}`]
 }
 
 // formatTokenAmount renders "0.25 $USDC" once the token is resolved, else "250000 units".

@@ -23,9 +23,10 @@ import { useErc20Lookup } from "@/components/dashboard/payments/use-erc20-lookup
 type Props = {
   // When set, the dialog edits this rule (pencil trigger) instead of adding one.
   initialRule?: PaymentSpendRule
+  // result "saved" closes the dialog; anything else keeps the typed values for a retry.
   onSave: (
     values: PaymentSpendRuleFormSchemaType
-  ) => Promise<FormCompletionResult<PaymentSpendRuleFormField>>
+  ) => Promise<FormCompletionResult<PaymentSpendRuleFormField, "saved">>
 }
 
 export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
@@ -42,21 +43,35 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
   ): Promise<FormCompletionResult<PaymentSpendRuleFormField>> => {
     setSaving(true)
     try {
-      const result = await onSave(values)
-      if (!result.error) {
+      const { error, result } = await onSave(values)
+      if (result === "saved") {
+        setValues(null)
         setOpen(false)
       }
-      return result
+      return { error }
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Closing mid-save would unmount the form and lose the save's error.
+        if (saving) return
+        // A previous session's token must never drive the next one's lookup.
+        setValues(null)
+        setOpen(next)
+      }}
+    >
       <DialogTrigger asChild>
         {editing ? (
-          <Button variant="ghost" size="icon-sm" aria-label="Edit rule">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Edit rule ${initialRule?.name ?? ""}`}
+          >
             <Pencil />
           </Button>
         ) : (

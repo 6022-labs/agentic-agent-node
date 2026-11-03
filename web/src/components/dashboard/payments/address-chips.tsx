@@ -31,9 +31,12 @@ export function DocsLink() {
 export function AudienceBadge({
   patterns,
   anyoneLabel = "anyone",
+  noun,
 }: {
   patterns: string[]
   anyoneLabel?: string
+  // noun names what the list holds, for the screen-reader label ("callers", "payees").
+  noun: string
 }) {
   if (patterns.includes(EVERYONE_PATTERN)) {
     return (
@@ -46,7 +49,10 @@ export function AudienceBadge({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" aria-label={`Show all ${patterns.length}`}>
+        <button
+          type="button"
+          aria-label={`Show all ${patterns.length} ${noun}`}
+        >
           <Badge variant="outline" className="font-mono">
             {audienceLabel(patterns, anyoneLabel)}
           </Badge>

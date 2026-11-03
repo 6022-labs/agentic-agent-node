@@ -35,7 +35,7 @@ export type ListPaymentSpendRulesResponse = {
 
 // PaymentSpendRuleConfig is the x402 method's token, carried in the wire rule's
 // method-specific config blob.
-export type PaymentSpendRuleConfig = {
+type PaymentSpendRuleConfig = {
   network: string
   asset: string
   assetTransferMethod?: string

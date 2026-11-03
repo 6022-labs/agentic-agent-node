@@ -64,7 +64,11 @@ export default function PaymentReceiveRuleDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {editing ? (
-          <Button variant="ghost" size="icon-sm" aria-label="Edit rule">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Edit rule ${initialRule?.name ?? ""}`}
+          >
             <Pencil />
           </Button>
         ) : (

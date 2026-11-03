@@ -5,7 +5,10 @@ import { z } from "zod"
 export const ANY_TRANSFER_METHOD = "any"
 
 // MAX_WINDOW_SECONDS mirrors the runtime's 10-year cap on a period.
-export const MAX_WINDOW_SECONDS = 315360000
+const MAX_WINDOW_SECONDS = 315360000
+
+// MAX_WINDOWS mirrors the runtime's MaxPaymentSpendRuleWindows.
+export const MAX_WINDOWS = 10
 
 // Token units; the form converts to atomic units on submit, where the uint256 bound is checked.
 const tokenAmount = z
@@ -26,20 +29,22 @@ export const paymentSpendRuleFormSchema = z
       .string()
       .trim()
       .regex(/^(\d+(\.\d+)?)?$/, "Token units, e.g. 0.5 (empty = no cap)"),
-    windows: z.array(
-      z.object({
-        windowSeconds: z
-          .string()
-          .trim()
-          .regex(/^[1-9]\d*$/, "Whole seconds, e.g. 86400 for a day")
-          .refine(
-            (value) =>
-              !/^\d+$/.test(value) || Number(value) <= MAX_WINDOW_SECONDS,
-            "At most 10 years (315360000 seconds)"
-          ),
-        maxAmount: tokenAmount,
-      })
-    ),
+    windows: z
+      .array(
+        z.object({
+          windowSeconds: z
+            .string()
+            .trim()
+            .regex(/^[1-9]\d*$/, "Whole seconds, e.g. 86400 for a day")
+            .refine(
+              (value) =>
+                !/^\d+$/.test(value) || Number(value) <= MAX_WINDOW_SECONDS,
+              "At most 10 years (315360000 seconds)"
+            ),
+          maxAmount: tokenAmount,
+        })
+      )
+      .max(MAX_WINDOWS, `At most ${MAX_WINDOWS} budgets`),
     network: z
       .string()
       .trim()

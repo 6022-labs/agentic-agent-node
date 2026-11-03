@@ -43,6 +43,7 @@ import {
   isZeroAmount,
   parseTokenAmount,
 } from "@/lib/token-format"
+import { normalizePattern } from "@/components/dashboard/payments/rule-form-errors"
 import {
   paymentReceiveRuleFormSchema,
   type PaymentReceiveRuleFormField,
@@ -442,10 +443,6 @@ export default function PaymentReceiveRuleForm({
   )
 }
 
-// normalizePattern lowercases a plain address, as the runtime matches lowercase.
-const normalizePattern = (pattern: string): string =>
-  isPlainAddressPattern(pattern) ? pattern.toLowerCase() : pattern
-
 // AddressPatternsEditor edits who pays one price: addresses or full-match regexes.
 function AddressPatternsEditor({
   patterns,
@@ -475,6 +472,7 @@ function AddressPatternsEditor({
         <div className="flex items-center gap-2">
           <Input
             className="font-mono text-xs"
+            aria-label="Payer address or regex"
             placeholder="0x… or a regex"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}

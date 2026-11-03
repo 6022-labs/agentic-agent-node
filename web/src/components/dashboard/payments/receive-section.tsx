@@ -29,6 +29,10 @@ import NotMintedState from "@/components/dashboard/not-minted-state"
 import PaymentReceiveRuleDialog from "@/components/dashboard/payments/dialogs/payment-receive-rule-dialog"
 import TokenCell from "@/components/dashboard/payments/token-cell"
 import {
+  isAssetTaken,
+  toFormField,
+} from "@/components/dashboard/payments/rule-form-errors"
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -82,22 +86,6 @@ const FORM_FIELDS: Array<keyof PaymentReceiveRuleFormSchemaType> = [
   "payTo",
   "prices",
 ]
-
-// toFormField maps a runtime error path ("config.asset", "prices[0].price") to a form control.
-const toFormField = (path: string): PaymentReceiveRuleFormField | null => {
-  const field = path.replace(/^config\./, "").replace(/\[(\d+)\]/g, ".$1")
-  const root = field.split(".")[0] as keyof PaymentReceiveRuleFormSchemaType
-  return FORM_FIELDS.includes(root)
-    ? (field as PaymentReceiveRuleFormField)
-    : null
-}
-
-// isAssetTaken reports the runtime's refusal of a second rule on one token.
-const isAssetTaken = (error: unknown): boolean =>
-  axios.isAxiosError(error) &&
-  error.response?.status === 409 &&
-  (error.response.data as { code?: string } | undefined)?.code ===
-    "asset_already_has_rule"
 
 const isNotMintedError = (error: unknown) =>
   axios.isAxiosError(error) &&
@@ -178,7 +166,10 @@ export default function PaymentReceivePolicySection() {
         }
         const validation = extractValidationError(error)
         if (validation) {
-          const field = toFormField(validation.field)
+          const field = toFormField<PaymentReceiveRuleFormField>(
+            validation.field,
+            FORM_FIELDS
+          )
           if (field) {
             return { error: { field, message: validation.message } }
           }
@@ -209,12 +200,18 @@ export default function PaymentReceivePolicySection() {
   }
 
   const onReset = async () => {
+    if (mutating) return
+    setMutating(true)
     try {
       await deletePaymentReceivePolicy()
       await load()
-      toast.success("Payment policy reset")
+      toast.success("Receive policy reset")
     } catch (error) {
-      toast.error(extractErrorMessage(error, "Failed to reset payment policy"))
+      toast.error(
+        extractErrorMessage(error, "Failed to reset the receive policy")
+      )
+    } finally {
+      setMutating(false)
     }
   }
 
@@ -299,9 +296,12 @@ export default function PaymentReceivePolicySection() {
                           asset={rule.asset}
                           badge={
                             hasUnsettleablePrice(rule) ? (
-                              <HoverHint content="No facilitator configured for this network — its paid prices can't be settled and aren't offered to callers; free prices still work.">
-                                <Badge variant="destructive">
-                                  <AlertTriangle />
+                              <HoverHint content="No facilitator on this network, so callers aren't offered its paid prices.">
+                                <Badge
+                                  variant="destructive"
+                                  aria-label="No facilitator on this network, so callers aren't offered its paid prices."
+                                >
+                                  <AlertTriangle aria-hidden />
                                 </Badge>
                               </HoverHint>
                             ) : null
@@ -354,7 +354,7 @@ export default function PaymentReceivePolicySection() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Remove pricing rule"
+                            aria-label={`Remove rule ${rule.name}`}
                             disabled={mutating}
                           >
                             <Trash2 />
@@ -377,7 +377,12 @@ export default function PaymentReceivePolicySection() {
             confirmLabel="Reset"
             onConfirm={onReset}
           >
-            <Button type="button" variant="destructive" size="sm">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={mutating}
+            >
               <Trash2 />
               Reset policy
             </Button>
@@ -409,7 +414,11 @@ function PricesCell({
       {visible.map((row) => (
         <div key={row.price} className="flex min-w-0 items-center gap-2">
           <PriceLabel price={row.price} token={token} settleable={settleable} />
-          <AudienceBadge patterns={row.addressPatterns} anyoneLabel="public" />
+          <AudienceBadge
+            patterns={row.addressPatterns}
+            anyoneLabel="public"
+            noun="callers"
+          />
         </div>
       ))}
       {hidden.length > 0 ? (
@@ -459,7 +468,7 @@ function PriceLabel({
     )
   }
   return (
-    <HoverHint content="No facilitator on this network, so this price can't be settled and isn't offered to callers.">
+    <HoverHint content="No facilitator on this network, so callers aren't offered this price.">
       <Badge variant="destructive">
         <AlertTriangle />
         {formatTokenAmount(price, token)}

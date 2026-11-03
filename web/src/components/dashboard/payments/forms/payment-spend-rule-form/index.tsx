@@ -29,6 +29,7 @@ import {
 } from "@/models/payment-spend-policy"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import type { Erc20Lookup } from "@/lib/erc20"
+import { useErc20Lookup } from "../../use-erc20-lookup"
 import { getAppConfig } from "@/configs/app-config"
 import {
   formatAtomicAmount,
@@ -38,6 +39,7 @@ import {
 } from "@/lib/token-format"
 import {
   ANY_TRANSFER_METHOD,
+  MAX_WINDOWS,
   paymentSpendRuleFormSchema,
   type PaymentSpendRuleFormField,
   type PaymentSpendRuleFormSchemaType,
@@ -62,13 +64,12 @@ const presetFor = (windowSeconds: string): string =>
     ? windowSeconds
     : CUSTOM_PERIOD
 
-// Keystroke filter: digits and a single dot only.
-const decimalOnly = (value: string): string =>
-  value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")
+// A comma is read as the decimal point; anything else is refused, never silently dropped.
+const TOKEN_AMOUNT = /^\d*\.?\d*$/
+const ATOMIC_AMOUNT = /^\d*$/
 
-// Non-zero amounts are atomic on the wire; they show once the token's decimals are known.
-const tokenUnitsPlaceholder = (amount: string | undefined): string =>
-  amount === undefined ? "" : amount === "0" ? "0" : ""
+// AmountMode is how amounts are typed: token units when the decimals are known, else atomic units.
+type AmountMode = "token" | "atomic"
 
 export default function PaymentSpendRuleForm({
   initialRule,
@@ -90,12 +91,11 @@ export default function PaymentSpendRuleForm({
     defaultValues: {
       name: initialRule?.name ?? "",
       method: initialRule?.method || X402_METHOD,
-      maxAmountPerPayment: tokenUnitsPlaceholder(
-        initialRule?.maxAmountPerPayment
-      ),
+      // Stored atomic values; converted to token units once the decimals load.
+      maxAmountPerPayment: initialRule?.maxAmountPerPayment ?? "",
       windows: (initialRule?.windows ?? []).map((window) => ({
         windowSeconds: String(window.windowSeconds),
-        maxAmount: tokenUnitsPlaceholder(window.maxAmount),
+        maxAmount: window.maxAmount,
       })),
       network: initialRule?.network ?? networkOptions[0] ?? "",
       asset: initialRule?.asset ?? "",
@@ -115,28 +115,78 @@ export default function PaymentSpendRuleForm({
 
   const tokenInfo = tokenLookup.status === "found" ? tokenLookup.info : null
 
-  // Editing: atomic amounts become token units once the token's decimals load.
-  const amountsInitialized = React.useRef(false)
+  // Amounts wait for a settled lookup; the mode then stays fixed until every amount is cleared.
+  const [lockedMode, setLockedMode] = React.useState<AmountMode | null>(null)
+  // An edited rule holds raw atomic values until its stored amounts are converted.
+  const [initDone, setInitDone] = React.useState(!initialRule)
+  const mode: AmountMode = !initDone
+    ? "atomic"
+    : (lockedMode ?? (tokenInfo ? "token" : "atomic"))
+  const lookupSettled =
+    tokenLookup.status !== "idle" && tokenLookup.status !== "loading"
+
+  // Stored amounts convert with the rule's own token, whatever is typed in the token field meanwhile.
+  const storedLookup = useErc20Lookup(initialRule?.network, initialRule?.asset)
+  const initialized = React.useRef(false)
   React.useEffect(() => {
-    if (initialRule && tokenInfo && !amountsInitialized.current) {
-      amountsInitialized.current = true
+    if (!initialRule || initialized.current) return
+    if (storedLookup.status === "idle" || storedLookup.status === "loading") {
+      return
+    }
+    initialized.current = true
+    const storedInfo =
+      storedLookup.status === "found" ? storedLookup.info : null
+    if (storedInfo) {
       const cap = initialRule.maxAmountPerPayment
-      if (cap !== undefined && cap !== "0") {
+      if (cap !== undefined) {
         form.setValue(
           "maxAmountPerPayment",
-          formatAtomicAmount(cap, tokenInfo.decimals)
+          formatAtomicAmount(cap, storedInfo.decimals)
         )
       }
       initialRule.windows.forEach((window, index) => {
-        if (window.maxAmount !== "0") {
-          form.setValue(
-            `windows.${index}.maxAmount`,
-            formatAtomicAmount(window.maxAmount, tokenInfo.decimals)
-          )
-        }
+        form.setValue(
+          `windows.${index}.maxAmount`,
+          formatAtomicAmount(window.maxAmount, storedInfo.decimals)
+        )
       })
     }
-  }, [initialRule, tokenInfo, form])
+    setLockedMode(storedInfo ? "token" : "atomic")
+    setInitDone(true)
+  }, [initialRule, storedLookup, form])
+
+  // Clearing every amount lets the mode follow the lookup again, so a token change never gets stuck.
+  const amountsEmpty =
+    (cap ?? "").trim().length === 0 &&
+    (windows ?? []).every(
+      (window) => (window?.maxAmount ?? "").trim().length === 0
+    )
+  React.useEffect(() => {
+    if (amountsEmpty && lockedMode !== null) {
+      setLockedMode(null)
+    }
+  }, [amountsEmpty, lockedMode])
+
+  const onAmountChange = (
+    field: PaymentSpendRuleFormField,
+    onChange: (value: string) => void,
+    value: string
+  ) => {
+    const normalized = mode === "token" ? value.replace(/,/g, ".") : value
+    if (!(mode === "token" ? TOKEN_AMOUNT : ATOMIC_AMOUNT).test(normalized)) {
+      form.setError(field, {
+        type: "manual",
+        message:
+          mode === "token"
+            ? "Digits and one decimal point only"
+            : "Digits only",
+      })
+      return
+    }
+    form.clearErrors(field)
+    if (lockedMode === null) setLockedMode(mode)
+    onChange(normalized)
+  }
 
   // Custom mode is per row, not derived from the value, so typing 3600 does not snap to "Hour".
   const [customRows, setCustomRows] = React.useState<Record<string, boolean>>(
@@ -155,27 +205,52 @@ export default function PaymentSpendRuleForm({
     })
   }
 
-  // toAtomic converts one token-unit amount, or sets the field's error and returns null.
+  // An unchanged token falls back to its stored decimals, so a failed live lookup never blocks saving.
+  const conversionInfo = (): typeof tokenInfo => {
+    if (tokenInfo) return tokenInfo
+    const { network, asset } = form.getValues()
+    const sameToken =
+      initialRule !== undefined &&
+      network === initialRule.network &&
+      asset.trim().toLowerCase() === initialRule.asset.toLowerCase()
+    return sameToken && storedLookup.status === "found"
+      ? storedLookup.info
+      : null
+  }
+
+  // toAtomic converts one typed amount to atomic units, or sets the field's error and returns null.
   const toAtomic = (
     field: PaymentSpendRuleFormField,
     amount: string
   ): string | null => {
-    if (isZeroAmount(amount)) return "0"
-    if (!tokenInfo) {
-      form.setError(field, {
-        type: "manual",
-        message:
-          "Resolve the token contract first — its decimals are needed to convert the amount",
-      })
-      return null
-    }
-    const parsed = parseTokenAmount(amount, tokenInfo.decimals)
-    if (!parsed) {
-      form.setError(field, {
-        type: "manual",
-        message: `Too many decimal places for $${tokenInfo.symbol} (max ${tokenInfo.decimals})`,
-      })
-      return null
+    const info = conversionInfo()
+    let parsed: string | null
+    if (mode === "atomic") {
+      if (!/^\d+$/.test(amount)) {
+        form.setError(field, {
+          type: "manual",
+          message: "Whole atomic units only",
+        })
+        return null
+      }
+      parsed = BigInt(amount).toString()
+    } else {
+      if (!info) {
+        form.setError(field, {
+          type: "manual",
+          message:
+            "The token's decimals are unknown; clear the amounts to enter atomic units",
+        })
+        return null
+      }
+      parsed = parseTokenAmount(amount, info.decimals)
+      if (!parsed) {
+        form.setError(field, {
+          type: "manual",
+          message: `Too many decimal places for $${info.symbol} (max ${info.decimals})`,
+        })
+        return null
+      }
     }
     if (BigInt(parsed) > BigInt(UNBOUNDED_MAX_AMOUNT)) {
       form.setError(field, {
@@ -189,22 +264,7 @@ export default function PaymentSpendRuleForm({
 
   // No reset: success unmounts the form, failure keeps values for a retry. Amounts go out in atomic units.
   const onSubmit = async (values: PaymentSpendRuleFormSchemaType) => {
-    // An unconverted edit would save the shown placeholders over the stored amounts.
-    if (initialRule && !tokenInfo && !amountsInitialized.current) {
-      const storedAmounts = [
-        initialRule.maxAmountPerPayment,
-        ...initialRule.windows.map((window) => window.maxAmount),
-      ]
-      if (storedAmounts.some((amount) => amount && amount !== "0")) {
-        form.setError("asset", {
-          type: "manual",
-          message:
-            "The token's decimals are needed to show this rule's amounts — check the contract",
-        })
-        return
-      }
-    }
-
+    if (!initDone) return
     let atomicCap = ""
     if (values.maxAmountPerPayment.length > 0) {
       const converted = toAtomic(
@@ -244,16 +304,31 @@ export default function PaymentSpendRuleForm({
     }
   }
 
-  // amountHint tells what a token-unit amount means once converted.
+  // amountHint tells what a typed amount means once converted.
   const amountHint = (amount: string, empty: string): string => {
+    if (!lookupSettled) {
+      return tokenLookup.status === "loading"
+        ? "Looking up the token…"
+        : "Enter the token contract first."
+    }
     if (amount.trim().length === 0) return empty
     if (isZeroAmount(amount)) return "0 refuses anything priced."
-    if (!tokenInfo) return "In token units, converted on save."
+    if (mode === "atomic") return "Atomic units (token decimals unknown)"
+    if (!tokenInfo) {
+      return "The token's decimals are unknown; clear the amounts to enter atomic units."
+    }
     const atomic = parseTokenAmount(amount, tokenInfo.decimals)
     return atomic
       ? `${atomic} atomic units`
       : `Up to ${tokenInfo.decimals} decimal places`
   }
+
+  const unitsLabel =
+    mode === "atomic"
+      ? " (atomic units)"
+      : tokenInfo
+        ? ` ($${tokenInfo.symbol})`
+        : ""
 
   return (
     <Form {...form}>
@@ -355,6 +430,12 @@ export default function PaymentSpendRuleForm({
                     {tokenInfo.decimals} decimals
                   </p>
                 ) : null}
+                {tokenLookup.status === "timeout" ? (
+                  <p className="flex items-center gap-1 text-sm text-destructive">
+                    <CircleX className="size-3.5" />
+                    Token lookup timed out.
+                  </p>
+                ) : null}
                 {tokenLookup.status === "not-found" ? (
                   <p className="flex items-center gap-1 text-sm text-destructive">
                     <CircleX className="size-3.5" />
@@ -363,7 +444,7 @@ export default function PaymentSpendRuleForm({
                 ) : null}
                 {tokenLookup.status === "unsupported" ? (
                   <FormDescription>
-                    No token lookup on this network: only 0 amounts.
+                    No token lookup on this network; enter atomic units.
                   </FormDescription>
                 ) : null}
                 <FormMessage />
@@ -399,16 +480,19 @@ export default function PaymentSpendRuleForm({
             name="maxAmountPerPayment"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Cap per payment{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
-                </FormLabel>
+                <FormLabel>Cap per payment{unitsLabel}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Optional"
-                    inputMode="decimal"
+                    inputMode={mode === "token" ? "decimal" : "numeric"}
                     {...field}
+                    disabled={!lookupSettled || !initDone}
                     onChange={(event) =>
-                      field.onChange(decimalOnly(event.target.value))
+                      onAmountChange(
+                        "maxAmountPerPayment",
+                        field.onChange,
+                        event.target.value
+                      )
                     }
                   />
                 </FormControl>
@@ -421,9 +505,7 @@ export default function PaymentSpendRuleForm({
           />
         </div>
         <div className="space-y-2">
-          <FormLabel>
-            Recurring budgets{tokenInfo ? ` ($${tokenInfo.symbol})` : ""}
-          </FormLabel>
+          <p className="text-sm font-medium">Recurring budgets{unitsLabel}</p>
           {windowRows.fields.map((row, index) => (
             <div
               key={row.id}
@@ -464,10 +546,14 @@ export default function PaymentSpendRuleForm({
                         <SelectItem value={CUSTOM_PERIOD}>Custom</SelectItem>
                       </SelectContent>
                     </Select>
+                    {/* Outside FormControl: the select trigger already owns the item's id. */}
                     {isCustomRow(row.id, field.value) ? (
-                      <FormControl>
-                        <Input placeholder="Seconds" {...field} />
-                      </FormControl>
+                      <Input
+                        id={`${row.id}-seconds`}
+                        aria-label="Period in seconds"
+                        placeholder="Seconds"
+                        {...field}
+                      />
                     ) : null}
                     <FormMessage />
                   </FormItem>
@@ -482,10 +568,15 @@ export default function PaymentSpendRuleForm({
                     <FormControl>
                       <Input
                         placeholder="10"
-                        inputMode="decimal"
+                        inputMode={mode === "token" ? "decimal" : "numeric"}
                         {...field}
+                        disabled={!lookupSettled || !initDone}
                         onChange={(event) =>
-                          field.onChange(decimalOnly(event.target.value))
+                          onAmountChange(
+                            `windows.${index}.maxAmount`,
+                            field.onChange,
+                            event.target.value
+                          )
                         }
                       />
                     </FormControl>
@@ -508,7 +599,13 @@ export default function PaymentSpendRuleForm({
               </Button>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={addWindow}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={windowRows.fields.length >= MAX_WINDOWS}
+            onClick={addWindow}
+          >
             <Plus />
             Add window
           </Button>
