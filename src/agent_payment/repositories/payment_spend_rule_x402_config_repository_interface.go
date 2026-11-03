@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/google/uuid"
 )
 
@@ -13,9 +14,11 @@ type PaymentSpendRuleX402ConfigRepositoryInterface interface {
 	// Upsert replaces the rule's x402 token.
 	Upsert(ctx context.Context, config *models.PaymentSpendRuleX402Config) error
 	// GetByRuleId returns the rule's token, or (nil, nil) if none exists.
-	GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error)
-	// GetByRuleIdForUpdate is GetByRuleId holding the row until the scope ends.
-	GetByRuleIdForUpdate(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error)
+	GetByRuleId(
+		ctx context.Context,
+		ruleId uuid.UUID,
+		options ...runtime_common_repositories.ReadOption,
+	) (*models.PaymentSpendRuleX402Config, error)
 	// GetByPolicyIdAndAsset returns the policy's config for that exact network and lowercased asset, or (nil, nil).
 	GetByPolicyIdAndAsset(
 		ctx context.Context,

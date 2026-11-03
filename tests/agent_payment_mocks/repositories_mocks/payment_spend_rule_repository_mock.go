@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -72,33 +73,23 @@ func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) DeleteById(ctx, i
 }
 
 // GetById mocks base method.
-func (m *MockPaymentSpendRuleRepositoryInterface) GetById(ctx context.Context, id uuid.UUID) (*models.PaymentSpendRule, error) {
+func (m *MockPaymentSpendRuleRepositoryInterface) GetById(ctx context.Context, id uuid.UUID, options ...repositories.ReadOption) (*models.PaymentSpendRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetById", ctx, id)
+	varargs := []any{ctx, id}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetById", varargs...)
 	ret0, _ := ret[0].(*models.PaymentSpendRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetById indicates an expected call of GetById.
-func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) GetById(ctx, id any) *gomock.Call {
+func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) GetById(ctx, id any, options ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockPaymentSpendRuleRepositoryInterface)(nil).GetById), ctx, id)
-}
-
-// GetByIdForUpdate mocks base method.
-func (m *MockPaymentSpendRuleRepositoryInterface) GetByIdForUpdate(ctx context.Context, id uuid.UUID) (*models.PaymentSpendRule, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByIdForUpdate", ctx, id)
-	ret0, _ := ret[0].(*models.PaymentSpendRule)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByIdForUpdate indicates an expected call of GetByIdForUpdate.
-func (mr *MockPaymentSpendRuleRepositoryInterfaceMockRecorder) GetByIdForUpdate(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIdForUpdate", reflect.TypeOf((*MockPaymentSpendRuleRepositoryInterface)(nil).GetByIdForUpdate), ctx, id)
+	varargs := append([]any{ctx, id}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockPaymentSpendRuleRepositoryInterface)(nil).GetById), varargs...)
 }
 
 // ListByPolicyId mocks base method.

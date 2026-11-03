@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -268,7 +269,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
+				GetById(suite.unitOfWorkCtx, config.PaymentSpendRuleId, runtime_common_repositories.ToLock).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
@@ -301,7 +302,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, config.PaymentSpendRuleId).
+				GetById(suite.unitOfWorkCtx, config.PaymentSpendRuleId, runtime_common_repositories.ToLock).
 				Return(nil, nil).
 				Times(1)
 		}
@@ -340,7 +341,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 		}
@@ -378,11 +379,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
@@ -419,11 +420,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(nil, nil).
 				Times(1)
 		}
@@ -466,11 +467,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(moved, nil).
 				Times(1)
 		}
@@ -509,11 +510,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 		}
@@ -554,11 +555,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 		}
@@ -598,11 +599,11 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 		}
@@ -640,15 +641,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
@@ -689,15 +690,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}
@@ -744,15 +745,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*roomyWindow, *tightWindow}, nil).
 				Times(1)
 		}
@@ -797,15 +798,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}
@@ -844,15 +845,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -893,15 +894,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(assert.AnError).Times(1)
@@ -942,15 +943,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
@@ -993,15 +994,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*dailyWindow, *weeklyWindow}, nil).
 				Times(1)
 		}
@@ -1098,15 +1099,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}
@@ -1172,15 +1173,15 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleRepository.EXPECT().
-				GetByIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetById(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(rule, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleX402ConfigRepository.EXPECT().
-				GetByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				GetByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return(config, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}

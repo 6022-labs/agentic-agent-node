@@ -11,6 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/google/uuid"
 )
@@ -99,7 +100,7 @@ func (u *UpdatePaymentSpendRule) replaceWindows(
 	sameAsset bool,
 ) ([]models.PaymentSpendRuleWindow, error) {
 	// Locked so a payment recording spend meanwhile is not overwritten by the stale row.
-	existing, err := u.paymentSpendRuleWindowRepository.ListByRuleIdForUpdate(ctx, ruleId)
+	existing, err := u.paymentSpendRuleWindowRepository.ListByRuleId(ctx, ruleId, runtime_common_repositories.ToLock)
 	if err != nil {
 		return nil, err
 	}

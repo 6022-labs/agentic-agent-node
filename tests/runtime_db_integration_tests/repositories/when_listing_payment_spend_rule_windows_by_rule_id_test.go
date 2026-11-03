@@ -2,11 +2,16 @@ package repositories_test
 
 import (
 	"context"
+	"math/big"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
+	runtime_db_services "github.com/6022-labs/agentic-agent-node/src/runtime_db/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
@@ -22,6 +27,7 @@ type WhenListingPaymentSpendRuleWindowsByRuleIdTestingSuite struct {
 	dbClient                 *runtime_db.DatabaseClient
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	sut                      *repositories.PaymentSpendRuleWindowRepository
+	unitOfWorkFactory        *runtime_db_services.UnitOfWorkFactory
 	rule                     *models.PaymentSpendRule
 }
 
@@ -67,6 +73,7 @@ func WhenListingPaymentSpendRuleWindowsByRuleIdBeforeEach(
 		dbClient:                 dbClient,
 		databaseContainerBuilder: databaseContainerBuilder,
 		sut:                      repositories.NewPaymentSpendRuleWindowRepository(dbClient),
+		unitOfWorkFactory:        runtime_db_services.NewUnitOfWorkFactory(dbClient),
 		rule:                     rule,
 	}
 }
@@ -127,6 +134,72 @@ func TestWhenListingPaymentSpendRuleWindowsByRuleId(t *testing.T) {
 					if assert.Len(t, windows, 2) {
 						assert.Equal(t, 3600, windows[0].WindowSeconds)
 						assert.Equal(t, 604800, windows[1].WindowSeconds)
+					}
+				})
+			})
+
+			t.Run("Given concurrent scopes read the windows to lock", func(t *testing.T) {
+				t.Parallel()
+
+				// The locked read is what stops both readers seeing the same empty period.
+				t.Run("Should let through only what the budget funds", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenListingPaymentSpendRuleWindowsByRuleIdBeforeEach(tc)
+					defer WhenListingPaymentSpendRuleWindowsByRuleIdAfterEach(suite)
+
+					budgeted, err := suite.sut.Create(context.Background(),
+						model_builders.NewPaymentSpendRuleWindowBuilder().
+							WithPaymentSpendRuleId(suite.rule.Id).
+							WithMaxAmount("300").
+							Build())
+					assert.NoError(t, err)
+
+					const racers = 8
+					results := make([]bool, racers)
+					var waitGroup sync.WaitGroup
+					waitGroup.Add(racers)
+					for i := range racers {
+						go func(index int) {
+							defer waitGroup.Done()
+
+							unitOfWork, err := suite.unitOfWorkFactory.Start(context.Background())
+							assert.NoError(t, err)
+							defer func() { _ = unitOfWork.Rollback() }()
+
+							locked, err := suite.sut.ListByRuleId(
+								unitOfWork.Context(),
+								suite.rule.Id,
+								runtime_common_repositories.ToLock,
+							)
+							assert.NoError(t, err)
+
+							recorded, err := locked[0].RecordSpend(big.NewInt(100), time.Now())
+							assert.NoError(t, err)
+							if !recorded {
+								return
+							}
+							_, err = suite.sut.Update(unitOfWork.Context(), &locked[0])
+							assert.NoError(t, err)
+							assert.NoError(t, unitOfWork.Commit())
+							results[index] = true
+						}(i)
+					}
+					waitGroup.Wait()
+
+					granted := 0
+					for _, allowed := range results {
+						if allowed {
+							granted++
+						}
+					}
+
+					assert.Equal(t, 3, granted, "a budget of 300 must fund exactly three payments of 100")
+
+					stored, err := suite.sut.ListByRuleId(context.Background(), suite.rule.Id)
+					assert.NoError(t, err)
+					if assert.Len(t, stored, 1) {
+						assert.Equal(t, budgeted.Id, stored[0].Id)
+						assert.Equal(t, "300", stored[0].Spent)
 					}
 				})
 			})

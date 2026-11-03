@@ -3,9 +3,11 @@ package runtime_db
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/utils"
 	"github.com/ncruces/go-sqlite3/gormlite"
@@ -80,21 +82,18 @@ func (c *DatabaseClient) Use(plugin gorm.Plugin) error {
 }
 
 // GetDB returns the transaction the context carries, or the pooled connection.
-func (c *DatabaseClient) GetDB(ctx context.Context) *gorm.DB {
+func (c *DatabaseClient) GetDB(ctx context.Context, options ...runtime_common_repositories.ReadOption) *gorm.DB {
 	if transaction, ok := c.TransactionFrom(ctx); ok {
 		if tx, open := transaction.open(); open {
-			return tx.WithContext(ctx)
+			db := tx.WithContext(ctx)
+			// sqlite has no row locks; its one-connection cap serializes scopes instead.
+			if slices.Contains(options, runtime_common_repositories.ToLock) && c.driver != enums.DatabaseDriverSqlite {
+				db = db.Clauses(clause.Locking{Strength: "UPDATE"})
+			}
+			return db
 		}
 	}
 	return c.db.WithContext(ctx)
-}
-
-// GetDBForUpdate is GetDB with its rows locked; sqlite has no row locks, so the one-connection cap serializes instead.
-func (c *DatabaseClient) GetDBForUpdate(ctx context.Context) *gorm.DB {
-	if c.driver == enums.DatabaseDriverSqlite {
-		return c.GetDB(ctx)
-	}
-	return c.GetDB(ctx).Clauses(clause.Locking{Strength: "UPDATE"})
 }
 
 func (c *DatabaseClient) GetDriver() enums.DatabaseDriver {

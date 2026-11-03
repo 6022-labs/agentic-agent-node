@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -386,7 +387,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return(nil, assert.AnError).
 				Times(1)
 			return rule
@@ -426,7 +427,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -471,7 +472,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*daily}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -519,7 +520,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*dropped}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -569,7 +570,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -624,7 +625,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Times(1)
 			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, rule.Id).
+				ListByRuleId(suite.unitOfWorkCtx, rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*daily, *hourly}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
@@ -844,7 +845,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*daily}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
@@ -886,7 +887,7 @@ func TestWhenUpdatingPaymentSpendRule(t *testing.T) {
 				Return(nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(gomock.Any(), rule.Id).
+				ListByRuleId(gomock.Any(), rule.Id, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().

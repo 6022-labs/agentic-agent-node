@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -46,25 +47,10 @@ func (r *PaymentSpendRuleX402ConfigRepository) Upsert(
 func (r *PaymentSpendRuleX402ConfigRepository) GetByRuleId(
 	ctx context.Context,
 	ruleId uuid.UUID,
+	options ...runtime_common_repositories.ReadOption,
 ) (*models.PaymentSpendRuleX402Config, error) {
 	var entity models.PaymentSpendRuleX402Config
-	err := r.client.GetDB(ctx).First(&entity, "payment_spend_rule_id = ?", ruleId).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &entity, nil
-}
-
-func (r *PaymentSpendRuleX402ConfigRepository) GetByRuleIdForUpdate(
-	ctx context.Context,
-	ruleId uuid.UUID,
-) (*models.PaymentSpendRuleX402Config, error) {
-	query := r.client.GetDBForUpdate(ctx)
-	var entity models.PaymentSpendRuleX402Config
-	err := query.First(&entity, "payment_spend_rule_id = ?", ruleId).Error
+	err := r.client.GetDB(ctx, options...).First(&entity, "payment_spend_rule_id = ?", ruleId).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

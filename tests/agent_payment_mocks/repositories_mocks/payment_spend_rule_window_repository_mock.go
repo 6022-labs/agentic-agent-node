@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -72,33 +73,23 @@ func (mr *MockPaymentSpendRuleWindowRepositoryInterfaceMockRecorder) DeleteById(
 }
 
 // ListByRuleId mocks base method.
-func (m *MockPaymentSpendRuleWindowRepositoryInterface) ListByRuleId(ctx context.Context, ruleId uuid.UUID) ([]models.PaymentSpendRuleWindow, error) {
+func (m *MockPaymentSpendRuleWindowRepositoryInterface) ListByRuleId(ctx context.Context, ruleId uuid.UUID, options ...repositories.ReadOption) ([]models.PaymentSpendRuleWindow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByRuleId", ctx, ruleId)
+	varargs := []any{ctx, ruleId}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListByRuleId", varargs...)
 	ret0, _ := ret[0].([]models.PaymentSpendRuleWindow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListByRuleId indicates an expected call of ListByRuleId.
-func (mr *MockPaymentSpendRuleWindowRepositoryInterfaceMockRecorder) ListByRuleId(ctx, ruleId any) *gomock.Call {
+func (mr *MockPaymentSpendRuleWindowRepositoryInterfaceMockRecorder) ListByRuleId(ctx, ruleId any, options ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByRuleId", reflect.TypeOf((*MockPaymentSpendRuleWindowRepositoryInterface)(nil).ListByRuleId), ctx, ruleId)
-}
-
-// ListByRuleIdForUpdate mocks base method.
-func (m *MockPaymentSpendRuleWindowRepositoryInterface) ListByRuleIdForUpdate(ctx context.Context, ruleId uuid.UUID) ([]models.PaymentSpendRuleWindow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByRuleIdForUpdate", ctx, ruleId)
-	ret0, _ := ret[0].([]models.PaymentSpendRuleWindow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListByRuleIdForUpdate indicates an expected call of ListByRuleIdForUpdate.
-func (mr *MockPaymentSpendRuleWindowRepositoryInterfaceMockRecorder) ListByRuleIdForUpdate(ctx, ruleId any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByRuleIdForUpdate", reflect.TypeOf((*MockPaymentSpendRuleWindowRepositoryInterface)(nil).ListByRuleIdForUpdate), ctx, ruleId)
+	varargs := append([]any{ctx, ruleId}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByRuleId", reflect.TypeOf((*MockPaymentSpendRuleWindowRepositoryInterface)(nil).ListByRuleId), varargs...)
 }
 
 // Update mocks base method.

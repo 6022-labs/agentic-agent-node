@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
+	runtime_db_services "github.com/6022-labs/agentic-agent-node/src/runtime_db/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
@@ -22,6 +24,7 @@ type WhenGettingPaymentSpendRuleX402ConfigByRuleIdTestingSuite struct {
 	dbClient                   *runtime_db.DatabaseClient
 	databaseContainerBuilder   container_builders.DatabaseContainerBuilderInterface
 	sut                        *repositories.PaymentSpendRuleX402ConfigRepository
+	unitOfWorkFactory          *runtime_db_services.UnitOfWorkFactory
 	paymentSpendRuleRepository *repositories.PaymentSpendRuleRepository
 	rule                       *models.PaymentSpendRule
 }
@@ -69,6 +72,7 @@ func WhenGettingPaymentSpendRuleX402ConfigByRuleIdBeforeEach(
 		dbClient:                   dbClient,
 		databaseContainerBuilder:   databaseContainerBuilder,
 		sut:                        repositories.NewPaymentSpendRuleX402ConfigRepository(dbClient),
+		unitOfWorkFactory:          runtime_db_services.NewUnitOfWorkFactory(dbClient),
 		paymentSpendRuleRepository: paymentSpendRuleRepository,
 		rule:                       rule,
 	}
@@ -125,6 +129,35 @@ func TestWhenGettingPaymentSpendRuleX402ConfigByRuleId(t *testing.T) {
 
 					assert.NoError(t, err)
 					assert.Nil(t, stored)
+				})
+			})
+
+			t.Run("Given the config is read to lock inside a unit of work", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should return it", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenGettingPaymentSpendRuleX402ConfigByRuleIdBeforeEach(tc)
+					defer WhenGettingPaymentSpendRuleX402ConfigByRuleIdAfterEach(suite)
+
+					config := model_builders.NewPaymentSpendRuleX402ConfigBuilder().
+						WithPaymentSpendRuleId(suite.rule.Id).
+						Build()
+					assert.NoError(t, suite.sut.Upsert(context.Background(), config))
+					unitOfWork, err := suite.unitOfWorkFactory.Start(context.Background())
+					assert.NoError(t, err)
+					defer func() { _ = unitOfWork.Rollback() }()
+
+					stored, err := suite.sut.GetByRuleId(
+						unitOfWork.Context(),
+						suite.rule.Id,
+						runtime_common_repositories.ToLock,
+					)
+
+					assert.NoError(t, err)
+					if assert.NotNil(t, stored) {
+						assert.Equal(t, config.Asset, stored.Asset)
+					}
 				})
 			})
 		})

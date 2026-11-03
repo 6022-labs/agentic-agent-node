@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -58,33 +59,23 @@ func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByPo
 }
 
 // GetByRuleId mocks base method.
-func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error) {
+func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByRuleId(ctx context.Context, ruleId uuid.UUID, options ...repositories.ReadOption) (*models.PaymentSpendRuleX402Config, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByRuleId", ctx, ruleId)
+	varargs := []any{ctx, ruleId}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetByRuleId", varargs...)
 	ret0, _ := ret[0].(*models.PaymentSpendRuleX402Config)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByRuleId indicates an expected call of GetByRuleId.
-func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByRuleId(ctx, ruleId any) *gomock.Call {
+func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByRuleId(ctx, ruleId any, options ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRuleId", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByRuleId), ctx, ruleId)
-}
-
-// GetByRuleIdForUpdate mocks base method.
-func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByRuleIdForUpdate(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByRuleIdForUpdate", ctx, ruleId)
-	ret0, _ := ret[0].(*models.PaymentSpendRuleX402Config)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByRuleIdForUpdate indicates an expected call of GetByRuleIdForUpdate.
-func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByRuleIdForUpdate(ctx, ruleId any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRuleIdForUpdate", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByRuleIdForUpdate), ctx, ruleId)
+	varargs := append([]any{ctx, ruleId}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRuleId", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByRuleId), varargs...)
 }
 
 // Upsert mocks base method.

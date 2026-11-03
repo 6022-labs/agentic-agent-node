@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/google/uuid"
 )
@@ -19,27 +20,15 @@ func NewPaymentSpendRuleWindowRepository(client *runtime_db.DatabaseClient) *Pay
 func (r *PaymentSpendRuleWindowRepository) ListByRuleId(
 	ctx context.Context,
 	ruleId uuid.UUID,
+	options ...runtime_common_repositories.ReadOption,
 ) ([]models.PaymentSpendRuleWindow, error) {
 	windows := []models.PaymentSpendRuleWindow{}
-	err := r.client.GetDB(ctx).
+	err := r.client.GetDB(ctx, options...).
 		Where("payment_spend_rule_id = ?", ruleId).
 		Order("window_seconds ASC").
 		Find(&windows).
 		Error
 	if err != nil {
-		return nil, err
-	}
-	return windows, nil
-}
-
-func (r *PaymentSpendRuleWindowRepository) ListByRuleIdForUpdate(
-	ctx context.Context,
-	ruleId uuid.UUID,
-) ([]models.PaymentSpendRuleWindow, error) {
-	query := r.client.GetDBForUpdate(ctx).Where("payment_spend_rule_id = ?", ruleId).Order("window_seconds ASC")
-
-	windows := []models.PaymentSpendRuleWindow{}
-	if err := query.Find(&windows).Error; err != nil {
 		return nil, err
 	}
 	return windows, nil

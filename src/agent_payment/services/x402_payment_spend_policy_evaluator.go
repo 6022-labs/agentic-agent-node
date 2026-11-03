@@ -12,6 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"github.com/google/uuid"
 )
@@ -100,7 +101,11 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
-	windows, err := e.paymentSpendRuleWindowRepository.ListByRuleIdForUpdate(unitOfWork.Context(), reservation.RuleId)
+	windows, err := e.paymentSpendRuleWindowRepository.ListByRuleId(
+		unitOfWork.Context(),
+		reservation.RuleId,
+		runtime_common_repositories.ToLock,
+	)
 	if err != nil {
 		return errors.NewInternalError("spend_policy_failed", err.Error())
 	}
@@ -141,14 +146,14 @@ func (e *X402PaymentSpendPolicyEvaluator) recordSpend(
 	}
 
 	// Locked in the order rule updates take them (rule, token, windows), so an edit is read once committed.
-	rule, err := e.paymentSpendRuleRepository.GetByIdForUpdate(ctx, found.PaymentSpendRuleId)
+	rule, err := e.paymentSpendRuleRepository.GetById(ctx, found.PaymentSpendRuleId, runtime_common_repositories.ToLock)
 	if err != nil {
 		return nil, err
 	}
 	if rule == nil || rule.Method != enums.PaymentMethodX402 {
 		return nil, e.noRule()
 	}
-	config, err := e.paymentSpendRuleX402ConfigRepository.GetByRuleIdForUpdate(ctx, rule.Id)
+	config, err := e.paymentSpendRuleX402ConfigRepository.GetByRuleId(ctx, rule.Id, runtime_common_repositories.ToLock)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +174,7 @@ func (e *X402PaymentSpendPolicyEvaluator) recordSpend(
 		return nil, errors.NewUnauthorizedError("spend_cap_exceeded", "the amount exceeds the rule's cap per payment")
 	}
 
-	windows, err := e.paymentSpendRuleWindowRepository.ListByRuleIdForUpdate(ctx, rule.Id)
+	windows, err := e.paymentSpendRuleWindowRepository.ListByRuleId(ctx, rule.Id, runtime_common_repositories.ToLock)
 	if err != nil {
 		return nil, err
 	}

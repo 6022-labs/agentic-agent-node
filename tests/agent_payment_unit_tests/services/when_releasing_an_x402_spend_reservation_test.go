@@ -10,6 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	payment_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_payment/services/interfaces"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
+	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -128,7 +129,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return(nil, assert.AnError).
 				Times(1)
 		}
@@ -164,7 +165,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 		}
@@ -200,7 +201,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -240,7 +241,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
@@ -290,7 +291,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*chargedWindow, *rolledWindow}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
@@ -349,7 +350,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*dailyWindow, *weeklyWindow, *uncharged}, nil).
 				Times(1)
 			suite.mockUnitOfWork.EXPECT().Commit().Return(nil).Times(1)
@@ -395,7 +396,7 @@ func TestWhenReleasingAnX402SpendReservation(t *testing.T) {
 		initSuite := func(suite *WhenReleasingAnX402SpendReservationTestingSuite) {
 			suite.mockUnitOfWorkFactory.EXPECT().Start(detached).Return(suite.mockUnitOfWork, nil).Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
-				ListByRuleIdForUpdate(suite.unitOfWorkCtx, ruleId).
+				ListByRuleId(suite.unitOfWorkCtx, ruleId, runtime_common_repositories.ToLock).
 				Return([]models.PaymentSpendRuleWindow{*window}, nil).
 				Times(1)
 			suite.mockPaymentSpendRuleWindowRepository.EXPECT().
