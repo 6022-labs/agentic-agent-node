@@ -201,6 +201,7 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 							WithAsset(spentAsset).
 							Build())
 
+					// Drivers word the unique violation differently, so the proof is the other rule's row left intact.
 					assert.Error(t, err)
 					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
 					assert.NoError(t, getErr)
@@ -244,6 +245,7 @@ func TestWhenUpsertingPaymentSpendRuleX402Config(t *testing.T) {
 							WithAsset(spentAsset).
 							Build())
 
+					// Drivers word the unique violation differently, so the proof is the other rule's row left intact.
 					assert.Error(t, err)
 					stored, getErr := suite.sut.GetByRuleId(context.Background(), other.Id)
 					assert.NoError(t, getErr)

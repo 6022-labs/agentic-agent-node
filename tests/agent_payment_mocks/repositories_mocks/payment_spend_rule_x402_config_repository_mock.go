@@ -72,6 +72,21 @@ func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByRu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRuleId", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByRuleId), ctx, ruleId)
 }
 
+// GetByRuleIdForUpdate mocks base method.
+func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) GetByRuleIdForUpdate(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByRuleIdForUpdate", ctx, ruleId)
+	ret0, _ := ret[0].(*models.PaymentSpendRuleX402Config)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByRuleIdForUpdate indicates an expected call of GetByRuleIdForUpdate.
+func (mr *MockPaymentSpendRuleX402ConfigRepositoryInterfaceMockRecorder) GetByRuleIdForUpdate(ctx, ruleId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRuleIdForUpdate", reflect.TypeOf((*MockPaymentSpendRuleX402ConfigRepositoryInterface)(nil).GetByRuleIdForUpdate), ctx, ruleId)
+}
+
 // Upsert mocks base method.
 func (m *MockPaymentSpendRuleX402ConfigRepositoryInterface) Upsert(ctx context.Context, config *models.PaymentSpendRuleX402Config) error {
 	m.ctrl.T.Helper()

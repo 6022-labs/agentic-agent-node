@@ -14,6 +14,8 @@ type PaymentSpendRuleX402ConfigRepositoryInterface interface {
 	Upsert(ctx context.Context, config *models.PaymentSpendRuleX402Config) error
 	// GetByRuleId returns the rule's token, or (nil, nil) if none exists.
 	GetByRuleId(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error)
+	// GetByRuleIdForUpdate is GetByRuleId holding the row until the scope ends.
+	GetByRuleIdForUpdate(ctx context.Context, ruleId uuid.UUID) (*models.PaymentSpendRuleX402Config, error)
 	// GetByPolicyIdAndAsset returns the policy's config for that exact network and lowercased asset, or (nil, nil).
 	GetByPolicyIdAndAsset(
 		ctx context.Context,

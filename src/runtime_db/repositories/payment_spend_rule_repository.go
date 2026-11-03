@@ -42,6 +42,22 @@ func (r *PaymentSpendRuleRepository) GetById(ctx context.Context, id uuid.UUID) 
 	return &entity, nil
 }
 
+func (r *PaymentSpendRuleRepository) GetByIdForUpdate(
+	ctx context.Context,
+	id uuid.UUID,
+) (*models.PaymentSpendRule, error) {
+	query := r.client.GetDBForUpdate(ctx)
+	var entity models.PaymentSpendRule
+	err := query.First(&entity, "id = ?", id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
 func (r *PaymentSpendRuleRepository) Create(
 	ctx context.Context,
 	rule *models.PaymentSpendRule,

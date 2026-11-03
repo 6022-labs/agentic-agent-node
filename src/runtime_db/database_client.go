@@ -14,6 +14,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"moul.io/zapgorm2"
 )
 
@@ -86,6 +87,14 @@ func (c *DatabaseClient) GetDB(ctx context.Context) *gorm.DB {
 		}
 	}
 	return c.db.WithContext(ctx)
+}
+
+// GetDBForUpdate is GetDB with its rows locked; sqlite has no row locks, so the one-connection cap serializes instead.
+func (c *DatabaseClient) GetDBForUpdate(ctx context.Context) *gorm.DB {
+	if c.driver == enums.DatabaseDriverSqlite {
+		return c.GetDB(ctx)
+	}
+	return c.GetDB(ctx).Clauses(clause.Locking{Strength: "UPDATE"})
 }
 
 func (c *DatabaseClient) GetDriver() enums.DatabaseDriver {

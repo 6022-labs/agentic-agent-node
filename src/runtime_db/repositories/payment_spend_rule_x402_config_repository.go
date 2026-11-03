@@ -58,6 +58,22 @@ func (r *PaymentSpendRuleX402ConfigRepository) GetByRuleId(
 	return &entity, nil
 }
 
+func (r *PaymentSpendRuleX402ConfigRepository) GetByRuleIdForUpdate(
+	ctx context.Context,
+	ruleId uuid.UUID,
+) (*models.PaymentSpendRuleX402Config, error) {
+	query := r.client.GetDBForUpdate(ctx)
+	var entity models.PaymentSpendRuleX402Config
+	err := query.First(&entity, "payment_spend_rule_id = ?", ruleId).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
 func (r *PaymentSpendRuleX402ConfigRepository) GetByPolicyIdAndAsset(
 	ctx context.Context,
 	policyId uuid.UUID,

@@ -3,11 +3,9 @@ package repositories
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/google/uuid"
-	"gorm.io/gorm/clause"
 )
 
 type PaymentSpendRuleWindowRepository struct {
@@ -38,11 +36,7 @@ func (r *PaymentSpendRuleWindowRepository) ListByRuleIdForUpdate(
 	ctx context.Context,
 	ruleId uuid.UUID,
 ) ([]models.PaymentSpendRuleWindow, error) {
-	query := r.client.GetDB(ctx).Where("payment_spend_rule_id = ?", ruleId).Order("window_seconds ASC")
-	// sqlite has no row locks; DatabaseClient caps it at one connection instead.
-	if r.client.GetDriver() != enums.DatabaseDriverSqlite {
-		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
-	}
+	query := r.client.GetDBForUpdate(ctx).Where("payment_spend_rule_id = ?", ruleId).Order("window_seconds ASC")
 
 	windows := []models.PaymentSpendRuleWindow{}
 	if err := query.Find(&windows).Error; err != nil {

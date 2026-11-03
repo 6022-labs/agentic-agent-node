@@ -13,6 +13,8 @@ type PaymentSpendRuleRepositoryInterface interface {
 	ListByPolicyId(ctx context.Context, policyId uuid.UUID) ([]models.PaymentSpendRule, error)
 	// GetById returns the rule, or (nil, nil) if it does not exist.
 	GetById(ctx context.Context, id uuid.UUID) (*models.PaymentSpendRule, error)
+	// GetByIdForUpdate is GetById holding the row until the scope ends, so a concurrent edit is read once committed.
+	GetByIdForUpdate(ctx context.Context, id uuid.UUID) (*models.PaymentSpendRule, error)
 	Create(ctx context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error)
 	Update(ctx context.Context, rule *models.PaymentSpendRule) (*models.PaymentSpendRule, error)
 	DeleteById(ctx context.Context, id uuid.UUID) error
