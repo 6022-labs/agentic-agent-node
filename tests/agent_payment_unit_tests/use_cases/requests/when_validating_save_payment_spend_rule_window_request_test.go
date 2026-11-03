@@ -130,6 +130,21 @@ func TestWhenValidatingSavePaymentSpendRuleWindowRequest(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a budget with leading zeros", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should store it without the leading zeros", func(t *testing.T) {
+			t.Parallel()
+
+			request := &requests.SavePaymentSpendRuleWindowRequest{WindowSeconds: 86400, MaxAmount: "0050000"}
+
+			_, err := request.ValidateAndSanitize(0)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "50000", request.MaxAmount)
+		})
+	})
+
 	t.Run("Given the window is valid", func(t *testing.T) {
 		t.Parallel()
 

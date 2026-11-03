@@ -6,7 +6,6 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,21 +79,6 @@ func TestWhenValidatingSavePaymentReceiveRulePriceRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given a blank address pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a ValidationError on the row's addressPatterns field", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentReceiveRulePriceRequest()
-			req.AddressPatterns = []string{"   "}
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, req.ValidateAndSanitize(0), &validationErr)
-			assert.Equal(t, "prices[0].addressPatterns", validationErr.Field)
-		})
-	})
-
 	t.Run("Given an address pattern that is not a valid regex", func(t *testing.T) {
 		t.Parallel()
 
@@ -121,50 +105,6 @@ func TestWhenValidatingSavePaymentReceiveRulePriceRequest(t *testing.T) {
 
 			assert.NoError(t, req.ValidateAndSanitize(0))
 			assert.Equal(t, "7", req.Price)
-		})
-	})
-
-	t.Run("Given a checksummed address pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should store it lowercased", func(t *testing.T) {
-			t.Parallel()
-
-			address := common_tests.RandomEthAddress().Hex()
-			req := generateSavePaymentReceiveRulePriceRequest()
-			req.AddressPatterns = []string{" " + address + " "}
-
-			assert.NoError(t, req.ValidateAndSanitize(0))
-			assert.Equal(t, []string{strings.ToLower(address)}, req.AddressPatterns)
-		})
-	})
-
-	t.Run("Given a repeated address pattern", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should keep it once", func(t *testing.T) {
-			t.Parallel()
-
-			address := common_tests.RandomEthAddress().Hex()
-			req := generateSavePaymentReceiveRulePriceRequest()
-			req.AddressPatterns = []string{address, strings.ToLower(address)}
-
-			assert.NoError(t, req.ValidateAndSanitize(0))
-			assert.Equal(t, []string{strings.ToLower(address)}, req.AddressPatterns)
-		})
-	})
-
-	t.Run("Given anyone among other address patterns", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should keep only anyone", func(t *testing.T) {
-			t.Parallel()
-
-			req := generateSavePaymentReceiveRulePriceRequest()
-			req.AddressPatterns = []string{strings.ToLower(common_tests.RandomEthAddress().Hex()), ".*"}
-
-			assert.NoError(t, req.ValidateAndSanitize(0))
-			assert.Equal(t, []string{".*"}, req.AddressPatterns)
 		})
 	})
 }

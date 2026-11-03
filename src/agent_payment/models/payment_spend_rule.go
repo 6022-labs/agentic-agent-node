@@ -24,7 +24,6 @@ type PaymentSpendRule struct {
 	UpdatedAt time.Time `gorm:"not null"`
 }
 
-// CoversPayment reports whether the per-payment cap, if any, allows the amount.
 func (m *PaymentSpendRule) CoversPayment(amount *big.Int) (bool, error) {
 	if m.MaxAmountPerPayment == nil {
 		return true, nil

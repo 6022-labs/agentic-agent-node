@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// AssetTransferMethod is how an x402 payment moves the token; detected on-chain at save, never operator input.
+// AssetTransferMethod is how an x402 payment moves the token: read on-chain for receive, an owner-set filter for spend.
 type AssetTransferMethod string
 
 const (

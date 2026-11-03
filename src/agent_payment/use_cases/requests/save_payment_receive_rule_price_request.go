@@ -2,11 +2,10 @@ package requests
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
+	payment_helpers "github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 )
 
@@ -37,31 +36,9 @@ func (a *SavePaymentReceiveRulePriceRequest) ValidateAndSanitize(index int) erro
 			"at least one pattern is required (\".*\" opens it to everyone)",
 		)
 	}
-	patterns := make([]string, 0, len(a.AddressPatterns))
-	seen := make(map[string]bool, len(a.AddressPatterns))
-	for _, pattern := range a.AddressPatterns {
-		trimmed := strings.TrimSpace(pattern)
-		if len(trimmed) == 0 {
-			return errors.NewValidationError(patternsField, "patterns cannot be empty")
-		}
-		if _, err := regexp.Compile(trimmed); err != nil {
-			return errors.NewValidationError(
-				patternsField,
-				"must be addresses or valid regexes",
-			)
-		}
-		if common.IsHexAddress(trimmed) {
-			trimmed = strings.ToLower(trimmed)
-		}
-		if seen[trimmed] {
-			continue
-		}
-		seen[trimmed] = true
-		patterns = append(patterns, trimmed)
-	}
-	// ".*" already covers every caller, so the others are noise.
-	if seen[".*"] {
-		patterns = []string{".*"}
+	patterns, err := payment_helpers.SanitizeAddressPatterns(patternsField, a.AddressPatterns)
+	if err != nil {
+		return err
 	}
 	a.AddressPatterns = patterns
 	return nil

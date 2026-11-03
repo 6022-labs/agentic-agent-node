@@ -22,6 +22,34 @@ func TestWhenValidatingSignX402PaymentRequest(t *testing.T) {
 		}
 	}
 
+	t.Run("Given a quote in another scheme than exact", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on the scheme field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSignX402PaymentRequest()
+			request.Scheme = "upto"
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "scheme", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a quote in the exact scheme", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should accept it", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSignX402PaymentRequest()
+			request.Scheme = "exact"
+
+			assert.NoError(t, request.ValidateAndSanitize())
+		})
+	})
+
 	t.Run("Given a network that is not CAIP-2", func(t *testing.T) {
 		t.Parallel()
 
@@ -124,6 +152,21 @@ func TestWhenValidatingSignX402PaymentRequest(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
 			assert.Equal(t, "amount", validationErr.Field)
+		})
+	})
+
+	t.Run("Given a negative signature lifetime", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on the maxTimeoutSeconds field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSignX402PaymentRequest()
+			request.MaxTimeoutSeconds = -1
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "maxTimeoutSeconds", validationErr.Field)
 		})
 	})
 

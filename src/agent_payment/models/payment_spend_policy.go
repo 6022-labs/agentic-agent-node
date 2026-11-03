@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	payment_helpers "github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ func (PaymentSpendPolicy) TableName() string {
 }
 
 func (m *PaymentSpendPolicy) AllowsPayee(payTo string) bool {
-	return helpers.MatchesAddressPatterns(m.PayToPatterns, payTo)
+	return payment_helpers.MatchesAddressPatterns(m.PayToPatterns, payTo)
 }
 
 func (m *PaymentSpendPolicy) BeforeCreate(_ *gorm.DB) error {

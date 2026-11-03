@@ -2,47 +2,32 @@ package requests
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
 // SavePaymentSpendRuleRequest is method-neutral: the limits, name and method are generic.
 type SavePaymentSpendRuleRequest struct {
-	Name                string                              `json:"name"`
+	SavePaymentRuleRequest
 	MaxAmountPerPayment *string                             `json:"maxAmountPerPayment,omitempty"`
 	Windows             []SavePaymentSpendRuleWindowRequest `json:"windows"`
-	Method              string                              `json:"method,omitempty"`
 	Config              json.RawMessage                     `json:"config"                        swaggertype:"object"`
 }
 
-// ValidateAndSanitize checks the method-agnostic fields and defaults the method to x402.
 func (a *SavePaymentSpendRuleRequest) ValidateAndSanitize() error {
-	a.Name = strings.TrimSpace(a.Name)
-	if len(a.Name) == 0 || len(a.Name) > 64 {
-		return errors.NewValidationError("name", "must be 1-64 characters")
+	if err := a.SavePaymentRuleRequest.ValidateAndSanitize(); err != nil {
+		return err
 	}
 
 	maxAmountPerPayment, err := a.validateMaxAmountPerPayment()
 	if err != nil {
 		return err
 	}
-	if err := a.validateWindows(maxAmountPerPayment); err != nil {
-		return err
-	}
-
-	var method enums.PaymentMethod
-	if len(strings.TrimSpace(a.Method)) == 0 {
-		method = enums.PaymentMethodX402
-	} else if err := method.Set(a.Method); err != nil {
-		return errors.NewValidationError("method", "must be one of: "+enums.GetAllPaymentMethods().String())
-	}
-	a.Method = method.String()
-
-	return nil
+	return a.validateWindows(maxAmountPerPayment)
 }
 
 // validateMaxAmountPerPayment treats a blank cap as none; "0" denies every non-zero quote.
@@ -52,22 +37,24 @@ func (a *SavePaymentSpendRuleRequest) validateMaxAmountPerPayment() (*big.Int, e
 		return nil, nil
 	}
 
-	trimmed := strings.TrimSpace(*a.MaxAmountPerPayment)
-	a.MaxAmountPerPayment = &trimmed
-	maxAmountPerPayment, ok := helpers.ParseUint256(trimmed)
-	if !ok {
-		return nil, errors.NewValidationError(
-			"maxAmountPerPayment",
-			"must be a non-negative integer in the asset's atomic units (0 = deny)",
-		)
+	maxAmountPerPayment, err := helpers.ParseSpendAmount("maxAmountPerPayment", *a.MaxAmountPerPayment)
+	if err != nil {
+		return nil, err
 	}
-	return maxAmountPerPayment, nil
+	// Canonical so "007" is stored as "7", like receive prices.
+	canonical := maxAmountPerPayment.Dec()
+	a.MaxAmountPerPayment = &canonical
+	return maxAmountPerPayment.ToBig(), nil
 }
 
 // validateWindows rejects a rule with no limit at all, a repeated period, and a cap no window could fit.
 func (a *SavePaymentSpendRuleRequest) validateWindows(maxAmountPerPayment *big.Int) error {
 	if maxAmountPerPayment == nil && len(a.Windows) == 0 {
 		return errors.NewValidationError("windows", "a rule needs maxAmountPerPayment, a window, or both")
+	}
+	// Every signature locks and updates each window, so the count stays small.
+	if len(a.Windows) > MaxPaymentSpendRuleWindows {
+		return errors.NewValidationError("windows", fmt.Sprintf("at most %d windows", MaxPaymentSpendRuleWindows))
 	}
 
 	seen := make(map[int]bool, len(a.Windows))

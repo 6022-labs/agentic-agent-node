@@ -18,7 +18,7 @@ type PaymentSpendRuleX402Config struct {
 
 	Network string `gorm:"not null;size:64;uniqueIndex:uq_payment_spend_rule_x402_configs_policy_asset,priority:2" json:"network"`
 	Asset   string `gorm:"not null;size:42;uniqueIndex:uq_payment_spend_rule_x402_configs_policy_asset,priority:3" json:"asset"`
-	// nil accepts either; eip3009 refuses permit2's standing max-uint256 allowance.
+	// nil accepts any, EIP-2612 Permit included; eip3009 refuses permit2's standing max-uint256 allowance.
 	AssetTransferMethod *enums.AssetTransferMethod `gorm:"size:16" json:"assetTransferMethod,omitempty"`
 }
 
@@ -26,13 +26,11 @@ func (PaymentSpendRuleX402Config) TableName() string {
 	return "payment_spend_rule_x402_configs"
 }
 
-// AcceptsAssetTransferMethod reports whether the quote moves the token the way this rule allows.
 func (c *PaymentSpendRuleX402Config) AcceptsAssetTransferMethod(assetTransferMethod string) bool {
 	return c.AssetTransferMethod == nil ||
 		strings.EqualFold(strings.TrimSpace(assetTransferMethod), c.AssetTransferMethod.String())
 }
 
-// Parse decodes an x402 spend config blob into the receiver.
 func (c *PaymentSpendRuleX402Config) Parse(raw []byte) error {
 	if len(raw) == 0 {
 		return errors.NewValidationError("config", "is required for x402 spend rules")

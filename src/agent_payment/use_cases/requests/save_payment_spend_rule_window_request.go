@@ -3,13 +3,14 @@ package requests
 import (
 	"fmt"
 	"math/big"
-	"strings"
 
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 )
 
 const MaxPaymentSpendWindowSeconds = 10 * 365 * 24 * 60 * 60
+
+const MaxPaymentSpendRuleWindows = 10
 
 // SavePaymentSpendRuleWindowRequest is one recurring budget of a spend rule.
 type SavePaymentSpendRuleWindowRequest struct {
@@ -17,23 +18,22 @@ type SavePaymentSpendRuleWindowRequest struct {
 	MaxAmount     string `json:"maxAmount"`
 }
 
-// ValidateAndSanitize checks the window at index in its rule and returns its parsed budget.
 func (w *SavePaymentSpendRuleWindowRequest) ValidateAndSanitize(index int) (*big.Int, error) {
 	// The cap keeps the period's time.Duration from overflowing into a window that never accumulates.
 	if w.WindowSeconds <= 0 || w.WindowSeconds > MaxPaymentSpendWindowSeconds {
 		return nil, errors.NewValidationError(
 			fmt.Sprintf("windows[%d].windowSeconds", index),
-			"must be a positive number of seconds, at most 10 years",
+			fmt.Sprintf(
+				"must be a positive number of seconds, at most %d years",
+				MaxPaymentSpendWindowSeconds/(365*24*60*60),
+			),
 		)
 	}
 
-	w.MaxAmount = strings.TrimSpace(w.MaxAmount)
-	maxAmount, ok := helpers.ParseUint256(w.MaxAmount)
-	if !ok {
-		return nil, errors.NewValidationError(
-			fmt.Sprintf("windows[%d].maxAmount", index),
-			"must be a non-negative integer in the asset's atomic units (0 = deny)",
-		)
+	maxAmount, err := helpers.ParseSpendAmount(fmt.Sprintf("windows[%d].maxAmount", index), w.MaxAmount)
+	if err != nil {
+		return nil, err
 	}
-	return maxAmount, nil
+	w.MaxAmount = maxAmount.Dec()
+	return maxAmount.ToBig(), nil
 }

@@ -50,7 +50,7 @@ func TestWhenReleasingAPaymentSpendWindow(t *testing.T) {
 	t.Run("Given the recorded spend is not a usable amount", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the recorded spend as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			window := model_builders.NewPaymentSpendRuleWindowBuilder().

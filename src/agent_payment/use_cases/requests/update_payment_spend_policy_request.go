@@ -1,12 +1,6 @@
 package requests
 
-import (
-	"regexp"
-	"strings"
-
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
-	"github.com/ethereum/go-ethereum/common"
-)
+import payment_helpers "github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 
 // UpdatePaymentSpendPolicyRequest replaces who the agent may pay; an empty list pays nobody.
 type UpdatePaymentSpendPolicyRequest struct {
@@ -14,28 +8,9 @@ type UpdatePaymentSpendPolicyRequest struct {
 }
 
 func (r *UpdatePaymentSpendPolicyRequest) ValidateAndSanitize() error {
-	sanitized := make([]string, 0, len(r.PayToPatterns))
-	seen := make(map[string]bool, len(r.PayToPatterns))
-	for _, pattern := range r.PayToPatterns {
-		trimmed := strings.TrimSpace(pattern)
-		if len(trimmed) == 0 {
-			return errors.NewValidationError("payToPatterns", "patterns cannot be empty")
-		}
-		if _, err := regexp.Compile(trimmed); err != nil {
-			return errors.NewValidationError(
-				"payToPatterns",
-				"must be addresses or valid regexes",
-			)
-		}
-		// A pasted checksummed address would compile and then never match the lowercased payee.
-		if common.IsHexAddress(trimmed) {
-			trimmed = strings.ToLower(trimmed)
-		}
-		if seen[trimmed] {
-			continue
-		}
-		seen[trimmed] = true
-		sanitized = append(sanitized, trimmed)
+	sanitized, err := payment_helpers.SanitizeAddressPatterns("payToPatterns", r.PayToPatterns)
+	if err != nil {
+		return err
 	}
 	r.PayToPatterns = sanitized
 	return nil

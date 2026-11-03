@@ -14,7 +14,7 @@ func TestWhenReadingAPaymentSpendWindowReset(t *testing.T) {
 	t.Run("Given a running period", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should report when it rolls over", func(t *testing.T) {
+		t.Run("Should report the rollover time", func(t *testing.T) {
 			t.Parallel()
 
 			startedAt := time.Now().Add(-time.Hour)

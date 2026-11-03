@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	"github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,8 +43,7 @@ func TestWhenMatchingAddressPatterns(t *testing.T) {
 	t.Run("Given a class that negates uppercase hex", func(t *testing.T) {
 		t.Parallel()
 
-		// Matching the lowercased address keeps this working; folding case would make
-		// Go's negated class exclude a-f as well and reject every address.
+		// Folding case would make the negated class exclude a-f too and reject every address.
 		t.Run("Should still match every address", func(t *testing.T) {
 			t.Parallel()
 

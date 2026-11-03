@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	payment_helpers "github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -28,7 +28,7 @@ func (PaymentReceiveRulePrice) TableName() string {
 
 // Matches reports whether this price is open to the address.
 func (m *PaymentReceiveRulePrice) Matches(address string) bool {
-	return helpers.MatchesAddressPatterns(m.AddressPatterns, address)
+	return payment_helpers.MatchesAddressPatterns(m.AddressPatterns, address)
 }
 
 func (m *PaymentReceiveRulePrice) IsFree() bool {

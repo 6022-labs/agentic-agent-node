@@ -6,6 +6,8 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
+	"github.com/6022-labs/agentic-agent-node/src/common/x402"
+	"github.com/holiman/uint256"
 )
 
 // Extra keys an x402 quote carries the asset's EIP-712 domain under.
@@ -17,6 +19,7 @@ const (
 
 // SignX402PaymentRequest is one `accepts` entry from a 402; the method and EIP-712 domain fall back to Extra.
 type SignX402PaymentRequest struct {
+	Scheme              string         `json:"scheme,omitempty"`
 	Network             string         `json:"network"`
 	Asset               string         `json:"asset"`
 	PayTo               string         `json:"payTo"`
@@ -24,6 +27,7 @@ type SignX402PaymentRequest struct {
 	AssetTransferMethod string         `json:"assetTransferMethod,omitempty"`
 	Eip712Name          string         `json:"eip712Name,omitempty"`
 	Eip712Version       string         `json:"eip712Version,omitempty"`
+	MaxTimeoutSeconds   int64          `json:"maxTimeoutSeconds,omitempty"`
 	Extra               map[string]any `json:"extra,omitempty"`
 
 	parsedAssetTransferMethod enums.AssetTransferMethod
@@ -39,7 +43,12 @@ func (r *SignX402PaymentRequest) ValidateAndSanitize() error {
 	r.Asset = strings.TrimSpace(r.Asset)
 	r.PayTo = strings.TrimSpace(r.PayTo)
 	r.Amount = strings.TrimSpace(r.Amount)
+	r.Scheme = strings.TrimSpace(r.Scheme)
 
+	// Signing builds an exact transfer, so another scheme would be paid on terms it never stated.
+	if r.Scheme != "" && r.Scheme != x402.SchemeExact {
+		return errors.NewValidationError("scheme", "only the exact scheme is supported")
+	}
 	chainId, err := helpers.ParseCaip2(r.Network)
 	if err != nil {
 		return errors.NewValidationError("network", err.Error())
@@ -52,8 +61,12 @@ func (r *SignX402PaymentRequest) ValidateAndSanitize() error {
 	if !helpers.IsEthAddress(r.PayTo) {
 		return errors.NewValidationError("payTo", "must be a 0x-prefixed address")
 	}
-	if _, ok := helpers.ParseUint256(r.Amount); !ok {
-		return errors.NewValidationError("amount", "must be a non-negative atomic amount")
+	r.Amount = strings.TrimSpace(r.Amount)
+	if _, err := uint256.FromDecimal(r.Amount); err != nil {
+		return errors.NewValidationError("amount", "must be a non-negative integer in the asset's atomic units")
+	}
+	if r.MaxTimeoutSeconds < 0 {
+		return errors.NewValidationError("maxTimeoutSeconds", "must be a positive number of seconds")
 	}
 
 	r.applyExtra()

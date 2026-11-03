@@ -2,10 +2,8 @@ package requests_test
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +14,8 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 
 	generateSavePaymentSpendRuleRequest := func(maxAmountPerPayment string) *requests.SavePaymentSpendRuleRequest {
 		return &requests.SavePaymentSpendRuleRequest{
-			Name:                "  Test token  ",
-			MaxAmountPerPayment: &maxAmountPerPayment,
+			SavePaymentRuleRequest: requests.SavePaymentRuleRequest{Name: "  Test token  "},
+			MaxAmountPerPayment:    &maxAmountPerPayment,
 			Windows: []requests.SavePaymentSpendRuleWindowRequest{
 				{WindowSeconds: 86400, MaxAmount: "50000"},
 			},
@@ -25,29 +23,15 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		}
 	}
 
-	t.Run("Given the name is empty", func(t *testing.T) {
+	// The base request owns name and method; this proves it runs first.
+	t.Run("Given a blank rule name", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return a validation error on the name field", func(t *testing.T) {
+		t.Run("Should return a ValidationError on the name field", func(t *testing.T) {
 			t.Parallel()
 
 			request := generateSavePaymentSpendRuleRequest("10000")
 			request.Name = "   "
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
-			assert.Equal(t, "name", validationErr.Field)
-		})
-	})
-
-	t.Run("Given the name is longer than 64 characters", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on the name field", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest("10000")
-			request.Name = strings.Repeat("a", 65)
 
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
@@ -128,6 +112,34 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		})
 	})
 
+	t.Run("Given more than 10 windows", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return a validation error on the windows field", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("10000")
+			request.Windows = []requests.SavePaymentSpendRuleWindowRequest{
+				{WindowSeconds: 3600, MaxAmount: "60000"},
+				{WindowSeconds: 7200, MaxAmount: "60000"},
+				{WindowSeconds: 10800, MaxAmount: "60000"},
+				{WindowSeconds: 14400, MaxAmount: "60000"},
+				{WindowSeconds: 18000, MaxAmount: "60000"},
+				{WindowSeconds: 21600, MaxAmount: "60000"},
+				{WindowSeconds: 25200, MaxAmount: "60000"},
+				{WindowSeconds: 28800, MaxAmount: "60000"},
+				{WindowSeconds: 32400, MaxAmount: "60000"},
+				{WindowSeconds: 36000, MaxAmount: "60000"},
+				{WindowSeconds: 39600, MaxAmount: "60000"},
+			}
+
+			var validationErr *apperrors.ValidationError
+			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
+			assert.Equal(t, "windows", validationErr.Field)
+			assert.Equal(t, "at most 10 windows", validationErr.Message)
+		})
+	})
+
 	t.Run("Given a window is invalid", func(t *testing.T) {
 		t.Parallel()
 
@@ -176,35 +188,6 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given an unsupported method", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return a validation error on the method field", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest("10000")
-			request.Method = "lightning"
-
-			var validationErr *apperrors.ValidationError
-			assert.ErrorAs(t, request.ValidateAndSanitize(), &validationErr)
-			assert.Equal(t, "method", validationErr.Field)
-		})
-	})
-
-	t.Run("Given an explicit supported method", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should normalize it", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest("10000")
-			request.Method = " X402 "
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
-		})
-	})
-
 	t.Run("Given a per-payment cap equal to a window budget", func(t *testing.T) {
 		t.Parallel()
 
@@ -230,6 +213,20 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a per-payment cap with leading zeros", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should store it without the leading zeros", func(t *testing.T) {
+			t.Parallel()
+
+			request := generateSavePaymentSpendRuleRequest("0010000")
+			request.Windows = nil
+
+			assert.NoError(t, request.ValidateAndSanitize())
+			assert.Equal(t, "10000", *request.MaxAmountPerPayment)
+		})
+	})
+
 	t.Run("Given a zero per-payment cap", func(t *testing.T) {
 		t.Parallel()
 
@@ -246,25 +243,4 @@ func TestWhenValidatingSavePaymentSpendRuleRequest(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the request is valid", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should trim the name", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest("10000")
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, "Test token", request.Name)
-		})
-
-		t.Run("Should default the method to x402", func(t *testing.T) {
-			t.Parallel()
-
-			request := generateSavePaymentSpendRuleRequest("10000")
-
-			assert.NoError(t, request.ValidateAndSanitize())
-			assert.Equal(t, enums.PaymentMethodX402.String(), request.Method)
-		})
-	})
 }

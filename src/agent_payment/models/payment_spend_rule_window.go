@@ -84,7 +84,6 @@ func (m *PaymentSpendRuleWindow) Release(amount *big.Int, periodStartedAt time.T
 	return nil
 }
 
-// Reset drops the spend recorded so far, starting a fresh period on next use.
 func (m *PaymentSpendRuleWindow) Reset() {
 	m.Spent = "0"
 	m.StartedAt = nil

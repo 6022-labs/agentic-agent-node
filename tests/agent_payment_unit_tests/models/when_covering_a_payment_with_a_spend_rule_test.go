@@ -29,7 +29,7 @@ func TestWhenCoveringAPaymentWithASpendRule(t *testing.T) {
 	t.Run("Given the cap is not a usable amount", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the cap as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithMaxAmountPerPayment("not-a-number").Build()
@@ -43,7 +43,7 @@ func TestWhenCoveringAPaymentWithASpendRule(t *testing.T) {
 	t.Run("Given the cap is negative", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the cap as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			rule := model_builders.NewPaymentSpendRuleBuilder().WithMaxAmountPerPayment("-1").Build()

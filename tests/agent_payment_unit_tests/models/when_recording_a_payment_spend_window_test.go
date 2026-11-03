@@ -18,7 +18,7 @@ func TestWhenRecordingAPaymentSpendWindow(t *testing.T) {
 	t.Run("Given the budget is not a usable amount", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the budget as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			window := model_builders.NewPaymentSpendRuleWindowBuilder().WithMaxAmount("not-a-number").Build()
@@ -32,7 +32,7 @@ func TestWhenRecordingAPaymentSpendWindow(t *testing.T) {
 	t.Run("Given the budget is negative", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the budget as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			window := model_builders.NewPaymentSpendRuleWindowBuilder().WithMaxAmount("-1").Build()
@@ -46,7 +46,7 @@ func TestWhenRecordingAPaymentSpendWindow(t *testing.T) {
 	t.Run("Given the recorded spend is not a usable amount", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the recorded spend as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			window := model_builders.NewPaymentSpendRuleWindowBuilder().
@@ -63,7 +63,7 @@ func TestWhenRecordingAPaymentSpendWindow(t *testing.T) {
 	t.Run("Given the recorded spend is negative", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should refuse the recorded spend as unusable", func(t *testing.T) {
 			t.Parallel()
 
 			window := model_builders.NewPaymentSpendRuleWindowBuilder().
