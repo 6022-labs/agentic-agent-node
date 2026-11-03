@@ -244,7 +244,7 @@ export default function PaymentReceivePolicySection() {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+      <CardContent className="space-y-3 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {notMinted ? (
           <NotMintedState description="The payment policy is created once the agent's on-chain identity is minted." />
         ) : loading || !policy ? (
@@ -268,103 +268,105 @@ export default function PaymentReceivePolicySection() {
                 description="Nobody can call this agent. Add a free rule for your wallet, or a public price for everyone."
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rule</TableHead>
-                    <TableHead>Token</TableHead>
-                    <TableHead>Prices per call</TableHead>
-                    <TableHead>Paid to</TableHead>
-                    <TableHead className="w-20" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rules.map((rule) => (
-                    <TableRow key={rule.id}>
-                      <TableCell className="font-medium">
-                        {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
-                        <HoverHint
-                          className="block max-w-40 truncate"
-                          content={rule.name}
-                        >
-                          {rule.name}
-                        </HoverHint>
-                      </TableCell>
-                      <TableCell className="max-w-40">
-                        <TokenCell
-                          network={rule.network}
-                          asset={rule.asset}
-                          badge={
-                            hasUnsettleablePrice(rule) ? (
-                              <HoverHint content="No facilitator on this network, so callers aren't offered its paid prices.">
-                                <Badge
-                                  variant="destructive"
-                                  aria-label="No facilitator on this network, so callers aren't offered its paid prices."
-                                >
-                                  <AlertTriangle aria-hidden />
-                                </Badge>
-                              </HoverHint>
-                            ) : null
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <PricesCell
-                          rule={rule}
-                          settleable={hasFacilitator(rule)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {rule.payTo.toLowerCase() ===
-                        policy.agentWalletAddress.toLowerCase() ? (
-                          <HoverHint
-                            content={
-                              <span className="font-mono break-all">
-                                {rule.payTo}
-                              </span>
-                            }
-                          >
-                            <Badge variant="outline">agent wallet</Badge>
-                          </HoverHint>
-                        ) : (
-                          <HoverHint
-                            className="font-mono"
-                            content={
-                              <span className="font-mono break-all">
-                                {rule.payTo}
-                              </span>
-                            }
-                          >
-                            {truncateEthAddress(rule.payTo)}
-                          </HoverHint>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <PaymentReceiveRuleDialog
-                          agentWalletAddress={policy.agentWalletAddress}
-                          initialRule={rule}
-                          onSave={onSaveRule(rule)}
-                        />
-                        <ConfirmDialog
-                          title="Remove this pricing rule?"
-                          description="Callers lose every price of this token — they fall back to other tokens or get refused."
-                          confirmLabel="Remove"
-                          onConfirm={() => onRemoveRule(rule)}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Remove rule ${rule.name}`}
-                            disabled={mutating}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </ConfirmDialog>
-                      </TableCell>
+              <div className="max-h-[28rem] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-card">
+                    <TableRow>
+                      <TableHead>Rule</TableHead>
+                      <TableHead>Token</TableHead>
+                      <TableHead>Prices per call</TableHead>
+                      <TableHead>Paid to</TableHead>
+                      <TableHead className="w-20" />
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {rules.map((rule) => (
+                      <TableRow key={rule.id}>
+                        <TableCell className="font-medium">
+                          {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
+                          <HoverHint
+                            className="block max-w-40 truncate"
+                            content={rule.name}
+                          >
+                            {rule.name}
+                          </HoverHint>
+                        </TableCell>
+                        <TableCell className="max-w-40">
+                          <TokenCell
+                            network={rule.network}
+                            asset={rule.asset}
+                            badge={
+                              hasUnsettleablePrice(rule) ? (
+                                <HoverHint content="No facilitator on this network, so callers aren't offered its paid prices.">
+                                  <Badge
+                                    variant="destructive"
+                                    aria-label="No facilitator on this network, so callers aren't offered its paid prices."
+                                  >
+                                    <AlertTriangle aria-hidden />
+                                  </Badge>
+                                </HoverHint>
+                              ) : null
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <PricesCell
+                            rule={rule}
+                            settleable={hasFacilitator(rule)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {rule.payTo.toLowerCase() ===
+                          policy.agentWalletAddress.toLowerCase() ? (
+                            <HoverHint
+                              content={
+                                <span className="font-mono break-all">
+                                  {rule.payTo}
+                                </span>
+                              }
+                            >
+                              <Badge variant="outline">agent wallet</Badge>
+                            </HoverHint>
+                          ) : (
+                            <HoverHint
+                              className="font-mono"
+                              content={
+                                <span className="font-mono break-all">
+                                  {rule.payTo}
+                                </span>
+                              }
+                            >
+                              {truncateEthAddress(rule.payTo)}
+                            </HoverHint>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <PaymentReceiveRuleDialog
+                            agentWalletAddress={policy.agentWalletAddress}
+                            initialRule={rule}
+                            onSave={onSaveRule(rule)}
+                          />
+                          <ConfirmDialog
+                            title="Remove this pricing rule?"
+                            description="Callers lose every price of this token — they fall back to other tokens or get refused."
+                            confirmLabel="Remove"
+                            onConfirm={() => onRemoveRule(rule)}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Remove rule ${rule.name}`}
+                              disabled={mutating}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </ConfirmDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </>
         )}

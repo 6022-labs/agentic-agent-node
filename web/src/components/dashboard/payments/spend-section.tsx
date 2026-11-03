@@ -363,7 +363,7 @@ export default function PaymentSpendPolicySection() {
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+      <CardContent className="space-y-3 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {!identityLoading && !isMinted ? (
           <NotMintedState description="The spend policy is set once the agent's on-chain identity is minted." />
         ) : loadFailed && !loading ? (
@@ -413,101 +413,103 @@ export default function PaymentSpendPolicySection() {
                 description="The agent cannot sign any payment until a rule allows one."
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rule</TableHead>
-                    <TableHead>Token</TableHead>
-                    <TableHead>Cap per payment</TableHead>
-                    <TableHead>Spent this period</TableHead>
-                    <TableHead className="w-20" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rules.map((rule) => (
-                    <TableRow key={rule.id ?? rule.name}>
-                      <TableCell className="font-medium">
-                        {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
-                        <HoverHint
-                          className="block max-w-40 truncate"
-                          content={rule.name}
-                        >
-                          {rule.name}
-                        </HoverHint>
-                      </TableCell>
-                      <TableCell className="max-w-40">
-                        <TokenCell
-                          network={rule.network}
-                          asset={rule.asset}
-                          badge={
-                            rule.assetTransferMethod ? (
-                              <Badge variant="outline" className="text-xs">
-                                {rule.assetTransferMethod}
-                              </Badge>
-                            ) : null
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {rule.maxAmountPerPayment === undefined ? (
-                          <span className="text-xs text-muted-foreground">
-                            none
-                          </span>
-                        ) : rule.maxAmountPerPayment === "0" ? (
-                          <Badge variant="secondary">denies</Badge>
-                        ) : (
-                          <AmountLabel
-                            amount={rule.maxAmountPerPayment}
+              <div className="max-h-[28rem] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-card">
+                    <TableRow>
+                      <TableHead>Rule</TableHead>
+                      <TableHead>Token</TableHead>
+                      <TableHead>Cap per payment</TableHead>
+                      <TableHead>Spent this period</TableHead>
+                      <TableHead className="w-20" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rules.map((rule) => (
+                      <TableRow key={rule.id ?? rule.name}>
+                        <TableCell className="font-medium">
+                          {/* A td ignores max-width in auto table layout, so the inner block truncates. */}
+                          <HoverHint
+                            className="block max-w-40 truncate"
+                            content={rule.name}
+                          >
+                            {rule.name}
+                          </HoverHint>
+                        </TableCell>
+                        <TableCell className="max-w-40">
+                          <TokenCell
                             network={rule.network}
                             asset={rule.asset}
+                            badge={
+                              rule.assetTransferMethod ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {rule.assetTransferMethod}
+                                </Badge>
+                              ) : null
+                            }
                           />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {rule.windows.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">
-                            per payment only
-                          </span>
-                        ) : (
-                          <div className="min-w-36 space-y-2">
-                            {rule.windows.map((window) => (
-                              <WindowUsage
-                                key={window.windowSeconds}
-                                window={window}
-                                network={rule.network}
-                                asset={rule.asset}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <PaymentSpendRuleDialog
-                            initialRule={rule}
-                            onSave={onSaveRule(rule)}
-                          />
-                          <ConfirmDialog
-                            title="Remove this spend rule?"
-                            description="The agent will stop being able to pay quotes only this rule allowed."
-                            confirmLabel="Remove"
-                            onConfirm={() => onDeleteRule(rule)}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Remove rule ${rule.name}`}
-                              disabled={mutating}
+                        </TableCell>
+                        <TableCell>
+                          {rule.maxAmountPerPayment === undefined ? (
+                            <span className="text-xs text-muted-foreground">
+                              none
+                            </span>
+                          ) : rule.maxAmountPerPayment === "0" ? (
+                            <Badge variant="secondary">denies</Badge>
+                          ) : (
+                            <AmountLabel
+                              amount={rule.maxAmountPerPayment}
+                              network={rule.network}
+                              asset={rule.asset}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {rule.windows.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">
+                              per payment only
+                            </span>
+                          ) : (
+                            <div className="min-w-36 space-y-2">
+                              {rule.windows.map((window) => (
+                                <WindowUsage
+                                  key={window.windowSeconds}
+                                  window={window}
+                                  network={rule.network}
+                                  asset={rule.asset}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <PaymentSpendRuleDialog
+                              initialRule={rule}
+                              onSave={onSaveRule(rule)}
+                            />
+                            <ConfirmDialog
+                              title="Remove this spend rule?"
+                              description="The agent will stop being able to pay quotes only this rule allowed."
+                              confirmLabel="Remove"
+                              onConfirm={() => onDeleteRule(rule)}
                             >
-                              <Trash2 />
-                            </Button>
-                          </ConfirmDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Remove rule ${rule.name}`}
+                                disabled={mutating}
+                              >
+                                <Trash2 />
+                              </Button>
+                            </ConfirmDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </>
         )}
