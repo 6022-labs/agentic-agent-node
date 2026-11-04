@@ -3,7 +3,7 @@ package tools
 import (
 	"context"
 
-	identity_requests "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
+	payment_requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	tool_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/tools/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning_self_tools/utils"
@@ -24,8 +24,8 @@ func NewSignTypedDataTool(
 func (t *SignTypedDataTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "sign_typed_data",
-		Description: "Sign an arbitrary EIP-712 typed-data payload with your wallet key. " +
-			"Anything you sign here is binding on chain — prefer sign_x402_payment for paying another agent.",
+		Description: "Sign EIP-712 typed data with your wallet key. Token transfers and permits count against " +
+			"your spend policy; batch permits are refused. Prefer sign_x402_payment to pay an agent.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"typedData": utils.ObjectProperty("The EIP-712 payload: types, primaryType, domain and message."),
 		}, []string{"typedData"}),
@@ -38,7 +38,7 @@ func (t *SignTypedDataTool) Execute(ctx context.Context, args map[string]any) (m
 		return nil, err
 	}
 	return utils.ToToolResult(
-		t.signTypedDataExecutor.Execute(ctx, &identity_requests.SignTypedDataRequest{TypedData: typedData}),
+		t.signTypedDataExecutor.Execute(ctx, &payment_requests.SignTypedDataRequest{TypedData: typedData}),
 	)
 }
 

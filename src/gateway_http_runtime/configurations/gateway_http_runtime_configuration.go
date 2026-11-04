@@ -110,6 +110,18 @@ func addKnowledgeConfiguration(container *dig.Container) {
 
 func addPaymentConfiguration(container *dig.Container) {
 	if err := container.Provide(
+		payment_services.NewHttpPaymentSpendPolicyClient,
+		dig.As(new(payment_interfaces.PaymentSpendPolicyClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		payment_services.NewHttpPaymentSpendRuleClient,
+		dig.As(new(payment_interfaces.PaymentSpendRuleClientInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		payment_services.NewHttpPaymentReceivePolicyClient,
 		dig.As(new(payment_interfaces.PaymentReceivePolicyClientInterface)),
 	); err != nil {

@@ -162,6 +162,46 @@ func (mr *MockClientInterfaceMockRecorder) DeleteInternalConfigPaymentReceivePol
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentReceivePolicyRulesId", reflect.TypeOf((*MockClientInterface)(nil).DeleteInternalConfigPaymentReceivePolicyRulesId), varargs...)
 }
 
+// DeleteInternalConfigPaymentSpendPolicy mocks base method.
+func (m *MockClientInterface) DeleteInternalConfigPaymentSpendPolicy(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteInternalConfigPaymentSpendPolicy", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteInternalConfigPaymentSpendPolicy indicates an expected call of DeleteInternalConfigPaymentSpendPolicy.
+func (mr *MockClientInterfaceMockRecorder) DeleteInternalConfigPaymentSpendPolicy(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentSpendPolicy", reflect.TypeOf((*MockClientInterface)(nil).DeleteInternalConfigPaymentSpendPolicy), varargs...)
+}
+
+// DeleteInternalConfigPaymentSpendPolicyRulesId mocks base method.
+func (m *MockClientInterface) DeleteInternalConfigPaymentSpendPolicyRulesId(ctx context.Context, id string, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteInternalConfigPaymentSpendPolicyRulesId", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteInternalConfigPaymentSpendPolicyRulesId indicates an expected call of DeleteInternalConfigPaymentSpendPolicyRulesId.
+func (mr *MockClientInterfaceMockRecorder) DeleteInternalConfigPaymentSpendPolicyRulesId(ctx, id any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentSpendPolicyRulesId", reflect.TypeOf((*MockClientInterface)(nil).DeleteInternalConfigPaymentSpendPolicyRulesId), varargs...)
+}
+
 // GetInternalAgentCollections mocks base method.
 func (m *MockClientInterface) GetInternalAgentCollections(ctx context.Context, params *clients.GetInternalAgentCollectionsParams, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -400,6 +440,46 @@ func (mr *MockClientInterfaceMockRecorder) GetInternalConfigPaymentReceivePolicy
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentReceivePolicyRules", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigPaymentReceivePolicyRules), varargs...)
+}
+
+// GetInternalConfigPaymentSpendPolicy mocks base method.
+func (m *MockClientInterface) GetInternalConfigPaymentSpendPolicy(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigPaymentSpendPolicy", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigPaymentSpendPolicy indicates an expected call of GetInternalConfigPaymentSpendPolicy.
+func (mr *MockClientInterfaceMockRecorder) GetInternalConfigPaymentSpendPolicy(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentSpendPolicy", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigPaymentSpendPolicy), varargs...)
+}
+
+// GetInternalConfigPaymentSpendPolicyRules mocks base method.
+func (m *MockClientInterface) GetInternalConfigPaymentSpendPolicyRules(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigPaymentSpendPolicyRules", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigPaymentSpendPolicyRules indicates an expected call of GetInternalConfigPaymentSpendPolicyRules.
+func (mr *MockClientInterfaceMockRecorder) GetInternalConfigPaymentSpendPolicyRules(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentSpendPolicyRules", reflect.TypeOf((*MockClientInterface)(nil).GetInternalConfigPaymentSpendPolicyRules), varargs...)
 }
 
 // GetInternalConfigSelfTools mocks base method.
@@ -822,6 +902,46 @@ func (mr *MockClientInterfaceMockRecorder) PostInternalConfigPaymentReceivePolic
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentReceivePolicyRulesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigPaymentReceivePolicyRulesWithBody), varargs...)
 }
 
+// PostInternalConfigPaymentSpendPolicyRules mocks base method.
+func (m *MockClientInterface) PostInternalConfigPaymentSpendPolicyRules(ctx context.Context, body clients.PostInternalConfigPaymentSpendPolicyRulesJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigPaymentSpendPolicyRules", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigPaymentSpendPolicyRules indicates an expected call of PostInternalConfigPaymentSpendPolicyRules.
+func (mr *MockClientInterfaceMockRecorder) PostInternalConfigPaymentSpendPolicyRules(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentSpendPolicyRules", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigPaymentSpendPolicyRules), varargs...)
+}
+
+// PostInternalConfigPaymentSpendPolicyRulesWithBody mocks base method.
+func (m *MockClientInterface) PostInternalConfigPaymentSpendPolicyRulesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigPaymentSpendPolicyRulesWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigPaymentSpendPolicyRulesWithBody indicates an expected call of PostInternalConfigPaymentSpendPolicyRulesWithBody.
+func (mr *MockClientInterfaceMockRecorder) PostInternalConfigPaymentSpendPolicyRulesWithBody(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentSpendPolicyRulesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostInternalConfigPaymentSpendPolicyRulesWithBody), varargs...)
+}
+
 // PostInternalConversations mocks base method.
 func (m *MockClientInterface) PostInternalConversations(ctx context.Context, body clients.PostInternalConversationsJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1162,6 +1282,86 @@ func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentReceivePolicy
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentReceivePolicyRulesIdWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentReceivePolicyRulesIdWithBody), varargs...)
 }
 
+// PutInternalConfigPaymentSpendPolicy mocks base method.
+func (m *MockClientInterface) PutInternalConfigPaymentSpendPolicy(ctx context.Context, body clients.PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicy", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicy indicates an expected call of PutInternalConfigPaymentSpendPolicy.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicy(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicy", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentSpendPolicy), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesId mocks base method.
+func (m *MockClientInterface) PutInternalConfigPaymentSpendPolicyRulesId(ctx context.Context, id string, body clients.PutInternalConfigPaymentSpendPolicyRulesIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyRulesId", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesId indicates an expected call of PutInternalConfigPaymentSpendPolicyRulesId.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyRulesId(ctx, id, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyRulesId", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentSpendPolicyRulesId), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithBody mocks base method.
+func (m *MockClientInterface) PutInternalConfigPaymentSpendPolicyRulesIdWithBody(ctx context.Context, id, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyRulesIdWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithBody indicates an expected call of PutInternalConfigPaymentSpendPolicyRulesIdWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyRulesIdWithBody(ctx, id, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyRulesIdWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentSpendPolicyRulesIdWithBody), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyWithBody mocks base method.
+func (m *MockClientInterface) PutInternalConfigPaymentSpendPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyWithBody indicates an expected call of PutInternalConfigPaymentSpendPolicyWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyWithBody(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutInternalConfigPaymentSpendPolicyWithBody), varargs...)
+}
+
 // PutInternalConfigSelfToolsId mocks base method.
 func (m *MockClientInterface) PutInternalConfigSelfToolsId(ctx context.Context, id string, body clients.PutInternalConfigSelfToolsIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1344,6 +1544,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteInternalConfigPaym
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentReceivePolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteInternalConfigPaymentReceivePolicyWithResponse), varargs...)
+}
+
+// DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse(ctx context.Context, id string, reqEditors ...clients.RequestEditorFn) (*clients.DeleteInternalConfigPaymentSpendPolicyRulesIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.DeleteInternalConfigPaymentSpendPolicyRulesIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse indicates an expected call of DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse(ctx, id any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteInternalConfigPaymentSpendPolicyRulesIdWithResponse), varargs...)
+}
+
+// DeleteInternalConfigPaymentSpendPolicyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.DeleteInternalConfigPaymentSpendPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteInternalConfigPaymentSpendPolicyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.DeleteInternalConfigPaymentSpendPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteInternalConfigPaymentSpendPolicyWithResponse indicates an expected call of DeleteInternalConfigPaymentSpendPolicyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteInternalConfigPaymentSpendPolicyWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInternalConfigPaymentSpendPolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteInternalConfigPaymentSpendPolicyWithResponse), varargs...)
 }
 
 // GetInternalAgentCollectionsWithResponse mocks base method.
@@ -1584,6 +1824,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigPayment
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentReceivePolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigPaymentReceivePolicyWithResponse), varargs...)
+}
+
+// GetInternalConfigPaymentSpendPolicyRulesWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalConfigPaymentSpendPolicyRulesWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalConfigPaymentSpendPolicyRulesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigPaymentSpendPolicyRulesWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalConfigPaymentSpendPolicyRulesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigPaymentSpendPolicyRulesWithResponse indicates an expected call of GetInternalConfigPaymentSpendPolicyRulesWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigPaymentSpendPolicyRulesWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentSpendPolicyRulesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigPaymentSpendPolicyRulesWithResponse), varargs...)
+}
+
+// GetInternalConfigPaymentSpendPolicyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, reqEditors ...clients.RequestEditorFn) (*clients.GetInternalConfigPaymentSpendPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetInternalConfigPaymentSpendPolicyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.GetInternalConfigPaymentSpendPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInternalConfigPaymentSpendPolicyWithResponse indicates an expected call of GetInternalConfigPaymentSpendPolicyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetInternalConfigPaymentSpendPolicyWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInternalConfigPaymentSpendPolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetInternalConfigPaymentSpendPolicyWithResponse), varargs...)
 }
 
 // GetInternalConfigSelfToolsWithResponse mocks base method.
@@ -2006,6 +2286,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigPaymen
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentReceivePolicyRulesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigPaymentReceivePolicyRulesWithResponse), varargs...)
 }
 
+// PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalConfigPaymentSpendPolicyRulesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalConfigPaymentSpendPolicyRulesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse indicates an expected call of PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigPaymentSpendPolicyRulesWithBodyWithResponse), varargs...)
+}
+
+// PostInternalConfigPaymentSpendPolicyRulesWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostInternalConfigPaymentSpendPolicyRulesWithResponse(ctx context.Context, body clients.PostInternalConfigPaymentSpendPolicyRulesJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalConfigPaymentSpendPolicyRulesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostInternalConfigPaymentSpendPolicyRulesWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PostInternalConfigPaymentSpendPolicyRulesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostInternalConfigPaymentSpendPolicyRulesWithResponse indicates an expected call of PostInternalConfigPaymentSpendPolicyRulesWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostInternalConfigPaymentSpendPolicyRulesWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostInternalConfigPaymentSpendPolicyRulesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostInternalConfigPaymentSpendPolicyRulesWithResponse), varargs...)
+}
+
 // PostInternalConversationsConversationIdMessagesWithBodyWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) PostInternalConversationsConversationIdMessagesWithBodyWithResponse(ctx context.Context, conversationId, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PostInternalConversationsConversationIdMessagesResponse, error) {
 	m.ctrl.T.Helper()
@@ -2344,6 +2664,86 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPayment
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, id, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentReceivePolicyRulesIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentReceivePolicyRulesIdWithResponse), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse(ctx context.Context, id, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigPaymentSpendPolicyRulesIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigPaymentSpendPolicyRulesIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse indicates an expected call of PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse(ctx, id, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentSpendPolicyRulesIdWithBodyWithResponse), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigPaymentSpendPolicyRulesIdWithResponse(ctx context.Context, id string, body clients.PutInternalConfigPaymentSpendPolicyRulesIdJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigPaymentSpendPolicyRulesIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, id, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyRulesIdWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigPaymentSpendPolicyRulesIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyRulesIdWithResponse indicates an expected call of PutInternalConfigPaymentSpendPolicyRulesIdWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyRulesIdWithResponse(ctx, id, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, id, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyRulesIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentSpendPolicyRulesIdWithResponse), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigPaymentSpendPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigPaymentSpendPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigPaymentSpendPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyWithBodyWithResponse indicates an expected call of PutInternalConfigPaymentSpendPolicyWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyWithBodyWithResponse(ctx, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentSpendPolicyWithBodyWithResponse), varargs...)
+}
+
+// PutInternalConfigPaymentSpendPolicyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutInternalConfigPaymentSpendPolicyWithResponse(ctx context.Context, body clients.PutInternalConfigPaymentSpendPolicyJSONRequestBody, reqEditors ...clients.RequestEditorFn) (*clients.PutInternalConfigPaymentSpendPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutInternalConfigPaymentSpendPolicyWithResponse", varargs...)
+	ret0, _ := ret[0].(*clients.PutInternalConfigPaymentSpendPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutInternalConfigPaymentSpendPolicyWithResponse indicates an expected call of PutInternalConfigPaymentSpendPolicyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutInternalConfigPaymentSpendPolicyWithResponse(ctx, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutInternalConfigPaymentSpendPolicyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutInternalConfigPaymentSpendPolicyWithResponse), varargs...)
 }
 
 // PutInternalConfigSelfToolsIdWithBodyWithResponse mocks base method.

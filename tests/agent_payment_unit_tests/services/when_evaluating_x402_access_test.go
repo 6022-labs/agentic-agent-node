@@ -23,7 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"go.uber.org/zap"
 )
 
 type WhenEvaluatingX402AccessTestingSuite struct {
@@ -65,7 +64,6 @@ func WhenEvaluatingX402AccessBeforeEach(t *testing.T) *WhenEvaluatingX402AccessT
 
 	return &WhenEvaluatingX402AccessTestingSuite{
 		sut: services.NewX402PaymentReceivePolicyEvaluator(
-			zap.NewNop(),
 			mockPaymentReceivePolicyProvider,
 			mockPaymentReceiveRuleRepository,
 			mockPaymentReceiveRuleX402ConfigRepository,

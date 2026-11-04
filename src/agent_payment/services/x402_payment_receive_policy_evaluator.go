@@ -14,7 +14,6 @@ import (
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/samber/lo"
-	"go.uber.org/zap"
 )
 
 // everyoneAddressPattern marks a price as public: only these are advertised in a 402.
@@ -28,7 +27,6 @@ type x402ReceiveOffer struct {
 
 // X402PaymentReceivePolicyEvaluator decides receive access; the gateway only executes the verdict.
 type X402PaymentReceivePolicyEvaluator struct {
-	logger                                 *zap.Logger
 	paymentReceivePolicyProvider           payment_interfaces.PaymentReceivePolicyProviderInterface
 	paymentReceiveRuleRepository           repositories.PaymentReceiveRuleRepositoryInterface
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface
@@ -38,7 +36,6 @@ type X402PaymentReceivePolicyEvaluator struct {
 }
 
 func NewX402PaymentReceivePolicyEvaluator(
-	logger *zap.Logger,
 	paymentReceivePolicyProvider payment_interfaces.PaymentReceivePolicyProviderInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
 	paymentReceiveRuleX402ConfigRepository repositories.PaymentReceiveRuleX402ConfigRepositoryInterface,
@@ -47,7 +44,6 @@ func NewX402PaymentReceivePolicyEvaluator(
 	paymentReceiveSettings *runtime_common_settings.PaymentReceiveSettings,
 ) *X402PaymentReceivePolicyEvaluator {
 	return &X402PaymentReceivePolicyEvaluator{
-		logger:                                 logger,
 		paymentReceivePolicyProvider:           paymentReceivePolicyProvider,
 		paymentReceiveRuleRepository:           paymentReceiveRuleRepository,
 		paymentReceiveRuleX402ConfigRepository: paymentReceiveRuleX402ConfigRepository,

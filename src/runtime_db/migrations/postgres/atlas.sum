@@ -1,4 +1,4 @@
-h1:h/xAjC830n9DXRX4o1STb0DMkBf41WZCFvDv0uS10uU=
+h1:h2w7eKNmsYR3Guu1W8ssrTU9GxwYI/sS81wzvN2P7+c=
 20260721111609_initial.sql h1:JRHKmxyEwO4QaMYk4sEl579eUAihTC6wcChWNVIrRsU=
 20260725141200_add_mcp_connection_allowed_tool_patterns.sql h1:uDTchsmM2ZQX9sdwcI7GsHS1yVO8AHE8MmyMRP//JOk=
 20260807004810_add_self_tools.sql h1:Kbj4/sOH9PkLvRCwjA1uz7gvk1hB8j+Sj2ObLFlczWc=
@@ -6,3 +6,4 @@ h1:h/xAjC830n9DXRX4o1STb0DMkBf41WZCFvDv0uS10uU=
 20260930204116_add_conversation_caller_id.sql h1:TgsmtDtatXYLfiD1Wmwg9LAzWdMuV2tFZRiOJrdrkiI=
 20261019210000_rename_payment_tables_to_receive.sql h1:Vu0TVizeaVXpDOfDC1fxlMHJAZS7mHIDPqgbT7su+gs=
 20261102185118_receive_rule_per_token.sql h1:pe6X4mOXN3bO/mRyokTN8l1Sk4TpZbtPEnABtRmw7Mc=
+20261102205942_add_payment_spend_tables.sql h1:0kH7bwYf4O5MdFW7bDXvSy+iETEgYnRJ4ycYXvGlLtc=

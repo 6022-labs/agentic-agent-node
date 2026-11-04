@@ -64,7 +64,11 @@ export default function PaymentReceiveRuleDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {editing ? (
-          <Button variant="ghost" size="icon-sm" aria-label="Edit rule">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Edit rule ${initialRule?.name ?? ""}`}
+          >
             <Pencil />
           </Button>
         ) : (
@@ -77,13 +81,10 @@ export default function PaymentReceiveRuleDialog({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Edit pricing rule" : "Add pricing rule"}
+            {editing ? "Edit receive rule" : "Add receive rule"}
           </DialogTitle>
           <DialogDescription>
-            One token, and what each group of callers pays with it per call.
-            {editing
-              ? ""
-              : " Pre-filled with the node's chain and the $6022 token."}
+            One token, and what each group of callers pays per call.
           </DialogDescription>
         </DialogHeader>
         {/* Remount the form each time the dialog opens so an edited rule's

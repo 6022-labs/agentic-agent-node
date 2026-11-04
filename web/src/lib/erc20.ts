@@ -17,7 +17,7 @@ export type Erc20Info = {
 // Erc20Lookup is the state of a token-metadata resolution, shared by the caller
 // that fetches it and the form that renders it.
 export type Erc20Lookup =
-  | { status: "idle" | "loading" | "not-found" | "unsupported" }
+  | { status: "idle" | "loading" | "not-found" | "timeout" | "unsupported" }
   | { status: "found"; info: Erc20Info }
 
 export function isLookupSupported(network: string): boolean {

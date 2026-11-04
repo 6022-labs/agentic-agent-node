@@ -52,21 +52,6 @@ definitions:
       message:
         type: string
     type: object
-  models.ExternalPaymentReceiveRule:
-    properties:
-      config:
-        type: object
-      id:
-        type: string
-      method:
-        type: string
-      name:
-        type: string
-      prices:
-        items:
-          $ref: '#/definitions/models.ExternalPaymentReceiveRulePrice'
-        type: array
-    type: object
   models.ExternalPaymentReceiveRulePrice:
     properties:
       addressPatterns:
@@ -233,6 +218,28 @@ definitions:
           $ref: '#/definitions/requests.SavePaymentReceiveRulePriceRequest'
         type: array
     type: object
+  requests.SavePaymentSpendRuleRequest:
+    properties:
+      config:
+        type: object
+      maxAmountPerPayment:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      windows:
+        items:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleWindowRequest'
+        type: array
+    type: object
+  requests.SavePaymentSpendRuleWindowRequest:
+    properties:
+      maxAmount:
+        type: string
+      windowSeconds:
+        type: integer
+    type: object
   requests.SetAgentGuidanceRequest:
     properties:
       content:
@@ -271,6 +278,13 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  requests.UpdatePaymentSpendPolicyRequest:
+    properties:
+      payToPatterns:
+        items:
+          type: string
+        type: array
     type: object
   requests.UpdateSelfToolRequest:
     properties:
@@ -552,6 +566,21 @@ definitions:
       updatedAt:
         type: string
     type: object
+  responses.GetPaymentSpendPolicyResponse:
+    properties:
+      agentId:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      payToPatterns:
+        items:
+          type: string
+        type: array
+      updatedAt:
+        type: string
+    type: object
   responses.KeyValue:
     properties:
       key:
@@ -590,7 +619,14 @@ definitions:
     properties:
       rules:
         items:
-          $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+          $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
+        type: array
+    type: object
+  responses.ListPaymentSpendRulesResponse:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleResponse'
         type: array
     type: object
   responses.ListSelfToolsResponse:
@@ -686,6 +722,49 @@ definitions:
         type: string
       type:
         type: string
+    type: object
+  responses.PaymentReceiveRuleResponse:
+    properties:
+      config:
+        type: object
+      id:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      prices:
+        items:
+          $ref: '#/definitions/models.ExternalPaymentReceiveRulePrice'
+        type: array
+    type: object
+  responses.PaymentSpendRuleResponse:
+    properties:
+      config:
+        type: object
+      id:
+        type: string
+      maxAmountPerPayment:
+        type: string
+      method:
+        type: string
+      name:
+        type: string
+      windows:
+        items:
+          $ref: '#/definitions/responses.PaymentSpendRuleWindowResponse'
+        type: array
+    type: object
+  responses.PaymentSpendRuleWindowResponse:
+    properties:
+      maxAmount:
+        type: string
+      resetsAt:
+        type: string
+      spent:
+        type: string
+      windowSeconds:
+        type: integer
     type: object
   responses.RegistrationStatusResponse:
     properties:
@@ -1763,7 +1842,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:
@@ -1838,7 +1917,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ExternalPaymentReceiveRule'
+            $ref: '#/definitions/responses.PaymentReceiveRuleResponse'
         "400":
           description: Bad Request
           schema:
@@ -1862,6 +1941,232 @@ paths:
       security:
       - BearerAuth: []
       summary: Update payment rule
+      tags:
+      - Config
+  /config/payment-spend-policy:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend policy
+      tags:
+      - Config
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetPaymentSpendPolicyResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Get payment spend policy
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: spend policy
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdatePaymentSpendPolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.GetPaymentSpendPolicyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Update payment spend policy
+      tags:
+      - Config
+  /config/payment-spend-policy/rules:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ListPaymentSpendRulesResponse'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: List payment spend rules
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "409":
+          description: agent_not_minted or asset_already_has_rule
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Create payment spend rule
+      tags:
+      - Config
+  /config/payment-spend-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: rule_not_found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend rule
+      tags:
+      - Config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: spend rule
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.SavePaymentSpendRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.PaymentSpendRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: missing_authorization or invalid_token
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "404":
+          description: rule_not_found
+          schema:
+            $ref: '#/definitions/errors.NotFoundError'
+        "409":
+          description: asset_already_has_rule
+          schema:
+            $ref: '#/definitions/errors.ConflictError'
+        "502":
+          description: runtime_unavailable
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      security:
+      - BearerAuth: []
+      summary: Update payment spend rule
       tags:
       - Config
   /config/self-tools:

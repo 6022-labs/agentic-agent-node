@@ -113,6 +113,30 @@ func AddRuntimeDbConfiguration(container *dig.Container) {
 		panic(err)
 	}
 	if err := container.Provide(
+		repositories.NewPaymentSpendPolicyRepository,
+		dig.As(new(payment_repositories.PaymentSpendPolicyRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewPaymentSpendRuleRepository,
+		dig.As(new(payment_repositories.PaymentSpendRuleRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewPaymentSpendRuleX402ConfigRepository,
+		dig.As(new(payment_repositories.PaymentSpendRuleX402ConfigRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
+		repositories.NewPaymentSpendRuleWindowRepository,
+		dig.As(new(payment_repositories.PaymentSpendRuleWindowRepositoryInterface)),
+	); err != nil {
+		panic(err)
+	}
+	if err := container.Provide(
 		runtime_db_services.NewUnitOfWorkFactory,
 		dig.As(new(runtime_common_interfaces.UnitOfWorkFactoryInterface)),
 	); err != nil {

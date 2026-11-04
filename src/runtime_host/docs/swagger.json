@@ -1153,6 +1153,285 @@
                 }
             }
         },
+        "/internal/config/payment-spend-policy": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal get payment spend policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendPolicyResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update payment spend policy",
+                "parameters": [
+                    {
+                        "description": "payment spend policy",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdatePaymentSpendPolicyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendPolicyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed or update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete payment spend policy",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "delete_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/payment-spend-policy/rules": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal list payment spend rules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ListPaymentSpendRulesResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed or list_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal create payment spend rule",
+                "parameters": [
+                    {
+                        "description": "payment spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "409": {
+                        "description": "agent_not_minted or asset_already_has_rule",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "spend_policy_failed, rule_lookup_failed or create_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/config/payment-spend-policy/rules/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal update payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "payment spend rule",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.SavePaymentSpendRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "rule_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "409": {
+                        "description": "asset_already_has_rule",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ConflictError"
+                        }
+                    },
+                    "500": {
+                        "description": "rule_lookup_failed or update_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Internal delete payment spend rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid_params",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "404": {
+                        "description": "rule_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.NotFoundError"
+                        }
+                    },
+                    "500": {
+                        "description": "delete_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    }
+                }
+            }
+        },
         "/internal/config/self-tools": {
             "get": {
                 "produces": [
@@ -2082,6 +2361,40 @@
                 }
             }
         },
+        "requests.SavePaymentSpendRuleRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "maxAmountPerPayment": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.SavePaymentSpendRuleWindowRequest"
+                    }
+                }
+            }
+        },
+        "requests.SavePaymentSpendRuleWindowRequest": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
+                    "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
+                }
+            }
+        },
         "requests.SetAgentGuidanceRequest": {
             "type": "object",
             "properties": {
@@ -2143,6 +2456,17 @@
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "requests.UpdatePaymentSpendPolicyRequest": {
+            "type": "object",
+            "properties": {
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -2557,6 +2881,17 @@
                 }
             }
         },
+        "responses.ListPaymentSpendRulesResponse": {
+            "type": "object",
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleResponse"
+                    }
+                }
+            }
+        },
         "responses.MCPConnectionListResponse": {
             "type": "object",
             "properties": {
@@ -2775,6 +3110,78 @@
                 },
                 "requirements": {
                     "$ref": "#/definitions/x402.PaymentRequirements"
+                }
+            }
+        },
+        "responses.PaymentSpendPolicyResponse": {
+            "type": "object",
+            "properties": {
+                "agentId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payToPatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.PaymentSpendRuleResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxAmountPerPayment": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "windows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.PaymentSpendRuleWindowResponse"
+                    }
+                }
+            }
+        },
+        "responses.PaymentSpendRuleWindowResponse": {
+            "type": "object",
+            "properties": {
+                "maxAmount": {
+                    "type": "string"
+                },
+                "resetsAt": {
+                    "type": "string"
+                },
+                "spent": {
+                    "type": "string"
+                },
+                "windowSeconds": {
+                    "type": "integer"
                 }
             }
         },

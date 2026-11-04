@@ -52,22 +52,6 @@ components:
         message:
           type: string
       type: object
-    models.ExternalPaymentReceiveRule:
-      properties:
-        config:
-          type: object
-        id:
-          type: string
-        method:
-          type: string
-        name:
-          type: string
-        prices:
-          items:
-            $ref: '#/components/schemas/models.ExternalPaymentReceiveRulePrice'
-          type: array
-          uniqueItems: false
-      type: object
     models.ExternalPaymentReceiveRulePrice:
       properties:
         addressPatterns:
@@ -241,6 +225,29 @@ components:
           type: array
           uniqueItems: false
       type: object
+    requests.SavePaymentSpendRuleRequest:
+      properties:
+        config:
+          type: object
+        maxAmountPerPayment:
+          type: string
+        method:
+          type: string
+        name:
+          type: string
+        windows:
+          items:
+            $ref: '#/components/schemas/requests.SavePaymentSpendRuleWindowRequest'
+          type: array
+          uniqueItems: false
+      type: object
+    requests.SavePaymentSpendRuleWindowRequest:
+      properties:
+        maxAmount:
+          type: string
+        windowSeconds:
+          type: integer
+      type: object
     requests.SetAgentGuidanceRequest:
       properties:
         content:
@@ -280,6 +287,14 @@ components:
           type: string
         url:
           type: string
+      type: object
+    requests.UpdatePaymentSpendPolicyRequest:
+      properties:
+        payToPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
       type: object
     requests.UpdateSelfToolRequest:
       properties:
@@ -570,6 +585,22 @@ components:
         updatedAt:
           type: string
       type: object
+    responses.GetPaymentSpendPolicyResponse:
+      properties:
+        agentId:
+          type: string
+        createdAt:
+          type: string
+        id:
+          type: string
+        payToPatterns:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        updatedAt:
+          type: string
+      type: object
     responses.KeyValue:
       properties:
         key:
@@ -611,7 +642,15 @@ components:
       properties:
         rules:
           items:
-            $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
+            $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.ListPaymentSpendRulesResponse:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
           type: array
           uniqueItems: false
       type: object
@@ -716,6 +755,51 @@ components:
           type: string
         type:
           type: string
+      type: object
+    responses.PaymentReceiveRuleResponse:
+      properties:
+        config:
+          type: object
+        id:
+          type: string
+        method:
+          type: string
+        name:
+          type: string
+        prices:
+          items:
+            $ref: '#/components/schemas/models.ExternalPaymentReceiveRulePrice'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.PaymentSpendRuleResponse:
+      properties:
+        config:
+          type: object
+        id:
+          type: string
+        maxAmountPerPayment:
+          type: string
+        method:
+          type: string
+        name:
+          type: string
+        windows:
+          items:
+            $ref: '#/components/schemas/responses.PaymentSpendRuleWindowResponse'
+          type: array
+          uniqueItems: false
+      type: object
+    responses.PaymentSpendRuleWindowResponse:
+      properties:
+        maxAmount:
+          type: string
+        resetsAt:
+          type: string
+        spent:
+          type: string
+        windowSeconds:
+          type: integer
       type: object
     responses.RegistrationStatusResponse:
       properties:
@@ -1994,7 +2078,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
+                $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
           description: OK
         "400":
           content:
@@ -2089,7 +2173,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ExternalPaymentReceiveRule'
+                $ref: '#/components/schemas/responses.PaymentReceiveRuleResponse'
           description: OK
         "400":
           content:
@@ -2124,6 +2208,287 @@ paths:
       security:
       - BearerAuth: []
       summary: Update payment rule
+      tags:
+      - Config
+  /config/payment-spend-policy:
+    delete:
+      responses:
+        "204": {}
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend policy
+      tags:
+      - Config
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.GetPaymentSpendPolicyResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Get payment spend policy
+      tags:
+      - Config
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.UpdatePaymentSpendPolicyRequest'
+                description: spend policy
+                summary: request
+        description: spend policy
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.GetPaymentSpendPolicyResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Update payment spend policy
+      tags:
+      - Config
+  /config/payment-spend-policy/rules:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.ListPaymentSpendRulesResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: List payment spend rules
+      tags:
+      - Config
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentSpendRuleRequest'
+                description: spend rule
+                summary: request
+        description: spend rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: agent_not_minted or asset_already_has_rule
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Create payment spend rule
+      tags:
+      - Config
+  /config/payment-spend-policy/rules/{id}:
+    delete:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204": {}
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: rule_not_found
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Delete payment spend rule
+      tags:
+      - Config
+    put:
+      parameters:
+      - description: rule id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/requests.SavePaymentSpendRuleRequest'
+                description: spend rule
+                summary: request
+        description: spend rule
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responses.PaymentSpendRuleResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnauthorizedError'
+          description: missing_authorization or invalid_token
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.NotFoundError'
+          description: rule_not_found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.ConflictError'
+          description: asset_already_has_rule
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors.UnavailableError'
+          description: runtime_unavailable
+      security:
+      - BearerAuth: []
+      summary: Update payment spend rule
       tags:
       - Config
   /config/self-tools:

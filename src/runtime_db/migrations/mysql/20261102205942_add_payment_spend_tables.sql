@@ -1,0 +1,60 @@
+-- +goose Up
+-- create "payment_spend_policies" table
+CREATE TABLE `payment_spend_policies` (
+  `id` varchar(36) NOT NULL,
+  `agent_id` varchar(36) NOT NULL,
+  `pay_to_patterns` longtext NOT NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `idx_payment_spend_policies_agent_id` (`agent_id`),
+  CONSTRAINT `fk_payment_spend_policies_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- create "payment_spend_rules" table
+CREATE TABLE `payment_spend_rules` (
+  `id` varchar(36) NOT NULL,
+  `policy_id` varchar(36) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `method` varchar(32) NOT NULL,
+  `max_amount_per_payment` varchar(78) NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_payment_spend_rules_policy_id` (`policy_id`),
+  CONSTRAINT `fk_payment_spend_rules_policy` FOREIGN KEY (`policy_id`) REFERENCES `payment_spend_policies` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- create "payment_spend_rule_windows" table
+CREATE TABLE `payment_spend_rule_windows` (
+  `id` varchar(36) NOT NULL,
+  `payment_spend_rule_id` varchar(36) NOT NULL,
+  `window_seconds` bigint NOT NULL,
+  `max_amount` varchar(78) NOT NULL,
+  `spent` varchar(78) NOT NULL DEFAULT "0",
+  `started_at` datetime(3) NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_payment_spend_rule_windows_rule_seconds` (`payment_spend_rule_id`, `window_seconds`),
+  CONSTRAINT `fk_payment_spend_rule_windows_payment_spend_rule` FOREIGN KEY (`payment_spend_rule_id`) REFERENCES `payment_spend_rules` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- create "payment_spend_rule_x402_configs" table
+CREATE TABLE `payment_spend_rule_x402_configs` (
+  `payment_spend_rule_id` varchar(36) NOT NULL,
+  `policy_id` varchar(36) NOT NULL,
+  `network` varchar(64) NOT NULL,
+  `asset` varchar(42) NOT NULL,
+  `asset_transfer_method` varchar(16) NULL,
+  PRIMARY KEY (`payment_spend_rule_id`),
+  UNIQUE INDEX `uq_payment_spend_rule_x402_configs_policy_asset` (`policy_id`, `network`, `asset`),
+  CONSTRAINT `fk_payment_spend_rule_x402_configs_payment_spend_rule` FOREIGN KEY (`payment_spend_rule_id`) REFERENCES `payment_spend_rules` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+-- +goose Down
+-- reverse: create "payment_spend_rule_x402_configs" table
+DROP TABLE `payment_spend_rule_x402_configs`;
+-- reverse: create "payment_spend_rule_windows" table
+DROP TABLE `payment_spend_rule_windows`;
+-- reverse: create "payment_spend_rules" table
+DROP TABLE `payment_spend_rules`;
+-- reverse: create "payment_spend_policies" table
+DROP TABLE `payment_spend_policies`;

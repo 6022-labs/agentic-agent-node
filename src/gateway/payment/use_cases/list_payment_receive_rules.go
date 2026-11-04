@@ -22,5 +22,5 @@ func (u *ListPaymentReceiveRules) Execute(ctx context.Context) (*responses.ListP
 	if err != nil {
 		return nil, err
 	}
-	return &responses.ListPaymentReceiveRulesResponse{Rules: rules}, nil
+	return responses.ToListPaymentReceiveRulesResponse(rules), nil
 }

@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	requests "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
-	responses "github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
+	requests "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	responses "github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/responses"
 	gomock "go.uber.org/mock/gomock"
 )
 

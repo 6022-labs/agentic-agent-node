@@ -2,10 +2,9 @@ package models
 
 import (
 	"math/big"
-	"regexp"
-	"strings"
 	"time"
 
+	payment_helpers "github.com/6022-labs/agentic-agent-node/src/agent_payment/helpers"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -29,18 +28,7 @@ func (PaymentReceiveRulePrice) TableName() string {
 
 // Matches reports whether this price is open to the address.
 func (m *PaymentReceiveRulePrice) Matches(address string) bool {
-	// The address is lowercased; patterns are matched as written, so uppercase-hex patterns never match.
-	lowered := strings.ToLower(strings.TrimSpace(address))
-	for _, pattern := range m.AddressPatterns {
-		compiled, err := regexp.Compile("^(?:" + pattern + ")$")
-		if err != nil {
-			continue
-		}
-		if compiled.MatchString(lowered) {
-			return true
-		}
-	}
-	return false
+	return payment_helpers.MatchesAddressPatterns(m.AddressPatterns, address)
 }
 
 func (m *PaymentReceiveRulePrice) IsFree() bool {

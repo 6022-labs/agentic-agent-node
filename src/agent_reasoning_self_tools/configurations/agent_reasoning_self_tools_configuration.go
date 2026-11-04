@@ -48,8 +48,16 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewUpdatePaymentReceiveRuleTool)
 	provideSelfTool(container, tools.NewDeletePaymentReceiveRuleTool)
 	provideSelfTool(container, tools.NewDeletePaymentReceivePolicyTool)
+	provideSelfTool(container, tools.NewGetPaymentSpendPolicyTool)
+	provideSelfTool(container, tools.NewUpdatePaymentSpendPolicyTool)
+	provideSelfTool(container, tools.NewListPaymentSpendRulesTool)
+	provideSelfTool(container, tools.NewCreatePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewUpdatePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentSpendRuleTool)
+	provideSelfTool(container, tools.NewDeletePaymentSpendPolicyTool)
 	provideSelfTool(container, tools.NewCheckAgentMintTool)
 	provideSelfTool(container, tools.NewCheckAgentEnsTool)
+	provideSelfTool(container, tools.NewSignX402PaymentTool)
 	provideSelfTool(container, tools.NewSignTypedDataTool)
 	provideSelfTool(container, tools.NewRunCommandTool)
 	provideSelfTool(container, tools.NewListProcessesTool)
@@ -93,15 +101,11 @@ func provideIdentityExecutors(container *dig.Container) {
 	asCheckAgentEns := func(u *identity_use_cases.CheckAgentEns) tool_interfaces.CheckAgentEnsExecutorInterface {
 		return u
 	}
-	asSignTypedData := func(u *identity_use_cases.SignTypedData) tool_interfaces.SignTypedDataExecutorInterface {
-		return u
-	}
 
 	provideExecutor(container, asGetAgentRegistration)
 	provideExecutor(container, asListAgentCollections)
 	provideExecutor(container, asCheckAgentMint)
 	provideExecutor(container, asCheckAgentEns)
-	provideExecutor(container, asSignTypedData)
 }
 
 func provideKnowledgeExecutors(container *dig.Container) {
@@ -166,6 +170,33 @@ func providePaymentExecutors(container *dig.Container) {
 	asDeletePaymentReceivePolicy := func(u *payment_use_cases.DeletePaymentReceivePolicy) tool_interfaces.DeletePaymentReceivePolicyExecutorInterface {
 		return u
 	}
+	asSignX402Payment := func(u *payment_use_cases.SignX402Payment) tool_interfaces.SignX402PaymentExecutorInterface {
+		return u
+	}
+	asSignTypedData := func(u *payment_use_cases.SignTypedData) tool_interfaces.SignTypedDataExecutorInterface {
+		return u
+	}
+	asGetPaymentSpendPolicy := func(u *payment_use_cases.GetPaymentSpendPolicy) tool_interfaces.GetPaymentSpendPolicyExecutorInterface {
+		return u
+	}
+	asUpdatePaymentSpendPolicy := func(u *payment_use_cases.UpdatePaymentSpendPolicy) tool_interfaces.UpdatePaymentSpendPolicyExecutorInterface {
+		return u
+	}
+	asListPaymentSpendRules := func(u *payment_use_cases.ListPaymentSpendRules) tool_interfaces.ListPaymentSpendRulesExecutorInterface {
+		return u
+	}
+	asCreatePaymentSpendRule := func(u *payment_use_cases.CreatePaymentSpendRule) tool_interfaces.CreatePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asUpdatePaymentSpendRule := func(u *payment_use_cases.UpdatePaymentSpendRule) tool_interfaces.UpdatePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asDeletePaymentSpendRule := func(u *payment_use_cases.DeletePaymentSpendRule) tool_interfaces.DeletePaymentSpendRuleExecutorInterface {
+		return u
+	}
+	asDeletePaymentSpendPolicy := func(u *payment_use_cases.DeletePaymentSpendPolicy) tool_interfaces.DeletePaymentSpendPolicyExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetPaymentReceivePolicy)
 	provideExecutor(container, asListPaymentReceiveRules)
@@ -174,6 +205,15 @@ func providePaymentExecutors(container *dig.Container) {
 	provideExecutor(container, asUpdatePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceiveRule)
 	provideExecutor(container, asDeletePaymentReceivePolicy)
+	provideExecutor(container, asGetPaymentSpendPolicy)
+	provideExecutor(container, asUpdatePaymentSpendPolicy)
+	provideExecutor(container, asListPaymentSpendRules)
+	provideExecutor(container, asCreatePaymentSpendRule)
+	provideExecutor(container, asUpdatePaymentSpendRule)
+	provideExecutor(container, asDeletePaymentSpendRule)
+	provideExecutor(container, asDeletePaymentSpendPolicy)
+	provideExecutor(container, asSignX402Payment)
+	provideExecutor(container, asSignTypedData)
 }
 
 func provideCommonExecutors(container *dig.Container) {
