@@ -189,6 +189,11 @@ definitions:
       role:
         type: string
     type: object
+  requests.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
   requests.ResponseInput:
     properties:
       messages:
@@ -766,6 +771,17 @@ definitions:
       windowSeconds:
         type: integer
     type: object
+  responses.RefreshAuthResponse:
+    properties:
+      expiresAt:
+        type: string
+      refreshExpiresAt:
+        type: string
+      refreshToken:
+        type: string
+      token:
+        type: string
+    type: object
   responses.RegistrationStatusResponse:
     properties:
       ensStatus:
@@ -851,6 +867,10 @@ definitions:
   responses.VerifyAuthResponse:
     properties:
       expiresAt:
+        type: string
+      refreshExpiresAt:
+        type: string
+      refreshToken:
         type: string
       token:
         type: string
@@ -1412,12 +1432,77 @@ paths:
       summary: Auth challenge
       tags:
       - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes the session behind the refresh token; idempotent.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RefreshTokenRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+      summary: Auth logout
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Spends the refresh token (valid jwt.refresh_idle_ttl after issue, at most jwt.refresh_ttl
+        after sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.
+        401 codes: refresh_token_missing, refresh_token_invalid, session_revoked,
+        refresh_token_reused, not_authorized
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.RefreshAuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ValidationError'
+        "401":
+          description: codes listed in the description
+          schema:
+            $ref: '#/definitions/errors.UnauthorizedError'
+        "500":
+          description: refresh_failed
+          schema:
+            $ref: '#/definitions/errors.InternalError'
+        "502":
+          description: identity_not_found
+          schema:
+            $ref: '#/definitions/errors.UnavailableError'
+      summary: Auth refresh
+      tags:
+      - Auth
   /auth/verify:
     post:
       consumes:
       - application/json
-      description: Rebuilds the EIP-4361 message, verifies the EIP-191 signature,
-        checks NFT ownership, issues a HS256 JWT.
+      description: |-
+        Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership,
+        issues a HS256 JWT and a refresh token.
       parameters:
       - description: Address + signature
         in: body

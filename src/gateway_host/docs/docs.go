@@ -728,9 +728,101 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/logout": {
+            "post": {
+                "description": "Revokes the session behind the refresh token; idempotent.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Auth logout",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Spends the refresh token (valid jwt.refresh_idle_ttl after issue, at most jwt.refresh_ttl\nafter sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.\n401 codes: refresh_token_missing, refresh_token_invalid, session_revoked,\nrefresh_token_reused, not_authorized",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Auth refresh",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.RefreshAuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ValidationError"
+                        }
+                    },
+                    "401": {
+                        "description": "codes listed in the description",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnauthorizedError"
+                        }
+                    },
+                    "500": {
+                        "description": "refresh_failed",
+                        "schema": {
+                            "$ref": "#/definitions/errors.InternalError"
+                        }
+                    },
+                    "502": {
+                        "description": "identity_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.UnavailableError"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/verify": {
             "post": {
-                "description": "Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership, issues a HS256 JWT.",
+                "description": "Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership,\nissues a HS256 JWT and a refresh token.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2749,6 +2841,14 @@ const docTemplate = `{
                 }
             }
         },
+        "requests.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.ResponseInput": {
             "type": "object",
             "properties": {
@@ -3640,6 +3740,23 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.RefreshAuthResponse": {
+            "type": "object",
+            "properties": {
+                "expiresAt": {
+                    "type": "string"
+                },
+                "refreshExpiresAt": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.RegistrationStatusResponse": {
             "type": "object",
             "properties": {
@@ -3770,6 +3887,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "expiresAt": {
+                    "type": "string"
+                },
+                "refreshExpiresAt": {
+                    "type": "string"
+                },
+                "refreshToken": {
                     "type": "string"
                 },
                 "token": {

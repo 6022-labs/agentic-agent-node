@@ -69,6 +69,20 @@ func addCoreConfiguration(container *dig.Container) {
 	}
 
 	if err := container.Provide(
+		core_services.NewRefreshTokenManager,
+		dig.As(new(core_interfaces.RefreshTokenManagerInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
+		core_services.NewRefreshSessionStore,
+		dig.As(new(core_interfaces.RefreshSessionStoreInterface)),
+	); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(
 		core_services.NewSiweMessageBuilder,
 		dig.As(new(core_interfaces.SiweMessageBuilderInterface)),
 	); err != nil {
@@ -78,6 +92,8 @@ func addCoreConfiguration(container *dig.Container) {
 	useCaseProviders := []any{
 		core_use_cases.NewGetAuthChallenge,
 		core_use_cases.NewVerifyAuth,
+		core_use_cases.NewRefreshAuth,
+		core_use_cases.NewRevokeAuth,
 		core_use_cases.NewGetConfig,
 		core_use_cases.NewGetWellKnownAgentCard,
 		core_use_cases.NewGetWellKnownAgent6022,
