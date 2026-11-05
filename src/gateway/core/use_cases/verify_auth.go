@@ -21,11 +21,12 @@ var (
 )
 
 type VerifyAuth struct {
-	nonceStore         gateway_interfaces.NonceStoreInterface
-	siweMessageBuilder gateway_interfaces.SiweMessageBuilderInterface
-	signatureVerifier  gateway_interfaces.SignatureVerifierInterface
-	authorizer         common_interfaces.AuthorizerInterface
-	jwtIssuer          gateway_interfaces.JwtIssuerInterface
+	nonceStore          gateway_interfaces.NonceStoreInterface
+	siweMessageBuilder  gateway_interfaces.SiweMessageBuilderInterface
+	signatureVerifier   gateway_interfaces.SignatureVerifierInterface
+	authorizer          common_interfaces.AuthorizerInterface
+	jwtIssuer           gateway_interfaces.JwtIssuerInterface
+	refreshTokenManager gateway_interfaces.RefreshTokenManagerInterface
 }
 
 func NewVerifyAuth(
@@ -34,13 +35,15 @@ func NewVerifyAuth(
 	signatureVerifier gateway_interfaces.SignatureVerifierInterface,
 	authorizer common_interfaces.AuthorizerInterface,
 	jwtIssuer gateway_interfaces.JwtIssuerInterface,
+	refreshTokenManager gateway_interfaces.RefreshTokenManagerInterface,
 ) *VerifyAuth {
 	return &VerifyAuth{
-		nonceStore:         nonceStore,
-		siweMessageBuilder: siweMessageBuilder,
-		signatureVerifier:  signatureVerifier,
-		authorizer:         authorizer,
-		jwtIssuer:          jwtIssuer,
+		nonceStore:          nonceStore,
+		siweMessageBuilder:  siweMessageBuilder,
+		signatureVerifier:   signatureVerifier,
+		authorizer:          authorizer,
+		jwtIssuer:           jwtIssuer,
+		refreshTokenManager: refreshTokenManager,
 	}
 }
 
@@ -82,8 +85,14 @@ func (u *VerifyAuth) Execute(
 	if err != nil {
 		return nil, apperrors.NewInternalError("verify_failed", err.Error())
 	}
+	refreshToken, err := u.refreshTokenManager.Issue(claimed)
+	if err != nil {
+		return nil, apperrors.NewInternalError("verify_failed", err.Error())
+	}
 	return &responses.VerifyAuthResponse{
-		Token:     token,
-		ExpiresAt: expiresAt,
+		Token:            token,
+		ExpiresAt:        expiresAt,
+		RefreshToken:     refreshToken.Token,
+		RefreshExpiresAt: refreshToken.ExpiresAt,
 	}, nil
 }
