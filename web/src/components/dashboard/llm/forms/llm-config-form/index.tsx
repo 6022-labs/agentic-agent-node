@@ -1,5 +1,5 @@
 import React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import {
@@ -45,7 +45,9 @@ export default function LlmConfigForm({
 }: Props) {
   // A ref, so the resolver sees the saved provider after each save without remounting the form.
   const currentProvider = React.useRef(config?.provider)
-  currentProvider.current = config?.provider
+  React.useEffect(() => {
+    currentProvider.current = config?.provider
+  }, [config?.provider])
 
   const form = useForm<LlmConfigFormSchemaType>({
     resolver: (values, context, options) =>
@@ -62,14 +64,15 @@ export default function LlmConfigForm({
     },
   })
 
-  const selectedProvider = form.watch("provider")
+  const selectedProvider = useWatch({ control: form.control, name: "provider" })
+  const baseUrl = useWatch({ control: form.control, name: "baseUrl" })
   const provider = LLM_PROVIDERS.find((p) => p.value === selectedProvider)
   const isSelfHosted = provider?.kind === "self-hosted"
   const keepsKey = !!config && config.provider === selectedProvider
   const needsBaseUrl = isSelfHosted || !!provider?.requiresBaseUrl
   const isBedrock = selectedProvider === "aws.bedrock"
   const detectedRegion = isBedrock
-    ? extractAmazonPlatformRegionFromUrl(form.watch("baseUrl") ?? "")
+    ? extractAmazonPlatformRegionFromUrl(baseUrl ?? "")
     : undefined
 
   // A self-hosted provider never takes a key: drop one typed before switching to it.
@@ -77,12 +80,10 @@ export default function LlmConfigForm({
     if (isSelfHosted && form.getValues("apiKey")) form.setValue("apiKey", "")
   }, [form, isSelfHosted])
 
+  const watched = useWatch({ control: form.control })
   React.useEffect(() => {
     onValueChange(form.getValues())
-
-    const subscription = form.watch(() => onValueChange(form.getValues()))
-    return () => subscription.unsubscribe()
-  }, [form, onValueChange])
+  }, [watched, form, onValueChange])
 
   const onSubmit = async (values: LlmConfigFormSchemaType) => {
     const { error, result: saved } = await onFormComplete(values)

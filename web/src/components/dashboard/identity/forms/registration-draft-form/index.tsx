@@ -1,5 +1,5 @@
 import React from "react"
-import { useForm, type DefaultValues } from "react-hook-form"
+import { useForm, useWatch, type DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 import {
@@ -94,14 +94,12 @@ export default function RegistrationDraftForm({
   }, [draft])
 
   // Collections are per-chain, so the wizard reloads them from the emitted values.
-  const selectedChainId = form.watch("chainId")
+  const selectedChainId = useWatch({ control: form.control, name: "chainId" })
 
+  const watched = useWatch({ control: form.control })
   React.useEffect(() => {
     onValueChange(form.getValues())
-
-    const subscription = form.watch(() => onValueChange(form.getValues()))
-    return () => subscription.unsubscribe()
-  }, [form, onValueChange])
+  }, [watched, form, onValueChange])
 
   const onSubmit = async (values: RegistrationDraftFormSchemaType) => {
     const { error } = await onFormComplete(values)
