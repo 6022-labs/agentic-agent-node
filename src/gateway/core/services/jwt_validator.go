@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"time"
 
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
@@ -34,7 +33,7 @@ func (v *JwtValidator) Verify(token string) (common.Address, error) {
 
 	sub, err := parsed.Claims.GetSubject()
 	if err != nil || !common.IsHexAddress(sub) {
-		return common.Address{}, errors.New("invalid subject")
+		return common.Address{}, jwt.ErrTokenInvalidSubject
 	}
 	return common.HexToAddress(sub), nil
 }
