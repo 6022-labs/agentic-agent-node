@@ -4,8 +4,10 @@ import (
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
+	core_settings "github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
 	_ "github.com/6022-labs/agentic-agent-node/src/gateway_host/docs"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core/middlewares"
+	reasoning_middlewares "github.com/6022-labs/agentic-agent-node/src/gateway_mvc/reasoning/middlewares"
 	fiberotel "github.com/gofiber/contrib/v3/otel"
 	"github.com/gofiber/contrib/v3/swaggo"
 	fiberzap "github.com/gofiber/contrib/v3/zap"
@@ -39,6 +41,7 @@ type registerRoutesParams struct {
 
 	App               *fiber.App
 	Logger            *zap.Logger
+	CorsSettings      *core_settings.CorsSettings
 	AgentTelemetry    *middlewares.AgentTelemetryContextMiddleware
 	JwtAuth           *middlewares.JwtAuthMiddleware
 	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
@@ -48,8 +51,13 @@ type registerRoutesParams struct {
 
 func registerRoutes(p registerRoutesParams) {
 	p.App.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: p.CorsSettings.AllowOrigins,
 		AllowHeaders: []string{"*"},
+		// x402 clients read the payment headers.
+		ExposeHeaders: []string{
+			reasoning_middlewares.PaymentRequiredHeader,
+			reasoning_middlewares.PaymentResponseHeader,
+		},
 	}))
 
 	p.App.Use(p.AgentTelemetry.Handle)

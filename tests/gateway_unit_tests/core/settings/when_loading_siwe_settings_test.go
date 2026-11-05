@@ -13,37 +13,37 @@ import (
 func TestWhenLoadingSiweSettings(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given a complete configuration", func(t *testing.T) {
-		t.Parallel()
-
-		k := koanf.New(".")
-		_ = k.Load(confmap.Provider(map[string]any{
-			"siwe.uri":       "https://agent.example.com:8443",
-			"siwe.statement": "Sign in.",
-		}, "."), nil)
-
-		t.Run("Should load every field and derive the domain from the uri", func(t *testing.T) {
-			t.Parallel()
-
-			result := settings.NewSiweSettings(zap.NewNop(), k)
-
-			assert.Equal(t, "agent.example.com:8443", result.Domain)
-			assert.Equal(t, "https://agent.example.com:8443", result.Uri)
-			assert.Equal(t, "Sign in.", result.Statement)
-		})
-	})
+	consoleSettings := &settings.ConsoleSettings{
+		Url:    "https://agent.example.com:8443",
+		Domain: "agent.example.com:8443",
+	}
 
 	t.Run("Given no configuration", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should fall back to the defaults", func(t *testing.T) {
+		t.Run("Should fall back to the default statement", func(t *testing.T) {
 			t.Parallel()
 
-			result := settings.NewSiweSettings(zap.NewNop(), koanf.New("."))
+			result := settings.NewSiweSettings(zap.NewNop(), koanf.New("."), consoleSettings)
 
-			assert.Equal(t, "localhost:5500", result.Domain)
-			assert.Equal(t, "http://localhost:5500", result.Uri)
-			assert.NotEmpty(t, result.Statement)
+			assert.Equal(t, "Sign in to your 6022 agent node.", result.Statement)
+		})
+	})
+
+	t.Run("Given a statement", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{"siwe.statement": "Sign in."}, "."), nil)
+
+		t.Run("Should load it and take the uri and domain from the console", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewSiweSettings(zap.NewNop(), k, consoleSettings)
+
+			assert.Equal(t, "Sign in.", result.Statement)
+			assert.Equal(t, "https://agent.example.com:8443", result.Uri)
+			assert.Equal(t, "agent.example.com:8443", result.Domain)
 		})
 	})
 }

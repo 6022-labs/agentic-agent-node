@@ -18,6 +18,7 @@ services:
       - JWT__NONCE_TTL=300
       - JWT__REFRESH_TTL=604800
       - JWT__REFRESH_IDLE_TTL=86400
+      - CONSOLE__URL=http://localhost:5500
       - VAULT__ADDRESS=http://agent-node-vault:8200
       - VAULT__TOKEN=wBGKZCJjfIGqIKB3HMmvcQVt
       - VAULT__KV_V1_MOUNT_PATH=secret
