@@ -82,7 +82,7 @@ func (u *RefreshAuth) Execute(
 		claims.SessionId,
 		claims.TokenId,
 		gateway_interfaces.SpentRefreshToken{SuccessorId: successorId, SpentAt: now},
-		claims.ExpiresAt,
+		claims.SessionExpiresAt,
 	)
 	if !spent {
 		if now.Sub(earlier.SpentAt) > refreshReuseGrace {

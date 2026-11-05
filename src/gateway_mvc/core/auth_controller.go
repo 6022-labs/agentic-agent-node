@@ -74,7 +74,8 @@ func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 
 // Verify exchanges a signed SIWE message for a JWT.
 // @Summary Auth verify
-// @Description Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership, issues a HS256 JWT and a refresh token.
+// @Description Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership,
+// @Description issues a HS256 JWT and a refresh token.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -101,14 +102,17 @@ func (c *AuthController) Verify(ctx fiber.Ctx) error {
 
 // Refresh spends a refresh token and returns a fresh access JWT plus the rotated refresh token.
 // @Summary Auth refresh
-// @Description Spends the refresh token (valid jwt.refresh_idle_ttl after its last use, capped at jwt.refresh_ttl from sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.
+// @Description Spends the refresh token (valid jwt.refresh_idle_ttl after issue, at most jwt.refresh_ttl
+// @Description after sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.
+// @Description 401 codes: refresh_token_missing, refresh_token_invalid, session_revoked,
+// @Description refresh_token_reused, not_authorized
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body requests.RefreshTokenRequest true "Refresh token"
 // @Success 200 {object} responses.RefreshAuthResponse
 // @Failure 400 {object} errors.ValidationError
-// @Failure 401 {object} errors.UnauthorizedError "refresh_token_missing, refresh_token_invalid, session_revoked, refresh_token_reused or not_authorized"
+// @Failure 401 {object} errors.UnauthorizedError "codes listed in the description"
 // @Failure 500 {object} errors.InternalError "refresh_failed"
 // @Failure 502 {object} errors.UnavailableError "identity_not_found"
 // @Router /auth/refresh [post]

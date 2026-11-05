@@ -764,7 +764,7 @@ const docTemplate = `{
         },
         "/auth/refresh": {
             "post": {
-                "description": "Spends the refresh token (valid jwt.refresh_idle_ttl after its last use, capped at jwt.refresh_ttl from sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.",
+                "description": "Spends the refresh token (valid jwt.refresh_idle_ttl after issue, at most jwt.refresh_ttl\nafter sign-in), re-checks NFT ownership, issues a HS256 JWT and the next refresh token.\n401 codes: refresh_token_missing, refresh_token_invalid, session_revoked,\nrefresh_token_reused, not_authorized",
                 "consumes": [
                     "application/json"
                 ],
@@ -800,7 +800,7 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "refresh_token_missing, refresh_token_invalid, session_revoked, refresh_token_reused or not_authorized",
+                        "description": "codes listed in the description",
                         "schema": {
                             "$ref": "#/definitions/errors.UnauthorizedError"
                         }
@@ -822,7 +822,7 @@ const docTemplate = `{
         },
         "/auth/verify": {
             "post": {
-                "description": "Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership, issues a HS256 JWT and a refresh token.",
+                "description": "Rebuilds the EIP-4361 message, verifies the EIP-191 signature, checks NFT ownership,\nissues a HS256 JWT and a refresh token.",
                 "consumes": [
                     "application/json"
                 ],

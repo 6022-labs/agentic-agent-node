@@ -60,6 +60,10 @@ func NewJwtSettings(logger *zap.Logger, k *koanf.Koanf) *JwtSettings {
 		logger.Warn("invalid jwt.refresh_idle_ttl value, defaulting to 86400")
 		raw.RefreshIdleTtlSeconds = 86400
 	}
+	if raw.RefreshIdleTtlSeconds < 2*raw.TokenTtlSeconds {
+		logger.Warn("jwt.refresh_idle_ttl is under twice jwt.token_ttl, raising it")
+		raw.RefreshIdleTtlSeconds = 2 * raw.TokenTtlSeconds
+	}
 
 	return &JwtSettings{
 		SigningKey:     raw.SigningKey,

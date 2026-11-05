@@ -312,7 +312,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			assert.Equal(t, expectedExp, resp.ExpiresAt)
 		})
 
-		t.Run("Should return the refresh token for the cookie", func(t *testing.T) {
+		t.Run("Should return the refresh token", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenVerifyingAuthBeforeEach(t)

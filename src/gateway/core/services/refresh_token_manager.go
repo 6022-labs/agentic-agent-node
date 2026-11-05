@@ -77,12 +77,11 @@ func (m *RefreshTokenManager) Parse(token string) (*interfaces.RefreshTokenClaim
 	}
 
 	sub, _ := claims.GetSubject()
-	exp, _ := claims.GetExpirationTime()
 	tokenType, _ := claims[refreshTokenTypeClaim].(string)
 	sessionId, _ := claims[refreshSessionIdClaim].(string)
 	tokenId, _ := claims[refreshTokenIdClaim].(string)
 	sessionExpiresAt, _ := claims[sessionExpiresAtClaim].(float64)
-	if tokenType != refreshTokenType || sessionId == "" || tokenId == "" || exp == nil || sessionExpiresAt <= 0 ||
+	if tokenType != refreshTokenType || sessionId == "" || tokenId == "" || sessionExpiresAt <= 0 ||
 		!common.IsHexAddress(sub) {
 		return nil, ErrInvalidRefreshToken
 	}
@@ -91,7 +90,6 @@ func (m *RefreshTokenManager) Parse(token string) (*interfaces.RefreshTokenClaim
 		Address:          common.HexToAddress(sub),
 		SessionId:        sessionId,
 		TokenId:          tokenId,
-		ExpiresAt:        exp.Time,
 		SessionExpiresAt: time.Unix(int64(sessionExpiresAt), 0),
 	}, nil
 }

@@ -15,7 +15,6 @@ type RefreshTokenClaims struct {
 	Address          common.Address
 	SessionId        string
 	TokenId          string
-	ExpiresAt        time.Time
 	SessionExpiresAt time.Time
 }
 

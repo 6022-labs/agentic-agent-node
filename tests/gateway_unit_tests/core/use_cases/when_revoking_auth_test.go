@@ -82,7 +82,6 @@ func TestWhenRevokingAuth(t *testing.T) {
 			Address:          common_tests.RandomEthAddress(),
 			SessionId:        "session-1",
 			TokenId:          "token-1",
-			ExpiresAt:        time.Now().Add(time.Hour),
 			SessionExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		}
 		initSuite := func(suite *WhenRevokingAuthTestingSuite) {

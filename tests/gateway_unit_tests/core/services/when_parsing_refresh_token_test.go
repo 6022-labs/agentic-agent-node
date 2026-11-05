@@ -43,7 +43,7 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 	t.Run("Given a malformed token", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should return an error", func(t *testing.T) {
+		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenParsingRefreshTokenBeforeEach()
@@ -88,6 +88,28 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a refresh token signed with another algorithm", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenParsingRefreshTokenBeforeEach()
+			token, _ := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+				"sub": address.Hex(),
+				"exp": time.Now().Add(time.Hour).Unix(),
+				"typ": "refresh",
+				"sid": "session-1",
+				"jti": "token-1",
+				"sxp": time.Now().Add(time.Hour).Unix(),
+			}).SignedString([]byte(suite.jwtSettings.SigningKey + ":refresh"))
+
+			_, err := suite.sut.Parse(token)
+
+			assert.ErrorIs(t, err, jwt.ErrTokenSignatureInvalid)
+		})
+	})
+
 	t.Run("Given an expired refresh token", func(t *testing.T) {
 		t.Parallel()
 
@@ -105,6 +127,27 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 			_, err := suite.sut.Parse(refreshToken.Token)
 
 			assert.ErrorIs(t, err, jwt.ErrTokenExpired)
+		})
+	})
+
+	t.Run("Given a token signed with the refresh key but no expiry", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenParsingRefreshTokenBeforeEach()
+			token := suite.signWithRefreshKey(jwt.MapClaims{
+				"sub": address.Hex(),
+				"typ": "refresh",
+				"sid": "session-1",
+				"jti": "token-1",
+				"sxp": time.Now().Add(time.Hour).Unix(),
+			})
+
+			_, err := suite.sut.Parse(token)
+
+			assert.ErrorIs(t, err, jwt.ErrTokenRequiredClaimMissing)
 		})
 	})
 
@@ -166,6 +209,27 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a token signed with the refresh key but no session expiry", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should return ErrInvalidRefreshToken", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenParsingRefreshTokenBeforeEach()
+			token := suite.signWithRefreshKey(jwt.MapClaims{
+				"sub": address.Hex(),
+				"exp": time.Now().Add(time.Hour).Unix(),
+				"typ": "refresh",
+				"sid": "session-1",
+				"jti": "token-1",
+			})
+
+			_, err := suite.sut.Parse(token)
+
+			assert.ErrorIs(t, err, services.ErrInvalidRefreshToken)
+		})
+	})
+
 	t.Run("Given a token signed with the refresh key but a non-address subject", func(t *testing.T) {
 		t.Parallel()
 
@@ -180,27 +244,6 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 				"sid": "session-1",
 				"jti": "token-1",
 				"sxp": time.Now().Add(time.Hour).Unix(),
-			})
-
-			_, err := suite.sut.Parse(token)
-
-			assert.ErrorIs(t, err, services.ErrInvalidRefreshToken)
-		})
-	})
-
-	t.Run("Given a token signed with the refresh key but no session expiry", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("Should return ErrInvalidRefreshToken", func(t *testing.T) {
-			t.Parallel()
-
-			suite := WhenParsingRefreshTokenBeforeEach()
-			token := suite.signWithRefreshKey(jwt.MapClaims{
-				"sub": address.Hex(),
-				"exp": time.Now().Add(time.Hour).Unix(),
-				"typ": "refresh",
-				"sid": "session-1",
-				"jti": "token-1",
 			})
 
 			_, err := suite.sut.Parse(token)
@@ -224,7 +267,6 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 			assert.Equal(t, address, claims.Address)
 			assert.NotEmpty(t, claims.SessionId)
 			assert.NotEmpty(t, claims.TokenId)
-			assert.Equal(t, refreshToken.ExpiresAt, claims.ExpiresAt)
 			assert.WithinDuration(
 				t,
 				time.Now().Add(suite.jwtSettings.RefreshTtl),

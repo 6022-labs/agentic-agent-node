@@ -40,7 +40,6 @@ func TestWhenReissuingRefreshToken(t *testing.T) {
 			Address:          address,
 			SessionId:        "session-1",
 			TokenId:          "token-1",
-			ExpiresAt:        time.Now().Add(10 * time.Minute),
 			SessionExpiresAt: time.Unix(time.Now().Add(10*time.Minute).Unix(), 0),
 		}
 
@@ -59,7 +58,7 @@ func TestWhenReissuingRefreshToken(t *testing.T) {
 	t.Run("Given the claims of an issued token and a new token id", func(t *testing.T) {
 		t.Parallel()
 
-		t.Run("Should keep the session id and session expiry", func(t *testing.T) {
+		t.Run("Should keep the session", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenReissuingRefreshTokenBeforeEach()

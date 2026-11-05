@@ -55,9 +55,9 @@ func TestWhenRefreshingAuth(t *testing.T) {
 		Address:          address,
 		SessionId:        "session-1",
 		TokenId:          "token-1",
-		ExpiresAt:        time.Now().Add(24 * time.Hour),
 		SessionExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	}
+	rotatedExpiresAt := time.Now().Add(24 * time.Hour)
 	request := &requests.RefreshTokenRequest{RefreshToken: "the-refresh-token"}
 	expectAuthorizedSession := func(suite *WhenRefreshingAuthTestingSuite) {
 		suite.mockRefreshTokenManager.EXPECT().Parse("the-refresh-token").Return(claims, nil)
@@ -241,7 +241,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
-				Spend("session-1", "token-1", successorSpent, claims.ExpiresAt).
+				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(earlier, false)
 		}
 
@@ -278,7 +278,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
-				Spend("session-1", "token-1", successorSpent, claims.ExpiresAt).
+				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(earlier, false)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now().Add(30*time.Minute), nil)
 		}
@@ -290,7 +290,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			initSuite(suite)
 			suite.mockRefreshTokenManager.EXPECT().
 				Reissue(claims, "token-0").
-				Return(&gateway_interfaces.RefreshToken{Token: "the-successor-token", ExpiresAt: claims.ExpiresAt}, nil)
+				Return(&gateway_interfaces.RefreshToken{Token: "the-successor-token", ExpiresAt: rotatedExpiresAt}, nil)
 
 			resp, err := suite.sut.Execute(context.Background(), request)
 
@@ -306,7 +306,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
-				Spend("session-1", "token-1", successorSpent, claims.ExpiresAt).
+				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("", time.Time{}, errors.New("sign failed"))
 		}
@@ -333,7 +333,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
-				Spend("session-1", "token-1", successorSpent, claims.ExpiresAt).
+				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now(), nil)
 			suite.mockRefreshTokenManager.EXPECT().Reissue(claims, "token-2").Return(nil, errors.New("sign failed"))
@@ -362,12 +362,12 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
-				Spend("session-1", "token-1", successorSpent, claims.ExpiresAt).
+				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
 			suite.mockRefreshTokenManager.EXPECT().
 				Reissue(claims, "token-2").
-				Return(&gateway_interfaces.RefreshToken{Token: "the-rotated-token", ExpiresAt: claims.ExpiresAt}, nil)
+				Return(&gateway_interfaces.RefreshToken{Token: "the-rotated-token", ExpiresAt: rotatedExpiresAt}, nil)
 		}
 
 		t.Run("Should return Ok with a JWT response", func(t *testing.T) {
@@ -383,7 +383,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			assert.Equal(t, expectedExp, resp.ExpiresAt)
 		})
 
-		t.Run("Should return the rotated refresh token for the cookie", func(t *testing.T) {
+		t.Run("Should return the rotated refresh token", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenRefreshingAuthBeforeEach(t)
@@ -393,7 +393,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, "the-rotated-token", resp.RefreshToken)
-			assert.Equal(t, claims.ExpiresAt, resp.RefreshExpiresAt)
+			assert.Equal(t, rotatedExpiresAt, resp.RefreshExpiresAt)
 		})
 	})
 }

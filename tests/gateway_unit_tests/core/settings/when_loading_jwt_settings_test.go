@@ -49,19 +49,16 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 			"jwt.signing_key": "test-signing-key-at-least-32-characters",
 		}, "."), nil)
 
-		t.Run(
-			"Should default token_ttl to 1800, nonce_ttl to 300, refresh_ttl to 7 days and refresh_idle_ttl to 1 day",
-			func(t *testing.T) {
-				t.Parallel()
+		t.Run("Should fall back to defaults", func(t *testing.T) {
+			t.Parallel()
 
-				result := settings.NewJwtSettings(zap.NewNop(), k)
+			result := settings.NewJwtSettings(zap.NewNop(), k)
 
-				assert.Equal(t, 1800*time.Second, result.TokenTtl)
-				assert.Equal(t, 300*time.Second, result.NonceTtl)
-				assert.Equal(t, 7*24*time.Hour, result.RefreshTtl)
-				assert.Equal(t, 24*time.Hour, result.RefreshIdleTtl)
-			},
-		)
+			assert.Equal(t, 1800*time.Second, result.TokenTtl)
+			assert.Equal(t, 300*time.Second, result.NonceTtl)
+			assert.Equal(t, 7*24*time.Hour, result.RefreshTtl)
+			assert.Equal(t, 24*time.Hour, result.RefreshIdleTtl)
+		})
 	})
 
 	t.Run("Given a padded signing_key", func(t *testing.T) {
@@ -102,13 +99,32 @@ func TestWhenLoadingJwtSettings(t *testing.T) {
 			assert.Equal(t, 24*time.Hour, result.RefreshIdleTtl)
 		})
 	})
+
+	t.Run("Given a refresh_idle_ttl under twice the token_ttl", func(t *testing.T) {
+		t.Parallel()
+
+		k := koanf.New(".")
+		_ = k.Load(confmap.Provider(map[string]any{
+			"jwt.signing_key":      "test-signing-key-at-least-32-characters",
+			"jwt.token_ttl":        3600,
+			"jwt.refresh_idle_ttl": 3600,
+		}, "."), nil)
+
+		t.Run("Should raise refresh_idle_ttl to twice the token_ttl", func(t *testing.T) {
+			t.Parallel()
+
+			result := settings.NewJwtSettings(zap.NewNop(), k)
+
+			assert.Equal(t, 2*time.Hour, result.RefreshIdleTtl)
+		})
+	})
 }
 
 func TestWhenLoadingJwtSettingsFromEnv(t *testing.T) {
 	t.Run("Given an env override", func(t *testing.T) {
 		t.Setenv("JWT__SIGNING_KEY", "test-signing-key-at-least-32-characters")
 		t.Setenv("JWT__REFRESH_TTL", "3600")
-		t.Setenv("JWT__REFRESH_IDLE_TTL", "600")
+		t.Setenv("JWT__REFRESH_IDLE_TTL", "7200")
 
 		k, err := host_configurations.LoadKoanfConfig()
 		assert.NoError(t, err)
@@ -117,7 +133,7 @@ func TestWhenLoadingJwtSettingsFromEnv(t *testing.T) {
 			result := settings.NewJwtSettings(zap.NewNop(), k)
 
 			assert.Equal(t, time.Hour, result.RefreshTtl)
-			assert.Equal(t, 10*time.Minute, result.RefreshIdleTtl)
+			assert.Equal(t, 2*time.Hour, result.RefreshIdleTtl)
 		})
 	})
 }
