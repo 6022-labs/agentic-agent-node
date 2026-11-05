@@ -1,5 +1,5 @@
 import React from "react"
-import { useFieldArray, useForm } from "react-hook-form"
+import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CircleCheck, CircleX, Loader2, Plus, Trash2, X } from "lucide-react"
 
@@ -112,15 +112,13 @@ export default function PaymentReceiveRuleForm({
   })
 
   const priceRows = useFieldArray({ control: form.control, name: "prices" })
-  const prices = form.watch("prices")
+  const prices = useWatch({ control: form.control, name: "prices" })
   const allFree = prices.every((row) => isZeroAmount(row.price))
 
+  const watched = useWatch({ control: form.control })
   React.useEffect(() => {
     onValueChange(form.getValues())
-
-    const subscription = form.watch(() => onValueChange(form.getValues()))
-    return () => subscription.unsubscribe()
-  }, [form, onValueChange])
+  }, [watched, form, onValueChange])
 
   // Paid prices need a facilitator network; all-free rules may use any reachable chain; the edited one is kept.
   const networkOptions = React.useMemo(() => {

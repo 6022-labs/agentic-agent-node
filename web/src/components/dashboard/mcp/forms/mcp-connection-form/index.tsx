@@ -1,5 +1,5 @@
 import React from "react"
-import { useFieldArray, useForm } from "react-hook-form"
+import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -77,14 +77,13 @@ export default function McpConnectionForm({
     control: form.control,
     name: "headerAuth",
   })
-  const headerTypes = form.watch("headerAuth").map((row) => row.type)
+  const headerAuth = useWatch({ control: form.control, name: "headerAuth" })
+  const headerTypes = headerAuth.map((row) => row.type)
 
+  const watched = useWatch({ control: form.control })
   React.useEffect(() => {
     onValueChange(form.getValues())
-
-    const subscription = form.watch(() => onValueChange(form.getValues()))
-    return () => subscription.unsubscribe()
-  }, [form, onValueChange])
+  }, [watched, form, onValueChange])
 
   // A freshly listed server starts fully allowed; an edited one keeps whatever
   // its stored patterns still match.
