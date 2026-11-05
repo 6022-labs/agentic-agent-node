@@ -32,6 +32,14 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(core_settings.NewConsoleSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(core_settings.NewCorsSettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(core_settings.NewSiweSettings); err != nil {
 		panic(err)
 	}

@@ -1,9 +1,6 @@
 package settings
 
 import (
-	"net/url"
-	"strings"
-
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/zap"
 )
@@ -12,27 +9,20 @@ const SiweSettingsKey = "siwe"
 
 // SiweSettings are the server-controlled fields of the EIP-4361 sign-in message.
 type SiweSettings struct {
-	Uri       string `koanf:"uri"`
 	Statement string `koanf:"statement"`
-	// Domain is the EIP-4361 authority shown by wallets, derived from Uri.
+	// Uri and Domain come from console.url; Domain is the authority wallets show.
+	Uri    string `koanf:"-"`
 	Domain string `koanf:"-"`
 }
 
-func NewSiweSettings(logger *zap.Logger, k *koanf.Koanf) *SiweSettings {
-	settings := SiweSettings{
-		Uri:       "http://localhost:5500",
-		Statement: "Sign in to your 6022 agent node.",
-	}
+func NewSiweSettings(logger *zap.Logger, k *koanf.Koanf, consoleSettings *ConsoleSettings) *SiweSettings {
+	settings := SiweSettings{Statement: "Sign in to your 6022 agent node."}
 	if err := k.Unmarshal(SiweSettingsKey, &settings); err != nil {
 		logger.Fatal("failed to unmarshal siwe settings", zap.Error(err))
 	}
 
-	settings.Uri = strings.TrimSpace(settings.Uri)
-	parsed, err := url.Parse(settings.Uri)
-	if err != nil || parsed.Host == "" {
-		logger.Fatal("siwe.uri must be an absolute URL (e.g. https://agent.example.com)")
-	}
-	settings.Domain = parsed.Host
+	settings.Uri = consoleSettings.Url
+	settings.Domain = consoleSettings.Domain
 
 	return &settings
 }
