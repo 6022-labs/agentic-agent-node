@@ -27,10 +27,10 @@ createRoot(document.getElementById("root")!).render(
       <TooltipProvider>
         <ConfigGate>
           <BrowserRouter>
+            <Toaster />
             <AuthProvider>
               <WalletProvider>
                 <AgentIdentityProvider>
-                  <Toaster />
                   <App />
                 </AgentIdentityProvider>
               </WalletProvider>
