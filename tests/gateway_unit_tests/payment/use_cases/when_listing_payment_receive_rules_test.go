@@ -39,7 +39,7 @@ func TestWhenListingPaymentReceiveRules(t *testing.T) {
 		initSuite := func(suite *WhenListingPaymentReceiveRulesTestingSuite) {
 			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {

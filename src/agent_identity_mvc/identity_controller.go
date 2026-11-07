@@ -3,6 +3,7 @@ package agent_identity_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/requests"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v3"
 )
@@ -17,17 +18,20 @@ type IdentityController struct {
 	getAgentIdentity         *use_cases.GetAgentIdentity
 	publishEnsRuntimeRecords *use_cases.PublishEnsRuntimeRecords
 	signAgentCard            *use_cases.SignAgentCard
+	errorWriter              *mvc.ErrorWriter
 }
 
 func NewIdentityController(
 	getAgentIdentity *use_cases.GetAgentIdentity,
 	publishEnsRuntimeRecords *use_cases.PublishEnsRuntimeRecords,
 	signAgentCard *use_cases.SignAgentCard,
+	errorWriter *mvc.ErrorWriter,
 ) *IdentityController {
 	return &IdentityController{
 		getAgentIdentity:         getAgentIdentity,
 		publishEnsRuntimeRecords: publishEnsRuntimeRecords,
 		signAgentCard:            signAgentCard,
+		errorWriter:              errorWriter,
 	}
 }
 
@@ -49,7 +53,7 @@ func (c *IdentityController) RegisterRoutes(app fiber.Router) {
 func (c *IdentityController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentIdentity.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -66,7 +70,7 @@ func (c *IdentityController) Get(ctx fiber.Ctx) error {
 // @Router /internal/identity/ens/publish [post]
 func (c *IdentityController) PublishEns(ctx fiber.Ctx) error {
 	if err := c.publishEnsRuntimeRecords.Execute(ctx.Context()); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
@@ -85,11 +89,11 @@ func (c *IdentityController) PublishEns(ctx fiber.Ctx) error {
 func (c *IdentityController) SignCard(ctx fiber.Ctx) error {
 	body := new(requests.SignAgentCardRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.signAgentCard.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

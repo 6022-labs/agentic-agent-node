@@ -27,10 +27,10 @@ func NewAbstractReasoningUseCase(
 func (u *AbstractReasoningUseCase) resolveAgent(ctx context.Context) (*identity_models.Agent, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("agent_lookup_failed", errors.ErrAgentNotInitialized)
 	}
 	return agent, nil
 }

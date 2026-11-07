@@ -40,7 +40,7 @@ func (u *GetMCPConnection) Execute(
 	}
 	connection, err := u.repository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("get_failed", err.Error())
+		return nil, errors.NewInternalError("get_failed", err)
 	}
 	if connection == nil {
 		return nil, errors.NewNotFoundError("mcp_connection_not_found", "")
@@ -50,7 +50,7 @@ func (u *GetMCPConnection) Execute(
 	for _, key := range connection.HeaderAuthKeys {
 		value, found, err := u.secretStorage.GetValue(ctx, connection.Id, string(key))
 		if err != nil {
-			return nil, errors.NewInternalError("get_failed", err.Error())
+			return nil, errors.NewInternalError("get_failed", err)
 		}
 		if found {
 			connection.HeaderAuth[string(key)] = value

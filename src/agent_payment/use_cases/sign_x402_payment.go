@@ -59,5 +59,5 @@ func (u *SignX402Payment) mapSignError(err error) error {
 		stderrors.As(err, &notFoundError) {
 		return err
 	}
-	return errors.NewUnavailableError("x402_payment_signing_failed", err.Error())
+	return errors.NewUnavailableError("x402_payment_signing_failed", "failed to sign the x402 payment", err)
 }

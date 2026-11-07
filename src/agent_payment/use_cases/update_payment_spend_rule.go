@@ -55,7 +55,7 @@ func (u *UpdatePaymentSpendRule) Execute(
 
 	rule, err := u.paymentSpendRuleRepository.GetById(ctx, request.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	if rule == nil {
 		return nil, errors.NewNotFoundError("rule_not_found", "")
@@ -67,7 +67,7 @@ func (u *UpdatePaymentSpendRule) Execute(
 
 	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -76,18 +76,18 @@ func (u *UpdatePaymentSpendRule) Execute(
 	rule.MaxAmountPerPayment = request.MaxAmountPerPayment
 	updated, err := u.paymentSpendRuleRepository.Update(unitOfWork.Context(), rule)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	if err := strategy.SaveConfig(unitOfWork.Context(), rule.PolicyId, rule.Id, request.Config); err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	windows, err := u.replaceWindows(unitOfWork.Context(), rule.Id, request.Windows, sameAsset)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 
 	if err := unitOfWork.Commit(); err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	return responses.ToPaymentSpendRuleResponse(updated, windows, request.Config, time.Now()), nil
 }

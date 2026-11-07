@@ -2,10 +2,12 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
@@ -86,6 +88,39 @@ func TestWhenCheckingMint(t *testing.T) {
 			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.MintStatus)
 			assert.NotNil(t, resp.TokenId)
 			assert.Equal(t, uint64(7), *resp.TokenId)
+		})
+	})
+
+	t.Run("Given the chain read fails", func(t *testing.T) {
+		t.Parallel()
+
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenCheckingMintTestingSuite) {
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(model_builders.NewAgentRegistrationStateBuilder().Build(), nil)
+			suite.mockMintPublisher.EXPECT().
+				ResolveMintedToken(gomock.Any(), gomock.Any()).
+				Return(common.Address{}, uint64(0), rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingMintBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "chain_read_failed", target.Code)
+				assert.Equal(t, "failed to read the minted token from chain", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 

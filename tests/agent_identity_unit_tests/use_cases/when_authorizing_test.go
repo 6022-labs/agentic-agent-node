@@ -84,7 +84,7 @@ func TestWhenAuthorizing(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "rpc down")
+			assert.ErrorContains(t, internalErr.Cause, "rpc down")
 		})
 	})
 

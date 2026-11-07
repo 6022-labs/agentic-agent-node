@@ -12,12 +12,14 @@ const InternalBlockchainConfigEndpoint = "/internal/config/blockchain"
 // gateway serves it unauthenticated so the owner UI boots from the API.
 type BlockchainConfigController struct {
 	getBlockchainConfig *use_cases.GetBlockchainConfig
+	errorWriter         *mvc.ErrorWriter
 }
 
 func NewBlockchainConfigController(
 	getBlockchainConfig *use_cases.GetBlockchainConfig,
+	errorWriter *mvc.ErrorWriter,
 ) *BlockchainConfigController {
-	return &BlockchainConfigController{getBlockchainConfig: getBlockchainConfig}
+	return &BlockchainConfigController{getBlockchainConfig: getBlockchainConfig, errorWriter: errorWriter}
 }
 
 func (c *BlockchainConfigController) RegisterRoutes(app fiber.Router) {
@@ -33,7 +35,7 @@ func (c *BlockchainConfigController) RegisterRoutes(app fiber.Router) {
 func (c *BlockchainConfigController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getBlockchainConfig.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

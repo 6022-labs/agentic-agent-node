@@ -7,6 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
 	"go.uber.org/dig"
 )
@@ -51,7 +52,7 @@ func (w *WalletCredentialsStorage) GetForId(
 	addressType enums.AddressType,
 ) (*identity_interfaces.WalletCredentials, bool, error) {
 	data, err := w.storage.Read(ctx, w.vaultKey(agentId, addressType))
-	if errors.Is(err, runtime_common_interfaces.ErrSecretNotFound) {
+	if errors.Is(err, apperrors.ErrSecretNotFound) {
 		return nil, false, nil
 	}
 	if err != nil {

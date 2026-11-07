@@ -57,7 +57,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, apperrors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, apperrors.NewInternalError("agent_lookup_failed", err)
 	}
 	if agent == nil {
 		return nil, apperrors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")
@@ -68,7 +68,7 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 
 	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, apperrors.NewInternalError("state_lookup_failed", err.Error())
+		return nil, apperrors.NewInternalError("state_lookup_failed", err)
 	}
 
 	agent, state, pending, err = u.ensureMinted(ctx, agent, state)
@@ -84,11 +84,11 @@ func (u *SelfRegisterAgent) Execute(ctx context.Context) (*responses.Registratio
 	// ENS-register with the node wallet unless already provisioned.
 	if state == nil || state.EnsRegistryStatus != enums.TransactionStatusConfirmed {
 		if err := u.ensPublisher.PublishRuntimeRecords(ctx); err != nil {
-			return nil, apperrors.NewInternalError("self_ens_failed", err.Error())
+			return nil, apperrors.NewInternalError("self_ens_failed", err)
 		}
 		state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, agent.Id, state)
 		if err != nil {
-			return nil, apperrors.NewInternalError("ens_reconcile_failed", err.Error())
+			return nil, apperrors.NewInternalError("ens_reconcile_failed", err)
 		}
 	}
 
@@ -110,20 +110,24 @@ func (u *SelfRegisterAgent) ensureMinted(
 
 	collection, tokenId, err := u.mintPublisher.ResolveMintedToken(ctx, agent)
 	if err != nil {
-		return nil, nil, false, apperrors.NewUnavailableError("chain_read_failed", err.Error())
+		return nil, nil, false, apperrors.NewUnavailableError(
+			"chain_read_failed",
+			"failed to read the minted token from chain",
+			err,
+		)
 	}
 
 	if tokenId != 0 {
 		agent, state, err = u.registrationReconciler.ReconcileMint(ctx, agent, state, collection, tokenId, nil)
 		if err != nil {
-			return nil, nil, false, apperrors.NewInternalError("mint_reconcile_failed", err.Error())
+			return nil, nil, false, apperrors.NewInternalError("mint_reconcile_failed", err)
 		}
 		return agent, state, false, nil
 	}
 
 	result, err := u.mintPublisher.SelfMint(ctx, agent, state)
 	if err != nil {
-		return nil, nil, false, apperrors.NewInternalError("self_mint_failed", err.Error())
+		return nil, nil, false, apperrors.NewInternalError("self_mint_failed", err)
 	}
 	return result.Agent, result.State, result.ProposalPending, nil
 }

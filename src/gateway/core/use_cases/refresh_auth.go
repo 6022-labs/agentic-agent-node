@@ -59,10 +59,14 @@ func (u *RefreshAuth) Execute(
 	// Authorize before spending so a transient failure never burns the token.
 	authorized, err := u.authorizer.IsAuthorized(ctx, claims.Address)
 	if err != nil {
-		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
-			return nil, apperrors.NewUnavailableError("identity_not_found", err.Error())
+		if errors.Is(err, apperrors.ErrIdentityNotFound) {
+			return nil, apperrors.NewUnavailableError(
+				"identity_not_found",
+				apperrors.ErrIdentityNotFound.Error(),
+				err,
+			)
 		}
-		return nil, apperrors.NewInternalError("refresh_failed", err.Error())
+		return nil, apperrors.NewInternalError("refresh_failed", err)
 	}
 	if !authorized {
 		u.refreshSessionStore.Revoke(claims.SessionId, claims.SessionExpiresAt)
@@ -75,7 +79,7 @@ func (u *RefreshAuth) Execute(
 
 	successorId, err := u.refreshTokenManager.NewTokenId()
 	if err != nil {
-		return nil, apperrors.NewInternalError("refresh_failed", err.Error())
+		return nil, apperrors.NewInternalError("refresh_failed", err)
 	}
 	now := u.now()
 	earlier, spent := u.refreshSessionStore.Spend(
@@ -94,11 +98,11 @@ func (u *RefreshAuth) Execute(
 
 	token, expiresAt, err := u.jwtIssuer.Issue(claims.Address)
 	if err != nil {
-		return nil, apperrors.NewInternalError("refresh_failed", err.Error())
+		return nil, apperrors.NewInternalError("refresh_failed", err)
 	}
 	refreshToken, err := u.refreshTokenManager.Reissue(claims, successorId)
 	if err != nil {
-		return nil, apperrors.NewInternalError("refresh_failed", err.Error())
+		return nil, apperrors.NewInternalError("refresh_failed", err)
 	}
 	return &responses.RefreshAuthResponse{
 		Token:            token,

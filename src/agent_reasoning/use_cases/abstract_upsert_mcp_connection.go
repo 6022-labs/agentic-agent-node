@@ -53,7 +53,7 @@ func (u *AbstractUpsertMCPConnection) ensureNameAvailable(
 ) error {
 	existing, err := u.mcpConnectionRepository.ListByAgentId(ctx, agentId)
 	if err != nil {
-		return errors.NewInternalError("mcp_connection_lookup_failed", err.Error())
+		return errors.NewInternalError("mcp_connection_lookup_failed", err)
 	}
 	for _, connection := range existing {
 		if connection.Id != excludedId && connection.Name == name {

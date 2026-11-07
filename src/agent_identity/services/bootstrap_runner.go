@@ -10,7 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"go.uber.org/zap"
 )
 
@@ -114,7 +114,7 @@ func (r *BootstrapRunner) refreshEnsRuntimeRecords(ctx context.Context) {
 	if err == nil {
 		return
 	}
-	if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
+	if errors.Is(err, apperrors.ErrIdentityNotFound) {
 		r.logger.Info("skipping ENS runtime records refresh: agent not minted yet")
 		return
 	}

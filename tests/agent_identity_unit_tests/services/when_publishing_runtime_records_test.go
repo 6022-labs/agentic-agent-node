@@ -9,7 +9,7 @@ import (
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -78,7 +78,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 			err := suite.sut.PublishRuntimeRecords(context.Background())
 
-			assert.ErrorIs(t, err, common_interfaces.ErrIdentityNotFound)
+			assert.ErrorIs(t, err, apperrors.ErrIdentityNotFound)
 		})
 	})
 

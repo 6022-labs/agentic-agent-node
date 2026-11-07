@@ -31,7 +31,7 @@ func (u *ListAgentCollections) Execute(
 
 	collections, err := u.agentCollectionsManagerRequester.ListCollections(req.ChainId)
 	if err != nil {
-		return nil, errors.NewUnavailableError("collections_read_failed", err.Error())
+		return nil, errors.NewUnavailableError("collections_read_failed", "failed to list the collections", err)
 	}
 
 	items := make([]responses.AgentCollectionResponse, 0, len(collections))

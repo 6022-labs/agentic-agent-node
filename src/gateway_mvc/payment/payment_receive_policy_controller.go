@@ -11,15 +11,18 @@ const PaymentReceivePolicyEndpoint = "/config/payment-receive-policy"
 type PaymentReceivePolicyController struct {
 	getPaymentReceivePolicy    *use_cases.GetPaymentReceivePolicy
 	deletePaymentReceivePolicy *use_cases.DeletePaymentReceivePolicy
+	errorWriter                *mvc.ErrorWriter
 }
 
 func NewPaymentReceivePolicyController(
 	getPaymentReceivePolicy *use_cases.GetPaymentReceivePolicy,
 	deletePaymentReceivePolicy *use_cases.DeletePaymentReceivePolicy,
+	errorWriter *mvc.ErrorWriter,
 ) *PaymentReceivePolicyController {
 	return &PaymentReceivePolicyController{
 		getPaymentReceivePolicy:    getPaymentReceivePolicy,
 		deletePaymentReceivePolicy: deletePaymentReceivePolicy,
+		errorWriter:                errorWriter,
 	}
 }
 
@@ -43,7 +46,7 @@ func (c *PaymentReceivePolicyController) RegisterAuthenticatedRoutes(app fiber.R
 func (c *PaymentReceivePolicyController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getPaymentReceivePolicy.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -59,7 +62,7 @@ func (c *PaymentReceivePolicyController) Get(ctx fiber.Ctx) error {
 // @Router /config/payment-receive-policy [delete]
 func (c *PaymentReceivePolicyController) Delete(ctx fiber.Ctx) error {
 	if err := c.deletePaymentReceivePolicy.Execute(ctx.Context()); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

@@ -80,7 +80,7 @@ func TestWhenGettingAuthChallenge(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "rng failed")
+			assert.ErrorContains(t, internalErr.Cause, "rng failed")
 		})
 	})
 

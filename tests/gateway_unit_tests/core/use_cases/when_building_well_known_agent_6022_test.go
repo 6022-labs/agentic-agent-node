@@ -3,6 +3,7 @@ package use_cases_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -76,7 +77,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 		initSuite := func(suite *WhenBuildingWellKnownAgent6022TestingSuite) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -102,7 +103,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 				Return(&identity_models.ExternalAgentRegistrationPayload{Name: "hermes"}, nil)
 			suite.mockPaymentReceiveRuleClient.EXPECT().
 				List(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -131,7 +132,7 @@ func TestWhenBuildingWellKnownAgent6022(t *testing.T) {
 				Return(nil, nil)
 			suite.mockAgentCardSignatureClient.EXPECT().
 				Sign(ctx, gomock.Any()).
-				Return(nil, apperrors.NewInternalError("agent_card_signing_failed", "vault unreachable"))
+				Return(nil, apperrors.NewInternalError("agent_card_signing_failed", errors.New("vault unreachable")))
 		}
 
 		t.Run("Should fail rather than serve an unsigned document", func(t *testing.T) {

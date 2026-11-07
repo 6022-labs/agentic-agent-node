@@ -39,7 +39,7 @@ func (u *SetAgentGuidance) Execute(
 		Content: request.Content,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("guidance_update_failed", err.Error())
+		return nil, errors.NewInternalError("guidance_update_failed", err)
 	}
 	return &responses.AgentGuidanceResponse{Content: saved.Content}, nil
 }

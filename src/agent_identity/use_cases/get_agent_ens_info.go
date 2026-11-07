@@ -27,7 +27,7 @@ func NewGetAgentEnsInfo(
 func (u *GetAgentEnsInfo) Execute(ctx context.Context) (*responses.EnsInfoResponse, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}
 	if agent == nil {
 		return nil, errors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")

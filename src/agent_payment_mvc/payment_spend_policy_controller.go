@@ -3,6 +3,7 @@ package agent_payment_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v3"
 )
@@ -13,17 +14,20 @@ type PaymentSpendPolicyController struct {
 	getPaymentSpendPolicy    *use_cases.GetPaymentSpendPolicy
 	updatePaymentSpendPolicy *use_cases.UpdatePaymentSpendPolicy
 	deletePaymentSpendPolicy *use_cases.DeletePaymentSpendPolicy
+	errorWriter              *mvc.ErrorWriter
 }
 
 func NewPaymentSpendPolicyController(
 	getPaymentSpendPolicy *use_cases.GetPaymentSpendPolicy,
 	updatePaymentSpendPolicy *use_cases.UpdatePaymentSpendPolicy,
 	deletePaymentSpendPolicy *use_cases.DeletePaymentSpendPolicy,
+	errorWriter *mvc.ErrorWriter,
 ) *PaymentSpendPolicyController {
 	return &PaymentSpendPolicyController{
 		getPaymentSpendPolicy:    getPaymentSpendPolicy,
 		updatePaymentSpendPolicy: updatePaymentSpendPolicy,
 		deletePaymentSpendPolicy: deletePaymentSpendPolicy,
+		errorWriter:              errorWriter,
 	}
 }
 
@@ -44,7 +48,7 @@ func (c *PaymentSpendPolicyController) RegisterRoutes(app fiber.Router) {
 func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getPaymentSpendPolicy.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -63,11 +67,11 @@ func (c *PaymentSpendPolicyController) Get(ctx fiber.Ctx) error {
 func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {
 	body := new(requests.UpdatePaymentSpendPolicyRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.updatePaymentSpendPolicy.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -80,7 +84,7 @@ func (c *PaymentSpendPolicyController) Update(ctx fiber.Ctx) error {
 // @Router /internal/config/payment-spend-policy [delete]
 func (c *PaymentSpendPolicyController) Delete(ctx fiber.Ctx) error {
 	if err := c.deletePaymentSpendPolicy.Execute(ctx.Context()); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

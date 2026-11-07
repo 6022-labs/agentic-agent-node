@@ -11,12 +11,17 @@ const InternalPaymentReceiveAccessEndpoint = "/internal/payment/receive/access"
 
 type PaymentReceiveAccessController struct {
 	authorizePaymentReceiveAccess *use_cases.AuthorizePaymentReceiveAccess
+	errorWriter                   *mvc.ErrorWriter
 }
 
 func NewPaymentReceiveAccessController(
 	authorizePaymentReceiveAccess *use_cases.AuthorizePaymentReceiveAccess,
+	errorWriter *mvc.ErrorWriter,
 ) *PaymentReceiveAccessController {
-	return &PaymentReceiveAccessController{authorizePaymentReceiveAccess: authorizePaymentReceiveAccess}
+	return &PaymentReceiveAccessController{
+		authorizePaymentReceiveAccess: authorizePaymentReceiveAccess,
+		errorWriter:                   errorWriter,
+	}
 }
 
 func (c *PaymentReceiveAccessController) RegisterRoutes(app fiber.Router) {
@@ -36,12 +41,12 @@ func (c *PaymentReceiveAccessController) RegisterRoutes(app fiber.Router) {
 func (c *PaymentReceiveAccessController) Authorize(ctx fiber.Ctx) error {
 	request := &requests.AuthorizePaymentReceiveAccessRequest{}
 	if err := ctx.Bind().Body(request); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 
 	resp, err := c.authorizePaymentReceiveAccess.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

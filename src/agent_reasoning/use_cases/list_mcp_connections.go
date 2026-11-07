@@ -34,7 +34,7 @@ func (u *ListMCPConnections) Execute(ctx context.Context) (*responses.MCPConnect
 	}
 	connections, err := u.repository.ListByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 	return responses.ToMCPConnectionListResponse(connections), nil
 }

@@ -27,7 +27,7 @@ func (u *SignAgentCard) Execute(
 
 	signature, err := u.agentCardSigner.Sign(ctx, request.Card)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_card_signing_failed", err.Error())
+		return nil, errors.NewInternalError("agent_card_signing_failed", err)
 	}
 
 	response := &responses.AgentCardSignatureResponse{}

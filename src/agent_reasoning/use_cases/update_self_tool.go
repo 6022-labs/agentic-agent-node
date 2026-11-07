@@ -44,7 +44,7 @@ func (u *UpdateSelfTool) Execute(
 
 	tool, err := u.selfToolRepository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("get_failed", err.Error())
+		return nil, errors.NewInternalError("get_failed", err)
 	}
 	if tool == nil {
 		return nil, errors.NewNotFoundError("self_tool_not_found", "self tool not found")
@@ -53,7 +53,7 @@ func (u *UpdateSelfTool) Execute(
 	tool.Enabled = *request.Enabled
 	updated, err := u.selfToolRepository.Update(ctx, tool)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 
 	description := ""

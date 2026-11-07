@@ -1,6 +1,7 @@
 package reasoning
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -15,15 +16,18 @@ const (
 type SelfToolConfigController struct {
 	listSelfTools  *use_cases.ListSelfTools
 	updateSelfTool *use_cases.UpdateSelfTool
+	errorWriter    *mvc.ErrorWriter
 }
 
 func NewSelfToolConfigController(
 	listSelfTools *use_cases.ListSelfTools,
 	updateSelfTool *use_cases.UpdateSelfTool,
+	errorWriter *mvc.ErrorWriter,
 ) *SelfToolConfigController {
 	return &SelfToolConfigController{
 		listSelfTools:  listSelfTools,
 		updateSelfTool: updateSelfTool,
+		errorWriter:    errorWriter,
 	}
 }
 
@@ -46,7 +50,7 @@ func (c *SelfToolConfigController) RegisterAuthenticatedRoutes(app fiber.Router)
 func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
 	resp, err := c.listSelfTools.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -68,14 +72,14 @@ func (c *SelfToolConfigController) List(ctx fiber.Ctx) error {
 func (c *SelfToolConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateSelfToolRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := ctx.Bind().Body(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.updateSelfTool.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

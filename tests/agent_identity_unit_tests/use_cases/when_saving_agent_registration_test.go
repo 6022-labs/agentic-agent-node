@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -164,6 +165,34 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the collection check fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := validSaveRequest(t)
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(false, rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "collection_check_failed", target.Code)
+				assert.Equal(t, "failed to check the collection", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
+		})
+	})
+
 	t.Run("Given the collection is not governed by the manager", func(t *testing.T) {
 		t.Parallel()
 
@@ -184,6 +213,36 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			var validationErr *apperrors.ValidationError
 			assert.ErrorAs(t, err, &validationErr)
 			assert.Equal(t, "collectionAddress", validationErr.Field)
+		})
+	})
+
+	t.Run("Given the collection name read fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := validSaveRequest(t)
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("", rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "collection_check_failed", target.Code)
+				assert.Equal(t, "failed to check the collection", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 
@@ -254,6 +313,86 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 			// Image generation and IPFS upload mocks are absent on purpose: a call fails the test.
 			assert.NoError(t, err)
 			assert.Equal(t, kept, resp.Images)
+		})
+	})
+
+	t.Run("Given the token decimals read fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := validSaveRequest(t)
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockToken6022Requester.EXPECT().
+				BalanceOf(gomock.Any(), gomock.Any()).
+				Return(big.NewInt(0), nil).
+				Times(2)
+			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(0), rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "token_read_failed", target.Code)
+				assert.Equal(t, "failed to read the creator's token balance", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
+		})
+	})
+
+	t.Run("Given the image upload fails", func(t *testing.T) {
+		t.Parallel()
+
+		request := validSaveRequest(t)
+		ipfsErr := errors.New("ipfs down")
+		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
+			suite.mockAgentCollectionsManagerRequester.EXPECT().
+				IsKnownCollection("80002", gomock.Any()).
+				Return(true, nil)
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentCollectionRequester.EXPECT().CollectionName("80002", gomock.Any()).Return("squad", nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[identity_enums.AddressType]string{identity_enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockToken6022Requester.EXPECT().
+				BalanceOf(gomock.Any(), gomock.Any()).
+				Return(big.NewInt(0), nil).
+				Times(2)
+			suite.mockToken6022Requester.EXPECT().Decimals().Return(uint8(18), nil)
+			suite.mockGenerateAgentImages.EXPECT().
+				Generate(gomock.Any()).
+				Return(map[string][]byte{"default": []byte("a")}, nil)
+			suite.mockIPFSFileStorage.EXPECT().UploadFile(gomock.Any(), gomock.Any()).Return(nil, ipfsErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSavingAgentRegistrationBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "image_upload_failed", target.Code)
+				assert.Equal(t, "failed to upload the image", target.Message)
+			}
+			assert.ErrorIs(t, err, ipfsErr)
 		})
 	})
 

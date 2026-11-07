@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/models"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -24,7 +23,7 @@ func (u *SetAgentGuidance) Execute(
 ) (*responses.AgentGuidanceResponse, error) {
 	payload, err := u.agentGuidanceClient.Set(ctx, &models.ExternalAgentGuidancePayload{Content: request.Content})
 	if err != nil {
-		return nil, apperrors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 	return &responses.AgentGuidanceResponse{Content: payload.Content}, nil
 }

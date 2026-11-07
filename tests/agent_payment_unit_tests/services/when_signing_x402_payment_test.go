@@ -215,7 +215,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Authorize(ctx, gomock.Any(), big.NewInt(10000)).
-				Return(nil, apperrors.NewInternalError("spend_policy_failed", "db down")).
+				Return(nil, apperrors.NewInternalError("spend_policy_failed", errors.New("db down"))).
 				Times(1)
 		}
 
@@ -440,7 +440,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 				Times(1)
 			suite.mockSpendPolicyEvaluator.EXPECT().
 				Release(gomock.Any(), reservation).
-				Return(apperrors.NewInternalError("spend_policy_failed", "")).
+				Return(apperrors.NewInternalError("spend_policy_failed", nil)).
 				Times(1)
 		}
 

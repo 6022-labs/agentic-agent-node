@@ -79,7 +79,7 @@ func (u *DiscoverMCPServerTools) resolveTarget(
 
 	stored, err := u.mcpConnectionRepository.GetById(ctx, agent.Id, *request.ConnectionId)
 	if err != nil {
-		return nil, errors.NewInternalError("list_mcp_server_tools_failed", err.Error())
+		return nil, errors.NewInternalError("list_mcp_server_tools_failed", err)
 	}
 	if stored == nil {
 		return nil, errors.NewNotFoundError("mcp_connection_not_found", "")
@@ -106,7 +106,7 @@ func (u *DiscoverMCPServerTools) resolveHeaderValues(
 	for _, key := range stored.HeaderAuthKeys {
 		value, found, err := u.mcpHeaderAuthSecretStorage.GetValue(ctx, stored.Id, string(key))
 		if err != nil {
-			return nil, errors.NewInternalError("list_mcp_server_tools_failed", err.Error())
+			return nil, errors.NewInternalError("list_mcp_server_tools_failed", err)
 		}
 		if found {
 			resolved[string(key)] = value

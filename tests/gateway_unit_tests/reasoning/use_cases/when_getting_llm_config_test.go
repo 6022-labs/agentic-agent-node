@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -59,14 +58,15 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
 		t.Parallel()
 
+		runtimeErr := apperrors.NewConflictError("conflict", "resource conflict")
 		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("boom"))
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingLlmConfigBeforeEach(t)
@@ -74,9 +74,27 @@ func TestWhenGettingLlmConfig(t *testing.T) {
 
 			_, err := suite.sut.Execute(context.Background())
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Contains(t, unavailableErr.Message, "boom")
+			assert.Same(t, runtimeErr, err)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		runtimeErr := apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)
+		initSuite := func(suite *WhenGettingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			assert.Same(t, runtimeErr, err)
 		})
 	})
 

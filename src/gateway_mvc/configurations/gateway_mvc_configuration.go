@@ -3,6 +3,7 @@ package configurations
 import (
 	common_metrics "github.com/6022-labs/agentic-agent-node/src/common/metrics"
 	common_metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/common/metrics/interfaces"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/gateway_mvc/core"
@@ -44,7 +45,7 @@ func addCoreConfiguration(container *dig.Container) {
 	if err := container.Provide(mvc_middlewares.NewApiRequestMetricsMiddleware); err != nil {
 		panic(err)
 	}
-	if err := container.Provide(mvc_middlewares.NewRequestFailureLogMiddleware); err != nil {
+	if err := container.Provide(mvc.NewErrorWriter); err != nil {
 		panic(err)
 	}
 

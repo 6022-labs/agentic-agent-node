@@ -28,10 +28,10 @@ func NewPaymentSpendPolicyProvider(
 func (p *PaymentSpendPolicyProvider) Ensure(ctx context.Context) (*models.PaymentSpendPolicy, error) {
 	agent, err := p.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("spend_policy_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("spend_policy_failed", errors.ErrAgentNotInitialized)
 	}
 	// Before mint anyone can sign in to the console, so only a minted owner may configure spending.
 	if agent.CollectionTokenId == nil {
@@ -40,7 +40,7 @@ func (p *PaymentSpendPolicyProvider) Ensure(ctx context.Context) (*models.Paymen
 
 	policy, err := p.paymentSpendPolicyRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	if policy != nil {
 		return policy, nil
@@ -53,7 +53,7 @@ func (p *PaymentSpendPolicyProvider) Ensure(ctx context.Context) (*models.Paymen
 		if getErr == nil && existing != nil {
 			return existing, nil
 		}
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 
 	return policy, nil

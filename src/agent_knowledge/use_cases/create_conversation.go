@@ -47,10 +47,10 @@ func (u *CreateConversation) Execute(
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("create_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("create_failed", errors.ErrAgentNotInitialized)
 	}
 	if agent.CollectionTokenId == nil {
 		return nil, errors.NewConflictError("agent_not_minted", "agent identity is not minted yet")
@@ -64,7 +64,7 @@ func (u *CreateConversation) Execute(
 		nil,
 	)
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	if taken {
 		return nil, errors.NewConflictError("conversation_name_taken", "a conversation already uses that name")
@@ -77,7 +77,7 @@ func (u *CreateConversation) Execute(
 		Name:     &request.Name,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 
 	u.knowledgeMetrics.RecordConversationStarted(ctx)

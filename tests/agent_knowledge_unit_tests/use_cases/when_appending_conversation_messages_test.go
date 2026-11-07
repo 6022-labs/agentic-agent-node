@@ -377,7 +377,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "db down")
+			assert.ErrorContains(t, internalErr.Cause, "db down")
 		})
 	})
 

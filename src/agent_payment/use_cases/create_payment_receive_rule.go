@@ -61,7 +61,7 @@ func (u *CreatePaymentReceiveRule) Execute(
 
 	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -71,17 +71,17 @@ func (u *CreatePaymentReceiveRule) Execute(
 		Method:   enums.PaymentMethod(request.Method),
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	if err := strategy.SaveConfig(unitOfWork.Context(), policy.Id, rule.Id, request.Config); err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	prices, err := u.createPrices(unitOfWork.Context(), rule.Id, request.Prices)
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	if err := unitOfWork.Commit(); err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	return responses.ToPaymentReceiveRuleResponse(rule, prices, request.Config), nil
 }

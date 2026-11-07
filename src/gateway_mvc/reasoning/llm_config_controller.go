@@ -1,6 +1,7 @@
 package reasoning
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -17,6 +18,7 @@ type LlmConfigController struct {
 	setLlmConfig      *use_cases.SetLlmConfig
 	deleteLlmConfig   *use_cases.DeleteLlmConfig
 	validateLlmConfig *use_cases.ValidateLlmConfig
+	errorWriter       *mvc.ErrorWriter
 }
 
 func NewLlmConfigController(
@@ -24,12 +26,14 @@ func NewLlmConfigController(
 	setLlmConfig *use_cases.SetLlmConfig,
 	deleteLlmConfig *use_cases.DeleteLlmConfig,
 	validateLlmConfig *use_cases.ValidateLlmConfig,
+	errorWriter *mvc.ErrorWriter,
 ) *LlmConfigController {
 	return &LlmConfigController{
 		getLlmConfig:      getLlmConfig,
 		setLlmConfig:      setLlmConfig,
 		deleteLlmConfig:   deleteLlmConfig,
 		validateLlmConfig: validateLlmConfig,
+		errorWriter:       errorWriter,
 	}
 }
 
@@ -57,10 +61,10 @@ func (c *LlmConfigController) RegisterAuthenticatedRoutes(app fiber.Router) {
 func (c *LlmConfigController) Validate(ctx fiber.Ctx) error {
 	body := new(requests.SetLlmConfigRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	if err := c.validateLlmConfig.Execute(ctx.Context(), body); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
@@ -78,7 +82,7 @@ func (c *LlmConfigController) Validate(ctx fiber.Ctx) error {
 func (c *LlmConfigController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getLlmConfig.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -98,11 +102,11 @@ func (c *LlmConfigController) Get(ctx fiber.Ctx) error {
 func (c *LlmConfigController) Set(ctx fiber.Ctx) error {
 	body := new(requests.SetLlmConfigRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.setLlmConfig.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -118,7 +122,7 @@ func (c *LlmConfigController) Set(ctx fiber.Ctx) error {
 // @Router /config/llm [delete]
 func (c *LlmConfigController) Delete(ctx fiber.Ctx) error {
 	if err := c.deleteLlmConfig.Execute(ctx.Context()); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

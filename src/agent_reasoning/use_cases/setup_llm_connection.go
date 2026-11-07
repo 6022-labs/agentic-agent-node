@@ -50,7 +50,7 @@ func (u *SetupLLMConnection) Execute(
 
 	current, err := u.llmConnectionRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("setup_failed", err.Error())
+		return nil, errors.NewInternalError("setup_failed", err)
 	}
 	if err := u.validateConnection(ctx, request, current); err != nil {
 		return nil, err
@@ -68,13 +68,13 @@ func (u *SetupLLMConnection) Execute(
 		SetupStatus: reasoning_enums.LLMConnectionSetupStatusEstablished,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("setup_failed", err.Error())
+		return nil, errors.NewInternalError("setup_failed", err)
 	}
 
 	// After the upsert, on every local save, so a failed delete heals on retry.
 	if u.usesLocalPlatform(request.Platform) {
 		if err := u.secretStorage.Delete(ctx); err != nil {
-			return nil, errors.NewInternalError("setup_failed", err.Error())
+			return nil, errors.NewInternalError("setup_failed", err)
 		}
 	}
 	return responses.ToLLMConnectionResponse(connection), nil
@@ -84,7 +84,7 @@ func (u *SetupLLMConnection) Execute(
 func (u *SetupLLMConnection) resolveApiKey(ctx context.Context, request *requests.SetupLLMConnectionRequest) error {
 	if request.ApiKey != "" {
 		if err := u.secretStorage.Save(ctx, request.ApiKey); err != nil {
-			return errors.NewInternalError("setup_failed", err.Error())
+			return errors.NewInternalError("setup_failed", err)
 		}
 		return nil
 	}
@@ -94,7 +94,7 @@ func (u *SetupLLMConnection) resolveApiKey(ctx context.Context, request *request
 
 	_, found, err := u.secretStorage.Get(ctx)
 	if err != nil {
-		return errors.NewInternalError("setup_failed", err.Error())
+		return errors.NewInternalError("setup_failed", err)
 	}
 	if !found {
 		return errors.NewValidationError("apiKey", "cannot be empty on first setup")

@@ -45,7 +45,7 @@ func TestWhenGettingConfig(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingConfigTestingSuite) {
 			suite.mockClient.EXPECT().Get(gomock.Any()).
-				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down"))
+				Return(nil, errors.NewUnavailableError("runtime_unavailable", "down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

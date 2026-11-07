@@ -20,7 +20,7 @@ func NewGetAgentSoul(agentRepository repositories.AgentRepositoryInterface) *Get
 func (u *GetAgentSoul) Execute(ctx context.Context) (*responses.AgentSoulResponse, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("soul_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("soul_lookup_failed", err)
 	}
 	if agent == nil {
 		return nil, errors.NewNotFoundError("identity_not_found", "agent identity not found")

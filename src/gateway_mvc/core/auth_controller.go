@@ -1,6 +1,7 @@
 package core
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
@@ -21,6 +22,7 @@ type AuthController struct {
 	refreshAuth      *use_cases.RefreshAuth
 	revokeAuth       *use_cases.RevokeAuth
 	authMetrics      metrics_interfaces.AuthMetricsInterface
+	errorWriter      *mvc.ErrorWriter
 }
 
 func NewAuthController(
@@ -29,6 +31,7 @@ func NewAuthController(
 	refreshAuth *use_cases.RefreshAuth,
 	revokeAuth *use_cases.RevokeAuth,
 	authMetrics metrics_interfaces.AuthMetricsInterface,
+	errorWriter *mvc.ErrorWriter,
 ) *AuthController {
 	return &AuthController{
 		getAuthChallenge: getAuthChallenge,
@@ -36,6 +39,7 @@ func NewAuthController(
 		refreshAuth:      refreshAuth,
 		revokeAuth:       revokeAuth,
 		authMetrics:      authMetrics,
+		errorWriter:      errorWriter,
 	}
 }
 
@@ -63,11 +67,11 @@ func (c *AuthController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 	request := new(requests.GetAuthChallengeRequest)
 	if err := ctx.Bind().Query(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_query", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_query", err.Error()))
 	}
 	resp, err := c.getAuthChallenge.Execute(request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -89,12 +93,12 @@ func (c *AuthController) Challenge(ctx fiber.Ctx) error {
 func (c *AuthController) Verify(ctx fiber.Ctx) error {
 	body := new(requests.VerifyAuthRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.verifyAuth.Execute(ctx.Context(), body)
 	if err != nil {
 		c.authMetrics.RecordAuthFailure(ctx.Context())
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	c.authMetrics.RecordAuthSuccess(ctx.Context())
 	return ctx.JSON(resp)
@@ -119,11 +123,11 @@ func (c *AuthController) Verify(ctx fiber.Ctx) error {
 func (c *AuthController) Refresh(ctx fiber.Ctx) error {
 	request := new(requests.RefreshTokenRequest)
 	if err := ctx.Bind().Body(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.refreshAuth.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -140,10 +144,10 @@ func (c *AuthController) Refresh(ctx fiber.Ctx) error {
 func (c *AuthController) Logout(ctx fiber.Ctx) error {
 	request := new(requests.RefreshTokenRequest)
 	if err := ctx.Bind().Body(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	if err := c.revokeAuth.Execute(request); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

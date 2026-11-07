@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/responses"
 )
@@ -19,7 +18,7 @@ func NewListSelfTools(selfToolConfigClient gateway_interfaces.SelfToolConfigClie
 func (u *ListSelfTools) Execute(ctx context.Context) (*responses.ListSelfToolsResponse, error) {
 	payload, err := u.selfToolConfigClient.List(ctx)
 	if err != nil {
-		return nil, errors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 	out := make([]responses.SelfToolResponse, 0, len(payload.Tools))
 	for i := range payload.Tools {

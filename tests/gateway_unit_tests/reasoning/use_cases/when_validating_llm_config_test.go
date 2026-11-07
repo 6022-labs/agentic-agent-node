@@ -56,7 +56,7 @@ func TestWhenValidatingLlmConfig(t *testing.T) {
 
 		initSuite := func(suite *WhenValidatingLlmConfigTestingSuite) {
 			suite.mockClient.EXPECT().Validate(gomock.Any(), gomock.Any()).
-				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

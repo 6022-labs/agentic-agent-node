@@ -37,18 +37,18 @@ func (u *DeleteMCPConnection) Execute(ctx context.Context, request *requests.Del
 	}
 	existing, err := u.repository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	if existing == nil {
 		return nil
 	}
 	for _, key := range existing.HeaderAuthKeys {
 		if err := u.secretStorage.DeleteValue(ctx, existing.Id, string(key)); err != nil {
-			return errors.NewInternalError("delete_failed", err.Error())
+			return errors.NewInternalError("delete_failed", err)
 		}
 	}
 	if err := u.repository.DeleteById(ctx, agent.Id, existing.Id); err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	return nil
 }

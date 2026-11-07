@@ -161,7 +161,7 @@ func TestWhenCreatingPaymentSpendRule(t *testing.T) {
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			suite.mockPaymentSpendPolicyProvider.EXPECT().
 				Ensure(gomock.Any()).
-				Return(nil, apperrors.NewInternalError("ensure_failed", "")).
+				Return(nil, apperrors.NewInternalError("ensure_failed", nil)).
 				Times(1)
 		}
 

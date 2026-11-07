@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
@@ -92,6 +93,37 @@ func TestWhenSelfRegisteringAgent(t *testing.T) {
 
 			var conflictErr *apperrors.ConflictError
 			assert.ErrorAs(t, err, &conflictErr)
+		})
+	})
+
+	t.Run("Given the chain read fails", func(t *testing.T) {
+		t.Parallel()
+
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenSelfRegisteringAgentTestingSuite) {
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(draft(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockMintPublisher.EXPECT().
+				ResolveMintedToken(gomock.Any(), gomock.Any()).
+				Return(gethcommon.Address{}, uint64(0), rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSelfRegisteringAgentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "chain_read_failed", target.Code)
+				assert.Equal(t, "failed to read the minted token from chain", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 

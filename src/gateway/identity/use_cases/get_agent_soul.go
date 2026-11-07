@@ -23,7 +23,7 @@ func (u *GetAgentSoul) Execute(ctx context.Context) (*responses.AgentSoulRespons
 		return nil, apperrors.NewNotFoundError("identity_not_found", "agent identity not found")
 	}
 	if err != nil {
-		return nil, apperrors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 	return &responses.AgentSoulResponse{Soul: payload.Soul}, nil
 }

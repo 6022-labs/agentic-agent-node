@@ -9,7 +9,7 @@ import (
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	knowledge_metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
@@ -116,7 +116,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 			_, err := suite.sut.Resolve(ctx, "c1", alice)
 
-			assert.ErrorIs(t, err, interfaces.ErrAgentNotMinted)
+			assert.ErrorIs(t, err, apperrors.ErrAgentNotMinted)
 		})
 	})
 
@@ -133,7 +133,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 			_, err := suite.sut.Resolve(ctx, "c1", alice)
 
-			assert.ErrorIs(t, err, interfaces.ErrAgentNotMinted)
+			assert.ErrorIs(t, err, apperrors.ErrAgentNotMinted)
 		})
 	})
 
@@ -267,7 +267,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 			_, err := suite.sut.Resolve(ctx, "c1", alice)
 
-			assert.ErrorIs(t, err, interfaces.ErrConversationUnavailable)
+			assert.ErrorIs(t, err, apperrors.ErrConversationUnavailable)
 		})
 	})
 
@@ -284,7 +284,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 			_, err := suite.sut.Resolve(ctx, "legacy", alice)
 
-			assert.ErrorIs(t, err, interfaces.ErrConversationUnavailable)
+			assert.ErrorIs(t, err, apperrors.ErrConversationUnavailable)
 		})
 	})
 
@@ -310,7 +310,7 @@ func TestWhenResolvingConversation(t *testing.T) {
 
 				_, err := suite.sut.Resolve(ctx, "c1", alice)
 
-				assert.ErrorIs(t, err, interfaces.ErrConversationUnavailable)
+				assert.ErrorIs(t, err, apperrors.ErrConversationUnavailable)
 			})
 		})
 

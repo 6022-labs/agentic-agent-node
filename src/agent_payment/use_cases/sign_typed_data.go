@@ -49,7 +49,7 @@ func (u *SignTypedData) Execute(
 	// Read before any spend is recorded, so this failure never leaves one to give back.
 	address, err := u.typedDataSigner.WalletAddress(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("wallet_address_unavailable", err.Error())
+		return nil, errors.NewInternalError("wallet_address_unavailable", err)
 	}
 	var reservation *payment_interfaces.X402PaymentSpendReservation
 	if quote != nil {
@@ -73,7 +73,7 @@ func (u *SignTypedData) Execute(
 				u.logger.Error("failed to release an unsigned payload's spend", zap.Error(releaseErr))
 			}
 		}
-		return nil, errors.NewInternalError("typed_data_signing_failed", err.Error())
+		return nil, errors.NewInternalError("typed_data_signing_failed", err)
 	}
 
 	if reservation != nil {

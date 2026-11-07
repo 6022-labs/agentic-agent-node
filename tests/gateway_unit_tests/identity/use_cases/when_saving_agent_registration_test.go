@@ -99,7 +99,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestWhenSavingAgentRegistration(t *testing.T) {
 
 		initSuite := func(suite *WhenSavingAgentRegistrationTestingSuite) {
 			suite.mockClient.EXPECT().Save(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

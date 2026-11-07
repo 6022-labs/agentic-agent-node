@@ -41,7 +41,7 @@ func TestWhenListingConversations(t *testing.T) {
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
 			suite.mockClient.EXPECT().
 				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestWhenListingConversations(t *testing.T) {
 		initSuite := func(suite *WhenListingConversationsTestingSuite) {
 			suite.mockClient.EXPECT().
 				ListConversations(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

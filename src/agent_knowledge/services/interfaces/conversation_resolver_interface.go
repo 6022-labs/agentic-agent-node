@@ -2,14 +2,7 @@ package interfaces
 
 import (
 	"context"
-	"errors"
 )
-
-// ErrConversationUnavailable — the requested key belongs to another caller.
-var ErrConversationUnavailable = errors.New("conversation unavailable for caller")
-
-// ErrAgentNotMinted — no sessions before mint, like append.
-var ErrAgentNotMinted = errors.New("agent identity is not minted yet")
 
 // ConversationResolverInterface binds a conversation key to the caller driving the turn.
 type ConversationResolverInterface interface {

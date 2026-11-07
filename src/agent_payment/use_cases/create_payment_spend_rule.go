@@ -62,7 +62,7 @@ func (u *CreatePaymentSpendRule) Execute(
 
 	unitOfWork, err := u.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -73,10 +73,10 @@ func (u *CreatePaymentSpendRule) Execute(
 		MaxAmountPerPayment: request.MaxAmountPerPayment,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	if err := strategy.SaveConfig(unitOfWork.Context(), policy.Id, rule.Id, request.Config); err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 
 	windows := make([]models.PaymentSpendRuleWindow, 0, len(request.Windows))
@@ -88,13 +88,13 @@ func (u *CreatePaymentSpendRule) Execute(
 			Spent:              "0",
 		})
 		if err != nil {
-			return nil, errors.NewInternalError("create_failed", err.Error())
+			return nil, errors.NewInternalError("create_failed", err)
 		}
 		windows = append(windows, *window)
 	}
 
 	if err := unitOfWork.Commit(); err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	return responses.ToPaymentSpendRuleResponse(rule, windows, request.Config, time.Now()), nil
 }

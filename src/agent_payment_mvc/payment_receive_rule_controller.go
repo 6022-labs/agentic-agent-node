@@ -3,6 +3,7 @@ package agent_payment_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases/requests"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v3"
 )
@@ -14,6 +15,7 @@ type PaymentReceiveRuleController struct {
 	createPaymentReceiveRule *use_cases.CreatePaymentReceiveRule
 	updatePaymentReceiveRule *use_cases.UpdatePaymentReceiveRule
 	deletePaymentReceiveRule *use_cases.DeletePaymentReceiveRule
+	errorWriter              *mvc.ErrorWriter
 }
 
 func NewPaymentReceiveRuleController(
@@ -21,12 +23,14 @@ func NewPaymentReceiveRuleController(
 	createPaymentReceiveRule *use_cases.CreatePaymentReceiveRule,
 	updatePaymentReceiveRule *use_cases.UpdatePaymentReceiveRule,
 	deletePaymentReceiveRule *use_cases.DeletePaymentReceiveRule,
+	errorWriter *mvc.ErrorWriter,
 ) *PaymentReceiveRuleController {
 	return &PaymentReceiveRuleController{
 		listPaymentReceiveRules:  listPaymentReceiveRules,
 		createPaymentReceiveRule: createPaymentReceiveRule,
 		updatePaymentReceiveRule: updatePaymentReceiveRule,
 		deletePaymentReceiveRule: deletePaymentReceiveRule,
+		errorWriter:              errorWriter,
 	}
 }
 
@@ -48,7 +52,7 @@ func (c *PaymentReceiveRuleController) RegisterRoutes(app fiber.Router) {
 func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 	resp, err := c.listPaymentReceiveRules.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -67,11 +71,11 @@ func (c *PaymentReceiveRuleController) List(ctx fiber.Ctx) error {
 func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 	body := new(requests.SavePaymentReceiveRuleRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.createPaymentReceiveRule.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -92,14 +96,14 @@ func (c *PaymentReceiveRuleController) Create(ctx fiber.Ctx) error {
 func (c *PaymentReceiveRuleController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdatePaymentReceiveRuleRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := ctx.Bind().Body(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.updatePaymentReceiveRule.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -116,10 +120,10 @@ func (c *PaymentReceiveRuleController) Update(ctx fiber.Ctx) error {
 func (c *PaymentReceiveRuleController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeletePaymentReceiveRuleRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := c.deletePaymentReceiveRule.Execute(ctx.Context(), request); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

@@ -31,7 +31,7 @@ func (u *Authorize) Execute(ctx context.Context, req *requests.AuthorizeRequest)
 	authorized, err := u.authorizer.IsAuthorized(ctx, common.HexToAddress(req.Address))
 	if err != nil {
 		u.authorizationMetrics.RecordAuthorizationFailed(ctx)
-		return nil, errors.NewInternalError("authorize_failed", err.Error())
+		return nil, errors.NewInternalError("authorize_failed", err)
 	}
 	if authorized {
 		u.authorizationMetrics.RecordAuthorizationAuthorized(ctx)

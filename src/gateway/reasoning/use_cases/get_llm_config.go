@@ -10,10 +10,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/responses"
 )
 
-// ErrLLMConnectionNotConfigured is exposed for unit tests that assert on the
-// semantic reason; the wire-side outcome is NotFound.
-var ErrLLMConnectionNotConfigured = errors.New("llm connection not configured")
-
 type GetLlmConfig struct {
 	client gateway_interfaces.LLMConfigClientInterface
 }
@@ -28,7 +24,7 @@ func (u *GetLlmConfig) Execute(ctx context.Context) (*responses.GetLlmConfigResp
 		return nil, apperrors.NewNotFoundError("not_configured", "")
 	}
 	if err != nil {
-		return nil, apperrors.NewUnavailableError("runtime_unavailable", err.Error())
+		return nil, err
 	}
 	return u.toResponse(payload), nil
 }

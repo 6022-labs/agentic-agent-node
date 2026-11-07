@@ -63,7 +63,7 @@ func TestWhenAuthorizingPaymentReceiveAccess(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingPaymentReceiveAccessTestingSuite) {
 			suite.mockEvaluator.EXPECT().
 				Evaluate(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewInternalError("access_evaluation_failed", "")).
+				Return(nil, apperrors.NewInternalError("access_evaluation_failed", nil)).
 				Times(1)
 		}
 

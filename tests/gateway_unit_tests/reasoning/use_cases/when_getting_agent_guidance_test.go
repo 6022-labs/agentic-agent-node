@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -33,14 +32,15 @@ func WhenGettingAgentGuidanceBeforeEach(t *testing.T) *WhenGettingAgentGuidanceT
 func TestWhenGettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
 		t.Parallel()
 
+		runtimeErr := apperrors.NewNotFoundError("not_found", "resource not found")
 		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentGuidanceBeforeEach(t)
@@ -48,9 +48,27 @@ func TestWhenGettingAgentGuidance(t *testing.T) {
 
 			_, err := suite.sut.Execute(context.Background())
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Same(t, runtimeErr, err)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		runtimeErr := apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)
+		initSuite := func(suite *WhenGettingAgentGuidanceTestingSuite) {
+			suite.mockAgentGuidanceClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			assert.Same(t, runtimeErr, err)
 		})
 	})
 

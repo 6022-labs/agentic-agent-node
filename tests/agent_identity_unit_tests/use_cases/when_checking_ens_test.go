@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -98,6 +99,37 @@ func TestWhenCheckingEns(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, string(identity_enums.TransactionStatusConfirmed), resp.EnsStatus)
+		})
+	})
+
+	t.Run("Given the ENS read fails", func(t *testing.T) {
+		t.Parallel()
+
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
+			suite.mockAgentRepository.EXPECT().
+				Get(gomock.Any()).
+				Return(model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build(), nil)
+			suite.mockAgentRegistrationStateRepository.EXPECT().
+				GetByAgentId(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenCheckingEnsBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "ens_read_failed", target.Code)
+				assert.Equal(t, "failed to read the ENS records", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 

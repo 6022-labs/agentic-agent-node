@@ -7,7 +7,6 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/metrics_mocks/interfaces_mocks"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +46,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 		initSuite := func(suite *WhenPublishingEnsRuntimeRecordsTestingSuite) {
 			suite.mockEnsPublisher.EXPECT().
 				PublishRuntimeRecords(gomock.Any()).
-				Return(common_interfaces.ErrIdentityNotFound)
+				Return(apperrors.ErrIdentityNotFound)
 		}
 
 		t.Run("Should return Conflict with identity_not_found", func(t *testing.T) {
@@ -81,7 +80,7 @@ func TestWhenPublishingEnsRuntimeRecords(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "ens registry down")
+			assert.ErrorContains(t, internalErr.Cause, "ens registry down")
 		})
 	})
 

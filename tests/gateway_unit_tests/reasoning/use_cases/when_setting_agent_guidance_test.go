@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -34,16 +33,15 @@ func WhenSettingAgentGuidanceBeforeEach(t *testing.T) *WhenSettingAgentGuidanceT
 func TestWhenSettingAgentGuidance(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
 		t.Parallel()
 
+		runtimeErr := apperrors.NewNotFoundError("not_found", "resource not found")
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
-			suite.mockAgentGuidanceClient.EXPECT().
-				Set(gomock.Any(), gomock.Any()).
-				Return(nil, errors.New("connection refused"))
+			suite.mockAgentGuidanceClient.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, runtimeErr)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSettingAgentGuidanceBeforeEach(t)
@@ -51,9 +49,27 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 
 			_, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "x"})
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Same(t, runtimeErr, err)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		runtimeErr := apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)
+		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
+			suite.mockAgentGuidanceClient.EXPECT().Set(gomock.Any(), gomock.Any()).Return(nil, runtimeErr)
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSettingAgentGuidanceBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), &requests.SetAgentGuidanceRequest{Content: "x"})
+
+			assert.Same(t, runtimeErr, err)
 		})
 	})
 

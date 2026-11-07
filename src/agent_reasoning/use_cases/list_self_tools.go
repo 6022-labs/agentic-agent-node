@@ -37,7 +37,7 @@ func (u *ListSelfTools) Execute(ctx context.Context) (*responses.SelfToolListRes
 
 	rows, err := u.selfToolRepository.ListByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	descriptionByName := make(map[string]string)

@@ -60,10 +60,10 @@ func (p *PaymentReceivePolicyProvider) Ensure(
 ) (*models.PaymentReceivePolicy, *identity_models.Agent, error) {
 	agent, err := p.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, nil, errors.NewInternalError("policy_failed", err)
 	}
 	if agent == nil {
-		return nil, nil, errors.NewInternalError("policy_failed", "agent identity is not initialized yet")
+		return nil, nil, errors.NewInternalError("policy_failed", errors.ErrAgentNotInitialized)
 	}
 	// The seed prices access to the agent's token, so there is nothing to seed before mint.
 	if agent.CollectionTokenId == nil {
@@ -72,7 +72,7 @@ func (p *PaymentReceivePolicyProvider) Ensure(
 
 	policy, err := p.paymentReceivePolicyRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, nil, errors.NewInternalError("policy_failed", err)
 	}
 	if policy != nil {
 		return policy, agent, nil
@@ -97,12 +97,12 @@ func (p *PaymentReceivePolicyProvider) createSeededPolicy(
 ) (*models.PaymentReceivePolicy, error) {
 	evmAddress, err := p.EvmAddress(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, errors.NewInternalError("policy_failed", err)
 	}
 
 	unitOfWork, err := p.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, errors.NewInternalError("policy_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -111,13 +111,13 @@ func (p *PaymentReceivePolicyProvider) createSeededPolicy(
 		&models.PaymentReceivePolicy{AgentId: agent.Id},
 	)
 	if err != nil {
-		return nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, errors.NewInternalError("policy_failed", err)
 	}
 	if err := p.seedDefaultRule(unitOfWork.Context(), policy, agent, evmAddress); err != nil {
 		return nil, err
 	}
 	if err := unitOfWork.Commit(); err != nil {
-		return nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, errors.NewInternalError("policy_failed", err)
 	}
 	return policy, nil
 }
@@ -130,23 +130,23 @@ func (p *PaymentReceivePolicyProvider) seedDefaultRule(
 ) error {
 	rule, config, price, err := p.defaultRule(policy, agent, evmAddress)
 	if err != nil {
-		return errors.NewInternalError("policy_failed", err.Error())
+		return errors.NewInternalError("policy_failed", err)
 	}
 	if rule == nil {
 		return nil
 	}
 	created, err := p.paymentReceiveRuleRepository.Create(ctx, rule)
 	if err != nil {
-		return errors.NewInternalError("policy_failed", err.Error())
+		return errors.NewInternalError("policy_failed", err)
 	}
 	if strategy, ok := p.paymentReceiveMethodStrategies.For(created.Method); ok {
 		if err := strategy.SaveConfig(ctx, policy.Id, created.Id, config); err != nil {
-			return errors.NewInternalError("policy_failed", err.Error())
+			return errors.NewInternalError("policy_failed", err)
 		}
 	}
 	price.PaymentReceiveRuleId = created.Id
 	if _, err := p.paymentReceiveRulePriceRepository.Create(ctx, price); err != nil {
-		return errors.NewInternalError("policy_failed", err.Error())
+		return errors.NewInternalError("policy_failed", err)
 	}
 	return nil
 }

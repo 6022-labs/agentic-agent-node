@@ -41,7 +41,7 @@ func TestWhenDeletingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenDeletingPaymentReceiveRuleTestingSuite) {
 			suite.mockPaymentReceiveRuleClient.EXPECT().Delete(gomock.Any(), ruleId.String()).
-				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestWhenDeletingPaymentReceiveRule(t *testing.T) {
 		initSuite := func(suite *WhenDeletingPaymentReceiveRuleTestingSuite) {
 			suite.mockPaymentReceiveRuleClient.EXPECT().
 				Delete(gomock.Any(), ruleId.String()).
-				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down")).
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil)).
 				Times(1)
 		}
 

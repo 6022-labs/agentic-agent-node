@@ -66,7 +66,7 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 	// Deciding and recording share one transaction, so concurrent signatures cannot overrun a window.
 	unitOfWork, err := e.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -77,10 +77,10 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 		if stderrors.As(err, &refusal) {
 			return nil, err
 		}
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	if err := unitOfWork.Commit(); err != nil {
-		return nil, errors.NewInternalError("spend_policy_failed", err.Error())
+		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	return reservation, nil
 }
@@ -97,7 +97,7 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 
 	unitOfWork, err := e.unitOfWorkFactory.Start(ctx)
 	if err != nil {
-		return errors.NewInternalError("spend_policy_failed", err.Error())
+		return errors.NewInternalError("spend_policy_failed", err)
 	}
 	defer func() { _ = unitOfWork.Rollback() }()
 
@@ -107,7 +107,7 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 		runtime_common_repositories.ToLock,
 	)
 	if err != nil {
-		return errors.NewInternalError("spend_policy_failed", err.Error())
+		return errors.NewInternalError("spend_policy_failed", err)
 	}
 	for i := range windows {
 		startedAt, charged := reservation.WindowStarts[windows[i].Id]
@@ -115,14 +115,14 @@ func (e *X402PaymentSpendPolicyEvaluator) Release(
 			continue
 		}
 		if err := windows[i].Release(reservation.Amount, startedAt); err != nil {
-			return errors.NewInternalError("spend_policy_failed", err.Error())
+			return errors.NewInternalError("spend_policy_failed", err)
 		}
 		if _, err := e.paymentSpendRuleWindowRepository.Update(unitOfWork.Context(), &windows[i]); err != nil {
-			return errors.NewInternalError("spend_policy_failed", err.Error())
+			return errors.NewInternalError("spend_policy_failed", err)
 		}
 	}
 	if err := unitOfWork.Commit(); err != nil {
-		return errors.NewInternalError("spend_policy_failed", err.Error())
+		return errors.NewInternalError("spend_policy_failed", err)
 	}
 	return nil
 }

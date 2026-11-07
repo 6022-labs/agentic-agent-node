@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -69,7 +69,7 @@ func TestWhenCheckingEnsProvisioning(t *testing.T) {
 
 			provisioned, err := suite.sut.IsProvisioned(context.Background())
 
-			assert.ErrorIs(t, err, common_interfaces.ErrIdentityNotFound)
+			assert.ErrorIs(t, err, apperrors.ErrIdentityNotFound)
 			assert.False(t, provisioned)
 		})
 	})

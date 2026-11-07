@@ -46,7 +46,7 @@ func (u *AbstractPaymentSpendUseCase) claimAsset(
 ) (owned bool, err error) {
 	ownerId, err := paymentSpendMethodStrategy.RuleIdForAsset(ctx, policyId, config)
 	if err != nil {
-		return false, errors.NewInternalError("rule_lookup_failed", err.Error())
+		return false, errors.NewInternalError("rule_lookup_failed", err)
 	}
 	if ownerId != uuid.Nil && ownerId != ruleId {
 		return false, errors.NewConflictError("asset_already_has_rule", "another rule already limits this asset")

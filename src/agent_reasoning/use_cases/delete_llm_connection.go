@@ -35,10 +35,10 @@ func (u *DeleteLLMConnection) Execute(ctx context.Context) error {
 		return err
 	}
 	if err := u.repository.DeleteByAgentId(ctx, agent.Id); err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	if err := u.secretStorage.Delete(ctx); err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	return nil
 }

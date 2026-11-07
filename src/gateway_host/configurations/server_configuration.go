@@ -1,6 +1,7 @@
 package configurations
 
 import (
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
@@ -29,24 +30,24 @@ func ConfigureServer(container *dig.Container) {
 	}
 }
 
-func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
+func newHttpServer(hostSettings *settings.HostSettings, errorWriter *mvc.ErrorWriter) *fiber.App {
 	return fiber.New(fiber.Config{
-		AppName:   AppName,
-		BodyLimit: hostSettings.BodyLimitBytes,
+		AppName:      AppName,
+		BodyLimit:    hostSettings.BodyLimitBytes,
+		ErrorHandler: errorWriter.Write,
 	})
 }
 
 type registerRoutesParams struct {
 	dig.In
 
-	App               *fiber.App
-	Logger            *zap.Logger
-	CorsSettings      *core_settings.CorsSettings
-	AgentTelemetry    *middlewares.AgentTelemetryContextMiddleware
-	JwtAuth           *middlewares.JwtAuthMiddleware
-	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
-	RequestFailureLog *mvc_middlewares.RequestFailureLogMiddleware
-	Controllers       []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
+	App            *fiber.App
+	Logger         *zap.Logger
+	CorsSettings   *core_settings.CorsSettings
+	AgentTelemetry *middlewares.AgentTelemetryContextMiddleware
+	JwtAuth        *middlewares.JwtAuthMiddleware
+	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
+	Controllers    []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -68,8 +69,6 @@ func registerRoutes(p registerRoutesParams) {
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
 	}))
-
-	p.App.Use(p.RequestFailureLog.Handle)
 
 	p.App.Get("/swagger/*", swaggo.New())
 

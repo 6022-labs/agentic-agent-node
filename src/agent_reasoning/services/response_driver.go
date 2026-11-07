@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"strings"
 	"time"
 
@@ -285,7 +286,7 @@ func (d *ResponseDriver) loadAgent(ctx context.Context) (*identity_models.Agent,
 		return nil, fmt.Errorf("failed to load agent identity: %w", err)
 	}
 	if agent == nil {
-		return nil, fmt.Errorf("agent identity is not initialized yet")
+		return nil, apperrors.ErrAgentNotInitialized
 	}
 	return agent, nil
 }

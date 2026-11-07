@@ -255,7 +255,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "setup_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "vault down")
+			assert.ErrorContains(t, internalErr.Cause, "vault down")
 		})
 	})
 
@@ -335,7 +335,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "setup_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "db down")
+			assert.ErrorContains(t, internalErr.Cause, "db down")
 		})
 	})
 
@@ -366,7 +366,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "setup_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "vault down")
+			assert.ErrorContains(t, internalErr.Cause, "vault down")
 		})
 	})
 

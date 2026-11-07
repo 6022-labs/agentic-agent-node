@@ -60,10 +60,11 @@ func TestWhenListingAgentCollections(t *testing.T) {
 	t.Run("Given the chain read fails", func(t *testing.T) {
 		t.Parallel()
 
+		rpcErr := errors.New("rpc down")
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockAgentCollectionsManagerRequester.EXPECT().
 				ListCollections(gomock.Any()).
-				Return(nil, errors.New("rpc down"))
+				Return(nil, rpcErr)
 		}
 
 		t.Run("Should return an UnavailableError", func(t *testing.T) {
@@ -78,7 +79,11 @@ func TestWhenListingAgentCollections(t *testing.T) {
 			)
 
 			var target *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &target)
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "collections_read_failed", target.Code)
+				assert.Equal(t, "failed to list the collections", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 

@@ -81,7 +81,7 @@ func (u *CreateResponse) Execute(
 	if err != nil {
 		span.Fail(err)
 		u.responseMetrics.RecordResponseFailed(ctx)
-		return nil, errors.NewInternalError("create_response_failed", err.Error())
+		return nil, errors.NewInternalError("create_response_failed", err)
 	}
 
 	u.responseMetrics.RecordResponseSucceeded(ctx)
@@ -91,12 +91,12 @@ func (u *CreateResponse) Execute(
 // resolveError maps caller-caused outcomes to 409; anything else is a 500.
 func (u *CreateResponse) resolveError(err error) error {
 	switch {
-	case goerrors.Is(err, knowledge_interfaces.ErrConversationUnavailable):
+	case goerrors.Is(err, errors.ErrConversationUnavailable):
 		return errors.NewConflictError("conversation_unavailable", err.Error())
-	case goerrors.Is(err, knowledge_interfaces.ErrAgentNotMinted):
+	case goerrors.Is(err, errors.ErrAgentNotMinted):
 		return errors.NewConflictError("agent_not_minted", err.Error())
 	default:
-		return errors.NewInternalError("create_response_failed", err.Error())
+		return errors.NewInternalError("create_response_failed", err)
 	}
 }
 

@@ -25,7 +25,7 @@ func (u *GetPaymentReceivePolicy) Execute(ctx context.Context) (*responses.Payme
 	}
 	evmAddress, err := u.paymentReceivePolicyProvider.EvmAddress(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("policy_failed", err.Error())
+		return nil, errors.NewInternalError("policy_failed", err)
 	}
 	return responses.ToPaymentReceivePolicyResponse(policy, evmAddress), nil
 }

@@ -49,7 +49,7 @@ func (u *UpdateMCPConnection) Execute(
 
 	existing, err := u.mcpConnectionRepository.GetById(ctx, agent.Id, request.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	if existing == nil {
 		return nil, errors.NewNotFoundError("mcp_connection_not_found", "")
@@ -71,7 +71,7 @@ func (u *UpdateMCPConnection) Execute(
 	}
 
 	if err := u.dropRemovedHeaders(ctx, existing, request.HeaderAuth); err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 
 	existing.Name = request.Name
@@ -80,11 +80,11 @@ func (u *UpdateMCPConnection) Execute(
 	existing.HeaderAuthKeys = u.headerAuthKeys(&request.MCPHeaderAuthRequest)
 	updated, err := u.mcpConnectionRepository.Update(ctx, existing)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 
 	if err := u.saveHeaderValues(ctx, updated.Id, headers); err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	updated.HeaderAuth = headers
 	return responses.ToMCPConnectionResponse(updated), nil
@@ -104,7 +104,7 @@ func (u *UpdateMCPConnection) resolveHeaderValues(
 		}
 		stored, found, err := u.mcpHeaderAuthSecretStorage.GetValue(ctx, existing.Id, key)
 		if err != nil {
-			return nil, errors.NewInternalError("update_failed", err.Error())
+			return nil, errors.NewInternalError("update_failed", err)
 		}
 		if !found {
 			return nil, errors.NewValidationError("headerAuth", "value for "+key+" cannot be empty")

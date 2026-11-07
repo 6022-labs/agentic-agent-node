@@ -33,7 +33,7 @@ func (u *GetLLMConnection) Execute(ctx context.Context) (*responses.LLMConnectio
 	}
 	connection, err := u.repository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("get_failed", err.Error())
+		return nil, errors.NewInternalError("get_failed", err)
 	}
 	if connection == nil {
 		return nil, errors.NewNotFoundError("not_configured", "")

@@ -7,7 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
@@ -46,7 +46,7 @@ func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
 		return fmt.Errorf("load agent: %w", err)
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
-		return common_interfaces.ErrIdentityNotFound
+		return apperrors.ErrIdentityNotFound
 	}
 
 	state, err := s.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
@@ -54,7 +54,7 @@ func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
 		return fmt.Errorf("load registration state: %w", err)
 	}
 	if !state.IsMinted() {
-		return common_interfaces.ErrIdentityNotFound
+		return apperrors.ErrIdentityNotFound
 	}
 
 	collection := common.HexToAddress(agent.CollectionAddress)
@@ -98,7 +98,7 @@ func (s *EnsPublisher) IsProvisioned(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("load agent: %w", err)
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
-		return false, common_interfaces.ErrIdentityNotFound
+		return false, apperrors.ErrIdentityNotFound
 	}
 	return s.ensRegistrar.Provisioned(
 		ctx,

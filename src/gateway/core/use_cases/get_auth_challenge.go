@@ -33,7 +33,7 @@ func (u *GetAuthChallenge) Execute(
 	address := common.HexToAddress(request.Address)
 	entry, err := u.nonceStore.Generate(address, request.ChainId)
 	if err != nil {
-		return nil, errors.NewInternalError("challenge_failed", err.Error())
+		return nil, errors.NewInternalError("challenge_failed", err)
 	}
 
 	message := u.siweMessageBuilder.Build(address, entry.ChainId, entry.Nonce, entry.IssuedAt, entry.ExpiresAt)
