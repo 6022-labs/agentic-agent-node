@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import TransferIdentityForm from "@/components/dashboard/identity/forms/transfer-identity-form"
 import type { TransferIdentityFormSchemaType } from "@/components/dashboard/identity/forms/transfer-identity-form/transfer-identity-form-schema"
-import { useAuth } from "@/contexts/auth-context"
+import { useSignOut } from "@/hooks/use-sign-out"
 import { useWallet } from "@/contexts/wallet-provider-context"
 import type { FormCompletionResult } from "@/models/api/validation-error"
 import { transferFrom } from "@/queries/contracts/agent-collection"
@@ -31,7 +31,7 @@ export default function TransferIdentityDialog({
   collectionTokenId,
   agentName,
 }: Props) {
-  const { signOut } = useAuth()
+  const signOut = useSignOut()
   const { wallet } = useWallet()
 
   const [open, setOpen] = React.useState(false)
