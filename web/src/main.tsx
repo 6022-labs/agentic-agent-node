@@ -9,13 +9,10 @@ import { Toaster } from "@/components/ui/sonner.tsx"
 import ConfigGate from "@/components/config-gate.tsx"
 import { initAxiosDefaults } from "@/configs/axios.ts"
 import { AuthProvider } from "@/contexts/auth-context.tsx"
-import { migrateLegacyTokens } from "@/lib/session-tokens"
 import { WalletProvider } from "@/contexts/wallet-provider-context.tsx"
 import { AgentIdentityProvider } from "@/contexts/agent-identity-context.tsx"
 
 initAxiosDefaults()
-
-migrateLegacyTokens()
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
