@@ -22,8 +22,10 @@ type AuthContextType = {
   jwt: string | null
   signIn: (token: string, refreshToken: string) => void
   signOut: () => void
-  // endedElsewhere is true once another tab ended this tab's session, so the login page doesn't auto-prompt.
-  endedElsewhere: boolean
+  // signOutExplicitly is the user's own sign-out: the login page then waits for a click instead of auto-signing.
+  signOutExplicitly: () => void
+  // skipAutoSign is true after another tab ended this tab's session or the user signed out, so the login page doesn't auto-prompt.
+  skipAutoSign: boolean
   // storedAddress is the address of the session in storage, which may belong to another tab.
   storedAddress: string | undefined
   // adoptStoredSession joins the stored session if it belongs to address; returns whether it did.
@@ -49,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [storedAddress, setStoredAddress] = React.useState(
     initialSession?.address
   )
-  const [endedElsewhere, setEndedElsewhere] = React.useState(false)
+  const [skipAutoSign, setSkipAutoSign] = React.useState(false)
   // Mirrors sessionAddress synchronously so a storage event never compares against a stale owner.
   const owner = React.useRef(initialSession?.address)
   const clockSkewMs = React.useRef(0)
@@ -72,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       saveSession({ address: decoded.address, refreshToken })
       setOwner(decoded.address)
       setStoredAddress(decoded.address)
-      setEndedElsewhere(false)
+      setSkipAutoSign(false)
       setToken(token)
     },
     [setOwner, setToken]
@@ -97,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const endSessionHere = React.useCallback(() => {
     setOwner(undefined)
-    setEndedElsewhere(true)
+    setSkipAutoSign(true)
     setRestoring(false)
     setToken(null)
   }, [setOwner, setToken])
@@ -119,6 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [clearSession])
 
   const endRestoring = React.useCallback(() => setRestoring(false), [])
+
+  const signOutExplicitly = React.useCallback(() => {
+    signOut()
+    setSkipAutoSign(true)
+  }, [signOut])
 
   const adoptStoredSession = React.useCallback(
     (address: string) => {
@@ -154,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         endSessionHere()
         return
       }
-      setEndedElsewhere(false)
+      setSkipAutoSign(false)
     }
     window.addEventListener("storage", onStorage)
     return () => window.removeEventListener("storage", onStorage)
@@ -179,7 +186,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         jwt,
         signIn,
         signOut,
-        endedElsewhere,
+        signOutExplicitly,
+        skipAutoSign,
         storedAddress,
         adoptStoredSession,
       }}
@@ -191,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             Restoring your session…
           </p>
           {/* Retries continue while the gateway is down; this is the way out. */}
-          <Button variant="ghost" size="sm" onClick={signOut}>
+          <Button variant="ghost" size="sm" onClick={signOutExplicitly}>
             Sign out
           </Button>
         </div>
