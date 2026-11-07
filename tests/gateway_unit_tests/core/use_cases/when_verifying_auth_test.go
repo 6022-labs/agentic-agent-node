@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
 	common_mocks "github.com/6022-labs/agentic-agent-node/tests/common_mocks/interfaces_mocks"
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +74,7 @@ func generateValidVerifyAuthRequest(address common.Address) *requests.VerifyAuth
 func TestWhenVerifyingAuth(t *testing.T) {
 	t.Parallel()
 
-	address := common.HexToAddress("0x3333333333333333333333333333333333333333")
+	address := common_tests.RandomEthAddress()
 	entry := &gateway_interfaces.ChallengeEntry{
 		Nonce:     "nonce-xyz",
 		ChainId:   80002,
@@ -161,7 +162,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().
 				Recover(siweMessage, testSignature).
-				Return(common.HexToAddress("0xdeadbeef"), nil)
+				Return(common_tests.RandomEthAddress(), nil)
 		}
 
 		t.Run("Should return Unauthorized with signature_mismatch", func(t *testing.T) {

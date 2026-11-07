@@ -9,17 +9,17 @@ import (
 )
 
 type JwtIssuer struct {
-	settings *settings.JwtSettings
-	now      func() time.Time
+	jwtSettings *settings.JwtSettings
+	now         func() time.Time
 }
 
-func NewJwtIssuer(settings *settings.JwtSettings) *JwtIssuer {
-	return &JwtIssuer{settings: settings, now: time.Now}
+func NewJwtIssuer(jwtSettings *settings.JwtSettings) *JwtIssuer {
+	return &JwtIssuer{jwtSettings: jwtSettings, now: time.Now}
 }
 
 func (i *JwtIssuer) Issue(address common.Address) (string, time.Time, error) {
 	now := i.now()
-	expiresAt := now.Add(i.settings.TokenTtl)
+	expiresAt := now.Add(i.jwtSettings.TokenTtl)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": address.Hex(),
@@ -27,7 +27,7 @@ func (i *JwtIssuer) Issue(address common.Address) (string, time.Time, error) {
 		"nbf": now.Unix(),
 		"exp": expiresAt.Unix(),
 	})
-	signed, err := token.SignedString([]byte(i.settings.SigningKey))
+	signed, err := token.SignedString([]byte(i.jwtSettings.SigningKey))
 	if err != nil {
 		return "", time.Time{}, err
 	}
