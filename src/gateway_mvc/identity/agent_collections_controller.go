@@ -1,6 +1,7 @@
 package identity
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
@@ -13,12 +14,14 @@ const AgentCollectionsEndpoint = "/agent/collections"
 // collections, proxied from the runtime's on-chain manager read.
 type AgentCollectionsController struct {
 	listAgentCollections *use_cases.ListAgentCollections
+	errorWriter          *mvc.ErrorWriter
 }
 
 func NewAgentCollectionsController(
 	listAgentCollections *use_cases.ListAgentCollections,
+	errorWriter *mvc.ErrorWriter,
 ) *AgentCollectionsController {
-	return &AgentCollectionsController{listAgentCollections: listAgentCollections}
+	return &AgentCollectionsController{listAgentCollections: listAgentCollections, errorWriter: errorWriter}
 }
 
 func (c *AgentCollectionsController) RegisterUnauthenticatedRoutes(_ fiber.Router) {}
@@ -41,11 +44,11 @@ func (c *AgentCollectionsController) RegisterAuthenticatedRoutes(app fiber.Route
 func (c *AgentCollectionsController) List(ctx fiber.Ctx) error {
 	req := new(requests.ListAgentCollectionsRequest)
 	if err := ctx.Bind().Query(req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_query", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_query", err.Error()))
 	}
 	resp, err := c.listAgentCollections.Execute(ctx.Context(), req)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

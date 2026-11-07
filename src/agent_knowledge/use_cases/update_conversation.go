@@ -46,10 +46,10 @@ func (u *UpdateConversation) Execute(
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("update_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("update_failed", errors.ErrAgentNotInitialized)
 	}
 
 	scope := &callerId
@@ -63,7 +63,7 @@ func (u *UpdateConversation) Execute(
 		scope,
 	)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	if conversation == nil {
 		return nil, errors.NewNotFoundError("conversation_not_found", "conversation not found")
@@ -74,7 +74,7 @@ func (u *UpdateConversation) Execute(
 		return nil, errors.NewConflictError("conversation_name_taken", "a conversation already uses that name")
 	}
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 
 	var wire responses.ConversationResponse

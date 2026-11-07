@@ -7,7 +7,6 @@ import (
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/metrics/interfaces"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 )
 
 type PublishEnsRuntimeRecords struct {
@@ -24,7 +23,7 @@ func NewPublishEnsRuntimeRecords(
 
 func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) error {
 	if err := u.ensPublisher.PublishRuntimeRecords(ctx); err != nil {
-		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
+		if errors.Is(err, apperrors.ErrIdentityNotFound) {
 			u.ensPublicationMetrics.RecordEnsPublishedNotMinted(ctx)
 			return apperrors.NewConflictError(
 				"identity_not_found",
@@ -32,7 +31,7 @@ func (u *PublishEnsRuntimeRecords) Execute(ctx context.Context) error {
 			)
 		}
 		u.ensPublicationMetrics.RecordEnsPublishedFailed(ctx)
-		return apperrors.NewInternalError("ens_publish_failed", err.Error())
+		return apperrors.NewInternalError("ens_publish_failed", err)
 	}
 	u.ensPublicationMetrics.RecordEnsPublishedSucceeded(ctx)
 	return nil

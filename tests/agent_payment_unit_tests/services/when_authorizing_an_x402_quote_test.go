@@ -106,7 +106,7 @@ func TestWhenAuthorizingAnX402Quote(t *testing.T) {
 		initSuite := func(suite *WhenAuthorizingAnX402QuoteTestingSuite) {
 			suite.mockPaymentSpendPolicyProvider.EXPECT().
 				Ensure(ctx).
-				Return(nil, apperrors.NewInternalError("spend_policy_failed", "")).
+				Return(nil, apperrors.NewInternalError("spend_policy_failed", nil)).
 				Times(1)
 		}
 

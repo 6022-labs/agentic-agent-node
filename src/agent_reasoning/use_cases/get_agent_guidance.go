@@ -32,7 +32,7 @@ func (u *GetAgentGuidance) Execute(ctx context.Context) (*responses.AgentGuidanc
 	}
 	guidance, err := u.agentGuidanceRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("guidance_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("guidance_lookup_failed", err)
 	}
 	response := &responses.AgentGuidanceResponse{}
 	if guidance != nil {

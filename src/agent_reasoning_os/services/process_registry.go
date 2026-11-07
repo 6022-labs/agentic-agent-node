@@ -97,7 +97,7 @@ func (r *ProcessRegistry) Kill(id uuid.UUID) error {
 		return r.notFound(id)
 	}
 	if err := entry.handle.Kill(); err != nil {
-		return errors.NewInternalError("kill_failed", err.Error())
+		return errors.NewInternalError("kill_failed", err)
 	}
 	r.refresh(entry)
 	return nil

@@ -202,7 +202,7 @@ func (s *CommandExecutor) runnerError(err error) error {
 	if goerrors.As(err, &pathError) && pathError.Op == "chdir" {
 		return errors.NewValidationError("workdir", "does not exist")
 	}
-	return errors.NewInternalError("command_failed", err.Error())
+	return errors.NewInternalError("command_failed", err)
 }
 
 // Seconds are compared before conversion: the multiplication overflows int64 well below what a model may send.

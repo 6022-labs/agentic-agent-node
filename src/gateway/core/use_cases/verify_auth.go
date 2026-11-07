@@ -64,7 +64,7 @@ func (u *VerifyAuth) Execute(
 	message := u.siweMessageBuilder.Build(claimed, entry.ChainId, entry.Nonce, entry.IssuedAt, entry.ExpiresAt)
 	recovered, err := u.signatureVerifier.Recover(message, req.Signature)
 	if err != nil {
-		return nil, apperrors.NewInternalError("verify_failed", err.Error())
+		return nil, apperrors.NewInternalError("verify_failed", err)
 	}
 	if recovered != claimed {
 		return nil, apperrors.NewUnauthorizedError("signature_mismatch", ErrSignatureMismatch.Error())
@@ -72,10 +72,14 @@ func (u *VerifyAuth) Execute(
 
 	authorized, err := u.authorizer.IsAuthorized(ctx, claimed)
 	if err != nil {
-		if errors.Is(err, common_interfaces.ErrIdentityNotFound) {
-			return nil, apperrors.NewUnavailableError("identity_not_found", err.Error())
+		if errors.Is(err, apperrors.ErrIdentityNotFound) {
+			return nil, apperrors.NewUnavailableError(
+				"identity_not_found",
+				apperrors.ErrIdentityNotFound.Error(),
+				err,
+			)
 		}
-		return nil, apperrors.NewInternalError("verify_failed", err.Error())
+		return nil, apperrors.NewInternalError("verify_failed", err)
 	}
 	if !authorized {
 		return nil, apperrors.NewUnauthorizedError("not_authorized", ErrAddressNotAuthorized.Error())
@@ -83,11 +87,11 @@ func (u *VerifyAuth) Execute(
 
 	token, expiresAt, err := u.jwtIssuer.Issue(claimed)
 	if err != nil {
-		return nil, apperrors.NewInternalError("verify_failed", err.Error())
+		return nil, apperrors.NewInternalError("verify_failed", err)
 	}
 	refreshToken, err := u.refreshTokenManager.Issue(claimed)
 	if err != nil {
-		return nil, apperrors.NewInternalError("verify_failed", err.Error())
+		return nil, apperrors.NewInternalError("verify_failed", err)
 	}
 	return &responses.VerifyAuthResponse{
 		Token:            token,

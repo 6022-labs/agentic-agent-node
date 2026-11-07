@@ -26,13 +26,13 @@ func NewDeletePaymentReceivePolicy(
 func (u *DeletePaymentReceivePolicy) Execute(ctx context.Context) error {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	if agent == nil {
-		return errors.NewInternalError("delete_failed", "agent identity is not initialized yet")
+		return errors.NewInternalError("delete_failed", errors.ErrAgentNotInitialized)
 	}
 	if err := u.paymentReceivePolicyRepository.DeleteByAgentId(ctx, agent.Id); err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	return nil
 }

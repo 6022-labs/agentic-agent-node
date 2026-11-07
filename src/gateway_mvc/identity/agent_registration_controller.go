@@ -1,6 +1,7 @@
 package identity
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/identity/use_cases/requests"
@@ -26,6 +27,7 @@ type AgentRegistrationController struct {
 	getAgentEnsInfo       *use_cases.GetAgentEnsInfo
 	checkAgentEns         *use_cases.CheckAgentEns
 	selfRegisterAgent     *use_cases.SelfRegisterAgent
+	errorWriter           *mvc.ErrorWriter
 }
 
 func NewAgentRegistrationController(
@@ -36,6 +38,7 @@ func NewAgentRegistrationController(
 	getAgentEnsInfo *use_cases.GetAgentEnsInfo,
 	checkAgentEns *use_cases.CheckAgentEns,
 	selfRegisterAgent *use_cases.SelfRegisterAgent,
+	errorWriter *mvc.ErrorWriter,
 ) *AgentRegistrationController {
 	return &AgentRegistrationController{
 		saveAgentRegistration: saveAgentRegistration,
@@ -45,6 +48,7 @@ func NewAgentRegistrationController(
 		getAgentEnsInfo:       getAgentEnsInfo,
 		checkAgentEns:         checkAgentEns,
 		selfRegisterAgent:     selfRegisterAgent,
+		errorWriter:           errorWriter,
 	}
 }
 
@@ -79,14 +83,14 @@ func (c *AgentRegistrationController) RegisterAuthenticatedRoutes(app fiber.Rout
 func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 	body := new(requests.SaveAgentRegistrationRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	if image, err := ctx.FormFile("image"); err == nil {
 		body.Image = image
 	}
 	resp, err := c.saveAgentRegistration.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -104,7 +108,7 @@ func (c *AgentRegistrationController) Save(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentRegistration.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -123,7 +127,7 @@ func (c *AgentRegistrationController) Get(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
 	resp, err := c.getAgentMintInfo.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -141,7 +145,7 @@ func (c *AgentRegistrationController) MintInfo(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
 	resp, err := c.checkAgentMint.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -160,7 +164,7 @@ func (c *AgentRegistrationController) CheckMint(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
 	resp, err := c.getAgentEnsInfo.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -178,7 +182,7 @@ func (c *AgentRegistrationController) EnsInfo(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
 	resp, err := c.checkAgentEns.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -197,7 +201,7 @@ func (c *AgentRegistrationController) CheckEns(ctx fiber.Ctx) error {
 func (c *AgentRegistrationController) Self(ctx fiber.Ctx) error {
 	resp, err := c.selfRegisterAgent.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

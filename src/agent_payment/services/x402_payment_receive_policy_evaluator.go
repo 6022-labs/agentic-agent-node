@@ -134,7 +134,7 @@ func (e *X402PaymentReceivePolicyEvaluator) loadOffers(ctx context.Context) ([]x
 
 	rules, err := e.paymentReceiveRuleRepository.ListByPolicyId(ctx, policy.Id)
 	if err != nil {
-		return nil, apperrors.NewInternalError("access_evaluation_failed", err.Error())
+		return nil, apperrors.NewInternalError("access_evaluation_failed", err)
 	}
 
 	offers := []x402ReceiveOffer{}
@@ -144,7 +144,7 @@ func (e *X402PaymentReceivePolicyEvaluator) loadOffers(ctx context.Context) ([]x
 		}
 		config, err := e.paymentReceiveRuleX402ConfigRepository.GetByRuleId(ctx, rules[i].Id)
 		if err != nil {
-			return nil, apperrors.NewInternalError("access_evaluation_failed", err.Error())
+			return nil, apperrors.NewInternalError("access_evaluation_failed", err)
 		}
 		// A rule with no matcher describes nothing, so it entitles nobody.
 		if config == nil {
@@ -152,7 +152,7 @@ func (e *X402PaymentReceivePolicyEvaluator) loadOffers(ctx context.Context) ([]x
 		}
 		prices, err := e.paymentReceiveRulePriceRepository.ListByRuleId(ctx, rules[i].Id)
 		if err != nil {
-			return nil, apperrors.NewInternalError("access_evaluation_failed", err.Error())
+			return nil, apperrors.NewInternalError("access_evaluation_failed", err)
 		}
 		config.PaymentReceiveRule = rules[i]
 		for j := range prices {

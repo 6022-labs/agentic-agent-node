@@ -65,11 +65,11 @@ func (u *CreateMCPConnection) Execute(
 		HeaderAuthKeys:      u.headerAuthKeys(&request.MCPHeaderAuthRequest),
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 
 	if err := u.saveHeaderValues(ctx, created.Id, request.HeaderAuth); err != nil {
-		return nil, errors.NewInternalError("create_failed", err.Error())
+		return nil, errors.NewInternalError("create_failed", err)
 	}
 	created.HeaderAuth = request.HeaderAuth
 	return responses.ToMCPConnectionResponse(created), nil

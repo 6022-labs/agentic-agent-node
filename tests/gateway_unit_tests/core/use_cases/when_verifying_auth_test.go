@@ -3,12 +3,12 @@ package use_cases_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
@@ -127,12 +127,14 @@ func TestWhenVerifyingAuth(t *testing.T) {
 	t.Run("Given the signature verifier fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("malformed")
+
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().
 				Recover(siweMessage, testSignature).
-				Return(common.Address{}, errors.New("malformed"))
+				Return(common.Address{}, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -146,7 +148,8 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "malformed")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 
@@ -185,7 +188,7 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().
 				IsAuthorized(gomock.Any(), address).
-				Return(false, common_interfaces.ErrIdentityNotFound)
+				Return(false, fmt.Errorf("%w: https://rpc.example/secret-key", apperrors.ErrIdentityNotFound))
 		}
 
 		t.Run("Should return Unavailable with identity_not_found", func(t *testing.T) {
@@ -200,17 +203,21 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Equal(t, "identity_not_found", unavailableErr.Code)
+			assert.Equal(t, apperrors.ErrIdentityNotFound.Error(), unavailableErr.Message)
+			assert.ErrorIs(t, err, apperrors.ErrIdentityNotFound)
 		})
 	})
 
 	t.Run("Given the authorizer fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("rpc down")
+
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
-			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
+			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -224,7 +231,8 @@ func TestWhenVerifyingAuth(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "rpc down")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 
@@ -256,13 +264,15 @@ func TestWhenVerifyingAuth(t *testing.T) {
 	t.Run("Given the refresh token manager fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("entropy exhausted")
+
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now(), nil)
-			suite.mockRefreshTokenManager.EXPECT().Issue(address).Return(nil, errors.New("entropy exhausted"))
+			suite.mockRefreshTokenManager.EXPECT().Issue(address).Return(nil, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -277,7 +287,8 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "verify_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "entropy exhausted")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 

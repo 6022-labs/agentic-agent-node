@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -35,14 +34,15 @@ func WhenDeletingLlmConfigBeforeEach(t *testing.T) *WhenDeletingLlmConfigTesting
 func TestWhenDeletingLlmConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 404", func(t *testing.T) {
 		t.Parallel()
 
+		runtimeErr := apperrors.NewNotFoundError("not_found", "resource not found")
 		initSuite := func(suite *WhenDeletingLlmConfigTestingSuite) {
-			suite.mockClient.EXPECT().Delete(gomock.Any()).Return(errors.New("transport down"))
+			suite.mockClient.EXPECT().Delete(gomock.Any()).Return(runtimeErr)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the NotFoundError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenDeletingLlmConfigBeforeEach(t)
@@ -50,9 +50,27 @@ func TestWhenDeletingLlmConfig(t *testing.T) {
 
 			err := suite.sut.Execute(context.Background())
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Contains(t, unavailableErr.Message, "transport down")
+			assert.Same(t, runtimeErr, err)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		runtimeErr := apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)
+		initSuite := func(suite *WhenDeletingLlmConfigTestingSuite) {
+			suite.mockClient.EXPECT().Delete(gomock.Any()).Return(runtimeErr)
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenDeletingLlmConfigBeforeEach(t)
+			initSuite(suite)
+
+			err := suite.sut.Execute(context.Background())
+
+			assert.Same(t, runtimeErr, err)
 		})
 	})
 

@@ -67,7 +67,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().
 				Create(ctx, gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockClient.EXPECT().
 				Create(ctx, gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

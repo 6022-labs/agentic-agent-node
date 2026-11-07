@@ -140,7 +140,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockConversationResolver.EXPECT().
 				Resolve(gomock.Any(), conversationId, responseCallerId).
-				Return("", knowledge_interfaces.ErrConversationUnavailable)
+				Return("", apperrors.ErrConversationUnavailable)
 			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
 		}
 
@@ -165,7 +165,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 		initSuite := func(suite *WhenCreatingResponseTestingSuite) {
 			suite.mockConversationResolver.EXPECT().
 				Resolve(gomock.Any(), conversationId, responseCallerId).
-				Return("", knowledge_interfaces.ErrAgentNotMinted)
+				Return("", apperrors.ErrAgentNotMinted)
 			suite.mockResponseMetrics.EXPECT().RecordResponseFailed(gomock.Any()).AnyTimes()
 		}
 
@@ -240,7 +240,7 @@ func TestWhenCreatingResponse(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "driver broke")
+			assert.ErrorContains(t, internalErr.Cause, "driver broke")
 		})
 	})
 

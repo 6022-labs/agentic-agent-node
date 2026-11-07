@@ -63,7 +63,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
 			suite.mockClient.EXPECT().
 				CreateConversation(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
 			suite.mockClient.EXPECT().
 				CreateConversation(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

@@ -11,13 +11,15 @@ const ConfigEndpoint = "/config"
 // ConfigController serves the public node config the owner UI boots from —
 // unauthenticated because the UI needs the chain id before wallet login.
 type ConfigController struct {
-	getConfig *use_cases.GetConfig
+	getConfig   *use_cases.GetConfig
+	errorWriter *mvc.ErrorWriter
 }
 
 func NewConfigController(
 	getConfig *use_cases.GetConfig,
+	errorWriter *mvc.ErrorWriter,
 ) *ConfigController {
-	return &ConfigController{getConfig: getConfig}
+	return &ConfigController{getConfig: getConfig, errorWriter: errorWriter}
 }
 
 func (c *ConfigController) RegisterUnauthenticatedRoutes(app fiber.Router) {
@@ -36,7 +38,7 @@ func (c *ConfigController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 func (c *ConfigController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getConfig.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

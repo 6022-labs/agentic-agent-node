@@ -113,7 +113,7 @@ func TestWhenListingConversations(t *testing.T) {
 
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
-			assert.Contains(t, internalErr.Message, "db blew")
+			assert.ErrorContains(t, internalErr.Cause, "db blew")
 		})
 	})
 
@@ -141,7 +141,7 @@ func TestWhenListingConversations(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "list_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "db blew")
+			assert.ErrorContains(t, internalErr.Cause, "db blew")
 		})
 	})
 
@@ -172,7 +172,7 @@ func TestWhenListingConversations(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "list_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "db blew")
+			assert.ErrorContains(t, internalErr.Cause, "db blew")
 		})
 	})
 

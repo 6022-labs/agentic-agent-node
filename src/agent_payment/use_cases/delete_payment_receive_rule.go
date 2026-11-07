@@ -24,13 +24,13 @@ func (u *DeletePaymentReceiveRule) Execute(
 ) error {
 	rule, err := u.paymentReceiveRuleRepository.GetById(ctx, request.Id)
 	if err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	if rule == nil {
 		return errors.NewNotFoundError("rule_not_found", "")
 	}
 	if err := u.paymentReceiveRuleRepository.DeleteById(ctx, request.Id); err != nil {
-		return errors.NewInternalError("delete_failed", err.Error())
+		return errors.NewInternalError("delete_failed", err)
 	}
 	return nil
 }

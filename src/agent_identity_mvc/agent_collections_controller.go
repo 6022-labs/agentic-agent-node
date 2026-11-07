@@ -13,12 +13,14 @@ const InternalAgentCollectionsEndpoint = "/internal/agent/collections"
 // gateway proxies the owner's authenticated calls here.
 type AgentCollectionsController struct {
 	listAgentCollections *use_cases.ListAgentCollections
+	errorWriter          *mvc.ErrorWriter
 }
 
 func NewAgentCollectionsController(
 	listAgentCollections *use_cases.ListAgentCollections,
+	errorWriter *mvc.ErrorWriter,
 ) *AgentCollectionsController {
-	return &AgentCollectionsController{listAgentCollections: listAgentCollections}
+	return &AgentCollectionsController{listAgentCollections: listAgentCollections, errorWriter: errorWriter}
 }
 
 func (c *AgentCollectionsController) RegisterRoutes(app fiber.Router) {
@@ -39,11 +41,11 @@ func (c *AgentCollectionsController) RegisterRoutes(app fiber.Router) {
 func (c *AgentCollectionsController) List(ctx fiber.Ctx) error {
 	req := &requests.ListAgentCollectionsRequest{}
 	if err := ctx.Bind().Query(req); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	resp, err := c.listAgentCollections.Execute(ctx.Context(), req)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

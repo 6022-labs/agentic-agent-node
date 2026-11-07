@@ -37,7 +37,7 @@ func NewCheckAgentEns(
 func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationStatusResponse, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, apperrors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, apperrors.NewInternalError("agent_lookup_failed", err)
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
 		return nil, apperrors.NewConflictError("not_minted", "agent NFT must be minted before ENS registration")
@@ -45,19 +45,19 @@ func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationSta
 
 	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, apperrors.NewInternalError("state_lookup_failed", err.Error())
+		return nil, apperrors.NewInternalError("state_lookup_failed", err)
 	}
 
 	// Already confirmed in the DB: idempotent, skip the chain read entirely.
 	if state == nil || state.EnsRegistryStatus != enums.TransactionStatusConfirmed {
 		provisioned, err := u.ensPublisher.IsProvisioned(ctx)
 		if err != nil {
-			return nil, apperrors.NewUnavailableError("ens_read_failed", err.Error())
+			return nil, apperrors.NewUnavailableError("ens_read_failed", "failed to read the ENS records", err)
 		}
 		if provisioned {
 			state, err = u.registrationReconciler.ReconcileEnsRegistry(ctx, agent.Id, state)
 			if err != nil {
-				return nil, apperrors.NewInternalError("ens_reconcile_failed", err.Error())
+				return nil, apperrors.NewInternalError("ens_reconcile_failed", err)
 			}
 		}
 	}

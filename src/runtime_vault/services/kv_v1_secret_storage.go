@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_vault/metrics/interfaces"
 	vault_settings "github.com/6022-labs/agentic-agent-node/src/runtime_vault/settings"
 	vault "github.com/hashicorp/vault/api"
@@ -28,7 +28,7 @@ func NewKvV1SecretStorage(
 func (s *KvV1SecretStorage) recordOperation(ctx context.Context, operation string, start time.Time, err *error) {
 	// ErrSecretNotFound is an expected "miss", not an operational failure.
 	var operationErr error
-	if err != nil && *err != nil && !errors.Is(*err, runtime_common_interfaces.ErrSecretNotFound) {
+	if err != nil && *err != nil && !errors.Is(*err, apperrors.ErrSecretNotFound) {
 		operationErr = *err
 	}
 	s.metrics.RecordOperation(ctx, operation, s.settings.KvV1MountPath, time.Since(start), operationErr)
@@ -50,16 +50,16 @@ func (s *KvV1SecretStorage) Read(ctx context.Context, key string) (result map[st
 	secret, err := s.client.KVv1(s.settings.KvV1MountPath).Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, vault.ErrSecretNotFound) {
-			return nil, runtime_common_interfaces.ErrSecretNotFound
+			return nil, apperrors.ErrSecretNotFound
 		}
 		var respErr *vault.ResponseError
 		if errors.As(err, &respErr) && respErr.StatusCode == 404 {
-			return nil, runtime_common_interfaces.ErrSecretNotFound
+			return nil, apperrors.ErrSecretNotFound
 		}
 		return nil, err
 	}
 	if secret == nil || secret.Data == nil {
-		return nil, runtime_common_interfaces.ErrSecretNotFound
+		return nil, apperrors.ErrSecretNotFound
 	}
 
 	out := make(map[string]string, len(secret.Data))

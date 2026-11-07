@@ -83,8 +83,5 @@ func MapRuntimeError(err error) error {
 			return apperrors.NewConflictError(statusErr.Code, statusErr.Message)
 		}
 	}
-	if statusErr != nil {
-		return apperrors.NewUnavailableError("runtime_unavailable", statusErr.Error())
-	}
-	return apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable")
+	return apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", err)
 }

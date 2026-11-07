@@ -40,7 +40,7 @@ func (u *UpdatePaymentSpendPolicy) Execute(
 	policy.PayToPatterns = request.PayToPatterns
 	updated, err := u.paymentSpendPolicyRepository.Update(ctx, policy)
 	if err != nil {
-		return nil, errors.NewInternalError("update_failed", err.Error())
+		return nil, errors.NewInternalError("update_failed", err)
 	}
 	return responses.ToPaymentSpendPolicyResponse(updated), nil
 }

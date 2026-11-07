@@ -1,6 +1,7 @@
 package agent_knowledge_mvc
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases"
@@ -13,15 +14,18 @@ const InternalConversationMessagesEndpoint = "/internal/conversations/:conversat
 type ConversationMessagesController struct {
 	appendConversationMessages *use_cases.AppendConversationMessages
 	listConversationMessages   *use_cases.ListConversationMessages
+	errorWriter                *mvc.ErrorWriter
 }
 
 func NewConversationMessagesController(
 	appendConversationMessages *use_cases.AppendConversationMessages,
 	listConversationMessages *use_cases.ListConversationMessages,
+	errorWriter *mvc.ErrorWriter,
 ) *ConversationMessagesController {
 	return &ConversationMessagesController{
 		appendConversationMessages: appendConversationMessages,
 		listConversationMessages:   listConversationMessages,
+		errorWriter:                errorWriter,
 	}
 }
 
@@ -49,15 +53,15 @@ func (c *ConversationMessagesController) RegisterRoutes(app fiber.Router) {
 func (c *ConversationMessagesController) Append(ctx fiber.Ctx) error {
 	body := new(requests.AppendConversationMessagesRequest)
 	if err := ctx.Bind().URI(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 
 	resp, err := c.appendConversationMessages.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -77,12 +81,12 @@ func (c *ConversationMessagesController) Append(ctx fiber.Ctx) error {
 func (c *ConversationMessagesController) List(ctx fiber.Ctx) error {
 	request := new(requests.ListConversationMessagesRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 
 	resp, err := c.listConversationMessages.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

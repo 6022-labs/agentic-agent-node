@@ -89,6 +89,8 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 	t.Run("Given the runtime answers 500", func(t *testing.T) {
 		t.Parallel()
 
+		statusErr := &helpers.RuntimeStatusError{StatusCode: http.StatusInternalServerError, Code: "inference_failed"}
+
 		t.Run("Should collapse it to unavailable", func(t *testing.T) {
 			t.Parallel()
 
@@ -99,7 +101,7 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 		})
 
 		// The message of a 500 is the runtime's own err.Error() — driver and schema detail.
-		t.Run("Should surface the code without the response body", func(t *testing.T) {
+		t.Run("Should answer with the fixed message", func(t *testing.T) {
 			t.Parallel()
 
 			err := helpers.MapRuntimeError(&helpers.RuntimeStatusError{
@@ -111,13 +113,23 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
-			assert.NotContains(t, unavailableErr.Message, "10.0.0.5")
-			assert.Contains(t, unavailableErr.Message, "inference_failed")
+			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Equal(t, "the runtime is unavailable", unavailableErr.Message)
+		})
+
+		t.Run("Should keep the status error as the cause", func(t *testing.T) {
+			t.Parallel()
+
+			err := helpers.MapRuntimeError(statusErr)
+
+			assert.ErrorIs(t, err, statusErr)
 		})
 	})
 
 	t.Run("Given an error that is not a runtime status error", func(t *testing.T) {
 		t.Parallel()
+
+		transportErr := errors.New("dial tcp: connect: refused")
 
 		// A transport error names the loopback address the runtime binds to.
 		t.Run("Should not disclose the runtime's address", func(t *testing.T) {
@@ -132,6 +144,14 @@ func TestWhenMappingRuntimeError(t *testing.T) {
 			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
 			assert.NotContains(t, unavailableErr.Message, "127.0.0.1")
 			assert.NotContains(t, unavailableErr.Message, "5400")
+		})
+
+		t.Run("Should keep the error as the cause", func(t *testing.T) {
+			t.Parallel()
+
+			err := helpers.MapRuntimeError(transportErr)
+
+			assert.ErrorIs(t, err, transportErr)
 		})
 	})
 }

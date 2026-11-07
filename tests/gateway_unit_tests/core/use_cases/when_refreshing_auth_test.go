@@ -3,11 +3,11 @@ package use_cases_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	common_interfaces "github.com/6022-labs/agentic-agent-node/src/common/interfaces"
 	gateway_interfaces "github.com/6022-labs/agentic-agent-node/src/gateway/core/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/use_cases/requests"
@@ -114,7 +114,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			suite.mockRefreshTokenManager.EXPECT().Parse("the-refresh-token").Return(claims, nil)
 			suite.mockAuthorizer.EXPECT().
 				IsAuthorized(gomock.Any(), address).
-				Return(false, common_interfaces.ErrIdentityNotFound)
+				Return(false, fmt.Errorf("%w: https://rpc.example/secret-key", apperrors.ErrIdentityNotFound))
 		}
 
 		t.Run("Should return Unavailable with identity_not_found", func(t *testing.T) {
@@ -128,15 +128,19 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			var unavailableErr *apperrors.UnavailableError
 			assert.ErrorAs(t, err, &unavailableErr)
 			assert.Equal(t, "identity_not_found", unavailableErr.Code)
+			assert.Equal(t, apperrors.ErrIdentityNotFound.Error(), unavailableErr.Message)
+			assert.ErrorIs(t, err, apperrors.ErrIdentityNotFound)
 		})
 	})
 
 	t.Run("Given the authorizer fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("rpc down")
+
 		initSuite := func(suite *WhenRefreshingAuthTestingSuite) {
 			suite.mockRefreshTokenManager.EXPECT().Parse("the-refresh-token").Return(claims, nil)
-			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, errors.New("rpc down"))
+			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(false, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -150,7 +154,8 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "refresh_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "rpc down")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 
@@ -213,9 +218,11 @@ func TestWhenRefreshingAuth(t *testing.T) {
 	t.Run("Given the token id generation fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("entropy exhausted")
+
 		initSuite := func(suite *WhenRefreshingAuthTestingSuite) {
 			expectAuthorizedSession(suite)
-			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("", errors.New("entropy exhausted"))
+			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("", dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -229,7 +236,8 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "refresh_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "entropy exhausted")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 
@@ -302,13 +310,15 @@ func TestWhenRefreshingAuth(t *testing.T) {
 	t.Run("Given the JWT issuer fails", func(t *testing.T) {
 		t.Parallel()
 
+		dependencyErr := errors.New("sign failed")
+
 		initSuite := func(suite *WhenRefreshingAuthTestingSuite) {
 			expectAuthorizedSession(suite)
 			suite.mockRefreshTokenManager.EXPECT().NewTokenId().Return("token-2", nil)
 			suite.mockRefreshSessionStore.EXPECT().
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("", time.Time{}, errors.New("sign failed"))
+			suite.mockJwtIssuer.EXPECT().Issue(address).Return("", time.Time{}, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -322,12 +332,15 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "refresh_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "sign failed")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 
 	t.Run("Given the refresh token manager fails to reissue", func(t *testing.T) {
 		t.Parallel()
+
+		dependencyErr := errors.New("sign failed")
 
 		initSuite := func(suite *WhenRefreshingAuthTestingSuite) {
 			expectAuthorizedSession(suite)
@@ -336,7 +349,7 @@ func TestWhenRefreshingAuth(t *testing.T) {
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
 			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now(), nil)
-			suite.mockRefreshTokenManager.EXPECT().Reissue(claims, "token-2").Return(nil, errors.New("sign failed"))
+			suite.mockRefreshTokenManager.EXPECT().Reissue(claims, "token-2").Return(nil, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -350,7 +363,8 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			var internalErr *apperrors.InternalError
 			assert.ErrorAs(t, err, &internalErr)
 			assert.Equal(t, "refresh_failed", internalErr.Code)
-			assert.Contains(t, internalErr.Message, "sign failed")
+			assert.Equal(t, apperrors.InternalErrorMessage, internalErr.Message)
+			assert.ErrorIs(t, err, dependencyErr)
 		})
 	})
 

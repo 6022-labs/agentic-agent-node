@@ -51,10 +51,10 @@ func (u *AppendConversationMessages) Execute(
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("append_failed", err.Error())
+		return nil, errors.NewInternalError("append_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("append_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("append_failed", errors.ErrAgentNotInitialized)
 	}
 	// Seeding memory is refused until mint, like the payment policy.
 	if agent.CollectionTokenId == nil {
@@ -68,7 +68,7 @@ func (u *AppendConversationMessages) Execute(
 		CallerId: &callerId,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("append_failed", err.Error())
+		return nil, errors.NewInternalError("append_failed", err)
 	}
 	if created {
 		u.knowledgeMetrics.RecordConversationStarted(ctx)
@@ -86,7 +86,7 @@ func (u *AppendConversationMessages) Execute(
 		scope,
 	)
 	if err != nil {
-		return nil, errors.NewInternalError("append_failed", err.Error())
+		return nil, errors.NewInternalError("append_failed", err)
 	}
 	if conversation == nil {
 		return nil, errors.NewNotFoundError("conversation_not_found", "conversation not found")
@@ -103,7 +103,7 @@ func (u *AppendConversationMessages) Execute(
 
 	inserted, err := u.messageAppender.Append(ctx, request.ConversationId, domainMessages)
 	if err != nil {
-		return nil, errors.NewInternalError("append_failed", err.Error())
+		return nil, errors.NewInternalError("append_failed", err)
 	}
 
 	out := make([]responses.ConversationMessage, 0, len(inserted))

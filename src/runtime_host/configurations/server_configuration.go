@@ -2,6 +2,7 @@ package configurations
 
 import (
 	identity_middlewares "github.com/6022-labs/agentic-agent-node/src/agent_identity_mvc/middlewares"
+	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
 	"github.com/6022-labs/agentic-agent-node/src/common/settings"
@@ -26,23 +27,23 @@ func ConfigureServer(container *dig.Container) {
 	}
 }
 
-func newHttpServer(hostSettings *settings.HostSettings) *fiber.App {
+func newHttpServer(hostSettings *settings.HostSettings, errorWriter *mvc.ErrorWriter) *fiber.App {
 	return fiber.New(fiber.Config{
-		AppName:   AppName,
-		BodyLimit: hostSettings.BodyLimitBytes,
+		AppName:      AppName,
+		BodyLimit:    hostSettings.BodyLimitBytes,
+		ErrorHandler: errorWriter.Write,
 	})
 }
 
 type registerRoutesParams struct {
 	dig.In
 
-	App               *fiber.App
-	Logger            *zap.Logger
-	AgentTelemetry    *identity_middlewares.AgentTelemetryContextMiddleware
-	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
-	CallerContext     *runtime_common_mvc_middlewares.CallerContextMiddleware
-	RequestFailureLog *mvc_middlewares.RequestFailureLogMiddleware
-	Controllers       []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
+	App            *fiber.App
+	Logger         *zap.Logger
+	AgentTelemetry *identity_middlewares.AgentTelemetryContextMiddleware
+	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
+	CallerContext  *runtime_common_mvc_middlewares.CallerContextMiddleware
+	Controllers    []mvc_interfaces.ControllerInterface `group:"runtime_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -56,8 +57,6 @@ func registerRoutes(p registerRoutesParams) {
 	}))
 
 	p.App.Use(p.CallerContext.Handle)
-
-	p.App.Use(p.RequestFailureLog.Handle)
 
 	p.App.Get("/swagger/*", swaggo.New())
 

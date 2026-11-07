@@ -2,6 +2,7 @@ package use_cases_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
@@ -63,6 +64,73 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 
 			var notFoundErr *apperrors.NotFoundError
 			assert.ErrorAs(t, err, &notFoundErr)
+		})
+	})
+
+	t.Run("Given the moderator count read fails", func(t *testing.T) {
+		t.Parallel()
+
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				ModeratorCount(gomock.Any(), gomock.Any()).
+				Return(uint64(0), rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "collection_read_failed", target.Code)
+				assert.Equal(t, "failed to read the collection moderators", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
+		})
+	})
+
+	t.Run("Given the moderator check fails", func(t *testing.T) {
+		t.Parallel()
+
+		rpcErr := errors.New("rpc down")
+		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
+			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
+			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentAddressRepository.EXPECT().
+				GetAllByAgentId(gomock.Any(), gomock.Any()).
+				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				ModeratorCount(gomock.Any(), gomock.Any()).
+				Return(uint64(2), nil)
+			suite.mockAgentCollectionRequester.EXPECT().
+				IsModerator(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(false, rpcErr)
+		}
+
+		t.Run("Should return an UnavailableError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentMintInfoBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			var target *apperrors.UnavailableError
+			if assert.ErrorAs(t, err, &target) {
+				assert.Equal(t, "collection_read_failed", target.Code)
+				assert.Equal(t, "failed to read the collection moderators", target.Message)
+			}
+			assert.ErrorIs(t, err, rpcErr)
 		})
 	})
 

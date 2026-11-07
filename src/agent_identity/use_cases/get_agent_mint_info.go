@@ -33,7 +33,7 @@ func NewGetAgentMintInfo(
 func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResponse, error) {
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}
 	if agent == nil {
 		return nil, errors.NewNotFoundError("draft_not_found", "no agent registration has been saved yet")
@@ -44,7 +44,7 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 
 	addresses, err := u.agentAddressRepository.GetAllByAgentId(ctx, agent.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err)
 	}
 
 	collection := common.HexToAddress(agent.CollectionAddress)
@@ -53,13 +53,21 @@ func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResp
 
 	moderatorCount, err := u.agentCollectionRequester.ModeratorCount(chainId, collection)
 	if err != nil {
-		return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
+		return nil, errors.NewUnavailableError(
+			"collection_read_failed",
+			"failed to read the collection moderators",
+			err,
+		)
 	}
 	ownerIsModerator := false
 	if moderatorCount > 0 {
 		ownerIsModerator, err = u.agentCollectionRequester.IsModerator(chainId, collection, owner)
 		if err != nil {
-			return nil, errors.NewUnavailableError("collection_read_failed", err.Error())
+			return nil, errors.NewUnavailableError(
+				"collection_read_failed",
+				"failed to read the collection moderators",
+				err,
+			)
 		}
 	}
 

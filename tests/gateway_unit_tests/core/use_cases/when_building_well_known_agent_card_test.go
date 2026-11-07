@@ -70,7 +70,7 @@ func TestWhenBuildingWellKnownAgentCard(t *testing.T) {
 		initSuite := func(suite *WhenBuildingWellKnownAgentCardTestingSuite) {
 			suite.mockAgentRegistrationClient.EXPECT().
 				Get(ctx).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

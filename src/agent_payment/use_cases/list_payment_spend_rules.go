@@ -39,7 +39,7 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 	}
 	rules, err := u.paymentSpendRuleRepository.ListByPolicyId(ctx, policy.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	// Windows and the token live in their own tables, so join them back per rule.
@@ -48,13 +48,13 @@ func (u *ListPaymentSpendRules) Execute(ctx context.Context) (*responses.ListPay
 	for i := range rules {
 		windows, err := u.paymentSpendRuleWindowRepository.ListByRuleId(ctx, rules[i].Id)
 		if err != nil {
-			return nil, errors.NewInternalError("list_failed", err.Error())
+			return nil, errors.NewInternalError("list_failed", err)
 		}
 		var config json.RawMessage
 		if strategy, ok := u.paymentSpendMethodStrategies.For(rules[i].Method); ok {
 			config, err = strategy.LoadConfig(ctx, rules[i].Id)
 			if err != nil {
-				return nil, errors.NewInternalError("list_failed", err.Error())
+				return nil, errors.NewInternalError("list_failed", err)
 			}
 		}
 		out = append(out, *responses.ToPaymentSpendRuleResponse(&rules[i], windows, config, now))

@@ -30,6 +30,7 @@ type ResponseAccessGateMiddleware struct {
 	paymentReceiveAccessClient gateway_interfaces.PaymentReceiveAccessClientInterface
 	x402FacilitatorClient      gateway_interfaces.X402FacilitatorClientInterface
 	paymentMetrics             metrics_interfaces.PaymentMetricsInterface
+	errorWriter                *mvc.ErrorWriter
 }
 
 func NewResponseAccessGateMiddleware(
@@ -38,6 +39,7 @@ func NewResponseAccessGateMiddleware(
 	paymentReceiveAccessClient gateway_interfaces.PaymentReceiveAccessClientInterface,
 	x402FacilitatorClient gateway_interfaces.X402FacilitatorClientInterface,
 	paymentMetrics metrics_interfaces.PaymentMetricsInterface,
+	errorWriter *mvc.ErrorWriter,
 ) *ResponseAccessGateMiddleware {
 	return &ResponseAccessGateMiddleware{
 		logger:                     logger,
@@ -45,6 +47,7 @@ func NewResponseAccessGateMiddleware(
 		paymentReceiveAccessClient: paymentReceiveAccessClient,
 		x402FacilitatorClient:      x402FacilitatorClient,
 		paymentMetrics:             paymentMetrics,
+		errorWriter:                errorWriter,
 	}
 }
 
@@ -56,10 +59,9 @@ func (m *ResponseAccessGateMiddleware) Handle(ctx fiber.Ctx) error {
 	)
 	if err != nil {
 		// This route is unauthenticated and the runtime's text can carry schema detail.
-		m.logger.Error("x402 access decision unavailable", zap.Error(err))
-		return mvc.WriteError(
+		return m.errorWriter.Write(
 			ctx,
-			apperrors.NewUnavailableError("access_decision_unavailable", "the access decision is unavailable"),
+			apperrors.NewUnavailableError("access_decision_unavailable", "the access decision is unavailable", err),
 		)
 	}
 
@@ -97,9 +99,9 @@ func (m *ResponseAccessGateMiddleware) settle(
 ) error {
 	settlement := decision.Settlement
 	if settlement == nil {
-		return mvc.WriteError(
+		return m.errorWriter.Write(
 			ctx,
-			apperrors.NewUnavailableError("access_decision_unavailable", "payable decision carried no settlement"),
+			apperrors.NewUnavailableError("access_decision_unavailable", "payable decision carried no settlement", nil),
 		)
 	}
 	payload, err := x402.DecodePaymentPayload(ctx.Get(PaymentSignatureHeader))
@@ -119,10 +121,9 @@ func (m *ResponseAccessGateMiddleware) settle(
 		&settlement.Requirements,
 	)
 	if err != nil {
-		m.logger.Error("x402 facilitator verify failed", zap.Error(err))
-		return mvc.WriteError(
+		return m.errorWriter.Write(
 			ctx,
-			apperrors.NewUnavailableError("facilitator_unavailable", "the payment facilitator is unavailable"),
+			apperrors.NewUnavailableError("facilitator_unavailable", "the payment facilitator is unavailable", err),
 		)
 	}
 	if !verifyResponse.IsValid {
@@ -188,5 +189,5 @@ func (m *ResponseAccessGateMiddleware) paymentRequired(
 	if encoded, err := x402.EncodeBase64Json(body); err == nil {
 		ctx.Set(PaymentRequiredHeader, encoded)
 	}
-	return ctx.Status(fiber.StatusPaymentRequired).JSON(body)
+	return m.errorWriter.WriteBody(ctx, fiber.StatusPaymentRequired, decision.ErrorCode, body)
 }

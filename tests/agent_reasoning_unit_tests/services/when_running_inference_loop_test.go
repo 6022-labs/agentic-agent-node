@@ -595,7 +595,10 @@ func TestWhenRunningInferenceLoop(t *testing.T) {
 			suite.expectDemojizePassthrough()
 			suite.mockSelfToolRegistry.EXPECT().
 				CallTool(gomock.Any(), selfTool.Name, gomock.Nil()).
-				Return(nil, apperrors.NewInternalError("mcp_lookup_failed", "dial tcp 10.0.0.5:5432: connection refused"))
+				Return(nil, apperrors.NewInternalError(
+					"mcp_lookup_failed",
+					errors.New("dial tcp 10.0.0.5:5432: connection refused"),
+				))
 
 			firstCall := suite.mockLLMExecutor.EXPECT().
 				Complete(gomock.Any(), gomock.Any(), selfTools, gomock.Any(), gomock.Any()).

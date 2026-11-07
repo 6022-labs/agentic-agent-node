@@ -44,10 +44,10 @@ func (u *ListConversationMessages) Execute(
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("list_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("list_failed", errors.ErrAgentNotInitialized)
 	}
 
 	scope := &callerId
@@ -61,7 +61,7 @@ func (u *ListConversationMessages) Execute(
 		scope,
 	)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 	if conversation == nil {
 		return nil, errors.NewNotFoundError("conversation_not_found", "conversation not found")
@@ -69,7 +69,7 @@ func (u *ListConversationMessages) Execute(
 
 	messages, err := u.conversationMessageRepository.ListByConversationId(ctx, conversation.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	out := make([]responses.ConversationMessage, 0, len(messages))

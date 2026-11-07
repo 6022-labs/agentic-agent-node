@@ -131,7 +131,7 @@ func TestWhenSigningX402PaymentUseCase(t *testing.T) {
 		initSuite := func(suite *WhenSigningX402PaymentUseCaseTestingSuite) {
 			suite.mockX402PaymentSigner.EXPECT().
 				Sign(ctx, gomock.Any()).
-				Return(nil, apperrors.NewInternalError("spend_policy_failed", "")).
+				Return(nil, apperrors.NewInternalError("spend_policy_failed", nil)).
 				Times(1)
 		}
 
@@ -208,10 +208,11 @@ func TestWhenSigningX402PaymentUseCase(t *testing.T) {
 		t.Parallel()
 
 		request := signedRequest()
+		signerErr := errors.New("node wallet not bootstrapped")
 		initSuite := func(suite *WhenSigningX402PaymentUseCaseTestingSuite) {
 			suite.mockX402PaymentSigner.EXPECT().
 				Sign(ctx, gomock.Any()).
-				Return(nil, errors.New("node wallet not bootstrapped")).
+				Return(nil, signerErr).
 				Times(1)
 		}
 
@@ -225,8 +226,11 @@ func TestWhenSigningX402PaymentUseCase(t *testing.T) {
 
 			assert.Nil(t, response)
 			var unavailableError *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableError)
-			assert.Equal(t, "x402_payment_signing_failed", unavailableError.Code)
+			if assert.ErrorAs(t, err, &unavailableError) {
+				assert.Equal(t, "x402_payment_signing_failed", unavailableError.Code)
+				assert.Equal(t, "failed to sign the x402 payment", unavailableError.Message)
+			}
+			assert.ErrorIs(t, err, signerErr)
 		})
 	})
 

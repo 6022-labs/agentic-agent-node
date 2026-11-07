@@ -111,7 +111,7 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingPaymentSpendPolicyTestingSuite) {
 			suite.mockPaymentSpendPolicyClient.EXPECT().
 				Update(gomock.Any(), gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "connection refused")).
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "connection refused", nil)).
 				Times(1)
 		}
 

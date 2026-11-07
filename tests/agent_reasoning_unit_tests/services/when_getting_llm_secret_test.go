@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	reasoning_services "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
-	runtime_common_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +43,7 @@ func TestWhenGettingLLMSecret(t *testing.T) {
 		initSuite := func(suite *WhenGettingLLMSecretTestingSuite) {
 			suite.mockStorage.EXPECT().
 				Read(gomock.Any(), scopedKey).
-				Return(nil, runtime_common_interfaces.ErrSecretNotFound)
+				Return(nil, apperrors.ErrSecretNotFound)
 		}
 
 		t.Run("Should report not-found", func(t *testing.T) {

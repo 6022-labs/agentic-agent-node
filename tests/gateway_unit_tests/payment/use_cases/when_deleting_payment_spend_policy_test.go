@@ -60,7 +60,7 @@ func TestWhenDeletingPaymentSpendPolicy(t *testing.T) {
 		initSuite := func(suite *WhenDeletingPaymentSpendPolicyTestingSuite) {
 			suite.mockPaymentSpendPolicyClient.EXPECT().
 				Delete(gomock.Any()).
-				Return(apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable")).
+				Return(apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)).
 				Times(1)
 		}
 

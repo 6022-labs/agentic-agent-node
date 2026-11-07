@@ -41,7 +41,7 @@ func TestWhenListingAgentCollections(t *testing.T) {
 
 		initSuite := func(suite *WhenListingAgentCollectionsTestingSuite) {
 			suite.mockClient.EXPECT().List(gomock.Any(), "80002").
-				Return(nil, errors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, errors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

@@ -40,7 +40,7 @@ func (u *ValidateLLMConnection) Execute(ctx context.Context, request *requests.S
 	}
 	current, err := u.llmConnectionRepository.GetByAgentId(ctx, agent.Id)
 	if err != nil {
-		return errors.NewInternalError("validate_failed", err.Error())
+		return errors.NewInternalError("validate_failed", err)
 	}
 	return u.validateConnection(ctx, request, current)
 }

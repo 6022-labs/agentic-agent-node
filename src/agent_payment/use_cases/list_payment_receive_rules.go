@@ -40,20 +40,20 @@ func (u *ListPaymentReceiveRules) Execute(ctx context.Context) (*responses.ListP
 	}
 	rules, err := u.paymentReceiveRuleRepository.ListByPolicyId(ctx, policy.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	out := make([]responses.PaymentReceiveRuleResponse, 0, len(rules))
 	for i := range rules {
 		prices, err := u.paymentReceiveRulePriceRepository.ListByRuleId(ctx, rules[i].Id)
 		if err != nil {
-			return nil, errors.NewInternalError("list_failed", err.Error())
+			return nil, errors.NewInternalError("list_failed", err)
 		}
 		var config json.RawMessage
 		if strategy, ok := u.paymentReceiveMethodStrategies.For(rules[i].Method); ok {
 			config, err = strategy.LoadConfig(ctx, rules[i].Id)
 			if err != nil {
-				return nil, errors.NewInternalError("list_failed", err.Error())
+				return nil, errors.NewInternalError("list_failed", err)
 			}
 		}
 		out = append(out, *responses.ToPaymentReceiveRuleResponse(&rules[i], prices, config))

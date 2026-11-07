@@ -15,15 +15,18 @@ const (
 type WellKnownController struct {
 	getWellKnownAgentCard *use_cases.GetWellKnownAgentCard
 	getWellKnownAgent6022 *use_cases.GetWellKnownAgent6022
+	errorWriter           *mvc.ErrorWriter
 }
 
 func NewWellKnownController(
 	getWellKnownAgentCard *use_cases.GetWellKnownAgentCard,
 	getWellKnownAgent6022 *use_cases.GetWellKnownAgent6022,
+	errorWriter *mvc.ErrorWriter,
 ) *WellKnownController {
 	return &WellKnownController{
 		getWellKnownAgentCard: getWellKnownAgentCard,
 		getWellKnownAgent6022: getWellKnownAgent6022,
+		errorWriter:           errorWriter,
 	}
 }
 
@@ -46,7 +49,7 @@ func (c *WellKnownController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 func (c *WellKnownController) GetWellKnownAgentCard(ctx fiber.Ctx) error {
 	card, err := c.getWellKnownAgentCard.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(card)
 }
@@ -63,7 +66,7 @@ func (c *WellKnownController) GetWellKnownAgentCard(ctx fiber.Ctx) error {
 func (c *WellKnownController) GetWellKnownAgent6022(ctx fiber.Ctx) error {
 	card, err := c.getWellKnownAgent6022.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(card)
 }

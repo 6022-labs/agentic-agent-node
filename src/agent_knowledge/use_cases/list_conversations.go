@@ -46,7 +46,7 @@ func (u *ListConversations) Execute(
 
 	agent, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 	if agent == nil {
 		return &responses.ListConversationsResponse{
@@ -63,7 +63,7 @@ func (u *ListConversations) Execute(
 
 	total, err := u.conversationRepository.CountByAgentId(ctx, agent.Id, scope)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	limit := int(*request.ElementsPerPage)
@@ -71,7 +71,7 @@ func (u *ListConversations) Execute(
 
 	conversations, err := u.conversationRepository.ListByAgentId(ctx, agent.Id, scope, &offset, &limit)
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	counts, err := u.conversationMessageRepository.CountByConversationIds(ctx, lo.Map(
@@ -79,7 +79,7 @@ func (u *ListConversations) Execute(
 		func(conversation models.Conversation, _ int) string { return conversation.Id },
 	))
 	if err != nil {
-		return nil, errors.NewInternalError("list_failed", err.Error())
+		return nil, errors.NewInternalError("list_failed", err)
 	}
 
 	out := make([]responses.ConversationResponse, 0, len(conversations))

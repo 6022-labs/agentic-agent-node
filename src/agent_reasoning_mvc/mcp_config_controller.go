@@ -3,6 +3,7 @@ package agent_reasoning_mvc
 import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/gofiber/fiber/v3"
 )
@@ -20,6 +21,7 @@ type MCPConfigController struct {
 	updateMCPConnection *use_cases.UpdateMCPConnection
 	deleteMCPConnection *use_cases.DeleteMCPConnection
 	listMCPServerTools  *use_cases.DiscoverMCPServerTools
+	errorWriter         *mvc.ErrorWriter
 }
 
 func NewMCPConfigController(
@@ -29,6 +31,7 @@ func NewMCPConfigController(
 	updateMCPConnection *use_cases.UpdateMCPConnection,
 	deleteMCPConnection *use_cases.DeleteMCPConnection,
 	listMCPServerTools *use_cases.DiscoverMCPServerTools,
+	errorWriter *mvc.ErrorWriter,
 ) *MCPConfigController {
 	return &MCPConfigController{
 		listMCPConnections:  listMCPConnections,
@@ -37,6 +40,7 @@ func NewMCPConfigController(
 		updateMCPConnection: updateMCPConnection,
 		deleteMCPConnection: deleteMCPConnection,
 		listMCPServerTools:  listMCPServerTools,
+		errorWriter:         errorWriter,
 	}
 }
 
@@ -64,11 +68,11 @@ func (c *MCPConfigController) RegisterRoutes(app fiber.Router) {
 func (c *MCPConfigController) DiscoverTools(ctx fiber.Ctx) error {
 	body := new(requests.DiscoverMCPServerToolsRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.listMCPServerTools.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -83,7 +87,7 @@ func (c *MCPConfigController) DiscoverTools(ctx fiber.Ctx) error {
 func (c *MCPConfigController) List(ctx fiber.Ctx) error {
 	resp, err := c.listMCPConnections.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -102,11 +106,11 @@ func (c *MCPConfigController) List(ctx fiber.Ctx) error {
 func (c *MCPConfigController) Create(ctx fiber.Ctx) error {
 	body := new(requests.CreateMCPConnectionRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.createMCPConnection.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
@@ -124,11 +128,11 @@ func (c *MCPConfigController) Create(ctx fiber.Ctx) error {
 func (c *MCPConfigController) GetById(ctx fiber.Ctx) error {
 	request := new(requests.GetMCPConnectionRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	resp, err := c.getMCPConnection.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -149,14 +153,14 @@ func (c *MCPConfigController) GetById(ctx fiber.Ctx) error {
 func (c *MCPConfigController) Update(ctx fiber.Ctx) error {
 	request := new(requests.UpdateMCPConnectionRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := ctx.Bind().Body(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.updateMCPConnection.Execute(ctx.Context(), request)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }
@@ -172,10 +176,10 @@ func (c *MCPConfigController) Update(ctx fiber.Ctx) error {
 func (c *MCPConfigController) Delete(ctx fiber.Ctx) error {
 	request := new(requests.DeleteMCPConnectionRequest)
 	if err := ctx.Bind().URI(request); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_params", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_params", err.Error()))
 	}
 	if err := c.deleteMCPConnection.Execute(ctx.Context(), request); err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

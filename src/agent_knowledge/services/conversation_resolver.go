@@ -9,7 +9,7 @@ import (
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
-	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/google/uuid"
 )
 
@@ -38,7 +38,7 @@ func (r *ConversationResolver) Resolve(ctx context.Context, requestedId string, 
 		return "", err
 	}
 	if agent == nil || agent.CollectionTokenId == nil {
-		return "", interfaces.ErrAgentNotMinted
+		return "", apperrors.ErrAgentNotMinted
 	}
 
 	requestedId = strings.TrimSpace(requestedId)
@@ -51,7 +51,7 @@ func (r *ConversationResolver) Resolve(ctx context.Context, requestedId string, 
 		return "", err
 	}
 	if !usable {
-		return "", interfaces.ErrConversationUnavailable
+		return "", apperrors.ErrConversationUnavailable
 	}
 	return requestedId, nil
 }

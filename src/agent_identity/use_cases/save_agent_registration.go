@@ -88,7 +88,7 @@ func (u *SaveAgentRegistration) Execute(
 
 	known, err := u.agentCollectionsManagerRequester.IsKnownCollection(req.ChainId, collection)
 	if err != nil {
-		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
+		return nil, errors.NewUnavailableError("collection_check_failed", "failed to check the collection", err)
 	}
 	if !known {
 		return nil, errors.NewValidationError("collectionAddress", "collection is not governed by the manager")
@@ -96,15 +96,15 @@ func (u *SaveAgentRegistration) Execute(
 
 	existing, err := u.agentRepository.Get(ctx)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}
 	if existing == nil {
-		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet")
+		return nil, errors.NewUnavailableError("wallet_not_ready", "node wallet has not been bootstrapped yet", nil)
 	}
 
 	collectionName, err := u.agentCollectionRequester.CollectionName(req.ChainId, collection)
 	if err != nil {
-		return nil, errors.NewUnavailableError("collection_check_failed", err.Error())
+		return nil, errors.NewUnavailableError("collection_check_failed", "failed to check the collection", err)
 	}
 
 	owner := req.Owner
@@ -125,7 +125,7 @@ func (u *SaveAgentRegistration) Execute(
 
 	addresses, err := u.agentAddressRepository.GetAllByAgentId(ctx, existing.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("agent_addresses_lookup_failed", err)
 	}
 
 	agent.Images, err = u.resolveImages(agent, existing, addresses, common.HexToAddress(owner), req.Image)
@@ -135,12 +135,12 @@ func (u *SaveAgentRegistration) Execute(
 
 	saved, err := u.agentRepository.Upsert(ctx, agent)
 	if err != nil {
-		return nil, errors.NewInternalError("agent_save_failed", err.Error())
+		return nil, errors.NewInternalError("agent_save_failed", err)
 	}
 
 	state, err := u.agentRegistrationStateRepository.GetByAgentId(ctx, saved.Id)
 	if err != nil {
-		return nil, errors.NewInternalError("state_lookup_failed", err.Error())
+		return nil, errors.NewInternalError("state_lookup_failed", err)
 	}
 	if state == nil {
 		state, err = u.agentRegistrationStateRepository.Upsert(ctx, &models.AgentRegistrationState{
@@ -149,7 +149,7 @@ func (u *SaveAgentRegistration) Execute(
 			EnsRegistryStatus: enums.TransactionStatusPending,
 		})
 		if err != nil {
-			return nil, errors.NewInternalError("state_save_failed", err.Error())
+			return nil, errors.NewInternalError("state_save_failed", err)
 		}
 	}
 
@@ -196,7 +196,7 @@ func (u *SaveAgentRegistration) buildImages(
 
 	stars, err := u.computeStars(creator)
 	if err != nil {
-		return nil, errors.NewUnavailableError("token_read_failed", err.Error())
+		return nil, errors.NewUnavailableError("token_read_failed", "failed to read the creator's token balance", err)
 	}
 
 	generated, err := u.generateAgentImages.Generate(identity_interfaces.GenerateImageParams{
@@ -211,14 +211,14 @@ func (u *SaveAgentRegistration) buildImages(
 		Stars:             stars,
 	})
 	if err != nil {
-		return nil, errors.NewInternalError("image_generation_failed", err.Error())
+		return nil, errors.NewInternalError("image_generation_failed", err)
 	}
 
 	images := make(map[string]string, len(generated))
 	for key, bytes := range generated {
 		cid, err := u.ipfsFileStorage.UploadFile(bytes, lo.FromPtr(agent.EnsDomain))
 		if err != nil {
-			return nil, errors.NewUnavailableError("image_upload_failed", err.Error())
+			return nil, errors.NewUnavailableError("image_upload_failed", "failed to upload the image", err)
 		}
 		images[key] = *cid
 	}

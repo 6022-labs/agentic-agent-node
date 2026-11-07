@@ -1,6 +1,7 @@
 package reasoning
 
 import (
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/reasoning/use_cases/requests"
@@ -13,15 +14,18 @@ const ResponsesEndpoint = "/responses"
 type ResponseController struct {
 	createResponse               use_cases.CreateResponseInterface
 	responseAccessGateMiddleware *middlewares.ResponseAccessGateMiddleware
+	errorWriter                  *mvc.ErrorWriter
 }
 
 func NewResponseController(
 	createResponse use_cases.CreateResponseInterface,
 	responseAccessGateMiddleware *middlewares.ResponseAccessGateMiddleware,
+	errorWriter *mvc.ErrorWriter,
 ) *ResponseController {
 	return &ResponseController{
 		createResponse:               createResponse,
 		responseAccessGateMiddleware: responseAccessGateMiddleware,
+		errorWriter:                  errorWriter,
 	}
 }
 
@@ -52,11 +56,11 @@ func (c *ResponseController) RegisterAuthenticatedRoutes(_ fiber.Router) {}
 func (c *ResponseController) CreateResponse(ctx fiber.Ctx) error {
 	body := new(requests.CreateResponseRequest)
 	if err := ctx.Bind().Body(body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"code": "invalid_body", "message": err.Error()})
+		return c.errorWriter.Write(ctx, apperrors.NewBadRequestError("invalid_body", err.Error()))
 	}
 	resp, err := c.createResponse.Execute(ctx.Context(), body)
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

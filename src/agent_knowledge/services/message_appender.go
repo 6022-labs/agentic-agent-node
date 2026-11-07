@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stderrors "errors"
 	"strings"
 
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
@@ -54,7 +55,10 @@ func (s *MessageAppender) Append(
 	// The transcript never holds system rows.
 	for _, msg := range messages {
 		if msg.Role == enums.ConversationMessageRoleSystem {
-			return nil, errors.NewInternalError("append_failed", "system messages must never be persisted")
+			return nil, errors.NewInternalError(
+				"append_failed",
+				stderrors.New("system messages must never be persisted"),
+			)
 		}
 	}
 
@@ -63,7 +67,7 @@ func (s *MessageAppender) Append(
 		return nil, err
 	}
 	if agent == nil {
-		return nil, errors.NewInternalError("append_failed", "agent identity is not initialized yet")
+		return nil, errors.NewInternalError("append_failed", errors.ErrAgentNotInitialized)
 	}
 	created, err := s.conversationRepository.Ensure(ctx, &models.Conversation{
 		Id:      conversationId,

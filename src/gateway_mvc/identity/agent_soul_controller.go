@@ -10,10 +10,11 @@ const AgentSoulEndpoint = "/agent/soul"
 
 type AgentSoulController struct {
 	getAgentSoul *use_cases.GetAgentSoul
+	errorWriter  *mvc.ErrorWriter
 }
 
-func NewAgentSoulController(getAgentSoul *use_cases.GetAgentSoul) *AgentSoulController {
-	return &AgentSoulController{getAgentSoul: getAgentSoul}
+func NewAgentSoulController(getAgentSoul *use_cases.GetAgentSoul, errorWriter *mvc.ErrorWriter) *AgentSoulController {
+	return &AgentSoulController{getAgentSoul: getAgentSoul, errorWriter: errorWriter}
 }
 
 func (c *AgentSoulController) RegisterUnauthenticatedRoutes(_ fiber.Router) {}
@@ -35,7 +36,7 @@ func (c *AgentSoulController) RegisterAuthenticatedRoutes(app fiber.Router) {
 func (c *AgentSoulController) Get(ctx fiber.Ctx) error {
 	resp, err := c.getAgentSoul.Execute(ctx.Context())
 	if err != nil {
-		return mvc.WriteError(ctx, err)
+		return c.errorWriter.Write(ctx, err)
 	}
 	return ctx.JSON(resp)
 }

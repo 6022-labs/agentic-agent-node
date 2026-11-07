@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
@@ -40,7 +41,7 @@ func (r *SelfToolReconciler) Reconcile(ctx context.Context) error {
 		return fmt.Errorf("failed to load agent: %w", err)
 	}
 	if agent == nil {
-		return fmt.Errorf("agent identity is not initialized yet")
+		return apperrors.ErrAgentNotInitialized
 	}
 	agentId := agent.Id
 

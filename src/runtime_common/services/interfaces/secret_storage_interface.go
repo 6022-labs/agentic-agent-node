@@ -2,11 +2,7 @@ package interfaces
 
 import (
 	"context"
-	"errors"
 )
-
-// ErrSecretNotFound is returned by Read when the key is absent.
-var ErrSecretNotFound = errors.New("secret not found")
 
 // SecretStorageInterface is the backend-agnostic read/write surface for secrets;
 // KvV1SecretStorage (Vault) is one implementation.

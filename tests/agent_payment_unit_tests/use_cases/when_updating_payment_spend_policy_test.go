@@ -70,7 +70,7 @@ func TestWhenUpdatingPaymentSpendPolicy(t *testing.T) {
 		initSuite := func(suite *WhenUpdatingPaymentSpendPolicyTestingSuite) {
 			suite.mockPaymentSpendPolicyProvider.EXPECT().
 				Ensure(gomock.Any()).
-				Return(nil, apperrors.NewInternalError("ensure_failed", "")).
+				Return(nil, apperrors.NewInternalError("ensure_failed", nil)).
 				Times(1)
 		}
 

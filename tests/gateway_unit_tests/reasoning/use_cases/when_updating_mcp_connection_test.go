@@ -71,7 +71,7 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
 			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestWhenUpdatingMcpConnection(t *testing.T) {
 		id := uuid.New()
 		initSuite := func(suite *WhenUpdatingMcpConnectionTestingSuite) {
 			suite.mockClient.EXPECT().Update(gomock.Any(), id, gomock.Any()).
-				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down"))
+				Return(nil, apperrors.NewUnavailableError("runtime_unavailable", "runtime down", nil))
 		}
 
 		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {

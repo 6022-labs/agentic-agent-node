@@ -55,7 +55,7 @@ func (u *AbstractPaymentUseCase) claimAsset(
 ) error {
 	ownerId, err := strategy.RuleIdForAsset(ctx, policyId, config)
 	if err != nil {
-		return errors.NewInternalError("rule_lookup_failed", err.Error())
+		return errors.NewInternalError("rule_lookup_failed", err)
 	}
 	if ownerId != uuid.Nil && ownerId != ruleId {
 		return errors.NewConflictError("asset_already_has_rule", "another rule already prices this asset")

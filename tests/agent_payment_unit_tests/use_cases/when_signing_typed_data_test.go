@@ -166,7 +166,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 			suite.mockTypedDataSigner.EXPECT().WalletAddress(ctx).Return(walletAddress, nil).Times(1)
 			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
 				Authorize(ctx, quote, amount).
-				Return(nil, apperrors.NewInternalError("spend_policy_failed", "")).
+				Return(nil, apperrors.NewInternalError("spend_policy_failed", nil)).
 				Times(1)
 		}
 
@@ -287,7 +287,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 				Times(1)
 			suite.mockX402PaymentSpendPolicyEvaluator.EXPECT().
 				Release(gomock.Any(), reservation).
-				Return(apperrors.NewInternalError("spend_policy_failed", "")).
+				Return(apperrors.NewInternalError("spend_policy_failed", nil)).
 				Times(1)
 		}
 

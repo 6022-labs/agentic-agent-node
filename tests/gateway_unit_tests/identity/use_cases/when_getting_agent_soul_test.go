@@ -2,7 +2,6 @@ package use_cases_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -55,14 +54,15 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 		})
 	})
 
-	t.Run("Given the runtime call fails", func(t *testing.T) {
+	t.Run("Given the runtime answers 409", func(t *testing.T) {
 		t.Parallel()
 
+		runtimeErr := apperrors.NewConflictError("conflict", "resource conflict")
 		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
-			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, errors.New("connection refused"))
+			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
 		}
 
-		t.Run("Should return an UnavailableError", func(t *testing.T) {
+		t.Run("Should surface the ConflictError unchanged", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenGettingAgentSoulBeforeEach(t)
@@ -70,9 +70,27 @@ func TestWhenGettingAgentSoul(t *testing.T) {
 
 			_, err := suite.sut.Execute(context.Background())
 
-			var unavailableErr *apperrors.UnavailableError
-			assert.ErrorAs(t, err, &unavailableErr)
-			assert.Equal(t, "runtime_unavailable", unavailableErr.Code)
+			assert.Same(t, runtimeErr, err)
+		})
+	})
+
+	t.Run("Given the runtime call fails", func(t *testing.T) {
+		t.Parallel()
+
+		runtimeErr := apperrors.NewUnavailableError("runtime_unavailable", "the runtime is unavailable", nil)
+		initSuite := func(suite *WhenGettingAgentSoulTestingSuite) {
+			suite.mockAgentSoulClient.EXPECT().Get(gomock.Any()).Return(nil, runtimeErr)
+		}
+
+		t.Run("Should surface the UnavailableError unchanged", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenGettingAgentSoulBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background())
+
+			assert.Same(t, runtimeErr, err)
 		})
 	})
 
