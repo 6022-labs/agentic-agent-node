@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics"
+	"github.com/6022-labs/agentic-agent-node/src/runtime_common/transports"
+
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/runtime_common/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -45,11 +46,15 @@ func (f *EthClientFactory) For(chainId string) (*ethclient.Client, error) {
 	if !ok {
 		return nil, fmt.Errorf("no RPC configured for chain %s", chainId)
 	}
+	rpcRoundTripper, err := transports.NewRpcRoundTripper(http.DefaultTransport, chain.HttpUrl, f.rpcMetrics, chainId)
+	if err != nil {
+		return nil, err
+	}
 	httpClient := &http.Client{
-		Transport: metrics.NewRpcRoundTripper(http.DefaultTransport, f.rpcMetrics, chainId),
+		Transport: rpcRoundTripper,
 		Timeout:   time.Duration(chain.RequestTimeoutSeconds) * time.Second,
 	}
-	rpcClient, err := rpc.DialOptions(context.Background(), chain.HttpUrl, rpc.WithHTTPClient(httpClient))
+	rpcClient, err := rpc.DialOptions(context.Background(), rpcRoundTripper.Origin(), rpc.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("dial chain %s: %w", chainId, err)
 	}
