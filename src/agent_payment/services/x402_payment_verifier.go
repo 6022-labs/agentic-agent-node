@@ -42,7 +42,7 @@ func (v *X402PaymentVerifier) recoverEip3009(
 	payload *x402.PaymentPayload,
 	config *models.PaymentReceiveRuleX402Config,
 ) (common.Address, error) {
-	auth := payload.Payload.Authorization
+	auth := payload.Payload.Eip3009Authorization
 	if auth == nil {
 		return common.Address{}, errors.New("missing authorization")
 	}

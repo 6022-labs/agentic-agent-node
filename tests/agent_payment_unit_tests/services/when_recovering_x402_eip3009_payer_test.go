@@ -132,7 +132,7 @@ func TestWhenRecoveringX402Eip3009Payer(t *testing.T) {
 			signer := crypto.PubkeyToAddress(key.PublicKey)
 			accept := x402TestAcceptOption()
 			payload := signX402Payment(t, key, x402TestAuthorization(signer.Hex(), accept), accept)
-			payload.Payload.Authorization.Value = "999999999"
+			payload.Payload.Eip3009Authorization.Value = "999999999"
 
 			_, err := suite.sut.RecoverPayer(payload, accept)
 

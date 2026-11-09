@@ -42,7 +42,7 @@ type PaymentRequired struct {
 // Permit2Authorization. The unused one stays nil and is omitted from the wire.
 type ExactEvmPayload struct {
 	Signature            string                `json:"signature"`
-	Authorization        *Eip3009Authorization `json:"authorization,omitempty"`
+	Eip3009Authorization *Eip3009Authorization `json:"authorization,omitempty"`
 	Permit2Authorization *Permit2Authorization `json:"permit2Authorization,omitempty"`
 }
 
@@ -59,8 +59,8 @@ func (p *PaymentPayload) RecipientAddress() string {
 	if p.Payload.Permit2Authorization != nil {
 		return p.Payload.Permit2Authorization.Witness.To
 	}
-	if p.Payload.Authorization != nil {
-		return p.Payload.Authorization.To
+	if p.Payload.Eip3009Authorization != nil {
+		return p.Payload.Eip3009Authorization.To
 	}
 	return ""
 }
@@ -73,8 +73,8 @@ func (p *PaymentPayload) AmountFor(assetTransferMethod string) string {
 			return p.Payload.Permit2Authorization.Permitted.Amount
 		}
 	case AssetTransferMethodEip3009:
-		if p.Payload.Authorization != nil {
-			return p.Payload.Authorization.Value
+		if p.Payload.Eip3009Authorization != nil {
+			return p.Payload.Eip3009Authorization.Value
 		}
 	}
 	return ""

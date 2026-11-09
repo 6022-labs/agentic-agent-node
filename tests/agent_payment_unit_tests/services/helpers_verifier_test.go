@@ -101,8 +101,8 @@ func signX402Payment(
 		Scheme:      x402.SchemeExact,
 		Network:     accept.Network,
 		Payload: x402.ExactEvmPayload{
-			Signature:     "0x" + hex.EncodeToString(signature),
-			Authorization: &auth,
+			Signature:            "0x" + hex.EncodeToString(signature),
+			Eip3009Authorization: &auth,
 		},
 	}
 }
