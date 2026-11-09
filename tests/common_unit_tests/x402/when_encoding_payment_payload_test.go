@@ -32,8 +32,8 @@ func TestWhenEncodingPaymentPayload(t *testing.T) {
 				Scheme:      x402.SchemeExact,
 				Network:     "eip155:80002",
 				Payload: x402.ExactEvmPayload{
-					Signature:     "0xsignature",
-					Authorization: &x402.Eip3009Authorization{Value: "10000"},
+					Signature:            "0xsignature",
+					Eip3009Authorization: &x402.Eip3009Authorization{Value: "10000"},
 				},
 			})
 

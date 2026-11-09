@@ -182,8 +182,8 @@ func (s *X402PaymentSigner) signEip3009(
 	}
 
 	return x402.ExactEvmPayload{
-		Signature:     hexutil.Encode(signature),
-		Authorization: authorization,
+		Signature:            hexutil.Encode(signature),
+		Eip3009Authorization: authorization,
 	}, nil
 }
 

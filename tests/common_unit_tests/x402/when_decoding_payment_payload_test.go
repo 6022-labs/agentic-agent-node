@@ -66,7 +66,7 @@ func TestWhenDecodingPaymentPayload(t *testing.T) {
 				Network:     "eip155:80002",
 				Payload: x402.ExactEvmPayload{
 					Signature: "0xsignature",
-					Authorization: &x402.Eip3009Authorization{
+					Eip3009Authorization: &x402.Eip3009Authorization{
 						From:  "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
 						To:    "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 						Value: "10000",
@@ -80,7 +80,7 @@ func TestWhenDecodingPaymentPayload(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, x402.SchemeExact, payload.Scheme)
 			assert.Equal(t, "eip155:80002", payload.Network)
-			assert.Equal(t, "10000", payload.Payload.Authorization.Value)
+			assert.Equal(t, "10000", payload.Payload.Eip3009Authorization.Value)
 		})
 	})
 }

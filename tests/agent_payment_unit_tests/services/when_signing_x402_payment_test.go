@@ -493,7 +493,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.Equal(t, signingNetwork, payload.Network)
 			assert.Nil(t, payload.Payload.Permit2Authorization)
 
-			authorization := payload.Payload.Authorization
+			authorization := payload.Payload.Eip3009Authorization
 			assert.Equal(t, suite.walletAddress.Hex(), authorization.From)
 			assert.Equal(t, signingPayTo, authorization.To)
 			assert.Equal(t, "10000", authorization.Value)
@@ -576,8 +576,8 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.NotEqual(t,
-				suite.decodePaymentPayload(t, first.PaymentSignature).Payload.Authorization.Nonce,
-				suite.decodePaymentPayload(t, second.PaymentSignature).Payload.Authorization.Nonce,
+				suite.decodePaymentPayload(t, first.PaymentSignature).Payload.Eip3009Authorization.Nonce,
+				suite.decodePaymentPayload(t, second.PaymentSignature).Payload.Eip3009Authorization.Nonce,
 			)
 		})
 	})
@@ -614,7 +614,7 @@ func TestWhenSigningX402Payment(t *testing.T) {
 			assert.NoError(t, err)
 			payload := suite.decodePaymentPayload(t, signed.PaymentSignature)
 
-			assert.Nil(t, payload.Payload.Authorization)
+			assert.Nil(t, payload.Payload.Eip3009Authorization)
 			authorization := payload.Payload.Permit2Authorization
 			assert.Equal(t, x402.Permit2Spender, authorization.Spender)
 			assert.Equal(t, signingAsset, authorization.Permitted.Token)
