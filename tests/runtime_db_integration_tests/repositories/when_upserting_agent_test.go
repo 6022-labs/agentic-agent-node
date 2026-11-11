@@ -185,6 +185,26 @@ func TestWhenUpsertingAgent(t *testing.T) {
 					assert.Equal(t, "facilitator", second.Attributes["role"])
 				})
 
+				t.Run("Should replace its soul", func(t *testing.T) {
+					t.Parallel()
+					suite := WhenUpsertingAgentBeforeEach(tc)
+					defer WhenUpsertingAgentAfterEach(suite)
+
+					_, err := suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithSoul("old soul").
+						Build())
+					assert.NoError(t, err)
+
+					_, err = suite.sut.Upsert(context.Background(), model_builders.NewAgentBuilder().
+						WithSoul("new soul").
+						Build())
+					assert.NoError(t, err)
+
+					reloaded, err := suite.sut.Get(context.Background())
+					assert.NoError(t, err)
+					assert.Equal(t, "new soul", lo.FromPtr(reloaded.Soul))
+				})
+
 				t.Run("Should keep a single row", func(t *testing.T) {
 					t.Parallel()
 					suite := WhenUpsertingAgentBeforeEach(tc)

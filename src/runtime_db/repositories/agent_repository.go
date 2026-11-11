@@ -50,6 +50,7 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 	existing.EnsDomain = agent.EnsDomain
 	existing.Creator = agent.Creator
 	existing.Owner = agent.Owner
+	existing.Soul = agent.Soul
 	existing.Images = agent.Images
 	existing.Attributes = agent.Attributes
 	if err := r.client.
