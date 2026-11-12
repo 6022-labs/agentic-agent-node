@@ -40,7 +40,7 @@ the same two files, never one volume alone.
 
 ## Observability
 
-Both hosts export metrics, logs and traces over OTLP/gRPC to Grafana Alloy, which
+Both hosts export metrics, logs and traces over OTLP (gRPC or HTTP) to Grafana Alloy, which
 fans them out to Mimir, Loki and Tempo. Several nodes, apps and environments can
 share one stack; `service.name`, `service.instance.id` and
 `deployment.environment.name` distinguish them, and every dashboard filters on
@@ -51,7 +51,8 @@ Agent side (`TELEMETRY__*`, or the `telemetry` block of `appsettings.json`):
 | Setting | Meaning |
 | --- | --- |
 | `enabled` | export at all |
-| `endpoint` | Alloy OTLP/gRPC `host:port` |
+| `protocol` | `grpc` (default) or `http` — use `http` when the route to Alloy only carries plain HTTPS |
+| `endpoint` | Alloy OTLP `host:port` (4317 for gRPC, 4318 for HTTP) |
 | `insecure` | disable TLS on the connection |
 | `instance_id` | value of `service.instance.id` and `agent.node.id` |
 | `environment` | value of `deployment.environment.name` (required when enabled) |
