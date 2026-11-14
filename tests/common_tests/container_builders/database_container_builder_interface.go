@@ -6,11 +6,12 @@ type DatabaseContainerBuilderInterface interface {
 	DropDatabase(dbName string)
 }
 
-// TlsServerName is the only name the TLS builders' server certificates are valid for.
+// TlsServerName is the only name the TLS containers' server certificates are valid for.
 const TlsServerName = "db.test.internal"
 
-// TlsDatabaseContainerBuilderInterface is a scratch-DB builder whose server presents a certificate signed by its CA.
+// TlsDatabaseContainerBuilderInterface also serves scratch DBs from a TLS container whose certificate its own CA signs.
 type TlsDatabaseContainerBuilderInterface interface {
 	DatabaseContainerBuilderInterface
-	CaCertificatePem() []byte
+	// CreateTls returns (dbName, connectionString, caCertificatePem) for a scratch DB in the TLS container.
+	CreateTls() (string, string, []byte)
 }

@@ -19,10 +19,9 @@ import (
 )
 
 type WhenCreatingDatabaseClientTestCase struct {
-	name                     string
-	driver                   enums.DatabaseDriver
-	clientBuilderFn          func() container_builders.TlsDatabaseContainerBuilderInterface
-	plaintextClientBuilderFn func() container_builders.DatabaseContainerBuilderInterface
+	name               string
+	driver             enums.DatabaseDriver
+	containerBuilderFn func() container_builders.TlsDatabaseContainerBuilderInterface
 	// preferTlsFn rewrites a plaintext url to a TLS mode that would fall back to plaintext.
 	preferTlsFn func(url string) string
 	// directTlsFn rewrites a TLS url to negotiate TLS directly, which requires ALPN.
@@ -35,10 +34,7 @@ var WhenCreatingDatabaseClientTestCases = []*WhenCreatingDatabaseClientTestCase{
 	{
 		name:   "PostgreSQL",
 		driver: enums.DatabaseDriverPostgres,
-		clientBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
-			return container_builders.GetPostgresTlsContainerBuilder()
-		},
-		plaintextClientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
+		containerBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
 			return container_builders.GetPostgresContainerBuilder()
 		},
 		preferTlsFn: func(url string) string {
@@ -57,10 +53,7 @@ var WhenCreatingDatabaseClientTestCases = []*WhenCreatingDatabaseClientTestCase{
 	{
 		name:   "MySQL",
 		driver: enums.DatabaseDriverMySQL,
-		clientBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
-			return container_builders.GetMySQLTlsContainerBuilder()
-		},
-		plaintextClientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
+		containerBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
 			return container_builders.GetMySQLContainerBuilder()
 		},
 		preferTlsFn: func(url string) string {
@@ -76,10 +69,7 @@ var WhenCreatingDatabaseClientTestCases = []*WhenCreatingDatabaseClientTestCase{
 	{
 		name:   "MariaDB",
 		driver: enums.DatabaseDriverMariaDB,
-		clientBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
-			return container_builders.GetMariaDBTlsContainerBuilder()
-		},
-		plaintextClientBuilderFn: func() container_builders.DatabaseContainerBuilderInterface {
+		containerBuilderFn: func() container_builders.TlsDatabaseContainerBuilderInterface {
 			return container_builders.GetMariaDBContainerBuilder()
 		},
 		preferTlsFn: func(url string) string {
@@ -97,26 +87,31 @@ var WhenCreatingDatabaseClientTestCases = []*WhenCreatingDatabaseClientTestCase{
 type WhenCreatingDatabaseClientTestingSuite struct {
 	dbName                   string
 	connectionString         string
+	caCertificatePem         []byte
 	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface
 	migrationsSettings       *settings.MigrationsSettings
 }
 
+// WhenCreatingDatabaseClientBeforeEach creates the scratch DB in the TLS container, or the plaintext one without isTls.
 func WhenCreatingDatabaseClientBeforeEach(
-	databaseContainerBuilder container_builders.DatabaseContainerBuilderInterface,
+	databaseContainerBuilder container_builders.TlsDatabaseContainerBuilderInterface,
+	isTls bool,
 ) *WhenCreatingDatabaseClientTestingSuite {
-	dbName, connectionString := databaseContainerBuilder.Create()
-
 	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
 	if err != nil {
 		panic(err)
 	}
 
-	return &WhenCreatingDatabaseClientTestingSuite{
-		dbName:                   dbName,
-		connectionString:         connectionString,
+	suite := &WhenCreatingDatabaseClientTestingSuite{
 		databaseContainerBuilder: databaseContainerBuilder,
 		migrationsSettings:       &settings.MigrationsSettings{FolderPath: *migrationFolderPath},
 	}
+	if isTls {
+		suite.dbName, suite.connectionString, suite.caCertificatePem = databaseContainerBuilder.CreateTls()
+	} else {
+		suite.dbName, suite.connectionString = databaseContainerBuilder.Create()
+	}
+	return suite
 }
 
 func WhenCreatingDatabaseClientAfterEach(suite *WhenCreatingDatabaseClientTestingSuite) {
@@ -145,29 +140,27 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			if testCase.plaintextClientBuilderFn != nil {
-				t.Run("Given a server without TLS", func(t *testing.T) {
+			t.Run("Given a server without TLS", func(t *testing.T) {
+				t.Parallel()
+
+				t.Run("Should refuse the connection", func(t *testing.T) {
 					t.Parallel()
 
-					t.Run("Should refuse the connection", func(t *testing.T) {
-						t.Parallel()
+					suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), false)
+					defer WhenCreatingDatabaseClientAfterEach(suite)
+					caCertificatePem := certificate_builders.NewCertificateAuthority().CertificatePem
 
-						suite := WhenCreatingDatabaseClientBeforeEach(testCase.plaintextClientBuilderFn())
-						defer WhenCreatingDatabaseClientAfterEach(suite)
-						caCertificatePem := testCase.clientBuilderFn().CaCertificatePem()
+					suite.connectionString = testCase.preferTlsFn(suite.connectionString)
 
-						suite.connectionString = testCase.preferTlsFn(suite.connectionString)
+					_, err := runtime_db.NewDatabaseClient(
+						suite.databaseSettings(testCase.driver, caCertificatePem, container_builders.TlsServerName),
+						suite.migrationsSettings,
+						zap.NewNop(),
+					)
 
-						_, err := runtime_db.NewDatabaseClient(
-							suite.databaseSettings(testCase.driver, caCertificatePem, container_builders.TlsServerName),
-							suite.migrationsSettings,
-							zap.NewNop(),
-						)
-
-						assert.ErrorContains(t, err, testCase.noTlsErrorMessage)
-					})
+					assert.ErrorContains(t, err, testCase.noTlsErrorMessage)
 				})
-			}
+			})
 
 			if testCase.directTlsFn != nil {
 				t.Run("Given direct TLS negotiation", func(t *testing.T) {
@@ -176,8 +169,7 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 					t.Run("Should encrypt the session", func(t *testing.T) {
 						t.Parallel()
 
-						builder := testCase.clientBuilderFn()
-						suite := WhenCreatingDatabaseClientBeforeEach(builder)
+						suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), true)
 						defer WhenCreatingDatabaseClientAfterEach(suite)
 
 						suite.connectionString = testCase.directTlsFn(suite.connectionString)
@@ -185,7 +177,7 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 						client, err := runtime_db.NewDatabaseClient(
 							suite.databaseSettings(
 								testCase.driver,
-								builder.CaCertificatePem(),
+								suite.caCertificatePem,
 								container_builders.TlsServerName,
 							),
 							suite.migrationsSettings,
@@ -210,7 +202,7 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 				t.Run("Should refuse the connection", func(t *testing.T) {
 					t.Parallel()
 
-					suite := WhenCreatingDatabaseClientBeforeEach(testCase.clientBuilderFn())
+					suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), true)
 					defer WhenCreatingDatabaseClientAfterEach(suite)
 					caCertificatePem := certificate_builders.NewCertificateAuthority().CertificatePem
 
@@ -231,12 +223,11 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 				t.Run("Should refuse the connection", func(t *testing.T) {
 					t.Parallel()
 
-					builder := testCase.clientBuilderFn()
-					suite := WhenCreatingDatabaseClientBeforeEach(builder)
+					suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), true)
 					defer WhenCreatingDatabaseClientAfterEach(suite)
 
 					_, err := runtime_db.NewDatabaseClient(
-						suite.databaseSettings(testCase.driver, builder.CaCertificatePem(), ""),
+						suite.databaseSettings(testCase.driver, suite.caCertificatePem, ""),
 						suite.migrationsSettings,
 						zap.NewNop(),
 					)
@@ -251,14 +242,13 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 				t.Run("Should apply all migrations without error", func(t *testing.T) {
 					t.Parallel()
 
-					builder := testCase.clientBuilderFn()
-					suite := WhenCreatingDatabaseClientBeforeEach(builder)
+					suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), true)
 					defer WhenCreatingDatabaseClientAfterEach(suite)
 
 					client, err := runtime_db.NewDatabaseClient(
 						suite.databaseSettings(
 							testCase.driver,
-							builder.CaCertificatePem(),
+							suite.caCertificatePem,
 							container_builders.TlsServerName,
 						),
 						suite.migrationsSettings,
@@ -275,14 +265,13 @@ func TestWhenCreatingDatabaseClient(t *testing.T) {
 				t.Run("Should encrypt the session", func(t *testing.T) {
 					t.Parallel()
 
-					builder := testCase.clientBuilderFn()
-					suite := WhenCreatingDatabaseClientBeforeEach(builder)
+					suite := WhenCreatingDatabaseClientBeforeEach(testCase.containerBuilderFn(), true)
 					defer WhenCreatingDatabaseClientAfterEach(suite)
 
 					client, err := runtime_db.NewDatabaseClient(
 						suite.databaseSettings(
 							testCase.driver,
-							builder.CaCertificatePem(),
+							suite.caCertificatePem,
 							container_builders.TlsServerName,
 						),
 						suite.migrationsSettings,
