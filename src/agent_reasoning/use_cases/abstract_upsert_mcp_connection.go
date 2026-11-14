@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
@@ -22,14 +22,14 @@ func NewAbstractUpsertMCPConnection(
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
 	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
 	mcpRequester reasoning_interfaces.McpRequesterInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *AbstractUpsertMCPConnection {
 	return &AbstractUpsertMCPConnection{
 		AbstractMCPConnectionUseCase: NewAbstractMCPConnectionUseCase(
 			mcpConnectionRepository,
 			mcpHeaderAuthSecretStorage,
 			mcpRequester,
-			agentRepository,
+			agentResolver,
 		),
 	}
 }

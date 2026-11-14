@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
@@ -19,20 +19,20 @@ import (
 type AppendConversationMessages struct {
 	messageAppender        interfaces.MessageAppenderInterface
 	conversationRepository repositories.ConversationRepositoryInterface
-	agentRepository        identity_repositories.AgentRepositoryInterface
+	agentResolver          identity_interfaces.AgentResolverInterface
 	knowledgeMetrics       metrics_interfaces.KnowledgeMetricsInterface
 }
 
 func NewAppendConversationMessages(
 	messageAppender interfaces.MessageAppenderInterface,
 	conversationRepository repositories.ConversationRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
 ) *AppendConversationMessages {
 	return &AppendConversationMessages{
 		messageAppender:        messageAppender,
 		conversationRepository: conversationRepository,
-		agentRepository:        agentRepository,
+		agentResolver:          agentResolver,
 		knowledgeMetrics:       knowledgeMetrics,
 	}
 }
@@ -49,7 +49,7 @@ func (u *AppendConversationMessages) Execute(
 		return nil, err
 	}
 
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("append_failed", err)
 	}

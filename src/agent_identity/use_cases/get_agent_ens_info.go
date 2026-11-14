@@ -3,7 +3,6 @@ package use_cases
 import (
 	"context"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -13,19 +12,19 @@ import (
 // GetAgentEnsInfo assembles the initAgentTexts calldata so the connected wallet can
 // register the agent's ENS records itself. Requires the NFT to be minted.
 type GetAgentEnsInfo struct {
-	agentRepository        repositories.AgentRepositoryInterface
+	agentResolver          identity_interfaces.AgentResolverInterface
 	runtimeRecordsProvider identity_interfaces.RuntimeRecordsProviderInterface
 }
 
 func NewGetAgentEnsInfo(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	runtimeRecordsProvider identity_interfaces.RuntimeRecordsProviderInterface,
 ) *GetAgentEnsInfo {
-	return &GetAgentEnsInfo{agentRepository: agentRepository, runtimeRecordsProvider: runtimeRecordsProvider}
+	return &GetAgentEnsInfo{agentResolver: agentResolver, runtimeRecordsProvider: runtimeRecordsProvider}
 }
 
 func (u *GetAgentEnsInfo) Execute(ctx context.Context) (*responses.EnsInfoResponse, error) {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}

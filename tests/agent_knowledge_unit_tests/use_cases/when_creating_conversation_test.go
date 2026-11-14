@@ -11,7 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	knowledge_metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -30,7 +30,7 @@ type WhenCreatingConversationTestingSuite struct {
 	sut *use_cases.CreateConversation
 
 	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
-	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *identity_interfaces_mocks.MockAgentResolverInterface
 	mockKnowledgeMetrics       *knowledge_metrics_mocks.MockKnowledgeMetricsInterface
 }
 
@@ -38,17 +38,17 @@ func WhenCreatingConversationBeforeEach(t *testing.T) *WhenCreatingConversationT
 	mockController := gomock.NewController(t)
 
 	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockKnowledgeMetrics := knowledge_metrics_mocks.NewMockKnowledgeMetricsInterface(mockController)
 
 	return &WhenCreatingConversationTestingSuite{
 		sut: use_cases.NewCreateConversation(
 			mockConversationRepository,
-			mockAgentRepository,
+			mockAgentResolver,
 			mockKnowledgeMetrics,
 		),
 		mockConversationRepository: mockConversationRepository,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 		mockKnowledgeMetrics:       mockKnowledgeMetrics,
 	}
 }
@@ -103,7 +103,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent.CollectionTokenId = nil
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should return the agent_not_minted conflict", func(t *testing.T) {
@@ -177,7 +177,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "Audit", nil).
 				Return(false, errors.New("db blew"))
@@ -205,7 +205,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "taken", nil).
 				Return(true, nil)
@@ -233,7 +233,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "Audit", nil).
 				Return(false, nil)
@@ -264,7 +264,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(callerId)).Build()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "Audit", nil).
 				Return(false, nil)
@@ -301,7 +301,7 @@ func TestWhenCreatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenCreatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				ExistsByAgentIdAndCallerIdAndName(gomock.Any(), agent.Id, &callerId, "ERC20 mint audit", nil).
 				Return(false, nil)

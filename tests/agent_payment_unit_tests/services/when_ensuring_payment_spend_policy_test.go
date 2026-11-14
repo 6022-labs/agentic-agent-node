@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/services"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -18,25 +18,25 @@ import (
 type WhenEnsuringPaymentSpendPolicyTestingSuite struct {
 	sut *services.PaymentSpendPolicyProvider
 
-	mockAgentRepository              *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                *identity_interfaces_mocks.MockAgentResolverInterface
 	mockPaymentSpendPolicyRepository *payment_repositories_mocks.MockPaymentSpendPolicyRepositoryInterface
 }
 
 func WhenEnsuringPaymentSpendPolicyBeforeEach(t *testing.T) *WhenEnsuringPaymentSpendPolicyTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockPaymentSpendPolicyRepository := payment_repositories_mocks.NewMockPaymentSpendPolicyRepositoryInterface(
 		mockController,
 	)
 
 	return &WhenEnsuringPaymentSpendPolicyTestingSuite{
 		sut: services.NewPaymentSpendPolicyProvider(
-			mockAgentRepository,
+			mockAgentResolver,
 			mockPaymentSpendPolicyRepository,
 		),
 
-		mockAgentRepository:              mockAgentRepository,
+		mockAgentResolver:                mockAgentResolver,
 		mockPaymentSpendPolicyRepository: mockPaymentSpendPolicyRepository,
 	}
 }
@@ -53,7 +53,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 			existing := model_builders.NewPaymentSpendPolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(existing, nil).Times(1)
 			return existing
 		}
@@ -78,7 +78,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 			created := model_builders.NewPaymentSpendPolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().Create(ctx, gomock.Any()).Return(created, nil).Times(1)
 			return created
@@ -103,7 +103,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 		}
 
 		t.Run("Should return a conflict without touching the policy", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 			winner := model_builders.NewPaymentSpendPolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().
 				Create(ctx, gomock.Any()).
@@ -157,7 +157,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().
 				Create(ctx, gomock.Any()).
@@ -185,7 +185,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, assert.AnError).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(nil, assert.AnError).Times(1)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -207,7 +207,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(nil, nil).Times(1)
 		}
 
 		t.Run("Should fail rather than create an orphan policy", func(t *testing.T) {
@@ -231,7 +231,7 @@ func TestWhenEnsuringPaymentSpendPolicy(t *testing.T) {
 		initSuite := func(suite *WhenEnsuringPaymentSpendPolicyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentSpendPolicyRepository.EXPECT().
 				GetByAgentId(ctx, agent.Id).
 				Return(nil, assert.AnError).

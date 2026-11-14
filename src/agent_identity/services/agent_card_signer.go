@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gowebpki/jcs"
@@ -28,11 +27,11 @@ type AgentCardSigner struct {
 }
 
 func NewAgentCardSigner(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 ) *AgentCardSigner {
 	return &AgentCardSigner{
-		AbstractWalletSigner: NewAbstractWalletSigner(agentRepository, walletCredentialsStorage),
+		AbstractWalletSigner: NewAbstractWalletSigner(agentResolver, walletCredentialsStorage),
 	}
 }
 

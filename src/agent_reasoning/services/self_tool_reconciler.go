@@ -5,7 +5,7 @@ import (
 	"fmt"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
@@ -18,25 +18,25 @@ type SelfToolReconciler struct {
 	logger             *zap.Logger
 	selfToolRegistry   interfaces.SelfToolRegistryInterface
 	selfToolRepository repositories.SelfToolRepositoryInterface
-	agentRepository    identity_repositories.AgentRepositoryInterface
+	agentResolver      identity_interfaces.AgentResolverInterface
 }
 
 func NewSelfToolReconciler(
 	logger *zap.Logger,
 	selfToolRegistry interfaces.SelfToolRegistryInterface,
 	selfToolRepository repositories.SelfToolRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *SelfToolReconciler {
 	return &SelfToolReconciler{
 		logger:             logger,
 		selfToolRegistry:   selfToolRegistry,
 		selfToolRepository: selfToolRepository,
-		agentRepository:    agentRepository,
+		agentResolver:      agentResolver,
 	}
 }
 
 func (r *SelfToolReconciler) Reconcile(ctx context.Context) error {
-	agent, err := r.agentRepository.Get(ctx)
+	agent, err := r.agentResolver.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to load agent: %w", err)
 	}

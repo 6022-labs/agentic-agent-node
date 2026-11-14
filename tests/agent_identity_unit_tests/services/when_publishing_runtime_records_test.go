@@ -27,7 +27,7 @@ type WhenPublishingRuntimeRecordsTestingSuite struct {
 	sut *services.EnsPublisher
 
 	mockEnsRegistrar                     *interface_mocks.MockEnsRegistrarInterface
-	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                    *interface_mocks.MockAgentResolverInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockRuntimeRecordsProvider           *interface_mocks.MockRuntimeRecordsProviderInterface
 }
@@ -36,7 +36,7 @@ func WhenPublishingRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingRuntime
 	mockController := gomock.NewController(t)
 
 	mockEnsRegistrar := interface_mocks.NewMockEnsRegistrarInterface(mockController)
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interface_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
 		mockController,
 	)
@@ -45,7 +45,7 @@ func WhenPublishingRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingRuntime
 	sut := services.NewEnsPublisher(
 		zap.NewNop(),
 		mockEnsRegistrar,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockRuntimeRecordsProvider,
 		mockAgentRegistrationStateRepository,
 	)
@@ -53,7 +53,7 @@ func WhenPublishingRuntimeRecordsBeforeEach(t *testing.T) *WhenPublishingRuntime
 	return &WhenPublishingRuntimeRecordsTestingSuite{
 		sut:                                  sut,
 		mockEnsRegistrar:                     mockEnsRegistrar,
-		mockAgentRepository:                  mockAgentRepository,
+		mockAgentResolver:                    mockAgentResolver,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockRuntimeRecordsProvider:           mockRuntimeRecordsProvider,
 	}
@@ -67,7 +67,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should report ErrIdentityNotFound without touching the registrar", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 
 		initSuite := func(suite *WhenPublishingRuntimeRecordsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("db down"))
@@ -114,7 +114,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(state, nil)
@@ -152,7 +152,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(state, nil)
@@ -189,7 +189,7 @@ func TestWhenPublishingRuntimeRecords(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(state, nil)

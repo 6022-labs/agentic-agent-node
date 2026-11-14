@@ -11,7 +11,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_services "github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	identity_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
@@ -41,22 +40,22 @@ const (
 type WhenSigningAgentCardTestingSuite struct {
 	sut *identity_services.AgentCardSigner
 
-	mockAgentRepository          *repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver            *identity_mocks.MockAgentResolverInterface
 	mockWalletCredentialsStorage *identity_mocks.MockWalletCredentialsStorageInterface
 }
 
 func WhenSigningAgentCardBeforeEach(t *testing.T) *WhenSigningAgentCardTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_mocks.NewMockAgentResolverInterface(mockController)
 	mockWalletCredentialsStorage := identity_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
 	return &WhenSigningAgentCardTestingSuite{
 		sut: identity_services.NewAgentCardSigner(
-			mockAgentRepository,
+			mockAgentResolver,
 			mockWalletCredentialsStorage,
 		),
-		mockAgentRepository:          mockAgentRepository,
+		mockAgentResolver:            mockAgentResolver,
 		mockWalletCredentialsStorage: mockWalletCredentialsStorage,
 	}
 }
@@ -68,7 +67,7 @@ func TestWhenSigningAgentCard(t *testing.T) {
 	agentId := uuid.MustParse("11111111-2222-3333-4444-555555555555")
 
 	expectWallet := func(suite *WhenSigningAgentCardTestingSuite) {
-		suite.mockAgentRepository.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
+		suite.mockAgentResolver.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
 		suite.mockWalletCredentialsStorage.EXPECT().
 			GetForId(ctx, agentId.String(), enums.AddressTypeEvm).
 			Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: vectorPrivateKeyHex, Address: vectorAddress}, true, nil)
@@ -93,7 +92,7 @@ func TestWhenSigningAgentCard(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(nil, nil)
 		}
 
 		t.Run("Should fail rather than sign with no identity", func(t *testing.T) {
@@ -112,7 +111,7 @@ func TestWhenSigningAgentCard(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningAgentCardTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(&models.Agent{Id: agentId}, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().
 				GetForId(ctx, agentId.String(), enums.AddressTypeEvm).
 				Return(nil, false, nil)

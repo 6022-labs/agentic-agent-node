@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -18,10 +18,10 @@ type DeleteLLMConnection struct {
 func NewDeleteLLMConnection(
 	repository repositories.LLMConnectionRepositoryInterface,
 	secretStorage reasoning_interfaces.LLMSecretStorageInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *DeleteLLMConnection {
 	return &DeleteLLMConnection{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentResolver),
 		repository:               repository,
 		secretStorage:            secretStorage,
 	}

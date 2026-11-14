@@ -5,7 +5,7 @@ import (
 	stderrors "errors"
 	"strings"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models/enums"
@@ -21,7 +21,7 @@ import (
 type MessageAppender struct {
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
 	conversationRepository        repositories.ConversationRepositoryInterface
-	agentRepository               identity_repositories.AgentRepositoryInterface
+	agentResolver                 identity_interfaces.AgentResolverInterface
 	knowledgeMetrics              metrics_interfaces.KnowledgeMetricsInterface
 	emojiDecoder                  runtime_services_interfaces.EmojiDecoderInterface
 }
@@ -29,14 +29,14 @@ type MessageAppender struct {
 func NewMessageAppender(
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
 	conversationRepository repositories.ConversationRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
 	emojiDecoder runtime_services_interfaces.EmojiDecoderInterface,
 ) *MessageAppender {
 	return &MessageAppender{
 		conversationMessageRepository: conversationMessageRepository,
 		conversationRepository:        conversationRepository,
-		agentRepository:               agentRepository,
+		agentResolver:                 agentResolver,
 		knowledgeMetrics:              knowledgeMetrics,
 		emojiDecoder:                  emojiDecoder,
 	}
@@ -62,7 +62,7 @@ func (s *MessageAppender) Append(
 		}
 	}
 
-	agent, err := s.agentRepository.Get(ctx)
+	agent, err := s.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,7 @@ import (
 type WhenAuthorizingNftOwnerTestingSuite struct {
 	sut *services.NftOwnerAuthorizer
 
-	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                    *chain_mocks.MockAgentResolverInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockAgentCollectionRequester         *chain_mocks.MockAgentCollectionRequesterInterface
 }
@@ -26,14 +26,14 @@ type WhenAuthorizingNftOwnerTestingSuite struct {
 func WhenAuthorizingNftOwnerBeforeEach(t *testing.T) *WhenAuthorizingNftOwnerTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := chain_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
 		mockController,
 	)
 	mockAgentCollectionRequester := chain_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 
 	sut := services.NewNftOwnerAuthorizer(
-		mockAgentRepository,
+		mockAgentResolver,
 		mockAgentRegistrationStateRepository,
 		mockAgentCollectionRequester,
 	)
@@ -41,7 +41,7 @@ func WhenAuthorizingNftOwnerBeforeEach(t *testing.T) *WhenAuthorizingNftOwnerTes
 	return &WhenAuthorizingNftOwnerTestingSuite{
 		sut: sut,
 
-		mockAgentRepository:                  mockAgentRepository,
+		mockAgentResolver:                    mockAgentResolver,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockAgentCollectionRequester:         mockAgentCollectionRequester,
 	}
@@ -64,7 +64,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 
 		initSuite := func(suite *WhenAuthorizingNftOwnerTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("db down"))
@@ -94,7 +94,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(mintedState(), nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				OwnerOf(gomock.Any(), collectionAddr, uint64(42)).
 				Return(common.Address{}, errors.New("rpc"))
@@ -124,7 +124,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(mintedState(), nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				OwnerOf(gomock.Any(), collectionAddr, uint64(42)).
 				Return(common.HexToAddress("0xdeadbeef"), nil)
@@ -151,7 +151,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 				WithMintStatus(identity_enums.TransactionStatusPending).
 				Build()
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(42).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(state, nil)
@@ -181,7 +181,7 @@ func TestWhenAuthorizingNftOwner(t *testing.T) {
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(mintedState(), nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentCollectionRequester.EXPECT().
 				OwnerOf(gomock.Any(), collectionAddr, uint64(42)).
 				Return(owner, nil)

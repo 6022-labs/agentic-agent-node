@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
@@ -19,10 +19,10 @@ type ListSelfTools struct {
 func NewListSelfTools(
 	selfToolRepository repositories.SelfToolRepositoryInterface,
 	selfToolRegistry interfaces.SelfToolRegistryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *ListSelfTools {
 	return &ListSelfTools{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentResolver),
 		selfToolRepository:       selfToolRepository,
 		selfToolRegistry:         selfToolRegistry,
 	}

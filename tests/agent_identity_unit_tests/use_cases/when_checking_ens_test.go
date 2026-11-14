@@ -19,7 +19,7 @@ type WhenCheckingEnsTestingSuite struct {
 	sut *use_cases.CheckAgentEns
 
 	mockEnsPublisher                     *interface_mocks.MockEnsPublisherInterface
-	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                    *interface_mocks.MockAgentResolverInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockRegistrationReconciler           *interface_mocks.MockRegistrationReconcilerInterface
 }
@@ -28,7 +28,7 @@ func WhenCheckingEnsBeforeEach(t *testing.T) *WhenCheckingEnsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockEnsPublisher := interface_mocks.NewMockEnsPublisherInterface(mockController)
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interface_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
 		mockController,
 	)
@@ -36,7 +36,7 @@ func WhenCheckingEnsBeforeEach(t *testing.T) *WhenCheckingEnsTestingSuite {
 
 	sut := use_cases.NewCheckAgentEns(
 		mockEnsPublisher,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler,
 	)
@@ -44,7 +44,7 @@ func WhenCheckingEnsBeforeEach(t *testing.T) *WhenCheckingEnsTestingSuite {
 	return &WhenCheckingEnsTestingSuite{
 		sut:                                  sut,
 		mockEnsPublisher:                     mockEnsPublisher,
-		mockAgentRepository:                  mockAgentRepository,
+		mockAgentResolver:                    mockAgentResolver,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockRegistrationReconciler:           mockRegistrationReconciler,
 	}
@@ -58,7 +58,7 @@ func TestWhenCheckingEns(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should return a Conflict without reading the chain", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestWhenCheckingEns(t *testing.T) {
 				WithEnsRegistryStatus(identity_enums.TransactionStatusConfirmed).
 				Build()
 
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(confirmedState, nil)
@@ -107,7 +107,7 @@ func TestWhenCheckingEns(t *testing.T) {
 
 		rpcErr := errors.New("rpc down")
 		initSuite := func(suite *WhenCheckingEnsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().
+			suite.mockAgentResolver.EXPECT().
 				Get(gomock.Any()).
 				Return(model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build(), nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
@@ -143,7 +143,7 @@ func TestWhenCheckingEns(t *testing.T) {
 				Build()
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(false, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(pendingState, nil)
@@ -175,7 +175,7 @@ func TestWhenCheckingEns(t *testing.T) {
 				Build()
 
 			suite.mockEnsPublisher.EXPECT().IsProvisioned(gomock.Any()).Return(true, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(pendingState, nil)

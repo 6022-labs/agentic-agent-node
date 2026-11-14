@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
-	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -16,17 +16,17 @@ import (
 type WhenBuildingAgentScopedKeyTestingSuite struct {
 	sut *services.AgentScopedKeyBuilder
 
-	mockAgentRepository *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenBuildingAgentScopedKeyBeforeEach(t *testing.T) *WhenBuildingAgentScopedKeyTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	return &WhenBuildingAgentScopedKeyTestingSuite{
-		sut:                 services.NewAgentScopedKeyBuilder(mockAgentRepository),
-		mockAgentRepository: mockAgentRepository,
+		sut:               services.NewAgentScopedKeyBuilder(mockAgentResolver),
+		mockAgentResolver: mockAgentResolver,
 	}
 }
 
@@ -37,7 +37,7 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should propagate the error", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should error", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestWhenBuildingAgentScopedKey(t *testing.T) {
 
 		initSuite := func(suite *WhenBuildingAgentScopedKeyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithId(id).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 		}
 
 		t.Run("Should namespace the key under agents/<id>", func(t *testing.T) {

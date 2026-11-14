@@ -10,7 +10,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -25,7 +25,7 @@ type WhenSettingUpLLMConnectionTestingSuite struct {
 	mockRepository             *repositories_mocks.MockLLMConnectionRepositoryInterface
 	mockSecretStorage          *interfaces_mocks.MockLLMSecretStorageInterface
 	mockLlmConnectionValidator *interfaces_mocks.MockLLMConnectionValidatorInterface
-	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnectionTestingSuite {
@@ -34,13 +34,13 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 	mockRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockLLMSecretStorageInterface(mockController)
 	mockLlmConnectionValidator := interfaces_mocks.NewMockLLMConnectionValidatorInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	sut := use_cases.NewSetupLLMConnection(
 		mockRepository,
 		mockSecretStorage,
 		mockLlmConnectionValidator,
-		mockAgentRepository,
+		mockAgentResolver,
 	)
 
 	return &WhenSettingUpLLMConnectionTestingSuite{
@@ -49,12 +49,12 @@ func WhenSettingUpLLMConnectionBeforeEach(t *testing.T) *WhenSettingUpLLMConnect
 		mockRepository:             mockRepository,
 		mockSecretStorage:          mockSecretStorage,
 		mockLlmConnectionValidator: mockLlmConnectionValidator,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 	}
 }
 
 func (s *WhenSettingUpLLMConnectionTestingSuite) givenCurrentConnection(current *models.LLMConnection) {
-	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+	s.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 	s.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(current, nil)
 }
 
@@ -99,7 +99,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
 
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 		}
 
 		t.Run("Should return an InternalError without touching other dependencies", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestWhenSettingUpLLMConnection(t *testing.T) {
 		request := &requests.SetupLLMConnectionRequest{Platform: openAi, Model: "gpt-4o", ApiKey: "sk-secret"}
 
 		initSuite := func(suite *WhenSettingUpLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetByAgentId(gomock.Any(), gomock.Any()).Return(nil, errors.New("db down"))
 		}
 

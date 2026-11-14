@@ -3,28 +3,28 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
 
 type DeletePaymentReceivePolicy struct {
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface
-	agentRepository                identity_repositories.AgentRepositoryInterface
+	agentResolver                  identity_interfaces.AgentResolverInterface
 }
 
 func NewDeletePaymentReceivePolicy(
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *DeletePaymentReceivePolicy {
 	return &DeletePaymentReceivePolicy{
 		paymentReceivePolicyRepository: paymentReceivePolicyRepository,
-		agentRepository:                agentRepository,
+		agentResolver:                  agentResolver,
 	}
 }
 
 func (u *DeletePaymentReceivePolicy) Execute(ctx context.Context) error {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return errors.NewInternalError("delete_failed", err)
 	}

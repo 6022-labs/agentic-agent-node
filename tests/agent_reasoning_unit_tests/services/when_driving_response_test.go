@@ -14,6 +14,7 @@ import (
 	traces_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/traces/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	knowledge_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
@@ -34,7 +35,7 @@ type WhenDrivingResponseTestingSuite struct {
 	mockAgentGuidanceRepository    *repositories_mocks.MockAgentGuidanceRepositoryInterface
 	mockMCPHeaderAuthSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
 	mockConversationHistory        *knowledge_interfaces_mocks.MockConversationHistoryInterface
-	mockAgentRepository            *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver              *identity_interfaces_mocks.MockAgentResolverInterface
 	mockAgentAddressRepository     *identity_repositories_mocks.MockAgentAddressRepositoryInterface
 	mockSystemPromptBuilder        *interfaces_mocks.MockSystemPromptBuilderInterface
 	mockMcpRequester               *interfaces_mocks.MockMcpRequesterInterface
@@ -87,7 +88,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, opts ...drivingResponseOption) 
 	mockAgentGuidanceRepository := repositories_mocks.NewMockAgentGuidanceRepositoryInterface(mockController)
 	mockMCPHeaderAuthSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
 	mockConversationHistory := knowledge_interfaces_mocks.NewMockConversationHistoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentAddressRepository := identity_repositories_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockSystemPromptBuilder := interfaces_mocks.NewMockSystemPromptBuilderInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
@@ -120,7 +121,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, opts ...drivingResponseOption) 
 		mockAgentGuidanceRepository,
 		mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockAgentAddressRepository,
 		mockSystemPromptBuilder,
 		mockMcpRequester,
@@ -140,7 +141,7 @@ func WhenDrivingResponseBeforeEach(t *testing.T, opts ...drivingResponseOption) 
 		mockAgentGuidanceRepository:    mockAgentGuidanceRepository,
 		mockMCPHeaderAuthSecretStorage: mockMCPHeaderAuthSecretStorage,
 		mockConversationHistory:        mockConversationHistory,
-		mockAgentRepository:            mockAgentRepository,
+		mockAgentResolver:              mockAgentResolver,
 		mockAgentAddressRepository:     mockAgentAddressRepository,
 		mockSystemPromptBuilder:        mockSystemPromptBuilder,
 		mockMcpRequester:               mockMcpRequester,
@@ -197,7 +198,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -227,7 +228,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -260,7 +261,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -300,7 +301,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -343,7 +344,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -391,7 +392,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -433,7 +434,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -509,7 +510,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -573,7 +574,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -641,7 +642,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(),
 				conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{stored}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -700,7 +701,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -761,7 +762,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -826,7 +827,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -915,7 +916,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -991,7 +992,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1067,7 +1068,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1131,7 +1132,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1189,7 +1190,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1258,7 +1259,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1323,7 +1324,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1375,7 +1376,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1439,7 +1440,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1509,7 +1510,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 				AnyTimes()
 			suite.expectDemojizePassthrough()
 			suite.mockConversationHistory.EXPECT().Read(gomock.Any(), conversationId).Return(history, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).
@@ -1618,7 +1619,7 @@ func TestWhenDrivingResponse(t *testing.T) {
 			suite.mockConversationHistory.EXPECT().
 				Read(gomock.Any(), conversationId).
 				Return([]knowledge_interfaces.ConversationMessage{}, nil)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[identity_enums.AddressType]string{}, nil).

@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
@@ -11,22 +11,22 @@ import (
 
 // PaymentSpendPolicyProvider materializes the policy head only: an agent spends nothing until an owner writes a rule.
 type PaymentSpendPolicyProvider struct {
-	agentRepository              identity_repositories.AgentRepositoryInterface
+	agentResolver                identity_interfaces.AgentResolverInterface
 	paymentSpendPolicyRepository repositories.PaymentSpendPolicyRepositoryInterface
 }
 
 func NewPaymentSpendPolicyProvider(
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	paymentSpendPolicyRepository repositories.PaymentSpendPolicyRepositoryInterface,
 ) *PaymentSpendPolicyProvider {
 	return &PaymentSpendPolicyProvider{
-		agentRepository:              agentRepository,
+		agentResolver:                agentResolver,
 		paymentSpendPolicyRepository: paymentSpendPolicyRepository,
 	}
 }
 
 func (p *PaymentSpendPolicyProvider) Ensure(ctx context.Context) (*models.PaymentSpendPolicy, error) {
-	agent, err := p.agentRepository.Get(ctx)
+	agent, err := p.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}

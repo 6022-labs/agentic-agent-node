@@ -78,6 +78,43 @@ func (s *RegistrationReconciler) ReconcileMint(
 	return savedAgent, savedState, nil
 }
 
+func (s *RegistrationReconciler) ReconcileIdentity(ctx context.Context) error {
+	agent, err := s.agentRepository.Get(ctx)
+	if err != nil {
+		return err
+	}
+	if agent == nil || agent.CollectionTokenId == nil {
+		return nil
+	}
+	state, err := s.agentRegistrationStateRepository.GetByAgentId(ctx, agent.Id)
+	if err != nil {
+		return err
+	}
+	if !state.IsMinted() {
+		return nil
+	}
+
+	chainId := lo.FromPtr(agent.ChainId)
+	collection := common.HexToAddress(agent.CollectionAddress)
+	info, err := s.agentCollectionRequester.InformationOf(chainId, collection, *agent.CollectionTokenId)
+	if err != nil {
+		return err
+	}
+	owner, err := s.agentCollectionRequester.OwnerOf(chainId, collection, *agent.CollectionTokenId)
+	if err != nil {
+		return err
+	}
+
+	agent.Name = lo.ToPtr(info.Name)
+	agent.CloneOf = info.CloneOf
+	agent.Creator = lo.ToPtr(info.Creator.Hex())
+	agent.Owner = lo.ToPtr(owner.Hex())
+	agent.Images = info.Images
+	agent.Attributes = info.Attributes
+	agent.Soul = lo.ToPtr(s.composeSoul(agent))
+	return s.agentRepository.UpdateOnChainIdentity(ctx, agent)
+}
+
 // roleSoulLines gives the well-known roles their own self-conception, SOUL.md-style;
 // on-chain roles are free-form strings, so unknown roles simply get no extra line.
 var roleSoulLines = map[string]string{

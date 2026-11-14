@@ -11,7 +11,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	knowledge_services_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -31,7 +31,7 @@ type WhenUpdatingConversationTestingSuite struct {
 
 	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
 	mockConversationLabeler    *knowledge_services_mocks.MockConversationLabelerInterface
-	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenUpdatingConversationBeforeEach(t *testing.T) *WhenUpdatingConversationTestingSuite {
@@ -39,17 +39,17 @@ func WhenUpdatingConversationBeforeEach(t *testing.T) *WhenUpdatingConversationT
 
 	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
 	mockConversationLabeler := knowledge_services_mocks.NewMockConversationLabelerInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	return &WhenUpdatingConversationTestingSuite{
 		sut: use_cases.NewUpdateConversation(
 			mockConversationRepository,
 			mockConversationLabeler,
-			mockAgentRepository,
+			mockAgentResolver,
 		),
 		mockConversationRepository: mockConversationRepository,
 		mockConversationLabeler:    mockConversationLabeler,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 	}
 }
 
@@ -97,7 +97,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db blew"))
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(nil, errors.New("db blew"))
@@ -176,7 +176,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		agent := model_builders.NewAgentBuilder().Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(nil, nil)
@@ -206,7 +206,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(conversation, nil)
@@ -239,7 +239,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(conversation, nil)
@@ -276,7 +276,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(conversation, nil)
@@ -308,7 +308,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 		conversation := model_builders.NewConversationBuilder().WithId("c1").WithAgentId(agent.Id).Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, gomock.Nil()).
 				Return(conversation, nil)
@@ -348,7 +348,7 @@ func TestWhenUpdatingConversation(t *testing.T) {
 			Build()
 
 		initSuite := func(suite *WhenUpdatingConversationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockConversationRepository.EXPECT().
 				GetByIdAndAgentIdAndCallerId(gomock.Any(), "c1", agent.Id, lo.ToPtr(updatingCallerId)).
 				Return(conversation, nil)

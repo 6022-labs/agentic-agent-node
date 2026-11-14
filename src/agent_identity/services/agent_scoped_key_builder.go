@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"sync"
-
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 )
 
 // agentScopePrefix is the parent path every agent's secrets are namespaced under.
@@ -15,14 +14,14 @@ const agentScopePrefix = "agents"
 // AgentScopedKeyBuilder prefixes secret keys with the persisted agent id, cached
 // after the first lookup since it never changes.
 type AgentScopedKeyBuilder struct {
-	agentRepository repositories.AgentRepositoryInterface
+	agentResolver identity_interfaces.AgentResolverInterface
 
 	mu     sync.Mutex
 	cached string
 }
 
-func NewAgentScopedKeyBuilder(agentRepository repositories.AgentRepositoryInterface) *AgentScopedKeyBuilder {
-	return &AgentScopedKeyBuilder{agentRepository: agentRepository}
+func NewAgentScopedKeyBuilder(agentResolver identity_interfaces.AgentResolverInterface) *AgentScopedKeyBuilder {
+	return &AgentScopedKeyBuilder{agentResolver: agentResolver}
 }
 
 func (b *AgentScopedKeyBuilder) ScopedKey(ctx context.Context, key string) (string, error) {
@@ -45,7 +44,7 @@ func (b *AgentScopedKeyBuilder) scope(ctx context.Context) (string, error) {
 		return b.cached, nil
 	}
 
-	agent, err := b.agentRepository.Get(ctx)
+	agent, err := b.agentResolver.Get(ctx)
 	if err != nil {
 		return "", err
 	}

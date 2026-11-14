@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 )
@@ -11,25 +12,25 @@ import (
 // GetAgentRegistration returns the stored draft + status, used to pre-fill the
 // form on retry after a failed mint or ENS registration.
 type GetAgentRegistration struct {
-	agentRepository                  repositories.AgentRepositoryInterface
+	agentResolver                    identity_interfaces.AgentResolverInterface
 	agentAddressRepository           repositories.AgentAddressRepositoryInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 }
 
 func NewGetAgentRegistration(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *GetAgentRegistration {
 	return &GetAgentRegistration{
-		agentRepository:                  agentRepository,
+		agentResolver:                    agentResolver,
 		agentAddressRepository:           agentAddressRepository,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 	}
 }
 
 func (u *GetAgentRegistration) Execute(ctx context.Context) (*responses.AgentRegistrationResponse, error) {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}

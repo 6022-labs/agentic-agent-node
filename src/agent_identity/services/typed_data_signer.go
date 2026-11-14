@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -20,11 +19,11 @@ type TypedDataSigner struct {
 }
 
 func NewTypedDataSigner(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 ) *TypedDataSigner {
 	return &TypedDataSigner{
-		AbstractWalletSigner: NewAbstractWalletSigner(agentRepository, walletCredentialsStorage),
+		AbstractWalletSigner: NewAbstractWalletSigner(agentResolver, walletCredentialsStorage),
 	}
 }
 

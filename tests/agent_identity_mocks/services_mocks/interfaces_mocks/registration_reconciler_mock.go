@@ -58,6 +58,20 @@ func (mr *MockRegistrationReconcilerInterfaceMockRecorder) ReconcileEnsRegistry(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileEnsRegistry", reflect.TypeOf((*MockRegistrationReconcilerInterface)(nil).ReconcileEnsRegistry), ctx, agentId, state)
 }
 
+// ReconcileIdentity mocks base method.
+func (m *MockRegistrationReconcilerInterface) ReconcileIdentity(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReconcileIdentity", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReconcileIdentity indicates an expected call of ReconcileIdentity.
+func (mr *MockRegistrationReconcilerInterfaceMockRecorder) ReconcileIdentity(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileIdentity", reflect.TypeOf((*MockRegistrationReconcilerInterface)(nil).ReconcileIdentity), ctx)
+}
+
 // ReconcileMint mocks base method.
 func (m *MockRegistrationReconcilerInterface) ReconcileMint(ctx context.Context, agent *models.Agent, state *models.AgentRegistrationState, collection common.Address, tokenId uint64, mintTxHash *string) (*models.Agent, *models.AgentRegistrationState, error) {
 	m.ctrl.T.Helper()

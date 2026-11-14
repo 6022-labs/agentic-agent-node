@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
@@ -16,18 +16,18 @@ import (
 
 type CreateConversation struct {
 	conversationRepository repositories.ConversationRepositoryInterface
-	agentRepository        identity_repositories.AgentRepositoryInterface
+	agentResolver          identity_interfaces.AgentResolverInterface
 	knowledgeMetrics       metrics_interfaces.KnowledgeMetricsInterface
 }
 
 func NewCreateConversation(
 	conversationRepository repositories.ConversationRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
 ) *CreateConversation {
 	return &CreateConversation{
 		conversationRepository: conversationRepository,
-		agentRepository:        agentRepository,
+		agentResolver:          agentResolver,
 		knowledgeMetrics:       knowledgeMetrics,
 	}
 }
@@ -45,7 +45,7 @@ func (u *CreateConversation) Execute(
 		return nil, err
 	}
 
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("create_failed", err)
 	}

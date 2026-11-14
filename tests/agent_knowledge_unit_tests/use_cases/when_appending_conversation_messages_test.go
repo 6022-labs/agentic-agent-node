@@ -13,7 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	knowledge_metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/services_mocks/interfaces_mocks"
@@ -34,7 +34,7 @@ type WhenAppendingConversationMessagesTestingSuite struct {
 
 	mockMessageAppender        *interfaces_mocks.MockMessageAppenderInterface
 	mockConversationRepository *knowledge_repositories_mocks.MockConversationRepositoryInterface
-	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *identity_interfaces_mocks.MockAgentResolverInterface
 	mockKnowledgeMetrics       *knowledge_metrics_mocks.MockKnowledgeMetricsInterface
 }
 
@@ -43,13 +43,13 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 
 	mockMessageAppender := interfaces_mocks.NewMockMessageAppenderInterface(mockController)
 	mockConversationRepository := knowledge_repositories_mocks.NewMockConversationRepositoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockKnowledgeMetrics := knowledge_metrics_mocks.NewMockKnowledgeMetricsInterface(mockController)
 
 	sut := use_cases.NewAppendConversationMessages(
 		mockMessageAppender,
 		mockConversationRepository,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockKnowledgeMetrics,
 	)
 
@@ -57,14 +57,14 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 		sut:                        sut,
 		mockMessageAppender:        mockMessageAppender,
 		mockConversationRepository: mockConversationRepository,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 		mockKnowledgeMetrics:       mockKnowledgeMetrics,
 	}
 }
 
 func (s *WhenAppendingConversationMessagesTestingSuite) expectMintedAgent() *identity_models.Agent {
 	agent := model_builders.NewAgentBuilder().Build()
-	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+	s.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 	return agent
 }
 
@@ -143,7 +143,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down")).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down")).Times(1)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 		}
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil).Times(1)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -200,7 +200,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 		}
 
 		t.Run("Should return the agent_not_minted conflict", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 			initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 				agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(appendingCallerId)).Build()
-				suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+				suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 				suite.mockConversationRepository.EXPECT().Ensure(gomock.Any(), gomock.Any()).Return(false, nil)
 				suite.mockConversationRepository.EXPECT().
 					GetByIdAndAgentIdAndCallerId(gomock.Any(), conversationId, agent.Id, gomock.Nil()).

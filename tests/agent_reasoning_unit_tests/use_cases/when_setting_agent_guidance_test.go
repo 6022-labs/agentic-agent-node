@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -20,19 +20,19 @@ type WhenSettingAgentGuidanceTestingSuite struct {
 	sut *use_cases.SetAgentGuidance
 
 	mockAgentGuidanceRepository *repositories_mocks.MockAgentGuidanceRepositoryInterface
-	mockAgentRepository         *identity_repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver           *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenSettingAgentGuidanceBeforeEach(t *testing.T) *WhenSettingAgentGuidanceTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockAgentGuidanceRepository := repositories_mocks.NewMockAgentGuidanceRepositoryInterface(mockController)
-	mockAgentRepository := identity_repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	return &WhenSettingAgentGuidanceTestingSuite{
-		sut:                         use_cases.NewSetAgentGuidance(mockAgentGuidanceRepository, mockAgentRepository),
+		sut:                         use_cases.NewSetAgentGuidance(mockAgentGuidanceRepository, mockAgentResolver),
 		mockAgentGuidanceRepository: mockAgentGuidanceRepository,
-		mockAgentRepository:         mockAgentRepository,
+		mockAgentResolver:           mockAgentResolver,
 	}
 }
 
@@ -44,7 +44,7 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().
 				Upsert(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("db down"))
@@ -69,7 +69,7 @@ func TestWhenSettingAgentGuidance(t *testing.T) {
 
 		initSuite := func(suite *WhenSettingAgentGuidanceTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentGuidanceRepository.EXPECT().
 				Upsert(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, g *models.AgentGuidance) (*models.AgentGuidance, error) {
