@@ -2,6 +2,7 @@ package runtime_db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"slices"
 	"sync"
@@ -10,6 +11,9 @@ import (
 	runtime_common_repositories "github.com/6022-labs/agentic-agent-node/src/runtime_common/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/utils"
+	mysql_driver "github.com/go-sql-driver/mysql"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/ncruces/go-sqlite3/gormlite"
 	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
@@ -34,7 +38,7 @@ func NewDatabaseClient(
 	migrationsSettings *settings.MigrationsSettings,
 	logger *zap.Logger,
 ) (*DatabaseClient, error) {
-	dialector, err := dialectorFor(dbSettings.Driver, dbSettings.Url)
+	dialector, err := dialectorFor(dbSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -63,16 +67,49 @@ func NewDatabaseClient(
 	}, nil
 }
 
-func dialectorFor(driver enums.DatabaseDriver, url string) (gorm.Dialector, error) {
-	switch driver {
+func dialectorFor(dbSettings *settings.DatabaseSettings) (gorm.Dialector, error) {
+	switch dbSettings.Driver {
 	case enums.DatabaseDriverPostgres:
-		return postgres.Open(url), nil
+		if dbSettings.TlsConfig == nil {
+			return postgres.Open(dbSettings.Url), nil
+		}
+		config, err := pgx.ParseConfig(dbSettings.Url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse postgres url: %w", err)
+		}
+		tlsConfig := dbSettings.TlsConfig.Clone()
+		// Keep what pgx derived from the url: ALPN for sslnegotiation=direct, sslcert/sslkey client certificates.
+		if config.TLSConfig != nil {
+			tlsConfig.NextProtos = config.TLSConfig.NextProtos
+			tlsConfig.Certificates = config.TLSConfig.Certificates
+			tlsConfig.GetClientCertificate = config.TLSConfig.GetClientCertificate
+		} else if config.SSLNegotiation == "direct" {
+			tlsConfig.NextProtos = []string{"postgresql"}
+		}
+		config.TLSConfig = tlsConfig
+		// sslmode prefer/allow fallbacks would retry in plaintext.
+		config.Fallbacks = nil
+		return postgres.New(postgres.Config{Conn: stdlib.OpenDB(*config)}), nil
 	case enums.DatabaseDriverMySQL, enums.DatabaseDriverMariaDB:
-		return mysql.Open(url), nil
+		if dbSettings.TlsConfig == nil {
+			return mysql.Open(dbSettings.Url), nil
+		}
+		config, err := mysql_driver.ParseDSN(dbSettings.Url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse mysql url: %w", err)
+		}
+		config.TLS = dbSettings.TlsConfig.Clone()
+		config.TLSConfig = ""
+		config.AllowFallbackToPlaintext = false
+		connector, err := mysql_driver.NewConnector(config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build mysql connector: %w", err)
+		}
+		return mysql.New(mysql.Config{Conn: sql.OpenDB(connector), DSNConfig: config}), nil
 	case enums.DatabaseDriverSqlite:
-		return gormlite.Open(utils.ApplySqliteDsnDefaults(url)), nil
+		return gormlite.Open(utils.ApplySqliteDsnDefaults(dbSettings.Url)), nil
 	default:
-		return nil, fmt.Errorf("unsupported database driver: %s", driver)
+		return nil, fmt.Errorf("unsupported database driver: %s", dbSettings.Driver)
 	}
 }
 

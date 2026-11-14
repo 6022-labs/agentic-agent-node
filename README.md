@@ -80,6 +80,24 @@ Authentication over a plaintext connection sends the credential in the clear: pa
 it with TLS on any untrusted network. The agent logs a warning when it is asked to
 do otherwise.
 
+## Database TLS
+
+The runtime database is set with `RUNTIME_DATABASE__*` (or the `runtime_database`
+block of `appsettings.json`). By default TLS is whatever the `url` asks for. To
+reach a database whose certificate is signed by a private CA, for example through
+a TCP proxy, add:
+
+| Setting | Meaning |
+| --- | --- |
+| `ca_certificate` | PEM of the CA the server certificate must chain to |
+| `tls_server_name` | name the certificate is checked against; defaults to the `url` host |
+
+With `ca_certificate` set the connection always uses TLS 1.2+ with full
+verification, whatever the `url` says (`sslmode`, `tls=`): there is no plaintext
+or skip-verify fallback. It works with `postgres`, `mysql` and `mariadb`; with
+`sqlite`, an unparsable PEM, or `tls_server_name` alone, startup is fatal. On
+Postgres only the first host of the `url` is used.
+
 ## Architecture at a glance
 
 nginx (in-container port 5000) is the single public listener; nothing else is

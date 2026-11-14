@@ -1,6 +1,7 @@
 package container_builders
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,22 +10,35 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/certificate_builders"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var mariadbContainer *MariaDBContainerBuilder
+var (
+	mariadbContainer   *MariaDBContainerBuilder
+	mariadbContainerMu sync.Mutex
+)
 
 type MariaDBContainerBuilder struct {
 	container       testcontainers.Container
 	connStrTemplate string
 	containerMu     sync.Mutex
-	databasesMu     sync.Mutex
-	databases       []string
+
+	tlsContainer       testcontainers.Container
+	tlsConnStrTemplate string
+	caCertificatePem   []byte
+	tlsContainerMu     sync.Mutex
+
+	databasesMu sync.Mutex
+	databases   []string
 }
 
 func GetMariaDBContainerBuilder() *MariaDBContainerBuilder {
+	mariadbContainerMu.Lock()
+	defer mariadbContainerMu.Unlock()
+
 	if mariadbContainer == nil {
 		mariadbContainer = &MariaDBContainerBuilder{}
 	}
@@ -36,50 +50,105 @@ func (b *MariaDBContainerBuilder) start() string {
 	defer b.containerMu.Unlock()
 
 	if b.container == nil {
-		ctx := context.Background()
-		req := testcontainers.ContainerRequest{
-			Image:        "mariadb:12.3",
-			ExposedPorts: []string{"3306/tcp"},
-			Env: map[string]string{
-				"MARIADB_ROOT_PASSWORD": "root",
-				"MARIADB_DATABASE":      "mariadb",
-			},
-			WaitingFor: wait.ForListeningPort("3306/tcp"),
-		}
-		container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-			ContainerRequest: req,
-			Started:          true,
-		})
-		if err != nil {
-			log.Fatalf("failed to start mariadb container: %v", err)
-		}
-		b.container = container
+		req := b.request()
+		// The image enables TLS by default; plaintext lets tests prove there is no fallback to it.
+		req.Cmd = []string{"--skip-ssl"}
 
-		host, _ := container.Host(ctx)
-		port, _ := container.MappedPort(ctx, "3306")
-		b.connStrTemplate = fmt.Sprintf("root:root@tcp(%s:%s)/%%s?parseTime=true", host, port.Port())
+		b.container, b.connStrTemplate = b.run(req)
 		log.Println("MariaDB container ready")
 	}
 	return b.connStrTemplate
 }
 
+func (b *MariaDBContainerBuilder) startTls() (string, []byte) {
+	b.tlsContainerMu.Lock()
+	defer b.tlsContainerMu.Unlock()
+
+	if b.tlsContainer == nil {
+		certificateAuthority := certificate_builders.NewCertificateAuthority()
+		certificatePem, keyPem := certificateAuthority.IssueServerCertificate(TlsServerName)
+
+		req := b.request()
+		req.Files = []testcontainers.ContainerFile{
+			{Reader: bytes.NewReader(certificatePem), ContainerFilePath: "/certs/server.crt", FileMode: 0o644},
+			{Reader: bytes.NewReader(keyPem), ContainerFilePath: "/certs/server.key", FileMode: 0o644},
+		}
+		req.Entrypoint = []string{"sh", "-c", "install -o mysql -g mysql -m 600 /certs/server.key /tmp/server.key" +
+			" && exec docker-entrypoint.sh mariadbd --ssl-cert=/certs/server.crt --ssl-key=/tmp/server.key"}
+
+		var connStrTemplate string
+		b.tlsContainer, connStrTemplate = b.run(req)
+		// skip-verify lets the builder create databases without trusting the CA.
+		b.tlsConnStrTemplate = connStrTemplate + "&tls=skip-verify"
+		b.caCertificatePem = certificateAuthority.CertificatePem
+		log.Println("MariaDB TLS container ready")
+	}
+	return b.tlsConnStrTemplate, b.caCertificatePem
+}
+
+func (b *MariaDBContainerBuilder) request() testcontainers.ContainerRequest {
+	return testcontainers.ContainerRequest{
+		Image:        "mariadb:12.3",
+		ExposedPorts: []string{"3306/tcp"},
+		Env: map[string]string{
+			"MARIADB_ROOT_PASSWORD": "root",
+			"MARIADB_DATABASE":      "mariadb",
+		},
+		WaitingFor: wait.ForListeningPort("3306/tcp"),
+	}
+}
+
+func (b *MariaDBContainerBuilder) run(req testcontainers.ContainerRequest) (testcontainers.Container, string) {
+	ctx := context.Background()
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		log.Fatalf("failed to start mariadb container: %v", err)
+	}
+
+	host, _ := container.Host(ctx)
+	port, _ := container.MappedPort(ctx, "3306")
+	return container, fmt.Sprintf("root:root@tcp(%s:%s)/%%s?parseTime=true", host, port.Port())
+}
+
 func (b *MariaDBContainerBuilder) stop() {
 	b.containerMu.Lock()
-	defer b.containerMu.Unlock()
-
 	if b.container != nil {
 		_ = b.container.Terminate(context.Background())
 		b.container = nil
 		log.Println("MariaDB container stopped")
 	}
+	b.containerMu.Unlock()
+
+	b.tlsContainerMu.Lock()
+	if b.tlsContainer != nil {
+		_ = b.tlsContainer.Terminate(context.Background())
+		b.tlsContainer = nil
+		log.Println("MariaDB TLS container stopped")
+	}
+	b.tlsContainerMu.Unlock()
+
+	mariadbContainerMu.Lock()
 	mariadbContainer = nil
+	mariadbContainerMu.Unlock()
 }
 
 func (b *MariaDBContainerBuilder) Create() (string, string) {
 	dnsTemplate := b.start()
-	mainDsn := fmt.Sprintf(dnsTemplate, "mariadb")
+	dbName := b.createDatabase(dnsTemplate)
+	return dbName, fmt.Sprintf(dnsTemplate, dbName)
+}
 
-	conn, err := sql.Open("mysql", mainDsn)
+func (b *MariaDBContainerBuilder) CreateTls() (string, string, []byte) {
+	dnsTemplate, caCertificatePem := b.startTls()
+	dbName := b.createDatabase(dnsTemplate)
+	return dbName, fmt.Sprintf(dnsTemplate, dbName), caCertificatePem
+}
+
+func (b *MariaDBContainerBuilder) createDatabase(dnsTemplate string) string {
+	conn, err := sql.Open("mysql", fmt.Sprintf(dnsTemplate, "mariadb"))
 	if err != nil {
 		log.Fatalf("failed to open mariadb: %v", err)
 	}
@@ -94,7 +163,7 @@ func (b *MariaDBContainerBuilder) Create() (string, string) {
 	b.databases = append(b.databases, dbName)
 	b.databasesMu.Unlock()
 
-	return dbName, fmt.Sprintf(dnsTemplate, dbName)
+	return dbName
 }
 
 func (b *MariaDBContainerBuilder) DropDatabase(dbName string) {

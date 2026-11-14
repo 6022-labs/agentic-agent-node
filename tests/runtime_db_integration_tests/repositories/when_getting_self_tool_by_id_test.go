@@ -6,14 +6,12 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db/repositories"
-	"github.com/6022-labs/agentic-agent-node/src/runtime_db/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/container_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/seeds"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 type WhenGettingSelfToolByIdTestingSuite struct {
@@ -24,25 +22,7 @@ type WhenGettingSelfToolByIdTestingSuite struct {
 }
 
 func WhenGettingSelfToolByIdBeforeEach(tc *common_tests.DatabaseTestCase) *WhenGettingSelfToolByIdTestingSuite {
-	databaseContainerBuilder := tc.ClientBuilderFn()
-	dbName, connectionString := databaseContainerBuilder.Create()
-
-	migrationFolderPath, err := common_tests.FindRuntimeMigrationFolderPath()
-	if err != nil {
-		panic(err)
-	}
-
-	dbClient, err := runtime_db.NewDatabaseClient(
-		&settings.DatabaseSettings{Driver: tc.Driver, Url: connectionString},
-		&settings.MigrationsSettings{FolderPath: *migrationFolderPath},
-		zap.NewNop(),
-	)
-	if err != nil {
-		panic(err)
-	}
-	if err := dbClient.Migrate(); err != nil {
-		panic(err)
-	}
+	databaseContainerBuilder, dbName, dbClient := newMigratedDatabase(tc)
 
 	return &WhenGettingSelfToolByIdTestingSuite{
 		dbName:                   dbName,
