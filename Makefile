@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt mocks swagger web-build web-dev help
+.PHONY: build test lint fmt mocks swagger web-build web-dev hooks help
 
 # build compiles every Go package under src/.
 build:
@@ -31,6 +31,12 @@ web-build:
 web-dev:
 	cd web && npm run dev
 
+# hooks installs pinned lefthook + gitleaks into GOPATH/bin and wires the git hooks.
+hooks:
+	go install github.com/evilmartians/lefthook/v2@v2.2.2
+	go install github.com/zricethezav/gitleaks/v8@v8.30.1
+	$$(go env GOPATH)/bin/lefthook install
+
 help:
 	@echo "build       - go build ./src/..."
 	@echo "test        - go test unit-test packages"
@@ -40,3 +46,4 @@ help:
 	@echo "swagger     - regenerate host API docs (needs go toolchain)"
 	@echo "web-build   - build the web console (cd web && npm ci && npm run build)"
 	@echo "web-dev     - run the web console dev server (cd web && npm run dev)"
+	@echo "hooks       - install git hooks (lefthook: format + secrets on commit, build/lint/test on push)"

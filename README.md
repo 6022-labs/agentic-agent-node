@@ -127,6 +127,7 @@ make test      # unit tests
 make lint      # golangci-lint
 make mocks     # regenerate mocks (needs deepsearch-mockgen)
 make swagger   # regenerate host API docs
+make hooks     # git hooks: format + secret scan on commit, build/lint/test on push
 make help      # list targets
 ```
 
