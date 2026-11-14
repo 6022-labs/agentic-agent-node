@@ -1,0 +1,13 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public EVM addresses, well-known dev keys and test fixtures"
+regexes = [
+  '''^0x[0-9a-fA-F]{40}$''',
+  '''ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80''',
+  '''4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318''',
+  '''wBGKZCJjfIGqIKB3HMmvcQVt''',
+  '''test-signing-key''',
+]
+paths = ['''atlas\.sum$''']
