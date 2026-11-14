@@ -9,8 +9,11 @@ import (
 func TestMain(m *testing.M) {
 	code := m.Run()
 	GetPostgresContainerBuilder().stop()
+	GetPostgresTlsContainerBuilder().stop()
 	GetMySQLContainerBuilder().stop()
+	GetMySQLTlsContainerBuilder().stop()
 	GetMariaDBContainerBuilder().stop()
+	GetMariaDBTlsContainerBuilder().stop()
 	GetVaultContainerBuilder().stop()
 	GetAnvilContainerBuilder().stop()
 	os.Exit(code)

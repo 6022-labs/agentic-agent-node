@@ -1,6 +1,7 @@
 package container_builders
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,19 +10,25 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/certificate_builders"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var postgresContainer *PostgresContainerBuilder
+var (
+	postgresTlsContainer   *PostgresContainerBuilder
+	postgresTlsContainerMu sync.Mutex
+)
 
 type PostgresContainerBuilder struct {
-	container       testcontainers.Container
-	connStrTemplate string
-	containerMu     sync.Mutex
-	databasesMu     sync.Mutex
-	databases       []string
+	certificateAuthority *certificate_builders.CertificateAuthority
+	container            testcontainers.Container
+	connStrTemplate      string
+	containerMu          sync.Mutex
+	databasesMu          sync.Mutex
+	databases            []string
 }
 
 func GetPostgresContainerBuilder() *PostgresContainerBuilder {
@@ -29,6 +36,23 @@ func GetPostgresContainerBuilder() *PostgresContainerBuilder {
 		postgresContainer = &PostgresContainerBuilder{}
 	}
 	return postgresContainer
+}
+
+// GetPostgresTlsContainerBuilder presents a certificate for TlsServerName signed by its own CA.
+func GetPostgresTlsContainerBuilder() *PostgresContainerBuilder {
+	postgresTlsContainerMu.Lock()
+	defer postgresTlsContainerMu.Unlock()
+
+	if postgresTlsContainer == nil {
+		postgresTlsContainer = &PostgresContainerBuilder{
+			certificateAuthority: certificate_builders.NewCertificateAuthority(),
+		}
+	}
+	return postgresTlsContainer
+}
+
+func (b *PostgresContainerBuilder) CaCertificatePem() []byte {
+	return b.certificateAuthority.CertificatePem
 }
 
 func (b *PostgresContainerBuilder) start() string {
@@ -47,6 +71,23 @@ func (b *PostgresContainerBuilder) start() string {
 			},
 			WaitingFor: wait.ForListeningPort("5432/tcp"),
 		}
+		sslMode := "disable"
+		if b.certificateAuthority != nil {
+			certificatePem, keyPem := b.certificateAuthority.IssueServerCertificate(TlsServerName)
+			req.Files = []testcontainers.ContainerFile{
+				{Reader: bytes.NewReader(certificatePem), ContainerFilePath: "/certs/server.crt", FileMode: 0o644},
+				{Reader: bytes.NewReader(keyPem), ContainerFilePath: "/certs/server.key", FileMode: 0o644},
+			}
+			// postgres refuses a key file it does not own with group/other access.
+			req.Entrypoint = []string{
+				"sh",
+				"-c",
+				"install -o postgres -g postgres -m 600 /certs/server.key /tmp/server.key" +
+					" && exec docker-entrypoint.sh postgres -c ssl=on" +
+					" -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/tmp/server.key",
+			}
+			sslMode = "require"
+		}
 
 		container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 			ContainerRequest: req,
@@ -61,8 +102,8 @@ func (b *PostgresContainerBuilder) start() string {
 		port, _ := container.MappedPort(ctx, "5432")
 
 		b.connStrTemplate = fmt.Sprintf(
-			"host=%s port=%s dbname=%s user=postgres password=postgres sslmode=disable",
-			host, port.Port(), "%s",
+			"host=%s port=%s dbname=%s user=postgres password=postgres sslmode=%s",
+			host, port.Port(), "%s", sslMode,
 		)
 		log.Println("PostgreSQL container ready")
 	}
@@ -78,7 +119,14 @@ func (b *PostgresContainerBuilder) stop() {
 		b.container = nil
 		log.Println("PostgreSQL container stopped")
 	}
-	postgresContainer = nil
+	if postgresContainer == b {
+		postgresContainer = nil
+	}
+	postgresTlsContainerMu.Lock()
+	if postgresTlsContainer == b {
+		postgresTlsContainer = nil
+	}
+	postgresTlsContainerMu.Unlock()
 }
 
 // Create returns (dbName, connectionString) for a scratch DB in the shared container, so tests run in parallel.

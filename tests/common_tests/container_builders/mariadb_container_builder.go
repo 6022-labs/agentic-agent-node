@@ -1,6 +1,7 @@
 package container_builders
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,19 +10,25 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/6022-labs/agentic-agent-node/tests/common_tests/certificate_builders"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var mariadbContainer *MariaDBContainerBuilder
+var (
+	mariadbTlsContainer   *MariaDBContainerBuilder
+	mariadbTlsContainerMu sync.Mutex
+)
 
 type MariaDBContainerBuilder struct {
-	container       testcontainers.Container
-	connStrTemplate string
-	containerMu     sync.Mutex
-	databasesMu     sync.Mutex
-	databases       []string
+	certificateAuthority *certificate_builders.CertificateAuthority
+	container            testcontainers.Container
+	connStrTemplate      string
+	containerMu          sync.Mutex
+	databasesMu          sync.Mutex
+	databases            []string
 }
 
 func GetMariaDBContainerBuilder() *MariaDBContainerBuilder {
@@ -29,6 +36,23 @@ func GetMariaDBContainerBuilder() *MariaDBContainerBuilder {
 		mariadbContainer = &MariaDBContainerBuilder{}
 	}
 	return mariadbContainer
+}
+
+// GetMariaDBTlsContainerBuilder presents a certificate for TlsServerName signed by its own CA.
+func GetMariaDBTlsContainerBuilder() *MariaDBContainerBuilder {
+	mariadbTlsContainerMu.Lock()
+	defer mariadbTlsContainerMu.Unlock()
+
+	if mariadbTlsContainer == nil {
+		mariadbTlsContainer = &MariaDBContainerBuilder{
+			certificateAuthority: certificate_builders.NewCertificateAuthority(),
+		}
+	}
+	return mariadbTlsContainer
+}
+
+func (b *MariaDBContainerBuilder) CaCertificatePem() []byte {
+	return b.certificateAuthority.CertificatePem
 }
 
 func (b *MariaDBContainerBuilder) start() string {
@@ -46,6 +70,21 @@ func (b *MariaDBContainerBuilder) start() string {
 			},
 			WaitingFor: wait.ForListeningPort("3306/tcp"),
 		}
+		tlsParam := ""
+		if b.certificateAuthority != nil {
+			certificatePem, keyPem := b.certificateAuthority.IssueServerCertificate(TlsServerName)
+			req.Files = []testcontainers.ContainerFile{
+				{Reader: bytes.NewReader(certificatePem), ContainerFilePath: "/certs/server.crt", FileMode: 0o644},
+				{Reader: bytes.NewReader(keyPem), ContainerFilePath: "/certs/server.key", FileMode: 0o644},
+			}
+			req.Entrypoint = []string{"sh", "-c", "install -o mysql -g mysql -m 600 /certs/server.key /tmp/server.key" +
+				" && exec docker-entrypoint.sh mariadbd --ssl-cert=/certs/server.crt --ssl-key=/tmp/server.key"}
+			// skip-verify lets the builder create databases without trusting the CA.
+			tlsParam = "&tls=skip-verify"
+		} else {
+			// The image enables TLS by default; plaintext lets tests prove there is no fallback to it.
+			req.Cmd = []string{"--skip-ssl"}
+		}
 		container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 			ContainerRequest: req,
 			Started:          true,
@@ -57,7 +96,7 @@ func (b *MariaDBContainerBuilder) start() string {
 
 		host, _ := container.Host(ctx)
 		port, _ := container.MappedPort(ctx, "3306")
-		b.connStrTemplate = fmt.Sprintf("root:root@tcp(%s:%s)/%%s?parseTime=true", host, port.Port())
+		b.connStrTemplate = fmt.Sprintf("root:root@tcp(%s:%s)/%%s?parseTime=true%s", host, port.Port(), tlsParam)
 		log.Println("MariaDB container ready")
 	}
 	return b.connStrTemplate
@@ -72,7 +111,14 @@ func (b *MariaDBContainerBuilder) stop() {
 		b.container = nil
 		log.Println("MariaDB container stopped")
 	}
-	mariadbContainer = nil
+	if mariadbContainer == b {
+		mariadbContainer = nil
+	}
+	mariadbTlsContainerMu.Lock()
+	if mariadbTlsContainer == b {
+		mariadbTlsContainer = nil
+	}
+	mariadbTlsContainerMu.Unlock()
 }
 
 func (b *MariaDBContainerBuilder) Create() (string, string) {
