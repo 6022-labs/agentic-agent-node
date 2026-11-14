@@ -10,6 +10,7 @@ import (
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	knowledge_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
@@ -35,7 +36,7 @@ type ResponseDriver struct {
 	agentGuidanceRepository    repositories.AgentGuidanceRepositoryInterface
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface
 	conversationHistory        knowledge_interfaces.ConversationHistoryInterface
-	agentRepository            identity_repositories.AgentRepositoryInterface
+	agentResolver              identity_interfaces.AgentResolverInterface
 	agentAddressRepository     identity_repositories.AgentAddressRepositoryInterface
 	systemPromptBuilder        interfaces.SystemPromptBuilderInterface
 	mcpRequester               interfaces.McpRequesterInterface
@@ -55,7 +56,7 @@ func NewResponseDriver(
 	agentGuidanceRepository repositories.AgentGuidanceRepositoryInterface,
 	mcpHeaderAuthSecretStorage interfaces.MCPHeaderAuthSecretStorageInterface,
 	conversationHistory knowledge_interfaces.ConversationHistoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	systemPromptBuilder interfaces.SystemPromptBuilderInterface,
 	mcpRequester interfaces.McpRequesterInterface,
@@ -74,7 +75,7 @@ func NewResponseDriver(
 		agentGuidanceRepository:    agentGuidanceRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		conversationHistory:        conversationHistory,
-		agentRepository:            agentRepository,
+		agentResolver:              agentResolver,
 		agentAddressRepository:     agentAddressRepository,
 		systemPromptBuilder:        systemPromptBuilder,
 		mcpRequester:               mcpRequester,
@@ -281,7 +282,7 @@ func (d *ResponseDriver) dedupInputsAgainstHistory(
 }
 
 func (d *ResponseDriver) loadAgent(ctx context.Context) (*identity_models.Agent, error) {
-	agent, err := d.agentRepository.Get(ctx)
+	agent, err := d.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load agent identity: %w", err)
 	}

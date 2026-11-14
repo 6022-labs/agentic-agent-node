@@ -9,6 +9,7 @@ import (
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
 	identity_enums "github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/repositories"
@@ -23,7 +24,7 @@ import (
 
 // PaymentReceivePolicyProvider materializes the receive policy lazily; unlike spend it requires a minted identity.
 type PaymentReceivePolicyProvider struct {
-	agentRepository                   identity_repositories.AgentRepositoryInterface
+	agentResolver                     identity_interfaces.AgentResolverInterface
 	agentAddressRepository            identity_repositories.AgentAddressRepositoryInterface
 	paymentReceivePolicyRepository    repositories.PaymentReceivePolicyRepositoryInterface
 	paymentReceiveRuleRepository      repositories.PaymentReceiveRuleRepositoryInterface
@@ -34,7 +35,7 @@ type PaymentReceivePolicyProvider struct {
 }
 
 func NewPaymentReceivePolicyProvider(
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentAddressRepository identity_repositories.AgentAddressRepositoryInterface,
 	paymentReceivePolicyRepository repositories.PaymentReceivePolicyRepositoryInterface,
 	paymentReceiveRuleRepository repositories.PaymentReceiveRuleRepositoryInterface,
@@ -44,7 +45,7 @@ func NewPaymentReceivePolicyProvider(
 	unitOfWorkFactory runtime_common_interfaces.UnitOfWorkFactoryInterface,
 ) *PaymentReceivePolicyProvider {
 	return &PaymentReceivePolicyProvider{
-		agentRepository:                   agentRepository,
+		agentResolver:                     agentResolver,
 		agentAddressRepository:            agentAddressRepository,
 		paymentReceivePolicyRepository:    paymentReceivePolicyRepository,
 		paymentReceiveRuleRepository:      paymentReceiveRuleRepository,
@@ -58,7 +59,7 @@ func NewPaymentReceivePolicyProvider(
 func (p *PaymentReceivePolicyProvider) Ensure(
 	ctx context.Context,
 ) (*models.PaymentReceivePolicy, *identity_models.Agent, error) {
-	agent, err := p.agentRepository.Get(ctx)
+	agent, err := p.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, nil, errors.NewInternalError("policy_failed", err)
 	}

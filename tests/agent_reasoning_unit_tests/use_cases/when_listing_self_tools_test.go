@@ -8,7 +8,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -21,7 +21,7 @@ type WhenListingSelfToolsTestingSuite struct {
 
 	mockSelfToolRepository *repositories_mocks.MockSelfToolRepositoryInterface
 	mockSelfToolRegistry   *interfaces_mocks.MockSelfToolRegistryInterface
-	mockAgentRepository    *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver      *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenListingSelfToolsBeforeEach(t *testing.T) *WhenListingSelfToolsTestingSuite {
@@ -29,16 +29,16 @@ func WhenListingSelfToolsBeforeEach(t *testing.T) *WhenListingSelfToolsTestingSu
 
 	mockSelfToolRepository := repositories_mocks.NewMockSelfToolRepositoryInterface(mockController)
 	mockSelfToolRegistry := interfaces_mocks.NewMockSelfToolRegistryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
-	sut := use_cases.NewListSelfTools(mockSelfToolRepository, mockSelfToolRegistry, mockAgentRepository)
+	sut := use_cases.NewListSelfTools(mockSelfToolRepository, mockSelfToolRegistry, mockAgentResolver)
 
 	return &WhenListingSelfToolsTestingSuite{
 		sut: sut,
 
 		mockSelfToolRepository: mockSelfToolRepository,
 		mockSelfToolRegistry:   mockSelfToolRegistry,
-		mockAgentRepository:    mockAgentRepository,
+		mockAgentResolver:      mockAgentResolver,
 	}
 }
 
@@ -49,7 +49,7 @@ func TestWhenListingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockSelfToolRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, errors.New("db down"))
@@ -77,7 +77,7 @@ func TestWhenListingSelfTools(t *testing.T) {
 			*model_builders.NewSelfToolBuilder().WithName("run_command").WithEnabled(false).Build(),
 		}
 		initSuite := func(suite *WhenListingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockSelfToolRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return(rows, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListTools().Return([]*models.Tool{
 				{Name: "get_identity", Description: "read own identity"},

@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	reasoning_enums "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
@@ -22,10 +22,10 @@ type AbstractLLMConnectionUseCase struct {
 func NewAbstractLLMConnectionUseCase(
 	llmConnectionRepository repositories.LLMConnectionRepositoryInterface,
 	llmConnectionValidator reasoning_interfaces.LLMConnectionValidatorInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *AbstractLLMConnectionUseCase {
 	return &AbstractLLMConnectionUseCase{
-		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentRepository),
+		AbstractReasoningUseCase: NewAbstractReasoningUseCase(agentResolver),
 		llmConnectionRepository:  llmConnectionRepository,
 		llmConnectionValidator:   llmConnectionValidator,
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -18,9 +18,9 @@ import (
 type WhenDeletingLLMConnectionTestingSuite struct {
 	sut *use_cases.DeleteLLMConnection
 
-	mockRepository      *repositories_mocks.MockLLMConnectionRepositoryInterface
-	mockSecretStorage   *interfaces_mocks.MockLLMSecretStorageInterface
-	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockRepository    *repositories_mocks.MockLLMConnectionRepositoryInterface
+	mockSecretStorage *interfaces_mocks.MockLLMSecretStorageInterface
+	mockAgentResolver *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenDeletingLLMConnectionBeforeEach(t *testing.T) *WhenDeletingLLMConnectionTestingSuite {
@@ -28,16 +28,16 @@ func WhenDeletingLLMConnectionBeforeEach(t *testing.T) *WhenDeletingLLMConnectio
 
 	mockRepository := repositories_mocks.NewMockLLMConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockLLMSecretStorageInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
-	sut := use_cases.NewDeleteLLMConnection(mockRepository, mockSecretStorage, mockAgentRepository)
+	sut := use_cases.NewDeleteLLMConnection(mockRepository, mockSecretStorage, mockAgentResolver)
 
 	return &WhenDeletingLLMConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:      mockRepository,
-		mockSecretStorage:   mockSecretStorage,
-		mockAgentRepository: mockAgentRepository,
+		mockRepository:    mockRepository,
+		mockSecretStorage: mockSecretStorage,
+		mockAgentResolver: mockAgentResolver,
 	}
 }
 
@@ -48,7 +48,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().DeleteByAgentId(gomock.Any(), gomock.Any()).Return(errors.New("db down"))
 		}
 
@@ -70,7 +70,7 @@ func TestWhenDeletingLLMConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingLLMConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			gomock.InOrder(
 				suite.mockRepository.EXPECT().DeleteByAgentId(gomock.Any(), gomock.Any()).Return(nil),
 				suite.mockSecretStorage.EXPECT().Delete(gomock.Any()).Return(nil),

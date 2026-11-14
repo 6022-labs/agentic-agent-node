@@ -7,7 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_payment/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ type WhenDeletingPaymentReceivePolicyTestingSuite struct {
 	sut *use_cases.DeletePaymentReceivePolicy
 
 	mockPaymentReceivePolicyRepository *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
-	mockAgentRepository                *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                  *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenDeletingPaymentReceivePolicyBeforeEach(t *testing.T) *WhenDeletingPaymentReceivePolicyTestingSuite {
@@ -27,13 +27,13 @@ func WhenDeletingPaymentReceivePolicyBeforeEach(t *testing.T) *WhenDeletingPayme
 	mockPaymentReceivePolicyRepository := payment_repositories_mocks.NewMockPaymentReceivePolicyRepositoryInterface(
 		mockController,
 	)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	return &WhenDeletingPaymentReceivePolicyTestingSuite{
-		sut: use_cases.NewDeletePaymentReceivePolicy(mockPaymentReceivePolicyRepository, mockAgentRepository),
+		sut: use_cases.NewDeletePaymentReceivePolicy(mockPaymentReceivePolicyRepository, mockAgentResolver),
 
 		mockPaymentReceivePolicyRepository: mockPaymentReceivePolicyRepository,
-		mockAgentRepository:                mockAgentRepository,
+		mockAgentResolver:                  mockAgentResolver,
 	}
 }
 
@@ -44,7 +44,7 @@ func TestWhenDeletingPaymentReceivePolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentReceivePolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().
+			suite.mockAgentResolver.EXPECT().
 				Get(gomock.Any()).
 				Return(model_builders.NewAgentBuilder().Build(), nil).
 				Times(1)
@@ -71,7 +71,7 @@ func TestWhenDeletingPaymentReceivePolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenDeletingPaymentReceivePolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().
+			suite.mockAgentResolver.EXPECT().
 				Get(gomock.Any()).
 				Return(model_builders.NewAgentBuilder().Build(), nil).
 				Times(1)

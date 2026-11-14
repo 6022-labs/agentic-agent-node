@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
+	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_db"
 	"gorm.io/gorm"
 )
@@ -60,4 +61,20 @@ func (r *AgentRepository) Upsert(ctx context.Context, agent *models.Agent) (*mod
 		return nil, err
 	}
 	return existing, nil
+}
+
+func (r *AgentRepository) UpdateOnChainIdentity(ctx context.Context, agent *models.Agent) error {
+	result := r.client.
+		GetDB(ctx).
+		Model(&models.Agent{}).
+		Where("id = ?", agent.Id).
+		Select("name", "clone_of", "creator", "owner", "images", "attributes", "soul", "updated_at").
+		Updates(agent)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return apperrors.ErrAgentNotInitialized
+	}
+	return nil
 }

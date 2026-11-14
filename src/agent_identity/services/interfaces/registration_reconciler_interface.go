@@ -21,6 +21,9 @@ type RegistrationReconcilerInterface interface {
 		tokenId uint64,
 		mintTxHash *string,
 	) (*models.Agent, *models.AgentRegistrationState, error)
+	// ReconcileIdentity re-reads a minted agent's owner and mutable NFT data from chain into its row.
+	// It is a no-op before mint.
+	ReconcileIdentity(ctx context.Context) error
 	// ReconcileEnsRegistry flips the ENS lifecycle to confirmed and persists it under the agent.
 	ReconcileEnsRegistry(
 		ctx context.Context,

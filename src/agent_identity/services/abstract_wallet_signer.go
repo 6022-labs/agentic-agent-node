@@ -7,29 +7,28 @@ import (
 	"strings"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
-	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // AbstractWalletSigner carries the wallet-key load every signer needs; load is unexported so no port exposes the key.
 type AbstractWalletSigner struct {
-	agentRepository          repositories.AgentRepositoryInterface
+	agentResolver            identity_interfaces.AgentResolverInterface
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface
 }
 
 func NewAbstractWalletSigner(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	walletCredentialsStorage identity_interfaces.WalletCredentialsStorageInterface,
 ) *AbstractWalletSigner {
 	return &AbstractWalletSigner{
-		agentRepository:          agentRepository,
+		agentResolver:            agentResolver,
 		walletCredentialsStorage: walletCredentialsStorage,
 	}
 }
 
 func (s *AbstractWalletSigner) load(ctx context.Context) (*ecdsa.PrivateKey, error) {
-	agent, err := s.agentRepository.Get(ctx)
+	agent, err := s.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("load agent: %w", err)
 	}

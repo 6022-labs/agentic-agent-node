@@ -56,6 +56,20 @@ func (mr *MockAgentRepositoryInterfaceMockRecorder) Get(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).Get), ctx)
 }
 
+// UpdateOnChainIdentity mocks base method.
+func (m *MockAgentRepositoryInterface) UpdateOnChainIdentity(ctx context.Context, agent *models.Agent) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOnChainIdentity", ctx, agent)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateOnChainIdentity indicates an expected call of UpdateOnChainIdentity.
+func (mr *MockAgentRepositoryInterfaceMockRecorder) UpdateOnChainIdentity(ctx, agent any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOnChainIdentity", reflect.TypeOf((*MockAgentRepositoryInterface)(nil).UpdateOnChainIdentity), ctx, agent)
+}
+
 // Upsert mocks base method.
 func (m *MockAgentRepositoryInterface) Upsert(ctx context.Context, agent *models.Agent) (*models.Agent, error) {
 	m.ctrl.T.Helper()

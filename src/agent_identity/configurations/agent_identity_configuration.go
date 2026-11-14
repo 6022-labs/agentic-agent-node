@@ -170,6 +170,13 @@ func AddAgentIdentityConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(
+		services.NewAgentResolver,
+		dig.As(new(identity_interfaces.AgentResolverInterface)),
+	); err != nil {
+		panic(err)
+	}
+
 	// Use Cases
 	useCaseProviders := []any{
 		use_cases.NewAuthorize,

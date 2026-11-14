@@ -18,7 +18,7 @@ type WhenCheckingEnsProvisioningTestingSuite struct {
 	sut *services.EnsPublisher
 
 	mockEnsRegistrar                     *interface_mocks.MockEnsRegistrarInterface
-	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                    *interface_mocks.MockAgentResolverInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 	mockRuntimeRecordsProvider           *interface_mocks.MockRuntimeRecordsProviderInterface
 }
@@ -27,7 +27,7 @@ func WhenCheckingEnsProvisioningBeforeEach(t *testing.T) *WhenCheckingEnsProvisi
 	mockController := gomock.NewController(t)
 
 	mockEnsRegistrar := interface_mocks.NewMockEnsRegistrarInterface(mockController)
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interface_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
 		mockController,
 	)
@@ -36,7 +36,7 @@ func WhenCheckingEnsProvisioningBeforeEach(t *testing.T) *WhenCheckingEnsProvisi
 	sut := services.NewEnsPublisher(
 		zap.NewNop(),
 		mockEnsRegistrar,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockRuntimeRecordsProvider,
 		mockAgentRegistrationStateRepository,
 	)
@@ -44,7 +44,7 @@ func WhenCheckingEnsProvisioningBeforeEach(t *testing.T) *WhenCheckingEnsProvisi
 	return &WhenCheckingEnsProvisioningTestingSuite{
 		sut:                                  sut,
 		mockEnsRegistrar:                     mockEnsRegistrar,
-		mockAgentRepository:                  mockAgentRepository,
+		mockAgentResolver:                    mockAgentResolver,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 		mockRuntimeRecordsProvider:           mockRuntimeRecordsProvider,
 	}
@@ -58,7 +58,7 @@ func TestWhenCheckingEnsProvisioning(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsProvisioningTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should report ErrIdentityNotFound without reading the chain", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestWhenCheckingEnsProvisioning(t *testing.T) {
 
 		initSuite := func(suite *WhenCheckingEnsProvisioningTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(5).WithName("alice").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockEnsRegistrar.EXPECT().
 				Provisioned(gomock.Any(), gomock.Any(), gomock.Any(), "alice").
 				Return(true, nil)

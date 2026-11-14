@@ -4,7 +4,7 @@ import (
 	"context"
 	stderrors "errors"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/repositories"
 	reasoning_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services/interfaces"
@@ -27,10 +27,10 @@ func NewAbstractMCPConnectionUseCase(
 	mcpConnectionRepository repositories.MCPConnectionRepositoryInterface,
 	mcpHeaderAuthSecretStorage reasoning_interfaces.MCPHeaderAuthSecretStorageInterface,
 	mcpRequester reasoning_interfaces.McpRequesterInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *AbstractMCPConnectionUseCase {
 	return &AbstractMCPConnectionUseCase{
-		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentRepository),
+		AbstractReasoningUseCase:   NewAbstractReasoningUseCase(agentResolver),
 		mcpConnectionRepository:    mcpConnectionRepository,
 		mcpHeaderAuthSecretStorage: mcpHeaderAuthSecretStorage,
 		mcpRequester:               mcpRequester,

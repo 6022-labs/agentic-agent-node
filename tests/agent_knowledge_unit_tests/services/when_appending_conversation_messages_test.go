@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services"
 	"github.com/6022-labs/agentic-agent-node/src/runtime_common/utils"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	metrics_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/metrics_mocks/interfaces_mocks"
 	knowledge_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_knowledge_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -24,7 +24,7 @@ type WhenAppendingConversationMessagesTestingSuite struct {
 
 	mockRepository             *knowledge_mocks.MockConversationMessageRepositoryInterface
 	mockConversationRepository *knowledge_mocks.MockConversationRepositoryInterface
-	mockAgentRepository        *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *identity_interfaces_mocks.MockAgentResolverInterface
 	mockEmojiDecoder           *runtime_services_mocks.MockEmojiDecoderInterface
 }
 
@@ -33,7 +33,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 
 	mockRepository := knowledge_mocks.NewMockConversationMessageRepositoryInterface(mockController)
 	mockConversationRepository := knowledge_mocks.NewMockConversationRepositoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	mockKnowledgeMetrics := metrics_mocks.NewMockKnowledgeMetricsInterface(mockController)
 	mockKnowledgeMetrics.EXPECT().RecordConversationStarted(gomock.Any()).AnyTimes()
@@ -44,7 +44,7 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 	sut := services.NewMessageAppender(
 		mockRepository,
 		mockConversationRepository,
-		mockAgentRepository,
+		mockAgentResolver,
 		mockKnowledgeMetrics,
 		mockEmojiDecoder,
 	)
@@ -53,13 +53,13 @@ func WhenAppendingConversationMessagesBeforeEach(t *testing.T) *WhenAppendingCon
 		sut:                        sut,
 		mockRepository:             mockRepository,
 		mockConversationRepository: mockConversationRepository,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 		mockEmojiDecoder:           mockEmojiDecoder,
 	}
 }
 
 func (suite *WhenAppendingConversationMessagesTestingSuite) expectAgentResolutionAndEnsure() {
-	suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+	suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 	suite.mockConversationRepository.EXPECT().Ensure(gomock.Any(), gomock.Any()).Return(false, nil)
 }
 

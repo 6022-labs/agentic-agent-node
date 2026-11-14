@@ -7,7 +7,6 @@ import (
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	interface_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -17,21 +16,21 @@ import (
 type WhenGettingAgentEnsInfoTestingSuite struct {
 	sut *use_cases.GetAgentEnsInfo
 
-	mockAgentRepository        *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver          *interface_mocks.MockAgentResolverInterface
 	mockRuntimeRecordsProvider *interface_mocks.MockRuntimeRecordsProviderInterface
 }
 
 func WhenGettingAgentEnsInfoBeforeEach(t *testing.T) *WhenGettingAgentEnsInfoTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interface_mocks.NewMockAgentResolverInterface(mockController)
 	mockRuntimeRecordsProvider := interface_mocks.NewMockRuntimeRecordsProviderInterface(mockController)
 
-	sut := use_cases.NewGetAgentEnsInfo(mockAgentRepository, mockRuntimeRecordsProvider)
+	sut := use_cases.NewGetAgentEnsInfo(mockAgentResolver, mockRuntimeRecordsProvider)
 
 	return &WhenGettingAgentEnsInfoTestingSuite{
 		sut:                        sut,
-		mockAgentRepository:        mockAgentRepository,
+		mockAgentResolver:          mockAgentResolver,
 		mockRuntimeRecordsProvider: mockRuntimeRecordsProvider,
 	}
 }
@@ -43,7 +42,7 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return a NotFound", func(t *testing.T) {
@@ -64,7 +63,7 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 		}
 
 		t.Run("Should return a Conflict", func(t *testing.T) {
@@ -85,7 +84,7 @@ func TestWhenGettingAgentEnsInfo(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingAgentEnsInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithCollectionTokenId(7).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockRuntimeRecordsProvider.EXPECT().
 				RuntimeRecords().
 				Return([]identity_interfaces.EnsRecord{{Key: "url", Value: "https://agent.example.com"}})

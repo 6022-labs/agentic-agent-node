@@ -15,27 +15,27 @@ import (
 // chain when the agent is minted but ENS is not yet confirmed.
 type CheckAgentEns struct {
 	ensPublisher                     identity_interfaces.EnsPublisherInterface
-	agentRepository                  repositories.AgentRepositoryInterface
+	agentResolver                    identity_interfaces.AgentResolverInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	registrationReconciler           identity_interfaces.RegistrationReconcilerInterface
 }
 
 func NewCheckAgentEns(
 	ensPublisher identity_interfaces.EnsPublisherInterface,
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	registrationReconciler identity_interfaces.RegistrationReconcilerInterface,
 ) *CheckAgentEns {
 	return &CheckAgentEns{
 		ensPublisher:                     ensPublisher,
-		agentRepository:                  agentRepository,
+		agentResolver:                    agentResolver,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		registrationReconciler:           registrationReconciler,
 	}
 }
 
 func (u *CheckAgentEns) Execute(ctx context.Context) (*responses.RegistrationStatusResponse, error) {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, apperrors.NewInternalError("agent_lookup_failed", err)
 	}

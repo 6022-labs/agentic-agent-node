@@ -12,7 +12,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/responses"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -25,10 +25,10 @@ import (
 type WhenDiscoveringMCPServerToolsTestingSuite struct {
 	sut *use_cases.DiscoverMCPServerTools
 
-	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
-	mockMcpRequester    *interfaces_mocks.MockMcpRequesterInterface
-	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockMcpRequester  *interfaces_mocks.MockMcpRequesterInterface
+	mockAgentResolver *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenDiscoveringMCPServerToolsBeforeEach(t *testing.T) *WhenDiscoveringMCPServerToolsTestingSuite {
@@ -37,17 +37,17 @@ func WhenDiscoveringMCPServerToolsBeforeEach(t *testing.T) *WhenDiscoveringMCPSe
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
-	sut := use_cases.NewDiscoverMCPServerTools(mockRepository, mockSecretStorage, mockMcpRequester, mockAgentRepository)
+	sut := use_cases.NewDiscoverMCPServerTools(mockRepository, mockSecretStorage, mockMcpRequester, mockAgentResolver)
 
 	return &WhenDiscoveringMCPServerToolsTestingSuite{
 		sut: sut,
 
-		mockRepository:      mockRepository,
-		mockSecretStorage:   mockSecretStorage,
-		mockMcpRequester:    mockMcpRequester,
-		mockAgentRepository: mockAgentRepository,
+		mockRepository:    mockRepository,
+		mockSecretStorage: mockSecretStorage,
+		mockMcpRequester:  mockMcpRequester,
+		mockAgentResolver: mockAgentResolver,
 	}
 }
 
@@ -76,7 +76,7 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 
 		id := uuid.New()
 		initSuite := func(suite *WhenDiscoveringMCPServerToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(nil, nil)
 		}
 
@@ -215,7 +215,7 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 				WithName("github").
 				WithHeaderAuthKeys([]string{"Authorization"}).
 				Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().
 				GetValue(gomock.Any(), id, "Authorization").
@@ -256,7 +256,7 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 				WithUrl("https://stored.mcp.example").
 				WithHeaderAuthKeys([]string{}).
 				Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockMcpRequester.EXPECT().
 				ListTools(gomock.Any(), gomock.Any()).
@@ -292,7 +292,7 @@ func TestWhenDiscoveringMCPServerTools(t *testing.T) {
 				WithUrl("https://stored.mcp.example").
 				WithHeaderAuthKeys([]string{"Authorization"}).
 				Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().GetById(gomock.Any(), gomock.Any(), id).Return(row, nil)
 			suite.mockSecretStorage.EXPECT().
 				GetValue(gomock.Any(), id, "Authorization").

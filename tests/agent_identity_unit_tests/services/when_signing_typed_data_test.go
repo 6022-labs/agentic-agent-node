@@ -9,7 +9,6 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/models/enums"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/services"
 	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
-	"github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -22,7 +21,7 @@ import (
 type WhenSigningTypedDataTestingSuite struct {
 	sut *services.TypedDataSigner
 
-	mockAgentRepository          *repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver            *interfaces_mocks.MockAgentResolverInterface
 	mockWalletCredentialsStorage *interfaces_mocks.MockWalletCredentialsStorageInterface
 	walletPrivateKeyHex          string
 }
@@ -30,7 +29,7 @@ type WhenSigningTypedDataTestingSuite struct {
 func WhenSigningTypedDataBeforeEach(t *testing.T) *WhenSigningTypedDataTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockWalletCredentialsStorage := interfaces_mocks.NewMockWalletCredentialsStorageInterface(mockController)
 
 	key, err := crypto.GenerateKey()
@@ -38,10 +37,10 @@ func WhenSigningTypedDataBeforeEach(t *testing.T) *WhenSigningTypedDataTestingSu
 
 	return &WhenSigningTypedDataTestingSuite{
 		sut: services.NewTypedDataSigner(
-			mockAgentRepository,
+			mockAgentResolver,
 			mockWalletCredentialsStorage,
 		),
-		mockAgentRepository:          mockAgentRepository,
+		mockAgentResolver:            mockAgentResolver,
 		mockWalletCredentialsStorage: mockWalletCredentialsStorage,
 		walletPrivateKeyHex:          hex.EncodeToString(crypto.FromECDSA(key)),
 	}
@@ -50,7 +49,7 @@ func WhenSigningTypedDataBeforeEach(t *testing.T) *WhenSigningTypedDataTestingSu
 // expectWallet makes the Vault-backed lookup answer with the suite's generated key.
 func (s *WhenSigningTypedDataTestingSuite) expectWallet() {
 	agent := model_builders.NewAgentBuilder().Build()
-	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).AnyTimes()
+	s.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil).AnyTimes()
 	s.mockWalletCredentialsStorage.EXPECT().
 		GetForId(gomock.Any(), agent.Id.String(), enums.AddressTypeEvm).
 		Return(&identity_interfaces.WalletCredentials{PrivateKeyHex: s.walletPrivateKeyHex}, true, nil).
@@ -133,7 +132,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 
 			suite := WhenSigningTypedDataBeforeEach(t)
 			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockWalletCredentialsStorage.EXPECT().
 				GetForId(gomock.Any(), agent.Id.String(), enums.AddressTypeEvm).
 				Return(nil, false, nil)
@@ -152,7 +151,7 @@ func TestWhenSigningTypedData(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenSigningTypedDataBeforeEach(t)
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, errors.New("db down"))
 
 			address, err := suite.sut.WalletAddress(ctx)
 

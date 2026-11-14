@@ -20,7 +20,7 @@ import (
 type WhenGettingAgentMintInfoTestingSuite struct {
 	sut *use_cases.GetAgentMintInfo
 
-	mockAgentRepository          *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver            *interface_mocks.MockAgentResolverInterface
 	mockAgentAddressRepository   *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentCollectionRequester *interface_mocks.MockAgentCollectionRequesterInterface
 }
@@ -28,15 +28,15 @@ type WhenGettingAgentMintInfoTestingSuite struct {
 func WhenGettingAgentMintInfoBeforeEach(t *testing.T) *WhenGettingAgentMintInfoTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := interface_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentCollectionRequester := interface_mocks.NewMockAgentCollectionRequesterInterface(mockController)
 
-	sut := use_cases.NewGetAgentMintInfo(mockAgentRepository, mockAgentAddressRepository, mockAgentCollectionRequester)
+	sut := use_cases.NewGetAgentMintInfo(mockAgentResolver, mockAgentAddressRepository, mockAgentCollectionRequester)
 
 	return &WhenGettingAgentMintInfoTestingSuite{
 		sut:                          sut,
-		mockAgentRepository:          mockAgentRepository,
+		mockAgentResolver:            mockAgentResolver,
 		mockAgentAddressRepository:   mockAgentAddressRepository,
 		mockAgentCollectionRequester: mockAgentCollectionRequester,
 	}
@@ -51,7 +51,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return a NotFound", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		rpcErr := errors.New("rpc down")
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
@@ -105,7 +105,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 		rpcErr := errors.New("rpc down")
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
@@ -139,7 +139,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).WithName("alice").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)
@@ -168,7 +168,7 @@ func TestWhenGettingAgentMintInfo(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingAgentMintInfoTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithOwner(owner).Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentAddressRepository.EXPECT().
 				GetAllByAgentId(gomock.Any(), gomock.Any()).
 				Return(map[enums.AddressType]string{enums.AddressTypeEvm: "0xabc"}, nil)

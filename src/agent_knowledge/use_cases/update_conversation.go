@@ -4,7 +4,7 @@ import (
 	"context"
 	stderrors "errors"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
@@ -16,18 +16,18 @@ import (
 type UpdateConversation struct {
 	conversationRepository repositories.ConversationRepositoryInterface
 	conversationLabeler    interfaces.ConversationLabelerInterface
-	agentRepository        identity_repositories.AgentRepositoryInterface
+	agentResolver          identity_interfaces.AgentResolverInterface
 }
 
 func NewUpdateConversation(
 	conversationRepository repositories.ConversationRepositoryInterface,
 	conversationLabeler interfaces.ConversationLabelerInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *UpdateConversation {
 	return &UpdateConversation{
 		conversationRepository: conversationRepository,
 		conversationLabeler:    conversationLabeler,
-		agentRepository:        agentRepository,
+		agentResolver:          agentResolver,
 	}
 }
 
@@ -44,7 +44,7 @@ func (u *UpdateConversation) Execute(
 		return nil, err
 	}
 
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("update_failed", err)
 	}

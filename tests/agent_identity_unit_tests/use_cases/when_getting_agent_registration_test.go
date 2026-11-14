@@ -9,6 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	repository_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -17,7 +18,7 @@ import (
 type WhenGettingAgentRegistrationTestingSuite struct {
 	sut *use_cases.GetAgentRegistration
 
-	mockAgentRepository                  *repository_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                    *identity_interfaces_mocks.MockAgentResolverInterface
 	mockAgentAddressRepository           *repository_mocks.MockAgentAddressRepositoryInterface
 	mockAgentRegistrationStateRepository *repository_mocks.MockAgentRegistrationStateRepositoryInterface
 }
@@ -25,21 +26,21 @@ type WhenGettingAgentRegistrationTestingSuite struct {
 func WhenGettingAgentRegistrationBeforeEach(t *testing.T) *WhenGettingAgentRegistrationTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := repository_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentAddressRepository := repository_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockAgentRegistrationStateRepository := repository_mocks.NewMockAgentRegistrationStateRepositoryInterface(
 		mockController,
 	)
 
 	sut := use_cases.NewGetAgentRegistration(
-		mockAgentRepository,
+		mockAgentResolver,
 		mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository,
 	)
 
 	return &WhenGettingAgentRegistrationTestingSuite{
 		sut:                                  sut,
-		mockAgentRepository:                  mockAgentRepository,
+		mockAgentResolver:                    mockAgentResolver,
 		mockAgentAddressRepository:           mockAgentAddressRepository,
 		mockAgentRegistrationStateRepository: mockAgentRegistrationStateRepository,
 	}
@@ -52,7 +53,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should return a NotFound", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			agent := model_builders.NewAgentBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, nil)
@@ -98,7 +99,7 @@ func TestWhenGettingAgentRegistration(t *testing.T) {
 		initSuite := func(suite *WhenGettingAgentRegistrationTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithName("alice").Build()
 			state := model_builders.NewAgentRegistrationStateBuilder().Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(state, nil)

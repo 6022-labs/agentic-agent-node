@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	identity_models "github.com/6022-labs/agentic-agent-node/src/agent_identity/models"
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	metrics_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_knowledge/metrics/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
@@ -16,24 +16,24 @@ import (
 // ConversationResolver keeps sessions private to their caller; the agent owner resumes any.
 type ConversationResolver struct {
 	conversationRepository repositories.ConversationRepositoryInterface
-	agentRepository        identity_repositories.AgentRepositoryInterface
+	agentResolver          identity_interfaces.AgentResolverInterface
 	knowledgeMetrics       metrics_interfaces.KnowledgeMetricsInterface
 }
 
 func NewConversationResolver(
 	conversationRepository repositories.ConversationRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	knowledgeMetrics metrics_interfaces.KnowledgeMetricsInterface,
 ) *ConversationResolver {
 	return &ConversationResolver{
 		conversationRepository: conversationRepository,
-		agentRepository:        agentRepository,
+		agentResolver:          agentResolver,
 		knowledgeMetrics:       knowledgeMetrics,
 	}
 }
 
 func (r *ConversationResolver) Resolve(ctx context.Context, requestedId string, callerId string) (string, error) {
-	agent, err := r.agentRepository.Get(ctx)
+	agent, err := r.agentResolver.Get(ctx)
 	if err != nil {
 		return "", err
 	}

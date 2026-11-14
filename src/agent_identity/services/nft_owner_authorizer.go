@@ -10,25 +10,25 @@ import (
 )
 
 type NftOwnerAuthorizer struct {
-	agentRepository     repositories.AgentRepositoryInterface
+	agentResolver       identity_interfaces.AgentResolverInterface
 	stateRepository     repositories.AgentRegistrationStateRepositoryInterface
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface
 }
 
 func NewNftOwnerAuthorizer(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	stateRepository repositories.AgentRegistrationStateRepositoryInterface,
 	collectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *NftOwnerAuthorizer {
 	return &NftOwnerAuthorizer{
-		agentRepository:     agentRepository,
+		agentResolver:       agentResolver,
 		stateRepository:     stateRepository,
 		collectionRequester: collectionRequester,
 	}
 }
 
 func (a *NftOwnerAuthorizer) IsAuthorized(ctx context.Context, address common.Address) (bool, error) {
-	agent, err := a.agentRepository.Get(ctx)
+	agent, err := a.agentResolver.Get(ctx)
 	if err != nil {
 		return false, err
 	}

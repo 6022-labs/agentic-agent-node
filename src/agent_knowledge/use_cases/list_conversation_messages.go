@@ -3,7 +3,7 @@ package use_cases
 import (
 	"context"
 
-	identity_repositories "github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/repositories"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/requests"
 	"github.com/6022-labs/agentic-agent-node/src/agent_knowledge/use_cases/responses"
@@ -14,18 +14,18 @@ import (
 type ListConversationMessages struct {
 	conversationRepository        repositories.ConversationRepositoryInterface
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface
-	agentRepository               identity_repositories.AgentRepositoryInterface
+	agentResolver                 identity_interfaces.AgentResolverInterface
 }
 
 func NewListConversationMessages(
 	conversationRepository repositories.ConversationRepositoryInterface,
 	conversationMessageRepository repositories.ConversationMessageRepositoryInterface,
-	agentRepository identity_repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 ) *ListConversationMessages {
 	return &ListConversationMessages{
 		conversationRepository:        conversationRepository,
 		conversationMessageRepository: conversationMessageRepository,
-		agentRepository:               agentRepository,
+		agentResolver:                 agentResolver,
 	}
 }
 
@@ -42,7 +42,7 @@ func (u *ListConversationMessages) Execute(
 		return nil, err
 	}
 
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("list_failed", err)
 	}

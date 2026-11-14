@@ -7,7 +7,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/services"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -21,7 +21,7 @@ type WhenReconcilingSelfToolsTestingSuite struct {
 
 	mockSelfToolRegistry   *interfaces_mocks.MockSelfToolRegistryInterface
 	mockSelfToolRepository *repositories_mocks.MockSelfToolRepositoryInterface
-	mockAgentRepository    *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver      *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenReconcilingSelfToolsBeforeEach(t *testing.T) *WhenReconcilingSelfToolsTestingSuite {
@@ -29,13 +29,13 @@ func WhenReconcilingSelfToolsBeforeEach(t *testing.T) *WhenReconcilingSelfToolsT
 
 	mockSelfToolRegistry := interfaces_mocks.NewMockSelfToolRegistryInterface(mockController)
 	mockSelfToolRepository := repositories_mocks.NewMockSelfToolRepositoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
 	sut := services.NewSelfToolReconciler(
 		zap.NewNop(),
 		mockSelfToolRegistry,
 		mockSelfToolRepository,
-		mockAgentRepository,
+		mockAgentResolver,
 	)
 
 	return &WhenReconcilingSelfToolsTestingSuite{
@@ -43,7 +43,7 @@ func WhenReconcilingSelfToolsBeforeEach(t *testing.T) *WhenReconcilingSelfToolsT
 
 		mockSelfToolRegistry:   mockSelfToolRegistry,
 		mockSelfToolRepository: mockSelfToolRepository,
-		mockAgentRepository:    mockAgentRepository,
+		mockAgentResolver:      mockAgentResolver,
 	}
 }
 
@@ -57,7 +57,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(nil, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(nil, nil)
 		}
 
 		t.Run("Should fail without touching the repository", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
 			suite.mockSelfToolRepository.EXPECT().
 				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
@@ -99,7 +99,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
 			suite.mockSelfToolRepository.EXPECT().
 				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
@@ -125,7 +125,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
 			suite.mockSelfToolRepository.EXPECT().
 				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).
@@ -155,7 +155,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		created := map[string]bool{}
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(defaults)
 			suite.mockSelfToolRepository.EXPECT().
 				ListExistingNames(gomock.Any(), agent.Id, gomock.InAnyOrder([]string{"get_identity", "run_command"})).
@@ -188,7 +188,7 @@ func TestWhenReconcilingSelfTools(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenReconcilingSelfToolsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil)
 			suite.mockSelfToolRegistry.EXPECT().ListDefaultEnabled().Return(map[string]bool{"get_identity": true})
 			suite.mockSelfToolRepository.EXPECT().
 				ListExistingNames(gomock.Any(), agent.Id, []string{"get_identity"}).

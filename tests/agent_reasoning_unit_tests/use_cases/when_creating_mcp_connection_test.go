@@ -9,7 +9,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases/requests"
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
@@ -21,10 +21,10 @@ import (
 type WhenCreatingMCPConnectionTestingSuite struct {
 	sut *use_cases.CreateMCPConnection
 
-	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockSecretStorage   *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
-	mockMcpRequester    *interfaces_mocks.MockMcpRequesterInterface
-	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockSecretStorage *interfaces_mocks.MockMCPHeaderAuthSecretStorageInterface
+	mockMcpRequester  *interfaces_mocks.MockMcpRequesterInterface
+	mockAgentResolver *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectionTestingSuite {
@@ -33,17 +33,17 @@ func WhenCreatingMCPConnectionBeforeEach(t *testing.T) *WhenCreatingMCPConnectio
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
 	mockSecretStorage := interfaces_mocks.NewMockMCPHeaderAuthSecretStorageInterface(mockController)
 	mockMcpRequester := interfaces_mocks.NewMockMcpRequesterInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
-	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage, mockMcpRequester, mockAgentRepository)
+	sut := use_cases.NewCreateMCPConnection(mockRepository, mockSecretStorage, mockMcpRequester, mockAgentResolver)
 
 	return &WhenCreatingMCPConnectionTestingSuite{
 		sut: sut,
 
-		mockRepository:      mockRepository,
-		mockSecretStorage:   mockSecretStorage,
-		mockMcpRequester:    mockMcpRequester,
-		mockAgentRepository: mockAgentRepository,
+		mockRepository:    mockRepository,
+		mockSecretStorage: mockSecretStorage,
+		mockMcpRequester:  mockMcpRequester,
+		mockAgentResolver: mockAgentResolver,
 	}
 }
 
@@ -83,7 +83,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
 			existing := model_builders.NewMCPConnectionBuilder().WithName("github").Build()
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return([]models.MCPConnection{*existing}, nil)
@@ -106,7 +106,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return([]models.MCPConnection{}, nil)
@@ -134,7 +134,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return([]models.MCPConnection{}, nil)
@@ -165,7 +165,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 
 		generatedId := uuid.New()
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return([]models.MCPConnection{}, nil)
@@ -232,7 +232,7 @@ func TestWhenCreatingMCPConnection(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenCreatingMCPConnectionTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().
 				ListByAgentId(gomock.Any(), gomock.Any()).
 				Return([]models.MCPConnection{}, nil)

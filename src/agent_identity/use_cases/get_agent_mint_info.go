@@ -13,25 +13,25 @@ import (
 
 // GetAgentMintInfo assembles the mint() calldata + moderator state so the connected wallet can submit the tx itself.
 type GetAgentMintInfo struct {
-	agentRepository          repositories.AgentRepositoryInterface
+	agentResolver            identity_interfaces.AgentResolverInterface
 	agentAddressRepository   repositories.AgentAddressRepositoryInterface
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface
 }
 
 func NewGetAgentMintInfo(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentAddressRepository repositories.AgentAddressRepositoryInterface,
 	agentCollectionRequester identity_interfaces.AgentCollectionRequesterInterface,
 ) *GetAgentMintInfo {
 	return &GetAgentMintInfo{
-		agentRepository:          agentRepository,
+		agentResolver:            agentResolver,
 		agentAddressRepository:   agentAddressRepository,
 		agentCollectionRequester: agentCollectionRequester,
 	}
 }
 
 func (u *GetAgentMintInfo) Execute(ctx context.Context) (*responses.MintInfoResponse, error) {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("agent_lookup_failed", err)
 	}

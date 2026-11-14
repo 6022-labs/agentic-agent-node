@@ -6,7 +6,7 @@ import (
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/models"
 	"github.com/6022-labs/agentic-agent-node/src/agent_reasoning/use_cases"
-	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_reasoning_mocks/repositories_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	"github.com/stretchr/testify/assert"
@@ -16,23 +16,23 @@ import (
 type WhenListingMCPConnectionsTestingSuite struct {
 	sut *use_cases.ListMCPConnections
 
-	mockRepository      *repositories_mocks.MockMCPConnectionRepositoryInterface
-	mockAgentRepository *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockRepository    *repositories_mocks.MockMCPConnectionRepositoryInterface
+	mockAgentResolver *identity_interfaces_mocks.MockAgentResolverInterface
 }
 
 func WhenListingMCPConnectionsBeforeEach(t *testing.T) *WhenListingMCPConnectionsTestingSuite {
 	mockController := gomock.NewController(t)
 
 	mockRepository := repositories_mocks.NewMockMCPConnectionRepositoryInterface(mockController)
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 
-	sut := use_cases.NewListMCPConnections(mockRepository, mockAgentRepository)
+	sut := use_cases.NewListMCPConnections(mockRepository, mockAgentResolver)
 
 	return &WhenListingMCPConnectionsTestingSuite{
 		sut: sut,
 
-		mockRepository:      mockRepository,
-		mockAgentRepository: mockAgentRepository,
+		mockRepository:    mockRepository,
+		mockAgentResolver: mockAgentResolver,
 	}
 }
 
@@ -47,7 +47,7 @@ func TestWhenListingMCPConnections(t *testing.T) {
 			*model_builders.NewMCPConnectionBuilder().WithName("beta").Build(),
 		}
 		initSuite := func(suite *WhenListingMCPConnectionsTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
+			suite.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(model_builders.NewAgentBuilder().Build(), nil)
 			suite.mockRepository.EXPECT().ListByAgentId(gomock.Any(), gomock.Any()).Return(stored, nil)
 		}
 

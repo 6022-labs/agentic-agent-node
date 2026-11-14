@@ -19,7 +19,7 @@ import (
 type EnsPublisher struct {
 	logger                           *zap.Logger
 	ensRegistrar                     identity_interfaces.EnsRegistrarInterface
-	agentRepository                  repositories.AgentRepositoryInterface
+	agentResolver                    identity_interfaces.AgentResolverInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 	runtimeRecordsProvider           identity_interfaces.RuntimeRecordsProviderInterface
 }
@@ -27,21 +27,21 @@ type EnsPublisher struct {
 func NewEnsPublisher(
 	logger *zap.Logger,
 	ensRegistrar identity_interfaces.EnsRegistrarInterface,
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	runtimeRecordsProvider identity_interfaces.RuntimeRecordsProviderInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *EnsPublisher {
 	return &EnsPublisher{
 		logger:                           logger,
 		ensRegistrar:                     ensRegistrar,
-		agentRepository:                  agentRepository,
+		agentResolver:                    agentResolver,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 		runtimeRecordsProvider:           runtimeRecordsProvider,
 	}
 }
 
 func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
-	agent, err := s.agentRepository.Get(ctx)
+	agent, err := s.agentResolver.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("load agent: %w", err)
 	}
@@ -93,7 +93,7 @@ func (s *EnsPublisher) PublishRuntimeRecords(ctx context.Context) error {
 }
 
 func (s *EnsPublisher) IsProvisioned(ctx context.Context) (bool, error) {
-	agent, err := s.agentRepository.Get(ctx)
+	agent, err := s.agentResolver.Get(ctx)
 	if err != nil {
 		return false, fmt.Errorf("load agent: %w", err)
 	}

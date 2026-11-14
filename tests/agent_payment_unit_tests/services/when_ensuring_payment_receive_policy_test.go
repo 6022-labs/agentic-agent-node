@@ -15,6 +15,7 @@ import (
 	apperrors "github.com/6022-labs/agentic-agent-node/src/common/errors"
 	runtime_common_settings "github.com/6022-labs/agentic-agent-node/src/runtime_common/settings"
 	identity_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/repositories_mocks"
+	identity_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_identity_mocks/services_mocks/interfaces_mocks"
 	payment_repositories_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/repositories_mocks"
 	payment_interfaces_mocks "github.com/6022-labs/agentic-agent-node/tests/agent_payment_mocks/services_mocks/interfaces_mocks"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
@@ -36,7 +37,7 @@ var (
 type WhenEnsuringPaymentReceivePolicyTestingSuite struct {
 	sut *services.PaymentReceivePolicyProvider
 
-	mockAgentRepository                   *identity_repositories_mocks.MockAgentRepositoryInterface
+	mockAgentResolver                     *identity_interfaces_mocks.MockAgentResolverInterface
 	mockAgentAddressRepository            *identity_repositories_mocks.MockAgentAddressRepositoryInterface
 	mockPaymentReceivePolicyRepository    *payment_repositories_mocks.MockPaymentReceivePolicyRepositoryInterface
 	mockPaymentReceiveRuleRepository      *payment_repositories_mocks.MockPaymentReceiveRuleRepositoryInterface
@@ -52,7 +53,7 @@ type receiveSeedUnitOfWorkContextKey struct{}
 func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPaymentReceivePolicyTestingSuite {
 	mockController := gomock.NewController(t)
 
-	mockAgentRepository := identity_repositories_mocks.NewMockAgentRepositoryInterface(mockController)
+	mockAgentResolver := identity_interfaces_mocks.NewMockAgentResolverInterface(mockController)
 	mockAgentAddressRepository := identity_repositories_mocks.NewMockAgentAddressRepositoryInterface(mockController)
 	mockPaymentReceivePolicyRepository := payment_repositories_mocks.NewMockPaymentReceivePolicyRepositoryInterface(
 		mockController,
@@ -79,7 +80,7 @@ func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPayme
 
 	return &WhenEnsuringPaymentReceivePolicyTestingSuite{
 		sut: services.NewPaymentReceivePolicyProvider(
-			mockAgentRepository,
+			mockAgentResolver,
 			mockAgentAddressRepository,
 			mockPaymentReceivePolicyRepository,
 			mockPaymentReceiveRuleRepository,
@@ -89,7 +90,7 @@ func WhenEnsuringPaymentReceivePolicyBeforeEach(t *testing.T) *WhenEnsuringPayme
 			mockUnitOfWorkFactory,
 		),
 
-		mockAgentRepository:                   mockAgentRepository,
+		mockAgentResolver:                     mockAgentResolver,
 		mockAgentAddressRepository:            mockAgentAddressRepository,
 		mockPaymentReceivePolicyRepository:    mockPaymentReceivePolicyRepository,
 		mockPaymentReceiveRuleRepository:      mockPaymentReceiveRuleRepository,
@@ -111,7 +112,7 @@ func (s *WhenEnsuringPaymentReceivePolicyTestingSuite) expectWallet(address stri
 
 // expectNoPolicy stubs an agent with no policy yet, read again after a failed creation.
 func (s *WhenEnsuringPaymentReceivePolicyTestingSuite) expectNoPolicy(agent *identity_models.Agent, reads int) {
-	s.mockAgentRepository.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
+	s.mockAgentResolver.EXPECT().Get(gomock.Any()).Return(agent, nil).Times(1)
 	s.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(gomock.Any(), agent.Id).Return(nil, nil).Times(reads)
 }
 
@@ -124,7 +125,7 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(nil, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(nil, nil).Times(1)
 		}
 
 		t.Run("Should fail rather than create an orphan policy", func(t *testing.T) {
@@ -146,7 +147,7 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 
 		initSuite := func(suite *WhenEnsuringPaymentReceivePolicyTestingSuite) {
 			agent := model_builders.NewAgentBuilder().WithoutCollectionTokenId().Build()
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 		}
 
 		// The seed prices access to the agent's token, so there is nothing to seed before mint.
@@ -172,7 +173,7 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 			existing := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentReceivePolicyRepository.EXPECT().
 				GetByAgentId(ctx, agent.Id).
 				Return(existing, nil).
@@ -251,7 +252,7 @@ func TestWhenEnsuringPaymentReceivePolicy(t *testing.T) {
 			agent := model_builders.NewAgentBuilder().Build()
 			winner := model_builders.NewPaymentReceivePolicyBuilder().WithAgentId(agent.Id).Build()
 
-			suite.mockAgentRepository.EXPECT().Get(ctx).Return(agent, nil).Times(1)
+			suite.mockAgentResolver.EXPECT().Get(ctx).Return(agent, nil).Times(1)
 			suite.mockPaymentReceivePolicyRepository.EXPECT().GetByAgentId(ctx, agent.Id).Return(nil, nil).Times(1)
 			suite.expectWallet(receiveSeedWallet)
 			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)

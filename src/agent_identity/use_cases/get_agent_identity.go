@@ -4,28 +4,29 @@ import (
 	"context"
 
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/repositories"
+	identity_interfaces "github.com/6022-labs/agentic-agent-node/src/agent_identity/services/interfaces"
 	"github.com/6022-labs/agentic-agent-node/src/agent_identity/use_cases/responses"
 	"github.com/6022-labs/agentic-agent-node/src/common/errors"
 	"github.com/samber/lo"
 )
 
 type GetAgentIdentity struct {
-	agentRepository                  repositories.AgentRepositoryInterface
+	agentResolver                    identity_interfaces.AgentResolverInterface
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface
 }
 
 func NewGetAgentIdentity(
-	agentRepository repositories.AgentRepositoryInterface,
+	agentResolver identity_interfaces.AgentResolverInterface,
 	agentRegistrationStateRepository repositories.AgentRegistrationStateRepositoryInterface,
 ) *GetAgentIdentity {
 	return &GetAgentIdentity{
-		agentRepository:                  agentRepository,
+		agentResolver:                    agentResolver,
 		agentRegistrationStateRepository: agentRegistrationStateRepository,
 	}
 }
 
 func (u *GetAgentIdentity) Execute(ctx context.Context) (*responses.GetAgentIdentityResponse, error) {
-	agent, err := u.agentRepository.Get(ctx)
+	agent, err := u.agentResolver.Get(ctx)
 	if err != nil {
 		return nil, errors.NewInternalError("identity_lookup_failed", err)
 	}
