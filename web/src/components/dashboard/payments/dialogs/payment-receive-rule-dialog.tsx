@@ -38,6 +38,7 @@ export default function PaymentReceiveRuleDialog({
   onSave,
 }: Props) {
   const [open, setOpen] = React.useState(false)
+  const [formKey, setFormKey] = React.useState(0)
   const [saving, setSaving] = React.useState(false)
   const [values, setValues] =
     React.useState<PaymentReceiveRuleFormSchemaType | null>(null)
@@ -61,7 +62,16 @@ export default function PaymentReceiveRuleDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setValues(null)
+          setFormKey((key) => key + 1)
+        }
+        setOpen(next)
+      }}
+    >
       <DialogTrigger asChild>
         {editing ? (
           <Button
@@ -89,15 +99,14 @@ export default function PaymentReceiveRuleDialog({
         </DialogHeader>
         {/* Remount the form each time the dialog opens so an edited rule's
             values are re-derived fresh. */}
-        {open ? (
-          <PaymentReceiveRuleForm
-            agentWalletAddress={agentWalletAddress}
-            initialRule={initialRule}
-            tokenLookup={tokenLookup}
-            onValueChange={setValues}
-            onFormComplete={onFormComplete}
-          />
-        ) : null}
+        <PaymentReceiveRuleForm
+          key={formKey}
+          agentWalletAddress={agentWalletAddress}
+          initialRule={initialRule}
+          tokenLookup={tokenLookup}
+          onValueChange={setValues}
+          onFormComplete={onFormComplete}
+        />
         <DialogFooter>
           <Button
             type="submit"

@@ -312,7 +312,7 @@ export default function PaymentReceiveRuleForm({
                   </p>
                 ) : null}
                 {tokenLookup.status === "not-found" ? (
-                  <p className="flex items-center gap-1 text-sm text-destructive">
+                  <p className="flex items-center gap-1 text-sm text-destructive dark:text-red-400">
                     <CircleX className="size-3.5" />
                     No ERC-20 token answers at this address on this network.
                   </p>
@@ -414,7 +414,7 @@ export default function PaymentReceiveRuleForm({
                       onChange={field.onChange}
                     />
                     {patternsError(index) ? (
-                      <p className="text-sm text-destructive">
+                      <p className="text-sm text-destructive dark:text-red-400">
                         {patternsError(index)}
                       </p>
                     ) : null}
@@ -433,7 +433,9 @@ export default function PaymentReceiveRuleForm({
             Add price
           </Button>
           {pricesError ? (
-            <p className="text-sm text-destructive">{pricesError}</p>
+            <p className="text-sm text-destructive dark:text-red-400">
+              {pricesError}
+            </p>
           ) : null}
         </div>
       </form>

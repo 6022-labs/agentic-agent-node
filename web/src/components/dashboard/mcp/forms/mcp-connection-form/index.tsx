@@ -234,7 +234,7 @@ export default function McpConnectionForm({
           </Button>
           {form.formState.errors.headerAuth?.root?.message ||
           form.formState.errors.headerAuth?.message ? (
-            <p className="text-sm text-destructive">
+            <p className="text-sm text-destructive dark:text-red-400">
               {form.formState.errors.headerAuth.root?.message ??
                 form.formState.errors.headerAuth.message}
             </p>

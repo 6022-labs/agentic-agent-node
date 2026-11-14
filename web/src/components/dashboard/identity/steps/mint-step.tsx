@@ -114,7 +114,7 @@ export default function MintStep({ draft, onAdvance }: Props) {
   return (
     <div className="space-y-4">
       {mintFailed ? (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive dark:text-red-400">
           The last mint attempt failed. You can try again below.
         </div>
       ) : null}

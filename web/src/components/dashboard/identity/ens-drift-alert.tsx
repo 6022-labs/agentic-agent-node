@@ -71,7 +71,11 @@ export default function EnsDriftAlert() {
           onClick={republish}
           disabled={publishing}
         >
-          <Send className={publishing ? "animate-pulse" : ""} />
+          <Send
+            className={
+              publishing ? "animate-pulse motion-reduce:animate-none" : ""
+            }
+          />
           {publishing ? "Republishing…" : "Republish"}
         </Button>
       </div>
