@@ -16,7 +16,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var mariadbContainer *MariaDBContainerBuilder
+var (
+	mariadbContainer   *MariaDBContainerBuilder
+	mariadbContainerMu sync.Mutex
+)
 
 type MariaDBContainerBuilder struct {
 	container       testcontainers.Container
@@ -33,6 +36,9 @@ type MariaDBContainerBuilder struct {
 }
 
 func GetMariaDBContainerBuilder() *MariaDBContainerBuilder {
+	mariadbContainerMu.Lock()
+	defer mariadbContainerMu.Unlock()
+
 	if mariadbContainer == nil {
 		mariadbContainer = &MariaDBContainerBuilder{}
 	}
@@ -124,7 +130,9 @@ func (b *MariaDBContainerBuilder) stop() {
 	}
 	b.tlsContainerMu.Unlock()
 
+	mariadbContainerMu.Lock()
 	mariadbContainer = nil
+	mariadbContainerMu.Unlock()
 }
 
 func (b *MariaDBContainerBuilder) Create() (string, string) {

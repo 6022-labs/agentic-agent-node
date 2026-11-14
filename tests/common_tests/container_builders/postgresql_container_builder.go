@@ -16,7 +16,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var postgresContainer *PostgresContainerBuilder
+var (
+	postgresContainer   *PostgresContainerBuilder
+	postgresContainerMu sync.Mutex
+)
 
 type PostgresContainerBuilder struct {
 	container       testcontainers.Container
@@ -33,6 +36,9 @@ type PostgresContainerBuilder struct {
 }
 
 func GetPostgresContainerBuilder() *PostgresContainerBuilder {
+	postgresContainerMu.Lock()
+	defer postgresContainerMu.Unlock()
+
 	if postgresContainer == nil {
 		postgresContainer = &PostgresContainerBuilder{}
 	}
@@ -129,7 +135,9 @@ func (b *PostgresContainerBuilder) stop() {
 	}
 	b.tlsContainerMu.Unlock()
 
+	postgresContainerMu.Lock()
 	postgresContainer = nil
+	postgresContainerMu.Unlock()
 }
 
 // Create returns (dbName, connectionString) for a scratch DB in the shared container, so tests run in parallel.

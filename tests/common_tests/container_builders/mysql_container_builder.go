@@ -16,7 +16,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var mysqlContainer *MySQLContainerBuilder
+var (
+	mysqlContainer   *MySQLContainerBuilder
+	mysqlContainerMu sync.Mutex
+)
 
 type MySQLContainerBuilder struct {
 	container       testcontainers.Container
@@ -33,6 +36,9 @@ type MySQLContainerBuilder struct {
 }
 
 func GetMySQLContainerBuilder() *MySQLContainerBuilder {
+	mysqlContainerMu.Lock()
+	defer mysqlContainerMu.Unlock()
+
 	if mysqlContainer == nil {
 		mysqlContainer = &MySQLContainerBuilder{}
 	}
@@ -124,7 +130,9 @@ func (b *MySQLContainerBuilder) stop() {
 	}
 	b.tlsContainerMu.Unlock()
 
+	mysqlContainerMu.Lock()
 	mysqlContainer = nil
+	mysqlContainerMu.Unlock()
 }
 
 func (b *MySQLContainerBuilder) Create() (string, string) {

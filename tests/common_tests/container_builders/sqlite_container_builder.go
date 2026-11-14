@@ -9,7 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-var sqliteBuilder *SqliteContainerBuilder
+var (
+	sqliteBuilder   *SqliteContainerBuilder
+	sqliteBuilderMu sync.Mutex
+)
 
 // SqliteContainerBuilder needs no container: each scratch DB is a temp file.
 type SqliteContainerBuilder struct {
@@ -20,6 +23,9 @@ type SqliteContainerBuilder struct {
 }
 
 func GetSqliteContainerBuilder() *SqliteContainerBuilder {
+	sqliteBuilderMu.Lock()
+	defer sqliteBuilderMu.Unlock()
+
 	if sqliteBuilder == nil {
 		sqliteBuilder = &SqliteContainerBuilder{files: map[string]string{}}
 	}
