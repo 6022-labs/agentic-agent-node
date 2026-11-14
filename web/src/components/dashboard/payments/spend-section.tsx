@@ -392,7 +392,7 @@ export default function PaymentSpendPolicySection() {
           <>
             {unrestricted ? (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive dark:text-red-400" />
                 <p className="text-muted-foreground">
                   Anyone can be paid any amount of a token. Narrow it first.
                 </p>
@@ -644,7 +644,7 @@ function PayeesEditor({
       </div>
       {payees.length === 0 ? (
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive dark:text-red-400" />
           <p className="text-muted-foreground">Nobody can be paid yet.</p>
         </div>
       ) : (
@@ -705,7 +705,9 @@ function PayeesEditor({
           Add
         </Button>
       </div>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-destructive dark:text-red-400">{error}</p>
+      ) : null}
     </div>
   )
 }

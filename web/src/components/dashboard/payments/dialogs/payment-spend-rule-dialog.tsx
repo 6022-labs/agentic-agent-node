@@ -31,6 +31,7 @@ type Props = {
 
 export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
   const [open, setOpen] = React.useState(false)
+  const [formKey, setFormKey] = React.useState(0)
   const [saving, setSaving] = React.useState(false)
   const [values, setValues] =
     React.useState<PaymentSpendRuleFormSchemaType | null>(null)
@@ -44,10 +45,7 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
     setSaving(true)
     try {
       const { error, result } = await onSave(values)
-      if (result === "saved") {
-        setValues(null)
-        setOpen(false)
-      }
+      if (result === "saved") setOpen(false)
       return { error }
     } finally {
       setSaving(false)
@@ -61,7 +59,10 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
         // Closing mid-save would unmount the form and lose the save's error.
         if (saving) return
         // A previous session's token must never drive the next one's lookup.
-        setValues(null)
+        if (next) {
+          setValues(null)
+          setFormKey((key) => key + 1)
+        }
         setOpen(next)
       }}
     >
@@ -91,14 +92,13 @@ export default function PaymentSpendRuleDialog({ initialRule, onSave }: Props) {
           </DialogDescription>
         </DialogHeader>
         {/* Remount per open so an edited rule's values are re-derived fresh. */}
-        {open ? (
-          <PaymentSpendRuleForm
-            initialRule={initialRule}
-            tokenLookup={tokenLookup}
-            onValueChange={setValues}
-            onFormComplete={onFormComplete}
-          />
-        ) : null}
+        <PaymentSpendRuleForm
+          key={formKey}
+          initialRule={initialRule}
+          tokenLookup={tokenLookup}
+          onValueChange={setValues}
+          onFormComplete={onFormComplete}
+        />
         <DialogFooter>
           <Button
             type="submit"

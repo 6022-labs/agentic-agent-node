@@ -35,6 +35,7 @@ const Blockies = ((BlockiesRaw as unknown as { default?: typeof BlockiesRaw })
 
 function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   const location = useLocation()
+  const { setOpenMobile } = useSidebar()
 
   return (
     <SidebarGroup>
@@ -48,7 +49,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
                 isActive={location.pathname === item.path}
                 tooltip={item.title}
               >
-                <Link to={item.path}>
+                <Link to={item.path} onClick={() => setOpenMobile(false)}>
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>
@@ -80,7 +81,10 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Identity">
-              <Link to="/dashboard/identity">
+              <Link
+                to="/dashboard/identity"
+                onClick={() => setOpenMobile(false)}
+              >
                 <img
                   src="/logo-192x192.png"
                   alt="Logo"

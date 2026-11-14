@@ -431,13 +431,13 @@ export default function PaymentSpendRuleForm({
                   </p>
                 ) : null}
                 {tokenLookup.status === "timeout" ? (
-                  <p className="flex items-center gap-1 text-sm text-destructive">
+                  <p className="flex items-center gap-1 text-sm text-destructive dark:text-red-400">
                     <CircleX className="size-3.5" />
                     Token lookup timed out.
                   </p>
                 ) : null}
                 {tokenLookup.status === "not-found" ? (
-                  <p className="flex items-center gap-1 text-sm text-destructive">
+                  <p className="flex items-center gap-1 text-sm text-destructive dark:text-red-400">
                     <CircleX className="size-3.5" />
                     No ERC-20 token answers at this address on this network.
                   </p>
@@ -611,7 +611,7 @@ export default function PaymentSpendRuleForm({
           </Button>
           {form.formState.errors.windows?.root?.message ||
           form.formState.errors.windows?.message ? (
-            <p className="text-sm text-destructive">
+            <p className="text-sm text-destructive dark:text-red-400">
               {form.formState.errors.windows.root?.message ??
                 form.formState.errors.windows.message}
             </p>

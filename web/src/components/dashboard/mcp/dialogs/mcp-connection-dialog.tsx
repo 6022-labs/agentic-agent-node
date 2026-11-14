@@ -56,28 +56,34 @@ type Props = {
 
 export default function McpConnectionDialog({ connection, onSaved }: Props) {
   const [open, setOpen] = React.useState(false)
+  const [formKey, setFormKey] = React.useState(0)
   const [saving, setSaving] = React.useState(false)
   const [loadingTools, setLoadingTools] = React.useState(false)
   const [tools, setTools] = React.useState<McpServerTool[] | null>(null)
   const [values, setValues] =
     React.useState<McpConnectionFormSchemaType | null>(null)
   const editing = connection !== undefined
+  // Bumped on every open and server change so a stale discovery is dropped.
+  const discoverySeq = React.useRef(0)
+  const lastValues = React.useRef<McpConnectionFormSchemaType | null>(null)
 
   // A different server (or credential) exposes different tools, so the loaded
   // list no longer applies.
   const onValueChange = React.useCallback(
     (next: McpConnectionFormSchemaType) => {
-      setValues((previous) => {
-        if (
-          previous &&
-          (previous.url !== next.url ||
-            JSON.stringify(previous.headerAuth) !==
-              JSON.stringify(next.headerAuth))
-        ) {
-          setTools(null)
-        }
-        return next
-      })
+      const previous = lastValues.current
+      lastValues.current = next
+      if (
+        previous &&
+        (previous.url !== next.url ||
+          JSON.stringify(previous.headerAuth) !==
+            JSON.stringify(next.headerAuth))
+      ) {
+        discoverySeq.current += 1
+        setLoadingTools(false)
+        setTools(null)
+      }
+      setValues(next)
     },
     []
   )
@@ -85,6 +91,7 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
   const onLoadTools = async () => {
     if (!connection && !values?.url) return
 
+    const seq = discoverySeq.current
     setLoadingTools(true)
     try {
       const { data } = await discoverMcpServerTools({
@@ -92,15 +99,17 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
         url: values?.url || undefined,
         headerAuth: toHeaderAuthMap(values?.headerAuth),
       })
+      if (seq !== discoverySeq.current) return
       setTools(data.tools ?? [])
     } catch (error) {
+      if (seq !== discoverySeq.current) return
       const validation = extractValidationError(error)
       toast.error(
         validation?.message ??
           extractErrorMessage(error, "Failed to list the server's tools")
       )
     } finally {
-      setLoadingTools(false)
+      if (seq === discoverySeq.current) setLoadingTools(false)
     }
   }
 
@@ -149,8 +158,16 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        // Reset on open, not close: the form stays mounted through the close animation.
+        if (next) {
+          discoverySeq.current += 1
+          lastValues.current = null
+          setLoadingTools(false)
+          setTools(null)
+          setValues(null)
+          setFormKey((key) => key + 1)
+        }
         setOpen(next)
-        if (!next) setTools(null)
       }}
     >
       <DialogTrigger asChild>
@@ -176,15 +193,14 @@ export default function McpConnectionDialog({ connection, onSaved }: Props) {
           </DialogDescription>
         </DialogHeader>
         {/* Remount per opening so an edited connection is re-derived fresh. */}
-        {open ? (
-          <McpConnectionForm
-            connection={connection}
-            tools={tools}
-            loadingTools={loadingTools}
-            onValueChange={onValueChange}
-            onFormComplete={onFormComplete}
-          />
-        ) : null}
+        <McpConnectionForm
+          key={formKey}
+          connection={connection}
+          tools={tools}
+          loadingTools={loadingTools}
+          onValueChange={onValueChange}
+          onFormComplete={onFormComplete}
+        />
         <DialogFooter>
           <Button
             type="button"
