@@ -3,7 +3,7 @@ package settings
 import (
 	"strings"
 
-	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/v2"
 	"github.com/knadh/koanf/v2"
 	"go.uber.org/zap"
 )
