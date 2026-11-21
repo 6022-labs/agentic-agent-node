@@ -145,3 +145,7 @@ via the relative `/api` base URL. For dev mode and configuration, see
 Domain modules live under `src/<domain>` (`agent_reasoning`, `agent_identity`,
 `agent_knowledge`, `agent_payment`, `runtime_common`, `gateway`), each paired with
 its adapter modules. The full module/adapter table is in [`CLAUDE.md`](./CLAUDE.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
