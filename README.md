@@ -7,7 +7,7 @@ The runtime DB therefore holds at most one LLM connection and one agent-identity
 
 ## Quickstart
 
-Prerequisites: **Docker** (with Compose) and, for local Go work, **Go 1.26**.
+Prerequisites: **Docker** (with Compose) and, for local Go work, **Go 1.27**.
 
 ```bash
 docker compose up

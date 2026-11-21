@@ -28,7 +28,7 @@ The exceptions, and they are the only ones: `New...` constructors; `Add<Module>C
 
 ## Architecture
 
-Single Go module (`github.com/6022-labs/agentic-agent-node`, Go 1.26), **two binaries** + the web console, all in one image. **One agent = one container** — so the runtime DB holds at most **one** LLM connection row and **one** agent-identity row.
+Single Go module (`github.com/6022-labs/agentic-agent-node`, Go 1.27), **two binaries** + the web console, all in one image. **One agent = one container** — so the runtime DB holds at most **one** LLM connection row and **one** agent-identity row.
 
 ### Hexagonal (ports & adapters) — enforced by structure, not lint
 
