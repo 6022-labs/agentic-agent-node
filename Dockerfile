@@ -63,6 +63,10 @@ COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/sr
 COPY --from=web-builder /web/dist /web
 COPY nginx.conf /etc/nginx/http.d/default.conf
 
+# Client IP for the rate limiter: trust nginx and private-network edges; keep 127.0.0.1 when overriding.
+ENV PROXY__HEADER=X-Forwarded-For \
+    PROXY__TRUSTED_PROXIES=127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7
+
 # Pre-filled defaults that hold whenever the three processes share a container:
 # both Go hosts bind the loopback interface (only nginx is reachable from
 # outside) and the gateway can reach the runtime at it. Anything sensitive
