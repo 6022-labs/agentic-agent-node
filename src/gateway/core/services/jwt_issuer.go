@@ -17,15 +17,23 @@ func NewJwtIssuer(jwtSettings *settings.JwtSettings) *JwtIssuer {
 	return &JwtIssuer{jwtSettings: jwtSettings, now: time.Now}
 }
 
-func (i *JwtIssuer) Issue(address common.Address) (string, time.Time, error) {
+func (i *JwtIssuer) Issue(
+	address common.Address,
+	sessionId string,
+	sessionExpiresAt time.Time,
+) (string, time.Time, error) {
 	now := i.now()
 	expiresAt := now.Add(i.jwtSettings.TokenTtl)
+	if sessionExpiresAt.Before(expiresAt) {
+		expiresAt = sessionExpiresAt
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": address.Hex(),
-		"iat": now.Unix(),
-		"nbf": now.Unix(),
-		"exp": expiresAt.Unix(),
+		subjectClaim:   address.Hex(),
+		issuedAtClaim:  now.Unix(),
+		notBeforeClaim: now.Unix(),
+		expiresAtClaim: expiresAt.Unix(),
+		sessionIdClaim: sessionId,
 	})
 	signed, err := token.SignedString([]byte(i.jwtSettings.SigningKey))
 	if err != nil {

@@ -7,7 +7,11 @@ import (
 )
 
 // JwtIssuerInterface mints HS256 JWTs whose subject is the authenticated
-// wallet address.
+// wallet address and whose sid ties them to a refresh session they never outlive.
 type JwtIssuerInterface interface {
-	Issue(address common.Address) (token string, expiresAt time.Time, err error)
+	Issue(
+		address common.Address,
+		sessionId string,
+		sessionExpiresAt time.Time,
+	) (token string, expiresAt time.Time, err error)
 }

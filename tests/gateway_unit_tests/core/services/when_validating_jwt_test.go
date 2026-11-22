@@ -7,17 +7,20 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/services"
 	"github.com/6022-labs/agentic-agent-node/src/gateway/core/settings"
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests"
+	gateway_mocks "github.com/6022-labs/agentic-agent-node/tests/gateway_mocks/core_mocks/services_mocks/interfaces_mocks"
 	"github.com/ethereum/go-ethereum/common"
 	gojwt "github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type WhenValidatingJwtTestingSuite struct {
-	jwtSettings *settings.JwtSettings
-	sut         *services.JwtValidator
+	jwtSettings             *settings.JwtSettings
+	mockRefreshSessionStore *gateway_mocks.MockRefreshSessionStoreInterface
+	sut                     *services.JwtValidator
 }
 
-func WhenValidatingJwtBeforeEach() *WhenValidatingJwtTestingSuite {
+func WhenValidatingJwtBeforeEach(t *testing.T) *WhenValidatingJwtTestingSuite {
 	jwtSettings := &settings.JwtSettings{
 		SigningKey:     "test-signing-key-at-least-32-characters",
 		TokenTtl:       time.Hour,
@@ -25,9 +28,12 @@ func WhenValidatingJwtBeforeEach() *WhenValidatingJwtTestingSuite {
 		RefreshIdleTtl: 24 * time.Hour,
 	}
 
+	mockRefreshSessionStore := gateway_mocks.NewMockRefreshSessionStoreInterface(gomock.NewController(t))
+
 	return &WhenValidatingJwtTestingSuite{
-		jwtSettings: jwtSettings,
-		sut:         services.NewJwtValidator(jwtSettings),
+		jwtSettings:             jwtSettings,
+		mockRefreshSessionStore: mockRefreshSessionStore,
+		sut:                     services.NewJwtValidator(jwtSettings, mockRefreshSessionStore),
 	}
 }
 
@@ -42,6 +48,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		return gojwt.MapClaims{
 			"sub": common_tests.RandomEthAddress().Hex(),
 			"exp": time.Now().Add(time.Hour).Unix(),
+			"sid": "session-1",
 		}
 	}
 
@@ -51,7 +58,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 
 			result, err := suite.sut.Verify("not-a-jwt")
 
@@ -66,11 +73,11 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			other := services.NewJwtIssuer(
 				&settings.JwtSettings{SigningKey: "another-signing-key-at-least-32-chars", TokenTtl: time.Hour},
 			)
-			token, _, _ := other.Issue(common_tests.RandomEthAddress())
+			token, _, _ := other.Issue(common_tests.RandomEthAddress(), "session-1", time.Now().Add(time.Hour))
 
 			result, err := suite.sut.Verify(token)
 
@@ -85,7 +92,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			refreshToken, _ := services.NewRefreshTokenManager(suite.jwtSettings).Issue(common_tests.RandomEthAddress())
 			token := refreshToken.Token
 
@@ -102,7 +109,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 
 			result, err := suite.sut.Verify(sign(gojwt.SigningMethodHS512, validClaims()))
 
@@ -117,7 +124,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			claims := validClaims()
 			claims["exp"] = time.Now().Add(-time.Minute).Unix()
 
@@ -134,7 +141,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			claims := validClaims()
 			delete(claims, "exp")
 
@@ -151,7 +158,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			claims := validClaims()
 			delete(claims, "sub")
 
@@ -168,7 +175,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			claims := validClaims()
 			claims["sub"] = "not-an-address"
 
@@ -185,7 +192,7 @@ func TestWhenValidatingJwt(t *testing.T) {
 		t.Run("Should reject it", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
 			claims := validClaims()
 			claims["sub"] = 42
 
@@ -196,15 +203,50 @@ func TestWhenValidatingJwt(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a token without a session", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach(t)
+			claims := validClaims()
+			delete(claims, "sid")
+
+			result, err := suite.sut.Verify(sign(gojwt.SigningMethodHS256, claims))
+
+			assert.ErrorIs(t, err, services.ErrAccessTokenSessionMissing)
+			assert.Equal(t, common.Address{}, result)
+		})
+	})
+
+	t.Run("Given a token whose session was revoked", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Should reject it", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenValidatingJwtBeforeEach(t)
+			suite.mockRefreshSessionStore.EXPECT().IsRevoked("session-1").Return(true)
+
+			result, err := suite.sut.Verify(sign(gojwt.SigningMethodHS256, validClaims()))
+
+			assert.ErrorIs(t, err, services.ErrAccessTokenSessionRevoked)
+			assert.Equal(t, common.Address{}, result)
+		})
+	})
+
 	t.Run("Given a token it issued", func(t *testing.T) {
 		t.Parallel()
 
 		t.Run("Should return the address", func(t *testing.T) {
 			t.Parallel()
 
-			suite := WhenValidatingJwtBeforeEach()
+			suite := WhenValidatingJwtBeforeEach(t)
+			suite.mockRefreshSessionStore.EXPECT().IsRevoked("session-1").Return(false)
 			address := common_tests.RandomEthAddress()
-			token, _, _ := services.NewJwtIssuer(suite.jwtSettings).Issue(address)
+			token, _, _ := services.NewJwtIssuer(suite.jwtSettings).
+				Issue(address, "session-1", time.Now().Add(time.Hour))
 
 			result, err := suite.sut.Verify(token)
 

@@ -96,7 +96,7 @@ func (u *RefreshAuth) Execute(
 		successorId = earlier.SuccessorId
 	}
 
-	token, expiresAt, err := u.jwtIssuer.Issue(claims.Address)
+	token, expiresAt, err := u.jwtIssuer.Issue(claims.Address, claims.SessionId, claims.SessionExpiresAt)
 	if err != nil {
 		return nil, apperrors.NewInternalError("refresh_failed", err)
 	}

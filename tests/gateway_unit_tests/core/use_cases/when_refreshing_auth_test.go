@@ -288,7 +288,9 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			suite.mockRefreshSessionStore.EXPECT().
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(earlier, false)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now().Add(30*time.Minute), nil)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, claims.SessionId, claims.SessionExpiresAt).
+				Return("the-token", time.Now().Add(30*time.Minute), nil)
 		}
 
 		t.Run("Should reissue the earlier successor", func(t *testing.T) {
@@ -318,7 +320,9 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			suite.mockRefreshSessionStore.EXPECT().
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("", time.Time{}, dependencyErr)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, claims.SessionId, claims.SessionExpiresAt).
+				Return("", time.Time{}, dependencyErr)
 		}
 
 		t.Run("Should return an InternalError", func(t *testing.T) {
@@ -348,7 +352,9 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			suite.mockRefreshSessionStore.EXPECT().
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now(), nil)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, claims.SessionId, claims.SessionExpiresAt).
+				Return("the-token", time.Now(), nil)
 			suite.mockRefreshTokenManager.EXPECT().Reissue(claims, "token-2").Return(nil, dependencyErr)
 		}
 
@@ -378,7 +384,9 @@ func TestWhenRefreshingAuth(t *testing.T) {
 			suite.mockRefreshSessionStore.EXPECT().
 				Spend("session-1", "token-1", successorSpent, claims.SessionExpiresAt).
 				Return(nil, true)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, claims.SessionId, claims.SessionExpiresAt).
+				Return("the-token", expectedExp, nil)
 			suite.mockRefreshTokenManager.EXPECT().
 				Reissue(claims, "token-2").
 				Return(&gateway_interfaces.RefreshToken{Token: "the-rotated-token", ExpiresAt: rotatedExpiresAt}, nil)
