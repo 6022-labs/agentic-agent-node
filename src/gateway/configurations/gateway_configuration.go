@@ -48,6 +48,14 @@ func addCoreConfiguration(container *dig.Container) {
 		panic(err)
 	}
 
+	if err := container.Provide(core_settings.NewRateLimitSettings); err != nil {
+		panic(err)
+	}
+
+	if err := container.Provide(core_settings.NewProxySettings); err != nil {
+		panic(err)
+	}
+
 	if err := container.Provide(
 		newNonceStore,
 		dig.As(new(core_interfaces.NonceStoreInterface)),

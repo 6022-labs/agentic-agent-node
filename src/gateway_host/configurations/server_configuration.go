@@ -1,6 +1,8 @@
 package configurations
 
 import (
+	"time"
+
 	"github.com/6022-labs/agentic-agent-node/src/common/mvc"
 	mvc_interfaces "github.com/6022-labs/agentic-agent-node/src/common/mvc/interfaces"
 	mvc_middlewares "github.com/6022-labs/agentic-agent-node/src/common/mvc/middlewares"
@@ -14,6 +16,7 @@ import (
 	fiberzap "github.com/gofiber/contrib/v3/zap"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/limiter"
 	"go.uber.org/dig"
 	"go.uber.org/zap"
 )
@@ -30,24 +33,33 @@ func ConfigureServer(container *dig.Container) {
 	}
 }
 
-func newHttpServer(hostSettings *settings.HostSettings, errorWriter *mvc.ErrorWriter) *fiber.App {
+func newHttpServer(
+	hostSettings *settings.HostSettings,
+	proxySettings *core_settings.ProxySettings,
+	errorWriter *mvc.ErrorWriter,
+) *fiber.App {
 	return fiber.New(fiber.Config{
-		AppName:      AppName,
-		BodyLimit:    hostSettings.BodyLimitBytes,
-		ErrorHandler: errorWriter.Write,
+		AppName:            AppName,
+		BodyLimit:          hostSettings.BodyLimitBytes,
+		ErrorHandler:       errorWriter.Write,
+		ProxyHeader:        proxySettings.Header,
+		TrustProxy:         proxySettings.Header != "",
+		TrustProxyConfig:   fiber.TrustProxyConfig{Proxies: proxySettings.TrustedProxies},
+		EnableIPValidation: true,
 	})
 }
 
 type registerRoutesParams struct {
 	dig.In
 
-	App            *fiber.App
-	Logger         *zap.Logger
-	CorsSettings   *core_settings.CorsSettings
-	AgentTelemetry *middlewares.AgentTelemetryContextMiddleware
-	JwtAuth        *middlewares.JwtAuthMiddleware
-	RequestMetrics *mvc_middlewares.ApiRequestMetricsMiddleware
-	Controllers    []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
+	App               *fiber.App
+	Logger            *zap.Logger
+	RateLimitSettings *core_settings.RateLimitSettings
+	CorsSettings      *core_settings.CorsSettings
+	AgentTelemetry    *middlewares.AgentTelemetryContextMiddleware
+	JwtAuth           *middlewares.JwtAuthMiddleware
+	RequestMetrics    *mvc_middlewares.ApiRequestMetricsMiddleware
+	Controllers       []mvc_interfaces.AuthAwareControllerInterface `group:"gateway_controllers"`
 }
 
 func registerRoutes(p registerRoutesParams) {
@@ -68,6 +80,14 @@ func registerRoutes(p registerRoutesParams) {
 
 	p.App.Use(fiberzap.New(fiberzap.Config{
 		Logger: p.Logger,
+	}))
+
+	p.App.Use(limiter.New(limiter.Config{
+		Max:        p.RateLimitSettings.RequestsPerSecond,
+		Expiration: 1 * time.Second,
+		LimitReached: func(fiber.Ctx) error {
+			return fiber.ErrTooManyRequests
+		},
 	}))
 
 	p.App.Get("/swagger/*", swaggo.New())
