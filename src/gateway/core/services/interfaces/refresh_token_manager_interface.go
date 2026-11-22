@@ -7,8 +7,10 @@ import (
 )
 
 type RefreshToken struct {
-	Token     string
-	ExpiresAt time.Time
+	Token            string
+	ExpiresAt        time.Time
+	SessionId        string
+	SessionExpiresAt time.Time
 }
 
 type RefreshTokenClaims struct {

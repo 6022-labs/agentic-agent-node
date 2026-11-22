@@ -272,7 +272,6 @@ func TestWhenVerifyingAuth(t *testing.T) {
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", time.Now(), nil)
 			suite.mockRefreshTokenManager.EXPECT().Issue(address).Return(nil, dependencyErr)
 		}
 
@@ -293,21 +292,62 @@ func TestWhenVerifyingAuth(t *testing.T) {
 		})
 	})
 
+	t.Run("Given the jwt issuer fails", func(t *testing.T) {
+		t.Parallel()
+
+		dependencyErr := errors.New("signing failed")
+		refreshToken := &gateway_interfaces.RefreshToken{
+			Token:            "the-refresh-token",
+			SessionId:        "session-1",
+			SessionExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		}
+
+		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
+			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
+			expectSiweMessage(suite)
+			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
+			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
+			suite.mockRefreshTokenManager.EXPECT().Issue(address).Return(refreshToken, nil)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, "session-1", refreshToken.SessionExpiresAt).
+				Return("", time.Time{}, dependencyErr)
+		}
+
+		t.Run("Should return an InternalError", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenVerifyingAuthBeforeEach(t)
+			request := generateValidVerifyAuthRequest(address)
+			initSuite(suite)
+
+			_, err := suite.sut.Execute(context.Background(), request)
+
+			var internalErr *apperrors.InternalError
+			assert.ErrorAs(t, err, &internalErr)
+			assert.Equal(t, "verify_failed", internalErr.Code)
+			assert.ErrorIs(t, err, dependencyErr)
+		})
+	})
+
 	t.Run("Given a valid nonce, signature, and authorized address", func(t *testing.T) {
 		t.Parallel()
 
 		expectedExp := time.Now().Add(30 * time.Minute)
 		refreshToken := &gateway_interfaces.RefreshToken{
-			Token:     "the-refresh-token",
-			ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+			Token:            "the-refresh-token",
+			ExpiresAt:        time.Now().Add(7 * 24 * time.Hour),
+			SessionId:        "session-1",
+			SessionExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		}
 		initSuite := func(suite *WhenVerifyingAuthTestingSuite) {
 			suite.mockNonceStore.EXPECT().Consume(address).Return(entry)
 			expectSiweMessage(suite)
 			suite.mockSignatureVerifier.EXPECT().Recover(siweMessage, testSignature).Return(address, nil)
 			suite.mockAuthorizer.EXPECT().IsAuthorized(gomock.Any(), address).Return(true, nil)
-			suite.mockJwtIssuer.EXPECT().Issue(address).Return("the-token", expectedExp, nil)
 			suite.mockRefreshTokenManager.EXPECT().Issue(address).Return(refreshToken, nil)
+			suite.mockJwtIssuer.EXPECT().
+				Issue(address, "session-1", refreshToken.SessionExpiresAt).
+				Return("the-token", expectedExp, nil)
 		}
 
 		t.Run("Should return Ok with a JWT response", func(t *testing.T) {

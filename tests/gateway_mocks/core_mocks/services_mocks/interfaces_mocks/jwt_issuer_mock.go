@@ -42,9 +42,9 @@ func (m *MockJwtIssuerInterface) EXPECT() *MockJwtIssuerInterfaceMockRecorder {
 }
 
 // Issue mocks base method.
-func (m *MockJwtIssuerInterface) Issue(address common.Address) (string, time.Time, error) {
+func (m *MockJwtIssuerInterface) Issue(address common.Address, sessionId string, sessionExpiresAt time.Time) (string, time.Time, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Issue", address)
+	ret := m.ctrl.Call(m, "Issue", address, sessionId, sessionExpiresAt)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(time.Time)
 	ret2, _ := ret[2].(error)
@@ -52,7 +52,7 @@ func (m *MockJwtIssuerInterface) Issue(address common.Address) (string, time.Tim
 }
 
 // Issue indicates an expected call of Issue.
-func (mr *MockJwtIssuerInterfaceMockRecorder) Issue(address any) *gomock.Call {
+func (mr *MockJwtIssuerInterfaceMockRecorder) Issue(address, sessionId, sessionExpiresAt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Issue", reflect.TypeOf((*MockJwtIssuerInterface)(nil).Issue), address)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Issue", reflect.TypeOf((*MockJwtIssuerInterface)(nil).Issue), address, sessionId, sessionExpiresAt)
 }

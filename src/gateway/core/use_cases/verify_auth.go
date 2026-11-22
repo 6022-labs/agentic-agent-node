@@ -85,11 +85,11 @@ func (u *VerifyAuth) Execute(
 		return nil, apperrors.NewUnauthorizedError("not_authorized", ErrAddressNotAuthorized.Error())
 	}
 
-	token, expiresAt, err := u.jwtIssuer.Issue(claimed)
+	refreshToken, err := u.refreshTokenManager.Issue(claimed)
 	if err != nil {
 		return nil, apperrors.NewInternalError("verify_failed", err)
 	}
-	refreshToken, err := u.refreshTokenManager.Issue(claimed)
+	token, expiresAt, err := u.jwtIssuer.Issue(claimed, refreshToken.SessionId, refreshToken.SessionExpiresAt)
 	if err != nil {
 		return nil, apperrors.NewInternalError("verify_failed", err)
 	}

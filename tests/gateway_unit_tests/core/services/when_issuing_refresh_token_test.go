@@ -105,5 +105,19 @@ func TestWhenIssuingRefreshToken(t *testing.T) {
 
 			assert.NotEqual(t, firstClaims.SessionId, secondClaims.SessionId)
 		})
+
+		t.Run("Should expose the session it signed", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenIssuingRefreshTokenBeforeEach(jwtSettings)
+
+			refreshToken, _ := suite.sut.Issue(address)
+			claims, err := suite.sut.Parse(refreshToken.Token)
+
+			assert.NoError(t, err)
+			assert.NotEmpty(t, refreshToken.SessionId)
+			assert.Equal(t, claims.SessionId, refreshToken.SessionId)
+			assert.Equal(t, claims.SessionExpiresAt, refreshToken.SessionExpiresAt)
+		})
 	})
 }

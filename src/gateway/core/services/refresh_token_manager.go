@@ -17,7 +17,6 @@ const (
 	refreshKeySuffix      = ":refresh"
 	refreshIdByteLength   = 16
 	refreshTokenTypeClaim = "typ"
-	refreshSessionIdClaim = "sid"
 	refreshTokenIdClaim   = "jti"
 	sessionExpiresAtClaim = "sxp"
 )
@@ -78,7 +77,7 @@ func (m *RefreshTokenManager) Parse(token string) (*interfaces.RefreshTokenClaim
 
 	sub, _ := claims.GetSubject()
 	tokenType, _ := claims[refreshTokenTypeClaim].(string)
-	sessionId, _ := claims[refreshSessionIdClaim].(string)
+	sessionId, _ := claims[sessionIdClaim].(string)
 	tokenId, _ := claims[refreshTokenIdClaim].(string)
 	sessionExpiresAt, _ := claims[sessionExpiresAtClaim].(float64)
 	if tokenType != refreshTokenType || sessionId == "" || tokenId == "" || sessionExpiresAt <= 0 ||
@@ -106,12 +105,12 @@ func (m *RefreshTokenManager) sign(
 		expiresAt = sessionExpiresAt
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":                 address.Hex(),
-		"iat":                 now.Unix(),
-		"nbf":                 now.Unix(),
-		"exp":                 expiresAt.Unix(),
+		subjectClaim:          address.Hex(),
+		issuedAtClaim:         now.Unix(),
+		notBeforeClaim:        now.Unix(),
+		expiresAtClaim:        expiresAt.Unix(),
 		refreshTokenTypeClaim: refreshTokenType,
-		refreshSessionIdClaim: sessionId,
+		sessionIdClaim:        sessionId,
 		refreshTokenIdClaim:   tokenId,
 		sessionExpiresAtClaim: sessionExpiresAt.Unix(),
 	})
@@ -119,7 +118,12 @@ func (m *RefreshTokenManager) sign(
 	if err != nil {
 		return nil, err
 	}
-	return &interfaces.RefreshToken{Token: signed, ExpiresAt: time.Unix(expiresAt.Unix(), 0)}, nil
+	return &interfaces.RefreshToken{
+		Token:            signed,
+		ExpiresAt:        time.Unix(expiresAt.Unix(), 0),
+		SessionId:        sessionId,
+		SessionExpiresAt: time.Unix(sessionExpiresAt.Unix(), 0),
+	}, nil
 }
 
 func (m *RefreshTokenManager) key() []byte {

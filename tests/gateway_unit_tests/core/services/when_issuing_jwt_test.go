@@ -36,13 +36,14 @@ func TestWhenIssuingJwt(t *testing.T) {
 		t.Parallel()
 
 		address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+		sessionExpiresAt := time.Now().Add(7 * 24 * time.Hour)
 
 		t.Run("Should return a non-empty token", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenIssuingJwtBeforeEach()
 
-			token, _, err := suite.sut.Issue(address)
+			token, _, err := suite.sut.Issue(address, "session-1", sessionExpiresAt)
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, token)
@@ -53,18 +54,18 @@ func TestWhenIssuingJwt(t *testing.T) {
 
 			suite := WhenIssuingJwtBeforeEach()
 
-			_, expiresAt, err := suite.sut.Issue(address)
+			_, expiresAt, err := suite.sut.Issue(address, "session-1", sessionExpiresAt)
 
 			assert.NoError(t, err)
 			assert.WithinDuration(t, time.Now().Add(suite.jwtSettings.TokenTtl), expiresAt, 5*time.Second)
 		})
 
-		t.Run("Should produce a 3-part JWT with HS256 alg and sub == address", func(t *testing.T) {
+		t.Run("Should produce a 3-part JWT with HS256 alg, sub == address and sid == session", func(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenIssuingJwtBeforeEach()
 
-			token, _, err := suite.sut.Issue(address)
+			token, _, err := suite.sut.Issue(address, "session-1", sessionExpiresAt)
 			assert.NoError(t, err)
 
 			parts := strings.Split(token, ".")
@@ -82,9 +83,33 @@ func TestWhenIssuingJwt(t *testing.T) {
 			var claims map[string]any
 			_ = json.Unmarshal(claimsBytes, &claims)
 			assert.Equal(t, address.Hex(), claims["sub"])
+			assert.Equal(t, "session-1", claims["sid"])
 			assert.NotZero(t, claims["iat"])
 			assert.NotZero(t, claims["nbf"])
 			assert.NotZero(t, claims["exp"])
+		})
+	})
+
+	t.Run("Given a session ending before token_ttl", func(t *testing.T) {
+		t.Parallel()
+
+		address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+		sessionExpiresAt := time.Unix(time.Now().Add(5*time.Minute).Unix(), 0)
+
+		t.Run("Should expire with the session", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenIssuingJwtBeforeEach()
+
+			token, expiresAt, err := suite.sut.Issue(address, "session-1", sessionExpiresAt)
+			assert.NoError(t, err)
+
+			claimsBytes, err := base64.RawURLEncoding.DecodeString(strings.Split(token, ".")[1])
+			assert.NoError(t, err)
+			var claims map[string]any
+			_ = json.Unmarshal(claimsBytes, &claims)
+			assert.Equal(t, sessionExpiresAt, expiresAt)
+			assert.Equal(t, float64(sessionExpiresAt.Unix()), claims["exp"])
 		})
 	})
 }

@@ -61,7 +61,8 @@ func TestWhenParsingRefreshToken(t *testing.T) {
 			t.Parallel()
 
 			suite := WhenParsingRefreshTokenBeforeEach()
-			accessToken, _, _ := services.NewJwtIssuer(suite.jwtSettings).Issue(address)
+			accessToken, _, _ := services.NewJwtIssuer(suite.jwtSettings).
+				Issue(address, "session-1", time.Now().Add(time.Hour))
 
 			_, err := suite.sut.Parse(accessToken)
 
