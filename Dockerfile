@@ -63,9 +63,9 @@ COPY --from=builder /usr/local/go/src/github.com/6022-labs/agentic-agent-node/sr
 COPY --from=web-builder /web/dist /web
 COPY nginx.conf /etc/nginx/http.d/default.conf
 
-# Client IP for the rate limiter: trust nginx and private-network edges; keep 127.0.0.1 when overriding.
+# Client IP for the rate limiter: nginx resolves it from the edge in front, trusting loopback, private and shared ranges.
 ENV PROXY__HEADER=X-Forwarded-For \
-    PROXY__TRUSTED_PROXIES=127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7
+    PROXY__TRUSTED_PROXIES=127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,fc00::/7
 
 # Pre-filled defaults that hold whenever the three processes share a container:
 # both Go hosts bind the loopback interface (only nginx is reachable from
@@ -111,8 +111,19 @@ RUNTIME_PID=$!
 # the gateway starts dialling /internal/* on it.
 sleep 1
 
-gateway &
+# The gateway only sees nginx, so it reads the client IP nginx resolved from PROXY__*.
+PROXY__HEADER=X-Real-IP PROXY__TRUSTED_PROXIES=127.0.0.1 gateway &
 GATEWAY_PID=$!
+
+REAL_IP_CONF=/etc/nginx/http.d/real_ip.conf
+rm -f "$REAL_IP_CONF"
+if [ -n "${PROXY__HEADER:-}" ]; then
+    for PROXY in $(echo "${PROXY__TRUSTED_PROXIES:-}" | tr ',' ' '); do
+        echo "set_real_ip_from $PROXY;" >> "$REAL_IP_CONF"
+    done
+    echo "real_ip_header $PROXY__HEADER;" >> "$REAL_IP_CONF"
+    echo "real_ip_recursive on;" >> "$REAL_IP_CONF"
+fi
 
 nginx -g 'daemon off;' &
 NGINX_PID=$!
