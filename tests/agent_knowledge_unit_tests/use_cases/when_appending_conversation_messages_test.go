@@ -283,15 +283,15 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 	t.Run("Given another caller owns the conversation", func(t *testing.T) {
 		t.Parallel()
 
-		req := &requests.AppendConversationMessagesRequest{
-			ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
-			Messages: []requests.ConversationMessageInput{
-				{Role: "user", Content: "hi", Timestamp: now},
-			},
-		}
-
 		t.Run("Given the caller does not own the agent", func(t *testing.T) {
 			t.Parallel()
+
+			req := &requests.AppendConversationMessagesRequest{
+				ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
+				Messages: []requests.ConversationMessageInput{
+					{Role: "user", Content: "hi", Timestamp: now},
+				},
+			}
 
 			initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 				agent := suite.expectMintedAgent()
@@ -318,6 +318,13 @@ func TestWhenAppendingConversationMessages(t *testing.T) {
 
 		t.Run("Given the caller owns the agent", func(t *testing.T) {
 			t.Parallel()
+
+			req := &requests.AppendConversationMessagesRequest{
+				ConversationIdRequest: requests.ConversationIdRequest{ConversationId: conversationId},
+				Messages: []requests.ConversationMessageInput{
+					{Role: "user", Content: "hi", Timestamp: now},
+				},
+			}
 
 			initSuite := func(suite *WhenAppendingConversationMessagesTestingSuite) {
 				agent := model_builders.NewAgentBuilder().WithOwner(strings.ToUpper(appendingCallerId)).Build()
