@@ -184,7 +184,6 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 	t.Run("Given agent's wallet owns a minted, ENS-provisioned NFT", func(t *testing.T) {
 		t.Parallel()
 
-		var capturedAgent *models.Agent
 		savedState := &models.AgentRegistrationState{}
 
 		initSuite := func(suite *WhenRecoveringAgentFromChainTestingSuite) {
@@ -204,13 +203,6 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 			suite.mockAgentRegistrationStateRepository.EXPECT().
 				GetByAgentId(gomock.Any(), gomock.Any()).
 				Return(nil, nil)
-			suite.mockRegistrationReconciler.EXPECT().
-				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
-				DoAndReturn(
-					func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
-						capturedAgent = agent
-						return agent, savedState, nil
-					})
 			suite.mockEnsRegistrar.EXPECT().
 				Provisioned(gomock.Any(), recoveryChainId, collection, "alice").
 				Return(true, nil)
@@ -224,6 +216,14 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 			suite := WhenRecoveringAgentFromChainBeforeEach(t)
 			initSuite(suite)
+			var capturedAgent *models.Agent
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
+						capturedAgent = agent
+						return agent, savedState, nil
+					})
 
 			recovered, err := suite.sut.Recover(context.Background())
 
@@ -245,6 +245,12 @@ func TestWhenRecoveringAgentFromChain(t *testing.T) {
 
 			suite := WhenRecoveringAgentFromChainBeforeEach(t)
 			initSuite(suite)
+			suite.mockRegistrationReconciler.EXPECT().
+				ReconcileMint(gomock.Any(), gomock.Any(), gomock.Any(), collection, uint64(9), gomock.Any()).
+				DoAndReturn(
+					func(_ context.Context, agent *models.Agent, _ *models.AgentRegistrationState, _ common.Address, _ uint64, _ *string) (*models.Agent, *models.AgentRegistrationState, error) {
+						return agent, savedState, nil
+					})
 
 			recovered, err := suite.sut.Recover(context.Background())
 

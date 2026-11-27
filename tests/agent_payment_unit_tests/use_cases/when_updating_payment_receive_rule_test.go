@@ -13,6 +13,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/tests/common_tests/model_builders"
 	runtime_common_mocks "github.com/6022-labs/agentic-agent-node/tests/runtime_common_mocks/services_mocks/interfaces_mocks"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -202,7 +203,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(uuid.Nil, assert.AnError).
@@ -232,7 +236,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(uuid.New(), nil).
@@ -262,7 +269,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -293,7 +303,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -328,7 +341,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -367,7 +383,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -410,7 +429,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			rule := model_builders.NewPaymentReceiveRuleBuilder().Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -458,7 +480,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 			price := model_builders.NewPaymentReceiveRulePriceBuilder().WithPaymentReceiveRuleId(rule.Id).Build()
 
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(rule.Id, nil).
@@ -511,7 +536,7 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().Validate(ctx, gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(ctx, rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(ctx, rule.Id).Return(lo.ToPtr(*rule), nil).Times(1)
 			suite.mockStrategy.EXPECT().RuleIdForAsset(ctx, rule.PolicyId, gomock.Any()).Return(rule.Id, nil).Times(1)
 			suite.mockUnitOfWorkFactory.EXPECT().Start(ctx).Return(suite.mockUnitOfWork, nil).Times(1)
 		}
@@ -677,7 +702,10 @@ func TestWhenUpdatingPaymentReceiveRule(t *testing.T) {
 
 		initSuite := func(suite *WhenUpdatingPaymentReceiveRuleTestingSuite) {
 			suite.mockStrategy.EXPECT().Validate(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-			suite.mockPaymentReceiveRuleRepository.EXPECT().GetById(gomock.Any(), rule.Id).Return(rule, nil).Times(1)
+			suite.mockPaymentReceiveRuleRepository.EXPECT().
+				GetById(gomock.Any(), rule.Id).
+				Return(lo.ToPtr(*rule), nil).
+				Times(1)
 			suite.mockStrategy.EXPECT().
 				RuleIdForAsset(gomock.Any(), rule.PolicyId, gomock.Any()).
 				Return(uuid.Nil, nil).
