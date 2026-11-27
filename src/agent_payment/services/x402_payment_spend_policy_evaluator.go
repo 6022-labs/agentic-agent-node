@@ -47,16 +47,8 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 	quote *payment_interfaces.X402PaymentQuote,
 	amount *big.Int,
 ) (*payment_interfaces.X402PaymentSpendReservation, error) {
-	policy, err := e.paymentSpendPolicyProvider.Ensure(ctx)
+	policy, err := e.ensurePolicy(ctx)
 	if err != nil {
-		// An unminted agent has no policy anyone could have set, so it spends nothing.
-		var notMinted *errors.ConflictError
-		if stderrors.As(err, &notMinted) {
-			return nil, errors.NewUnauthorizedError(
-				"spend_agent_not_minted",
-				"the agent is not minted, so it spends nothing",
-			)
-		}
 		return nil, err
 	}
 	if !policy.AllowsPayee(quote.PayTo) {
@@ -83,6 +75,31 @@ func (e *X402PaymentSpendPolicyEvaluator) Authorize(
 		return nil, errors.NewInternalError("spend_policy_failed", err)
 	}
 	return reservation, nil
+}
+
+func (e *X402PaymentSpendPolicyEvaluator) AuthorizeFree(
+	ctx context.Context,
+) (*payment_interfaces.X402PaymentSpendReservation, error) {
+	if _, err := e.ensurePolicy(ctx); err != nil {
+		return nil, err
+	}
+	return &payment_interfaces.X402PaymentSpendReservation{Amount: new(big.Int)}, nil
+}
+
+// ensurePolicy loads the policy; an unminted agent has none anyone could have set, so it spends nothing.
+func (e *X402PaymentSpendPolicyEvaluator) ensurePolicy(ctx context.Context) (*models.PaymentSpendPolicy, error) {
+	policy, err := e.paymentSpendPolicyProvider.Ensure(ctx)
+	if err != nil {
+		var notMinted *errors.ConflictError
+		if stderrors.As(err, &notMinted) {
+			return nil, errors.NewUnauthorizedError(
+				"spend_agent_not_minted",
+				"the agent is not minted, so it spends nothing",
+			)
+		}
+		return nil, err
+	}
+	return policy, nil
 }
 
 func (e *X402PaymentSpendPolicyEvaluator) Release(

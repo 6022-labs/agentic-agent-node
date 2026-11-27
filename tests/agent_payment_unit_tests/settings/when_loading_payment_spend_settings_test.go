@@ -18,6 +18,7 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 
 			assert.Equal(t, int64(300), loaded.ValiditySeconds)
 			assert.Equal(t, int64(60), loaded.ValidAfterSkew)
+			assert.Equal(t, int64(60), loaded.FreeValiditySeconds)
 		})
 	})
 
@@ -25,7 +26,11 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"payment": map[string]any{
-				"spend": map[string]any{"validity_seconds": 120, "valid_after_skew_seconds": 15},
+				"spend": map[string]any{
+					"validity_seconds":         120,
+					"valid_after_skew_seconds": 15,
+					"free_validity_seconds":    20,
+				},
 			},
 		}, "."), nil)
 
@@ -34,6 +39,7 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 
 			assert.Equal(t, int64(120), loaded.ValiditySeconds)
 			assert.Equal(t, int64(15), loaded.ValidAfterSkew)
+			assert.Equal(t, int64(20), loaded.FreeValiditySeconds)
 		})
 	})
 
@@ -41,7 +47,11 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 		k := koanf.New(".")
 		_ = k.Load(confmap.Provider(map[string]any{
 			"payment": map[string]any{
-				"spend": map[string]any{"validity_seconds": 0, "valid_after_skew_seconds": -5},
+				"spend": map[string]any{
+					"validity_seconds":         0,
+					"valid_after_skew_seconds": -5,
+					"free_validity_seconds":    0,
+				},
 			},
 		}, "."), nil)
 
@@ -50,11 +60,13 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 
 			assert.Equal(t, int64(300), loaded.ValiditySeconds)
 			assert.Equal(t, int64(60), loaded.ValidAfterSkew)
+			assert.Equal(t, int64(60), loaded.FreeValiditySeconds)
 		})
 	})
 
 	t.Run("Given an env override", func(t *testing.T) {
 		t.Setenv("PAYMENT__SPEND__VALIDITY_SECONDS", "45")
+		t.Setenv("PAYMENT__SPEND__FREE_VALIDITY_SECONDS", "15")
 
 		k, err := host_configurations.LoadKoanfConfig()
 		assert.NoError(t, err)
@@ -63,6 +75,7 @@ func TestWhenLoadingPaymentSpendSettings(t *testing.T) {
 			loaded := settings.NewPaymentSpendSettings(zap.NewNop(), k)
 
 			assert.Equal(t, int64(45), loaded.ValiditySeconds)
+			assert.Equal(t, int64(15), loaded.FreeValiditySeconds)
 		})
 	})
 }

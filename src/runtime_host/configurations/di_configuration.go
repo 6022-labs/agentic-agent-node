@@ -11,6 +11,7 @@ import (
 	agent_payment_blockchain_configurations "github.com/6022-labs/agentic-agent-node/src/agent_payment_blockchain/configurations"
 	agent_payment_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_payment_mvc/configurations"
 	agent_reasoning_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning/configurations"
+	agent_reasoning_http_a2a_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_a2a/configurations"
 	agent_reasoning_http_inference_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_inference/configurations"
 	agent_reasoning_http_mcp_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_http_mcp/configurations"
 	agent_reasoning_mvc_configurations "github.com/6022-labs/agentic-agent-node/src/agent_reasoning_mvc/configurations"
@@ -47,6 +48,7 @@ func ConfigureDI(config *koanf.Koanf) *dig.Container {
 	agent_identity_http_ipfs_configurations.AddAgentIdentityHttpIpfsConfiguration(container)
 	agent_reasoning_http_inference_configurations.AddAgentReasoningHttpInferenceConfiguration(container)
 	agent_reasoning_http_mcp_configurations.AddAgentReasoningHttpMcpConfiguration(container)
+	agent_reasoning_http_a2a_configurations.AddAgentReasoningHttpA2AConfiguration(container)
 	agent_reasoning_os_configurations.AddAgentReasoningOsConfiguration(container)
 	agent_reasoning_configurations.AddAgentReasoningConfiguration(container)
 	runtime_db_configurations.AddRuntimeDbConfiguration(container)

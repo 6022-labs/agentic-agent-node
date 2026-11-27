@@ -26,8 +26,9 @@ func (t *SignX402PaymentTool) Definition() *models.Tool {
 	return &models.Tool{
 		Name: "sign_x402_payment",
 		Description: "Pay an x402 quote from your wallet; returns the paymentSignature for the paid call. " +
-			"Pass one accepts entry as received. Refused, with no spend, unless the payee is allowed and " +
-			"the token's rule fits. Spend counts when signed, so don't sign again for the same call.",
+			"Pass one accepts entry as received. A 0 amount only proves who you are and needs no spend rule; " +
+			"otherwise refused, with no spend, unless the payee is allowed and the token's rule fits. " +
+			"Spend counts when signed, so don't sign again for the same call.",
 		InputScheme: utils.ObjectScheme(map[string]models.ToolInputSchemeProperty{
 			"accept": utils.ObjectProperty(
 				"One accepts entry from a 402 quote: network, asset, payTo, amount and its extra.",

@@ -21,6 +21,9 @@ type X402PaymentSpendPolicyEvaluatorInterface interface {
 	// Authorize records the spend and returns its reservation; a refusal is an UnauthorizedError naming why.
 	// It is not a predicate: call Release if the payment is then not signed.
 	Authorize(ctx context.Context, quote *X402PaymentQuote, amount *big.Int) (*X402PaymentSpendReservation, error)
+	// AuthorizeFree clears a zero-amount x402 payment the signer builds itself: it needs only a minted agent
+	// and reserves nothing, since it moves no funds and only proves the caller to a free price.
+	AuthorizeFree(ctx context.Context) (*X402PaymentSpendReservation, error)
 	// Release gives a reservation back, even once ctx is cancelled; a period that rolled over since
 	// keeps the spend it now holds.
 	Release(ctx context.Context, reservation *X402PaymentSpendReservation) error

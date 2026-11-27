@@ -124,6 +124,7 @@ func AddAgentReasoningConfiguration(container *dig.Container) {
 		use_cases.NewSetAgentGuidance,
 		use_cases.NewListSelfTools,
 		use_cases.NewUpdateSelfTool,
+		use_cases.NewCallAgent,
 	}
 	for _, p := range providers {
 		if err := container.Provide(p); err != nil {
