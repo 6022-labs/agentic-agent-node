@@ -66,6 +66,7 @@ func AddAgentReasoningSelfToolsConfiguration(container *dig.Container) {
 	provideSelfTool(container, tools.NewListConversationsTool)
 	provideSelfTool(container, tools.NewCreateConversationTool)
 	provideSelfTool(container, tools.NewUpdateConversationTool)
+	provideSelfTool(container, tools.NewCallAgentTool)
 }
 
 func provideSelfTool(container *dig.Container, ctor any) {
@@ -140,12 +141,16 @@ func provideReasoningExecutors(container *dig.Container) {
 	asDeleteMCPConnection := func(u *reasoning_use_cases.DeleteMCPConnection) tool_interfaces.DeleteMCPConnectionExecutorInterface {
 		return u
 	}
+	asCallAgent := func(u *reasoning_use_cases.CallAgent) tool_interfaces.CallAgentExecutorInterface {
+		return u
+	}
 
 	provideExecutor(container, asGetLLMConnection)
 	provideExecutor(container, asListMCPConnections)
 	provideExecutor(container, asSetAgentGuidance)
 	provideExecutor(container, asCreateMCPConnection)
 	provideExecutor(container, asDeleteMCPConnection)
+	provideExecutor(container, asCallAgent)
 }
 
 func providePaymentExecutors(container *dig.Container) {

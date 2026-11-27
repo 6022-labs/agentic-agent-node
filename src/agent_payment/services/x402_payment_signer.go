@@ -17,6 +17,7 @@ import (
 	"github.com/6022-labs/agentic-agent-node/src/common/helpers"
 	"github.com/6022-labs/agentic-agent-node/src/common/x402"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -67,7 +68,7 @@ func (s *X402PaymentSigner) Sign(
 		return nil, errors.NewValidationError("assetTransferMethod", "must be one of eip3009, permit2")
 	}
 
-	reservation, err := s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
+	reservation, err := s.authorize(ctx, quote, amount)
 	if err != nil {
 		var refusal *errors.UnauthorizedError
 		if stderrors.As(err, &refusal) {
@@ -84,10 +85,24 @@ func (s *X402PaymentSigner) Sign(
 		}
 		return nil, err
 	}
-	s.logger.Info(
-		"x402 payment signed",
-		append(quote.AuditFields(), zap.String("ruleId", reservation.RuleId.String()))...)
+	auditFields := quote.AuditFields()
+	if reservation.RuleId != uuid.Nil {
+		auditFields = append(auditFields, zap.String("ruleId", reservation.RuleId.String()))
+	}
+	s.logger.Info("x402 payment signed", auditFields...)
 	return signed, nil
+}
+
+// authorize gives a zero amount the free path: the signer builds that payload, so it can move no funds.
+func (s *X402PaymentSigner) authorize(
+	ctx context.Context,
+	quote *interfaces.X402PaymentQuote,
+	amount *big.Int,
+) (*interfaces.X402PaymentSpendReservation, error) {
+	if amount.Sign() == 0 {
+		return s.x402PaymentSpendPolicyEvaluator.AuthorizeFree(ctx)
+	}
+	return s.x402PaymentSpendPolicyEvaluator.Authorize(ctx, quote, amount)
 }
 
 func (s *X402PaymentSigner) signAuthorized(
@@ -104,6 +119,9 @@ func (s *X402PaymentSigner) signAuthorized(
 	now := time.Now().Unix()
 	validAfter := now - s.paymentSpendSettings.ValidAfterSkew
 	validity := s.paymentSpendSettings.ValiditySeconds
+	if amount.Sign() == 0 && s.paymentSpendSettings.FreeValiditySeconds < validity {
+		validity = s.paymentSpendSettings.FreeValiditySeconds
+	}
 	if quote.MaxTimeoutSeconds > 0 && quote.MaxTimeoutSeconds < validity {
 		validity = quote.MaxTimeoutSeconds
 	}

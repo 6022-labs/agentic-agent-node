@@ -11,12 +11,15 @@ const PaymentSpendSettingsKey = "payment.spend"
 type PaymentSpendSettings struct {
 	ValiditySeconds int64 `koanf:"validity_seconds"`
 	ValidAfterSkew  int64 `koanf:"valid_after_skew_seconds"`
+	// FreeValiditySeconds shortens a zero-amount proof: nothing settles it, so it replays until it expires.
+	FreeValiditySeconds int64 `koanf:"free_validity_seconds"`
 }
 
 func NewPaymentSpendSettings(logger *zap.Logger, k *koanf.Koanf) *PaymentSpendSettings {
 	settings := PaymentSpendSettings{
-		ValiditySeconds: 300,
-		ValidAfterSkew:  60,
+		ValiditySeconds:     300,
+		ValidAfterSkew:      60,
+		FreeValiditySeconds: 60,
 	}
 	if err := k.Unmarshal(PaymentSpendSettingsKey, &settings); err != nil {
 		logger.Fatal("failed to unmarshal spend settings", zap.Error(err))
@@ -29,6 +32,10 @@ func NewPaymentSpendSettings(logger *zap.Logger, k *koanf.Koanf) *PaymentSpendSe
 	if settings.ValidAfterSkew < 0 {
 		logger.Warn("invalid payment.spend.valid_after_skew_seconds, defaulting to 60")
 		settings.ValidAfterSkew = 60
+	}
+	if settings.FreeValiditySeconds <= 0 {
+		logger.Warn("invalid payment.spend.free_validity_seconds, defaulting to 60")
+		settings.FreeValiditySeconds = 60
 	}
 
 	return &settings

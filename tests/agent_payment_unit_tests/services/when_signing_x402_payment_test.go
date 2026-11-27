@@ -624,13 +624,43 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 	})
 
+	t.Run("Given a zero-price quote from an unminted agent", func(t *testing.T) {
+		t.Parallel()
+
+		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
+			suite.mockSpendPolicyEvaluator.EXPECT().
+				AuthorizeFree(gomock.Any()).
+				Return(nil, apperrors.NewUnauthorizedError("spend_agent_not_minted", "")).
+				Times(1)
+		}
+
+		t.Run("Should return the refusal", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			_, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "0",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+
+			var unauthorizedError *apperrors.UnauthorizedError
+			assert.ErrorAs(t, err, &unauthorizedError)
+			assert.Equal(t, "spend_agent_not_minted", unauthorizedError.Code)
+		})
+	})
+
 	t.Run("Given a zero-price permit2 quote", func(t *testing.T) {
 		t.Parallel()
 
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
-				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(signingReservation(), nil).
+				AuthorizeFree(gomock.Any()).
+				Return(&payment_interfaces.X402PaymentSpendReservation{Amount: big.NewInt(0)}, nil).
 				Times(1)
 			suite.expectWalletSigning()
 		}
@@ -651,6 +681,26 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, signed.PaymentSignature)
+		})
+
+		t.Run("Should expire the proof within the free validity", func(t *testing.T) {
+			t.Parallel()
+
+			suite := WhenSigningX402PaymentBeforeEach(t)
+			initSuite(suite)
+
+			before := time.Now().Unix()
+			signed, err := suite.sut.Sign(ctx, &payment_interfaces.X402PaymentQuote{
+				Network:             signingNetwork,
+				Asset:               signingAsset,
+				PayTo:               signingPayTo,
+				Amount:              "0",
+				AssetTransferMethod: enums.AssetTransferMethodPermit2,
+			})
+
+			assert.NoError(t, err)
+			assert.LessOrEqual(t, signed.ValidBefore, time.Now().Unix()+60)
+			assert.GreaterOrEqual(t, signed.ValidBefore, before+60)
 		})
 
 	})
@@ -704,8 +754,8 @@ func TestWhenSigningX402Payment(t *testing.T) {
 
 		initSuite := func(suite *WhenSigningX402PaymentTestingSuite) {
 			suite.mockSpendPolicyEvaluator.EXPECT().
-				Authorize(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(signingReservation(), nil).
+				AuthorizeFree(gomock.Any()).
+				Return(&payment_interfaces.X402PaymentSpendReservation{Amount: big.NewInt(0)}, nil).
 				Times(1)
 			suite.expectWalletSigning()
 		}

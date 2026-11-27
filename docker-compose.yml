@@ -36,6 +36,8 @@ services:
       # - RUNTIME_DATABASE__TLS_SERVER_NAME=db.internal
       - RUNTIME_MIGRATIONS__FOLDER_PATH=/migrations
       - AGENT_IDENTITY__RUNTIME_URL=http://localhost:5500
+      # Lets call_agent reach other agents on this machine or docker network; also the loopback runtime.
+      # - A2A__ALLOW_PRIVATE_NETWORKS=true
       - TELEMETRY__ENABLED=true
       - TELEMETRY__ENDPOINT=agent-node-alloy:4317
       - TELEMETRY__INSECURE=true

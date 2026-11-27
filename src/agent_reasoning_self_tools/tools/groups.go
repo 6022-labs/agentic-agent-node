@@ -8,4 +8,5 @@ const (
 	GroupMachine       = "Machine"
 	GroupConfiguration = "Configuration"
 	GroupMemory        = "Memory"
+	GroupAgents        = "Agents"
 )
